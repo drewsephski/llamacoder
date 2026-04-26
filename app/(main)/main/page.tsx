@@ -23,7 +23,7 @@ import {
   memo,
 } from "react";
 
-import { Context } from "./providers";
+import { Context } from "../providers";
 import Header from "@/components/header";
 import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
