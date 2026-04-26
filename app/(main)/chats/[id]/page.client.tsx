@@ -10,20 +10,23 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { memo, startTransition, use, useEffect, useRef, useState } from "react";
-import { ChatCompletionStream } from "together-ai/lib/ChatCompletionStream.mjs";
 import ChatBox from "./chat-box";
 import ChatLog from "./chat-log";
 import CodeViewer from "./code-viewer";
 import CodeViewerLayout from "./code-viewer-layout";
 import type { Chat, Message } from "./page";
 import { Context } from "../../providers";
+import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 
 const HeaderChat = memo(({ chat }: { chat: Chat }) => (
-  <div className="flex items-center gap-4 px-4 py-4">
-    <a href="/" target="_blank">
-      <LogoSmall />
-    </a>
-    <p className="italic text-gray-500">{chat.title}</p>
+  <div className="flex items-center justify-between px-4 py-4">
+    <div className="flex items-center gap-4">
+      <a href="/" target="_blank">
+        <LogoSmall />
+      </a>
+      <p className="italic text-muted-foreground">{chat.title}</p>
+    </div>
+    <AnimatedThemeToggleButton type="horizontal" />
   </div>
 ));
 
@@ -37,14 +40,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
   >(context.streamPromise);
   const [streamText, setStreamText] = useState("");
   const [isShowingCodeViewer, setIsShowingCodeViewer] = useState(
-    chat.messages.some((m) => m.role === "assistant"),
+    chat.messages.some((m: Message) => m.role === "assistant"),
   );
   const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
   const router = useRouter();
   const isHandlingStreamRef = useRef(false);
   const [activeMessage, setActiveMessage] = useState(
     chat.messages
-      .filter((m) => m.role === "assistant" && extractFirstCodeBlock(m.content))
+      .filter((m: Message) => m.role === "assistant" && extractFirstCodeBlock(m.content))
       .at(-1),
   );
 
@@ -58,14 +61,23 @@ export default function PageClient({ chat }: { chat: Chat }) {
       const stream = await streamPromise;
       let didPushToCode = false;
       let didPushToPreview = false;
+      let fullText = "";
 
-      ChatCompletionStream.fromReadableStream(stream)
-        .on("content", (delta, content) => {
-          setStreamText((text) => text + delta);
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+          setStreamText(fullText);
 
           if (
             !didPushToCode &&
-            parseReplySegments(content).some((seg) => seg.type === "file")
+            parseReplySegments(fullText).some((seg) => seg.type === "file")
           ) {
             didPushToCode = true;
             setIsShowingCodeViewer(true);
@@ -74,56 +86,60 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
           if (
             !didPushToPreview &&
-            parseReplySegments(content).some(
+            parseReplySegments(fullText).some(
               (seg) => seg.type === "file" && !seg.isPartial,
             )
           ) {
             didPushToPreview = true;
             setIsShowingCodeViewer(true);
           }
-        })
-        .on("finalContent", async (finalText) => {
-          startTransition(async () => {
-            // Get all previous assistant messages with files
-            const previousAssistantMessages = chat.messages.filter(
-              (m) =>
-                m.role === "assistant" &&
-                extractAllCodeBlocks(m.content).length > 0,
-            );
+        }
 
-            // Extract all files from previous messages
-            const previousFiles = previousAssistantMessages.flatMap((msg) =>
-              extractAllCodeBlocks(msg.content),
-            );
+        // Streaming complete
+        startTransition(async () => {
+          // Get all previous assistant messages with files
+          const previousAssistantMessages = chat.messages.filter(
+            (m: Message) =>
+              m.role === "assistant" &&
+              extractAllCodeBlocks(m.content).length > 0,
+          );
 
-            // Extract files from current AI response
-            const currentFiles = extractAllCodeBlocks(finalText);
+          // Extract all files from previous messages
+          const previousFiles = previousAssistantMessages.flatMap((msg: Message) =>
+            extractAllCodeBlocks(msg.content),
+          );
 
-            // Merge files (current overrides previous for same paths)
-            const fileMap = new Map();
-            previousFiles.forEach((file) => fileMap.set(file.path, file));
-            currentFiles.forEach((file) => fileMap.set(file.path, file));
-            const allFiles = Array.from(fileMap.values());
+          // Extract files from current AI response
+          const currentFiles = extractAllCodeBlocks(fullText);
 
-            const message = await createMessage(
-              chat.id,
-              finalText, // Store original AI response content (only changed files)
-              "assistant",
-              allFiles, // Store cumulative files
-            );
+          // Merge files (current overrides previous for same paths)
+          const fileMap = new Map();
+          previousFiles.forEach((file: any) => fileMap.set(file.path, file));
+          currentFiles.forEach((file: any) => fileMap.set(file.path, file));
+          const allFiles = Array.from(fileMap.values());
 
-            startTransition(() => {
-              isHandlingStreamRef.current = false;
-              setStreamText("");
-              setStreamPromise(undefined);
-              setActiveMessage(message);
-              // When streaming finishes, switch to preview mode and keep the viewer open
-              setIsShowingCodeViewer(true);
-              setActiveTab("preview");
-              router.refresh();
-            });
+          const message = await createMessage(
+            chat.id,
+            fullText, // Store original AI response content (only changed files)
+            "assistant",
+            allFiles, // Store cumulative files
+          );
+
+          startTransition(() => {
+            isHandlingStreamRef.current = false;
+            setStreamText("");
+            setStreamPromise(undefined);
+            setActiveMessage(message);
+            // When streaming finishes, switch to preview mode and keep the viewer open
+            setIsShowingCodeViewer(true);
+            setActiveTab("preview");
+            router.refresh();
           });
         });
+      } catch (error) {
+        console.error("Stream reading error:", error);
+        isHandlingStreamRef.current = false;
+      }
     }
 
     f();

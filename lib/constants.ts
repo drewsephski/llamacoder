@@ -1,47 +1,24 @@
-export const MODEL_ALIASES: Record<string, string> = {
-  "zai-org/GLM-4.6": "zai-org/GLM-5.1",
-  "Qwen/Qwen2.5-Coder-32B-Instruct": "zai-org/GLM-5.1",
-};
-
-export function resolveModel(model: string): string {
-  return MODEL_ALIASES[model] ?? model;
-}
 
 export const MODELS = [
   {
-    label: "GLM 5",
-    value: "zai-org/GLM-5",
+    label: "DeepSeek V4 Flash",
+    value: "deepseek/deepseek-v4-flash",
   },
   {
-    label: "GLM 5.1",
-    value: "zai-org/GLM-5.1",
+    label: "DeepSeek V4 Pro",
+    value: "deepseek/deepseek-v4-pro",
   },
   {
-    label: "MiniMax M2.5",
-    value: "MiniMaxAI/MiniMax-M2.5",
+    label: "Llama 4 Scout",
+    value: "meta-llama/llama-4-scout",
   },
   {
-    label: "Qwen 3 Coder 480B",
-    value: "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8",
+    label: "Llama 4 Maverick",
+    value: "meta-llama/llama-4-maverick",
   },
   {
-    label: "Qwen 3 Coder Next",
-    value: "Qwen/Qwen3-Coder-Next-FP8",
-  },
-  {
-    label: "DeepSeek V3",
-    value: "deepseek-ai/DeepSeek-V3",
-    hidden: true,
-  },
-  {
-    label: "Qwen 3 235B",
-    value: "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
-    hidden: true,
-  },
-  {
-    label: "Llama 3.3 70B",
-    value: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    hidden: true,
+    label: "GPT 4O Mini",
+    value: "openai/gpt-4o-mini",
   },
 ];
 

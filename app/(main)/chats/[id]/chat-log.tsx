@@ -41,14 +41,14 @@ export default function ChatLog({
           className="pointer-events-none absolute inset-0 z-10"
           style={{
             background:
-              "linear-gradient(to bottom, #F4F4F5 0%, rgba(244,244,245,0) 20px, rgba(244,244,245,0) calc(100% - 20px), #F4F4F5 100%)",
+              "linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted) / 0) 20px, hsl(var(--muted) / 0) calc(100% - 20px), hsl(var(--muted)) 100%)",
             transform: "translateY(-1px)",
           }}
         />
         <UserMessage content={chat.prompt} />
 
         {chat.totalMessages > chat.messages.length && (
-          <div className="py-2 text-center text-sm text-gray-500">
+          <div className="py-2 text-center text-sm text-muted-foreground">
             Only last messages loaded. Full history not available.
           </div>
         )}
@@ -100,7 +100,7 @@ export default function ChatLog({
 function UserMessage({ content }: { content: string }) {
   return (
     <div className="relative inline-flex max-w-[80%] items-end gap-3 self-end">
-      <div className="whitespace-pre-wrap break-words rounded bg-white px-4 py-2 text-gray-600 shadow">
+      <div className="whitespace-pre-wrap break-words rounded bg-card px-4 py-2 text-card-foreground shadow">
         {content}
       </div>
     </div>
@@ -179,7 +179,7 @@ function AssistantMessage({
           if (seg.type === "text") {
             return (
               <div key={i}>
-                <Streamdown className="prose break-words">
+                <Streamdown className="prose dark:prose-invert break-words">
                   {seg.content}
                 </Streamdown>
               </div>
@@ -189,7 +189,7 @@ function AssistantMessage({
           return (
             <div
               key={i}
-              className="m-0.5 inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm"
+              className="m-0.5 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm"
             >
               <svg
                 width="14"
@@ -197,14 +197,14 @@ function AssistantMessage({
                 viewBox="0 0 14 14"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-gray-600"
+                className="text-muted-foreground"
               >
                 <path
                   d="M10.5 3.5L11.5 2.5L12.5 3.5L11.5 4.5L10.5 3.5ZM2.5 9.5V11.5H4.5L9.5 6.5L7.5 4.5L2.5 9.5ZM0.5 12.5H13.5V14.5H0.5V12.5Z"
                   fill="currentColor"
                 />
               </svg>
-              <span className="font-medium text-gray-700">{seg.path}</span>
+              <span className="font-medium text-foreground">{seg.path}</span>
             </div>
           );
         })}
@@ -221,6 +221,6 @@ function AssistantMessage({
     );
   } else {
     // No code blocks, just show text
-    return <Streamdown className="prose break-words">{content}</Streamdown>;
+    return <Streamdown className="prose dark:prose-invert break-words">{content}</Streamdown>;
   }
 }

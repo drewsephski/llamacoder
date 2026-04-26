@@ -20,28 +20,33 @@ sequenceDiagram
 - Code stored/extracted from message history
 - Versioning through message chains
 
-## Version 2: Vercel AI SDK Integration
+## Version 2: Vercel AI SDK with OpenRouter Provider
 
-_Vercel AI SDK with tool streaming and enhanced reasoning_
+_Vercel AI SDK with OpenRouter provider for unified model access_
 
 ```mermaid
 sequenceDiagram
     participant U as User/Browser
     participant V as Vercel AI SDK
-    participant T as AI Tools
+    participant OR as OpenRouter Provider
+    participant M as AI Models
 
-    U->>V: Send request with file context
-    V->>T: Stream tools for reasoning & file operations
-    T->>V: Execute tool calls (edit, search, run commands)
-    V->>U: Stream responses with tool outputs
-    U->>V: Continue conversation with tool results
+    U->>V: Send request (create chat / stream completion)
+    V->>OR: Initialize provider with custom config
+    OR->>M: Route to specific models (Llama, Qwen, Kimi)
+    M->>OR: Return model responses
+    OR->>V: Process responses (generateText / streamText)
+    V->>U: Return formatted response
 ```
 
-- Workflow: User request -> Vercel AI SDK streams tools -> Tools execute operations -> Stream results back
-- Migrate from Together AI to Vercel AI SDK for better tool streaming
-- Enhanced reasoning capabilities with tool calling
-- Real-time streaming of AI thinking and tool execution
-- Support for complex multi-step operations
+- Workflow: User request -> Vercel AI SDK with OpenRouter provider -> Model routing -> Response processing
+- Uses @openrouter/ai-sdk-provider with createOpenRouter()
+- generateText() for non-streaming requests (chat creation, title generation, screenshot analysis)
+- streamText() for streaming completions with toTextStreamResponse()
+- Model-level configuration (maxTokens, temperature)
+- Provider options for OpenRouter-specific features (reasoning, custom headers)
+- Helicone integration via custom headers for analytics
+- Support for multimodal content (images in messages)
 
 ## Version 3: Multi-File Project Support
 

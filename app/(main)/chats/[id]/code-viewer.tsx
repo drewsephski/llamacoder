@@ -285,7 +285,7 @@ export default function CodeViewer({
 
     // Generate app title for filename
     const appTitle = generateAppTitle(files);
-    const filename = `${appTitle.replace(/[^a-zA-Z0-9]/g, "-")}-llamacoder.zip`;
+    const filename = `${appTitle.replace(/[^a-zA-Z0-9]/g, "-")}-squidcoder.zip`;
 
     // Create a download link and trigger the download
     const url = URL.createObjectURL(content);
@@ -317,10 +317,10 @@ export default function CodeViewer({
 
   return (
     <>
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-300 px-4">
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
         <div className="inline-flex items-center gap-4">
           <button
-            className="hidden text-gray-400 hover:text-gray-700 md:block"
+            className="hidden text-muted-foreground hover:text-foreground md:block"
             onClick={onClose}
           >
             <CloseIcon className="size-5" />
@@ -347,7 +347,7 @@ export default function CodeViewer({
                           (allAssistantMessages.length - 1 - i) +
                           1}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {timeAgo(msg.createdAt)}
                       </span>
                     </div>
@@ -367,18 +367,18 @@ export default function CodeViewer({
                     1,
                 )
               }
-              className="inline-flex h-[38px] items-center justify-center rounded bg-blue-500 px-2 text-xs font-medium text-white hover:bg-blue-600"
+              className="inline-flex h-[38px] items-center justify-center rounded bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
             >
               Restore
             </button>
           )}
         </div>
-        <div className="rounded-lg border-2 border-gray-300 p-1">
+        <div className="rounded-lg border-2 border-border p-1">
           <button
             onClick={() => onTabChange("code")}
             data-active={activeTab === "code" ? true : undefined}
             disabled={disabledControls}
-            className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 data-[active]:bg-blue-500 data-[active]:text-white"
+            className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 data-[active]:bg-primary data-[active]:text-primary-foreground"
           >
             Code
           </button>
@@ -386,14 +386,14 @@ export default function CodeViewer({
             onClick={() => onTabChange("preview")}
             data-active={activeTab === "preview" ? true : undefined}
             disabled={disabledControls}
-            className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 data-[active]:bg-blue-500 data-[active]:text-white"
+            className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 data-[active]:bg-primary data-[active]:text-primary-foreground"
           >
             Preview
           </button>
         </div>
       </div>
 
-      <div className="flex grow flex-col overflow-y-auto bg-white">
+      <div className="flex grow flex-col overflow-y-auto bg-background">
         {activeTab === "code" ? (
           <StickToBottom
             className="relative grow overflow-hidden *:!h-[inherit]"
@@ -433,7 +433,7 @@ export default function CodeViewer({
         )}
       </div>
 
-      <div className="flex items-center justify-between border-t border-gray-300 px-4 py-4">
+      <div className="flex items-center justify-between border-t border-border px-4 py-4">
         <div className="inline-flex items-center gap-2.5 text-sm">
           <Share
             message={
@@ -445,7 +445,7 @@ export default function CodeViewer({
             }
           />
           <button
-            className="inline-flex items-center gap-1 rounded border border-gray-300 px-1.5 py-0.5 text-sm text-gray-600 transition enabled:hover:bg-white disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition enabled:hover:bg-accent disabled:opacity-50"
             onClick={() => setRefresh((r) => r + 1)}
             disabled={disabledControls}
           >
@@ -453,7 +453,7 @@ export default function CodeViewer({
             Refresh
           </button>
           <button
-            className="hidden items-center gap-1 rounded border border-gray-300 px-1.5 py-0.5 text-sm text-gray-600 transition hover:bg-white disabled:opacity-50 md:inline-flex"
+            className="hidden items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition hover:bg-accent disabled:opacity-50 md:inline-flex"
             onClick={handleDownloadFiles}
             disabled={disabledControls}
             title="Download files"
@@ -462,7 +462,7 @@ export default function CodeViewer({
             Download
           </button>
         </div>
-        <div className="text-xs text-gray-500 md:hidden">{chat.model}</div>
+        <div className="text-xs text-muted-foreground md:hidden">{chat.model}</div>
       </div>
     </>
   );

@@ -40,8 +40,8 @@ export default function CodeViewerLayout({
         <div
           className={`${isShowing ? "w-[70%]" : "w-0"} hidden h-full overflow-hidden py-5 transition-[width] lg:block`}
         >
-          <div className="ml-3 flex h-full flex-col rounded-l-xl shadow-lg shadow-gray-400/40">
-            <div className="flex h-full flex-col rounded-l-xl shadow shadow-gray-800/50">
+          <div className="ml-3 flex h-full flex-col rounded-l-xl shadow-lg shadow-muted-foreground/20">
+            <div className="flex h-full flex-col rounded-l-xl shadow shadow-foreground/10">
               {children}
             </div>
           </div>

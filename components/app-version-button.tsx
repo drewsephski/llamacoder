@@ -24,13 +24,13 @@ export function AppVersionButton({
     <div className="my-4">
       <button
         disabled={disabled}
-        className={`inline-flex w-full items-center gap-2 rounded-lg border-4 border-gray-300 p-1.5 ${
+        className={`inline-flex w-full items-center gap-2 rounded-lg border-4 border-border p-1.5 ${
           generating
             ? "animate-pulse"
             : isActive !== undefined
               ? isActive
-                ? "bg-white"
-                : "bg-gray-300 hover:border-gray-400 hover:bg-gray-400"
+                ? "bg-background"
+                : "bg-muted hover:border-muted-foreground/50 hover:bg-muted/80"
               : ""
         }`}
         onClick={onClick}
@@ -39,9 +39,9 @@ export function AppVersionButton({
           className={`flex size-8 items-center justify-center rounded font-bold ${
             isActive !== undefined
               ? isActive
-                ? "bg-gray-300"
-                : "bg-gray-200"
-              : "bg-gray-300"
+                ? "bg-muted"
+                : "bg-muted/70"
+              : "bg-muted"
           }`}
         >
           V{version}
@@ -57,7 +57,7 @@ export function AppVersionButton({
                 Version {version}
                 {appTitle ? ` - ${appTitle}` : ""}
               </div>
-              <div className="text-xs leading-none text-gray-500">
+              <div className="text-xs leading-none text-muted-foreground">
                 {fileCount} file{fileCount !== 1 ? "s" : ""} edited
               </div>
             </>
@@ -66,7 +66,7 @@ export function AppVersionButton({
               <div className="text-sm font-medium leading-none">
                 {toTitleCase(filename.name)} {version !== 1 && `v${version}`}
               </div>
-              <div className="text-xs leading-none text-gray-500">
+              <div className="text-xs leading-none text-muted-foreground">
                 {filename.name}
                 {version !== 1 && `-v${version}`}
                 {"."}
@@ -89,7 +89,7 @@ export function AppVersionButton({
               >
                 <path
                   d="M11 0.5L11 11M5.16667 2.25L8.66667 5.75M8.66667 5.75L5.16667 9.25M8.66667 5.75L0.5 5.75"
-                  stroke="black"
+                  stroke="currentColor"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />

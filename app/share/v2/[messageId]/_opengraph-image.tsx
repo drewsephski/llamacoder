@@ -34,7 +34,7 @@ export default async function Image({
 
   let title = message
     ? message.chat.title
-    : "An app generated on LlamaCoder.io";
+    : "An app generated on SquidCoder.io";
 
   return new ImageResponse(
     (

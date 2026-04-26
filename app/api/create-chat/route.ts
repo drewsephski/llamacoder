@@ -5,13 +5,13 @@ import {
   screenshotToCodePrompt,
   softwareArchitectPrompt,
 } from "@/lib/prompts";
-import Together from "together-ai";
-import { resolveModel } from "@/lib/constants";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText } from "ai";
 
 export async function POST(request: NextRequest) {
   try {
     const { prompt, model, quality, screenshotUrl } = await request.json();
-    const resolvedModel = resolveModel(model);
+    const resolvedModel = model; // For now, we'll use the model as-is since we're handling aliases in the frontend
 
     const prisma = getPrisma();
     const chat = await prisma.chat.create({
@@ -24,22 +24,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    let options: ConstructorParameters<typeof Together>[0] = {};
+    let options: Parameters<typeof createOpenRouter>[0] = {};
     if (process.env.HELICONE_API_KEY) {
       options.baseURL = "https://together.helicone.ai/v1";
-      options.defaultHeaders = {
+      options.headers = {
         "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
-        "Helicone-Property-appname": "LlamaCoder",
+        "Helicone-Property-appname": "SquidCoder",
         "Helicone-Session-Id": chat.id,
-        "Helicone-Session-Name": "LlamaCoder Chat",
+        "Helicone-Session-Name": "SquidCoder Chat",
       };
     }
 
-    const together = new Together(options);
+    const openrouter = createOpenRouter(options);
 
     async function fetchTitle() {
-      const responseForChatTitle = await together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      const responseForChatTitle = await generateText({
+        model: openrouter(model),
         messages: [
           {
             role: "system",
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
           },
         ],
       });
-      const title = responseForChatTitle.choices[0].message?.content || prompt;
+      const title = responseForChatTitle.text || prompt;
       return title;
     }
 
@@ -61,29 +61,31 @@ export async function POST(request: NextRequest) {
     let fullScreenshotDescription;
     if (screenshotUrl) {
       try {
-        const screenshotResponse = await together.chat.completions.create({
-          model: "moonshotai/Kimi-K2.5",
-          reasoning: { enabled: false },
+        const screenshotResponse = await generateText({
+          model: openrouter(model, {
+            maxTokens: 1000,
+          }),
+          providerOptions: {
+            openrouter: {
+              reasoning: { enabled: false },
+            },
+          },
           temperature: 0.4,
-          max_tokens: 1000,
           messages: [
             {
               role: "user",
               content: [
                 { type: "text", text: screenshotToCodePrompt },
                 {
-                  type: "image_url",
-                  image_url: {
-                    url: screenshotUrl,
-                  },
+                  type: "image",
+                  image: screenshotUrl,
                 },
               ],
             },
           ],
         });
 
-        fullScreenshotDescription =
-          screenshotResponse.choices[0].message?.content;
+        fullScreenshotDescription = screenshotResponse.text;
       } catch (err) {
         console.warn("Screenshot processing failed, continuing without it:", err);
       }
@@ -91,8 +93,10 @@ export async function POST(request: NextRequest) {
 
     let userMessage: string;
     if (quality === "high") {
-      let initialRes = await together.chat.completions.create({
-        model: "Qwen/Qwen3-Coder-Next-FP8",
+      let initialRes = await generateText({
+        model: openrouter(model, {
+          maxTokens: 3000,
+        }),
         messages: [
           {
             role: "system",
@@ -106,12 +110,11 @@ export async function POST(request: NextRequest) {
           },
         ],
         temperature: 0.4,
-        max_tokens: 3000,
       });
 
-      console.log("PLAN:", initialRes.choices[0].message?.content);
+      console.log("PLAN:", initialRes.text);
 
-      userMessage = initialRes.choices[0].message?.content ?? prompt;
+      userMessage = initialRes.text ?? prompt;
     } else if (fullScreenshotDescription) {
       userMessage =
         prompt +
@@ -146,8 +149,8 @@ export async function POST(request: NextRequest) {
     });
 
     const lastMessage = newChat.messages
-      .sort((a, b) => a.position - b.position)
-      .at(-1);
+      .sort((a: { position: number }, b: { position: number }) => a.position - b.position)
+      .at(-1) as { id: string } | undefined;
     if (!lastMessage) throw new Error("No new message");
 
     return NextResponse.json({

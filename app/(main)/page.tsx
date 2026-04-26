@@ -28,6 +28,7 @@ import Header from "@/components/header";
 import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
+import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 
 export default function Home() {
   const { setStreamPromise } = use(Context);
@@ -35,7 +36,7 @@ export default function Home() {
 
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(
-    MODELS.find((m) => !m.hidden)?.value || MODELS[0].value,
+    MODELS[0].value,
   );
   const [quality, setQuality] = useState("low");
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
@@ -46,12 +47,30 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [isPending, startTransition] = useTransition();
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHoveringRing, setIsHoveringRing] = useState(false);
+  const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
   }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ringRef.current) return;
+    
+    const rect = ringRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    setMousePosition({ x, y });
+    setIsHoveringRing(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHoveringRing(false);
+  };
 
   const { uploadToS3 } = useS3Upload();
 
@@ -88,32 +107,37 @@ export default function Home() {
 
   return (
     <div className="relative flex grow flex-col">
-      <div className="absolute inset-0 flex justify-center">
-        <Image
-          src={bgImg}
-          alt=""
-          className="max-h-[953px] w-full max-w-[1200px] object-cover object-top mix-blend-screen"
-          priority
-        />
+      <div 
+        ref={ringRef}
+        className="absolute inset-0 flex justify-center"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div className="relative max-h-[953px] w-full max-w-[1200px]">
+          <Image
+            src={bgImg}
+            alt=""
+            className={`object-cover object-top mix-blend-screen transition-all duration-500 ease-out ${
+              isHoveringRing ? 'scale-[1.02] opacity-100 dark:opacity-30' : 'scale-100 opacity-90 dark:opacity-20'
+            }`}
+            priority
+          />
+          {isHoveringRing && (
+            <div 
+              className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+              style={{
+                background: `radial-gradient(circle 300px at ${mousePosition.x}% ${mousePosition.y}%, rgba(59, 130, 246, 0.15) 0%, transparent 70%)`,
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <div className="isolate flex h-full grow flex-col">
         <Header />
 
         <div className="mt-10 flex grow flex-col items-center px-4 lg:mt-16">
-          <a
-            className="mb-4 inline-flex shrink-0 items-center rounded-full border-[0.5px] border-[#BABABA] px-3.5 py-1.5 text-xs text-black transition-shadow"
-            href="https://togetherai.link/?utm_source=llamacoder&utm_medium=referral&utm_campaign=example-app"
-            target="_blank"
-          >
-            <span className="text-center">
-              Powered by <span className="font-semibold">Together AI</span>.
-              Used by
-              <span className="font-semibold"> 1.1M+ users. </span>
-            </span>
-          </a>
-
-          <h1 className="mt-4 text-balance text-center text-4xl leading-none text-gray-700 md:text-[64px] lg:mt-8">
+          <h1 className="mt-4 text-balance text-center text-5xl font-bold leading-none text-foreground md:text-7xl lg:text-8xl lg:mt-8">
             Turn your <span className="text-blue-500">idea</span>
             <br className="hidden md:block" /> into an{" "}
             <span className="text-blue-500">app</span>
@@ -169,12 +193,12 @@ export default function Home() {
             }}
           >
             <Fieldset>
-              <div className="relative flex w-full max-w-2xl rounded-xl border border-gray-300 bg-white pb-10">
+              <div className="relative flex w-full max-w-2xl rounded-xl border border-border bg-background dark:bg-card pb-10">
                 <div className="w-full">
                   {screenshotLoading && (
                     <div className="relative mx-3 mt-3">
                       <div className="rounded-xl">
-                        <div className="group mb-2 flex h-16 w-[68px] animate-pulse items-center justify-center rounded bg-gray-200">
+                        <div className="group mb-2 flex h-16 w-[68px] animate-pulse items-center justify-center rounded bg-muted dark:bg-muted/50">
                           <Spinner />
                         </div>
                       </div>
@@ -194,7 +218,7 @@ export default function Home() {
                       <button
                         type="button"
                         id="x-circle-icon"
-                        className="absolute -right-3 -top-4 left-14 z-10 size-5 rounded-full bg-white text-gray-900 hover:text-gray-500"
+                        className="absolute -right-3 -top-4 left-14 z-10 size-5 rounded-full bg-background text-foreground hover:text-muted-foreground dark:bg-card"
                         onClick={() => {
                           setScreenshotUrl(undefined);
                           if (fileInputRef.current) {
@@ -285,7 +309,7 @@ export default function Home() {
                       value={model}
                       onValueChange={setModel}
                     >
-                      <Select.Trigger className="inline-flex items-center gap-1 rounded-md p-1 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">
+                      <Select.Trigger className="inline-flex items-center gap-1 rounded-md p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/80 dark:hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
                         <Select.Value aria-label={model}>
                           <span>{selectedModel?.label}</span>
                         </Select.Value>
@@ -294,19 +318,19 @@ export default function Home() {
                         </Select.Icon>
                       </Select.Trigger>
                       <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-md bg-white shadow ring-1 ring-black/5">
+                        <Select.Content className="overflow-hidden rounded-md bg-popover shadow ring-1 ring-border dark:bg-popover dark:ring-border">
                           <Select.Viewport className="space-y-1 p-2">
-                            {MODELS.filter((m) => !m.hidden).map((m) => (
+                            {MODELS.map((m) => (
                               <Select.Item
                                 key={m.value}
                                 value={m.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-gray-100 data-[highlighted]:outline-none"
+                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:outline-none dark:data-[highlighted]:bg-accent/50"
                               >
-                                <Select.ItemText className="inline-flex items-center gap-2 text-gray-500">
+                                <Select.ItemText className="inline-flex items-center gap-2 text-muted-foreground">
                                   {m.label}
                                 </Select.ItemText>
                                 <Select.ItemIndicator>
-                                  <CheckIcon className="size-3 text-blue-600" />
+                                  <CheckIcon className="size-3 text-primary" />
                                 </Select.ItemIndicator>
                               </Select.Item>
                             ))}
@@ -317,14 +341,14 @@ export default function Home() {
                       </Select.Portal>
                     </Select.Root>
 
-                    <div className="h-4 w-px bg-gray-200 max-sm:hidden" />
+                    <div className="h-4 w-px bg-border max-sm:hidden" />
 
                     <Select.Root
                       name="quality"
                       value={quality}
                       onValueChange={setQuality}
                     >
-                      <Select.Trigger className="inline-flex items-center gap-1 rounded p-1 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">
+                      <Select.Trigger className="inline-flex items-center gap-1 rounded p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/80 dark:hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
                         <Select.Value aria-label={quality}>
                           <span className="max-sm:hidden">
                             {quality === "low"
@@ -340,19 +364,19 @@ export default function Home() {
                         </Select.Icon>
                       </Select.Trigger>
                       <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-md bg-white shadow ring-1 ring-black/5">
+                        <Select.Content className="overflow-hidden rounded-md bg-popover shadow ring-1 ring-border dark:bg-popover dark:ring-border">
                           <Select.Viewport className="space-y-1 p-2">
                             {qualityOptions.map((q) => (
                               <Select.Item
                                 key={q.value}
                                 value={q.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-gray-100 data-[highlighted]:outline-none"
+                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:outline-none dark:data-[highlighted]:bg-accent/50"
                               >
-                                <Select.ItemText className="inline-flex items-center gap-2 text-gray-500">
+                                <Select.ItemText className="inline-flex items-center gap-2 text-muted-foreground">
                                   {q.label}
                                 </Select.ItemText>
                                 <Select.ItemIndicator>
-                                  <CheckIcon className="size-3 text-blue-600" />
+                                  <CheckIcon className="size-3 text-primary" />
                                 </Select.ItemIndicator>
                               </Select.Item>
                             ))}
@@ -362,16 +386,16 @@ export default function Home() {
                         </Select.Content>
                       </Select.Portal>
                     </Select.Root>
-                    <div className="h-4 w-px bg-gray-200 max-sm:hidden" />
+                    <div className="h-4 w-px bg-border max-sm:hidden" />
                     <div>
                       <label
                         htmlFor="screenshot"
-                        className="flex cursor-pointer gap-2 text-sm text-gray-400 hover:underline"
+                        className="flex cursor-pointer gap-2 text-sm text-muted-foreground hover:underline"
                       >
-                        <div className="flex size-6 items-center justify-center rounded bg-black hover:bg-gray-700">
+                        <div className="flex size-6 items-center justify-center rounded bg-foreground hover:bg-foreground/80 dark:bg-background dark:hover:bg-muted">
                           <UploadIcon className="size-4" />
                         </div>
-                        <div className="flex items-center justify-center transition hover:text-gray-700">
+                        <div className="flex items-center justify-center transition hover:text-foreground">
                           Attach
                         </div>
                       </label>
@@ -426,7 +450,7 @@ export default function Home() {
                         }
                       }, 0);
                     }}
-                    className="rounded bg-[#E5E9EF] px-2.5 py-1.5 text-xs tracking-[0%] transition-colors hover:bg-[#cccfd5]"
+                    className="rounded bg-muted px-2.5 py-1.5 text-xs tracking-[0%] transition-colors hover:bg-muted/80 dark:hover:bg-muted/70"
                   >
                     {v.title}
                   </button>
@@ -435,6 +459,8 @@ export default function Home() {
             </Fieldset>
           </form>
         </div>
+
+        <HoverBrandLogo />
 
         <Footer />
       </div>
@@ -448,19 +474,7 @@ const Footer = memo(() => {
       <div>
         <div className="font-medium">
           Built with{" "}
-          <a
-            href="https://togetherai.link/?utm_source=llamacoder&utm_medium=referral&utm_campaign=example-app"
-            className="font-semibold text-blue-600 underline-offset-4 transition hover:text-gray-700 hover:underline"
-          >
-            Llama
-          </a>{" "}
-          and{" "}
-          <a
-            href="https://togetherai.link/?utm_source=llamacoder&utm_medium=referral&utm_campaign=example-app"
-            className="font-semibold text-blue-600 underline-offset-4 transition hover:text-gray-700 hover:underline"
-          >
-            Together AI
-          </a>
+          <span className="font-semibold text-blue-600">Squid Coder</span>
           .
         </div>
       </div>
@@ -483,7 +497,7 @@ const Footer = memo(() => {
           </svg>
         </Link>
         <Link
-          href="https://github.com/Nutlope/llamacoder"
+          href="https://github.com/Nutlope/squid-coder"
           className="group"
           aria-label=""
         >
@@ -507,8 +521,8 @@ function LoadingMessage({
   screenshotUrl: string | undefined;
 }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white px-1 py-3 md:px-3">
-      <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
+    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background px-1 py-3 md:px-3 dark:bg-card">
+      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
         <span className="animate-pulse text-balance text-center text-sm md:text-base">
           {isHighQuality
             ? `Coming up with project plan, may take 15 seconds...`

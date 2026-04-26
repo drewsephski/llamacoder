@@ -2,8 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { Pool } from "@neondatabase/serverless";
 import { z } from "zod";
-import Together from "together-ai";
-import { resolveModel } from "@/lib/constants";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { streamText } from "ai";
 
 function optimizeMessagesForTokens(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
@@ -75,29 +75,33 @@ export async function POST(req: Request) {
     messages = [messages[0], messages[1], messages[2], ...messages.slice(-7)];
   }
 
-  let options: ConstructorParameters<typeof Together>[0] = {};
+  let options: Parameters<typeof createOpenRouter>[0] = {};
   if (process.env.HELICONE_API_KEY) {
     options.baseURL = "https://together.helicone.ai/v1";
-    options.defaultHeaders = {
+    options.headers = {
       "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
-      "Helicone-Property-appname": "LlamaCoder",
+      "Helicone-Property-appname": "SquidCoder",
       "Helicone-Session-Id": message.chatId,
-      "Helicone-Session-Name": "LlamaCoder Chat",
+      "Helicone-Session-Name": "SquidCoder Chat",
     };
   }
 
-  const together = new Together(options);
+  const openrouter = createOpenRouter(options);
 
-  const res = await together.chat.completions.create({
-    model: resolveModel(model),
-    reasoning: { enabled: false },
+  const res = streamText({
+    model: openrouter(model, {
+      maxTokens: 9000,
+    }),
+    providerOptions: {
+      openrouter: {
+        reasoning: { enabled: false },
+      },
+    },
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    stream: true,
     temperature: 0.4,
-    max_tokens: 9000,
   });
 
-  return new Response(res.toReadableStream());
+  return res.toTextStreamResponse();
 }
 
 export const runtime = "edge";
