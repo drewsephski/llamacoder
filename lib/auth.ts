@@ -26,6 +26,13 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
   baseURL: getBaseUrl(),
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      enabled: true,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async (data, request) => {

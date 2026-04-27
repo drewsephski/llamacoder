@@ -1,24 +1,35 @@
+export const FREE_MODEL = "openrouter/free";
 
 export const MODELS = [
   {
+    label: "Free",
+    value: "openrouter/free",
+    free: true,
+  },
+  {
     label: "DeepSeek V4 Flash",
     value: "deepseek/deepseek-v4-flash",
+    paid: true,
   },
   {
     label: "DeepSeek V4 Pro",
     value: "deepseek/deepseek-v4-pro",
+    paid: true,
   },
   {
     label: "Llama 4 Scout",
     value: "meta-llama/llama-4-scout",
+    paid: true,
   },
   {
     label: "Llama 4 Maverick",
     value: "meta-llama/llama-4-maverick",
+    paid: true,
   },
   {
     label: "GPT 4O Mini",
     value: "openai/gpt-4o-mini",
+    paid: true,
   },
 ];
 

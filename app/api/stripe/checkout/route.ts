@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { stripe, createStripeCustomer, createCheckoutSession, STRIPE_PRICE_ID } from "@/lib/stripe";
+import { stripe, createStripeCustomer, createCheckoutSession, STRIPE_PRICE_IDS, SUBSCRIPTION_TIERS } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    const tier = body.plan || "pro";
+
+    // Validate tier
+    if (!STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS]) {
+      return NextResponse.json(
+        { error: "Invalid subscription tier" },
+        { status: 400 }
+      );
+    }
+
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -49,12 +60,15 @@ export async function POST(request: NextRequest) {
 
     const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
 
-    // Create checkout session
+    // Create checkout session with tier
     const checkoutSession = await createCheckoutSession(
       customerId,
-      `${origin}/chats?success=true`,
-      `${origin}/chats?canceled=true`
+      `${origin}/dashboard?subscription_success=true&tier=${tier}`,
+      `${origin}/dashboard?subscription_canceled=true`,
+      tier as "pro" | "unlimited"
     );
+
+    const tierConfig = SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS];
 
     // Create or update subscription record in database before checkout
     if (user.subscription) {
@@ -63,7 +77,9 @@ export async function POST(request: NextRequest) {
         where: { id: user.subscription.id },
         data: {
           stripeCustomerId: customerId,
+          stripePriceId: STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS],
           status: "incomplete",
+          tier: tier,
         },
       });
     } else {
@@ -74,9 +90,10 @@ export async function POST(request: NextRequest) {
             connect: { id: user.id }
           },
           stripeCustomerId: customerId,
-          stripePriceId: STRIPE_PRICE_ID,
+          stripePriceId: STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS],
           stripeSubscriptionId: checkoutSession.subscription as string,
           status: "incomplete",
+          tier: tier,
           currentPeriodStart: new Date(),
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         },

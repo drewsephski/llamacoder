@@ -15,7 +15,8 @@ import {
   FolderOpen, 
   LogOut,
   Layers,
-  MoreHorizontal
+  MoreHorizontal,
+  Coins
 } from "lucide-react";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 
@@ -46,6 +47,7 @@ async function DashboardPage() {
   });
 
   let projects: any[] = [];
+  let userCredits = 0;
 
   if (session) {
     const prisma = getPrisma();
@@ -53,6 +55,12 @@ async function DashboardPage() {
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { credits: true },
+    });
+    userCredits = user?.credits || 0;
   }
 
   async function handleRename(formData: FormData) {
@@ -140,6 +148,11 @@ async function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5">
+                <Coins className="h-4 w-4 text-amber-500" />
+                <span className="text-sm font-medium">{userCredits}</span>
+                <span className="text-xs text-muted-foreground hidden sm:inline">credits</span>
+              </div>
               <AnimatedThemeToggleButton variant="horizontal" />
               <form action={async () => {
                 "use server";

@@ -9,79 +9,121 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { MODELS, FREE_MODEL } from "@/lib/constants";
+
+// Credit costs for different model tiers
+const MODEL_CREDIT_COSTS: Record<string, number> = {
+  [FREE_MODEL]: 0, // Free model costs 0 credits
+  default: 1, // Standard paid models cost 1 credit
+  premium: 2, // Premium models (Pro versions) cost 2 credits
+};
+
+function getModelCreditCost(modelValue: string): number {
+  const model = MODELS.find(m => m.value === modelValue);
+  if (!model) return MODEL_CREDIT_COSTS.default;
+  if (model.free) return 0;
+  if (modelValue.includes('pro') || modelValue.includes('maverick')) {
+    return MODEL_CREDIT_COSTS.premium;
+  }
+  return MODEL_CREDIT_COSTS.default;
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { prompt, model, quality, screenshotUrl } = await request.json();
-    const resolvedModel = model; // For now, we'll use the model as-is since we're handling aliases in the frontend
-
-    // Check authentication and credits
+    
+    // Check authentication
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     const prisma = getPrisma();
+    
+    // Check if selected model is free or paid
+    const selectedModel = MODELS.find(m => m.value === model);
+    const isPaidModel = selectedModel?.paid ?? false;
+    
+    // For unauthenticated users or users without credits/subscription, enforce free model
+    let resolvedModel = model;
+    let creditCost = 0;
+    
+    if (!session) {
+      // Unauthenticated users must use free model
+      if (isPaidModel) {
+        return NextResponse.json(
+          { error: "PAID_MODEL_REQUIRES_AUTH", message: "Please sign in to use premium models" },
+          { status: 403 }
+        );
+      }
+      resolvedModel = FREE_MODEL;
+    } else {
+      // Authenticated user - check if they can use paid models
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          credits: true,
+          subscription: {
+            select: {
+              status: true,
+            },
+          },
+        },
+      });
 
-    // If authenticated, check eligibility
-    if (session) {
-      // Check if user has existing projects
+      const userCredits = user?.credits || 0;
+      const hasActiveSubscription = user?.subscription?.status === "active";
+      const canUsePaidModels = hasActiveSubscription || userCredits > 0;
+
+      if (isPaidModel && !canUsePaidModels) {
+        return NextResponse.json(
+          { error: "INSUFFICIENT_CREDITS", message: "Upgrade to use premium models" },
+          { status: 402 }
+        );
+      }
+
+      // Calculate credit cost for this model
+      creditCost = getModelCreditCost(model);
+      
+      // Check if first project (free) or has subscription (unlimited)
       const existingProjectsCount = await prisma.chat.count({
         where: { userId: session.user.id },
       });
+      const isFirstProject = existingProjectsCount === 0;
 
-      if (existingProjectsCount > 0) {
-        // User has existing projects, check credits or subscription
-        const user = await prisma.user.findUnique({
-          where: { id: session.user.id },
-          select: {
-            credits: true,
-            subscription: {
-              select: {
-                status: true,
-              },
-            },
+      if (!isFirstProject && !hasActiveSubscription) {
+        // Need to deduct credits
+        if (userCredits < creditCost) {
+          return NextResponse.json(
+            { error: "INSUFFICIENT_CREDITS", message: `Need ${creditCost} credits for this model` },
+            { status: 402 }
+          );
+        }
+
+        // Deduct credits
+        const result = await prisma.user.updateMany({
+          where: {
+            id: session.user.id,
+            credits: { gte: creditCost },
           },
+          data: { credits: { decrement: creditCost } },
         });
 
-        const credits = user?.credits || 0;
-        const hasActiveSubscription = user?.subscription?.status === "active";
-
-        if (!hasActiveSubscription && credits <= 0) {
+        if (result.count === 0) {
           return NextResponse.json(
             { error: "INSUFFICIENT_CREDITS" },
             { status: 402 }
           );
         }
 
-        // Deduct one credit for new project if no active subscription
-        if (!hasActiveSubscription) {
-          const result = await prisma.user.updateMany({
-            where: {
-              id: session.user.id,
-              credits: { gt: 0 },
-            },
-            data: { credits: { decrement: 1 } },
-          });
-
-          if (result.count === 0) {
-            return NextResponse.json(
-              { error: "INSUFFICIENT_CREDITS" },
-              { status: 402 }
-            );
-          }
-
-          // Record credit history
-          await prisma.$transaction([
-            prisma.creditHistory.create({
-              data: {
-                userId: session.user.id,
-                amount: -1,
-                type: "usage",
-                description: "New project creation",
-              },
-            }),
-          ]);
-        }
+        // Record credit history
+        await prisma.creditHistory.create({
+          data: {
+            userId: session.user.id,
+            amount: -creditCost,
+            type: "usage",
+            description: `Used ${selectedModel?.label || model}`,
+          },
+        });
       }
     }
 

@@ -354,7 +354,7 @@ export default function CodeViewer({
                           (allAssistantMessages.length - 1 - i) +
                           1}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-white">
                         {timeAgo(msg.createdAt)}
                       </span>
                     </div>
@@ -391,9 +391,13 @@ export default function CodeViewer({
             <button
               onClick={onSave}
               disabled={isSaving || isCheckingSession}
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                !chat.userId
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
             >
-              {isSaving ? "Saving..." : isCheckingSession ? "Loading..." : "Save"}
+              {isSaving ? "Saving..." : isCheckingSession ? "Loading..." : !chat.userId ? "Sign Up to Save" : "Save"}
             </button>
           )}
           {isSaved && (
@@ -474,7 +478,7 @@ export default function CodeViewer({
             }
           />
           <button
-            className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition enabled:hover:bg-accent disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition enabled:hover:bg-accent enabled:hover:text-white disabled:opacity-50"
             onClick={() => setRefresh((r) => r + 1)}
             disabled={disabledControls}
           >
@@ -482,7 +486,7 @@ export default function CodeViewer({
             Refresh
           </button>
           <button
-            className="hidden items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition hover:bg-accent disabled:opacity-50 md:inline-flex"
+            className="hidden items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition hover:bg-accent hover:text-white disabled:opacity-50 md:inline-flex"
             onClick={handleDownloadFiles}
             disabled={disabledControls}
             title="Download files"

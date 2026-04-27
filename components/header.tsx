@@ -5,23 +5,74 @@ import { memo, useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import { authClient } from "@/lib/auth-client";
-import { MenuIcon, XIcon } from "lucide-react";
+import { MenuIcon, XIcon, Zap, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { PricingModal } from "@/components/pricing-modal";
 
 function Header() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
 
   useEffect(() => {
     authClient.getSession()
       .then((result) => {
         if (result.data) {
           setSession(result.data);
+          // Fetch credits for authenticated users
+          fetchCredits();
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const fetchCredits = async () => {
+    try {
+      const response = await fetch("/api/user/credits");
+      if (response.ok) {
+        const data = await response.json();
+        setCredits(data.credits);
+        setHasSubscription(data.hasActiveSubscription);
+      }
+    } catch (error) {
+      console.error("Error fetching credits:", error);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Please sign in to subscribe");
+          return;
+        }
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      toast.error(error.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -36,6 +87,14 @@ function Header() {
           alt="Squid Coder"
           className="h-9 object-contain"
         />
+        {!session && !loading && (
+          <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            Guest
+          </span>
+        )}
       </Link>
       
       {/* Desktop Navigation */}
@@ -44,6 +103,21 @@ function Header() {
           <span className="text-sm text-muted-foreground">Loading...</span>
         ) : session ? (
           <>
+            {/* Credits / Upgrade Button */}
+            {hasSubscription ? (
+              <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                <Zap className="h-4 w-4 text-yellow-500" />
+                <span>{credits ?? 0} credits</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowPricingModal(true)}
+                className="flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors min-h-[44px]"
+              >
+                <Zap className="h-4 w-4" />
+                Upgrade
+              </button>
+            )}
             <Link
               href="/dashboard"
               className="rounded-md px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted min-h-[44px] flex items-center"
@@ -59,6 +133,12 @@ function Header() {
           </>
         ) : (
           <>
+            <button
+              onClick={() => setShowPricingModal(true)}
+              className="rounded-md px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted min-h-[44px] flex items-center"
+            >
+              Pricing
+            </button>
             <Link
               href="/sign-in"
               className="rounded-md px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted min-h-[44px] flex items-center"
@@ -102,6 +182,24 @@ function Header() {
                 <span className="text-sm text-muted-foreground">Loading...</span>
               ) : session ? (
                 <>
+                  {/* Mobile Credits / Upgrade */}
+                  {hasSubscription ? (
+                    <div className="flex items-center gap-2 rounded-md bg-muted px-4 py-2 text-sm text-muted-foreground">
+                      <Zap className="h-4 w-4 text-yellow-500" />
+                      <span>{credits ?? 0} credits</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowPricingModal(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700 transition-colors"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Upgrade
+                    </button>
+                  )}
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
@@ -121,6 +219,15 @@ function Header() {
                 </>
               ) : (
                 <>
+                  <button
+                    onClick={() => {
+                      setShowPricingModal(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted min-h-[48px] flex items-center"
+                  >
+                    Pricing
+                  </button>
                   <Link
                     href="/sign-in"
                     onClick={() => setMobileMenuOpen(false)}
@@ -144,6 +251,13 @@ function Header() {
           </div>
         </div>
       )}
+
+      <PricingModal
+        open={showPricingModal}
+        onOpenChange={setShowPricingModal}
+        remainingCredits={credits ?? 0}
+        isAuthenticated={!!session}
+      />
     </header>
   );
 }

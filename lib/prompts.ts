@@ -76,7 +76,7 @@ export function getMainCodingPrompt() {
 
   **Available Libraries:**
   - **UI Components:** Shadcn UI (foundation - ALREADY INSTALLED)
-    ⚠️ CRITICAL: These components are PRE-INSTALLED. NEVER output or redefine them. Import and CUSTOMIZE them for uniqueness.
+    CRITICAL: These components are PRE-INSTALLED. NEVER output or redefine them. Import and CUSTOMIZE them for uniqueness.
     ${shadcnDocs.map((component) => `- ${component.name}: ${component.importDocs}`).join("\n")}
 
     **Customization Guidelines:**

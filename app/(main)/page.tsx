@@ -9,7 +9,7 @@ import Spinner from "@/components/spinner";
 import bgImg from "@/public/halo.png";
 import * as Select from "@radix-ui/react-select";
 import assert from "assert";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, Info } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,7 +27,7 @@ import { Context } from "./providers";
 import Header from "@/components/header";
 import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
-import { MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
+import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/components/pricing-modal";
 import { authClient } from "@/lib/auth-client";
@@ -38,10 +38,11 @@ export default function Home() {
   const router = useRouter();
 
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState(
-    MODELS[0].value,
-  );
+  const [model, setModel] = useState(FREE_MODEL);
   const [quality, setQuality] = useState("low");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [userCredits, setUserCredits] = useState(0);
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
     undefined,
   );
@@ -61,7 +62,38 @@ export default function Home() {
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
+    // Check auth status on mount
+    checkAuthStatus();
   }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const session = await authClient.getSession();
+      if (session.data) {
+        setIsAuthenticated(true);
+        // Fetch user subscription/credits info
+        const response = await fetch("/api/user/credits");
+        if (response.ok) {
+          const data = await response.json();
+          setHasActiveSubscription(data.hasActiveSubscription);
+          setUserCredits(data.credits);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking auth:", error);
+    }
+  };
+
+  const canUsePaidModels = isAuthenticated && (hasActiveSubscription || userCredits > 0);
+
+  const handleModelChange = (newModel: string) => {
+    const selectedModel = MODELS.find(m => m.value === newModel);
+    if (selectedModel?.paid && !canUsePaidModels) {
+      setShowPricingModal(true);
+      return;
+    }
+    setModel(newModel);
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ringRef.current) return;
@@ -342,11 +374,13 @@ export default function Home() {
                     <Select.Root
                       name="model"
                       value={model}
-                      onValueChange={setModel}
+                      onValueChange={handleModelChange}
                     >
                       <Select.Trigger className="inline-flex items-center gap-1 rounded-md p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/80 dark:hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
                         <Select.Value aria-label={model}>
-                          <span>{selectedModel?.label}</span>
+                          <span className="flex items-center gap-1.5">
+                            {selectedModel?.label}
+                          </span>
                         </Select.Value>
                         <Select.Icon>
                           <ChevronDownIcon className="size-3" />
@@ -355,20 +389,29 @@ export default function Home() {
                       <Select.Portal>
                         <Select.Content className="overflow-hidden rounded-md bg-popover shadow ring-1 ring-border dark:bg-popover dark:ring-border">
                           <Select.Viewport className="space-y-1 p-2">
-                            {MODELS.map((m) => (
-                              <Select.Item
-                                key={m.value}
-                                value={m.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:outline-none dark:data-[highlighted]:bg-accent/50"
-                              >
-                                <Select.ItemText className="inline-flex items-center gap-2 text-muted-foreground">
-                                  {m.label}
-                                </Select.ItemText>
-                                <Select.ItemIndicator>
-                                  <CheckIcon className="size-3 text-primary" />
-                                </Select.ItemIndicator>
-                              </Select.Item>
-                            ))}
+                            {MODELS.map((m) => {
+                              const isLocked = m.paid && !canUsePaidModels;
+                              return (
+                                <Select.Item
+                                  key={m.value}
+                                  value={m.value}
+                                  disabled={isLocked}
+                                  className={`flex cursor-pointer items-center gap-2 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:outline-none dark:data-[highlighted]:bg-accent/50 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  <Select.ItemText className={`inline-flex items-center gap-2 ${m.free ? 'text-green-600 dark:text-green-400 font-medium' : isLocked ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
+                                    {m.label}
+                                  </Select.ItemText>
+                                  {isLocked && (
+                                    <svg className="size-3 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                    </svg>
+                                  )}
+                                  <Select.ItemIndicator>
+                                    <CheckIcon className="size-3 text-primary" />
+                                  </Select.ItemIndicator>
+                                </Select.Item>
+                              );
+                            })}
                           </Select.Viewport>
                           <Select.ScrollDownButton />
                           <Select.Arrow />
@@ -422,7 +465,7 @@ export default function Home() {
                       </Select.Portal>
                     </Select.Root>
                     <div className="h-4 w-px bg-border max-sm:hidden" />
-                    <div>
+                    <div className="flex items-center gap-2">
                       <label
                         htmlFor="screenshot"
                         className="flex cursor-pointer gap-2 text-sm text-muted-foreground hover:underline"
@@ -443,7 +486,19 @@ export default function Home() {
                         className="hidden"
                         ref={fileInputRef}
                       />
+                      {/* Info tooltip for supported formats */}
+                      <div className="group relative hidden sm:block">
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        <div className="absolute bottom-full left-1/2 mb-2 w-48 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-xs text-popover-foreground shadow-lg ring-1 ring-border opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none z-50">
+                          <p className="font-medium mb-1">Supported formats:</p>
+                          <p className="text-muted-foreground">PNG, JPEG, WebP</p>
+                          <p className="mt-1 text-muted-foreground">Upload a screenshot to convert it into code</p>
+                          {/* Arrow pointing down */}
+                          <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                        </div>
+                      </div>
                     </div>
+
                   </div>
 
                   <div className="relative flex has-[:disabled]:opacity-50">
@@ -505,7 +560,8 @@ export default function Home() {
       <PricingModal
         open={showPricingModal}
         onOpenChange={setShowPricingModal}
-        remainingCredits={credits}
+        remainingCredits={userCredits}
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );
