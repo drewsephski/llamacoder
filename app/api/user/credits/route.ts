@@ -38,7 +38,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      credits: user.credits,
+      credits: user.credits ?? 0,
       hasActiveSubscription: user.subscription?.status === "active",
       subscriptionEndsAt: user.subscription?.currentPeriodEnd?.toISOString() || null,
     });

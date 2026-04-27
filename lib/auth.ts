@@ -103,20 +103,25 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           const prisma = getPrisma();
-          await prisma.$transaction([
-            prisma.user.update({
-              where: { id: user.id },
-              data: { credits: STARTER_CREDITS },
-            }),
-            prisma.creditHistory.create({
-              data: {
-                userId: user.id,
-                amount: STARTER_CREDITS,
-                type: "subscription",
-                description: "Welcome bonus - starter credits",
-              },
-            }),
-          ]);
+          try {
+            await prisma.$transaction([
+              prisma.user.update({
+                where: { id: user.id },
+                data: { credits: STARTER_CREDITS },
+              }),
+              prisma.creditHistory.create({
+                data: {
+                  userId: user.id,
+                  amount: STARTER_CREDITS,
+                  type: "subscription",
+                  description: "Welcome bonus - starter credits",
+                },
+              }),
+            ]);
+          } catch (error) {
+            console.error("[databaseHooks] Failed to set initial credits:", error);
+            // Don't throw - allow user creation to succeed even if credits fail
+          }
         },
       },
     },

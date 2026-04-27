@@ -56,11 +56,16 @@ async function DashboardPage() {
       orderBy: { createdAt: "desc" },
     });
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { credits: true },
-    });
-    userCredits = user?.credits || 0;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { credits: true },
+      });
+      userCredits = user?.credits || 0;
+    } catch (error) {
+      console.error("[Dashboard] Failed to fetch user credits:", error);
+      userCredits = 0;
+    }
   }
 
   async function handleRename(formData: FormData) {
