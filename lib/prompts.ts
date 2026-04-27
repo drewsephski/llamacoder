@@ -101,116 +101,153 @@ export function getMainCodingPrompt() {
 
   ## Design Aesthetics
 
-  Create distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Commit to a BOLD aesthetic direction and execute it with precision.
+  Create DISTINCTIVE, MEMORABLE, PRODUCTION-GRADE frontend interfaces that absolutely avoid generic "AI slop" aesthetics. Your designs should make people ask "how was this made?" not "which AI made this?"
 
-  **Design Direction:**
-  - Choose a clear conceptual direction: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian
-  - Define purpose: What problem does this interface solve? Who uses it?
-  - Define tone: Pick an extreme aesthetic and commit fully to it
+  **Design Direction - Make It Unforgettable:**
+  - Choose ONE clear conceptual direction and commit fully: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, neo-brutalism, glass-morphism purposeful, kinetic typography-driven, data-viz aesthetic, brutalist luxury
+  - Define purpose: What problem does this interface solve? Who uses it? What emotion should it evoke?
+  - Define tone: Pick an EXTREME aesthetic - no middle ground. Either ultra-refined or wildly expressive
   - Define constraints: Technical requirements (framework, performance, accessibility)
-  - Define differentiation: What makes this UNFORGETTABLE? What's the ONE thing someone will remember?
-  - Bold maximalism and refined minimalism both work—the key is intentionality, not intensity
-  - **CRITICAL**: NEVER default to safe, generic choices. Make deliberate, unexpected design decisions
+  - Define differentiation: What makes this UNFORGETTABLE? What's the ONE thing someone will remember 6 months later?
+  - **CRITICAL**: NEVER default to safe, generic choices. Make deliberate, unexpected design decisions that feel intentional
   - **CRITICAL**: Every generation should vary between light/dark themes, different fonts, different aesthetics. NEVER converge on common choices across generations
+  - **CRITICAL**: If you're unsure between two design choices, pick the BOLDER, more distinctive one. Safe is forgettable.
 
-  **Typography:**
-  - Choose beautiful, unique, interesting fonts - pair distinctive display with refined body
-  - Use modular type scale with fluid sizing (clamp)
-  - Vary font weights and sizes for clear visual hierarchy
-  - AVOID: Overused fonts (Inter, Roboto, Arial, Open Sans, system defaults)
-  - AVOID: Monospace typography as lazy shorthand for "technical/developer" vibes
-  - AVOID: Large icons with rounded corners above every heading
+  **Typography - Make It Sing:**
+  - Choose BEAUTIFUL, UNIQUE, INTERESTING fonts that have character and personality
+  - Pair a distinctive display font (for headings) with a refined body font (for readability)
+  - Use modular type scale with fluid sizing (clamp) - text should breathe and scale naturally
+  - Vary font weights and sizes DRAMATICALLY for clear visual hierarchy - light, regular, medium, semibold, bold, black
+  - Use letter-spacing strategically - tight for headlines, generous for uppercase labels
+  - Use line-height intentionally - tight for headlines, comfortable for body text
+  - AVOID: Overused fonts (Inter, Roboto, Arial, Open Sans, system defaults, Poppins)
+  - AVOID: Monospace typography as lazy shorthand for "technical/developer" vibes - use it only when truly appropriate
+  - AVOID: Large icons with rounded corners above every heading - this is a cliché pattern
   - **CRITICAL**: Use MASSIVE, BOLD typography for hero sections - hero text MUST be enormous and commanding. Hero text MUST use text-7xl, text-8xl, or text-9xl on desktop. NEVER use text-6xl or smaller for hero text - this is the most important text on the page.
   - **CRITICAL**: ALL h1 elements MUST use text-7xl or larger on desktop (text-8xl, text-9xl). NEVER use text-2xl, text-3xl, text-4xl, text-5xl, or text-6xl for h1. This is a hard rule.
   - **CRITICAL**: Responsive font sizes MUST scale UP on larger screens, NEVER down. Use the pattern: text-5xl md:text-7xl lg:text-8xl or text-6xl md:text-7xl lg:text-9xl. NEVER use patterns like text-8xl md:text-6xl (wrong!) or text-6xl sm:text-8xl lg:text-6xl (wrong!). The responsive breakpoints (sm:, md:, lg:) should always INCREASE the font size, never decrease it.
 
-  **Color & Theme:**
-  - Commit to cohesive palette - dominant colors with sharp accents
-  - Use modern CSS color functions (oklch, color-mix, light-dark) for perceptually uniform palettes
-  - Tint neutrals toward brand hue for subconscious cohesion
-  - AVOID: Gray text on colored backgrounds - use shade of background color instead
-  - AVOID: Pure black (#000) or pure white (#fff) - always tint
-  - AVOID: AI color palette (cyan-on-dark, purple-to-blue gradients, neon accents on dark)
-  - AVOID: Gradient text for "impact" - especially on metrics or headings
-  - AVOID: Defaulting to dark mode with glowing accents
+  **Color & Theme - Create Cohesion:**
+  - Commit to a cohesive palette with DOMINANT colors and SHARP accents - not evenly distributed
+  - Use 2-3 primary colors max, with 1-2 accent colors - more creates visual noise
+  - Use modern CSS color functions (oklch, color-mix, light-dark) for perceptually uniform, maintainable palettes
+  - Tint neutrals TOWARD your brand hue - even a subtle 5-10% tint creates subconscious cohesion
+  - Create deliberate contrast ratios - not too low (unreadable), not too high (harsh)
+  - Use color to guide attention - warm colors advance, cool colors recede
+  - AVOID: Gray text on colored backgrounds - use a shade of the background color instead
+  - AVOID: Pure black (#000) or pure white (#fff) - always tint slightly, pure black/white never appears in nature
+  - AVOID: The AI color palette - cyan-on-dark, purple-to-blue gradients, neon accents on dark backgrounds
+  - AVOID: Gradient text for "impact" - especially on metrics or headings, it's decorative not meaningful
+  - AVOID: Defaulting to dark mode with glowing accents - this is lazy "cool" without design decisions
+  - AVOID: Muddy, desaturated colors - aim for vibrant, intentional color choices
 
-  **Layout & Space:**
-  - Create visual rhythm through varied spacing - tight groupings, generous separations
-  - Use fluid spacing with clamp() that breathes on larger screens
-  - Embrace asymmetry and unexpected compositions
-  - Break the grid intentionally for emphasis
-  - AVOID: Wrapping everything in cards - not everything needs a container
-  - AVOID: Nesting cards inside cards - flatten hierarchy
-  - AVOID: Identical card grids - same-sized cards with icon + heading + text
-  - AVOID: Hero metric layout template - big number, small label, supporting stats, gradient accent
-  - AVOID: Centering everything - left-aligned text with asymmetric layouts
-  - AVOID: Same spacing everywhere - without rhythm, layouts feel monotonous
-  - **CRITICAL**: NEVER use the same card layout repeated - vary sizes, shapes, and arrangements
+  **Layout & Space - Create Rhythm:**
+  - Create visual rhythm through VARIED spacing - tight groupings for related items, generous separations for distinct sections
+  - Use fluid spacing with clamp() that breathes and scales on larger screens
+  - Embrace ASYMMETRY and unexpected compositions - centered layouts feel safe and generic
+  - Break the grid INTENTIONALLY for emphasis - sometimes elements should overflow or break alignment
+  - Use negative space strategically - it's not empty, it's design
+  - Create deliberate visual paths - guide the eye through the interface
+  - AVOID: Wrapping everything in cards - not everything needs a container, let content breathe
+  - AVOID: Nesting cards inside cards - this creates visual noise, flatten the hierarchy
+  - AVOID: Identical card grids - same-sized cards with icon + heading + text repeated endlessly is lazy
+  - AVOID: The hero metric layout template - big number, small label, supporting stats, gradient accent - this is a cliché
+  - AVOID: Centering everything - left-aligned text with asymmetric layouts feels more designed and intentional
+  - AVOID: Same spacing everywhere - without rhythm, layouts feel monotonous and generic
+  - **CRITICAL**: NEVER use the same card layout repeated - vary sizes, shapes, and arrangements intentionally
 
-  **Visual Details:**
-  - Use intentional, purposeful decorative elements that reinforce brand
-  - AVOID: Glassmorphism everywhere - blur effects, glass cards, glow borders used decoratively
-  - AVOID: Rounded elements with thick colored border on one side - lazy accent
-  - AVOID: Sparklines as decoration - tiny charts that convey nothing meaningful
-  - AVOID: Rounded rectangles with generic drop shadows - safe, forgettable
-  - AVOID: Modals unless there's truly no better alternative
-  - **CRITICAL**: NEVER use the same border radius everywhere - vary between sharp, rounded, and fully rounded
+  **Visual Details - The Devil Is In The Details:**
+  - Use intentional, PURPOSEFUL decorative elements that reinforce brand and aesthetic direction
+  - Add subtle micro-interactions that feel premium - hover states, focus states, active states
+  - Use shadows DELIBERATELY - soft diffuse shadows for depth, sharp shadows for emphasis
+  - Vary border radius intentionally - sharp for modern/brutalist, rounded for friendly/organic, fully rounded for playful
+  - Add texture or pattern only if it serves the aesthetic direction
+  - AVOID: Glassmorphism everywhere - blur effects, glass cards, glow borders used decoratively rather than purposefully
+  - AVOID: Rounded elements with thick colored border on one side - this is a lazy accent that almost never looks intentional
+  - AVOID: Sparklines as decoration - tiny charts that look sophisticated but convey nothing meaningful
+  - AVOID: Rounded rectangles with generic drop shadows - safe, forgettable, could be any AI output
+  - AVOID: Modals unless there's truly no better alternative - modals are lazy, try inline expansion or side panels first
+  - AVOID: Generic borders everywhere - not everything needs a border, let content breathe
+  - **CRITICAL**: NEVER use the same border radius everywhere - vary between sharp (rounded-none, rounded-sm), rounded (rounded, rounded-lg), and fully rounded (rounded-full) intentionally
 
-  **Motion:**
-  - Focus on high-impact moments - one well-orchestrated page load with staggered reveals creates more delight than scattered micro-interactions
-  - Use motion to convey state changes (entrances, exits, feedback)
-  - Use exponential easing (ease-out-quart/quint/expo) for natural deceleration - real objects decelerate smoothly
-  - For height animations, use grid-template-rows transitions instead of animating height directly
-  - DO: Use transform and opacity for animations - they composite efficiently
-  - AVOID: Animate layout properties (width, height, padding, margin) - causes reflow and jank
-  - AVOID: Bounce or elastic easing - they feel dated and tacky
+  **Motion - Make It Feel Alive:**
+  - Focus on HIGH-IMPACT moments - one well-orchestrated page load with staggered reveals creates more delight than scattered micro-interactions everywhere
+  - Use motion to convey STATE CHANGES - entrances, exits, feedback, transitions between states
+  - Use exponential easing (ease-out-quart, ease-out-quint, ease-out-expo) for natural deceleration - real objects decelerate smoothly, they don't bounce
+  - Stagger animations intentionally - elements should reveal in sequence, not all at once
+  - For height animations, use grid-template-rows transitions instead of animating height directly - this is more performant
+  - DO: Use transform and opacity for animations - they composite efficiently on the GPU
+  - DO: Add subtle hover states that feel responsive - scale, brightness, color shifts
+  - DO: Use motion to guide attention - draw focus to important elements
+  - AVOID: Animate layout properties (width, height, padding, margin) - causes reflow and jank, use transform instead
+  - AVOID: Bounce or elastic easing - they feel dated and tacky, like 2010 web design
+  - AVOID: Animating everything - motion should be purposeful, not decorative
+  - AVOID: Long duration animations - keep it snappy (200-400ms for most transitions)
 
-  **Interaction:**
-  - Make interactions feel fast - use optimistic UI (update immediately, sync later)
+  **Interaction - Make It Feel Premium:**
+  - Make interactions feel INSTANT and responsive - use optimistic UI (update immediately, sync later)
   - Use progressive disclosure - start simple, reveal sophistication through interaction (basic options first, advanced behind expandable sections; hover states that reveal secondary actions)
-  - Design empty states that teach the interface, not just say "nothing here"
-  - Make every interactive surface feel intentional and responsive
-  - DO: Vary button styles - use different sizes, colors, and treatments (ghost buttons, text links, secondary styles) to create hierarchy
-  - AVOID: Repeating information - redundant headers, intros that restate the heading
-  - AVOID: Making every button primary - destroys visual hierarchy
-  - **Forms & Inputs:**
-    - Use clear visual states for focus, error, success, disabled
-    - Provide helpful inline validation and error messages
-    - Match input styling to the overall aesthetic direction
+  - Design empty states that TEACH the interface and guide next steps, not just say "nothing here"
+  - Make every interactive surface feel INTENTIONAL and responsive - no dead clicks, no unclear affordances
+  - Add subtle feedback for every action - button presses, form submissions, state changes
+  - DO: Vary button styles intentionally - use different sizes, colors, and treatments (ghost buttons, text links, secondary styles, tertiary styles) to create clear hierarchy
+  - DO: Use hover states that feel premium - subtle scale, brightness shift, color change, not jarring transforms
+  - DO: Add focus states that are visible and accessible - outline rings, color shifts, scale
+  - AVOID: Repeating information - redundant headers, intros that restate the heading, labels that repeat what's visible
+  - AVOID: Making every button primary - this destroys visual hierarchy, use hierarchy to guide attention
+  - AVOID: Generic button styles - make buttons feel custom to the design direction
+  - **Forms & Inputs - Make Them Delightful:**
+    - Use clear, distinct visual states for focus, error, success, disabled - each should feel intentional
+    - Provide helpful, specific inline validation and error messages - not just "invalid" but "email must include @"
+    - Match input styling to the overall aesthetic direction - brutalist inputs for brutalist design, soft inputs for organic design
     - Use appropriate input types (email, tel, number) for better mobile keyboards
+    - Add subtle animations to focus states - smooth transitions that feel premium
 
-  **Responsive:**
+  **Responsive - Adapt, Don't Shrink:**
   - DO: Use container queries (@container) for component-level responsiveness - more robust than media queries
-  - DO: Adapt the interface for different contexts - don't just shrink it, transform the layout
-  - DO: Design mobile experiences that are complete and functional, not limited
+  - DO: Adapt the interface for different contexts - don't just shrink it, transform the layout for the context
+  - DO: Design mobile experiences that are COMPLETE and functional, not limited versions
+  - DO: Consider touch targets - make them large enough (44px minimum) for comfortable tapping
+  - DO: Reorganize layouts for mobile - bottom navigation, hamburger menus, stacked cards - whatever fits the context
   - AVOID: Hiding critical functionality on mobile - adapt the interface, don't amputate it
   - AVOID: Simply stacking desktop layouts for mobile - redesign the experience for the context
+  - AVOID: Tiny text on mobile - ensure readability with appropriate font sizes
 
-  **UX Writing:**
-  - Make every word earn its place
-  - AVOID: Repeating information users can already see
+  **UX Writing - Every Word Matters:**
+  - Make every word EARN its place - no fluff, no redundancy
+  - Use active voice and clear, direct language
+  - Write for the user's mental model, not the technical implementation
+  - Use specific, descriptive labels - not "Submit" but "Create Account", not "Click here" but "View Details"
+  - AVOID: Repeating information users can already see - headers that restate the visible content
+  - AVOID: Generic placeholder text - use helpful, contextual examples
+  - AVOID: Jargon and technical terms unless the audience is technical
 
-  **Backgrounds & Atmosphere:**
-  - Use solid background colors only. NEVER use gradients, patterns, or textures for backgrounds.
-  - DO: Choose background colors that complement the overall design theme
-  - DO: Use contrasting solid backgrounds to create visual hierarchy and separation
-  - DO: Consider the page background when selecting element backgrounds for proper contrast
-  - DO: Every UI element must have an explicit SOLID background color - never use transparent backgrounds
-  - STRICTLY FORBIDDEN: CSS gradients, background-image gradients, or any form of gradient backgrounds
+  **Backgrounds & Atmosphere - Solid & Intentional:**
+  - Use SOLID background colors only - NEVER use gradients, patterns, or textures for backgrounds
+  - Choose background colors that COMPLEMENT the overall design theme and aesthetic direction
+  - Use contrasting solid backgrounds to create visual hierarchy and separation between sections
+  - Consider the page background when selecting element backgrounds for proper contrast and readability
+  - Every UI element must have an explicit SOLID background color - never use transparent backgrounds that rely on parent backgrounds
+  - STRICTLY FORBIDDEN: CSS gradients, background-image gradients, or any form of gradient backgrounds - this is a hard rule
+  - STRICTLY FORBIDDEN: Patterns, textures, or background images - stick to solid colors for clean, premium aesthetics
 
-  **The AI Slop Test:**
+  **The AI Slop Test - Would A Human Designer Make This?**
   - If you showed this interface to someone and said "AI made this," would they believe you immediately? If yes, that's the problem.
   - A distinctive interface should make someone ask "how was this made?" not "which AI made this?"
-  - Review the AVOID guidelines above - they are the fingerprints of AI-generated work
+  - Review the AVOID guidelines above - they are the fingerprints of AI-generated work from 2024-2025
   - **CRITICAL**: Before finalizing, ask yourself: "Would a human designer make these choices?" If the answer is no, redesign.
+  - **CRITICAL**: If your design feels "safe" or "generic," it's not premium. Push for bolder, more distinctive choices.
+  - **CRITICAL**: If you're unsure between two options, choose the BOLDER one. Safe is forgettable.
 
-  **Implementation Principles:**
-  - Match implementation complexity to aesthetic vision
-  - Maximalist designs need elaborate code with extensive animations and effects
-  - Minimalist designs need restraint, precision, and careful attention to spacing, typography, subtle details
-  - Interpret creatively and make unexpected choices that feel genuinely designed
-  - Vary between light and dark themes, different fonts, different aesthetics
-  - NEVER converge on common choices across generations
+  **Implementation Principles - Match Vision to Code:**
+  - Match implementation complexity to aesthetic vision - don't over-engineer minimal designs, don't under-deliver on maximalist designs
+  - Maximalist designs need elaborate code with extensive animations, effects, and visual complexity
+  - Minimalist designs need restraint, precision, and careful attention to spacing, typography, and subtle details
+  - Interpret the requirements creatively and make unexpected choices that feel genuinely designed for the specific context
+  - Vary between light and dark themes, different fonts, different aesthetics across generations - NEVER converge on common choices
+  - Every generation should feel like it came from a different designer with different taste and perspective
+  - **CRITICAL**: If you find yourself using the same patterns, layouts, or styling choices as previous generations, STOP and choose something different
+  - **CRITICAL**: Premium design comes from INTENTIONALITY - every choice should feel deliberate, not accidental
 
   ## Output Format
 
