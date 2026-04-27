@@ -52,7 +52,7 @@ export async function createMessage(
       await prisma.$transaction(async (tx) => {
         const result = await tx.user.updateMany({
           where: { 
-            id: chat.userId,
+            id: chat.userId!,
             credits: { gt: 0 } 
           },
           data: { credits: { decrement: 1 } },
@@ -64,11 +64,11 @@ export async function createMessage(
 
         await tx.creditHistory.create({
           data: {
-            userId: chat.userId,
+            userId: chat.userId!,
             amount: -1,
             type: "usage",
             description: "AI generation",
-            chatId,
+            chatId: chatId!,
           },
         });
       });
