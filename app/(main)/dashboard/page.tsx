@@ -17,6 +17,7 @@ import {
   Layers,
   MoreHorizontal
 } from "lucide-react";
+import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 
 // Professional model badge styles - no emojis
 function getModelBadgeClass(model: string): string {
@@ -73,6 +74,7 @@ async function DashboardPage() {
                 <img src="/squidcoder-logo.svg" alt="Squid Coder" className="h-8 w-auto" />
               </Link>
               <div className="flex items-center gap-3">
+                <AnimatedThemeToggleButton variant="horizontal" />
                 <Link 
                   href="/sign-in" 
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -137,18 +139,21 @@ async function DashboardPage() {
                 <span className="text-sm font-medium">Dashboard</span>
               </div>
             </div>
-            <form action={async () => {
-              "use server";
-              redirect("/api/auth/signout");
-            }}>
-              <button 
-                type="submit"
-                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign out</span>
-              </button>
-            </form>
+            <div className="flex items-center gap-3">
+              <AnimatedThemeToggleButton variant="horizontal" />
+              <form action={async () => {
+                "use server";
+                redirect("/api/auth/signout");
+              }}>
+                <button 
+                  type="submit"
+                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </nav>

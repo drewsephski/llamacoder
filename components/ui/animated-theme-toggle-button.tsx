@@ -249,8 +249,8 @@ export const AnimatedThemeToggleButton = ({
       ref={buttonRef}
       onClick={toggleTheme}
       className={cn(
-        "flex items-center justify-center p-1 rounded-full outline-none focus:outline-none active:outline-none focus:ring-0 cursor-pointer border border-border mx-3 transition-colors",
-        isDark ? "bg-card text-yellow-400" : "bg-background text-blue-600",
+        "flex items-center justify-center p-1 rounded-full outline-none focus:outline-none active:outline-none focus:ring-0 cursor-pointer mx-3 transition-colors",
+        isDark ? "text-yellow-400" : "text-blue-600",
         className
       )}
       style={{ width: 32, height: 32 }}

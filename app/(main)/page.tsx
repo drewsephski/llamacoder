@@ -137,7 +137,7 @@ export default function Home() {
         <Header />
 
         <div className="mt-10 flex flex-1 flex-col items-center px-4 lg:mt-16">
-          <h1 className="mt-4 text-center text-5xl font-bold leading-none tracking-tight text-foreground md:text-7xl lg:text-8xl lg:mt-8">
+          <h1 className="mt-4 text-center text-7xl font-bold leading-none tracking-tight text-foreground md:text-8xl lg:text-9xl lg:mt-8" style={{ fontSize: 'clamp(3rem, 8vw, 8rem)' }}>
             Turn your <span className="text-blue-500">idea</span>
             <br className="hidden md:block" /> into an{" "}
             <span className="text-blue-500">app</span>
@@ -450,7 +450,7 @@ export default function Home() {
                         }
                       }, 0);
                     }}
-                    className="rounded bg-muted px-2.5 py-1.5 text-xs tracking-[0%] transition-colors hover:bg-muted/80 dark:hover:bg-muted/70"
+                    className="rounded bg-muted px-3 py-2 text-xs tracking-[0%] transition-colors hover:bg-muted/80 dark:hover:bg-muted/70 min-h-[44px] sm:min-h-[36px]"
                   >
                     {v.title}
                   </button>
@@ -479,7 +479,7 @@ const Footer = memo(() => {
         </div>
       </div>
       <div className="flex items-center gap-4 pb-4 sm:pb-0">
-        <Link href="https://x.com/drewsepeczi" className="group" aria-label="">
+        <Link href="https://x.com/drewsepeczi" className="group p-2 rounded-md hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="X (Twitter)">
           <svg
             width="16"
             height="16"
@@ -498,8 +498,8 @@ const Footer = memo(() => {
         </Link>
         <Link
           href="https://github.com/drewsephski"
-          className="group"
-          aria-label=""
+          className="group p-2 rounded-md hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"
+          aria-label="GitHub"
         >
           <svg
             aria-hidden="true"

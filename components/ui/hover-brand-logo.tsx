@@ -1,52 +1,66 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Neon } from '@/logos/neon';
+import { BetterAuth } from '@/logos/better-auth';
 
 const BrandLogo = ({ src, alt, className }: { src: string; alt: string; className?: string }) => (
   <img src={src} alt={alt} className={className} />
 );
 
 const brands = [
-  { 
-    id: 'openai',   
-    name: 'OpenAI', 
+  {
+    id: 'openai',
+    name: 'OpenAI',
     logo: 'https://svgl.app/library/openai.svg',
     logoDark: 'https://svgl.app/library/openai_dark.svg'
   },
-  { 
-    id: 'vercel',   
-    name: 'Vercel',     
-    logo: 'https://svgl.app/library/vercel.svg',
-    logoDark: 'https://svgl.app/library/vercel_dark.svg'
-  },
-  { 
-    id: 'nextjs',      
-    name: 'Next.js',    
-    logo: 'https://svgl.app/library/nextjs_icon_dark.svg',
-    logoDark: 'https://svgl.app/library/nextjs_icon_dark.svg'
-  },
-  { 
-    id: 'react',   
-    name: 'React',    
+  {
+    id: 'react',
+    name: 'React',
     logo: 'https://svgl.app/library/react_light.svg',
     logoDark: 'https://svgl.app/library/react_dark.svg'
   },
-  { 
-    id: 'supabase', 
-    name: 'Supabase', 
+  {
+    id: 'vercel',
+    name: 'Vercel',
+    logo: 'https://svgl.app/library/vercel.svg',
+    logoDark: 'https://svgl.app/library/vercel_dark.svg'
+  },
+  {
+    id: 'nextjs',
+    name: 'Next.js',
+    logo: 'https://svgl.app/library/nextjs_icon_dark.svg',
+    logoDark: 'https://svgl.app/library/nextjs_icon_dark.svg'
+  },
+  {
+    id: 'supabase',
+    name: 'Supabase',
     logo: 'https://svgl.app/library/supabase.svg',
     logoDark: 'https://svgl.app/library/supabase.svg'
   },
-  { 
-    id: 'clerk',   
-    name: 'Clerk',       
+  {
+    id: 'clerk',
+    name: 'Clerk',
     logo: 'https://svgl.app/library/clerk-icon-light.svg',
     logoDark: 'https://svgl.app/library/clerk-icon-dark.svg'
   },
-  { 
-    id: 'stripe',      
-    name: 'Stripe',      
+  {
+    id: 'stripe',
+    name: 'Stripe',
     logo: 'https://svgl.app/library/stripe.svg',
     logoDark: 'https://svgl.app/library/stripe.svg'
+  },
+  {
+    id: 'better-auth',
+    name: 'Better Auth',
+    type: 'component',
+    component: BetterAuth
+  },
+  {
+    id: 'neon',
+    name: 'Neon',
+    type: 'component',
+    component: Neon
   },
 ];
 
@@ -86,8 +100,9 @@ export default function HoverBrandLogo() {
       </div>
 
       {/* Right: icon grid */}
-      <div className="grid grid-cols-4 sm:flex sm:flex-wrap items-center justify-center sm:justify-end gap-1.5 sm:gap-2 w-full sm:w-auto md:mt-6 sm:mt-0">
-        {brands.map(({ id, name, logo, logoDark }) => {
+      <div className="grid grid-cols-5 sm:flex sm:flex-wrap items-center justify-center sm:justify-end gap-1.5 sm:gap-2 w-full sm:w-auto md:mt-6 sm:mt-0">
+        {brands.map((brand) => {
+          const { id, name } = brand;
           const isActive = hoveredId === id;
           const isDimmed = hoveredId !== null && !isActive;
           return (
@@ -95,7 +110,7 @@ export default function HoverBrandLogo() {
               key={id}
               aria-label={name}
               className={[
-                'flex items-center justify-center p-2.5 sm:p-3 lg:p-3.5 rounded-lg border transition-all duration-200',
+                'flex items-center justify-center p-2.5 sm:p-3 lg:p-3.5 rounded-lg border transition-all duration-200 min-h-[44px] min-w-[44px] sm:min-h-[40px] sm:min-w-[40px]',
                 isActive
                   ? 'border-foreground/30 text-foreground bg-foreground/5 dark:border-white/50 dark:bg-white/20 dark:shadow-[0_0_8px_rgba(255,255,255,0.25)]'
                   : 'border-transparent text-foreground/30 hover:text-foreground/50 dark:text-muted-foreground dark:hover:text-foreground dark:bg-muted/30 dark:hover:bg-muted/50 dark:hover:border-border',
@@ -104,16 +119,22 @@ export default function HoverBrandLogo() {
               onMouseEnter={() => setHoveredId(id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              <BrandLogo 
-                src={logo} 
-                alt={name} 
-                className="w-8 h-8 sm:w-6 sm:h-6 dark:hidden" 
-              />
-              <BrandLogo 
-                src={logoDark} 
-                alt={name} 
-                className="w-8 h-8 sm:w-6 sm:h-6 hidden dark:block" 
-              />
+              {'type' in brand && brand.type === 'component' ? (
+                <brand.component className="w-8 h-8 sm:w-6 sm:h-6" />
+              ) : (
+                <>
+                  <BrandLogo
+                    src={(brand as { logo: string }).logo}
+                    alt={name}
+                    className="w-8 h-8 sm:w-6 sm:h-6 dark:hidden"
+                  />
+                  <BrandLogo
+                    src={(brand as { logoDark: string }).logoDark}
+                    alt={name}
+                    className="w-8 h-8 sm:w-6 sm:h-6 hidden dark:block"
+                  />
+                </>
+              )}
             </button>
           );
         })}

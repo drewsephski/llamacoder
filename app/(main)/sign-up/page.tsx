@@ -1,13 +1,9 @@
 "use client";
 
-import { createAuthClient } from "better-auth/react";
+import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
-});
 
 export default function SignUpPage() {
   const [name, setName] = useState("");

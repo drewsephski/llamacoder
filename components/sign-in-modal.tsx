@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createAuthClient } from "better-auth/react";
+import { authClient } from "@/lib/auth-client";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,6 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
-});
 
 interface SignInModalProps {
   open: boolean;
@@ -92,7 +88,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
                 placeholder="you@example.com"
               />
             </div>
@@ -109,7 +105,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
                 placeholder="••••••••"
               />
             </div>
@@ -118,7 +114,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
@@ -127,7 +123,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
             Don't have an account?{" "}
             <Link
               href="/sign-up"
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-primary hover:underline min-h-[44px] inline-flex items-center"
               onClick={() => onOpenChange(false)}
             >
               Sign up

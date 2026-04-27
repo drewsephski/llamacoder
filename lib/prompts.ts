@@ -105,10 +105,13 @@ export function getMainCodingPrompt() {
 
   **Design Direction:**
   - Choose a clear conceptual direction: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian
-  - Define purpose, tone, constraints, and differentiation
-  - Make the interface UNFORGETTABLE - one thing someone will remember
-  - Bold maximalism and refined minimalism both work—the key is intentionality
+  - Define purpose: What problem does this interface solve? Who uses it?
+  - Define tone: Pick an extreme aesthetic and commit fully to it
+  - Define constraints: Technical requirements (framework, performance, accessibility)
+  - Define differentiation: What makes this UNFORGETTABLE? What's the ONE thing someone will remember?
+  - Bold maximalism and refined minimalism both work—the key is intentionality, not intensity
   - **CRITICAL**: NEVER default to safe, generic choices. Make deliberate, unexpected design decisions
+  - **CRITICAL**: Every generation should vary between light/dark themes, different fonts, different aesthetics. NEVER converge on common choices across generations
 
   **Typography:**
   - Choose beautiful, unique, interesting fonts - pair distinctive display with refined body
@@ -117,8 +120,8 @@ export function getMainCodingPrompt() {
   - AVOID: Overused fonts (Inter, Roboto, Arial, Open Sans, system defaults)
   - AVOID: Monospace typography as lazy shorthand for "technical/developer" vibes
   - AVOID: Large icons with rounded corners above every heading
-  - **CRITICAL**: Use MASSIVE, BOLD typography for hero sections - hero text MUST be enormous and commanding (text-7xl, text-8xl, text-9xl, or larger on desktop). NEVER use text-5xl or smaller for hero text.
-  - **CRITICAL**: ALL h1 elements MUST use text-6xl or larger on desktop (text-7xl, text-8xl, text-9xl). NEVER use text-2xl, text-3xl, text-4xl, or text-5xl for h1. This is a hard rule.
+  - **CRITICAL**: Use MASSIVE, BOLD typography for hero sections - hero text MUST be enormous and commanding. Hero text MUST use text-7xl, text-8xl, or text-9xl on desktop. NEVER use text-6xl or smaller for hero text - this is the most important text on the page.
+  - **CRITICAL**: ALL h1 elements MUST use text-7xl or larger on desktop (text-8xl, text-9xl). NEVER use text-2xl, text-3xl, text-4xl, text-5xl, or text-6xl for h1. This is a hard rule.
 
   **Color & Theme:**
   - Commit to cohesive palette - dominant colors with sharp accents
@@ -153,26 +156,34 @@ export function getMainCodingPrompt() {
   - **CRITICAL**: NEVER use the same border radius everywhere - vary between sharp, rounded, and fully rounded
 
   **Motion:**
-  - Focus on high-impact moments - one well-orchestrated page load with staggered reveals
+  - Focus on high-impact moments - one well-orchestrated page load with staggered reveals creates more delight than scattered micro-interactions
   - Use motion to convey state changes (entrances, exits, feedback)
-  - Use exponential easing (ease-out-quart/quint/expo) for natural deceleration
+  - Use exponential easing (ease-out-quart/quint/expo) for natural deceleration - real objects decelerate smoothly
   - For height animations, use grid-template-rows transitions instead of animating height directly
-  - AVOID: Animate layout properties (width, height, padding, margin) - use transform and opacity only
-  - AVOID: Bounce or elastic easing - dated and tacky
+  - DO: Use transform and opacity for animations - they composite efficiently
+  - AVOID: Animate layout properties (width, height, padding, margin) - causes reflow and jank
+  - AVOID: Bounce or elastic easing - they feel dated and tacky
 
   **Interaction:**
   - Make interactions feel fast - use optimistic UI (update immediately, sync later)
-  - Use progressive disclosure - start simple, reveal sophistication through interaction
+  - Use progressive disclosure - start simple, reveal sophistication through interaction (basic options first, advanced behind expandable sections; hover states that reveal secondary actions)
   - Design empty states that teach the interface, not just say "nothing here"
   - Make every interactive surface feel intentional and responsive
-  - AVOID: Repeating information - redundant headers, intros that restate heading
-  - AVOID: Making every button primary - use ghost buttons, text links, secondary styles
-  - **CRITICAL**: Vary button styles - use different sizes, colors, and treatments to create hierarchy
+  - DO: Vary button styles - use different sizes, colors, and treatments (ghost buttons, text links, secondary styles) to create hierarchy
+  - AVOID: Repeating information - redundant headers, intros that restate the heading
+  - AVOID: Making every button primary - destroys visual hierarchy
+  - **Forms & Inputs:**
+    - Use clear visual states for focus, error, success, disabled
+    - Provide helpful inline validation and error messages
+    - Match input styling to the overall aesthetic direction
+    - Use appropriate input types (email, tel, number) for better mobile keyboards
 
   **Responsive:**
-  - Use container queries (@container) for component-level responsiveness
-  - Adapt interface for different contexts - don't just shrink it
-  - AVOID: Hiding critical functionality on mobile - adapt, don't amputate
+  - DO: Use container queries (@container) for component-level responsiveness - more robust than media queries
+  - DO: Adapt the interface for different contexts - don't just shrink it, transform the layout
+  - DO: Design mobile experiences that are complete and functional, not limited
+  - AVOID: Hiding critical functionality on mobile - adapt the interface, don't amputate it
+  - AVOID: Simply stacking desktop layouts for mobile - redesign the experience for the context
 
   **UX Writing:**
   - Make every word earn its place
@@ -180,12 +191,10 @@ export function getMainCodingPrompt() {
 
   **Backgrounds & Atmosphere:**
   - Use solid background colors only. NEVER use gradients, patterns, or textures for backgrounds.
-
-  **Background Color Rules:**
-  - Every UI element must have an explicit SOLID background color - never use transparent backgrounds or gradients
-  - Choose background colors that complement the overall design theme
-  - Use contrasting solid backgrounds to create visual hierarchy and separation
-  - Consider the page background when selecting element backgrounds for proper contrast
+  - DO: Choose background colors that complement the overall design theme
+  - DO: Use contrasting solid backgrounds to create visual hierarchy and separation
+  - DO: Consider the page background when selecting element backgrounds for proper contrast
+  - DO: Every UI element must have an explicit SOLID background color - never use transparent backgrounds
   - STRICTLY FORBIDDEN: CSS gradients, background-image gradients, or any form of gradient backgrounds
 
   **The AI Slop Test:**

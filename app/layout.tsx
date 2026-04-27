@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import PlausibleProvider from "next-plausible";
 import "./globals.css";
 
@@ -7,6 +7,12 @@ let description = "Generate your next app with advanced AI models";
 let url = "https://squidcoder.io/";
 let ogimage = "https://squidcoder.io/og-image.png";
 let sitename = "squidcoder.io";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(url),

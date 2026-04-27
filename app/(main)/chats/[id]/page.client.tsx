@@ -17,13 +17,9 @@ import CodeViewerLayout from "./code-viewer-layout";
 import type { Chat, Message } from "./page";
 import { Context } from "../../providers";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
-import { createAuthClient } from "better-auth/react";
+import { authClient } from "@/lib/auth-client";
 import { SignInModal } from "@/components/sign-in-modal";
 import { toast } from "sonner";
-
-const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
-});
 
 const HeaderChat = memo(
   ({
