@@ -22,6 +22,55 @@ export async function createMessage(
     ? Math.max(...chat.messages.map((m: any) => m.position))
     : 0;
 
+  // Deduct credit for user follow-up messages (not initial creation or assistant messages)
+  const isFollowUpUserMessage = role === "user" && chat.messages.length > 2;
+  
+  if (isFollowUpUserMessage && chat.userId) {
+    // Check user credits and subscription status in a single query
+    const user = await prisma.user.findUnique({
+      where: { id: chat.userId },
+      select: { 
+        credits: true,
+        subscription: { select: { status: true } }
+      },
+    });
+
+    if (!user) {
+      throw new Error("USER_NOT_FOUND");
+    }
+
+    const hasActiveSubscription = user.subscription?.status === "active";
+
+    // Only deduct credits if user doesn't have an active subscription
+    if (!hasActiveSubscription) {
+      // Atomic credit deduction with race condition protection
+      const result = await prisma.user.updateMany({
+        where: { 
+          id: chat.userId,
+          credits: { gt: 0 } 
+        },
+        data: { credits: { decrement: 1 } },
+      });
+
+      if (result.count === 0) {
+        throw new Error("INSUFFICIENT_CREDITS");
+      }
+
+      // Record credit history in a transaction with the deduction
+      await prisma.$transaction([
+        prisma.creditHistory.create({
+          data: {
+            userId: chat.userId,
+            amount: -1,
+            type: "usage",
+            description: "AI generation",
+            chatId,
+          },
+        }),
+      ]);
+    }
+  }
+
   const newMessage = await prisma.message.create({
     data: {
       role,

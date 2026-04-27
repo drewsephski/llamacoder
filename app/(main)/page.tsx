@@ -29,6 +29,9 @@ import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
+import { PricingModal } from "@/components/pricing-modal";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 export default function Home() {
   const { setStreamPromise } = use(Context);
@@ -49,6 +52,9 @@ export default function Home() {
   const [isPending, startTransition] = useTransition();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHoveringRing, setIsHoveringRing] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [credits, setCredits] = useState(0);
+  const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
   const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -137,7 +143,7 @@ export default function Home() {
         <Header />
 
         <div className="mt-10 flex flex-1 flex-col items-center px-4 lg:mt-16">
-          <h1 className="mt-4 text-center text-7xl font-bold leading-none tracking-tight text-foreground md:text-8xl lg:text-9xl lg:mt-8" style={{ fontSize: 'clamp(3rem, 8vw, 8rem)' }}>
+          <h1 className="mt-4 text-center text-7xl font-bold leading-none tracking-tight text-foreground md:text-8xl lg:text-9xl lg:mt-8">
             Turn your <span className="text-blue-500">idea</span>
             <br className="hidden md:block" /> into an{" "}
             <span className="text-blue-500">app</span>
@@ -146,49 +152,78 @@ export default function Home() {
           <form
             className="relative w-full max-w-2xl pt-6 lg:pt-12"
             action={async (formData) => {
-              startTransition(async () => {
-                const { prompt, model, quality } = Object.fromEntries(formData);
-
-                assert.ok(typeof prompt === "string");
-                assert.ok(typeof model === "string");
-                assert.ok(quality === "high" || quality === "low");
-
-                const response = await fetch("/api/create-chat", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    prompt,
-                    model,
-                    quality,
-                    screenshotUrl,
-                  }),
-                });
-
-                if (!response.ok) {
-                  throw new Error("Failed to create chat");
-                }
-
-                const { chatId, lastMessageId } = await response.json();
-
-                const streamPromise = fetch(
-                  "/api/get-next-completion-stream-promise",
-                  {
-                    method: "POST",
-                    body: JSON.stringify({ messageId: lastMessageId, model }),
-                  },
-                ).then((res) => {
-                  if (!res.body) {
-                    throw new Error("No body on response");
+              // Check eligibility before creating
+              setIsCheckingEligibility(true);
+              try {
+                const session = await authClient.getSession();
+                
+                // Only check for authenticated users
+                if (session.data) {
+                  const checkResponse = await fetch("/api/user/can-create-project");
+                  if (checkResponse.ok) {
+                    const eligibility = await checkResponse.json();
+                    
+                    if (!eligibility.canCreate) {
+                      // User has existing projects but no credits
+                      setCredits(eligibility.credits);
+                      setShowPricingModal(true);
+                      setIsCheckingEligibility(false);
+                      return;
+                    }
                   }
-                  return res.body;
-                });
+                }
+              } catch (error) {
+                console.error("Error checking eligibility:", error);
+              }
+              setIsCheckingEligibility(false);
 
-                startTransition(() => {
-                  setStreamPromise(streamPromise);
-                  router.push(`/chats/${chatId}`);
-                });
+              startTransition(async () => {
+                try {
+                  const { prompt, model, quality } = Object.fromEntries(formData);
+
+                  assert.ok(typeof prompt === "string");
+                  assert.ok(typeof model === "string");
+                  assert.ok(quality === "high" || quality === "low");
+
+                  const response = await fetch("/api/create-chat", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      prompt,
+                      model,
+                      quality,
+                      screenshotUrl,
+                    }),
+                  });
+
+                  if (!response.ok) {
+                    throw new Error("Failed to create chat");
+                  }
+
+                  const { chatId, lastMessageId } = await response.json();
+
+                  const streamPromise = fetch(
+                    "/api/get-next-completion-stream-promise",
+                    {
+                      method: "POST",
+                      body: JSON.stringify({ messageId: lastMessageId, model }),
+                    },
+                  ).then((res) => {
+                    if (!res.body) {
+                      throw new Error("No body on response");
+                    }
+                    return res.body;
+                  });
+
+                  startTransition(() => {
+                    setStreamPromise(streamPromise);
+                    router.push(`/chats/${chatId}`);
+                  });
+                } catch (error: any) {
+                  toast.error(error.message || "Failed to create project");
+                }
               });
             }}
           >
@@ -411,15 +446,17 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="relative flex shrink-0 has-[:disabled]:opacity-50">
+                  <div className="relative flex has-[:disabled]:opacity-50">
                     <div className="pointer-events-none absolute inset-0 -bottom-[1px] rounded bg-blue-500" />
 
                     <LoadingButton
                       className="relative inline-flex size-6 items-center justify-center rounded bg-blue-500 font-medium text-white shadow-lg outline-blue-300 hover:bg-blue-500/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-90"
                       type="submit"
-                      disabled={screenshotLoading || prompt.length === 0}
+                      disabled={screenshotLoading || prompt.length === 0 || isCheckingEligibility}
                     >
-                      <ArrowRightIcon />
+                      <Spinner loading={isCheckingEligibility}>
+                        <ArrowRightIcon />
+                      </Spinner>
                     </LoadingButton>
                   </div>
                 </div>
@@ -464,6 +501,12 @@ export default function Home() {
 
         <Footer />
       </div>
+
+      <PricingModal
+        open={showPricingModal}
+        onOpenChange={setShowPricingModal}
+        remainingCredits={credits}
+      />
     </div>
   );
 }

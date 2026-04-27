@@ -122,6 +122,7 @@ export function getMainCodingPrompt() {
   - AVOID: Large icons with rounded corners above every heading
   - **CRITICAL**: Use MASSIVE, BOLD typography for hero sections - hero text MUST be enormous and commanding. Hero text MUST use text-7xl, text-8xl, or text-9xl on desktop. NEVER use text-6xl or smaller for hero text - this is the most important text on the page.
   - **CRITICAL**: ALL h1 elements MUST use text-7xl or larger on desktop (text-8xl, text-9xl). NEVER use text-2xl, text-3xl, text-4xl, text-5xl, or text-6xl for h1. This is a hard rule.
+  - **CRITICAL**: Responsive font sizes MUST scale UP on larger screens, NEVER down. Use the pattern: text-5xl md:text-7xl lg:text-8xl or text-6xl md:text-7xl lg:text-9xl. NEVER use patterns like text-8xl md:text-6xl (wrong!) or text-6xl sm:text-8xl lg:text-6xl (wrong!). The responsive breakpoints (sm:, md:, lg:) should always INCREASE the font size, never decrease it.
 
   **Color & Theme:**
   - Commit to cohesive palette - dominant colors with sharp accents

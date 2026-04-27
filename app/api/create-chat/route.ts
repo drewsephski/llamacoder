@@ -7,13 +7,84 @@ import {
 } from "@/lib/prompts";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
     const { prompt, model, quality, screenshotUrl } = await request.json();
     const resolvedModel = model; // For now, we'll use the model as-is since we're handling aliases in the frontend
 
+    // Check authentication and credits
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
     const prisma = getPrisma();
+
+    // If authenticated, check eligibility
+    if (session) {
+      // Check if user has existing projects
+      const existingProjectsCount = await prisma.chat.count({
+        where: { userId: session.user.id },
+      });
+
+      if (existingProjectsCount > 0) {
+        // User has existing projects, check credits or subscription
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: {
+            credits: true,
+            subscription: {
+              select: {
+                status: true,
+              },
+            },
+          },
+        });
+
+        const credits = user?.credits || 0;
+        const hasActiveSubscription = user?.subscription?.status === "active";
+
+        if (!hasActiveSubscription && credits <= 0) {
+          return NextResponse.json(
+            { error: "INSUFFICIENT_CREDITS" },
+            { status: 402 }
+          );
+        }
+
+        // Deduct one credit for new project if no active subscription
+        if (!hasActiveSubscription) {
+          const result = await prisma.user.updateMany({
+            where: {
+              id: session.user.id,
+              credits: { gt: 0 },
+            },
+            data: { credits: { decrement: 1 } },
+          });
+
+          if (result.count === 0) {
+            return NextResponse.json(
+              { error: "INSUFFICIENT_CREDITS" },
+              { status: 402 }
+            );
+          }
+
+          // Record credit history
+          await prisma.$transaction([
+            prisma.creditHistory.create({
+              data: {
+                userId: session.user.id,
+                amount: -1,
+                type: "usage",
+                description: "New project creation",
+              },
+            }),
+          ]);
+        }
+      }
+    }
+
     const chat = await prisma.chat.create({
       data: {
         model: resolvedModel,
@@ -21,6 +92,7 @@ export async function POST(request: NextRequest) {
         prompt,
         title: "",
         shadcn: true,
+        userId: session?.user.id || null,
       },
     });
 
