@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
           subscription: {
             select: {
               status: true,
+              tier: true,
             },
           },
         },
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
 
       const userCredits = user?.credits || 0;
       const hasActiveSubscription = user?.subscription?.status === "active";
+      const isUnlimited = hasActiveSubscription && user?.subscription?.tier === "unlimited";
       const canUsePaidModels = hasActiveSubscription || userCredits > 0;
 
       if (isPaidModel && !canUsePaidModels) {
@@ -84,13 +86,14 @@ export async function POST(request: NextRequest) {
       // Calculate credit cost for this model
       creditCost = getModelCreditCost(model);
       
-      // Check if first project (free) or has subscription (unlimited)
+      // Check if first project (free) or has unlimited subscription
       const existingProjectsCount = await prisma.chat.count({
         where: { userId: session.user.id },
       });
       const isFirstProject = existingProjectsCount === 0;
 
-      if (!isFirstProject && !hasActiveSubscription) {
+      // Only Unlimited subscribers skip credit deduction; Pro subscribers still use credits
+      if (!isFirstProject && !isUnlimited) {
         // Need to deduct credits
         if (userCredits < creditCost) {
           return NextResponse.json(
@@ -99,30 +102,28 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Deduct credits
-        const result = await prisma.user.updateMany({
-          where: {
-            id: session.user.id,
-            credits: { gte: creditCost },
-          },
-          data: { credits: { decrement: creditCost } },
-        });
+        // Atomic credit deduction + history in a single transaction
+        await prisma.$transaction(async (tx) => {
+          const result = await tx.user.updateMany({
+            where: {
+              id: session.user.id,
+              credits: { gte: creditCost },
+            },
+            data: { credits: { decrement: creditCost } },
+          });
 
-        if (result.count === 0) {
-          return NextResponse.json(
-            { error: "INSUFFICIENT_CREDITS" },
-            { status: 402 }
-          );
-        }
+          if (result.count === 0) {
+            throw new Error("INSUFFICIENT_CREDITS");
+          }
 
-        // Record credit history
-        await prisma.creditHistory.create({
-          data: {
-            userId: session.user.id,
-            amount: -creditCost,
-            type: "usage",
-            description: `Used ${selectedModel?.label || model}`,
-          },
+          await tx.creditHistory.create({
+            data: {
+              userId: session.user.id,
+              amount: -creditCost,
+              type: "usage",
+              description: `Used ${selectedModel?.label || model}`,
+            },
+          });
         });
       }
     }

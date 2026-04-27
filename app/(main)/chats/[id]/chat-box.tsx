@@ -84,13 +84,15 @@ export default function ChatBox({
           const response = await fetch("/api/user/credits");
           if (response.ok) {
             const data = await response.json();
-            if (data.credits <= 0) {
-              setCredits(0);
+            setHasActiveSubscription(data.hasActiveSubscription);
+            setCredits(data.credits);
+            // Only block if no credits AND no active subscription
+            // Unlimited subscribers bypass; Pro subscribers still need credits
+            if (data.credits <= 0 && !data.hasActiveSubscription) {
               setShowPricingModal(true);
               setIsCheckingCredits(false);
               return;
             }
-            setCredits(data.credits);
           }
         } else {
           // Not signed in, show pricing modal

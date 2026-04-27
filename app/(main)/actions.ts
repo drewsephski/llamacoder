@@ -31,7 +31,7 @@ export async function createMessage(
       where: { id: chat.userId },
       select: { 
         credits: true,
-        subscription: { select: { status: true } }
+        subscription: { select: { status: true, tier: true } }
       },
     });
 
@@ -40,25 +40,29 @@ export async function createMessage(
     }
 
     const hasActiveSubscription = user.subscription?.status === "active";
+    const isUnlimited = hasActiveSubscription && user.subscription?.tier === "unlimited";
 
-    // Only deduct credits if user doesn't have an active subscription
-    if (!hasActiveSubscription) {
-      // Atomic credit deduction with race condition protection
-      const result = await prisma.user.updateMany({
-        where: { 
-          id: chat.userId,
-          credits: { gt: 0 } 
-        },
-        data: { credits: { decrement: 1 } },
-      });
-
-      if (result.count === 0) {
+    // Only Unlimited subscribers skip credit deduction; Pro subscribers still use credits
+    if (!isUnlimited) {
+      if (user.credits <= 0) {
         throw new Error("INSUFFICIENT_CREDITS");
       }
 
-      // Record credit history in a transaction with the deduction
-      await prisma.$transaction([
-        prisma.creditHistory.create({
+      // Atomic credit deduction + history in a single transaction
+      await prisma.$transaction(async (tx) => {
+        const result = await tx.user.updateMany({
+          where: { 
+            id: chat.userId,
+            credits: { gt: 0 } 
+          },
+          data: { credits: { decrement: 1 } },
+        });
+
+        if (result.count === 0) {
+          throw new Error("INSUFFICIENT_CREDITS");
+        }
+
+        await tx.creditHistory.create({
           data: {
             userId: chat.userId,
             amount: -1,
@@ -66,8 +70,8 @@ export async function createMessage(
             description: "AI generation",
             chatId,
           },
-        }),
-      ]);
+        });
+      });
     }
   }
 

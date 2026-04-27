@@ -5,6 +5,8 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const STARTER_CREDITS = 5;
+
 const getBaseUrl = () => {
   if (process.env.BETTER_AUTH_URL) {
     return process.env.BETTER_AUTH_URL;
@@ -28,8 +30,8 @@ export const auth = betterAuth({
   baseURL: getBaseUrl(),
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       enabled: true,
     },
   },
@@ -95,5 +97,28 @@ export const auth = betterAuth({
   },
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          const prisma = getPrisma();
+          await prisma.$transaction([
+            prisma.user.update({
+              where: { id: user.id },
+              data: { credits: STARTER_CREDITS },
+            }),
+            prisma.creditHistory.create({
+              data: {
+                userId: user.id,
+                amount: STARTER_CREDITS,
+                type: "subscription",
+                description: "Welcome bonus - starter credits",
+              },
+            }),
+          ]);
+        },
+      },
+    },
   },
 });
