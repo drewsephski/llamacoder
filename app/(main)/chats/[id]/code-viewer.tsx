@@ -3,7 +3,8 @@
 import CloseIcon from "@/components/icons/close-icon";
 import RefreshIcon from "@/components/icons/refresh";
 import { DownloadIcon } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,10 @@ export default function CodeViewer({
   onClose,
   onRequestFix,
   onRestore,
+  isSaved,
+  isSaving,
+  isCheckingSession,
+  onSave,
 }: {
   chat: Chat;
   streamText: string;
@@ -58,6 +63,10 @@ export default function CodeViewer({
     oldVersion: number,
     newVersion: number,
   ) => void;
+  isSaved: boolean;
+  isSaving: boolean;
+  isCheckingSession: boolean;
+  onSave: () => void;
 }) {
   const streamAllFiles = extractAllCodeBlocks(streamText);
 
@@ -297,10 +306,8 @@ export default function CodeViewer({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast({
-      title: "Files downloaded!",
+    toast.success("Files downloaded!", {
       description: `${files.length} files downloaded as ${filename}`,
-      variant: "default",
     });
   };
 
@@ -373,7 +380,28 @@ export default function CodeViewer({
             </button>
           )}
         </div>
-        <div className="rounded-lg border-2 border-border p-1">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          >
+            Dashboard
+          </Link>
+          {!isSaved && (
+            <button
+              onClick={onSave}
+              disabled={isSaving || isCheckingSession}
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : isCheckingSession ? "Loading..." : "Save"}
+            </button>
+          )}
+          {isSaved && (
+            <span className="rounded-md bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-400">
+              Saved
+            </span>
+          )}
+          <div className="rounded-lg border-2 border-border p-1">
           <button
             onClick={() => onTabChange("code")}
             data-active={activeTab === "code" ? true : undefined}
@@ -390,6 +418,7 @@ export default function CodeViewer({
           >
             Preview
           </button>
+        </div>
         </div>
       </div>
 

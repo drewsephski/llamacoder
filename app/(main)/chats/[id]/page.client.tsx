@@ -1,6 +1,6 @@
 "use client";
 
-import { createMessage } from "@/app/(main)/actions";
+import { createMessage, saveProject } from "@/app/(main)/actions";
 import LogoSmall from "@/components/icons/logo-small";
 import {
   parseReplySegments,
@@ -17,18 +17,35 @@ import CodeViewerLayout from "./code-viewer-layout";
 import type { Chat, Message } from "./page";
 import { Context } from "../../providers";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
+import { createAuthClient } from "better-auth/react";
+import { SignInModal } from "@/components/sign-in-modal";
+import { toast } from "sonner";
 
-const HeaderChat = memo(({ chat }: { chat: Chat }) => (
-  <div className="flex items-center justify-between px-4 py-4">
-    <div className="flex items-center gap-4">
-      <a href="/" target="_blank">
-        <LogoSmall />
-      </a>
-      <p className="italic text-muted-foreground">{chat.title}</p>
-    </div>
-    <AnimatedThemeToggleButton type="horizontal" />
-  </div>
-));
+const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
+});
+
+const HeaderChat = memo(
+  ({
+    chat,
+  }: {
+    chat: Chat;
+  }) => {
+    return (
+      <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center gap-4">
+          <a href="/" target="_blank">
+            <LogoSmall />
+          </a>
+          <p className="italic text-muted-foreground">{chat.title}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <AnimatedThemeToggleButton variant="horizontal" />
+        </div>
+      </div>
+    );
+  },
+);
 
 HeaderChat.displayName = "HeaderChat";
 
@@ -51,7 +68,54 @@ export default function PageClient({ chat }: { chat: Chat }) {
       .at(-1),
   );
 
+  // Save state
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(!!chat.userId);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [showSignInModal, setShowSignInModal] = useState(false);
+
   useEffect(() => {
+    setIsCheckingSession(true);
+    authClient.getSession()
+      .then((result) => {
+        if (result.data) {
+          setIsSaved(chat.userId === result.data.user.id);
+        }
+        setIsCheckingSession(false);
+      })
+      .catch(() => setIsCheckingSession(false));
+  }, [chat.userId]);
+
+  const handleSave = async () => {
+    if (isSaved) return;
+
+    setIsSaving(true);
+    try {
+      await saveProject(chat.id);
+      setIsSaved(true);
+    } catch (error: any) {
+      console.error("Save error:", error);
+      if (error.message && error.message.includes("signed in")) {
+        setShowSignInModal(true);
+      } else {
+        toast.error(error.message || "Failed to save project");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSignInSuccess = async () => {
+    const result = await authClient.getSession();
+    if (result.data) {
+      // Auto-save after sign in
+      await handleSave();
+    }
+  };
+
+  useEffect(() => {
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
     async function f() {
       if (!streamPromise || isHandlingStreamRef.current) return;
 
@@ -63,7 +127,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
       let didPushToPreview = false;
       let fullText = "";
 
-      const reader = stream.getReader();
+      reader = stream.getReader();
       const decoder = new TextDecoder();
 
       try {
@@ -143,6 +207,13 @@ export default function PageClient({ chat }: { chat: Chat }) {
     }
 
     f();
+
+    return () => {
+      if (reader) {
+        reader.cancel();
+      }
+      isHandlingStreamRef.current = false;
+    };
   }, [chat.id, router, streamPromise, context]);
 
   return (
@@ -151,7 +222,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
         <div
           className={`flex w-full shrink-0 flex-col overflow-hidden ${isShowingCodeViewer ? "lg:w-[30%]" : "lg:w-full"}`}
         >
-          <HeaderChat chat={chat} />
+          <HeaderChat
+            chat={chat}
+          />
 
           <ChatLog
             chat={chat}
@@ -194,6 +267,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 setActiveMessage(undefined);
                 setIsShowingCodeViewer(false);
               }}
+              isSaved={isSaved}
+              isSaving={isSaving}
+              isCheckingSession={isCheckingSession}
+              onSave={handleSave}
               onRequestFix={(error: string) => {
                 startTransition(async () => {
                   let newMessageText = `The code is not working. Can you fix it? Here's the error:\n\n`;
@@ -266,6 +343,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
           )}
         </CodeViewerLayout>
       </div>
+      <SignInModal
+        open={showSignInModal}
+        onOpenChange={setShowSignInModal}
+        onSuccess={handleSignInSuccess}
+      />
     </div>
   );
 }

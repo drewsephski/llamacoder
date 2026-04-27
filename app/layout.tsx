@@ -42,8 +42,9 @@ export default function RootLayout({
       <head>
         <PlausibleProvider domain="squidcoder.io" />
       </head>
-
-      {children}
+      <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
+        {children}
+      </body>
     </html>
   );
 }

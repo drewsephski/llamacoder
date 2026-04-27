@@ -23,7 +23,7 @@ import {
   memo,
 } from "react";
 
-import { Context } from "../providers";
+import { Context } from "./providers";
 import Header from "@/components/header";
 import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
@@ -106,7 +106,7 @@ export default function Home() {
   );
 
   return (
-    <div className="relative flex grow flex-col">
+    <div className="relative flex h-screen flex-col overflow-hidden">
       <div 
         ref={ringRef}
         className="absolute inset-0 flex justify-center"
@@ -133,11 +133,11 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="isolate flex h-full grow flex-col">
+      <div className="isolate flex h-full flex-col">
         <Header />
 
-        <div className="mt-10 flex grow flex-col items-center px-4 lg:mt-16">
-          <h1 className="mt-4 text-balance text-center text-5xl font-bold leading-none text-foreground md:text-7xl lg:text-8xl lg:mt-8">
+        <div className="mt-10 flex flex-1 flex-col items-center px-4 lg:mt-16">
+          <h1 className="mt-4 text-center text-5xl font-bold leading-none tracking-tight text-foreground md:text-7xl lg:text-8xl lg:mt-8">
             Turn your <span className="text-blue-500">idea</span>
             <br className="hidden md:block" /> into an{" "}
             <span className="text-blue-500">app</span>
@@ -431,7 +431,7 @@ export default function Home() {
                   />
                 )}
               </div>
-              <div className="mt-4 flex w-full flex-wrap justify-between gap-2.5">
+              <div className="mt-4 flex w-full flex-wrap justify-between gap-2.5 mb-12">
                 {SUGGESTED_PROMPTS.map((v) => (
                   <button
                     key={v.title}
@@ -470,7 +470,7 @@ export default function Home() {
 
 const Footer = memo(() => {
   return (
-    <footer className="flex w-full flex-col items-center justify-between space-y-3 px-5 pb-3 pt-5 text-center sm:flex-row sm:pt-2">
+    <footer className="absolute bottom-5 left-1/2 transform -translate-x-1/2 w-full flex flex-col items-center justify-between px-5 text-center sm:flex-row sm:pt-2">
       <div>
         <div className="font-medium">
           Built with{" "}
@@ -479,7 +479,7 @@ const Footer = memo(() => {
         </div>
       </div>
       <div className="flex items-center gap-4 pb-4 sm:pb-0">
-        <Link href="https://x.com/nutlope" className="group" aria-label="">
+        <Link href="https://x.com/drewsepeczi" className="group" aria-label="">
           <svg
             width="16"
             height="16"
@@ -497,7 +497,7 @@ const Footer = memo(() => {
           </svg>
         </Link>
         <Link
-          href="https://github.com/Nutlope/squid-coder"
+          href="https://github.com/drewsephski"
           className="group"
           aria-label=""
         >

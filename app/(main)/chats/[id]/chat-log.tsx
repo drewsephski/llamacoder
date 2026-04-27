@@ -179,7 +179,7 @@ function AssistantMessage({
           if (seg.type === "text") {
             return (
               <div key={i}>
-                <Streamdown className="prose dark:prose-invert break-words">
+                <Streamdown className="prose dark:prose-invert text-foreground break-words">
                   {seg.content}
                 </Streamdown>
               </div>
@@ -221,6 +221,6 @@ function AssistantMessage({
     );
   } else {
     // No code blocks, just show text
-    return <Streamdown className="prose dark:prose-invert break-words">{content}</Streamdown>;
+    return <Streamdown className="prose dark:prose-invert text-foreground break-words">{content}</Streamdown>;
   }
 }

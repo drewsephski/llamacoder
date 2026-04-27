@@ -1,5 +1,5 @@
 import Providers from "@/app/(main)/providers";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 
 export default function Layout({
   children,

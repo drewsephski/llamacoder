@@ -9,12 +9,25 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  session: {
+    modelName: "Session",
+    storeSessionInDatabase: true,
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+  },
   user: {
+    modelName: "User",
     additionalFields: {
       name: {
         type: "string",
         required: false,
       },
     },
+  },
+  account: {
+    modelName: "Account",
+  },
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === "production",
   },
 });

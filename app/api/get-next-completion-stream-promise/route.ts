@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { Pool } from "@neondatabase/serverless";
+import { getPrisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
@@ -37,9 +35,7 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const neon = new Pool({ connectionString: process.env.DATABASE_URL });
-  const adapter = new PrismaNeon(neon);
-  const prisma = new PrismaClient({ adapter });
+  const prisma = getPrisma();
 
   const parsed = requestSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -104,5 +100,5 @@ export async function POST(req: Request) {
   return res.toTextStreamResponse();
 }
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const maxDuration = 300;

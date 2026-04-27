@@ -2,6 +2,7 @@
 
 import { createContext, ReactNode, useState } from "react";
 import { ThemeProvider } from "next-themes";
+import { NoiseTexture } from "@/components/ui/noise-texture";
 
 export const Context = createContext<{
   streamPromise?: Promise<ReadableStream>;
@@ -15,7 +16,10 @@ export default function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <Context value={{ streamPromise, setStreamPromise }}>{children}</Context>
+      <div className="relative min-h-full">
+        <NoiseTexture />
+        <Context value={{ streamPromise, setStreamPromise }}>{children}</Context>
+      </div>
     </ThemeProvider>
   );
 }

@@ -63,7 +63,7 @@ export default async function SharePage({
       {/* Floating desktop banner */}
       <div className="fixed bottom-4 right-4 z-50 hidden md:block">
         <a
-          className="inline-flex shrink-0 items-center rounded-full border-[0.5px] border-[#BABABA] bg-white px-3.5 py-1.5 text-xs text-black shadow-lg transition-shadow hover:shadow-sm"
+          className="inline-flex shrink-0 items-center rounded-full border border-border bg-background px-3.5 py-1.5 text-xs text-foreground shadow-lg transition-shadow hover:shadow-sm"
           href={`https://squidcoder.io/?ref=${messageId}`}
           target="_blank"
           rel="noopener noreferrer"

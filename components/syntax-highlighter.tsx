@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import { getMonacoLanguage } from "@/lib/utils";
+import { Tree, Folder, File, type TreeViewElement } from "@/components/ui/file-tree";
 
 export default function SyntaxHighlighter({
   files,
@@ -51,8 +52,15 @@ export default function SyntaxHighlighter({
     return <div className="p-4 text-muted-foreground">No files to display</div>;
   }
 
-  // Group files by directory structure
-  const fileTree = buildFileTree(files);
+  // Convert files to TreeViewElement format
+  const treeElements = useMemo(() => buildTreeElements(files), [files]);
+
+  // Handle file selection from tree
+  const handleFileSelect = useCallback((id: string) => {
+    if (disableSelection) return;
+    const index = files.findIndex((f) => f.path === id);
+    if (index !== -1) setActiveFile(index);
+  }, [disableSelection, files]);
 
   return (
     <div className="flex h-full flex-col md:flex-row">
@@ -63,16 +71,15 @@ export default function SyntaxHighlighter({
             <div className="border-b border-border p-2 text-sm font-medium text-foreground">
               Files ({files.length})
             </div>
-            <div className="max-h-32 overflow-y-auto">
-              <FileTree
-                tree={fileTree}
-                activeFile={files[activeFile]?.path}
-                onFileSelect={(path) => {
-                  if (disableSelection) return;
-                  const index = files.findIndex((f) => f.path === path);
-                  if (index !== -1) setActiveFile(index);
-                }}
-              />
+            <div className="h-32">
+              <Tree
+                elements={treeElements}
+                initialSelectedId={files[activeFile]?.path}
+                indicator={true}
+                className="h-full"
+              >
+                {treeElements.map((element) => renderTreeNode(element, handleFileSelect, files[activeFile]?.path))}
+              </Tree>
             </div>
           </div>
 
@@ -83,16 +90,15 @@ export default function SyntaxHighlighter({
             <div className="border-b border-border p-2 text-sm font-medium text-foreground">
               Files ({files.length})
             </div>
-            <div className="overflow-y-auto">
-              <FileTree
-                tree={fileTree}
-                activeFile={files[activeFile]?.path}
-                onFileSelect={(path) => {
-                  if (disableSelection) return;
-                  const index = files.findIndex((f) => f.path === path);
-                  if (index !== -1) setActiveFile(index);
-                }}
-              />
+            <div className="h-[calc(100%-2.5rem)]">
+              <Tree
+                elements={treeElements}
+                initialSelectedId={files[activeFile]?.path}
+                indicator={true}
+                className="h-full"
+              >
+                {treeElements.map((element) => renderTreeNode(element, handleFileSelect, files[activeFile]?.path))}
+              </Tree>
             </div>
           </div>
         </>
@@ -204,74 +210,122 @@ export default function SyntaxHighlighter({
   );
 }
 
-function buildFileTree(
+// Build tree elements from files array
+function buildTreeElements(
   files: Array<{ path: string; content: string; language: string }>,
-) {
-  const tree: any = {};
+): TreeViewElement[] {
+  const folderMap = new Map<string, TreeViewElement>();
 
+  // First pass: create all folders
   files.forEach((file) => {
     const parts = file.path.split("/");
-    let current = tree;
+    let currentPath = "";
 
-    parts.forEach((part, index) => {
-      if (!current[part]) {
-        current[part] =
-          index === parts.length - 1 ? { ...file, isFile: true } : {};
+    for (let i = 0; i < parts.length - 1; i++) {
+      currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
+
+      if (!folderMap.has(currentPath)) {
+        const folder: TreeViewElement = {
+          id: currentPath,
+          name: parts[i],
+          type: "folder",
+          isSelectable: true,
+          children: [],
+        };
+        folderMap.set(currentPath, folder);
       }
-      current = current[part];
-    });
+    }
   });
 
-  return tree;
+  // Second pass: assign children to folders
+  folderMap.forEach((folder, path) => {
+    const directChildren: TreeViewElement[] = [];
+
+    // Add child folders
+    folderMap.forEach((child, childPath) => {
+      if (childPath !== path) {
+        const childParent = childPath.substring(0, childPath.lastIndexOf("/"));
+        if (childParent === path) {
+          directChildren.push(child);
+        }
+      }
+    });
+
+    // Add files that are direct children of this folder
+    files.forEach((file) => {
+      const lastSlashIndex = file.path.lastIndexOf("/");
+      const fileParent = lastSlashIndex === -1 ? "" : file.path.substring(0, lastSlashIndex);
+      
+      if (fileParent === path) {
+        const fileName = file.path.split("/").pop()!;
+        directChildren.push({
+          id: file.path,
+          name: fileName,
+          type: "file",
+          isSelectable: true,
+        });
+      }
+    });
+
+    folder.children = directChildren;
+  });
+
+  // Get root level items
+  const rootItems: TreeViewElement[] = [];
+
+  folderMap.forEach((folder, path) => {
+    if (!path.includes("/")) {
+      rootItems.push(folder);
+    }
+  });
+
+  // Add root level files (files with no parent folder)
+  files.forEach((file) => {
+    if (!file.path.includes("/")) {
+      rootItems.push({
+        id: file.path,
+        name: file.path,
+        type: "file",
+        isSelectable: true,
+      });
+    }
+  });
+
+  return rootItems;
 }
 
-function FileTree({
-  tree,
-  activeFile,
-  onFileSelect,
-  prefix = "",
-}: {
-  tree: any;
-  activeFile: string;
-  onFileSelect: (path: string) => void;
-  prefix?: string;
-}) {
-  return (
-    <>
-      {Object.entries(tree).map(([name, node]: [string, any]) => {
-        const fullPath = prefix ? `${prefix}/${name}` : name;
-        const isActive = fullPath === activeFile;
+// Recursive render function for tree nodes
 
-        if (node.isFile) {
-          return (
-            <div
-              key={name}
-              className={`cursor-pointer px-2 py-1 text-sm hover:bg-muted/80 ${
-                isActive ? "bg-primary/20 text-primary" : "text-foreground"
-              }`}
-              onClick={() => onFileSelect(fullPath)}
-            >
-              📄 {name}
-            </div>
-          );
-        } else {
-          return (
-            <div key={name}>
-              <div className="px-2 py-1 text-sm font-medium text-muted-foreground">
-                📁 {name}
-              </div>
-              <div className="ml-4">
-                <FileTree
-                  tree={node}
-                  activeFile={activeFile}
-                  onFileSelect={onFileSelect}
-                  prefix={fullPath}
-                />
-              </div>
-            </div>
-          );
-        }
-      })}
-    </>
+function renderTreeNode(
+  element: TreeViewElement,
+  onSelect: (id: string) => void,
+  activePath?: string,
+): React.ReactNode {
+  if (element.type === "folder" || element.children) {
+    return (
+      <Folder
+        key={element.id}
+        value={element.id}
+        element={element.name}
+        isSelectable={true}
+        isSelect={activePath?.startsWith(element.id)}
+      >
+        {element.children?.map((child) =>
+          renderTreeNode(child, onSelect, activePath)
+        )}
+      </Folder>
+    );
+  }
+
+  return (
+    <File
+      key={element.id}
+      value={element.id}
+      isSelectable={true}
+      isSelect={element.id === activePath}
+      handleSelect={onSelect}
+    >
+      <span>{element.name}</span>
+    </File>
   );
 }

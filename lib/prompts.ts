@@ -117,7 +117,8 @@ export function getMainCodingPrompt() {
   - AVOID: Overused fonts (Inter, Roboto, Arial, Open Sans, system defaults)
   - AVOID: Monospace typography as lazy shorthand for "technical/developer" vibes
   - AVOID: Large icons with rounded corners above every heading
-  - **CRITICAL**: Use large, bold typography for hero sections - hero text should be massive and commanding (text-5xl, text-6xl, text-7xl, or larger)
+  - **CRITICAL**: Use MASSIVE, BOLD typography for hero sections - hero text MUST be enormous and commanding (text-7xl, text-8xl, text-9xl, or larger on desktop). NEVER use text-5xl or smaller for hero text.
+  - **CRITICAL**: ALL h1 elements MUST use text-6xl or larger on desktop (text-7xl, text-8xl, text-9xl). NEVER use text-2xl, text-3xl, text-4xl, or text-5xl for h1. This is a hard rule.
 
   **Color & Theme:**
   - Commit to cohesive palette - dominant colors with sharp accents
