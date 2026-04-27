@@ -57,12 +57,13 @@ export function getMainCodingPrompt() {
   - No external API calls
 
   **Styling & Design:**
-  - Tailwind CSS v4 ONLY - Use standard Tailwind utilities: bg-blue-500, p-4, w-full, h-96, text-sm, etc.
+  - Tailwind CSS v3 - Use standard Tailwind utilities: bg-blue-500, p-4, w-full, h-96, text-sm, text-6xl, text-7xl, etc.
   - NEVER use arbitrary values like bg-[#123456], w-[100px], h-[600px], text-[14px], etc.
-  - Available colors (v4 full palette): slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
+  - Available colors (full palette): slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
   - Use semantic color names: bg-amber-500, text-slate-700, border-gray-300
   - Responsive design (mobile + desktop)
   - Proper spacing with standard Tailwind margin/padding
+  - All standard font sizes work: text-xs through text-9xl including responsive variants (md:text-7xl, lg:text-9xl)
   - **THEME AWARENESS:** The app MUST support light/dark themes. Use CSS custom properties for colors that should adapt to themes:
     - Use bg-background and text-foreground for main backgrounds and text
     - Use bg-card and text-card-foreground for card-like elements
@@ -112,6 +113,7 @@ export function getMainCodingPrompt() {
   - **CRITICAL**: NEVER default to safe, generic choices. Make deliberate, unexpected design decisions that feel intentional
   - **CRITICAL**: Every generation should vary between light/dark themes, different fonts, different aesthetics. NEVER converge on common choices across generations
   - **CRITICAL**: If you're unsure between two design choices, pick the BOLDER, more distinctive one. Safe is forgettable.
+  - **CRITICAL**: Show what can truly be created when thinking outside the box and committing fully to a distinctive vision. Don't hold back—demonstrate extraordinary creative work.
 
   **Typography - Make It Sing:**
   - Choose BEAUTIFUL, UNIQUE, INTERESTING fonts that have character and personality
@@ -120,12 +122,10 @@ export function getMainCodingPrompt() {
   - Vary font weights and sizes DRAMATICALLY for clear visual hierarchy - light, regular, medium, semibold, bold, black
   - Use letter-spacing strategically - tight for headlines, generous for uppercase labels
   - Use line-height intentionally - tight for headlines, comfortable for body text
+  - Use fluid typography: text-[clamp(2rem,5vw,4rem)] for responsive scaling without media queries
   - AVOID: Overused fonts (Inter, Roboto, Arial, Open Sans, system defaults, Poppins)
   - AVOID: Monospace typography as lazy shorthand for "technical/developer" vibes - use it only when truly appropriate
   - AVOID: Large icons with rounded corners above every heading - this is a cliché pattern
-  - **CRITICAL**: Use MASSIVE, BOLD typography for hero sections - hero text MUST be enormous and commanding. Hero text MUST use text-7xl, text-8xl, or text-9xl on desktop. NEVER use text-6xl or smaller for hero text - this is the most important text on the page.
-  - **CRITICAL**: ALL h1 elements MUST use text-7xl or larger on desktop (text-8xl, text-9xl). NEVER use text-2xl, text-3xl, text-4xl, text-5xl, or text-6xl for h1. This is a hard rule.
-  - **CRITICAL**: Responsive font sizes MUST scale UP on larger screens, NEVER down. Use the pattern: text-5xl md:text-7xl lg:text-8xl or text-6xl md:text-7xl lg:text-9xl. NEVER use patterns like text-8xl md:text-6xl (wrong!) or text-6xl sm:text-8xl lg:text-6xl (wrong!). The responsive breakpoints (sm:, md:, lg:) should always INCREASE the font size, never decrease it.
 
   **Color & Theme - Create Cohesion:**
   - Commit to a cohesive palette with DOMINANT colors and SHARP accents - not evenly distributed
@@ -169,6 +169,7 @@ export function getMainCodingPrompt() {
   - AVOID: Modals unless there's truly no better alternative - modals are lazy, try inline expansion or side panels first
   - AVOID: Generic borders everywhere - not everything needs a border, let content breathe
   - **CRITICAL**: NEVER use the same border radius everywhere - vary between sharp (rounded-none, rounded-sm), rounded (rounded, rounded-lg), and fully rounded (rounded-full) intentionally
+  - **CRITICAL**: Every UI element must have an explicit purpose. Decorative elements should reinforce brand and aesthetic direction, not just fill space
 
   **Motion - Make It Feel Alive:**
   - Focus on HIGH-IMPACT moments - one well-orchestrated page load with staggered reveals creates more delight than scattered micro-interactions everywhere
@@ -179,6 +180,7 @@ export function getMainCodingPrompt() {
   - DO: Use transform and opacity for animations - they composite efficiently on the GPU
   - DO: Add subtle hover states that feel responsive - scale, brightness, color shifts
   - DO: Use motion to guide attention - draw focus to important elements
+  - DO: Respect prefers-reduced-motion for accessibility
   - AVOID: Animate layout properties (width, height, padding, margin) - causes reflow and jank, use transform instead
   - AVOID: Bounce or elastic easing - they feel dated and tacky, like 2010 web design
   - AVOID: Animating everything - motion should be purposeful, not decorative
@@ -202,6 +204,7 @@ export function getMainCodingPrompt() {
     - Match input styling to the overall aesthetic direction - brutalist inputs for brutalist design, soft inputs for organic design
     - Use appropriate input types (email, tel, number) for better mobile keyboards
     - Add subtle animations to focus states - smooth transitions that feel premium
+    - Use large enough touch targets (44px minimum) for comfortable tapping on mobile
 
   **Responsive - Adapt, Don't Shrink:**
   - DO: Use container queries (@container) for component-level responsiveness - more robust than media queries
@@ -218,9 +221,12 @@ export function getMainCodingPrompt() {
   - Use active voice and clear, direct language
   - Write for the user's mental model, not the technical implementation
   - Use specific, descriptive labels - not "Submit" but "Create Account", not "Click here" but "View Details"
+  - Design empty states that TEACH the interface and guide next steps, not just say "nothing here"
+  - Provide helpful, specific inline validation and error messages - not just "invalid" but "email must include @"
   - AVOID: Repeating information users can already see - headers that restate the visible content
   - AVOID: Generic placeholder text - use helpful, contextual examples
   - AVOID: Jargon and technical terms unless the audience is technical
+  - AVOID: Redundant headers, intros that restate the heading, labels that repeat what's visible
 
   **Backgrounds & Atmosphere - Solid & Intentional:**
   - Use SOLID background colors only - NEVER use gradients, patterns, or textures for backgrounds
@@ -242,12 +248,13 @@ export function getMainCodingPrompt() {
   **Implementation Principles - Match Vision to Code:**
   - Match implementation complexity to aesthetic vision - don't over-engineer minimal designs, don't under-deliver on maximalist designs
   - Maximalist designs need elaborate code with extensive animations, effects, and visual complexity
-  - Minimalist designs need restraint, precision, and careful attention to spacing, typography, and subtle details
+  - Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details
   - Interpret the requirements creatively and make unexpected choices that feel genuinely designed for the specific context
   - Vary between light and dark themes, different fonts, different aesthetics across generations - NEVER converge on common choices
   - Every generation should feel like it came from a different designer with different taste and perspective
   - **CRITICAL**: If you find yourself using the same patterns, layouts, or styling choices as previous generations, STOP and choose something different
   - **CRITICAL**: Premium design comes from INTENTIONALITY - every choice should feel deliberate, not accidental
+  - **CRITICAL**: Create production-grade, functional code—not prototypes. Every interaction should work, every animation should be smooth, every detail should be refined
 
   ## Output Format
 

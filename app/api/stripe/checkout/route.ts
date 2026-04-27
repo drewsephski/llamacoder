@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
       // Create new subscription record
       await prisma.subscription.create({
         data: {
-          userId: user.id,
+          user: {
+            connect: { id: user.id }
+          },
           stripeCustomerId: customerId,
           stripePriceId: STRIPE_PRICE_ID,
           stripeSubscriptionId: checkoutSession.subscription as string,

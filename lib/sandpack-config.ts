@@ -68,7 +68,7 @@ export default function App() {
     files: sandpackFiles,
     options: {
       externalResources: [
-        "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4",
+        "https://cdn.tailwindcss.com",
       ],
     },
     customSetup: {
@@ -132,7 +132,7 @@ const shadcnFiles = {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Document</title>
-      <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+      <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body>
       <div id="root"></div>
