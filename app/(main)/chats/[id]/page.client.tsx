@@ -30,9 +30,9 @@ const HeaderChat = memo(
     return (
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-4">
-          <a href="/" target="_blank">
+          <Link href="/">
             <LogoSmall />
-          </a>
+          </Link>
           <p className="italic text-muted-foreground">{chat.title}</p>
         </div>
         <div className="flex items-center gap-2">
