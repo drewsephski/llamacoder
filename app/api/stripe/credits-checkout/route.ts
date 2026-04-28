@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session) {
+      console.error("[Credits Checkout] No session found");
       return NextResponse.json(
         { error: "You must be signed in to purchase credits" },
         { status: 401 }
@@ -20,10 +21,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { pack } = body;
 
+    console.log("[Credits Checkout] Request body:", body);
+    console.log("[Credits Checkout] Available packs:", Object.keys(CREDIT_PACKS));
+    console.log("[Credits Checkout] Pack requested:", pack);
+
     // Validate the pack type
     if (!pack || !CREDIT_PACKS[pack as keyof typeof CREDIT_PACKS]) {
+      console.error("[Credits Checkout] Invalid pack:", pack, "Available:", Object.keys(CREDIT_PACKS));
       return NextResponse.json(
-        { error: "Invalid credit pack" },
+        { error: "Invalid credit pack", received: pack, available: Object.keys(CREDIT_PACKS) },
         { status: 400 }
       );
     }

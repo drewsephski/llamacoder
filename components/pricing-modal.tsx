@@ -20,9 +20,9 @@ interface PricingModalProps {
 }
 
 const CREDIT_PACKS = [
-  { credits: 10, price: 5, popular: false },
-  { credits: 25, price: 10, popular: true },
-  { credits: 60, price: 20, popular: false },
+  { key: "small", credits: 10, price: 5, popular: false },
+  { key: "medium", credits: 25, price: 10, popular: true },
+  { key: "large", credits: 60, price: 20, popular: false },
 ];
 
 export function PricingModal({
@@ -78,7 +78,7 @@ export function PricingModal({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ credits: pack.credits, price: pack.price }),
+        body: JSON.stringify({ pack: pack.key }),
       });
 
       const data = await response.json();
@@ -275,7 +275,7 @@ export function PricingModal({
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {CREDIT_PACKS.map((pack) => (
                 <div
-                  key={pack.credits}
+                  key={pack.key}
                   className={`rounded-2xl border p-6 flex flex-col hover:border-border/80 transition-colors ${
                     pack.popular
                       ? "border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-950/30 dark:to-transparent shadow-lg shadow-blue-500/5"

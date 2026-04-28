@@ -20,8 +20,30 @@ function getCreditPackFromPriceId(priceId: string): keyof typeof CREDIT_PACKS | 
 }
 
 export async function POST(request: NextRequest) {
+  console.log("[Stripe Webhook] Received request");
+  console.log("[Stripe Webhook] Headers:", {
+    "stripe-signature": request.headers.get("stripe-signature")?.slice(0, 20) + "...",
+    "content-type": request.headers.get("content-type"),
+  });
+
   const payload = await request.text();
-  const signature = request.headers.get("stripe-signature")!;
+  const signature = request.headers.get("stripe-signature");
+
+  if (!signature) {
+    console.error("[Stripe Webhook] Missing stripe-signature header");
+    return NextResponse.json(
+      { error: "Missing stripe-signature header" },
+      { status: 400 }
+    );
+  }
+
+  if (!STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET === "whsec_...") {
+    console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured properly");
+    return NextResponse.json(
+      { error: "Webhook secret not configured" },
+      { status: 500 }
+    );
+  }
 
   let event;
   try {
@@ -30,8 +52,9 @@ export async function POST(request: NextRequest) {
       signature,
       STRIPE_WEBHOOK_SECRET
     );
+    console.log("[Stripe Webhook] Event verified:", event.type, "ID:", event.id);
   } catch (error: any) {
-    console.error("Webhook signature verification failed:", error.message);
+    console.error("[Stripe Webhook] Signature verification failed:", error.message);
     return NextResponse.json(
       { error: `Webhook signature verification failed: ${error.message}` },
       { status: 400 }
