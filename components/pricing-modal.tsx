@@ -11,6 +11,7 @@ import {
 import { Loader2, Zap, Check, Sparkles, Crown, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { MODELS } from "@/lib/constants";
+import { CREDIT_PACKS, MODEL_PRICING, getModelCreditCost } from "@/lib/billing";
 import { Button } from "./ui/button";
 
 interface PricingModalProps {
@@ -19,12 +20,6 @@ interface PricingModalProps {
   remainingCredits?: number;
   isAuthenticated?: boolean;
 }
-
-const CREDIT_PACKS = [
-  { key: "small", credits: 10, price: 5, popular: false },
-  { key: "medium", credits: 25, price: 10, popular: true },
-  { key: "large", credits: 60, price: 20, popular: false },
-];
 
 export function PricingModal({
   open,
@@ -66,7 +61,7 @@ export function PricingModal({
     }
   };
 
-  const handleBuyCredits = async (pack: typeof CREDIT_PACKS[0]) => {
+  const handleBuyCredits = async (pack: { key: string; credits: number; price: number }) => {
     if (!isAuthenticated) {
       window.location.href = "/sign-in";
       return;
@@ -159,7 +154,7 @@ export function PricingModal({
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">1 free project</span>
+                  <span className="text-muted-foreground">5 free credits</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
@@ -228,18 +223,18 @@ export function PricingModal({
               </Button>
             </div>
 
-            {/* Unlimited Plan */}
+            {/* Pro Plus Plan */}
             <div className="rounded-2xl border border-border/50 bg-muted/40 p-6 flex flex-col hover:border-border/80 transition-colors">
               <div className="flex items-center gap-2.5 mb-3">
                 <Crown className="h-5 w-5 text-amber-500" />
-                <h3 className="font-semibold text-lg">Unlimited</h3>
+                <h3 className="font-semibold text-lg">Pro Plus</h3>
               </div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-3xl font-bold">$29</span>
                 <span className="text-sm text-muted-foreground">/mo</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-6">Unlimited credits</p>
-              
+              <p className="text-sm text-muted-foreground mb-6">500 credits/month</p>
+
               <ul className="space-y-3 text-sm mb-8 flex-1">
                 <li className="flex items-start gap-2.5">
                   <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
@@ -247,7 +242,7 @@ export function PricingModal({
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Unlimited generations</span>
+                  <span className="text-muted-foreground">500 credits monthly</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
@@ -260,11 +255,11 @@ export function PricingModal({
               </ul>
 
               <Button
-                onClick={() => handleSubscribe("unlimited")}
-                disabled={isLoading === "unlimited"}
+                onClick={() => handleSubscribe("pro_plus")}
+                disabled={isLoading === "pro_plus"}
                 className="w-full py-2.5 px-4 rounded-xl bg-amber-500 text-white border-amber-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px] min-h-[44px]"
               >
-                {isLoading === "unlimited" ? (
+                {isLoading === "pro_plus" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   "Subscribe"
@@ -278,7 +273,11 @@ export function PricingModal({
               Buy credits to use premium models. Credits never expire.
             </p>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {CREDIT_PACKS.map((pack) => (
+              {[
+                { key: "small", credits: CREDIT_PACKS.small.credits, price: CREDIT_PACKS.small.price, popular: false },
+                { key: "medium", credits: CREDIT_PACKS.medium.credits, price: CREDIT_PACKS.medium.price, popular: true },
+                { key: "large", credits: CREDIT_PACKS.large.credits, price: CREDIT_PACKS.large.price, popular: false },
+              ].map((pack) => (
                 <div
                   key={pack.key}
                   className={`rounded-2xl border p-6 flex flex-col hover:border-border/80 transition-colors ${
@@ -302,11 +301,7 @@ export function PricingModal({
                   <Button
                     onClick={() => handleBuyCredits(pack)}
                     disabled={isLoading === `credits-${pack.credits}`}
-                    className={`w-full py-2.5 px-4 rounded-xl min-h-[44px] ${
-                      pack.popular
-                        ? ""
-                        : ""
-                    }`}
+                    className="w-full py-2.5 px-4 rounded-xl min-h-[44px]"
                   >
                     {isLoading === `credits-${pack.credits}` ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -318,7 +313,7 @@ export function PricingModal({
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-6 leading-relaxed">
-              1 credit = 1 generation with standard models. Premium models cost 2 credits.
+              1 credit = 1 generation with standard models. Premium models cost 2+ credits.
             </p>
           </div>
         )}
@@ -340,13 +335,7 @@ export function PricingModal({
                   {m.label}
                 </span>
                 <span className={`text-xs font-medium ${m.free ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
-                  {m.free ? "Free" : (
-                    m.value.includes('opus') && m.value.includes('4') ? "7 credits" :
-                    m.value.includes('sonnet') && m.value.includes('4') ? "6 credits" :
-                    m.value.includes('gpt') && m.value.includes('5') ? "7 credits" :
-                    m.value.includes('pro') ? "2 credits" :
-                    "1 credit"
-                  )}
+                  {m.free ? `${getModelCreditCost(m.value)} credit` : `${getModelCreditCost(m.value)} credits`}
                 </span>
               </div>
             ))}

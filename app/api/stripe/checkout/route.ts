@@ -6,9 +6,9 @@ import { getPrisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const priceId = formData.get("priceId") as string;
-    const tier = formData.get("plan") as string || "pro";
+    const body = await request.json();
+    const priceId = body.priceId as string;
+    const tier = body.plan as string || "pro";
 
     // If priceId is provided directly, use it
     const finalPriceId = priceId || STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS];

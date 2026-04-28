@@ -81,8 +81,8 @@ function Header() {
   };
 
   return (
-    <header className="relative mx-auto flex w-full shrink-0 items-center justify-between px-4 py-6">
-      <Link href="/" className="flex flex-row items-center gap-3">
+    <header className="relative mx-auto flex w-full shrink-0 items-center justify-between px-4 py-4 sm:py-6">
+      <Link href="/" className="min-w-0 flex flex-row items-center gap-3">
         <img
           src="/squidcoder-logo.svg"
           alt="Squid Coder"
@@ -99,9 +99,9 @@ function Header() {
       </Link>
       
       {/* Desktop Navigation */}
-      <div className="hidden sm:flex items-center gap-4">
+      <div className="hidden md:flex items-center gap-3 lg:gap-4">
         {loading ? (
-          <span className="text-sm text-muted-foreground">Loading...</span>
+          <span className="text-sm text-muted-foreground">Loading…</span>
         ) : session ? (
           <>
             {/* Credits / Upgrade Button */}
@@ -161,7 +161,7 @@ function Header() {
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         variant="ghost"
         size="icon"
-        className="sm:hidden"
+        className="size-11 md:hidden"
         aria-label="Toggle menu"
       >
         {mobileMenuOpen ? (
@@ -173,15 +173,15 @@ function Header() {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 sm:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div 
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-full max-w-[200px] bg-background border-l border-border p-6 shadow-xl">
+          <div className="absolute right-0 top-0 h-full w-full max-w-[280px] overflow-y-auto border-l border-border bg-background p-5 shadow-xl">
             <div className="flex flex-col gap-4 pt-12">
               {loading ? (
-                <span className="text-sm text-muted-foreground">Loading...</span>
+                <span className="text-sm text-muted-foreground">Loading…</span>
               ) : session ? (
                 <>
                   {/* Mobile Credits / Upgrade */}
@@ -202,7 +202,7 @@ function Header() {
                       Upgrade
                     </Button>
                   )}
-                  <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)}>
+                    <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)} className="justify-start">
                     <Link href="/dashboard">
                       Dashboard
                     </Link>
@@ -230,12 +230,12 @@ function Header() {
                   >
                     Pricing
                   </Button>
-                  <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)}>
+                  <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)} className="justify-start">
                     <Link href="/sign-in">
                       Sign In
                     </Link>
                   </Button>
-                  <Button asChild onClick={() => setMobileMenuOpen(false)}>
+                  <Button asChild onClick={() => setMobileMenuOpen(false)} className="justify-start">
                     <Link href="/sign-up">
                       Sign Up
                     </Link>

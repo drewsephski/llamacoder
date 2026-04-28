@@ -200,7 +200,7 @@ export default function Home() {
   );
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden">
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden">
       <div 
         ref={ringRef}
         className="absolute inset-0 flex justify-center"
@@ -227,12 +227,12 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="isolate flex h-full flex-col">
+      <div className="isolate flex min-h-dvh flex-col">
         <Header />
 
-        <div className="mt-10 flex flex-1 flex-col items-center px-4 lg:mt-16">
+        <div className="mt-6 flex flex-1 flex-col items-center px-4 sm:mt-8 lg:mt-16">
           <div className="mt-4 flex flex-col items-center gap-4 lg:mt-8 lg:gap-5">
-            <h1 className="font-display text-center text-6xl font-semibold leading-[1.05] tracking-tight text-foreground md:text-7xl lg:text-8xl">
+            <h1 className="font-display text-center text-4xl font-semibold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-7xl lg:text-8xl">
               Turn your{" "}
               <span className="font-medium text-blue-500 dark:text-blue-400">
                 idea
@@ -243,7 +243,7 @@ export default function Home() {
                 app
               </span>
             </h1>
-            <p className="max-w-md text-center text-base text-muted-foreground md:text-lg">
+            <p className="max-w-md text-center text-sm text-muted-foreground sm:text-base md:text-lg">
               Describe what you want.
             </p>
           </div>
@@ -328,7 +328,7 @@ export default function Home() {
             }}
           >
             <Fieldset>
-              <div className="relative flex w-full max-w-2xl rounded-xl border border-border bg-background dark:bg-card pb-10">
+              <div className="relative flex w-full max-w-2xl rounded-xl border border-border bg-background pb-16 dark:bg-card sm:pb-10">
                 <div className="w-full">
                   {screenshotLoading && (
                     <div className="relative mx-3 mt-3">
@@ -382,7 +382,7 @@ export default function Home() {
                     </div>
                   )}
                   <div className="relative">
-                    <div className="p-3">
+                    <div className="px-3 py-5">
                       <p className="invisible w-full whitespace-pre-wrap">
                         {textareaResizePrompt}
                       </p>
@@ -393,42 +393,9 @@ export default function Home() {
                       required
                       name="prompt"
                       rows={2}
-                      className="peer absolute inset-0 w-full resize-none bg-transparent px-4 py-3 placeholder-gray-500 focus-visible:outline-none disabled:opacity-50"
+                      className="peer absolute inset-0 w-full resize-none bg-transparent px-4 py-5 placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      onPaste={(e) => {
-                        // Clean up pasted text
-                        e.preventDefault();
-                        const pastedText = e.clipboardData.getData("text");
-
-                        // Normalize line endings and clean up whitespace
-                        const cleanedText = pastedText
-                          .replace(/\r\n/g, "\n") // Convert Windows line endings
-                          .replace(/\r/g, "\n") // Convert old Mac line endings
-                          .replace(/\n{3,}/g, "\n\n") // Max 2 consecutive newlines
-                          .trim(); // Remove leading/trailing whitespace
-
-                        // Insert the cleaned text at cursor position
-                        const textarea = e.target as HTMLTextAreaElement;
-                        const start = textarea.selectionStart;
-                        const end = textarea.selectionEnd;
-                        const newValue =
-                          prompt.slice(0, start) +
-                          cleanedText +
-                          prompt.slice(end);
-
-                        setPrompt(newValue);
-
-                        // Set cursor position after the pasted text
-                        setTimeout(() => {
-                          if (textareaRef.current) {
-                            textareaRef.current.selectionStart =
-                              start + cleanedText.length;
-                            textareaRef.current.selectionEnd =
-                              start + cleanedText.length;
-                          }
-                        }, 0);
-                      }}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey) {
                           event.preventDefault();
@@ -440,8 +407,8 @@ export default function Home() {
                     />
                   </div>
                 </div>
-                <div className="absolute bottom-2 left-3 right-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="absolute bottom-2 left-3 right-3 flex flex-wrap items-center justify-between gap-2 sm:flex-nowrap">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
                     <Select.Root
                       name="model"
                       value={model}
@@ -472,7 +439,7 @@ export default function Home() {
                                       setShowPricingModal(true);
                                     }
                                   }}
-                                  className={`flex cursor-pointer items-center justify-between rounded-md p-2 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:outline-none dark:data-[highlighted]:bg-accent/50 ${isLocked ? 'opacity-70' : ''}`}
+                                  className={`flex cursor-pointer items-center justify-between rounded-md p-2 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:ring-2 data-[highlighted]:ring-ring/40 dark:data-[highlighted]:bg-accent/50 ${isLocked ? 'opacity-70' : ''}`}
                                 >
                                   <div className="flex items-center gap-2">
                                     <Select.ItemText className={`inline-flex items-center gap-2 ${m.free ? 'text-green-600 dark:text-green-400 font-medium' : isLocked ? 'text-muted-foreground' : 'text-foreground'}`}>
@@ -546,7 +513,7 @@ export default function Home() {
                               <Select.Item
                                 key={q.value}
                                 value={q.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:outline-none dark:data-[highlighted]:bg-accent/50"
+                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:ring-2 data-[highlighted]:ring-ring/40 dark:data-[highlighted]:bg-accent/50"
                               >
                                 <Select.ItemText className="inline-flex items-center gap-2 text-muted-foreground">
                                   {q.label}
@@ -566,12 +533,12 @@ export default function Home() {
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor="screenshot"
-                        className="flex cursor-pointer gap-2 text-sm text-muted-foreground hover:underline"
+                        className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:underline"
                       >
                         <div className="flex size-6 items-center justify-center rounded bg-foreground hover:bg-foreground/80 dark:bg-background dark:hover:bg-muted">
                           <UploadIcon className="size-4" />
                         </div>
-                        <div className="flex items-center justify-center transition hover:text-foreground">
+                        <div className="hidden items-center justify-center transition hover:text-foreground sm:flex">
                           Attach
                         </div>
                       </label>
@@ -620,7 +587,7 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="mt-4 flex w-full flex-wrap justify-between gap-2.5">
+              <div className="mt-4 flex w-full flex-wrap justify-center gap-2.5 sm:justify-between">
                 {SUGGESTED_PROMPTS.map((v) => (
                   <Button
                     key={v.title}
@@ -655,25 +622,25 @@ export default function Home() {
                 <div className="h-px w-12 bg-gradient-to-l from-transparent via-border to-border" />
               </div>
 
-              <div className="mt-3 mb-12 flex items-center justify-center">
+              <div className="mb-10 mt-3 flex w-full items-center justify-center sm:mb-12">
                 <div
                   className={`
-                    group relative flex items-center gap-2 overflow-hidden rounded-xl border px-3 py-2 transition-all duration-300
+                    group relative flex w-full max-w-md items-center gap-2 overflow-hidden rounded-xl border-2 px-3 py-2.5 shadow-sm transition-all duration-300
                     ${urlInput.trim()
-                      ? 'border-blue-500/40 bg-blue-500/5'
-                      : 'border-border/40 bg-muted/30 hover:border-border/60 hover:bg-muted/50'
+                      ? 'border-blue-500 bg-blue-50/50 shadow-blue-500/10 dark:border-blue-400 dark:bg-blue-950/20 dark:shadow-blue-400/10'
+                      : 'border-border bg-background hover:border-foreground/30 hover:shadow-md dark:bg-card'
                     }
-                    ${isScrapingUrl ? 'border-blue-400/50 bg-blue-500/10' : ''}
-                    focus-within:border-blue-500/50 focus-within:bg-background
+                    ${isScrapingUrl ? 'border-blue-400 bg-blue-50 dark:border-blue-300 dark:bg-blue-900/30' : ''}
+                    focus-within:border-blue-500 focus-within:bg-background focus-within:shadow-md focus-within:shadow-blue-500/10 dark:focus-within:border-blue-400 dark:focus-within:bg-card
                   `}
                 >
                   <div className={`
-                    flex size-8 items-center justify-center rounded-lg transition-colors
+                    flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors
                     ${isScrapingUrl
-                      ? 'bg-blue-500/20 text-blue-500'
+                      ? 'bg-blue-500 text-white'
                       : urlInput.trim()
-                        ? 'bg-blue-500/15 text-blue-500'
-                        : 'bg-muted text-muted-foreground group-hover:text-foreground'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-muted text-muted-foreground group-hover:bg-foreground/10 group-hover:text-foreground'
                     }
                   `}>
                     {isScrapingUrl ? (
@@ -694,7 +661,7 @@ export default function Home() {
                       }
                     }}
                     disabled={isScrapingUrl}
-                    className="w-48 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 border-none focus:border-none focus-visible:border-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed sm:w-64"
+                    className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-none focus-visible:border-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:cursor-not-allowed"
                   />
                   {urlInput.trim() && !isScrapingUrl && (
                     <button
@@ -731,7 +698,7 @@ export default function Home() {
 
 const Footer = memo(() => {
   return (
-    <footer className="absolute bottom-5 left-1/2 transform -translate-x-1/2 w-full flex flex-col items-center justify-between px-5 text-center sm:flex-row sm:pt-2">
+    <footer className="mt-auto flex w-full flex-col items-center justify-between gap-2 px-5 pb-5 pt-2 text-center sm:flex-row sm:gap-0 sm:pt-4">
       <div>
         <div className="font-medium">
           Built with{" "}

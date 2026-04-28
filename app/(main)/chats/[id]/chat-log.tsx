@@ -99,7 +99,7 @@ export default function ChatLog({
 
 function UserMessage({ content }: { content: string }) {
   return (
-    <div className="relative inline-flex max-w-[80%] items-end gap-3 self-end">
+    <div className="relative inline-flex max-w-[90%] items-end gap-3 self-end sm:max-w-[80%]">
       <div className="whitespace-pre-wrap break-words rounded bg-card px-4 py-2 text-card-foreground shadow">
         {content}
       </div>

@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -55,14 +54,14 @@ model User {
   email         String          @unique
   emailVerified Boolean         @default(false)
   image         String?
-  credits       Int             @default(0)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  credits       Int             @default(0)
   chats         Chat[]
+  creditHistory CreditHistory[]
+  subscription  Subscription?
   accounts      Account[]
   sessions      Session[]
-  subscription  Subscription?
-  creditHistory CreditHistory[]
 
   @@map("user")
 }
@@ -70,16 +69,16 @@ model User {
 model Subscription {
   id                   String   @id @default(nanoid(16))
   userId               String   @unique
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stripeCustomerId     String   @unique
   stripePriceId        String
   stripeSubscriptionId String?  @unique
-  status               String // active, canceled, past_due, etc.
-  tier                 String   @default("pro") // pro, unlimited
+  status               String
   currentPeriodStart   DateTime
   currentPeriodEnd     DateTime
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+  tier                 String   @default("pro")
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([stripeCustomerId])
@@ -89,14 +88,41 @@ model Subscription {
 model CreditHistory {
   id          String   @id @default(nanoid(16))
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Int // positive for top-ups, negative for usage
-  type        String // subscription, purchase, usage
+  amount      Int
+  type        String
   description String?
   chatId      String?
   createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([createdAt])
+}
+
+model AnonymousUsage {
+  id              String   @id @default(nanoid(16))
+  ipHash          String
+  fingerprintHash String?
+  generationsUsed Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ipHash, fingerprintHash])
+  @@index([createdAt])
+}
+
+model GenerationLog {
+  id          String   @id @default(nanoid(16))
+  userId      String?
+  modelId     String
+  creditsUsed Int
+  tokensUsed  Int?
+  status      String
+  chatId      String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([modelId])
   @@index([createdAt])
 }
 

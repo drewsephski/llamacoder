@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, STRIPE_WEBHOOK_SECRET, SUBSCRIPTION_TIERS, STRIPE_PRICE_IDS, CREDIT_PACKS } from "@/lib/stripe";
+import { stripe, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_IDS, CREDIT_PACK_CONFIGS } from "@/lib/stripe";
+import { TIERS, normalizeTier } from "@/lib/billing/config";
 import { getPrisma } from "@/lib/prisma";
 
 // Helper to determine tier from price ID
-function getTierFromPriceId(priceId: string): "pro" | "unlimited" | null {
+function getTierFromPriceId(priceId: string): "pro" | "pro_plus" | null {
   if (priceId === STRIPE_PRICE_IDS.pro) return "pro";
-  if (priceId === STRIPE_PRICE_IDS.unlimited) return "unlimited";
+  if (priceId === STRIPE_PRICE_IDS.pro_plus) return "pro_plus";
   // Fallback: if it's the old STRIPE_PRICE_ID, treat as pro
   if (process.env.STRIPE_PRICE_ID && priceId === process.env.STRIPE_PRICE_ID) return "pro";
   return null;
 }
 
 // Helper to determine credit pack from price ID
-function getCreditPackFromPriceId(priceId: string): keyof typeof CREDIT_PACKS | null {
-  for (const [key, pack] of Object.entries(CREDIT_PACKS)) {
-    if (pack.priceId === priceId) return key as keyof typeof CREDIT_PACKS;
+function getCreditPackFromPriceId(priceId: string): keyof typeof CREDIT_PACK_CONFIGS | null {
+  for (const [key, pack] of Object.entries(CREDIT_PACK_CONFIGS)) {
+    if (pack.priceId === priceId) return key as keyof typeof CREDIT_PACK_CONFIGS;
   }
   return null;
 }
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
 
         // Determine tier from price ID
         const tier = getTierFromPriceId(priceId) || "pro";
-        const tierConfig = SUBSCRIPTION_TIERS[tier];
+        const tierConfig = TIERS[tier];
 
         // Find user by customer ID
         const existingSub = await prisma.subscription.findFirst({
@@ -167,25 +168,23 @@ export async function POST(request: NextRequest) {
             },
           });
 
-          // Add credits to user (only for Pro tier, Unlimited gets unlimited)
-          if (tier === "pro" && tierConfig.credits > 0) {
-            await prisma.user.update({
-              where: { id: existingSub.userId },
-              data: {
-                credits: { increment: tierConfig.credits },
-              },
-            });
+          // Add credits to user for ALL tiers (no unlimited bypass)
+          await prisma.user.update({
+            where: { id: existingSub.userId },
+            data: {
+              credits: { increment: tierConfig.monthlyCredits },
+            },
+          });
 
-            // Record credit history
-            await prisma.creditHistory.create({
-              data: {
-                userId: existingSub.userId,
-                amount: tierConfig.credits,
-                type: "subscription",
-                description: `${tierConfig.name} subscription - ${tierConfig.credits} credits`,
-              },
-            });
-          }
+          // Record credit history
+          await prisma.creditHistory.create({
+            data: {
+              userId: existingSub.userId,
+              amount: tierConfig.monthlyCredits,
+              type: "subscription",
+              description: `${tierConfig.name} subscription - ${tierConfig.monthlyCredits} credits`,
+            },
+          });
         }
         break;
       }
@@ -210,7 +209,7 @@ export async function POST(request: NextRequest) {
             current_period_start: number;
             current_period_end: number;
           };
-          
+
           await prisma.subscription.update({
             where: { id: userSub.id },
             data: {
@@ -221,25 +220,25 @@ export async function POST(request: NextRequest) {
           });
 
           // Determine tier and add monthly credits
-          const tier = (userSub.tier as "pro" | "unlimited") || "pro";
-          const tierConfig = SUBSCRIPTION_TIERS[tier];
+          const tier = normalizeTier(userSub.tier);
+          const tierConfig = TIERS[tier];
 
-          // Add monthly credits (only if this isn't the first invoice and it's Pro tier)
-          if (tier === "pro" && tierConfig.credits > 0 && 
-              (!stripeInvoice.billing_reason || stripeInvoice.billing_reason !== "subscription_create")) {
+          // Add monthly credits for ALL tiers (no unlimited bypass)
+          // Only skip if this is the first invoice (already handled in checkout.session.completed)
+          if (!stripeInvoice.billing_reason || stripeInvoice.billing_reason !== "subscription_create") {
             await prisma.user.update({
               where: { id: userSub.userId },
               data: {
-                credits: { increment: tierConfig.credits },
+                credits: { increment: tierConfig.monthlyCredits },
               },
             });
 
             await prisma.creditHistory.create({
               data: {
                 userId: userSub.userId,
-                amount: tierConfig.credits,
+                amount: tierConfig.monthlyCredits,
                 type: "subscription",
-                description: `${tierConfig.name} monthly renewal - ${tierConfig.credits} credits`,
+                description: `${tierConfig.name} monthly renewal - ${tierConfig.monthlyCredits} credits`,
               },
             });
           }

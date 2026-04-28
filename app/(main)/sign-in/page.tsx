@@ -1,7 +1,7 @@
 "use client";
 
 import { authClient, useSession } from "@/lib/auth-client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 function SignInForm() {
   const { data: session, isPending } = useSession();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrlRef = useRef(searchParams.get("callbackUrl") || "/dashboard");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,9 +19,9 @@ function SignInForm() {
   // Redirect authenticated users away from sign-in page
   useEffect(() => {
     if (session && !isPending) {
-      window.location.href = callbackUrl;
+      window.location.href = callbackUrlRef.current;
     }
-  }, [session, isPending, callbackUrl]);
+  }, [session, isPending]);
 
   // Show loading while checking session
   if (isPending) {
@@ -46,7 +46,7 @@ function SignInForm() {
       const { error: signInError } = await authClient.signIn.email({
         email,
         password,
-        callbackURL: callbackUrl,
+        callbackURL: callbackUrlRef.current,
       });
 
       if (signInError) {
@@ -56,7 +56,7 @@ function SignInForm() {
       }
 
       // Immediate redirect on successful sign-in
-      window.location.href = callbackUrl;
+      window.location.href = callbackUrlRef.current;
     } catch (err) {
       console.error("Sign in error:", err);
       setError("An error occurred. Please try again.");
@@ -69,7 +69,7 @@ function SignInForm() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: callbackUrl,
+        callbackURL: callbackUrlRef.current,
       });
     } catch (err) {
       console.error("Google sign in error:", err);

@@ -144,7 +144,7 @@ export default function ChatBox({
 
   return (
     <>
-      <div className="mx-auto mb-4 flex w-full max-w-4xl shrink-0 flex-col px-6">
+      <div className="mx-auto mb-4 flex w-full max-w-4xl shrink-0 flex-col px-3 sm:px-6">
         {/* Show upgrade banner for free users on free models, or model-locked banner when viewing a paid model without subscription */}
         {!hasActiveSubscription && (
           <UpgradeBanner 
@@ -159,7 +159,7 @@ export default function ChatBox({
         <fieldset className="w-full" disabled={disabled}>
           <div className="relative flex flex-col rounded-lg border border-border bg-background">
             <div className="relative w-full">
-              <div className="w-full p-4">
+              <div className="w-full px-4 py-5">
                 <p className="invisible min-h-[48px] w-full whitespace-pre-wrap">
                   {textareaResizePrompt}
                 </p>
@@ -171,7 +171,7 @@ export default function ChatBox({
                 onChange={(e) => setPrompt(e.target.value)}
                 required
                 name="prompt"
-                className="peer absolute inset-0 w-full resize-none bg-transparent p-4 placeholder-muted-foreground focus:outline-none disabled:opacity-50"
+                className="peer absolute inset-0 w-full resize-none bg-transparent px-4 py-5 placeholder-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -183,10 +183,10 @@ export default function ChatBox({
               />
             </div>
 
-            <div className="flex w-full justify-between p-3 pl-4 has-[:disabled]:opacity-50">
-              <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center justify-between gap-2 p-3 pl-4 has-[:disabled]:opacity-50">
+              <div className="flex min-w-0 items-center gap-2">
                 <div
-                  className="max-w-[200px] items-center truncate font-mono text-xs text-muted-foreground"
+                  className="max-w-[180px] items-center truncate font-mono text-xs text-muted-foreground sm:max-w-[220px]"
                   title={chat.model}
                 >
                   {modelLabel}
@@ -201,7 +201,7 @@ export default function ChatBox({
               <Button
                 type="submit"
                 disabled={isCheckingCredits}
-                className="size-6"
+                className="size-8"
               >
                 <Spinner loading={disabled || isCheckingCredits}>
                   <ArrowRightIcon />

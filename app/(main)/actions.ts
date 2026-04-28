@@ -4,24 +4,7 @@ import { getPrisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { MODELS, FREE_MODEL } from "@/lib/constants";
-
-// Credit costs for different model tiers
-const MODEL_CREDIT_COSTS: Record<string, number> = {
-  [FREE_MODEL]: 0, // Free model costs 0 credits
-  default: 1, // Standard paid models cost 1 credit
-  premium: 2, // Premium models (Pro versions) cost 2 credits
-};
-
-function getModelCreditCost(modelValue: string): number {
-  const model = MODELS.find(m => m.value === modelValue);
-  if (!model) return MODEL_CREDIT_COSTS.default;
-  if (model.free) return 0;
-  if (modelValue.includes('pro') || modelValue.includes('maverick')) {
-    return MODEL_CREDIT_COSTS.premium;
-  }
-  return MODEL_CREDIT_COSTS.default;
-}
+import { checkAndConsumeCredits } from "@/lib/billing";
 
 export async function createMessage(
   chatId: string,
@@ -44,51 +27,19 @@ export async function createMessage(
   const isFollowUpUserMessage = role === "user" && chat.messages.length >= 2;
 
   if (isFollowUpUserMessage && chat.userId) {
-    // Check user credits and subscription status in a single query
-    const user = await prisma.user.findUnique({
-      where: { id: chat.userId },
-      select: {
-        credits: true,
-        subscription: { select: { status: true, tier: true } }
-      },
+    // Use the credit engine to check and consume credits
+    const creditCheck = await checkAndConsumeCredits({
+      userId: chat.userId,
+      modelId: chat.model,
+      chatId,
+      description: `Follow-up message - ${chat.model}`,
     });
 
-    if (!user) {
-      throw new Error("USER_NOT_FOUND");
-    }
-
-    const hasActiveSubscription = user.subscription?.status === "active";
-    const isUnlimited = hasActiveSubscription && user.subscription?.tier === "unlimited";
-
-    // Only Unlimited subscribers skip credit deduction; Pro subscribers still use credits
-    if (!isUnlimited) {
-      // Calculate credit cost based on the chat's model
-      const creditCost = getModelCreditCost(chat.model);
-
-      // Atomic credit deduction + history in a single transaction
-      await prisma.$transaction(async (tx) => {
-        const result = await tx.user.updateMany({
-          where: {
-            id: chat.userId!,
-            credits: { gte: creditCost }
-          },
-          data: { credits: { decrement: creditCost } },
-        });
-
-        if (result.count === 0) {
-          throw new Error("INSUFFICIENT_CREDITS");
-        }
-
-        await tx.creditHistory.create({
-          data: {
-            userId: chat.userId!,
-            amount: -creditCost,
-            type: "usage",
-            description: `AI generation - ${chat.model}`,
-            chatId: chatId!,
-          },
-        });
-      });
+    if (!creditCheck.success) {
+      if (creditCheck.error === "INSUFFICIENT_CREDITS") {
+        throw new Error("INSUFFICIENT_CREDITS");
+      }
+      throw new Error("CREDIT_CHECK_FAILED");
     }
   }
 

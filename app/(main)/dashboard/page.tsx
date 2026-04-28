@@ -189,7 +189,7 @@ async function DashboardPage({
               <AnimatedThemeToggleButton variant="horizontal" />
               <form action={async () => {
                 "use server";
-                redirect("/api/auth/signout");
+                redirect("/api/auth/sign-out");
               }}>
                 <Button 
                   type="submit"
@@ -252,7 +252,7 @@ async function DashboardPage({
               </div>
               <h2 className="mb-2 text-xl font-semibold">Ready to build something amazing?</h2>
               <p className="mb-6 max-w-sm text-muted-foreground text-balance">
-                Create your first app with AI. Start free, then upgrade to unlock GPT-5.4, Claude Sonnet 4.5, and Claude Opus 4.6.
+                Create your first app with AI. Start free with 5 credits, then upgrade to unlock GPT-5.4 and Claude Opus 4.6.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button asChild>
@@ -269,7 +269,7 @@ async function DashboardPage({
                 </Button>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
-                Free plan includes 1 project with the basic AI model
+                Free plan includes 5 starter credits for the free AI model
               </p>
             </div>
           </div>
@@ -456,11 +456,11 @@ async function DashboardPage({
               <ul className="space-y-3 mb-6">
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>100 credits/month</span>
+                  <span>5 starter credits</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Basic AI models</span>
+                  <span>Free AI model only</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
@@ -510,19 +510,19 @@ async function DashboardPage({
               </form>
             </div>
 
-            {/* Enterprise Plan */}
+            {/* Pro Plus Plan */}
             <div className="rounded-xl border border-border bg-card p-6">
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Crown className="h-5 w-5 text-amber-500" />
-                  <h3 className="text-lg font-semibold">Unlimited</h3>
+                  <h3 className="text-lg font-semibold">Pro Plus</h3>
                 </div>
                 <p className="text-3xl font-bold">$29<span className="text-lg font-normal text-muted-foreground">/month</span></p>
               </div>
               <ul className="space-y-3 mb-6">
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Unlimited credits</span>
+                  <span>500 credits/month</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
@@ -530,21 +530,21 @@ async function DashboardPage({
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Dedicated support</span>
+                  <span>Priority support</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Custom integrations</span>
+                  <span>Credit rollover</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>SLA guarantee</span>
+                  <span>Advanced features</span>
                 </li>
               </ul>
               <form action="/api/stripe/checkout" method="POST">
                 <input type="hidden" name="priceId" value="price_1TQyStRZE8Whwvf0mciJwsjS" />
                 <Button type="submit" variant="outline" className="w-full">
-                  Get Unlimited
+                  Get Pro Plus
                 </Button>
               </form>
             </div>

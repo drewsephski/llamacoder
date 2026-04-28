@@ -42,7 +42,7 @@ export function UpgradeBanner({ variant = "dashboard", messageCount = 0 }: Upgra
     chat: {
       icon: Sparkles,
       title: "Unlock smarter AI responses",
-      description: "Upgrade to access GPT-5.4, Claude Sonnet 4.5, and Claude Opus 4.6.",
+      description: "Upgrade to access GPT-5.4 and Claude Opus 4.6.",
       cta: "Upgrade Now",
       color: "from-amber-500/10 to-orange-500/10 border-amber-500/20",
       iconColor: "text-amber-500",
@@ -60,7 +60,7 @@ export function UpgradeBanner({ variant = "dashboard", messageCount = 0 }: Upgra
       title: "Unlock your full potential",
       description: messageCount > 0
         ? `You've created ${messageCount} project${messageCount === 1 ? "" : "s"}. Subscribe for unlimited premium generations.`
-        : "Subscribe to access GPT-5.4, Claude Sonnet 4.5, and Claude Opus 4.6.",
+        : "Subscribe to access GPT-5.4 and Claude Opus 4.6.",
       cta: "Get Premium",
       color: "from-amber-500/10 to-orange-500/10 border-amber-500/20",
       iconColor: "text-amber-500",
