@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -77,12 +78,14 @@ function ResetPasswordForm() {
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
-        <Link
-          href="/forgot-password"
-          className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 min-h-[48px]"
+        <Button
+          asChild
+          className="w-full"
         >
-          Request new reset link
-        </Link>
+          <Link href="/forgot-password">
+            Request new reset link
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -148,13 +151,13 @@ function ResetPasswordForm() {
         </div>
       </div>
 
-      <button
+      <Button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+        className="w-full"
       >
         {loading ? "Resetting..." : "Reset password"}
-      </button>
+      </Button>
 
       <p className="text-center text-sm">
         <Link

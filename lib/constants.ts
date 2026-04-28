@@ -17,18 +17,18 @@ export const MODELS = [
     paid: true,
   },
   {
-    label: "Llama 4 Scout",
-    value: "meta-llama/llama-4-scout",
+    label: "GPT 5.4",
+    value: "openai/gpt-5.4",
     paid: true,
   },
   {
-    label: "Llama 4 Maverick",
-    value: "meta-llama/llama-4-maverick",
+    label: "Claude Sonnet 4.5",
+    value: "anthropic/claude-sonnet-4.5",
     paid: true,
   },
   {
-    label: "GPT 4O Mini",
-    value: "openai/gpt-4o-mini",
+    label: "Claude Opus 4.6",
+    value: "anthropic/claude-opus-4.6",
     paid: true,
   },
 ];
@@ -53,11 +53,6 @@ export const SUGGESTED_PROMPTS = [
     title: "Expense Tracker",
     description:
       "Make a personal expense tracker where I can log expenses with categories like food, transport, and entertainment. Show a monthly breakdown with interactive pie and bar charts, and a running total.",
-  },
-  {
-    title: "Workout Timer",
-    description:
-      "Make an interval workout timer for HIIT training. Let me configure work and rest durations, number of rounds, and exercises. Show a large countdown display with color changes for work vs rest, and play a sound when switching.",
   },
   {
     title: "Calculator",

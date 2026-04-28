@@ -4,6 +4,24 @@ import { getPrisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { MODELS, FREE_MODEL } from "@/lib/constants";
+
+// Credit costs for different model tiers
+const MODEL_CREDIT_COSTS: Record<string, number> = {
+  [FREE_MODEL]: 0, // Free model costs 0 credits
+  default: 1, // Standard paid models cost 1 credit
+  premium: 2, // Premium models (Pro versions) cost 2 credits
+};
+
+function getModelCreditCost(modelValue: string): number {
+  const model = MODELS.find(m => m.value === modelValue);
+  if (!model) return MODEL_CREDIT_COSTS.default;
+  if (model.free) return 0;
+  if (modelValue.includes('pro') || modelValue.includes('maverick')) {
+    return MODEL_CREDIT_COSTS.premium;
+  }
+  return MODEL_CREDIT_COSTS.default;
+}
 
 export async function createMessage(
   chatId: string,
@@ -23,13 +41,13 @@ export async function createMessage(
     : 0;
 
   // Deduct credit for user follow-up messages (not initial creation or assistant messages)
-  const isFollowUpUserMessage = role === "user" && chat.messages.length > 2;
-  
+  const isFollowUpUserMessage = role === "user" && chat.messages.length >= 2;
+
   if (isFollowUpUserMessage && chat.userId) {
     // Check user credits and subscription status in a single query
     const user = await prisma.user.findUnique({
       where: { id: chat.userId },
-      select: { 
+      select: {
         credits: true,
         subscription: { select: { status: true, tier: true } }
       },
@@ -44,18 +62,17 @@ export async function createMessage(
 
     // Only Unlimited subscribers skip credit deduction; Pro subscribers still use credits
     if (!isUnlimited) {
-      if (user.credits <= 0) {
-        throw new Error("INSUFFICIENT_CREDITS");
-      }
+      // Calculate credit cost based on the chat's model
+      const creditCost = getModelCreditCost(chat.model);
 
       // Atomic credit deduction + history in a single transaction
       await prisma.$transaction(async (tx) => {
         const result = await tx.user.updateMany({
-          where: { 
+          where: {
             id: chat.userId!,
-            credits: { gt: 0 } 
+            credits: { gte: creditCost }
           },
-          data: { credits: { decrement: 1 } },
+          data: { credits: { decrement: creditCost } },
         });
 
         if (result.count === 0) {
@@ -65,9 +82,9 @@ export async function createMessage(
         await tx.creditHistory.create({
           data: {
             userId: chat.userId!,
-            amount: -1,
+            amount: -creditCost,
             type: "usage",
-            description: "AI generation",
+            description: `AI generation - ${chat.model}`,
             chatId: chatId!,
           },
         });

@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface SignInModalProps {
   open: boolean;
@@ -111,13 +112,13 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+            className="w-full min-h-[48px]"
           >
             {loading ? "Signing in..." : "Sign in"}
-          </button>
+          </Button>
 
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}

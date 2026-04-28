@@ -55,6 +55,17 @@ export function getMainCodingPrompt() {
   - Complete, runnable code with no placeholders
   - Interactive components with proper state management
   - No external API calls
+  - useRoutes() may be used only in the context of a <Router> component.
+  - Cannot assign to read only property 'message' of object
+
+  **CRITICAL - Export/Import Verification (Prevents "Element type is invalid" errors):**
+  - ALWAYS verify that every component you import is properly exported from its source file
+  - If importing with \`import { Component } from "./file"\`, the source file MUST use \`export function Component()\` or \`export const Component = ...\` (named export)
+  - If importing with \`import Component from "./file"\`, the source file MUST use \`export default function Component()\` or \`export default Component\` (default export)
+  - NEVER mix up default and named imports/exports - they must match exactly
+  - NEVER import a component that doesn't exist or isn't exported - this causes "undefined" component errors
+  - When creating a new component file, ALWAYS include the export statement at the end or beginning
+  - For multi-file apps, double-check all import paths are correct before finalizing output
 
   **Styling & Design:**
   - Tailwind CSS v3 - Use standard Tailwind utilities: bg-blue-500, p-4, w-full, h-96, text-sm, text-6xl, text-7xl, etc.
@@ -279,6 +290,7 @@ export function getMainCodingPrompt() {
    - Only create your own custom components and pages
    - Use imports to reference existing Shadcn components
    - ALWAYS create multiple files - never put all code in one file
+   - BEFORE finalizing, verify: all imports have matching exports, no undefined components, file paths are correct
    - Create at least 3-5 files for every application, even simple ones
 
   **Special Cases:**

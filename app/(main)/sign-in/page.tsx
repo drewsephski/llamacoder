@@ -1,16 +1,41 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
+import { authClient, useSession } from "@/lib/auth-client";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
-export default function SignInPage() {
+function SignInForm() {
+  const { data: session, isPending } = useSession();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+
+  // Redirect authenticated users away from sign-in page
+  useEffect(() => {
+    if (session && !isPending) {
+      window.location.href = callbackUrl;
+    }
+  }, [session, isPending, callbackUrl]);
+
+  // Show loading while checking session
+  if (isPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render form if already authenticated (will redirect)
+  if (session) {
+    return null;
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,27 +43,23 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const { data, error } = await authClient.signIn.email({
+      const { error: signInError } = await authClient.signIn.email({
         email,
         password,
+        callbackURL: callbackUrl,
       });
 
-      if (error) {
-        setError(error.message || "Sign in failed");
+      if (signInError) {
+        setError(signInError.message || "Sign in failed");
+        setLoading(false);
         return;
       }
 
-      console.log("Sign in successful:", data);
-      
-      // Wait a moment for the session to be set
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      router.push("/dashboard");
-      router.refresh();
+      // Immediate redirect on successful sign-in
+      window.location.href = callbackUrl;
     } catch (err) {
       console.error("Sign in error:", err);
       setError("An error occurred. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -48,7 +69,7 @@ export default function SignInPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: callbackUrl,
       });
     } catch (err) {
       console.error("Google sign in error:", err);
@@ -92,6 +113,7 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
                 placeholder="you@example.com"
+                suppressHydrationWarning
               />
             </div>
 
@@ -117,17 +139,18 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
                 placeholder="••••••••"
+                suppressHydrationWarning
               />
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+            className="w-full"
           >
             {loading ? "Signing in..." : "Sign in"}
-          </button>
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -138,11 +161,12 @@ export default function SignInPage() {
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+            variant="outline"
+            className="w-full"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -163,9 +187,21 @@ export default function SignInPage() {
               />
             </svg>
             {loading ? "Connecting..." : "Google"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   );
 }

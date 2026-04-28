@@ -18,6 +18,9 @@ const MODEL_CREDIT_COSTS: Record<string, number> = {
   premium: 2, // Premium models (Pro versions) cost 2 credits
 };
 
+// Free user project limit
+const FREE_PROJECT_LIMIT = 3;
+
 function getModelCreditCost(modelValue: string): number {
   const model = MODELS.find(m => m.value === modelValue);
   if (!model) return MODEL_CREDIT_COSTS.default;
@@ -30,7 +33,7 @@ function getModelCreditCost(modelValue: string): number {
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, model, quality, screenshotUrl } = await request.json();
+    const { prompt, model, quality, screenshotUrl, screenshotData } = await request.json();
     
     // Check authentication
     const session = await auth.api.getSession({
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
       const userCredits = user?.credits || 0;
       const hasActiveSubscription = user?.subscription?.status === "active";
       const isUnlimited = hasActiveSubscription && user?.subscription?.tier === "unlimited";
-      const canUsePaidModels = hasActiveSubscription || userCredits > 0;
+      const canUsePaidModels = hasActiveSubscription;
 
       if (isPaidModel && !canUsePaidModels) {
         return NextResponse.json(
@@ -91,6 +94,17 @@ export async function POST(request: NextRequest) {
         where: { userId: session.user.id },
       });
       const isFirstProject = existingProjectsCount === 0;
+
+      // Enforce project limit for free users
+      if (!hasActiveSubscription && existingProjectsCount >= FREE_PROJECT_LIMIT) {
+        return NextResponse.json(
+          { 
+            error: "PROJECT_LIMIT_REACHED", 
+            message: `Free users can create up to ${FREE_PROJECT_LIMIT} projects. Upgrade to create more.` 
+          },
+          { status: 402 }
+        );
+      }
 
       // Only Unlimited subscribers skip credit deduction; Pro subscribers still use credits
       if (!isFirstProject && !isUnlimited) {
@@ -174,7 +188,7 @@ export async function POST(request: NextRequest) {
     const title = await fetchTitle();
 
     let fullScreenshotDescription;
-    if (screenshotUrl) {
+    if (screenshotData) {
       try {
         const screenshotResponse = await generateText({
           model: openrouter(model, {
@@ -193,7 +207,7 @@ export async function POST(request: NextRequest) {
                 { type: "text", text: screenshotToCodePrompt },
                 {
                   type: "image",
-                  image: screenshotUrl,
+                  image: screenshotData,
                 },
               ],
             },

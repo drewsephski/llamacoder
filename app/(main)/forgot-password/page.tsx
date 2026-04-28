@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -59,12 +60,14 @@ export default function ForgotPasswordPage() {
                 We've sent a password reset link to {email}. The link will expire in 1 hour.
               </p>
             </div>
-            <Link
-              href="/sign-in"
-              className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 min-h-[48px]"
+            <Button
+              asChild
+              className="w-full"
             >
-              Back to sign in
-            </Link>
+              <Link href="/sign-in">
+                Back to sign in
+              </Link>
+            </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -86,18 +89,18 @@ export default function ForgotPasswordPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+                className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
                 placeholder="you@example.com"
               />
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+              className="w-full"
             >
               {loading ? "Sending..." : "Send reset link"}
-            </button>
+            </Button>
 
             <p className="text-center text-sm">
               <Link

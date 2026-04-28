@@ -10,6 +10,7 @@
     "lint": "next lint && tsc --noEmit --noUnusedLocals"
   },
   "dependencies": {
+    "@browserbasehq/stagehand": "^3.3.0",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@codesandbox/sandpack-themes": "^2.0.21",
     "@conform-to/zod": "^1.2.2",

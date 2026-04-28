@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { renameProject } from "../actions";
 import { ProjectCardActions } from "@/components/project-card-actions";
+import { UnlockProgress } from "@/components/unlock-progress";
+import { UpgradeBanner } from "@/components/upgrade-banner";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { 
@@ -16,9 +18,13 @@ import {
   LogOut,
   Layers,
   MoreHorizontal,
-  Coins
+  Coins,
+  Check,
+  Zap,
+  Crown
 } from "lucide-react";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
+import { Button } from "@/components/ui/button";
 
 // Professional model badge styles - no emojis
 function getModelBadgeClass(model: string): string {
@@ -41,27 +47,51 @@ function getModelLabel(model: string): string {
   return "AI";
 }
 
-async function DashboardPage() {
+async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   let projects: any[] = [];
   let userCredits = 0;
+  let totalProjects = 0;
+  let hasActiveSubscription = false;
+  const PROJECTS_PER_PAGE = 9;
+  const FREE_PROJECT_LIMIT = 3;
+  const resolvedSearchParams = await searchParams;
+  const currentPage = parseInt(resolvedSearchParams.page || "1", 10);
 
   if (session) {
     const prisma = getPrisma();
+    totalProjects = await prisma.chat.count({
+      where: { userId: session.user.id },
+    });
+
     projects = await prisma.chat.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PROJECTS_PER_PAGE,
+      take: PROJECTS_PER_PAGE,
     });
 
     try {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { credits: true },
+        select: {
+          credits: true,
+          subscription: {
+            select: {
+              status: true,
+            },
+          },
+        },
       });
       userCredits = user?.credits || 0;
+      hasActiveSubscription = user?.subscription?.status === "active";
     } catch (error) {
       console.error("[Dashboard] Failed to fetch user credits:", error);
       userCredits = 0;
@@ -94,12 +124,11 @@ async function DashboardPage() {
                 >
                   Sign In
                 </Link>
-                <Link 
-                  href="/sign-up" 
-                  className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:bg-foreground/90 transition-colors"
-                >
-                  Get Started
-                </Link>
+                <Button asChild>
+                  <Link href="/sign-up">
+                    Get Started
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -115,18 +144,16 @@ async function DashboardPage() {
               Access your projects and continue building with AI
             </p>
             <div className="flex flex-col gap-3">
-              <Link
-                href="/sign-in"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-5 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
-              >
-                Try Demo
-              </Link>
+              <Button asChild className="w-full">
+                <Link href="/sign-in">
+                  Sign In
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/">
+                  Try Demo
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -136,6 +163,7 @@ async function DashboardPage() {
 
   const userName = session.user.name?.split(" ")[0] || "there";
   const hasProjects = projects.length > 0;
+  const totalPages = Math.ceil(totalProjects / PROJECTS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,13 +191,14 @@ async function DashboardPage() {
                 "use server";
                 redirect("/api/auth/signout");
               }}>
-                <button 
+                <Button 
                   type="submit"
-                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  variant="ghost"
+                  size="sm"
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Sign out</span>
-                </button>
+                </Button>
               </form>
             </div>
           </div>
@@ -179,7 +208,7 @@ async function DashboardPage() {
       {/* Main Content */}
       <main className="mx-auto max-w-6xl px-6 lg:px-8 py-10">
         {/* Welcome Section */}
-        <div className="mb-10">
+        <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Welcome back</p>
@@ -187,36 +216,61 @@ async function DashboardPage() {
                 Hi, {userName}
               </h1>
             </div>
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors glow-electric"
-            >
-              <Plus className="h-4 w-4" />
-              New Project
-            </Link>
+            {!hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT ? (
+              <Button disabled className="opacity-50 cursor-not-allowed">
+                <Plus className="h-4 w-4" />
+                Limit Reached
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link href="/">
+                  <Plus className="h-4 w-4" />
+                  New Project
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Unlock Progress */}
+        <UnlockProgress projectCount={totalProjects} />
+
+        {/* Upgrade Banner - show limit-reached when free user hits limit */}
+        {!hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT ? (
+          <UpgradeBanner variant="limit-reached" messageCount={totalProjects} />
+        ) : (
+          <UpgradeBanner variant="dashboard" messageCount={totalProjects} />
+        )}
 
         {/* Projects Section */}
         {!hasProjects ? (
           /* Empty State */
           <div className="rounded-2xl border border-border bg-card">
-            <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
               <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
                 <Layers className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h2 className="mb-2 text-xl font-semibold">No projects yet</h2>
-              <p className="mb-8 max-w-sm text-muted-foreground text-balance">
-                Turn your ideas into working apps. Describe what you want to build and let AI handle the code.
+              <h2 className="mb-2 text-xl font-semibold">Ready to build something amazing?</h2>
+              <p className="mb-6 max-w-sm text-muted-foreground text-balance">
+                Create your first app with AI. Start free, then upgrade to unlock GPT-5.4, Claude Sonnet 4.5, and Claude Opus 4.6.
               </p>
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <Sparkles className="h-4 w-4" />
-                Create your first project
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button asChild>
+                  <Link href="/">
+                    <Sparkles className="h-4 w-4" />
+                    Create your first project
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/?upgrade=true">
+                    <Crown className="h-4 w-4" />
+                    View Premium Plans
+                  </Link>
+                </Button>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Free plan includes 1 project with the basic AI model
+              </p>
             </div>
           </div>
         ) : (
@@ -225,8 +279,12 @@ async function DashboardPage() {
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-medium">Your projects</h2>
-                <span className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                  {projects.length}
+                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                  !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
+                    ? "border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400"
+                    : "border-border bg-muted text-muted-foreground"
+                }`}>
+                  {hasActiveSubscription ? totalProjects : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
                 </span>
               </div>
             </div>
@@ -263,7 +321,7 @@ async function DashboardPage() {
                       href={`/chats/${project.id}`}
                       className="mb-1"
                     >
-                      <h3 className="font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                      <h3 className="font-medium leading-snug line-clamp-2">
                         {project.title}
                       </h3>
                     </Link>
@@ -307,12 +365,12 @@ async function DashboardPage() {
                           className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                           required
                         />
-                        <button
+                        <Button
                           type="submit"
-                          className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                          size="sm"
                         >
                           Save
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </details>
@@ -320,18 +378,178 @@ async function DashboardPage() {
               ))}
             </div>
 
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-2">
+                {currentPage === 1 ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Previous
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/dashboard?page=${currentPage - 1}`}>
+                      Previous
+                    </Link>
+                  </Button>
+                )}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) =>
+                    currentPage === page ? (
+                      <Button key={page} variant="default" size="sm">
+                        {page}
+                      </Button>
+                    ) : (
+                      <Button key={page} variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard?page=${page}`}>
+                          {page}
+                        </Link>
+                      </Button>
+                    )
+                  )}
+                </div>
+                {currentPage === totalPages ? (
+                  <Button variant="outline" size="sm" disabled>
+                    Next
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/dashboard?page=${currentPage + 1}`}>
+                      Next
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            )}
+
             {/* Bottom CTA */}
             <div className="mt-12 flex items-center justify-center">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Start another project
-              </Link>
+              {!hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT ? (
+                <Button disabled variant="outline" className="opacity-50 cursor-not-allowed">
+                  <Plus className="h-4 w-4" />
+                  Limit Reached
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link href="/">
+                    <Plus className="h-4 w-4" />
+                    Start another project
+                  </Link>
+                </Button>
+              )}
             </div>
           </>
         )}
+
+        {/* Pricing Section */}
+        <div className="mb-10">
+          <h2 className="text-lg font-medium mb-6">Pricing Plans</h2>
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Free Plan */}
+            <div className="rounded-xl border border-border bg-card p-6">
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Free</h3>
+                </div>
+                <p className="text-3xl font-bold">$0<span className="text-lg font-normal text-muted-foreground">/month</span></p>
+              </div>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>100 credits/month</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Basic AI models</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Community support</span>
+                </li>
+              </ul>
+              <Button variant="outline" className="w-full" disabled>
+                Current Plan
+              </Button>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="rounded-xl border-2 border-primary bg-card p-6 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
+                Popular
+              </div>
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Pro</h3>
+                </div>
+                <p className="text-3xl font-bold">$9<span className="text-lg font-normal text-muted-foreground">/month</span></p>
+              </div>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>100 credits/month</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>All AI models</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Priority support</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Advanced features</span>
+                </li>
+              </ul>
+              <form action="/api/stripe/checkout" method="POST">
+                <input type="hidden" name="priceId" value="price_1TQySsRZE8Whwvf0U4nEsJrt" />
+                <Button type="submit" className="w-full">
+                  Upgrade to Pro
+                </Button>
+              </form>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="rounded-xl border border-border bg-card p-6">
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Crown className="h-5 w-5 text-amber-500" />
+                  <h3 className="text-lg font-semibold">Unlimited</h3>
+                </div>
+                <p className="text-3xl font-bold">$29<span className="text-lg font-normal text-muted-foreground">/month</span></p>
+              </div>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Unlimited credits</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>All AI models</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Dedicated support</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Custom integrations</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>SLA guarantee</span>
+                </li>
+              </ul>
+              <form action="/api/stripe/checkout" method="POST">
+                <input type="hidden" name="priceId" value="price_1TQyStRZE8Whwvf0mciJwsjS" />
+                <Button type="submit" variant="outline" className="w-full">
+                  Get Unlimited
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

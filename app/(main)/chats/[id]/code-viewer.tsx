@@ -24,6 +24,7 @@ import { Share } from "./share";
 import { StickToBottom } from "use-stick-to-bottom";
 import JSZip from "jszip";
 import dynamic from "next/dynamic";
+import { Button } from "@/components/ui/button";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -326,12 +327,14 @@ export default function CodeViewer({
     <>
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
         <div className="inline-flex items-center gap-4">
-          <button
-            className="hidden text-muted-foreground hover:text-foreground md:block"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex"
             onClick={onClose}
           >
             <CloseIcon className="size-5" />
-          </button>
+          </Button>
           <span className="hidden md:block">{appTitle}</span>
           {!disabledControls && (
             <Select
@@ -364,7 +367,8 @@ export default function CodeViewer({
             </Select>
           )}
           {currentVersionIndex < allAssistantMessages.length - 1 && message && (
-            <button
+            <Button
+              size="sm"
               onClick={() =>
                 onRestore(
                   message,
@@ -374,55 +378,56 @@ export default function CodeViewer({
                     1,
                 )
               }
-              className="inline-flex h-[38px] items-center justify-center rounded bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
             >
               Restore
-            </button>
+            </Button>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard"
-            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-accent"
-          >
-            Dashboard
-          </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard">
+              Dashboard
+            </Link>
+          </Button>
           {!isSaved && (
-            <button
+            <Button
+              size="sm"
               onClick={onSave}
               disabled={isSaving || isCheckingSession}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                !chat.userId
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"
-              }`}
+              className={!chat.userId ? "bg-green-600 hover:bg-green-700" : ""}
             >
               {isSaving ? "Saving..." : isCheckingSession ? "Loading..." : !chat.userId ? "Sign Up to Save" : "Save"}
-            </button>
+            </Button>
           )}
           {isSaved && (
             <span className="rounded-md bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-400">
               Saved
             </span>
           )}
-          <div className="rounded-lg border-2 border-border p-1">
-          <button
-            onClick={() => onTabChange("code")}
-            data-active={activeTab === "code" ? true : undefined}
-            disabled={disabledControls}
-            className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 data-[active]:bg-primary data-[active]:text-primary-foreground"
-          >
-            Code
-          </button>
-          <button
-            onClick={() => onTabChange("preview")}
-            data-active={activeTab === "preview" ? true : undefined}
-            disabled={disabledControls}
-            className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 data-[active]:bg-primary data-[active]:text-primary-foreground"
-          >
-            Preview
-          </button>
-        </div>
+          <div className="inline-flex rounded-lg border-2 border-border p-1">
+            <button
+              onClick={() => onTabChange("code")}
+              disabled={disabledControls}
+              className={`h-7 w-16 rounded-md text-xs font-medium transition-colors ${
+                activeTab === "code"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              } disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              Code
+            </button>
+            <button
+              onClick={() => onTabChange("preview")}
+              disabled={disabledControls}
+              className={`h-7 w-16 rounded-md text-xs font-medium transition-colors ${
+                activeTab === "preview"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              } disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              Preview
+            </button>
+          </div>
         </div>
       </div>
 
@@ -477,23 +482,26 @@ export default function CodeViewer({
                   : undefined
             }
           />
-          <button
-            className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition enabled:hover:bg-accent enabled:hover:text-white disabled:opacity-50"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setRefresh((r) => r + 1)}
             disabled={disabledControls}
           >
             <RefreshIcon className="size-3" />
             Refresh
-          </button>
-          <button
-            className="hidden items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground transition hover:bg-accent hover:text-white disabled:opacity-50 md:inline-flex"
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleDownloadFiles}
             disabled={disabledControls}
             title="Download files"
+            className="hidden md:inline-flex"
           >
             <DownloadIcon className="size-3" />
             Download
-          </button>
+          </Button>
         </div>
         <div className="text-xs text-muted-foreground md:hidden">{chat.model}</div>
       </div>

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { deleteProject } from "@/app/(main)/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface DeleteProjectModalProps {
   projectId: string;
@@ -69,17 +70,17 @@ export function DeleteProjectModal({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <button
+          <Button
             onClick={onClose}
             disabled={isDeleting}
-            className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+            variant="outline"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+            variant="destructive"
           >
             {isDeleting ? (
               <>
@@ -92,7 +93,7 @@ export function DeleteProjectModal({
                 Delete Project
               </>
             )}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

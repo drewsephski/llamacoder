@@ -3,6 +3,7 @@
 import ShareIcon from "@/components/icons/share-icon";
 import { toast } from "sonner";
 import { Message } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 
 export function Share({ message }: { message?: Message }) {
   async function shareAction() {
@@ -20,14 +21,15 @@ export function Share({ message }: { message?: Message }) {
 
   return (
     <form action={shareAction} className="flex">
-      <button
+      <Button
         type="submit"
         disabled={!message}
-        className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-sm text-muted-foreground enabled:hover:bg-accent enabled:hover:text-accent-foreground disabled:opacity-50"
+        variant="outline"
+        size="sm"
       >
         <ShareIcon className="size-3" />
         Share
-      </button>
+      </Button>
     </form>
   );
 }

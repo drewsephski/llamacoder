@@ -6,13 +6,16 @@ import { getPrisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const tier = body.plan || "pro";
+    const formData = await request.formData();
+    const priceId = formData.get("priceId") as string;
+    const tier = formData.get("plan") as string || "pro";
 
-    // Validate tier
-    if (!STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS]) {
+    // If priceId is provided directly, use it
+    const finalPriceId = priceId || STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS];
+
+    if (!finalPriceId) {
       return NextResponse.json(
-        { error: "Invalid subscription tier" },
+        { error: "Invalid price ID" },
         { status: 400 }
       );
     }
@@ -60,15 +63,25 @@ export async function POST(request: NextRequest) {
 
     const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
 
-    // Create checkout session with tier
-    const checkoutSession = await createCheckoutSession(
-      customerId,
-      `${origin}/dashboard?subscription_success=true&tier=${tier}`,
-      `${origin}/dashboard?subscription_canceled=true`,
-      tier as "pro" | "unlimited"
-    );
-
-    const tierConfig = SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS];
+    // Create checkout session with direct price ID
+    const checkoutSession = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: finalPriceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${origin}/dashboard?subscription_success=true`,
+      cancel_url: `${origin}/dashboard?subscription_canceled=true`,
+      subscription_data: {
+        metadata: {
+          tier: tier,
+        },
+      },
+    });
 
     // Create or update subscription record in database before checkout
     if (user.subscription) {
@@ -77,7 +90,7 @@ export async function POST(request: NextRequest) {
         where: { id: user.subscription.id },
         data: {
           stripeCustomerId: customerId,
-          stripePriceId: STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS],
+          stripePriceId: finalPriceId,
           status: "incomplete",
           tier: tier,
         },
@@ -90,7 +103,7 @@ export async function POST(request: NextRequest) {
             connect: { id: user.id }
           },
           stripeCustomerId: customerId,
-          stripePriceId: STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS],
+          stripePriceId: finalPriceId,
           status: "incomplete",
           tier: tier,
           currentPeriodStart: new Date(),

@@ -14,8 +14,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Aeonik"', ...defaultTheme.fontFamily.sans],
-        mono: ['"Aeonik Mono"', ...defaultTheme.fontFamily.mono],
+        sans: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
+        display: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
+        mono: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.mono],
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { MenuIcon, XIcon, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PricingModal } from "@/components/pricing-modal";
+import { Button } from "@/components/ui/button";
 
 function Header() {
   const [session, setSession] = useState<any>(null);
@@ -110,56 +111,57 @@ function Header() {
                 <span>{credits ?? 0} credits</span>
               </div>
             ) : (
-              <button
+              <Button
                 onClick={() => setShowPricingModal(true)}
-                className="flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors min-h-[44px]"
+                size="sm"
               >
                 <Zap className="h-4 w-4" />
                 Upgrade
-              </button>
+              </Button>
             )}
-            <Link
-              href="/dashboard"
-              className="rounded-md px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted min-h-[44px] flex items-center"
-            >
-              Dashboard
-            </Link>
-            <button
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard">
+                Dashboard
+              </Link>
+            </Button>
+            <Button
               onClick={handleSignOut}
-              className="rounded-md px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted min-h-[44px] flex items-center"
+              variant="ghost"
+              size="sm"
             >
               Sign Out
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <button
+            <Button
               onClick={() => setShowPricingModal(true)}
-              className="rounded-md px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted min-h-[44px] flex items-center"
+              variant="ghost"
+              size="sm"
             >
               Pricing
-            </button>
-            <Link
-              href="/sign-in"
-              className="rounded-md px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted min-h-[44px] flex items-center"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 min-h-[44px] flex items-center"
-            >
-              Sign Up
-            </Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/sign-in">
+                Sign In
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/sign-up">
+                Sign Up
+              </Link>
+            </Button>
           </>
         )}
         <AnimatedThemeToggleButton variant="horizontal" />
       </div>
 
       {/* Mobile Menu Button */}
-      <button
+      <Button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="sm:hidden flex items-center justify-center p-2 rounded-md hover:bg-muted min-h-[44px] min-w-[44px]"
+        variant="ghost"
+        size="icon"
+        className="sm:hidden"
         aria-label="Toggle menu"
       >
         {mobileMenuOpen ? (
@@ -167,7 +169,7 @@ function Header() {
         ) : (
           <MenuIcon className="h-6 w-6" />
         )}
-      </button>
+      </Button>
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
@@ -189,59 +191,55 @@ function Header() {
                       <span>{credits ?? 0} credits</span>
                     </div>
                   ) : (
-                    <button
+                    <Button
                       onClick={() => {
                         setShowPricingModal(true);
                         setMobileMenuOpen(false);
                       }}
-                      className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700 transition-colors"
+                      size="sm"
                     >
                       <Zap className="h-4 w-4" />
                       Upgrade
-                    </button>
+                    </Button>
                   )}
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted min-h-[48px] flex items-center"
-                  >
-                    Dashboard
-                  </Link>
-                  <button
+                  <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href="/dashboard">
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button
                     onClick={() => {
                       handleSignOut();
                       setMobileMenuOpen(false);
                     }}
-                    className="rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted min-h-[48px] flex items-center text-left"
+                    variant="ghost"
+                    className="justify-start"
                   >
                     Sign Out
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
                     onClick={() => {
                       setShowPricingModal(true);
                       setMobileMenuOpen(false);
                     }}
-                    className="rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted min-h-[48px] flex items-center"
+                    variant="ghost"
+                    className="justify-start"
                   >
                     Pricing
-                  </button>
-                  <Link
-                    href="/sign-in"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted min-h-[48px] flex items-center"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/sign-up"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-md bg-primary px-4 py-3 text-base font-medium text-primary-foreground hover:bg-primary/90 min-h-[48px] flex items-center"
-                  >
-                    Sign Up
-                  </Link>
+                  </Button>
+                  <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href="/sign-in">
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button asChild onClick={() => setMobileMenuOpen(false)}>
+                    <Link href="/sign-up">
+                      Sign Up
+                    </Link>
+                  </Button>
                 </>
               )}
               <div className="pt-4 border-t border-border">

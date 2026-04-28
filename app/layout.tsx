@@ -1,6 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import PlausibleProvider from "next-plausible";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
 
 let title = "Squid Coder – AI Code Generator";
 let description = "Generate your next app with advanced AI models";
@@ -44,11 +52,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className={`h-full ${dmSans.variable}`}>
       <head>
         <PlausibleProvider domain="squidcoder.io" />
       </head>
-      <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
+      <body className="flex min-h-full flex-col bg-background text-foreground antialiased font-sans">
         {children}
       </body>
     </html>

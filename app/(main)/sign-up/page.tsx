@@ -3,6 +3,7 @@
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
@@ -131,13 +132,13 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full"
           >
             {loading ? "Creating account..." : "Sign up"}
-          </button>
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -148,11 +149,12 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+            variant="outline"
+            className="w-full min-h-[48px]"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -173,7 +175,7 @@ export default function SignUpPage() {
               />
             </svg>
             {loading ? "Connecting..." : "Google"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>
