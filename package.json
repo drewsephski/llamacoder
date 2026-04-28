@@ -7,7 +7,21 @@
     "dev": "next dev",
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
-    "lint": "next lint && tsc --noEmit --noUnusedLocals"
+    "lint": "next lint && tsc --noEmit --noUnusedLocals",
+    "typecheck": "tsc --noEmit",
+    "test:quick": "echo 'No quick tests configured'",
+    "ship:quick": "pnpm typecheck && pnpm lint",
+    "ship:full": "pnpm ship:quick && pnpm test:quick",
+    "ship:commit": "git diff --cached --stat",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.prisma": [
+      "prisma format"
+    ]
   },
   "dependencies": {
     "@browserbasehq/stagehand": "^3.3.0",
@@ -60,11 +74,16 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.2",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@eslint/eslintrc": "^3.3.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "postcss": "^8",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.10",

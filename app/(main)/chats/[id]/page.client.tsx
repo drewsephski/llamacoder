@@ -28,12 +28,12 @@ const HeaderChat = memo(
     chat: Chat;
   }) => {
     return (
-      <div className="flex items-center justify-between px-4 py-4">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-3 px-4 py-4">
+        <div className="flex min-w-0 items-center gap-3">
           <Link href="/">
             <LogoSmall />
           </Link>
-          <p className="italic text-muted-foreground">{chat.title}</p>
+          <p className="truncate italic text-muted-foreground">{chat.title}</p>
         </div>
         <div className="flex items-center gap-2">
           <AnimatedThemeToggleButton variant="horizontal" />
@@ -213,10 +213,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
   }, [chat.id, router, streamPromise, context]);
 
   return (
-    <div className="h-dvh">
-      <div className="flex h-full">
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <div className="flex h-full min-h-0 overflow-hidden">
         <div
-          className={`flex w-full shrink-0 flex-col overflow-hidden ${isShowingCodeViewer ? "lg:w-[30%]" : "lg:w-full"}`}
+          className={`flex w-full shrink-0 flex-col overflow-hidden h-full ${isShowingCodeViewer ? "lg:w-[30%]" : "lg:w-full"}`}
         >
           <HeaderChat
             chat={chat}

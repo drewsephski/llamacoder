@@ -1,4 +1,8 @@
 import Stripe from "stripe";
+import { TIERS, CREDIT_PACKS } from "./billing/config";
+
+// Re-export for backward compatibility
+export { TIERS as SUBSCRIPTION_TIERS, CREDIT_PACKS };
 
 // Validate required environment variables at module load time
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -19,42 +23,26 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 // These match the Stripe Price IDs created via MCP
 export const STRIPE_PRICE_IDS = {
   pro: process.env.STRIPE_PRO_PRICE_ID || process.env.STRIPE_PRICE_ID || "price_1TQySsRZE8Whwvf0U4nEsJrt",      // $9/month - 100 credits (fallback to old STRIPE_PRICE_ID)
-  unlimited: process.env.STRIPE_UNLIMITED_PRICE_ID || "price_1TQyStRZE8Whwvf0mciJwsjS", // $29/month - unlimited
+  pro_plus: process.env.STRIPE_PRO_PLUS_PRICE_ID || process.env.STRIPE_UNLIMITED_PRICE_ID || "price_1TQyStRZE8Whwvf0mciJwsjS", // $29/month - 500 credits (was unlimited)
 };
 
-// Credit pack configurations (one-time purchases)
+// Credit pack configurations with Stripe Price IDs
 // These match the Stripe Product Price IDs created via MCP
-export const CREDIT_PACKS = {
-  small: {                // 10 credits for $5
+export const CREDIT_PACK_CONFIGS = {
+  small: {
     priceId: process.env.STRIPE_CREDITS_10_PRICE_ID || "price_1TQyStRZE8Whwvf0ofuH4dwB",
-    credits: 10,
-    price: 5,
+    credits: CREDIT_PACKS.small.credits,
+    price: CREDIT_PACKS.small.price,
   },
-  medium: {               // 25 credits for $10 (best value)
+  medium: {
     priceId: process.env.STRIPE_CREDITS_25_PRICE_ID || "price_1TQyStRZE8Whwvf0Vwt9tbnK",
-    credits: 25,
-    price: 10,
+    credits: CREDIT_PACKS.medium.credits,
+    price: CREDIT_PACKS.medium.price,
   },
-  large: {                // 60 credits for $20
+  large: {
     priceId: process.env.STRIPE_CREDITS_60_PRICE_ID || "price_1TQyStRZE8Whwvf0YJb0BFnI",
-    credits: 60,
-    price: 20,
-  },
-};
-
-// Subscription tier details
-export const SUBSCRIPTION_TIERS = {
-  pro: {
-    price: 9,
-    credits: 100,
-    interval: "month" as const,
-    name: "Pro",
-  },
-  unlimited: {
-    price: 29,
-    credits: -1, // unlimited
-    interval: "month" as const,
-    name: "Unlimited",
+    credits: CREDIT_PACKS.large.credits,
+    price: CREDIT_PACKS.large.price,
   },
 };
 
@@ -69,11 +57,11 @@ export async function createCheckoutSession(
   customerId: string,
   successUrl: string,
   cancelUrl: string,
-  tier: "pro" | "unlimited" = "pro"
+  tier: "pro" | "pro_plus" = "pro"
 ) {
   const priceId = STRIPE_PRICE_IDS[tier];
-  const config = SUBSCRIPTION_TIERS[tier];
-  
+  const config = TIERS[tier];
+
   if (!priceId) {
     throw new Error(`Price ID not configured for tier: ${tier}`);
   }
@@ -93,7 +81,7 @@ export async function createCheckoutSession(
     subscription_data: {
       metadata: {
         tier,
-        credits: config.credits.toString(),
+        credits: config.monthlyCredits.toString(),
       },
     },
   });
@@ -104,11 +92,11 @@ export async function createCreditsCheckoutSession(
   customerId: string,
   successUrl: string,
   cancelUrl: string,
-  creditPack: keyof typeof CREDIT_PACKS,
+  creditPack: keyof typeof CREDIT_PACK_CONFIGS,
   userId: string
 ) {
-  const pack = CREDIT_PACKS[creditPack];
-  
+  const pack = CREDIT_PACK_CONFIGS[creditPack];
+
   if (!pack.priceId) {
     // If no price ID configured, create a dynamic price
     const price = await stripe.prices.create({

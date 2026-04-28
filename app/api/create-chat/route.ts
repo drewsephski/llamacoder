@@ -10,26 +10,11 @@ import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { MODELS, FREE_MODEL } from "@/lib/constants";
-
-// Credit costs for different model tiers
-const MODEL_CREDIT_COSTS: Record<string, number> = {
-  [FREE_MODEL]: 0, // Free model costs 0 credits
-  default: 1, // Standard paid models cost 1 credit
-  premium: 2, // Premium models (Pro versions) cost 2 credits
-};
-
-// Free user project limit
-const FREE_PROJECT_LIMIT = 3;
-
-function getModelCreditCost(modelValue: string): number {
-  const model = MODELS.find(m => m.value === modelValue);
-  if (!model) return MODEL_CREDIT_COSTS.default;
-  if (model.free) return 0;
-  if (modelValue.includes('pro') || modelValue.includes('maverick')) {
-    return MODEL_CREDIT_COSTS.premium;
-  }
-  return MODEL_CREDIT_COSTS.default;
-}
+import {
+  checkAnonymousUsageLimit,
+  checkAndConsumeCredits,
+  getModelCreditCost,
+} from "@/lib/billing";
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,16 +26,27 @@ export async function POST(request: NextRequest) {
     });
 
     const prisma = getPrisma();
-    
+
     // Check if selected model is free or paid
     const selectedModel = MODELS.find(m => m.value === model);
     const isPaidModel = selectedModel?.paid ?? false;
-    
-    // For unauthenticated users or users without credits/subscription, enforce free model
+
+    // For unauthenticated users or users without credits, enforce free model
     let resolvedModel = model;
-    let creditCost = 0;
-    
+
     if (!session) {
+      // Check anonymous usage limit (1 free generation)
+      const anonymousCheck = await checkAnonymousUsageLimit(request);
+      if (!anonymousCheck.allowed) {
+        return NextResponse.json(
+          {
+            error: "ANONYMOUS_LIMIT_REACHED",
+            message: "You've used your free generation. Sign up to continue.",
+          },
+          { status: 402 }
+        );
+      }
+
       // Unauthenticated users must use free model
       if (isPaidModel) {
         return NextResponse.json(
@@ -60,85 +56,29 @@ export async function POST(request: NextRequest) {
       }
       resolvedModel = FREE_MODEL;
     } else {
-      // Authenticated user - check if they can use paid models
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: {
-          credits: true,
-          subscription: {
-            select: {
-              status: true,
-              tier: true,
-            },
-          },
-        },
+      // Authenticated user - use credit engine for all checks
+      const creditCheck = await checkAndConsumeCredits({
+        userId: session.user.id,
+        modelId: model,
+        description: `AI generation - ${selectedModel?.label || model}`,
       });
 
-      const userCredits = user?.credits || 0;
-      const hasActiveSubscription = user?.subscription?.status === "active";
-      const isUnlimited = hasActiveSubscription && user?.subscription?.tier === "unlimited";
-      const canUsePaidModels = hasActiveSubscription;
-
-      if (isPaidModel && !canUsePaidModels) {
-        return NextResponse.json(
-          { error: "INSUFFICIENT_CREDITS", message: "Upgrade to use premium models" },
-          { status: 402 }
-        );
-      }
-
-      // Calculate credit cost for this model
-      creditCost = getModelCreditCost(model);
-      
-      // Check if first project (free) or has unlimited subscription
-      const existingProjectsCount = await prisma.chat.count({
-        where: { userId: session.user.id },
-      });
-      const isFirstProject = existingProjectsCount === 0;
-
-      // Enforce project limit for free users
-      if (!hasActiveSubscription && existingProjectsCount >= FREE_PROJECT_LIMIT) {
-        return NextResponse.json(
-          { 
-            error: "PROJECT_LIMIT_REACHED", 
-            message: `Free users can create up to ${FREE_PROJECT_LIMIT} projects. Upgrade to create more.` 
-          },
-          { status: 402 }
-        );
-      }
-
-      // Only Unlimited subscribers skip credit deduction; Pro subscribers still use credits
-      if (!isFirstProject && !isUnlimited) {
-        // Need to deduct credits
-        if (userCredits < creditCost) {
+      if (!creditCheck.success) {
+        if (creditCheck.error === "FORBIDDEN_MODEL") {
           return NextResponse.json(
-            { error: "INSUFFICIENT_CREDITS", message: `Need ${creditCost} credits for this model` },
-            { status: 402 }
+            { error: "FORBIDDEN_MODEL", message: "Upgrade to use this model" },
+            { status: 403 }
           );
         }
-
-        // Atomic credit deduction + history in a single transaction
-        await prisma.$transaction(async (tx) => {
-          const result = await tx.user.updateMany({
-            where: {
-              id: session.user.id,
-              credits: { gte: creditCost },
-            },
-            data: { credits: { decrement: creditCost } },
-          });
-
-          if (result.count === 0) {
-            throw new Error("INSUFFICIENT_CREDITS");
-          }
-
-          await tx.creditHistory.create({
-            data: {
-              userId: session.user.id,
-              amount: -creditCost,
-              type: "usage",
-              description: `Used ${selectedModel?.label || model}`,
-            },
-          });
-        });
+        return NextResponse.json(
+          {
+            error: creditCheck.error,
+            message: creditCheck.error === "INSUFFICIENT_CREDITS"
+              ? `Need ${getModelCreditCost(model)} credits for this model. Upgrade or buy credits to continue.`
+              : "Unable to process request",
+          },
+          { status: 402 }
+        );
       }
     }
 
