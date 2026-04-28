@@ -104,7 +104,8 @@ export async function createCreditsCheckoutSession(
   customerId: string,
   successUrl: string,
   cancelUrl: string,
-  creditPack: keyof typeof CREDIT_PACKS
+  creditPack: keyof typeof CREDIT_PACKS,
+  userId: string
 ) {
   const pack = CREDIT_PACKS[creditPack];
   
@@ -136,6 +137,7 @@ export async function createCreditsCheckoutSession(
       type: "credits",
       credits: pack.credits.toString(),
       pack: creditPack,
+      userId: userId,
     },
   });
 }

@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
       customerId,
       `${origin}/dashboard?credits_success=true`,
       `${origin}/dashboard?credits_canceled=true`,
-      pack as keyof typeof CREDIT_PACKS
+      pack as keyof typeof CREDIT_PACKS,
+      user.id
     );
 
     return NextResponse.json({ url: checkoutSession.url });

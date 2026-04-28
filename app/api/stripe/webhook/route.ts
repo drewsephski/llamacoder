@@ -68,37 +68,63 @@ export async function POST(request: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object;
         const customerId = session.customer as string;
-        const sessionMetadata = session.metadata as { type?: string; credits?: string; pack?: string } || {};
+        const sessionMetadata = session.metadata as { type?: string; credits?: string; pack?: string; userId?: string } || {};
 
         // Check if this is a credit purchase (one-time payment)
         if (session.mode === "payment" && sessionMetadata.type === "credits") {
           const creditAmount = parseInt(sessionMetadata.credits || "0");
           const packName = sessionMetadata.pack || "unknown";
+          const metadataUserId = sessionMetadata.userId;
+          
+          console.log("[Stripe Webhook] Processing credit purchase:", { creditAmount, packName, metadataUserId, customerId });
           
           if (creditAmount > 0) {
-            // Find user by customer ID
-            const existingSub = await prisma.subscription.findFirst({
-              where: { stripeCustomerId: customerId },
-            });
+            let userId: string | null = null;
+            
+            // First try to find by userId from metadata (for credit-only purchases)
+            if (metadataUserId) {
+              const user = await prisma.user.findUnique({
+                where: { id: metadataUserId },
+              });
+              if (user) {
+                userId = user.id;
+                console.log("[Stripe Webhook] Found user by metadata userId:", userId);
+              }
+            }
+            
+            // Fallback: find user by customer ID via subscription
+            if (!userId) {
+              const existingSub = await prisma.subscription.findFirst({
+                where: { stripeCustomerId: customerId },
+              });
+              if (existingSub) {
+                userId = existingSub.userId;
+                console.log("[Stripe Webhook] Found user by subscription customerId:", userId);
+              }
+            }
 
-            if (existingSub) {
+            if (userId) {
               // Add credits to user
               await prisma.user.update({
-                where: { id: existingSub.userId },
+                where: { id: userId },
                 data: {
                   credits: { increment: creditAmount },
                 },
               });
+              console.log("[Stripe Webhook] Added credits:", creditAmount, "to user:", userId);
 
               // Record credit history
               await prisma.creditHistory.create({
                 data: {
-                  userId: existingSub.userId,
+                  userId: userId,
                   amount: creditAmount,
                   type: "purchase",
                   description: `Credit pack purchase - ${creditAmount} credits (${packName})`,
                 },
               });
+              console.log("[Stripe Webhook] Recorded credit history");
+            } else {
+              console.error("[Stripe Webhook] Could not find user for credit purchase. Customer:", customerId, "Metadata userId:", metadataUserId);
             }
           }
           break;
