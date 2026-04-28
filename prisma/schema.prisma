@@ -73,7 +73,7 @@ model Subscription {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stripeCustomerId     String   @unique
   stripePriceId        String
-  stripeSubscriptionId String   @unique
+  stripeSubscriptionId String?  @unique
   status               String // active, canceled, past_due, etc.
   tier                 String   @default("pro") // pro, unlimited
   currentPeriodStart   DateTime

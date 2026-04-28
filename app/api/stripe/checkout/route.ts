@@ -91,7 +91,6 @@ export async function POST(request: NextRequest) {
           },
           stripeCustomerId: customerId,
           stripePriceId: STRIPE_PRICE_IDS[tier as keyof typeof STRIPE_PRICE_IDS],
-          stripeSubscriptionId: checkoutSession.subscription as string,
           status: "incomplete",
           tier: tier,
           currentPeriodStart: new Date(),
