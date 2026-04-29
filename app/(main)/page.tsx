@@ -9,7 +9,13 @@ import Spinner from "@/components/spinner";
 import bgImg from "@/public/halo.png";
 import * as Select from "@radix-ui/react-select";
 import assert from "assert";
-import { CheckIcon, ChevronDownIcon, Info, Link2, Sparkles } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  Info,
+  Link2,
+  Sparkles,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -63,7 +69,10 @@ export default function Home() {
 
   const [isPending, startTransition] = useTransition();
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
-  const [smoothMousePosition, setSmoothMousePosition] = useState({ x: 50, y: 50 });
+  const [smoothMousePosition, setSmoothMousePosition] = useState({
+    x: 50,
+    y: 50,
+  });
   const [isHoveringRing, setIsHoveringRing] = useState(false);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const [showPricingModal, setShowPricingModal] = useState(false);
@@ -78,7 +87,7 @@ export default function Home() {
       textareaRef.current.focus();
     }
     checkAuthStatus();
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
     if (!hasSeenOnboarding) {
       setShowOnboardingModal(true);
     }
@@ -86,7 +95,7 @@ export default function Home() {
 
   useEffect(() => {
     const animate = () => {
-      setSmoothMousePosition(prev => ({
+      setSmoothMousePosition((prev) => ({
         x: prev.x + (mousePosition.x - prev.x) * 0.08,
         y: prev.y + (mousePosition.y - prev.y) * 0.08,
       }));
@@ -121,7 +130,7 @@ export default function Home() {
   const canUsePaidModels = isAuthenticated && hasActiveSubscription;
 
   const handleModelChange = (newModel: string) => {
-    const selectedModel = MODELS.find(m => m.value === newModel);
+    const selectedModel = MODELS.find((m) => m.value === newModel);
     if (selectedModel?.paid && !canUsePaidModels) {
       setShowPricingModal(true);
       return;
@@ -131,11 +140,11 @@ export default function Home() {
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ringRef.current) return;
-    
+
     const rect = ringRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+
     setMousePosition({ x, y });
     setIsHoveringRing(true);
   };
@@ -177,7 +186,7 @@ export default function Home() {
 
   const handleUrlScrape = async () => {
     if (!urlInput.trim()) return;
-    
+
     if (prompt.length === 0) setPrompt(`Build me a website like ${urlInput}`);
     setQuality("low");
     setIsScrapingUrl(true);
@@ -202,7 +211,10 @@ export default function Home() {
       toast.success("Website captured successfully!");
     } catch (error: any) {
       console.error("URL scraping error:", error);
-      toast.error(error.message || "Failed to capture website. Please check the URL and try again.");
+      toast.error(
+        error.message ||
+          "Failed to capture website. Please check the URL and try again.",
+      );
     } finally {
       setIsScrapingUrl(false);
       setScreenshotLoading(false);
@@ -227,19 +239,21 @@ export default function Home() {
   );
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-x-hidden">
+    <div className="relative flex min-h-dvh w-full flex-col overflow-x-hidden">
       <div
         ref={ringRef}
         className="absolute inset-0 flex justify-center overflow-hidden"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="relative max-h-[953px] w-full max-w-[1200px]">
+        <div className="relative max-h-[953px] w-full">
           <Image
             src={bgImg}
             alt=""
             className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
-              isHoveringRing ? 'scale-[1.01] opacity-70 dark:opacity-15' : 'scale-100 opacity-60 dark:opacity-10'
+              isHoveringRing
+                ? "scale-[1.01] opacity-70 dark:opacity-15"
+                : "scale-100 opacity-60 dark:opacity-10"
             }`}
             priority
           />
@@ -249,29 +263,29 @@ export default function Home() {
               background: isHoveringRing
                 ? `radial-gradient(circle 400px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
                    radial-gradient(circle 200px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(99, 102, 241, 0.12) 0%, transparent 50%)`
-                : 'none',
+                : "none",
               opacity: isHoveringRing ? 1 : 0,
             }}
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-transparent to-background opacity-80" />
         </div>
       </div>
 
       <div className="isolate flex min-h-dvh flex-col">
         <Header onHelpClick={() => setShowHelpPanel(true)} />
 
-<div className="mt-16 flex flex-1 flex-col items-center px-4 sm:mt-20 lg:mt-24">
+        <div className="mt-16 flex flex-1 flex-col items-center px-4 sm:mt-20 lg:mt-24">
           <div className="flex flex-col items-center gap-5 lg:gap-6">
-            <h1 className="font-display text-center font-medium tracking-tight text-foreground">
+            <h1 className="text-center font-display font-medium tracking-tight text-foreground">
               <span className="block text-4xl leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl">
-                Turn ideas 
+                Turn ideas
               </span>
-              <span className="block text-4xl leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl mt-1 text-blue-500 dark:text-blue-400">
+              <span className="mt-1 block text-4xl leading-[1.1] text-blue-500 dark:text-blue-400 sm:text-5xl md:text-6xl lg:text-7xl">
                 into apps
               </span>
             </h1>
             <p className="max-w-md text-center text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Describe what you want to build. <br/>We&apos;ll generate the code.
+              Describe what you want to build. <br />
+              We&apos;ll generate the code.
             </p>
           </div>
 
@@ -282,13 +296,15 @@ export default function Home() {
               setIsCheckingEligibility(true);
               try {
                 const session = await authClient.getSession();
-                
+
                 // Only check for authenticated users
                 if (session.data) {
-                  const checkResponse = await fetch("/api/user/can-create-project");
+                  const checkResponse = await fetch(
+                    "/api/user/can-create-project",
+                  );
                   if (checkResponse.ok) {
                     const eligibility = await checkResponse.json();
-                    
+
                     if (!eligibility.canCreate) {
                       // User has existing projects but no credits
                       setCredits(eligibility.credits);
@@ -305,7 +321,8 @@ export default function Home() {
 
               startTransition(async () => {
                 try {
-                  const { prompt, model, quality } = Object.fromEntries(formData);
+                  const { prompt, model, quality } =
+                    Object.fromEntries(formData);
 
                   assert.ok(typeof prompt === "string");
                   assert.ok(typeof model === "string");
@@ -355,7 +372,7 @@ export default function Home() {
             }}
           >
             <Fieldset>
-              <div className="group relative flex w-full max-w-2xl rounded-2xl border border-border/60 bg-background/80 pb-14 dark:bg-card/80 sm:pb-10 backdrop-blur-xl shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/30 transition-all duration-500 focus-within:shadow-blue-500/20 focus-within:border-blue-500/40">
+              <div className="group relative flex w-full max-w-2xl rounded-2xl pb-14 shadow-lg shadow-black/5 backdrop-blur-xl transition-all duration-500 focus-within:border-blue-500/40 focus-within:shadow-blue-500/20 hover:border-blue-500/30 hover:border-b-blue-500 hover:border-r-blue-500 hover:shadow-xl hover:shadow-blue-500/10 dark:bg-card/80 sm:pb-10">
                 <div className="w-full">
                   {screenshotLoading && (
                     <div className="relative mx-3 mt-3">
@@ -413,7 +430,7 @@ export default function Home() {
                     placeholder="Build me a budgeting app..."
                     required
                     name="prompt"
-                    className="min-h-[80px] resize-none border-0 focus:ring-0 mb-4 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="mb-4 min-h-[80px] resize-none border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={(event) => {
@@ -433,12 +450,12 @@ export default function Home() {
                       value={model}
                       onValueChange={handleModelChange}
                     >
-                      <Select.Trigger className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
+                      <Select.Trigger className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
                         <Select.Value aria-label={model}>
                           <span className="flex items-center gap-1.5">
                             {selectedModel?.label}
                             {selectedModel?.paid && (
-                              <span className="text-[10px] px-1 py-0 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
+                              <span className="rounded bg-amber-100 px-1 py-0 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                                 Pro
                               </span>
                             )}
@@ -449,7 +466,7 @@ export default function Home() {
                         </Select.Icon>
                       </Select.Trigger>
                       <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-lg bg-popover shadow-lg ring-1 ring-border dark:bg-popover dark:ring-border min-w-[180px]">
+                        <Select.Content className="min-w-[180px] overflow-hidden rounded-lg bg-popover shadow-lg ring-1 ring-border dark:bg-popover dark:ring-border">
                           <Select.Viewport className="p-1">
                             {MODELS.map((m) => {
                               const isLocked = m.paid && !canUsePaidModels;
@@ -463,14 +480,16 @@ export default function Home() {
                                       setShowPricingModal(true);
                                     }
                                   }}
-                                  className={`flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? 'opacity-60' : ''}`}
+                                  className={`flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? "opacity-60" : ""}`}
                                 >
                                   <div className="flex items-center gap-2">
-                                    <Select.ItemText className={`${m.free ? 'text-green-600 dark:text-green-400 font-medium' : isLocked ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                    <Select.ItemText
+                                      className={`${m.free ? "font-medium text-green-600 dark:text-green-400" : isLocked ? "text-muted-foreground" : "text-foreground"}`}
+                                    >
                                       {m.label}
                                     </Select.ItemText>
                                     {isLocked && (
-                                      <span className="text-[10px] px-1 py-0 rounded bg-muted text-muted-foreground font-medium">
+                                      <span className="rounded bg-muted px-1 py-0 text-[10px] font-medium text-muted-foreground">
                                         Pro
                                       </span>
                                     )}
@@ -495,12 +514,10 @@ export default function Home() {
                       value={quality}
                       onValueChange={setQuality}
                     >
-                      <Select.Trigger className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
+                      <Select.Trigger className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
                         <Select.Value aria-label={quality}>
                           <span className="max-sm:hidden">
-                            {quality === "low"
-                              ? "Faster"
-                              : "Smarter"}
+                            {quality === "low" ? "Faster" : "Smarter"}
                           </span>
                           <span className="sm:hidden">
                             <LightningBoltIcon className="size-3.5" />
@@ -551,28 +568,39 @@ export default function Home() {
                         ref={fileInputRef}
                       />
                       {/* Info tooltip for supported formats */}
-                      <div className="group relative hidden sm:block">
-                        <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help transition-colors group-hover:text-muted-foreground" />
-                        <div className="absolute bottom-full left-1/2 mb-2 w-48 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-xs text-popover-foreground shadow-lg ring-1 ring-border opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none z-50">
-                          <p className="font-medium mb-1">Supported formats:</p>
-                          <p className="text-muted-foreground">PNG, JPEG, WebP</p>
-                          <p className="mt-1 text-muted-foreground">Upload a screenshot to convert it into code</p>
+                      <div className="relative hidden sm:block">
+                        <Info className="peer h-3.5 w-3.5 cursor-help text-muted-foreground/60 transition-colors hover:text-muted-foreground" />
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-48 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-xs text-popover-foreground opacity-0 shadow-lg ring-1 ring-border transition-opacity peer-hover:opacity-100">
+                          <p className="mb-1 font-medium">Supported formats:</p>
+                          <p className="text-muted-foreground">
+                            PNG, JPEG, WebP
+                          </p>
+                          <p className="mt-1 text-muted-foreground">
+                            Upload a screenshot to convert it into code
+                          </p>
                           <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
                         </div>
                       </div>
                     </div>
-
                   </div>
 
                   <div className="relative flex has-[:disabled]:opacity-50">
                     <LoadingButton
                       type="submit"
-                      disabled={screenshotLoading || prompt.length === 0 || isCheckingEligibility}
-                      className=" transition-transform duration-200 group"
+                      disabled={
+                        screenshotLoading ||
+                        prompt.length === 0 ||
+                        isCheckingEligibility
+                      }
+                      className="group transition-transform duration-200"
                     >
                       Build
                       <Spinner loading={isCheckingEligibility}>
-                        <img src="/image.png" alt="Build" className="invert size-4 group-hover:scale-105 group-hover:translate-x-1 transition-transform duration-200" />
+                        <img
+                          src="/image.png"
+                          alt="Build"
+                          className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5 group-hover:scale-105"
+                        />
                       </Spinner>
                     </LoadingButton>
                   </div>
@@ -604,9 +632,8 @@ export default function Home() {
                         }
                       }, 0);
                     }}
-                    className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/50 px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:border-blue-400/40 hover:bg-blue-50/50 hover:text-foreground dark:hover:bg-blue-950/20"
+                    className="group inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-background/40 px-3 py-1.5 text-[13px] text-muted-foreground/80 transition-all duration-200 hover:border-blue-500/30 hover:bg-blue-50/30 hover:text-foreground dark:hover:bg-blue-950/20"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-blue-500/70 transition-colors group-hover:text-blue-500" />
                     {v.title}
                   </button>
                 ))}
@@ -614,30 +641,26 @@ export default function Home() {
 
               {/* URL Input Section */}
               <div className="mt-6 text-center">
-                <span className="text-sm text-muted-foreground/70">or paste a URL</span>
+                <span className="text-sm text-muted-foreground/70">
+                  or paste a URL
+                </span>
               </div>
 
-              <div className="mb-12 mt-4 flex w-full items-center justify-center sm:mb-16">
+              <div className="mb-12 mt-3 flex w-full items-center justify-center sm:mb-16">
                 <div
-                  className={`
-                    group relative flex w-full max-w-md items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 shadow-sm transition-all duration-300
-                    ${urlInput.trim()
-                      ? 'border-blue-400/50 bg-blue-50/30 shadow-blue-500/5 dark:border-blue-400/40 dark:bg-blue-950/15'
-                      : 'border-border/60 bg-background/80 hover:border-foreground/20 hover:shadow-md dark:bg-card/80'
-                    }
-                    ${isScrapingUrl ? 'border-blue-400/60 bg-blue-50/50 dark:bg-blue-900/20' : ''}
-                    focus-within:border-blue-400/60 focus-within:shadow-md focus-within:shadow-blue-500/5
-                  `}
+                  className={`group relative flex w-full max-w-md items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 transition-all duration-300 ${
+                    urlInput.trim()
+                      ? "border-blue-500/40 bg-blue-50/30 dark:border-blue-500/30 dark:bg-blue-950/15"
+                      : "border-border/50 bg-background/60 hover:border-border/80"
+                  } ${isScrapingUrl ? "border-blue-500/50 bg-blue-50/40 dark:bg-blue-900/20" : ""} focus-within:border-blue-500/50 focus-within:bg-blue-50/20 dark:focus-within:bg-blue-950/10`}
                 >
-                  <div className={`
-                    flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors
-                    ${isScrapingUrl
-                      ? 'bg-blue-500 text-white'
-                      : urlInput.trim()
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-muted/80 text-muted-foreground group-hover:bg-muted group-hover:text-foreground'
-                    }
-                  `}>
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                      isScrapingUrl || urlInput.trim()
+                        ? "bg-blue-500 text-white"
+                        : "bg-muted/70 text-muted-foreground group-hover:bg-muted"
+                    } `}
+                  >
                     {isScrapingUrl ? (
                       <Sparkles className="size-4" />
                     ) : (
@@ -662,7 +685,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleUrlScrape}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500 text-white transition-all hover:bg-blue-600 hover:scale-105 active:scale-95"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500 text-white transition-all hover:scale-105 hover:bg-blue-600 active:scale-95"
                     >
                       <ArrowRightIcon className="size-3.5" />
                     </button>
@@ -691,7 +714,7 @@ export default function Home() {
         isOpen={showOnboardingModal}
         onClose={() => {
           setShowOnboardingModal(false);
-          localStorage.setItem('hasSeenOnboarding', 'true');
+          localStorage.setItem("hasSeenOnboarding", "true");
         }}
       />
       <HelpPanel
@@ -763,7 +786,7 @@ function LoadingMessage({
   isScrapingUrl?: boolean;
 }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/95 backdrop-blur-sm px-4 dark:bg-card/95">
+    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/95 px-4 backdrop-blur-sm dark:bg-card/95">
       <div className="flex flex-col items-center justify-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
           <Spinner className="text-blue-500" />
