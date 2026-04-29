@@ -52,7 +52,8 @@ export function DeleteProjectModal({
         <DialogHeader>
           <DialogTitle>Delete Project</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this project? This action cannot be undone.
+            Are you sure you want to delete this project? This action cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
 
@@ -60,19 +61,15 @@ export function DeleteProjectModal({
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
-          <div className="rounded-lg border border-border bg-muted/50 p-3 flex-1">
-            <p className="text-sm font-medium text-foreground truncate">
+          <div className="flex-1 overflow-hidden rounded-lg border border-border bg-muted/50 p-3">
+            <p className="truncate text-sm font-medium text-foreground">
               {projectTitle}
             </p>
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            onClick={onClose}
-            disabled={isDeleting}
-            variant="outline"
-          >
+          <Button onClick={onClose} disabled={isDeleting} variant="outline">
             Cancel
           </Button>
           <Button
