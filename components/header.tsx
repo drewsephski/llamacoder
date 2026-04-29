@@ -87,20 +87,33 @@ function Header({ onHelpClick }: HeaderProps) {
 
   return (
     <header className="relative mx-auto flex w-full shrink-0 items-center justify-between px-4 py-4 sm:py-6">
-      <Link href="/" className="flex min-w-0 flex-row items-center gap-3">
-        <img
-          src="/squidcoder-logo.svg"
-          alt="Squid Coder"
-          className="h-9 object-contain"
-        />
+      <Link
+        href="/"
+        className="group flex min-w-0 flex-row items-center gap-3 transition-opacity hover:opacity-90"
+      >
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 scale-[1.3] rounded-full bg-blue-500/10 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+          <img
+            src="/squidcoder-logo.svg"
+            alt="Squid Coder"
+            className="ease-[cubic-bezier(0.34,1.56,0.64,1)] relative z-10 h-9 object-contain transition-transform duration-500 group-hover:-rotate-1 group-hover:scale-[1.05]"
+          />
+        </div>
+
+        <div className="font-sans-dm hidden flex-col justify-center sm:flex">
+          <span className="text-[15px] font-bold leading-tight tracking-tighter text-foreground transition-colors group-hover:text-[#0062FF] dark:group-hover:text-[#0CA8FF]">
+            Squid
+          </span>
+        </div>
+
         {!session && !loading && (
-          <span className="hidden items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400 sm:inline-flex">
+          <span className="ml-1 hidden items-center gap-1.5 rounded-full border border-[#0CA8FF]/20 bg-[#0CA8FF]/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#0095ff] sm:inline-flex">
             <svg
               className="size-3"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              strokeWidth={2}
+              strokeWidth={2.5}
             >
               <path
                 strokeLinecap="round"

@@ -8,7 +8,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Zap, Check, Sparkles, Crown, Lock, Unlock } from "lucide-react";
+import {
+  Loader2,
+  Zap,
+  Check,
+  Sparkles,
+  Crown,
+  Lock,
+  Unlock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { MODELS } from "@/lib/constants";
 import { CREDIT_PACKS, MODEL_PRICING, getModelCreditCost } from "@/lib/billing";
@@ -61,7 +69,11 @@ export function PricingModal({
     }
   };
 
-  const handleBuyCredits = async (pack: { key: string; credits: number; price: number }) => {
+  const handleBuyCredits = async (pack: {
+    key: string;
+    credits: number;
+    price: number;
+  }) => {
     if (!isAuthenticated) {
       window.location.href = "/sign-in";
       return;
@@ -92,18 +104,18 @@ export function PricingModal({
     }
   };
 
-  const freeModel = MODELS.find(m => m.free);
-  const paidModels = MODELS.filter(m => m.paid);
+  const freeModel = MODELS.find((m) => m.free);
+  const paidModels = MODELS.filter((m) => m.paid);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[90vh] sm:max-w-[90vw] lg:max-w-7xl overflow-y-auto lg:overflow-visible">
+      <DialogContent className="max-h-[90vh] w-[95vw] max-w-[95vw] overflow-y-auto p-4 sm:max-w-[90vw] sm:p-6 lg:max-w-7xl lg:overflow-visible">
         <DialogHeader className="text-left">
-          <DialogTitle className="flex items-center gap-3 text-3xl font-bold tracking-tight">
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight sm:gap-3 sm:text-3xl">
             <Crown className="h-7 w-7 text-amber-500" />
             Unlock Premium AI Models
           </DialogTitle>
-          <DialogDescription className="text-base mt-2 text-muted-foreground leading-relaxed">
+          <DialogDescription className="mt-2 text-base leading-relaxed text-muted-foreground">
             {remainingCredits > 0
               ? `You have ${remainingCredits} credit${remainingCredits === 1 ? "" : "s"} remaining.`
               : "Upgrade to access powerful AI models and create more projects."}
@@ -111,95 +123,107 @@ export function PricingModal({
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="flex gap-2 mt-6 p-1 bg-muted/50 rounded-xl">
+        <div className="mt-4 flex gap-2 rounded-xl bg-muted/50 p-1 sm:mt-6">
           <Button
             onClick={() => setActiveTab("plans")}
             variant={activeTab === "plans" ? "default" : "ghost"}
-            className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
+            className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
           >
             Subscription Plans
           </Button>
           <Button
             onClick={() => setActiveTab("credits")}
             variant={activeTab === "credits" ? "default" : "ghost"}
-            className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
+            className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
           >
             Buy Credits
           </Button>
         </div>
 
         {activeTab === "plans" ? (
-          <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* Free Plan */}
-            <div className="rounded-2xl border border-border/50 bg-muted/40 p-6 flex flex-col hover:border-border/80 transition-colors">
-              <div className="flex items-center gap-2.5 mb-3">
+            <div className="flex flex-col rounded-2xl border border-border/50 bg-muted/40 p-4 transition-colors hover:border-border/80 sm:p-6">
+              <div className="mb-3 flex items-center gap-2.5">
                 <Zap className="h-5 w-5 text-green-500" />
-                <h3 className="font-semibold text-lg">Free</h3>
+                <h3 className="text-lg font-semibold">Free</h3>
               </div>
-              <div className="flex items-baseline gap-1 mb-1">
+              <div className="mb-1 flex items-baseline gap-1">
                 <span className="text-3xl font-bold">$0</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-6">Forever free</p>
-              
-              <ul className="space-y-3 text-sm mb-8 flex-1">
+              <p className="mb-6 text-sm text-muted-foreground">Forever free</p>
+
+              <ul className="mb-8 flex-1 space-y-3 text-sm">
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">{freeModel?.label} model only</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                  <span className="text-muted-foreground">
+                    {freeModel?.label} model only
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
                   <span className="text-muted-foreground">5 free credits</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
                   <span className="text-muted-foreground">Basic support</span>
                 </li>
                 <li className="flex items-start gap-2.5 opacity-50">
-                  <Lock className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Premium models locked</span>
+                  <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    Premium models locked
+                  </span>
                 </li>
               </ul>
 
               <Button
                 disabled
-                className="w-full py-2.5 px-4 rounded-xl bg-muted/60 text-muted-foreground text-sm font-medium cursor-default"
+                className="w-full cursor-default rounded-xl bg-muted/60 px-4 py-2.5 text-sm font-medium text-muted-foreground"
               >
                 Current Plan
               </Button>
             </div>
 
             {/* Pro Plan */}
-            <div className="rounded-2xl border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-950/30 dark:to-transparent p-6 flex flex-col relative shadow-lg shadow-blue-500/5">
+            <div className="relative flex flex-col rounded-2xl border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent p-4 shadow-lg shadow-blue-500/5 dark:from-blue-950/30 dark:to-transparent sm:p-6">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                <span className="rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                   Popular
                 </span>
               </div>
-              <div className="flex items-center gap-2.5 mb-3 mt-2">
+              <div className="mb-3 mt-2 flex items-center gap-2.5">
                 <Sparkles className="h-5 w-5 text-blue-500" />
-                <h3 className="font-semibold text-lg">Pro</h3>
+                <h3 className="text-lg font-semibold">Pro</h3>
               </div>
-              <div className="flex items-baseline gap-1 mb-1">
+              <div className="mb-1 flex items-baseline gap-1">
                 <span className="text-3xl font-bold">$9</span>
                 <span className="text-sm text-muted-foreground">/mo</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-6">100 credits/month</p>
-              
-              <ul className="space-y-3 text-sm mb-8 flex-1">
+              <p className="mb-6 text-sm text-muted-foreground">
+                100 credits/month
+              </p>
+
+              <ul className="mb-8 flex-1 space-y-3 text-sm">
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">All {paidModels.length}+ premium models</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+                  <span className="text-muted-foreground">
+                    All {paidModels.length}+ premium models
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">100 credits monthly</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+                  <span className="text-muted-foreground">
+                    100 credits monthly
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Priority generation</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+                  <span className="text-muted-foreground">
+                    Priority generation
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                   <span className="text-muted-foreground">Export projects</span>
                 </li>
               </ul>
@@ -207,7 +231,7 @@ export function PricingModal({
               <Button
                 onClick={() => handleSubscribe("pro")}
                 disabled={isLoading === "pro"}
-                className="w-full py-2.5 px-4 rounded-xl min-h-[44px]"
+                className="min-h-[44px] w-full rounded-xl px-4 py-2.5"
               >
                 {isLoading === "pro" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -218,40 +242,50 @@ export function PricingModal({
             </div>
 
             {/* Pro Plus Plan */}
-            <div className="rounded-2xl border border-border/50 bg-muted/40 p-6 flex flex-col hover:border-border/80 transition-colors">
-              <div className="flex items-center gap-2.5 mb-3">
+            <div className="flex flex-col rounded-2xl border border-border/50 bg-muted/40 p-4 transition-colors hover:border-border/80 sm:p-6">
+              <div className="mb-3 flex items-center gap-2.5">
                 <Crown className="h-5 w-5 text-amber-500" />
-                <h3 className="font-semibold text-lg">Pro Plus</h3>
+                <h3 className="text-lg font-semibold">Pro Plus</h3>
               </div>
-              <div className="flex items-baseline gap-1 mb-1">
+              <div className="mb-1 flex items-baseline gap-1">
                 <span className="text-3xl font-bold">$29</span>
                 <span className="text-sm text-muted-foreground">/mo</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-6">500 credits/month</p>
+              <p className="mb-6 text-sm text-muted-foreground">
+                500 credits/month
+              </p>
 
-              <ul className="space-y-3 text-sm mb-8 flex-1">
+              <ul className="mb-8 flex-1 space-y-3 text-sm">
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Everything in Pro</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  <span className="text-muted-foreground">
+                    Everything in Pro
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">500 credits monthly</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  <span className="text-muted-foreground">
+                    500 credits monthly
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Early access to new models</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  <span className="text-muted-foreground">
+                    Early access to new models
+                  </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Check className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">Dedicated support</span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  <span className="text-muted-foreground">
+                    Dedicated support
+                  </span>
                 </li>
               </ul>
 
               <Button
                 onClick={() => handleSubscribe("pro_plus")}
                 disabled={isLoading === "pro_plus"}
-                className="w-full py-2.5 px-4 rounded-xl bg-amber-500 text-white border-amber-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px] min-h-[44px]"
+                className="min-h-[44px] w-full rounded-xl border-b-[4px] border-amber-600 bg-amber-500 px-4 py-2.5 text-white hover:-translate-y-[1px] hover:border-b-[6px] hover:brightness-110 active:translate-y-[2px] active:border-b-[2px] active:brightness-90"
               >
                 {isLoading === "pro_plus" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -263,39 +297,54 @@ export function PricingModal({
           </div>
         ) : (
           <div className="mt-6">
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
               Buy credits to use premium models. Credits never expire.
             </p>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                { key: "small", credits: CREDIT_PACKS.small.credits, price: CREDIT_PACKS.small.price, popular: false },
-                { key: "medium", credits: CREDIT_PACKS.medium.credits, price: CREDIT_PACKS.medium.price, popular: true },
-                { key: "large", credits: CREDIT_PACKS.large.credits, price: CREDIT_PACKS.large.price, popular: false },
+                {
+                  key: "small",
+                  credits: CREDIT_PACKS.small.credits,
+                  price: CREDIT_PACKS.small.price,
+                  popular: false,
+                },
+                {
+                  key: "medium",
+                  credits: CREDIT_PACKS.medium.credits,
+                  price: CREDIT_PACKS.medium.price,
+                  popular: true,
+                },
+                {
+                  key: "large",
+                  credits: CREDIT_PACKS.large.credits,
+                  price: CREDIT_PACKS.large.price,
+                  popular: false,
+                },
               ].map((pack) => (
                 <div
                   key={pack.key}
-                  className={`rounded-2xl border p-6 flex flex-col hover:border-border/80 transition-colors ${
+                  className={`flex flex-col rounded-2xl border p-4 transition-colors hover:border-border/80 sm:p-6 ${
                     pack.popular
-                      ? "border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-950/30 dark:to-transparent shadow-lg shadow-blue-500/5"
+                      ? "border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent shadow-lg shadow-blue-500/5 dark:from-blue-950/30 dark:to-transparent"
                       : "border-border/50 bg-muted/40"
                   }`}
                 >
                   {pack.popular && (
-                    <span className="bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full w-fit mb-3 shadow-sm">
+                    <span className="mb-3 w-fit rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                       Best Value
                     </span>
                   )}
-                  <div className="flex items-baseline gap-1 mb-1">
+                  <div className="mb-1 flex items-baseline gap-1">
                     <span className="text-4xl font-bold">{pack.credits}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-6">credits</p>
-                  <div className="flex items-baseline gap-1 mb-6">
+                  <p className="mb-6 text-sm text-muted-foreground">credits</p>
+                  <div className="mb-6 flex items-baseline gap-1">
                     <span className="text-3xl font-bold">${pack.price}</span>
                   </div>
                   <Button
                     onClick={() => handleBuyCredits(pack)}
                     disabled={isLoading === `credits-${pack.credits}`}
-                    className="w-full py-2.5 px-4 rounded-xl min-h-[44px]"
+                    className="min-h-[44px] w-full rounded-xl px-4 py-2.5"
                   >
                     {isLoading === `credits-${pack.credits}` ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -306,37 +355,42 @@ export function PricingModal({
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground mt-6 leading-relaxed">
-              1 credit = 1 generation with standard models. Premium models cost 2+ credits.
+            <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
+              1 credit = 1 generation with standard models. Premium models cost
+              2+ credits.
             </p>
           </div>
         )}
 
         {/* Model Comparison */}
-        <div className="mt-8 pt-6 border-t border-border/50">
-          <h4 className="font-semibold mb-4 text-sm">Available Models</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+        <div className="mt-8 border-t border-border/50 pt-6">
+          <h4 className="mb-4 text-sm font-semibold">Available Models</h4>
+          <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-3">
             {MODELS.map((m) => (
               <div
                 key={m.value}
-                className={`flex items-center justify-between p-3 rounded-xl ${
+                className={`flex items-center justify-between rounded-xl p-3 ${
                   m.free
-                    ? "bg-green-50/50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-900/30"
-                    : "bg-muted/40 border border-border/50"
+                    ? "border border-green-200/50 bg-green-50/50 dark:border-green-900/30 dark:bg-green-950/20"
+                    : "border border-border/50 bg-muted/40"
                 }`}
               >
                 <span className="flex items-center gap-2 font-medium">
                   {m.label}
                 </span>
-                <span className={`text-xs font-medium ${m.free ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
-                  {m.free ? `${getModelCreditCost(m.value)} credit` : `${getModelCreditCost(m.value)} credits`}
+                <span
+                  className={`text-xs font-medium ${m.free ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+                >
+                  {m.free
+                    ? `${getModelCreditCost(m.value)} credit`
+                    : `${getModelCreditCost(m.value)} credits`}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
+        <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
           Cancel anytime. Credits never expire. Powered by Stripe.
         </p>
       </DialogContent>

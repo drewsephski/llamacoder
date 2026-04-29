@@ -32,10 +32,10 @@ export default function SignUpPage() {
       }
 
       console.log("Sign up successful:", data);
-      
+
       // Wait a moment for the session to be set
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
@@ -64,10 +64,25 @@ export default function SignUpPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Create an account</h2>
+          <Link
+            href="/"
+            className="mb-8 inline-flex items-center justify-center transition-transform hover:scale-105"
+          >
+            <img
+              src="/squidcoder-logo.svg"
+              alt="Squid Coder"
+              className="h-16 w-auto"
+            />
+          </Link>
+          <h2 className="text-3xl font-bold tracking-tight">
+            Create an account
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Or{" "}
-            <Link href="/sign-in" className="font-medium text-primary hover:underline">
+            <Link
+              href="/sign-in"
+              className="font-medium text-primary hover:underline"
+            >
               sign in to your existing account
             </Link>
           </p>
@@ -132,11 +147,7 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Creating account..." : "Sign up"}
           </Button>
 
@@ -145,7 +156,9 @@ export default function SignUpPage() {
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
             </div>
           </div>
 
@@ -154,7 +167,7 @@ export default function SignUpPage() {
             onClick={handleGoogleSignIn}
             disabled={loading}
             variant="outline"
-            className="w-full min-h-[48px]"
+            className="min-h-[48px] w-full"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path

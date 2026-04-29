@@ -11,6 +11,7 @@ import assert from "assert";
 import {
   CheckIcon,
   ChevronDownIcon,
+  Coins,
   Info,
   Link2,
   Sparkles,
@@ -33,12 +34,14 @@ import Header from "@/components/header";
 import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
+import { getModelCreditCost } from "@/lib/billing";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/components/pricing-modal";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { HelpPanel } from "@/components/help-panel";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -553,16 +556,23 @@ export default function Home() {
               className="animate-fade-up-3 relative w-full max-w-2xl pt-8 lg:pt-12"
               action={async (formData) => {
                 setIsCheckingEligibility(true);
+                const currentModel = (formData.get("model") as string) || model;
                 try {
                   const session = await authClient.getSession();
                   if (session.data) {
                     const checkResponse = await fetch(
-                      "/api/user/can-create-project",
+                      `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
                     );
                     if (checkResponse.ok) {
                       const eligibility = await checkResponse.json();
                       if (!eligibility.canCreate) {
                         setCredits(eligibility.credits);
+                        const cost =
+                          eligibility.modelCost ||
+                          getModelCreditCost(currentModel);
+                        toast.error(
+                          `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
+                        );
                         setShowPricingModal(true);
                         setIsCheckingEligibility(false);
                         return;
@@ -705,10 +715,13 @@ export default function Home() {
                             </Select.Icon>
                           </Select.Trigger>
                           <Select.Portal>
-                            <Select.Content className="min-w-[190px] overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover">
+                            <Select.Content className="min-w-[240px] overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover">
                               <Select.Viewport className="p-1.5">
                                 {MODELS.map((m) => {
                                   const isLocked = m.paid && !canUsePaidModels;
+                                  const creditCost = getModelCreditCost(
+                                    m.value,
+                                  );
                                   return (
                                     <Select.Item
                                       key={m.value}
@@ -733,9 +746,23 @@ export default function Home() {
                                           <span className="pro-badge">PRO</span>
                                         )}
                                       </div>
-                                      <Select.ItemIndicator>
-                                        <CheckIcon className="size-3.5 text-primary" />
-                                      </Select.ItemIndicator>
+                                      <div className="flex items-center gap-2">
+                                        <span
+                                          className={`inline-flex items-center gap-1 text-[11px] font-medium tabular-nums ${
+                                            m.free
+                                              ? "text-emerald-500 dark:text-emerald-400"
+                                              : creditCost >= 6
+                                                ? "text-amber-500 dark:text-amber-400"
+                                                : "text-muted-foreground/70"
+                                          }`}
+                                        >
+                                          {creditCost}{" "}
+                                          <Coins className="size-3" />
+                                        </span>
+                                        <Select.ItemIndicator>
+                                          <CheckIcon className="size-3.5 text-primary" />
+                                        </Select.ItemIndicator>
+                                      </div>
                                     </Select.Item>
                                   );
                                 })}
@@ -973,63 +1000,6 @@ export default function Home() {
   );
 }
 
-const Footer = memo(() => {
-  return (
-    <footer className="mt-auto flex w-full items-center justify-between gap-4 px-6 pb-6 pt-4">
-      <div className="flex items-center gap-2 text-sm">
-        <span className="font-medium tracking-tight text-foreground/80">
-          Squid Coder
-        </span>
-        <span className="text-border">·</span>
-        <span className="text-xs text-muted-foreground/60">
-          Turn ideas into apps
-        </span>
-      </div>
-      <div className="flex items-center gap-0.5">
-        <Link
-          href="https://x.com/drewsepeczi"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="X (Twitter)"
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
-            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
-          </svg>
-        </Link>
-        <Link
-          href="https://github.com/drewsephski"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="GitHub"
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
-          </svg>
-        </Link>
-      </div>
-    </footer>
-  );
-});
-
-Footer.displayName = "Footer";
-
 function LoadingMessage({
   isHighQuality,
   screenshotUrl,
@@ -1040,12 +1010,12 @@ function LoadingMessage({
   isScrapingUrl?: boolean;
 }) {
   return (
-    <div className="bg-background/96 dark:bg-card/96 absolute inset-0 flex items-center justify-center rounded-[20px] backdrop-blur-md">
+    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[20px] bg-background dark:bg-card">
       <div className="flex flex-col items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
-          <Spinner className="text-blue-500" />
+          <Spinner className="size-5 text-blue-500" />
         </div>
-        <p className="text-center text-[13.5px] font-medium text-muted-foreground">
+        <p className="text-center text-[15px] font-semibold text-foreground">
           {isScrapingUrl
             ? "Capturing website…"
             : isHighQuality

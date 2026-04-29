@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 function SignInForm() {
   const { data: session, isPending } = useSession();
   const searchParams = useSearchParams();
-  const callbackUrlRef = useRef(searchParams.get("callbackUrl") || "/dashboard");
+  const callbackUrlRef = useRef(
+    searchParams.get("callbackUrl") || "/dashboard",
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +29,7 @@ function SignInForm() {
   if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -82,10 +84,23 @@ function SignInForm() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8 p-6 sm:p-8">
         <div className="text-center">
+          <Link
+            href="/"
+            className="mb-8 inline-flex items-center justify-center transition-transform hover:scale-105"
+          >
+            <img
+              src="/squidcoder-logo.svg"
+              alt="Squid Coder"
+              className="h-16 w-auto"
+            />
+          </Link>
           <h2 className="text-3xl font-bold tracking-tight">Sign in</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Or{" "}
-            <Link href="/sign-up" className="font-medium text-primary hover:underline min-h-[44px] inline-flex items-center">
+            <Link
+              href="/sign-up"
+              className="inline-flex min-h-[44px] items-center font-medium text-primary hover:underline"
+            >
               create a new account
             </Link>
           </p>
@@ -111,7 +126,7 @@ function SignInForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+                className="mt-1 block min-h-[48px] w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 placeholder="you@example.com"
                 suppressHydrationWarning
               />
@@ -137,18 +152,14 @@ function SignInForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+                className="mt-1 block min-h-[48px] w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 placeholder="••••••••"
                 suppressHydrationWarning
               />
             </div>
           </div>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Signing in..." : "Sign in"}
           </Button>
 
@@ -157,7 +168,9 @@ function SignInForm() {
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
             </div>
           </div>
 
@@ -196,11 +209,13 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+        </div>
+      }
+    >
       <SignInForm />
     </Suspense>
   );
