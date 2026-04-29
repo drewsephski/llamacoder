@@ -5,12 +5,16 @@ import { memo, useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import { authClient } from "@/lib/auth-client";
-import { MenuIcon, XIcon, Zap, Loader2 } from "lucide-react";
+import { MenuIcon, XIcon, Zap, Loader2, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PricingModal } from "@/components/pricing-modal";
 import { Button } from "@/components/ui/button";
 
-function Header() {
+interface HeaderProps {
+  onHelpClick?: () => void;
+}
+
+function Header({ onHelpClick }: HeaderProps) {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -119,15 +123,16 @@ function Header() {
                 Upgrade
               </Button>
             )}
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm" className="text-foreground hover:text-white hover:bg-accent">
               <Link href="/dashboard">
-                Dashboard
+                Dashboard 
               </Link>
             </Button>
             <Button
               onClick={handleSignOut}
               variant="ghost"
               size="sm"
+              className="text-foreground hover:text-white hover:bg-accent"
             >
               Sign Out
             </Button>
@@ -138,10 +143,11 @@ function Header() {
               onClick={() => setShowPricingModal(true)}
               variant="ghost"
               size="sm"
+              className="text-foreground hover:text-white hover:bg-accent"
             >
               Pricing
             </Button>
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm" className="text-foreground hover:text-white hover:bg-accent">
               <Link href="/sign-in">
                 Sign In
               </Link>
@@ -154,6 +160,15 @@ function Header() {
           </>
         )}
         <AnimatedThemeToggleButton variant="horizontal" />
+        <Button
+          onClick={onHelpClick}
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          aria-label="Help"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Mobile Menu Button */}
@@ -161,7 +176,7 @@ function Header() {
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         variant="ghost"
         size="icon"
-        className="size-11 md:hidden"
+        className="size-10 md:hidden"
         aria-label="Toggle menu"
       >
         {mobileMenuOpen ? (
@@ -197,12 +212,13 @@ function Header() {
                         setMobileMenuOpen(false);
                       }}
                       size="sm"
+                      className="justify-start"
                     >
                       <Zap className="h-4 w-4" />
                       Upgrade
                     </Button>
                   )}
-                    <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)} className="justify-start">
+                    <Button asChild variant="default" onClick={() => setMobileMenuOpen(false)} className="justify-start">
                     <Link href="/dashboard">
                       Dashboard
                     </Link>
@@ -212,7 +228,7 @@ function Header() {
                       handleSignOut();
                       setMobileMenuOpen(false);
                     }}
-                    variant="ghost"
+                    variant="default"
                     className="justify-start"
                   >
                     Sign Out
@@ -225,17 +241,17 @@ function Header() {
                       setShowPricingModal(true);
                       setMobileMenuOpen(false);
                     }}
-                    variant="ghost"
+                    variant="default"
                     className="justify-start"
                   >
                     Pricing
                   </Button>
-                  <Button asChild variant="ghost" onClick={() => setMobileMenuOpen(false)} className="justify-start">
+                  <Button asChild variant="default" onClick={() => setMobileMenuOpen(false)} className="justify-start">
                     <Link href="/sign-in">
                       Sign In
                     </Link>
                   </Button>
-                  <Button asChild onClick={() => setMobileMenuOpen(false)} className="justify-start">
+                  <Button asChild variant="default" onClick={() => setMobileMenuOpen(false)} className="justify-start">
                     <Link href="/sign-up">
                       Sign Up
                     </Link>

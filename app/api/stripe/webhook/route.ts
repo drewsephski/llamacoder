@@ -185,6 +185,52 @@ export async function POST(request: NextRequest) {
               description: `${tierConfig.name} subscription - ${tierConfig.monthlyCredits} credits`,
             },
           });
+        } else {
+          // NEW: Create subscription for new users
+          // Find user by customer ID or metadata
+          let userId: string | null = sessionMetadata.userId || null;
+          
+          if (!userId) {
+            // Look up by stripeCustomerId via user record
+            const userWithCustomer = await prisma.user.findFirst({
+              where: { subscription: { stripeCustomerId: customerId } },
+            });
+            if (userWithCustomer) {
+              userId = userWithCustomer.id;
+            }
+          }
+          
+          if (userId) {
+            // Create subscription record
+            await prisma.subscription.create({
+              data: {
+                userId: userId,
+                stripeCustomerId: customerId,
+                stripeSubscriptionId: subscriptionId,
+                stripePriceId: priceId,
+                status: subscription.status,
+                tier: tier,
+                currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              },
+            });
+            
+            // Add credits
+            await prisma.user.update({
+              where: { id: userId },
+              data: { credits: { increment: tierConfig.monthlyCredits } },
+            });
+            
+            // Record credit history
+            await prisma.creditHistory.create({
+              data: {
+                userId: userId,
+                amount: tierConfig.monthlyCredits,
+                type: "subscription",
+                description: `${tierConfig.name} subscription - ${tierConfig.monthlyCredits} credits`,
+              },
+            });
+          }
         }
         break;
       }

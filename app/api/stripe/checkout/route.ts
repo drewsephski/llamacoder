@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
       subscription_data: {
         metadata: {
           tier: tier,
+          userId: user.id,
         },
       },
     });

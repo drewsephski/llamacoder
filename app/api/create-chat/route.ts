@@ -160,6 +160,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let plan: string | null = null;
     let userMessage: string;
     if (quality === "high") {
       let initialRes = await generateText({
@@ -183,7 +184,23 @@ export async function POST(request: NextRequest) {
 
       console.log("PLAN:", initialRes.text);
 
-      userMessage = initialRes.text ?? prompt;
+      plan = initialRes.text ?? null;
+      userMessage = prompt; // Use original prompt instead of plan
+
+      // Track plan generation in GenerationLog
+      try {
+        await prisma.generationLog.create({
+          data: {
+            userId: session?.user.id || null,
+            modelId: resolvedModel,
+            creditsUsed: getModelCreditCost(resolvedModel),
+            status: "plan_generated",
+            chatId: chat.id,
+          },
+        });
+      } catch (logError) {
+        console.error("Failed to log plan generation:", logError);
+      }
     } else if (fullScreenshotDescription) {
       userMessage =
         prompt +
@@ -199,6 +216,8 @@ export async function POST(request: NextRequest) {
       },
       data: {
         title,
+        plan: plan,
+        hasCode: false,
         messages: {
           createMany: {
             data: [
@@ -225,6 +244,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       chatId: chat.id,
       lastMessageId: lastMessage.id,
+      plan: plan,
+      hasCode: false,
     });
   } catch (error) {
     console.error("Error creating chat:", error);

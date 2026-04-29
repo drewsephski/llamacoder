@@ -63,6 +63,12 @@ export default function PageClient({ chat }: { chat: Chat }) {
       .filter((m: Message) => m.role === "assistant" && extractFirstCodeBlock(m.content))
       .at(-1),
   );
+  const [streamError, setStreamError] = useState<{
+    message: string;
+    partialText: string;
+    canRetry: boolean;
+    failedMessageId?: string;
+  } | null>(null);
 
   // Save state
   const [isSaving, setIsSaving] = useState(false);
@@ -107,6 +113,12 @@ export default function PageClient({ chat }: { chat: Chat }) {
       // Auto-save after sign in
       await handleSave();
     }
+  };
+
+  const handleRetry = () => {
+    setStreamError(null);
+    // Note: ChatBox handles prompt state and retry via its own form submission
+    // We just clear the error state here
   };
 
   useEffect(() => {
@@ -196,8 +208,47 @@ export default function PageClient({ chat }: { chat: Chat }) {
             router.refresh();
           });
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Stream reading error:", error);
+        
+        // Set error state for UI
+        setStreamError({
+          message: error.message || "Connection lost",
+          partialText: fullText,
+          canRetry: true,
+        });
+        
+        // Persist partial assistant message so user sees what failed
+        if (fullText) {
+          try {
+            const partialMessage = await createMessage(
+              chat.id,
+              fullText + "\n\n[Error: Response truncated - please retry]",
+              "assistant",
+              extractAllCodeBlocks(fullText),
+            );
+            setStreamError({
+              message: error.message || "Connection lost",
+              partialText: fullText,
+              canRetry: true,
+              failedMessageId: partialMessage.id,
+            });
+          } catch (saveError) {
+            console.error("Failed to save partial message:", saveError);
+            setStreamError({
+              message: error.message || "Connection lost",
+              partialText: fullText,
+              canRetry: true,
+            });
+          }
+        } else {
+          setStreamError({
+            message: error.message || "Connection lost",
+            partialText: "",
+            canRetry: true,
+          });
+        }
+        
         isHandlingStreamRef.current = false;
       }
     }
@@ -226,7 +277,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
             chat={chat}
             streamText={streamText}
             activeMessage={activeMessage}
-            onMessageClick={(message) => {
+            streamError={streamError}
+            onRetryAction={handleRetry}
+            onMessageClickAction={(message) => {
               if (message !== activeMessage) {
                 setActiveMessage(message);
                 setIsShowingCodeViewer(true);
@@ -239,7 +292,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
           <ChatBox
             chat={chat}
-            onNewStreamPromise={setStreamPromise}
+            onNewStreamPromiseAction={setStreamPromise}
             isStreaming={!!streamPromise}
           />
         </div>

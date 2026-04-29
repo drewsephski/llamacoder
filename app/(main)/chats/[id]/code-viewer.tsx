@@ -404,14 +404,14 @@ export default function CodeViewer({
               Saved
             </span>
           )}
-          <div className="inline-flex rounded-lg border-2 border-border p-1">
+          <div className="inline-flex items-center rounded-xl border border-border/60 bg-muted/30 p-1">
             <button
               onClick={() => onTabChange("code")}
               disabled={disabledControls}
-              className={`h-7 w-16 rounded-md text-xs font-medium transition-colors ${
+              className={`h-8 w-20 rounded-lg text-xs font-semibold transition-all duration-200 ${
                 activeTab === "code"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-foreground"
               } disabled:cursor-not-allowed disabled:opacity-50`}
             >
               Code
@@ -419,10 +419,10 @@ export default function CodeViewer({
             <button
               onClick={() => onTabChange("preview")}
               disabled={disabledControls}
-              className={`h-7 w-16 rounded-md text-xs font-medium transition-colors ${
+              className={`h-8 w-20 rounded-lg text-xs font-semibold transition-all duration-200 ${
                 activeTab === "preview"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-foreground"
               } disabled:cursor-not-allowed disabled:opacity-50`}
             >
               Preview

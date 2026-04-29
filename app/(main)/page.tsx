@@ -30,10 +30,14 @@ import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/components/pricing-modal";
+import { OnboardingModal } from "@/components/onboarding-modal";
+import { HelpPanel } from "@/components/help-panel";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { HelpCircle } from "lucide-react";
 
 export default function Home() {
   const { setStreamPromise } = use(Context);
@@ -58,9 +62,13 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [isPending, startTransition] = useTransition();
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
+  const [smoothMousePosition, setSmoothMousePosition] = useState({ x: 50, y: 50 });
   const [isHoveringRing, setIsHoveringRing] = useState(false);
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [credits, setCredits] = useState(0);
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -69,9 +77,28 @@ export default function Home() {
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
-    // Check auth status on mount
     checkAuthStatus();
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    if (!hasSeenOnboarding) {
+      setShowOnboardingModal(true);
+    }
   }, []);
+
+  useEffect(() => {
+    const animate = () => {
+      setSmoothMousePosition(prev => ({
+        x: prev.x + (mousePosition.x - prev.x) * 0.08,
+        y: prev.y + (mousePosition.y - prev.y) * 0.08,
+      }));
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+    animationFrameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [mousePosition]);
 
   const checkAuthStatus = async () => {
     try {
@@ -201,9 +228,9 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-x-hidden">
-      <div 
+      <div
         ref={ringRef}
-        className="absolute inset-0 flex justify-center"
+        className="absolute inset-0 flex justify-center overflow-hidden"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
@@ -211,40 +238,40 @@ export default function Home() {
           <Image
             src={bgImg}
             alt=""
-            className={`object-cover object-top mix-blend-screen transition-all duration-500 ease-out ${
-              isHoveringRing ? 'scale-[1.02] opacity-100 dark:opacity-30' : 'scale-100 opacity-90 dark:opacity-20'
+            className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
+              isHoveringRing ? 'scale-[1.01] opacity-70 dark:opacity-15' : 'scale-100 opacity-60 dark:opacity-10'
             }`}
             priority
           />
-          {isHoveringRing && (
-            <div 
-              className="pointer-events-none absolute inset-0 transition-opacity duration-300"
-              style={{
-                background: `radial-gradient(circle 300px at ${mousePosition.x}% ${mousePosition.y}%, rgba(59, 130, 246, 0.15) 0%, transparent 70%)`,
-              }}
-            />
-          )}
+          <div
+            className="pointer-events-none absolute inset-0 transition-opacity duration-500"
+            style={{
+              background: isHoveringRing
+                ? `radial-gradient(circle 400px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+                   radial-gradient(circle 200px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(99, 102, 241, 0.12) 0%, transparent 50%)`
+                : 'none',
+              opacity: isHoveringRing ? 1 : 0,
+            }}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-transparent to-background opacity-80" />
         </div>
       </div>
 
       <div className="isolate flex min-h-dvh flex-col">
-        <Header />
+        <Header onHelpClick={() => setShowHelpPanel(true)} />
 
-        <div className="mt-6 flex flex-1 flex-col items-center px-4 sm:mt-8 lg:mt-16">
-          <div className="mt-4 flex flex-col items-center gap-4 lg:mt-8 lg:gap-5">
-            <h1 className="font-display text-center text-4xl font-semibold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-7xl lg:text-8xl">
-              Turn your{" "}
-              <span className="font-medium text-blue-500 dark:text-blue-400">
-                idea
+<div className="mt-16 flex flex-1 flex-col items-center px-4 sm:mt-20 lg:mt-24">
+          <div className="flex flex-col items-center gap-5 lg:gap-6">
+            <h1 className="font-display text-center font-medium tracking-tight text-foreground">
+              <span className="block text-4xl leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl">
+                Turn ideas 
               </span>
-              <br className="hidden md:block" />{" "}
-              into an{" "}
-              <span className="font-medium text-blue-500 dark:text-blue-400">
-                app
+              <span className="block text-4xl leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl mt-1 text-blue-500 dark:text-blue-400">
+                into apps
               </span>
             </h1>
-            <p className="max-w-md text-center text-sm text-muted-foreground sm:text-base md:text-lg">
-              Describe what you want.
+            <p className="max-w-md text-center text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Describe what you want to build. <br/>We&apos;ll generate the code.
             </p>
           </div>
 
@@ -328,7 +355,7 @@ export default function Home() {
             }}
           >
             <Fieldset>
-              <div className="relative flex w-full max-w-2xl rounded-xl border border-border bg-background pb-16 dark:bg-card sm:pb-10">
+              <div className="group relative flex w-full max-w-2xl rounded-2xl border border-border/60 bg-background/80 pb-14 dark:bg-card/80 sm:pb-10 backdrop-blur-xl shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/30 transition-all duration-500 focus-within:shadow-blue-500/20 focus-within:border-blue-500/40">
                 <div className="w-full">
                   {screenshotLoading && (
                     <div className="relative mx-3 mt-3">
@@ -381,31 +408,23 @@ export default function Home() {
                       </button>
                     </div>
                   )}
-                  <div className="relative">
-                    <div className="px-3 py-5">
-                      <p className="invisible w-full whitespace-pre-wrap">
-                        {textareaResizePrompt}
-                      </p>
-                    </div>
-                    <textarea
-                      ref={textareaRef}
-                      placeholder="Build me a budgeting app..."
-                      required
-                      name="prompt"
-                      rows={2}
-                      className="peer absolute inset-0 w-full resize-none bg-transparent px-4 py-5 placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey) {
-                          event.preventDefault();
-                          const target = event.target;
-                          if (!(target instanceof HTMLTextAreaElement)) return;
-                          target.closest("form")?.requestSubmit();
-                        }
-                      }}
-                    />
-                  </div>
+                  <Textarea
+                    ref={textareaRef}
+                    placeholder="Build me a budgeting app..."
+                    required
+                    name="prompt"
+                    className="min-h-[80px] resize-none border-0 focus:ring-0 mb-4 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        const target = event.target;
+                        if (!(target instanceof HTMLTextAreaElement)) return;
+                        target.closest("form")?.requestSubmit();
+                      }
+                    }}
+                  />
                 </div>
                 <div className="absolute bottom-2 left-3 right-3 flex flex-wrap items-center justify-between gap-2 sm:flex-nowrap">
                   <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
@@ -414,19 +433,24 @@ export default function Home() {
                       value={model}
                       onValueChange={handleModelChange}
                     >
-                      <Select.Trigger className="inline-flex items-center gap-1 rounded-md p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/80 dark:hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
+                      <Select.Trigger className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
                         <Select.Value aria-label={model}>
                           <span className="flex items-center gap-1.5">
                             {selectedModel?.label}
+                            {selectedModel?.paid && (
+                              <span className="text-[10px] px-1 py-0 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
+                                Pro
+                              </span>
+                            )}
                           </span>
                         </Select.Value>
                         <Select.Icon>
-                          <ChevronDownIcon className="size-3" />
+                          <ChevronDownIcon className="size-3.5 opacity-60" />
                         </Select.Icon>
                       </Select.Trigger>
                       <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-md bg-popover shadow ring-1 ring-border dark:bg-popover dark:ring-border">
-                          <Select.Viewport className="space-y-1 p-2">
+                        <Select.Content className="overflow-hidden rounded-lg bg-popover shadow-lg ring-1 ring-border dark:bg-popover dark:ring-border min-w-[180px]">
+                          <Select.Viewport className="p-1">
                             {MODELS.map((m) => {
                               const isLocked = m.paid && !canUsePaidModels;
                               return (
@@ -439,44 +463,24 @@ export default function Home() {
                                       setShowPricingModal(true);
                                     }
                                   }}
-                                  className={`flex cursor-pointer items-center justify-between rounded-md p-2 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:ring-2 data-[highlighted]:ring-ring/40 dark:data-[highlighted]:bg-accent/50 ${isLocked ? 'opacity-70' : ''}`}
+                                  className={`flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? 'opacity-60' : ''}`}
                                 >
                                   <div className="flex items-center gap-2">
-                                    <Select.ItemText className={`inline-flex items-center gap-2 ${m.free ? 'text-green-600 dark:text-green-400 font-medium' : isLocked ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                    <Select.ItemText className={`${m.free ? 'text-green-600 dark:text-green-400 font-medium' : isLocked ? 'text-muted-foreground' : 'text-foreground'}`}>
                                       {m.label}
                                     </Select.ItemText>
                                     {isLocked && (
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
+                                      <span className="text-[10px] px-1 py-0 rounded bg-muted text-muted-foreground font-medium">
                                         Pro
                                       </span>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    {isLocked ? (
-                                      <span className="text-xs text-muted-foreground">Subscribe to unlock</span>
-                                    ) : null}
-                                    <Select.ItemIndicator>
-                                      <CheckIcon className="size-3 text-primary" />
-                                    </Select.ItemIndicator>
-                                  </div>
+                                  <Select.ItemIndicator>
+                                    <CheckIcon className="size-3.5 text-primary" />
+                                  </Select.ItemIndicator>
                                 </Select.Item>
                               );
                             })}
-                            {!canUsePaidModels && (
-                              <div className="mt-2 pt-2 border-t border-border">
-                                <button
-                                  onClick={() => setShowPricingModal(true)}
-                                  className="w-full text-left p-2 rounded-md bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-900/30 hover:border-amber-300 dark:hover:border-amber-800/50 transition-colors"
-                                >
-                                  <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                                    Unlock {MODELS.filter(m => m.paid).length}+ premium models
-                                  </p>
-                                  <p className="text-[10px] text-amber-600/80 dark:text-amber-500/60 mt-0.5">
-                                    Starting at $9/month
-                                  </p>
-                                </button>
-                              </div>
-                            )}
                           </Select.Viewport>
                           <Select.ScrollDownButton />
                           <Select.Arrow />
@@ -484,14 +488,14 @@ export default function Home() {
                       </Select.Portal>
                     </Select.Root>
 
-                    <div className="h-4 w-px bg-border max-sm:hidden" />
+                    <div className="h-4 w-px bg-border/50 max-sm:hidden" />
 
                     <Select.Root
                       name="quality"
                       value={quality}
                       onValueChange={setQuality}
                     >
-                      <Select.Trigger className="inline-flex items-center gap-1 rounded p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/80 dark:hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
+                      <Select.Trigger className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
                         <Select.Value aria-label={quality}>
                           <span className="max-sm:hidden">
                             {quality === "low"
@@ -499,27 +503,27 @@ export default function Home() {
                               : "Smarter"}
                           </span>
                           <span className="sm:hidden">
-                            <LightningBoltIcon className="size-3" />
+                            <LightningBoltIcon className="size-3.5" />
                           </span>
                         </Select.Value>
                         <Select.Icon>
-                          <ChevronDownIcon className="size-3" />
+                          <ChevronDownIcon className="size-3.5 opacity-60" />
                         </Select.Icon>
                       </Select.Trigger>
                       <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-md bg-popover shadow ring-1 ring-border dark:bg-popover dark:ring-border">
-                          <Select.Viewport className="space-y-1 p-2">
+                        <Select.Content className="overflow-hidden rounded-lg bg-popover shadow-lg ring-1 ring-border dark:bg-popover dark:ring-border">
+                          <Select.Viewport className="space-y-0.5 p-1.5">
                             {qualityOptions.map((q) => (
                               <Select.Item
                                 key={q.value}
                                 value={q.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:ring-2 data-[highlighted]:ring-ring/40 dark:data-[highlighted]:bg-accent/50"
+                                className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:ring-1 data-[highlighted]:ring-ring/30"
                               >
                                 <Select.ItemText className="inline-flex items-center gap-2 text-muted-foreground">
                                   {q.label}
                                 </Select.ItemText>
                                 <Select.ItemIndicator>
-                                  <CheckIcon className="size-3 text-primary" />
+                                  <CheckIcon className="size-3.5 text-primary" />
                                 </Select.ItemIndicator>
                               </Select.Item>
                             ))}
@@ -529,21 +533,16 @@ export default function Home() {
                         </Select.Content>
                       </Select.Portal>
                     </Select.Root>
-                    <div className="h-4 w-px bg-border max-sm:hidden" />
-                    <div className="flex items-center gap-2">
+                    <div className="h-4 w-px bg-border/50 max-sm:hidden" />
+                    <div className="flex items-center gap-1">
                       <label
                         htmlFor="screenshot"
-                        className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:underline"
+                        className="group flex cursor-pointer items-center justify-center rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="Attach screenshot"
                       >
-                        <div className="flex size-6 items-center justify-center rounded bg-foreground hover:bg-foreground/80 dark:bg-background dark:hover:bg-muted">
-                          <UploadIcon className="size-4" />
-                        </div>
-                        <div className="hidden items-center justify-center transition hover:text-foreground sm:flex">
-                          Attach
-                        </div>
+                        <UploadIcon className="size-4" />
                       </label>
                       <input
-                        // name="screenshot"
                         id="screenshot"
                         type="file"
                         accept="image/png, image/jpeg, image/webp"
@@ -553,12 +552,11 @@ export default function Home() {
                       />
                       {/* Info tooltip for supported formats */}
                       <div className="group relative hidden sm:block">
-                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help transition-colors group-hover:text-muted-foreground" />
                         <div className="absolute bottom-full left-1/2 mb-2 w-48 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-xs text-popover-foreground shadow-lg ring-1 ring-border opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none z-50">
                           <p className="font-medium mb-1">Supported formats:</p>
                           <p className="text-muted-foreground">PNG, JPEG, WebP</p>
                           <p className="mt-1 text-muted-foreground">Upload a screenshot to convert it into code</p>
-                          {/* Arrow pointing down */}
                           <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
                         </div>
                       </div>
@@ -570,9 +568,11 @@ export default function Home() {
                     <LoadingButton
                       type="submit"
                       disabled={screenshotLoading || prompt.length === 0 || isCheckingEligibility}
+                      className=" transition-transform duration-200 group"
                     >
+                      Build
                       <Spinner loading={isCheckingEligibility}>
-                        Build
+                        <img src="/image.png" alt="Build" className="invert size-4 group-hover:scale-105 group-hover:translate-x-1 transition-transform duration-200" />
                       </Spinner>
                     </LoadingButton>
                   </div>
@@ -587,19 +587,15 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="mt-4 flex w-full flex-wrap justify-center gap-2.5 sm:justify-between">
+              <div className="mt-6 flex w-full flex-wrap justify-center gap-2">
                 {SUGGESTED_PROMPTS.map((v) => (
-                  <Button
+                  <button
                     key={v.title}
                     type="button"
-                    variant="secondary"
-                    size="sm"
                     onClick={() => {
                       setPrompt(v.description);
-                      // Refocus the textarea after setting the prompt
                       setTimeout(() => {
                         textareaRef.current?.focus();
-                        // Position cursor at the end
                         if (textareaRef.current) {
                           textareaRef.current.selectionStart =
                             textareaRef.current.value.length;
@@ -608,50 +604,49 @@ export default function Home() {
                         }
                       }, 0);
                     }}
-                    className="text-xs"
+                    className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/50 px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:border-blue-400/40 hover:bg-blue-50/50 hover:text-foreground dark:hover:bg-blue-950/20"
                   >
+                    <Sparkles className="h-3.5 w-3.5 text-blue-500/70 transition-colors group-hover:text-blue-500" />
                     {v.title}
-                  </Button>
+                  </button>
                 ))}
               </div>
 
-              {/* URL Input Section - Clean external option */}
-              <div className="mt-6 flex items-center justify-center gap-2">
-                <div className="h-px w-12 bg-gradient-to-r from-transparent via-border to-border" />
-                <span className="text-sm text-muted-foreground">or</span>
-                <div className="h-px w-12 bg-gradient-to-l from-transparent via-border to-border" />
+              {/* URL Input Section */}
+              <div className="mt-6 text-center">
+                <span className="text-sm text-muted-foreground/70">or paste a URL</span>
               </div>
 
-              <div className="mb-10 mt-3 flex w-full items-center justify-center sm:mb-12">
+              <div className="mb-12 mt-4 flex w-full items-center justify-center sm:mb-16">
                 <div
                   className={`
-                    group relative flex w-full max-w-md items-center gap-2 overflow-hidden rounded-xl border-2 px-3 py-2.5 shadow-sm transition-all duration-300
+                    group relative flex w-full max-w-md items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 shadow-sm transition-all duration-300
                     ${urlInput.trim()
-                      ? 'border-blue-500 bg-blue-50/50 shadow-blue-500/10 dark:border-blue-400 dark:bg-blue-950/20 dark:shadow-blue-400/10'
-                      : 'border-border bg-background hover:border-foreground/30 hover:shadow-md dark:bg-card'
+                      ? 'border-blue-400/50 bg-blue-50/30 shadow-blue-500/5 dark:border-blue-400/40 dark:bg-blue-950/15'
+                      : 'border-border/60 bg-background/80 hover:border-foreground/20 hover:shadow-md dark:bg-card/80'
                     }
-                    ${isScrapingUrl ? 'border-blue-400 bg-blue-50 dark:border-blue-300 dark:bg-blue-900/30' : ''}
-                    focus-within:border-blue-500 focus-within:bg-background focus-within:shadow-md focus-within:shadow-blue-500/10 dark:focus-within:border-blue-400 dark:focus-within:bg-card
+                    ${isScrapingUrl ? 'border-blue-400/60 bg-blue-50/50 dark:bg-blue-900/20' : ''}
+                    focus-within:border-blue-400/60 focus-within:shadow-md focus-within:shadow-blue-500/5
                   `}
                 >
                   <div className={`
-                    flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors
+                    flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors
                     ${isScrapingUrl
                       ? 'bg-blue-500 text-white'
                       : urlInput.trim()
                         ? 'bg-blue-500 text-white'
-                        : 'bg-muted text-muted-foreground group-hover:bg-foreground/10 group-hover:text-foreground'
+                        : 'bg-muted/80 text-muted-foreground group-hover:bg-muted group-hover:text-foreground'
                     }
                   `}>
                     {isScrapingUrl ? (
-                      <Sparkles className="size-4 animate-spin" />
+                      <Sparkles className="size-4" />
                     ) : (
                       <Link2 className="size-4" />
                     )}
                   </div>
                   <Input
                     type="url"
-                    placeholder="Build from a URL..."
+                    placeholder="https://example.com"
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -661,15 +656,15 @@ export default function Home() {
                       }
                     }}
                     disabled={isScrapingUrl}
-                    className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-none focus-visible:border-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:cursor-not-allowed"
+                    className="w-full border-none text-[15px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
                   />
                   {urlInput.trim() && !isScrapingUrl && (
                     <button
                       type="button"
                       onClick={handleUrlScrape}
-                      className="flex size-7 items-center justify-center rounded-md bg-blue-500 text-white transition-all hover:bg-blue-600 hover:scale-105 active:scale-95"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500 text-white transition-all hover:bg-blue-600 hover:scale-105 active:scale-95"
                     >
-                      <ArrowRightIcon className="size-3" />
+                      <ArrowRightIcon className="size-3.5" />
                     </button>
                   )}
                   {isScrapingUrl && (
@@ -692,48 +687,65 @@ export default function Home() {
         remainingCredits={userCredits}
         isAuthenticated={isAuthenticated}
       />
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        onClose={() => {
+          setShowOnboardingModal(false);
+          localStorage.setItem('hasSeenOnboarding', 'true');
+        }}
+      />
+      <HelpPanel
+        isOpen={showHelpPanel}
+        onClose={() => setShowHelpPanel(false)}
+      />
     </div>
   );
 }
 
 const Footer = memo(() => {
   return (
-    <footer className="mt-auto flex w-full flex-col items-center justify-between gap-2 px-5 pb-5 pt-2 text-center sm:flex-row sm:gap-0 sm:pt-4">
-      <div>
-        <div className="font-medium">
-          Built with{" "}
-          <span className="font-semibold text-blue-600">Squid Coder</span>
-          .
-        </div>
+    <footer className="mt-auto flex w-full flex-col items-center justify-between gap-4 px-6 pb-6 pt-6 text-center sm:flex-row sm:gap-0">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="font-medium">Squid Coder</span>
+        <span className="text-border">·</span>
+        <span>Turn ideas into apps</span>
       </div>
-      <div className="flex items-center gap-4 pb-4 sm:pb-0">
-        <Link href="https://x.com/drewsepeczi" className="group p-2 rounded-md hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="X (Twitter)">
+      <div className="flex items-center gap-1">
+        <Link
+          href="https://x.com/drewsepeczi"
+          className="group flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="X (Twitter)"
+        >
           <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
             fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 fill-slate-500 group-hover:fill-slate-700"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M10.7465 16L6.8829 10.2473L2.04622 16H0L5.97508 8.89534L0 0H5.25355L8.8949 5.42183L13.4573 0H15.5036L9.80578 6.77562L16 16H10.7465ZM13.0252 14.3782H11.6475L2.92988 1.62182H4.30767L7.79916 6.72957L8.40293 7.6159L13.0252 14.3782Z"
-              fill="#71717a"
-            />
+            <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
+            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
           </svg>
         </Link>
         <Link
           href="https://github.com/drewsephski"
-          className="group p-2 rounded-md hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="group flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="GitHub"
         >
           <svg
-            aria-hidden="true"
-            className="h-6 w-6 fill-slate-500 group-hover:fill-slate-700"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z" />
+            <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
           </svg>
         </Link>
       </div>
@@ -751,19 +763,20 @@ function LoadingMessage({
   isScrapingUrl?: boolean;
 }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background px-1 py-3 md:px-3 dark:bg-card">
-      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-        <span className="animate-pulse text-balance text-center text-sm md:text-base">
+    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/95 backdrop-blur-sm px-4 dark:bg-card/95">
+      <div className="flex flex-col items-center justify-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
+          <Spinner className="text-blue-500" />
+        </div>
+        <span className="text-balance text-center text-sm font-medium text-muted-foreground">
           {isScrapingUrl
             ? "Capturing website screenshot..."
             : isHighQuality
-              ? `Coming up with project plan, may take 15 seconds...`
+              ? "Planning project structure..."
               : screenshotUrl
                 ? "Analyzing your screenshot..."
-                : `Creating your app...`}
+                : "Building your app..."}
         </span>
-
-        <Spinner />
       </div>
     </div>
   );

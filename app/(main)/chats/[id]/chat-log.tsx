@@ -11,17 +11,28 @@ import { Fragment } from "react";
 import { Streamdown } from "streamdown";
 import { StickToBottom } from "use-stick-to-bottom";
 import { AppVersionButton } from "@/components/app-version-button";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export default function ChatLog({
   chat,
   activeMessage,
   streamText,
-  onMessageClick,
+  onMessageClickAction,
+  streamError,
+  onRetryAction,
 }: {
   chat: Chat;
   activeMessage?: Message;
   streamText: string;
-  onMessageClick: (v: Message) => void;
+  onMessageClickAction: (v: Message) => void;
+  streamError?: {
+    message: string;
+    partialText: string;
+    canRetry: boolean;
+    failedMessageId?: string;
+  } | null;
+  onRetryAction?: () => void;
 }) {
   const assistantMessages = chat.messages.filter(
     (m) =>
@@ -73,7 +84,7 @@ export default function ChatLog({
                   return idx > 0 ? assistantMessages[idx - 1] : undefined;
                 })()}
                 isActive={!streamText && activeMessage?.id === message.id}
-                onMessageClick={onMessageClick}
+                onMessageClickAction={onMessageClickAction}
                 isStreaming={!!streamText}
               />
             )}
@@ -92,6 +103,37 @@ export default function ChatLog({
             previousMessage={assistantMessages.at(-1)}
           />
         )}
+
+        {streamError && (
+          <div className="rounded-xl border border-red-500/20 bg-red-50/50 p-4 dark:bg-red-950/20">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
+                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-red-700 dark:text-red-400">
+                  {streamError.message}
+                </p>
+                {streamError.partialText && (
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Partial response received ({streamError.partialText.length} characters)
+                  </p>
+                )}
+                {streamError.canRetry && onRetryAction && (
+                  <Button
+                    onClick={onRetryAction}
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 gap-2 border-red-200 bg-white hover:bg-red-50 dark:border-red-800 dark:bg-red-950/30 dark:hover:bg-red-900/40"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Retry
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </StickToBottom.Content>
     </StickToBottom>
   );
@@ -99,8 +141,8 @@ export default function ChatLog({
 
 function UserMessage({ content }: { content: string }) {
   return (
-    <div className="relative inline-flex max-w-[90%] items-end gap-3 self-end sm:max-w-[80%]">
-      <div className="whitespace-pre-wrap break-words rounded bg-card px-4 py-2 text-card-foreground shadow">
+    <div className="relative inline-flex max-w-[92%] items-end gap-3 self-end sm:max-w-[75%] md:max-w-[65%]">
+      <div className="whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm bg-primary px-5 py-3 text-[15px] leading-relaxed text-primary-foreground shadow-sm">
         {content}
       </div>
     </div>
@@ -112,7 +154,7 @@ function AssistantMessage({
   version,
   message,
   isActive,
-  onMessageClick = () => {},
+  onMessageClickAction = () => {},
   previousMessage,
   isStreaming = false,
 }: {
@@ -120,7 +162,7 @@ function AssistantMessage({
   version: number;
   message?: Message;
   isActive?: boolean;
-  onMessageClick?: (v: Message) => void;
+  onMessageClickAction?: (v: Message) => void;
   previousMessage?: Message;
   isStreaming?: boolean;
 }) {
@@ -178,8 +220,8 @@ function AssistantMessage({
         {segments.map((seg, i) => {
           if (seg.type === "text") {
             return (
-              <div key={i}>
-                <Streamdown className="prose dark:prose-invert text-foreground break-words">
+              <div key={i} className="prose dark:prose-invert prose-p:leading-relaxed prose-p:text-[15px] max-w-none">
+                <Streamdown className="text-foreground break-words">
                   {seg.content}
                 </Streamdown>
               </div>
@@ -189,7 +231,7 @@ function AssistantMessage({
           return (
             <div
               key={i}
-              className="m-0.5 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm"
+              className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-sm transition-colors hover:border-blue-400/40 hover:bg-blue-50/30 dark:hover:bg-blue-950/20"
             >
               <svg
                 width="14"
@@ -197,11 +239,21 @@ function AssistantMessage({
                 viewBox="0 0 14 14"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-muted-foreground"
+                className="text-blue-500/70"
               >
                 <path
-                  d="M10.5 3.5L11.5 2.5L12.5 3.5L11.5 4.5L10.5 3.5ZM2.5 9.5V11.5H4.5L9.5 6.5L7.5 4.5L2.5 9.5ZM0.5 12.5H13.5V14.5H0.5V12.5Z"
-                  fill="currentColor"
+                  d="M7.5 2.5H3.5C2.67157 2.5 2 3.17157 2 4V11C2 11.8284 2.67157 12.5 3.5 12.5H10.5C11.3284 12.5 12 11.8284 12 11V6.5L7.5 2.5Z"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M7.5 2.5V6.5H12"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
               <span className="font-medium text-foreground">{seg.path}</span>
@@ -214,7 +266,7 @@ function AssistantMessage({
           appTitle={appTitle}
           generating={false}
           disabled={!message || isStreaming}
-          onClick={message ? () => onMessageClick(message) : undefined}
+          onClick={message ? () => onMessageClickAction(message) : undefined}
           isActive={isActive}
         />
       </div>

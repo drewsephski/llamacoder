@@ -25,6 +25,8 @@ model Chat {
   title             String
   llamaCoderVersion String    @default("v2")
   shadcn            Boolean
+  plan              String?
+  hasCode           Boolean   @default(false)
   createdAt         DateTime  @default(now())
   userId            String?
   user              User?     @relation(fields: [userId], references: [id])

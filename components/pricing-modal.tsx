@@ -114,21 +114,15 @@ export function PricingModal({
         <div className="flex gap-2 mt-6 p-1 bg-muted/50 rounded-xl">
           <Button
             onClick={() => setActiveTab("plans")}
-            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "plans"
-                ? "bg-background shadow-sm text-white"
-                : "text-white hover:text-white hover:bg-background/50"
-            }`}
+            variant={activeTab === "plans" ? "default" : "ghost"}
+            className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
           >
             Subscription Plans
           </Button>
           <Button
             onClick={() => setActiveTab("credits")}
-            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "credits"
-                ? "bg-background shadow-sm text-white"
-                : "text-white hover:text-white hover:bg-background/50"
-            }`}
+            variant={activeTab === "credits" ? "default" : "ghost"}
+            className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
           >
             Buy Credits
           </Button>

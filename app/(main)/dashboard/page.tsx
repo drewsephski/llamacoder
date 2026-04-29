@@ -21,7 +21,9 @@ import {
   Coins,
   Check,
   Zap,
-  Crown
+  Crown,
+  FileText,
+  Code2
 } from "lucide-react";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import { Button } from "@/components/ui/button";
@@ -207,8 +209,8 @@ async function DashboardPage({
 
       {/* Main Content */}
       <main className="mx-auto max-w-6xl px-6 lg:px-8 py-10">
-        {/* Welcome Section */}
-        <div className="mb-6">
+        {/* Hero Section */}
+        <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Welcome back</p>
@@ -232,8 +234,58 @@ async function DashboardPage({
           </div>
         </div>
 
-        {/* Unlock Progress */}
-        <UnlockProgress projectCount={totalProjects} />
+        {/* Milestones Section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="text-lg font-medium">Your Progress</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">Projects Created</span>
+                <span className={`text-sm font-medium ${
+                  !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
+                    ? "text-red-600 dark:text-red-400"
+                    : ""
+                }`}>
+                  {hasActiveSubscription ? totalProjects : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div 
+                  className={`h-full transition-all ${
+                    !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
+                      ? "bg-red-500"
+                      : "bg-primary"
+                  }`}
+                  style={{ 
+                    width: `${hasActiveSubscription ? 100 : (totalProjects / FREE_PROJECT_LIMIT) * 100}%` 
+                  }}
+                />
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">Available Credits</span>
+                <div className="flex items-center gap-1.5">
+                  <Coins className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-medium">{userCredits}</span>
+                </div>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div 
+                  className="h-full bg-amber-500 transition-all"
+                  style={{ 
+                    width: `${hasActiveSubscription ? 100 : Math.min((userCredits / 100) * 100, 100)}%` 
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Upgrade Banner - show limit-reached when free user hits limit */}
         {!hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT ? (
@@ -243,52 +295,52 @@ async function DashboardPage({
         )}
 
         {/* Projects Section */}
-        {!hasProjects ? (
-          /* Empty State */
-          <div className="rounded-2xl border border-border bg-card">
-            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-                <Layers className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <h2 className="mb-2 text-xl font-semibold">Ready to build something amazing?</h2>
-              <p className="mb-6 max-w-sm text-muted-foreground text-balance">
-                Create your first app with AI. Start free with 5 credits, then upgrade to unlock GPT-5.4 and Claude Opus 4.6.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button asChild>
-                  <Link href="/">
-                    <Sparkles className="h-4 w-4" />
-                    Create your first project
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/?upgrade=true">
-                    <Crown className="h-4 w-4" />
-                    View Premium Plans
-                  </Link>
-                </Button>
-              </div>
-              <p className="mt-4 text-xs text-muted-foreground">
-                Free plan includes 5 starter credits for the free AI model
-              </p>
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Layers className="h-4 w-4 text-primary" />
             </div>
+            <h2 className="text-lg font-medium">Your Projects</h2>
+            <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+              !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
+                ? "border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400"
+                : "border-border bg-muted text-muted-foreground"
+            }`}>
+              {hasActiveSubscription ? totalProjects : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
+            </span>
           </div>
-        ) : (
-          <>
-            {/* Section Header */}
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-medium">Your projects</h2>
-                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                  !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
-                    ? "border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400"
-                    : "border-border bg-muted text-muted-foreground"
-                }`}>
-                  {hasActiveSubscription ? totalProjects : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
-                </span>
+          {!hasProjects ? (
+            /* Empty State */
+            <div className="rounded-2xl border border-border bg-card">
+              <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                  <Layers className="h-7 w-7 text-muted-foreground" />
+                </div>
+                <h2 className="mb-2 text-xl font-semibold">Ready to build something amazing?</h2>
+                <p className="mb-6 max-w-sm text-muted-foreground text-balance">
+                  Create your first app with AI. Start free with 5 credits, then upgrade to unlock GPT-5.4 and Claude Opus 4.6.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button asChild>
+                    <Link href="/">
+                      <Sparkles className="h-4 w-4" />
+                      Create your first project
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/?upgrade=true">
+                      <Crown className="h-4 w-4" />
+                      View Premium Plans
+                    </Link>
+                  </Button>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  Free plan includes 5 starter credits for the free AI model
+                </p>
               </div>
             </div>
-
+          ) : (
+            <>
             {/* Projects Grid */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {projects.map((project: any) => (
@@ -327,11 +379,26 @@ async function DashboardPage({
                     </Link>
 
                     {/* Meta */}
-                    <div className="mt-auto pt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>
-                        {project.quality === "high" ? "High quality" : "Fast"}
-                      </span>
+                    <div className="mt-auto pt-4 flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>
+                          {project.quality === "high" ? "High quality" : "Fast"}
+                        </span>
+                      </div>
+                      {/* Status Badge */}
+                      {(project as any).plan && !(project as any).hasCode && (
+                        <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-600 dark:text-blue-400">
+                          <FileText className="h-3 w-3" />
+                          <span>Planned</span>
+                        </div>
+                      )}
+                      {(project as any).hasCode && (
+                        <div className="flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-green-600 dark:text-green-400">
+                          <Code2 className="h-3 w-3" />
+                          <span>Ready</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -439,10 +506,16 @@ async function DashboardPage({
             </div>
           </>
         )}
+        </div>
 
         {/* Pricing Section */}
         <div className="mb-10">
-          <h2 className="text-lg font-medium mb-6">Pricing Plans</h2>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Crown className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="text-lg font-medium">Pricing Plans</h2>
+          </div>
           <div className="grid gap-6 md:grid-cols-3">
             {/* Free Plan */}
             <div className="rounded-xl border border-border bg-card p-6">
