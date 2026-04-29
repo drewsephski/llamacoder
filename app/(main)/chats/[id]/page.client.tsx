@@ -21,27 +21,21 @@ import { authClient } from "@/lib/auth-client";
 import { SignInModal } from "@/components/sign-in-modal";
 import { toast } from "sonner";
 
-const HeaderChat = memo(
-  ({
-    chat,
-  }: {
-    chat: Chat;
-  }) => {
-    return (
-      <div className="flex items-center justify-between gap-3 px-4 py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link href="/">
-            <LogoSmall />
-          </Link>
-          <p className="truncate italic text-muted-foreground">{chat.title}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <AnimatedThemeToggleButton variant="horizontal" />
-        </div>
+const HeaderChat = memo(({ chat }: { chat: Chat }) => {
+  return (
+    <div className="flex items-center justify-between gap-3 px-4 py-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <Link href="/">
+          <LogoSmall />
+        </Link>
+        <p className="truncate italic text-muted-foreground">{chat.title}</p>
       </div>
-    );
-  },
-);
+      <div className="flex items-center gap-2">
+        <AnimatedThemeToggleButton variant="horizontal" />
+      </div>
+    </div>
+  );
+});
 
 HeaderChat.displayName = "HeaderChat";
 
@@ -60,7 +54,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const isHandlingStreamRef = useRef(false);
   const [activeMessage, setActiveMessage] = useState(
     chat.messages
-      .filter((m: Message) => m.role === "assistant" && extractFirstCodeBlock(m.content))
+      .filter(
+        (m: Message) =>
+          m.role === "assistant" && extractFirstCodeBlock(m.content),
+      )
       .at(-1),
   );
   const [streamError, setStreamError] = useState<{
@@ -78,7 +75,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
   useEffect(() => {
     setIsCheckingSession(true);
-    authClient.getSession()
+    authClient
+      .getSession()
       .then((result) => {
         if (result.data) {
           setIsSaved(chat.userId === result.data.user.id);
@@ -177,8 +175,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
           );
 
           // Extract all files from previous messages
-          const previousFiles = previousAssistantMessages.flatMap((msg: Message) =>
-            extractAllCodeBlocks(msg.content),
+          const previousFiles = previousAssistantMessages.flatMap(
+            (msg: Message) => extractAllCodeBlocks(msg.content),
           );
 
           // Extract files from current AI response
@@ -210,14 +208,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
         });
       } catch (error: any) {
         console.error("Stream reading error:", error);
-        
+
         // Set error state for UI
         setStreamError({
           message: error.message || "Connection lost",
           partialText: fullText,
           canRetry: true,
         });
-        
+
         // Persist partial assistant message so user sees what failed
         if (fullText) {
           try {
@@ -248,7 +246,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
             canRetry: true,
           });
         }
-        
+
         isHandlingStreamRef.current = false;
       }
     }
@@ -267,11 +265,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
     <div className="flex h-dvh flex-col overflow-hidden">
       <div className="flex h-full min-h-0 overflow-hidden">
         <div
-          className={`flex w-full shrink-0 flex-col overflow-hidden h-full ${isShowingCodeViewer ? "lg:w-[30%]" : "lg:w-full"}`}
+          className={`flex h-full w-full shrink-0 flex-col overflow-hidden ${isShowingCodeViewer ? "lg:w-[30%]" : "lg:w-full"}`}
         >
-          <HeaderChat
-            chat={chat}
-          />
+          <HeaderChat chat={chat} />
 
           <ChatLog
             chat={chat}
@@ -299,7 +295,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
         <CodeViewerLayout
           isShowing={isShowingCodeViewer}
-          onClose={() => {
+          onCloseAction={() => {
             setActiveMessage(undefined);
             setIsShowingCodeViewer(false);
           }}

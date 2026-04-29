@@ -2,6 +2,12 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Neon } from "@/logos/neon";
 import { BetterAuth } from "@/logos/better-auth";
+import { Bun } from "@/logos/bun";
+import { Shadcn } from "@/logos/shadcn";
+import { PostgreSQL } from "@/logos/postgresql";
+import { Prisma } from "@/logos/prisma";
+import { Tailwind } from "@/logos/tailwind";
+import { TypeScript } from "@/logos/typescript";
 
 const BrandLogo = ({
   src,
@@ -15,16 +21,28 @@ const BrandLogo = ({
 
 const brands = [
   {
-    id: "openai",
-    name: "OpenAI",
-    logo: "https://svgl.app/library/openai.svg",
-    logoDark: "https://svgl.app/library/openai_dark.svg",
+    id: "typescript",
+    name: "TypeScript",
+    type: "component",
+    component: TypeScript,
   },
   {
     id: "react",
     name: "React",
     logo: "https://svgl.app/library/react_light.svg",
     logoDark: "https://svgl.app/library/react_dark.svg",
+  },
+  {
+    id: "shadcn",
+    name: "shadcn",
+    type: "component",
+    component: Shadcn,
+  },
+  {
+    id: "tailwind",
+    name: "Tailwind",
+    type: "component",
+    component: Tailwind,
   },
   {
     id: "vercel",
@@ -37,6 +55,12 @@ const brands = [
     name: "Next.js",
     logo: "https://svgl.app/library/nextjs_icon_dark.svg",
     logoDark: "https://svgl.app/library/nextjs_icon_dark.svg",
+  },
+  {
+    id: "openai",
+    name: "OpenAI",
+    logo: "https://svgl.app/library/openai.svg",
+    logoDark: "https://svgl.app/library/openai_dark.svg",
   },
   {
     id: "supabase",
@@ -68,6 +92,37 @@ const brands = [
     type: "component",
     component: Neon,
   },
+  {
+    id: "bun",
+    name: "Bun",
+    type: "component",
+    component: Bun,
+  },
+
+  {
+    id: "postgres",
+    name: "Postgres",
+    type: "component",
+    component: PostgreSQL,
+  },
+  {
+    id: "prisma",
+    name: "Prisma",
+    type: "component",
+    component: Prisma,
+  },
+  {
+    id: "firecrawl",
+    name: "Firecrawl",
+    logo: "https://svgl.app/library/firecrawl.svg",
+    logoDark: "https://svgl.app/library/firecrawl.svg",
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    logo: "https://svgl.app/library/openrouter_light.svg",
+    logoDark: "https://svgl.app/library/openrouter_dark.svg",
+  },
 ];
 
 export default function HoverBrandLogo() {
@@ -75,7 +130,7 @@ export default function HoverBrandLogo() {
   const activeBrand = brands.find((b) => b.id === hoveredId);
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 px-4 py-12">
+    <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-6 px-4 py-12">
       {/* Text */}
       <div className="text-center">
         <p className="mb-2 text-sm text-muted-foreground/70">Built with</p>

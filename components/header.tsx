@@ -24,7 +24,8 @@ function Header({ onHelpClick }: HeaderProps) {
   const [showPricingModal, setShowPricingModal] = useState(false);
 
   useEffect(() => {
-    authClient.getSession()
+    authClient
+      .getSession()
       .then((result) => {
         if (result.data) {
           setSession(result.data);
@@ -86,24 +87,34 @@ function Header({ onHelpClick }: HeaderProps) {
 
   return (
     <header className="relative mx-auto flex w-full shrink-0 items-center justify-between px-4 py-4 sm:py-6">
-      <Link href="/" className="min-w-0 flex flex-row items-center gap-3">
+      <Link href="/" className="flex min-w-0 flex-row items-center gap-3">
         <img
           src="/squidcoder-logo.svg"
           alt="Squid Coder"
           className="h-9 object-contain"
         />
         {!session && !loading && (
-          <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-            <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+          <span className="hidden items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400 sm:inline-flex">
+            <svg
+              className="size-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+              />
             </svg>
             Guest
           </span>
         )}
       </Link>
-      
+
       {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center gap-3 lg:gap-4">
+      <div className="hidden items-center gap-3 md:flex lg:gap-4">
         {loading ? (
           <span className="text-sm text-muted-foreground">Loading…</span>
         ) : session ? (
@@ -115,24 +126,24 @@ function Header({ onHelpClick }: HeaderProps) {
                 <span>{credits ?? 0} credits</span>
               </div>
             ) : (
-              <Button
-                onClick={() => setShowPricingModal(true)}
-                size="sm"
-              >
+              <Button onClick={() => setShowPricingModal(true)} size="sm">
                 <Zap className="h-4 w-4" />
                 Upgrade
               </Button>
             )}
-            <Button asChild variant="ghost" size="sm" className="text-foreground hover:text-white hover:bg-accent">
-              <Link href="/dashboard">
-                Dashboard 
-              </Link>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-foreground hover:bg-accent hover:text-white"
+            >
+              <Link href="/dashboard">Dashboard</Link>
             </Button>
             <Button
               onClick={handleSignOut}
               variant="ghost"
               size="sm"
-              className="text-foreground hover:text-white hover:bg-accent"
+              className="text-foreground hover:bg-accent hover:text-white"
             >
               Sign Out
             </Button>
@@ -143,28 +154,29 @@ function Header({ onHelpClick }: HeaderProps) {
               onClick={() => setShowPricingModal(true)}
               variant="ghost"
               size="sm"
-              className="text-foreground hover:text-white hover:bg-accent"
+              className="text-foreground hover:bg-accent hover:text-white"
             >
               Pricing
             </Button>
-            <Button asChild variant="ghost" size="sm" className="text-foreground hover:text-white hover:bg-accent">
-              <Link href="/sign-in">
-                Sign In
-              </Link>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-foreground hover:bg-accent hover:text-white"
+            >
+              <Link href="/sign-in">Sign In</Link>
             </Button>
             <Button asChild size="sm">
-              <Link href="/sign-up">
-                Sign Up
-              </Link>
+              <Link href="/sign-up">Sign Up</Link>
             </Button>
           </>
         )}
         <AnimatedThemeToggleButton variant="horizontal" />
         <Button
+          className="size-8 text-foreground hover:bg-accent hover:text-white"
           onClick={onHelpClick}
           variant="ghost"
           size="icon"
-          className="size-8"
           aria-label="Help"
         >
           <HelpCircle className="h-4 w-4" />
@@ -189,7 +201,7 @@ function Header({ onHelpClick }: HeaderProps) {
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div 
+          <div
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
           />
@@ -218,10 +230,13 @@ function Header({ onHelpClick }: HeaderProps) {
                       Upgrade
                     </Button>
                   )}
-                    <Button asChild variant="default" onClick={() => setMobileMenuOpen(false)} className="justify-start">
-                    <Link href="/dashboard">
-                      Dashboard
-                    </Link>
+                  <Button
+                    asChild
+                    variant="default"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="justify-start"
+                  >
+                    <Link href="/dashboard">Dashboard</Link>
                   </Button>
                   <Button
                     onClick={() => {
@@ -246,19 +261,25 @@ function Header({ onHelpClick }: HeaderProps) {
                   >
                     Pricing
                   </Button>
-                  <Button asChild variant="default" onClick={() => setMobileMenuOpen(false)} className="justify-start">
-                    <Link href="/sign-in">
-                      Sign In
-                    </Link>
+                  <Button
+                    asChild
+                    variant="default"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="justify-start"
+                  >
+                    <Link href="/sign-in">Sign In</Link>
                   </Button>
-                  <Button asChild variant="default" onClick={() => setMobileMenuOpen(false)} className="justify-start">
-                    <Link href="/sign-up">
-                      Sign Up
-                    </Link>
+                  <Button
+                    asChild
+                    variant="default"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="justify-start"
+                  >
+                    <Link href="/sign-up">Sign Up</Link>
                   </Button>
                 </>
               )}
-              <div className="pt-4 border-t border-border">
+              <div className="border-t border-border pt-4">
                 <AnimatedThemeToggleButton variant="horizontal" />
               </div>
             </div>

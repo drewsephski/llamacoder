@@ -4,7 +4,6 @@
 import Fieldset from "@/components/fieldset";
 import ArrowRightIcon from "@/components/icons/arrow-right";
 import LightningBoltIcon from "@/components/icons/lightning-bolt";
-import LoadingButton from "@/components/loading-button";
 import Spinner from "@/components/spinner";
 import bgImg from "@/public/halo.png";
 import * as Select from "@radix-ui/react-select";
@@ -114,7 +113,6 @@ export default function Home() {
       const session = await authClient.getSession();
       if (session.data) {
         setIsAuthenticated(true);
-        // Fetch user subscription/credits info
         const response = await fetch("/api/user/credits");
         if (response.ok) {
           const data = await response.json();
@@ -140,11 +138,9 @@ export default function Home() {
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ringRef.current) return;
-
     const rect = ringRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-
     setMousePosition({ x, y });
     setIsHoveringRing(true);
   };
@@ -167,12 +163,12 @@ export default function Home() {
     ],
     [],
   );
+
   const handleScreenshotUpload = async (event: any) => {
     if (prompt.length === 0) setPrompt("Build this");
     setQuality("low");
     setScreenshotLoading(true);
     let file = event.target.files[0];
-    // Convert file to base64 for server-side processing
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result as string;
@@ -186,28 +182,21 @@ export default function Home() {
 
   const handleUrlScrape = async () => {
     if (!urlInput.trim()) return;
-
     if (prompt.length === 0) setPrompt(`Build me a website like ${urlInput}`);
     setQuality("low");
     setIsScrapingUrl(true);
     setScreenshotLoading(true);
-
     try {
       const response = await fetch("/api/scrape-screenshot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: urlInput.trim() }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to scrape URL");
-      }
-
+      if (!response.ok) throw new Error(data.error || "Failed to scrape URL");
       setScreenshotData(data.screenshotData);
-      setScreenshotUrl(urlInput); // Store the URL as reference
-      setUrlInput(""); // Clear input after successful scrape
+      setScreenshotUrl(urlInput);
+      setUrlInput("");
       toast.success("Website captured successfully!");
     } catch (error: any) {
       console.error("URL scraping error:", error);
@@ -224,9 +213,7 @@ export default function Home() {
   const clearScreenshot = () => {
     setScreenshotUrl(undefined);
     setScreenshotData(undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const textareaResizePrompt = useMemo(
@@ -239,509 +226,774 @@ export default function Home() {
   );
 
   return (
-    <div className="relative flex min-h-dvh w-full flex-col overflow-x-hidden">
-      <div
-        ref={ringRef}
-        className="absolute inset-0 flex justify-center overflow-hidden"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className="relative max-h-[953px] w-full">
-          <Image
-            src={bgImg}
-            alt=""
-            className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
-              isHoveringRing
-                ? "scale-[1.01] opacity-70 dark:opacity-15"
-                : "scale-100 opacity-60 dark:opacity-10"
-            }`}
-            priority
-          />
-          <div
-            className="pointer-events-none absolute inset-0 transition-opacity duration-500"
-            style={{
-              background: isHoveringRing
-                ? `radial-gradient(circle 400px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
-                   radial-gradient(circle 200px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(99, 102, 241, 0.12) 0%, transparent 50%)`
-                : "none",
-              opacity: isHoveringRing ? 1 : 0,
-            }}
-          />
-        </div>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
-      <div className="isolate flex min-h-dvh flex-col">
-        <Header onHelpClick={() => setShowHelpPanel(true)} />
+        .font-display { font-family: 'Instrument Serif', Georgia, serif; }
+        .font-sans-dm { font-family: 'DM Sans', system-ui, sans-serif; }
 
-        <div className="mt-16 flex flex-1 flex-col items-center px-4 sm:mt-20 lg:mt-24">
-          <div className="flex flex-col items-center gap-5 lg:gap-6">
-            <h1 className="text-center font-display font-medium tracking-tight text-foreground">
-              <span className="block text-4xl leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl">
-                Turn ideas
-              </span>
-              <span className="mt-1 block text-4xl leading-[1.1] text-blue-500 dark:text-blue-400 sm:text-5xl md:text-6xl lg:text-7xl">
-                into apps
-              </span>
-            </h1>
-            <p className="max-w-md text-center text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Describe what you want to build. <br />
-              We&apos;ll generate the code.
-            </p>
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+          50% { box-shadow: 0 0 0 6px rgba(59,130,246,0.06); }
+        }
+        @keyframes floatDot {
+          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.4; }
+          50% { transform: translateY(-8px) scale(1.1); opacity: 0.7; }
+        }
+        @keyframes borderGlow {
+          0%, 100% { border-color: rgba(59,130,246,0.2); }
+          50% { border-color: rgba(59,130,246,0.5); }
+        }
+
+        .animate-fade-up { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-fade-up-1 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
+        .animate-fade-up-2 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both; }
+        .animate-fade-up-3 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both; }
+        .animate-fade-up-4 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both; }
+        .animate-fade-in { animation: fadeIn 0.8s ease both 0.4s; }
+
+        .shimmer-text {
+          background: linear-gradient(
+            150deg,
+            hsl(var(--foreground)) 0%,
+            rgba(0, 98, 255, 1) 100%
+          );  
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer-reverse 3s linear infinite;
+        }
+
+        .compose-box {
+          position: relative;
+          border-radius: 20px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .compose-box::before {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          border-radius: 21px;
+          padding: 1px;
+          background: linear-gradient(135deg, transparent 0%, rgba(59,130,246,0.15) 50%, transparent 100%);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .compose-box:focus-within::before { opacity: 1; }
+
+        .compose-box-inner {
+          background: hsl(var(--background) / 0.85);
+          backdrop-filter: blur(20px) saturate(180%);
+          border: 1px solid hsl(var(--border) / 0.6);
+          border-radius: 20px;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .compose-box-inner:focus-within {
+          border-color: rgba(59,130,246,0.45);
+          box-shadow:
+            0 0 0 3px rgba(59,130,246,0.06),
+            0 8px 32px rgba(0,0,0,0.08),
+            0 2px 8px rgba(59,130,246,0.06);
+        }
+        .compose-box-inner:hover:not(:focus-within) {
+          border-color: hsl(var(--border) / 0.9);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .dark .compose-box-inner {
+          background: hsl(var(--card) / 0.75);
+        }
+
+        .toolbar-divider {
+          width: 1px;
+          height: 16px;
+          background: hsl(var(--border) / 0.6);
+        }
+
+        .pill-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 12px;
+          border-radius: 99px;
+          border: 1px solid hsl(var(--border) / 0.5);
+          background: hsl(var(--background) / 0.5);
+          font-size: 12.5px;
+          color: hsl(var(--muted-foreground));
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          font-weight: 400;
+          letter-spacing: -0.01em;
+          backdrop-filter: blur(8px);
+        }
+        .pill-chip:hover {
+          border-color: rgba(59,130,246,0.35);
+          background: rgba(59,130,246,0.04);
+          color: hsl(var(--foreground));
+          transform: translateY(-1px);
+          box-shadow: 0 3px 10px rgba(59,130,246,0.08);
+        }
+
+        .url-strip {
+          border-radius: 14px;
+          border: 1px solid hsl(var(--border) / 0.5);
+          background: hsl(var(--background) / 0.6);
+          backdrop-filter: blur(12px);
+          transition: all 0.25s ease;
+        }
+        .url-strip:focus-within {
+          border-color: rgba(59,130,246,0.4);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.05);
+        }
+
+        .build-btn {
+          position: relative;
+          overflow: hidden;
+          border-radius: 12px;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+          transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .build-btn::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+          pointer-events: none;
+        }
+        .build-btn:hover:not(:disabled) {
+          transform: translateY(-1px) scale(1.02);
+          box-shadow: 0 6px 20px rgba(59,130,246,0.3);
+        }
+        .build-btn:active:not(:disabled) {
+          transform: translateY(0) scale(0.99);
+        }
+
+        .select-trigger-custom {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 8px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 450;
+          color: hsl(var(--muted-foreground));
+          font-family: 'DM Sans', system-ui, sans-serif;
+          transition: all 0.15s ease;
+          cursor: pointer;
+          letter-spacing: -0.01em;
+        }
+        .select-trigger-custom:hover {
+          background: hsl(var(--muted) / 0.7);
+          color: hsl(var(--foreground));
+        }
+
+        .stat-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #22c55e;
+          animation: floatDot 2.4s ease-in-out infinite;
+          box-shadow: 0 0 6px rgba(34,197,94,0.5);
+        }
+
+        .screenshot-thumb {
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+          transition: transform 0.2s ease;
+        }
+        .screenshot-thumb:hover { transform: scale(1.03); }
+
+        .or-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: hsl(var(--muted-foreground) / 0.5);
+          font-size: 11.5px;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          font-weight: 500;
+        }
+        .or-divider::before, .or-divider::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: hsl(var(--border) / 0.4);
+        }
+
+        .upload-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
+          color: hsl(var(--muted-foreground));
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .upload-btn:hover {
+          background: hsl(var(--muted) / 0.7);
+          color: hsl(var(--foreground));
+        }
+
+        .info-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 8px;
+          border-radius: 99px;
+          background: rgba(12,168,255,0.08);
+          border: 1px solid rgba(12,168,255,0.2);
+          color: #0095ff;
+          font-size: 11.5px;
+          font-weight: 500;
+          font-family: 'DM Sans', system-ui, sans-serif;
+        }
+        .dark .info-pill { color: #0095ff; background: rgba(12,168,255,0.06); }
+
+        .pro-badge {
+          padding: 1px 6px;
+          border-radius: 4px;
+          background: rgba(245,158,11,0.12);
+          color: #b45309;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          font-family: 'DM Sans', system-ui, sans-serif;
+        }
+        .dark .pro-badge { background: rgba(245,158,11,0.15); color: #fbbf24; }
+      `}</style>
+
+      <div className="font-sans-dm relative flex min-h-dvh w-full flex-col overflow-x-hidden">
+        {/* Background layer */}
+        <div
+          ref={ringRef}
+          className="absolute inset-0 flex justify-center overflow-hidden"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="relative max-h-[953px] w-full">
+            <Image
+              src={bgImg}
+              alt=""
+              className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
+                isHoveringRing
+                  ? "scale-[1.01] opacity-70 dark:opacity-15"
+                  : "scale-100 opacity-55 dark:opacity-10"
+              }`}
+              priority
+            />
+            <div
+              className="pointer-events-none absolute inset-0 transition-opacity duration-500"
+              style={{
+                background: isHoveringRing
+                  ? `radial-gradient(circle 500px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(59, 130, 246, 0.07) 0%, transparent 65%),
+                     radial-gradient(circle 250px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(99, 102, 241, 0.09) 0%, transparent 55%)`
+                  : "none",
+                opacity: isHoveringRing ? 1 : 0,
+              }}
+            />
           </div>
+        </div>
 
-          <form
-            className="relative w-full max-w-2xl pt-6 lg:pt-12"
-            action={async (formData) => {
-              // Check eligibility before creating
-              setIsCheckingEligibility(true);
-              try {
-                const session = await authClient.getSession();
+        <div className="isolate flex min-h-dvh flex-col">
+          <Header onHelpClick={() => setShowHelpPanel(true)} />
 
-                // Only check for authenticated users
-                if (session.data) {
-                  const checkResponse = await fetch(
-                    "/api/user/can-create-project",
-                  );
-                  if (checkResponse.ok) {
-                    const eligibility = await checkResponse.json();
+          <div className="mt-16 flex flex-1 flex-col items-center px-4 sm:mt-20 lg:mt-24">
+            {/* Hero text */}
+            <div className="flex flex-col items-center gap-4 lg:gap-5">
+              <div className="animate-fade-up">
+                <span className="info-pill">AI-powered code generation</span>
+              </div>
 
-                    if (!eligibility.canCreate) {
-                      // User has existing projects but no credits
-                      setCredits(eligibility.credits);
-                      setShowPricingModal(true);
-                      setIsCheckingEligibility(false);
-                      return;
-                    }
-                  }
-                }
-              } catch (error) {
-                console.error("Error checking eligibility:", error);
-              }
-              setIsCheckingEligibility(false);
+              <h1 className="animate-fade-up-1 text-center font-display tracking-tight text-foreground">
+                <span className="block text-[2.6rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                  Turn ideas
+                </span>
+                <span className="shimmer-text mt-0.5 block text-[2.6rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                  into apps
+                </span>
+              </h1>
 
-              startTransition(async () => {
+              <p className="animate-fade-up-2 max-w-sm text-center text-[15px] leading-relaxed text-muted-foreground/75 sm:text-base">
+                Describe what you want to build. <br />
+                <span className="text-foreground/60">
+                  We&apos;ll generate the code.
+                </span>
+              </p>
+            </div>
+
+            {/* Main form */}
+            <form
+              className="animate-fade-up-3 relative w-full max-w-2xl pt-8 lg:pt-12"
+              action={async (formData) => {
+                setIsCheckingEligibility(true);
                 try {
-                  const { prompt, model, quality } =
-                    Object.fromEntries(formData);
-
-                  assert.ok(typeof prompt === "string");
-                  assert.ok(typeof model === "string");
-                  assert.ok(quality === "high" || quality === "low");
-
-                  const response = await fetch("/api/create-chat", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      prompt,
-                      model,
-                      quality,
-                      screenshotUrl,
-                      screenshotData,
-                    }),
-                  });
-
-                  if (!response.ok) {
-                    throw new Error("Failed to create chat");
-                  }
-
-                  const { chatId, lastMessageId } = await response.json();
-
-                  const streamPromise = fetch(
-                    "/api/get-next-completion-stream-promise",
-                    {
-                      method: "POST",
-                      body: JSON.stringify({ messageId: lastMessageId, model }),
-                    },
-                  ).then((res) => {
-                    if (!res.body) {
-                      throw new Error("No body on response");
+                  const session = await authClient.getSession();
+                  if (session.data) {
+                    const checkResponse = await fetch(
+                      "/api/user/can-create-project",
+                    );
+                    if (checkResponse.ok) {
+                      const eligibility = await checkResponse.json();
+                      if (!eligibility.canCreate) {
+                        setCredits(eligibility.credits);
+                        setShowPricingModal(true);
+                        setIsCheckingEligibility(false);
+                        return;
+                      }
                     }
-                    return res.body;
-                  });
-
-                  startTransition(() => {
-                    setStreamPromise(streamPromise);
-                    router.push(`/chats/${chatId}`);
-                  });
-                } catch (error: any) {
-                  toast.error(error.message || "Failed to create project");
+                  }
+                } catch (error) {
+                  console.error("Error checking eligibility:", error);
                 }
-              });
-            }}
-          >
-            <Fieldset>
-              <div className="group relative flex w-full max-w-2xl rounded-2xl pb-14 shadow-lg shadow-black/5 backdrop-blur-xl transition-all duration-500 focus-within:border-blue-500/40 focus-within:shadow-blue-500/20 hover:border-blue-500/30 hover:border-b-blue-500 hover:border-r-blue-500 hover:shadow-xl hover:shadow-blue-500/10 dark:bg-card/80 sm:pb-10">
-                <div className="w-full">
-                  {screenshotLoading && (
-                    <div className="relative mx-3 mt-3">
-                      <div className="rounded-xl">
-                        <div className="group mb-2 flex h-16 w-[68px] animate-pulse items-center justify-center rounded bg-muted dark:bg-muted/50">
+                setIsCheckingEligibility(false);
+
+                startTransition(async () => {
+                  try {
+                    const { prompt, model, quality } =
+                      Object.fromEntries(formData);
+                    assert.ok(typeof prompt === "string");
+                    assert.ok(typeof model === "string");
+                    assert.ok(quality === "high" || quality === "low");
+
+                    const response = await fetch("/api/create-chat", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        prompt,
+                        model,
+                        quality,
+                        screenshotUrl,
+                        screenshotData,
+                      }),
+                    });
+
+                    if (!response.ok) throw new Error("Failed to create chat");
+
+                    const { chatId, lastMessageId } = await response.json();
+                    const streamPromise = fetch(
+                      "/api/get-next-completion-stream-promise",
+                      {
+                        method: "POST",
+                        body: JSON.stringify({
+                          messageId: lastMessageId,
+                          model,
+                        }),
+                      },
+                    ).then((res) => {
+                      if (!res.body) throw new Error("No body on response");
+                      return res.body;
+                    });
+
+                    startTransition(() => {
+                      setStreamPromise(streamPromise);
+                      router.push(`/chats/${chatId}`);
+                    });
+                  } catch (error: any) {
+                    toast.error(error.message || "Failed to create project");
+                  }
+                });
+              }}
+            >
+              <Fieldset>
+                {/* Compose box */}
+                <div className="compose-box w-full">
+                  <div className="compose-box-inner relative w-full pb-14 shadow-lg shadow-black/5 sm:pb-11">
+                    {/* Screenshot preview */}
+                    {screenshotLoading && (
+                      <div className="mx-3 mt-3">
+                        <div className="flex h-[52px] w-[60px] animate-pulse items-center justify-center rounded-xl bg-muted/60">
                           <Spinner />
                         </div>
                       </div>
-                    </div>
-                  )}
-                  {(screenshotUrl || screenshotData) && (
-                    <div
-                      className={`${isPending ? "invisible" : ""} relative mx-3 mt-3`}
-                    >
-                      <div className="rounded-xl">
-                        {screenshotData ? (
-                          <img
-                            alt="screenshot"
-                            src={screenshotData}
-                            className="group relative mb-2 h-16 w-[68px] rounded object-cover"
-                          />
-                        ) : (
-                          <img
-                            alt="screenshot"
-                            src={screenshotUrl}
-                            className="group relative mb-2 h-16 w-[68px] rounded object-cover"
-                          />
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        id="x-circle-icon"
-                        className="absolute -right-3 -top-4 left-14 z-10 size-5 rounded-full bg-background text-foreground hover:text-muted-foreground dark:bg-card"
-                        onClick={clearScreenshot}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="size-6"
+                    )}
+                    {(screenshotUrl || screenshotData) &&
+                      !screenshotLoading && (
+                        <div
+                          className={`${isPending ? "invisible" : ""} relative mx-3 mt-3 inline-block`}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                  <Textarea
-                    ref={textareaRef}
-                    placeholder="Build me a budgeting app..."
-                    required
-                    name="prompt"
-                    className="mb-4 min-h-[80px] resize-none border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
-                        event.preventDefault();
-                        const target = event.target;
-                        if (!(target instanceof HTMLTextAreaElement)) return;
-                        target.closest("form")?.requestSubmit();
-                      }
-                    }}
-                  />
-                </div>
-                <div className="absolute bottom-2 left-3 right-3 flex flex-wrap items-center justify-between gap-2 sm:flex-nowrap">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-                    <Select.Root
-                      name="model"
-                      value={model}
-                      onValueChange={handleModelChange}
-                    >
-                      <Select.Trigger className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
-                        <Select.Value aria-label={model}>
-                          <span className="flex items-center gap-1.5">
-                            {selectedModel?.label}
-                            {selectedModel?.paid && (
-                              <span className="rounded bg-amber-100 px-1 py-0 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                Pro
+                          <div className="screenshot-thumb">
+                            <img
+                              alt="screenshot"
+                              src={screenshotData ?? screenshotUrl}
+                              className="h-[52px] w-[60px] object-cover"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border/50 transition-colors hover:text-foreground dark:bg-card"
+                            onClick={clearScreenshot}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="size-3.5"
+                            >
+                              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+
+                    {/* Textarea */}
+                    <Textarea
+                      ref={textareaRef}
+                      placeholder="Build me a budgeting app..."
+                      required
+                      name="prompt"
+                      className="min-h-[90px] resize-none border-0 bg-transparent px-4 pt-4 text-[15px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
+                          const target = event.target;
+                          if (!(target instanceof HTMLTextAreaElement)) return;
+                          target.closest("form")?.requestSubmit();
+                        }
+                      }}
+                    />
+
+                    {/* Toolbar */}
+                    <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
+                      {/* Left controls */}
+                      <div className="flex items-center gap-1">
+                        {/* Model selector */}
+                        <Select.Root
+                          name="model"
+                          value={model}
+                          onValueChange={handleModelChange}
+                        >
+                          <Select.Trigger className="select-trigger-custom">
+                            <Select.Value aria-label={model}>
+                              <span className="flex items-center gap-1.5">
+                                {selectedModel?.label}
+                                {selectedModel?.paid && (
+                                  <span className="pro-badge">PRO</span>
+                                )}
                               </span>
-                            )}
-                          </span>
-                        </Select.Value>
-                        <Select.Icon>
-                          <ChevronDownIcon className="size-3.5 opacity-60" />
-                        </Select.Icon>
-                      </Select.Trigger>
-                      <Select.Portal>
-                        <Select.Content className="min-w-[180px] overflow-hidden rounded-lg bg-popover shadow-lg ring-1 ring-border dark:bg-popover dark:ring-border">
-                          <Select.Viewport className="p-1">
-                            {MODELS.map((m) => {
-                              const isLocked = m.paid && !canUsePaidModels;
-                              return (
-                                <Select.Item
-                                  key={m.value}
-                                  value={m.value}
-                                  disabled={isLocked}
-                                  onClick={() => {
-                                    if (isLocked) {
-                                      setShowPricingModal(true);
-                                    }
-                                  }}
-                                  className={`flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? "opacity-60" : ""}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Select.ItemText
-                                      className={`${m.free ? "font-medium text-green-600 dark:text-green-400" : isLocked ? "text-muted-foreground" : "text-foreground"}`}
+                            </Select.Value>
+                            <Select.Icon>
+                              <ChevronDownIcon className="size-3 opacity-50" />
+                            </Select.Icon>
+                          </Select.Trigger>
+                          <Select.Portal>
+                            <Select.Content className="min-w-[190px] overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover">
+                              <Select.Viewport className="p-1.5">
+                                {MODELS.map((m) => {
+                                  const isLocked = m.paid && !canUsePaidModels;
+                                  return (
+                                    <Select.Item
+                                      key={m.value}
+                                      value={m.value}
+                                      disabled={isLocked}
+                                      onClick={() => {
+                                        if (isLocked) setShowPricingModal(true);
+                                      }}
+                                      className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? "opacity-50" : ""}`}
                                     >
-                                      {m.label}
-                                    </Select.ItemText>
-                                    {isLocked && (
-                                      <span className="rounded bg-muted px-1 py-0 text-[10px] font-medium text-muted-foreground">
-                                        Pro
-                                      </span>
-                                    )}
-                                  </div>
-                                  <Select.ItemIndicator>
-                                    <CheckIcon className="size-3.5 text-primary" />
-                                  </Select.ItemIndicator>
-                                </Select.Item>
-                              );
-                            })}
-                          </Select.Viewport>
-                          <Select.ScrollDownButton />
-                          <Select.Arrow />
-                        </Select.Content>
-                      </Select.Portal>
-                    </Select.Root>
+                                      <div className="flex items-center gap-2">
+                                        <Select.ItemText
+                                          className={
+                                            m.free
+                                              ? "font-medium text-emerald-600 dark:text-emerald-400"
+                                              : "text-foreground"
+                                          }
+                                        >
+                                          {m.label}
+                                        </Select.ItemText>
+                                        {isLocked && (
+                                          <span className="pro-badge">PRO</span>
+                                        )}
+                                      </div>
+                                      <Select.ItemIndicator>
+                                        <CheckIcon className="size-3.5 text-primary" />
+                                      </Select.ItemIndicator>
+                                    </Select.Item>
+                                  );
+                                })}
+                              </Select.Viewport>
+                              <Select.Arrow />
+                            </Select.Content>
+                          </Select.Portal>
+                        </Select.Root>
 
-                    <div className="h-4 w-px bg-border/50 max-sm:hidden" />
+                        <div className="toolbar-divider mx-1" />
 
-                    <Select.Root
-                      name="quality"
-                      value={quality}
-                      onValueChange={setQuality}
-                    >
-                      <Select.Trigger className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/50">
-                        <Select.Value aria-label={quality}>
-                          <span className="max-sm:hidden">
-                            {quality === "low" ? "Faster" : "Smarter"}
-                          </span>
-                          <span className="sm:hidden">
-                            <LightningBoltIcon className="size-3.5" />
-                          </span>
-                        </Select.Value>
-                        <Select.Icon>
-                          <ChevronDownIcon className="size-3.5 opacity-60" />
-                        </Select.Icon>
-                      </Select.Trigger>
-                      <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-lg bg-popover shadow-lg ring-1 ring-border dark:bg-popover dark:ring-border">
-                          <Select.Viewport className="space-y-0.5 p-1.5">
-                            {qualityOptions.map((q) => (
-                              <Select.Item
-                                key={q.value}
-                                value={q.value}
-                                className="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[highlighted]:ring-1 data-[highlighted]:ring-ring/30"
-                              >
-                                <Select.ItemText className="inline-flex items-center gap-2 text-muted-foreground">
-                                  {q.label}
-                                </Select.ItemText>
-                                <Select.ItemIndicator>
-                                  <CheckIcon className="size-3.5 text-primary" />
-                                </Select.ItemIndicator>
-                              </Select.Item>
-                            ))}
-                          </Select.Viewport>
-                          <Select.ScrollDownButton />
-                          <Select.Arrow />
-                        </Select.Content>
-                      </Select.Portal>
-                    </Select.Root>
-                    <div className="h-4 w-px bg-border/50 max-sm:hidden" />
-                    <div className="flex items-center gap-1">
-                      <label
-                        htmlFor="screenshot"
-                        className="group flex cursor-pointer items-center justify-center rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        title="Attach screenshot"
-                      >
-                        <UploadIcon className="size-4" />
-                      </label>
-                      <input
-                        id="screenshot"
-                        type="file"
-                        accept="image/png, image/jpeg, image/webp"
-                        onChange={handleScreenshotUpload}
-                        className="hidden"
-                        ref={fileInputRef}
-                      />
-                      {/* Info tooltip for supported formats */}
-                      <div className="relative hidden sm:block">
-                        <Info className="peer h-3.5 w-3.5 cursor-help text-muted-foreground/60 transition-colors hover:text-muted-foreground" />
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-48 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-xs text-popover-foreground opacity-0 shadow-lg ring-1 ring-border transition-opacity peer-hover:opacity-100">
-                          <p className="mb-1 font-medium">Supported formats:</p>
-                          <p className="text-muted-foreground">
-                            PNG, JPEG, WebP
-                          </p>
-                          <p className="mt-1 text-muted-foreground">
-                            Upload a screenshot to convert it into code
-                          </p>
-                          <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                        {/* Quality selector */}
+                        <Select.Root
+                          name="quality"
+                          value={quality}
+                          onValueChange={setQuality}
+                        >
+                          <Select.Trigger className="select-trigger-custom">
+                            <Select.Value aria-label={quality}>
+                              <span className="max-sm:hidden">
+                                {quality === "low" ? (
+                                  <span className="flex items-center gap-1.5">
+                                    <LightningBoltIcon className="size-3 text-amber-500" />
+                                    Faster
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1.5">
+                                    <Sparkles className="size-3 text-blue-500" />
+                                    Smarter
+                                  </span>
+                                )}
+                              </span>
+                              <span className="sm:hidden">
+                                <LightningBoltIcon className="size-3.5" />
+                              </span>
+                            </Select.Value>
+                            <Select.Icon>
+                              <ChevronDownIcon className="size-3 opacity-50" />
+                            </Select.Icon>
+                          </Select.Trigger>
+                          <Select.Portal>
+                            <Select.Content className="overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover">
+                              <Select.Viewport className="p-1.5">
+                                {qualityOptions.map((q) => (
+                                  <Select.Item
+                                    key={q.value}
+                                    value={q.value}
+                                    className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+                                  >
+                                    <Select.ItemText>{q.label}</Select.ItemText>
+                                    <Select.ItemIndicator>
+                                      <CheckIcon className="size-3.5 text-primary" />
+                                    </Select.ItemIndicator>
+                                  </Select.Item>
+                                ))}
+                              </Select.Viewport>
+                              <Select.Arrow />
+                            </Select.Content>
+                          </Select.Portal>
+                        </Select.Root>
+
+                        <div className="toolbar-divider mx-1" />
+
+                        {/* Upload */}
+                        <div className="flex items-center gap-0.5">
+                          <label
+                            htmlFor="screenshot"
+                            className="upload-btn"
+                            title="Attach image"
+                          >
+                            <UploadIcon className="size-[15px]" />
+                          </label>
+                          <input
+                            id="screenshot"
+                            type="file"
+                            accept="image/png, image/jpeg, image/webp"
+                            onChange={handleScreenshotUpload}
+                            className="hidden"
+                            ref={fileInputRef}
+                          />
+                          <div className="relative hidden sm:block">
+                            <Info className="peer h-3 w-3 cursor-help text-muted-foreground/40 transition-colors hover:text-muted-foreground/70" />
+                            <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
+                              <p className="mb-1 font-semibold">
+                                Supported formats
+                              </p>
+                              <p className="text-muted-foreground">
+                                PNG, JPEG, WebP
+                              </p>
+                              <p className="mt-1 text-muted-foreground/70">
+                                Upload a screenshot to recreate it in code
+                              </p>
+                              <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="relative flex has-[:disabled]:opacity-50">
-                    <LoadingButton
-                      type="submit"
-                      disabled={
-                        screenshotLoading ||
-                        prompt.length === 0 ||
-                        isCheckingEligibility
-                      }
-                      className="group transition-transform duration-200"
-                    >
-                      Build
-                      <Spinner loading={isCheckingEligibility}>
-                        <img
-                          src="/image.png"
-                          alt="Build"
-                          className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5 group-hover:scale-105"
-                        />
-                      </Spinner>
-                    </LoadingButton>
-                  </div>
-                </div>
-
-                {(isPending || isScrapingUrl) && (
-                  <LoadingMessage
-                    isHighQuality={quality === "high"}
-                    screenshotUrl={screenshotUrl}
-                    isScrapingUrl={isScrapingUrl}
-                  />
-                )}
-              </div>
-
-              <div className="mt-6 flex w-full flex-wrap justify-center gap-2">
-                {SUGGESTED_PROMPTS.map((v) => (
-                  <button
-                    key={v.title}
-                    type="button"
-                    onClick={() => {
-                      setPrompt(v.description);
-                      setTimeout(() => {
-                        textareaRef.current?.focus();
-                        if (textareaRef.current) {
-                          textareaRef.current.selectionStart =
-                            textareaRef.current.value.length;
-                          textareaRef.current.selectionEnd =
-                            textareaRef.current.value.length;
+                      {/* Submit button */}
+                      <Button
+                        type="submit"
+                        disabled={
+                          screenshotLoading ||
+                          prompt.length === 0 ||
+                          isCheckingEligibility ||
+                          isPending
                         }
-                      }, 0);
-                    }}
-                    className="group inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-background/40 px-3 py-1.5 text-[13px] text-muted-foreground/80 transition-all duration-200 hover:border-blue-500/30 hover:bg-blue-50/30 hover:text-foreground dark:hover:bg-blue-950/20"
-                  >
-                    {v.title}
-                  </button>
-                ))}
-              </div>
+                        className="build-btn group"
+                      >
+                        Build
+                        <Spinner loading={isCheckingEligibility || isPending}>
+                          <img
+                            src="/image.png"
+                            alt="Build"
+                            className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5 group-hover:scale-105"
+                          />
+                        </Spinner>
+                      </Button>
+                    </div>
 
-              {/* URL Input Section */}
-              <div className="mt-6 text-center">
-                <span className="text-sm text-muted-foreground/70">
-                  or paste a URL
-                </span>
-              </div>
-
-              <div className="mb-12 mt-3 flex w-full items-center justify-center sm:mb-16">
-                <div
-                  className={`group relative flex w-full max-w-md items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 transition-all duration-300 ${
-                    urlInput.trim()
-                      ? "border-blue-500/40 bg-blue-50/30 dark:border-blue-500/30 dark:bg-blue-950/15"
-                      : "border-border/50 bg-background/60 hover:border-border/80"
-                  } ${isScrapingUrl ? "border-blue-500/50 bg-blue-50/40 dark:bg-blue-900/20" : ""} focus-within:border-blue-500/50 focus-within:bg-blue-50/20 dark:focus-within:bg-blue-950/10`}
-                >
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                      isScrapingUrl || urlInput.trim()
-                        ? "bg-blue-500 text-white"
-                        : "bg-muted/70 text-muted-foreground group-hover:bg-muted"
-                    } `}
-                  >
-                    {isScrapingUrl ? (
-                      <Sparkles className="size-4" />
-                    ) : (
-                      <Link2 className="size-4" />
+                    {/* Loading overlay */}
+                    {(isPending || isScrapingUrl) && (
+                      <LoadingMessage
+                        isHighQuality={quality === "high"}
+                        screenshotUrl={screenshotUrl}
+                        isScrapingUrl={isScrapingUrl}
+                      />
                     )}
                   </div>
-                  <Input
-                    type="url"
-                    placeholder="https://example.com"
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && urlInput.trim()) {
-                        e.preventDefault();
-                        handleUrlScrape();
-                      }
-                    }}
-                    disabled={isScrapingUrl}
-                    className="w-full border-none text-[15px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
-                  />
-                  {urlInput.trim() && !isScrapingUrl && (
-                    <button
-                      type="button"
-                      onClick={handleUrlScrape}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500 text-white transition-all hover:scale-105 hover:bg-blue-600 active:scale-95"
-                    >
-                      <ArrowRightIcon className="size-3.5" />
-                    </button>
-                  )}
-                  {isScrapingUrl && (
-                    <Spinner className="size-4 text-blue-500" />
-                  )}
                 </div>
-              </div>
-            </Fieldset>
-          </form>
+
+                {/* Suggested prompts */}
+                <div className="mt-5 flex w-full flex-wrap justify-center gap-2">
+                  {SUGGESTED_PROMPTS.map((v) => (
+                    <button
+                      key={v.title}
+                      type="button"
+                      onClick={() => {
+                        setPrompt(v.description);
+                        setTimeout(() => {
+                          textareaRef.current?.focus();
+                          if (textareaRef.current) {
+                            textareaRef.current.selectionStart =
+                              textareaRef.current.value.length;
+                            textareaRef.current.selectionEnd =
+                              textareaRef.current.value.length;
+                          }
+                        }, 0);
+                      }}
+                      className="pill-chip"
+                    >
+                      {v.title}
+                    </button>
+                  ))}
+                </div>
+
+                {/* URL section */}
+                <div className="mb-10 mt-8 sm:mb-14">
+                  <div className="or-divider mb-5">or clone a site</div>
+
+                  <div className="flex justify-center">
+                    <div
+                      className={`url-strip group flex w-full max-w-[420px] items-center gap-3 px-4 py-2.5 ${
+                        urlInput.trim()
+                          ? "border-blue-500/35 bg-blue-50/20 dark:border-blue-500/25 dark:bg-blue-950/10"
+                          : ""
+                      } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
+                    >
+                      <div
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
+                          isScrapingUrl || urlInput.trim()
+                            ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
+                            : "bg-muted/70 text-muted-foreground/70"
+                        }`}
+                      >
+                        {isScrapingUrl ? (
+                          <Spinner className="size-3.5" />
+                        ) : (
+                          <Link2 className="size-3.5" />
+                        )}
+                      </div>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com"
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && urlInput.trim()) {
+                            e.preventDefault();
+                            handleUrlScrape();
+                          }
+                        }}
+                        disabled={isScrapingUrl}
+                        className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
+                      />
+                      {urlInput.trim() && !isScrapingUrl && (
+                        <button
+                          type="button"
+                          onClick={handleUrlScrape}
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-all hover:scale-105 hover:bg-blue-600 active:scale-95"
+                        >
+                          <ArrowRightIcon className="size-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Fieldset>
+            </form>
+          </div>
+
+          <HoverBrandLogo />
+          <Footer />
         </div>
 
-        <HoverBrandLogo />
-
-        <Footer />
+        <PricingModal
+          open={showPricingModal}
+          onOpenChange={setShowPricingModal}
+          remainingCredits={userCredits}
+          isAuthenticated={isAuthenticated}
+        />
+        <OnboardingModal
+          isOpen={showOnboardingModal}
+          onClose={() => {
+            setShowOnboardingModal(false);
+            localStorage.setItem("hasSeenOnboarding", "true");
+          }}
+        />
+        <HelpPanel
+          isOpen={showHelpPanel}
+          onClose={() => setShowHelpPanel(false)}
+        />
       </div>
-
-      <PricingModal
-        open={showPricingModal}
-        onOpenChange={setShowPricingModal}
-        remainingCredits={userCredits}
-        isAuthenticated={isAuthenticated}
-      />
-      <OnboardingModal
-        isOpen={showOnboardingModal}
-        onClose={() => {
-          setShowOnboardingModal(false);
-          localStorage.setItem("hasSeenOnboarding", "true");
-        }}
-      />
-      <HelpPanel
-        isOpen={showHelpPanel}
-        onClose={() => setShowHelpPanel(false)}
-      />
-    </div>
+    </>
   );
 }
 
 const Footer = memo(() => {
   return (
-    <footer className="mt-auto flex w-full flex-col items-center justify-between gap-4 px-6 pb-6 pt-6 text-center sm:flex-row sm:gap-0">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="font-medium">Squid Coder</span>
+    <footer className="mt-auto flex w-full items-center justify-between gap-4 px-6 pb-6 pt-4">
+      <div className="flex items-center gap-2 text-sm">
+        <span className="font-medium tracking-tight text-foreground/80">
+          Squid Coder
+        </span>
         <span className="text-border">·</span>
-        <span>Turn ideas into apps</span>
+        <span className="text-xs text-muted-foreground/60">
+          Turn ideas into apps
+        </span>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         <Link
           href="https://x.com/drewsepeczi"
-          className="group flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
           aria-label="X (Twitter)"
         >
           <svg
-            width="18"
-            height="18"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -755,12 +1007,12 @@ const Footer = memo(() => {
         </Link>
         <Link
           href="https://github.com/drewsephski"
-          className="group flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
           aria-label="GitHub"
         >
           <svg
-            width="18"
-            height="18"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -776,6 +1028,8 @@ const Footer = memo(() => {
   );
 });
 
+Footer.displayName = "Footer";
+
 function LoadingMessage({
   isHighQuality,
   screenshotUrl,
@@ -786,20 +1040,20 @@ function LoadingMessage({
   isScrapingUrl?: boolean;
 }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/95 px-4 backdrop-blur-sm dark:bg-card/95">
-      <div className="flex flex-col items-center justify-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
+    <div className="bg-background/96 dark:bg-card/96 absolute inset-0 flex items-center justify-center rounded-[20px] backdrop-blur-md">
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
           <Spinner className="text-blue-500" />
         </div>
-        <span className="text-balance text-center text-sm font-medium text-muted-foreground">
+        <p className="text-center text-[13.5px] font-medium text-muted-foreground">
           {isScrapingUrl
-            ? "Capturing website screenshot..."
+            ? "Capturing website…"
             : isHighQuality
-              ? "Planning project structure..."
+              ? "Planning project structure…"
               : screenshotUrl
-                ? "Analyzing your screenshot..."
-                : "Building your app..."}
-        </span>
+                ? "Analyzing screenshot…"
+                : "Building your app…"}
+        </p>
       </div>
     </div>
   );
