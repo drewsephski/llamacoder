@@ -62,7 +62,7 @@ export function DeleteProjectModal({
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
           <div className="flex-1 overflow-hidden rounded-lg border border-border bg-muted/50 p-3">
-            <p className="truncate text-sm font-medium text-foreground">
+            <p className="break-words text-sm font-medium text-foreground">
               {projectTitle}
             </p>
           </div>
