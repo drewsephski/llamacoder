@@ -4,57 +4,47 @@ import ArrowRightIcon from "@/components/icons/arrow-right";
 import Spinner from "@/components/spinner";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { createMessage } from "../../actions";
+import { createMessage } from "@/app/(main)/actions";
 import { type Chat } from "./page";
-import { MODELS } from "@/lib/constants";
-import { PricingModal } from "@/components/pricing-modal";
-import { UpgradeBanner } from "@/components/upgrade-banner";
+import { MODELS, FREE_MODEL } from "@/lib/constants";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { PricingModal } from "@/components/pricing-modal";
+import { UpgradeBanner } from "@/components/upgrade-banner";
+import { useUserCredits, useUserSession } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+
+interface ChatBoxProps {
+  chat: {
+    id: string;
+    title: string;
+    model: string;
+    messages: any[];
+  };
+  onNewStreamPromiseAction: (streamPromise: Promise<ReadableStream>) => void;
+  isStreaming: boolean;
+}
 
 export default function ChatBox({
   chat,
   onNewStreamPromiseAction,
   isStreaming,
-}: {
-  chat: Chat;
-  onNewStreamPromiseAction: (v: Promise<ReadableStream>) => void;
-  isStreaming: boolean;
-}) {
+}: ChatBoxProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const disabled = isPending || isStreaming;
-  const didFocusOnce = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [prompt, setPrompt] = useState("");
-  const [credits, setCredits] = useState<number | null>(null);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [disabled, setDisabled] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isCheckingCredits, setIsCheckingCredits] = useState(false);
+  const didFocusOnce = useRef(false);
 
-  const modelLabel =
-    MODELS.find((m) => m.value === chat.model)?.label || chat.model;
-
-  useEffect(() => {
-    const fetchCredits = async () => {
-      try {
-        const session = await authClient.getSession();
-        if (session.data) {
-          const response = await fetch("/api/user/credits");
-          if (response.ok) {
-            const data = await response.json();
-            setCredits(data.credits);
-            setHasActiveSubscription(data.hasActiveSubscription);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch credits:", error);
-      }
-    };
-    fetchCredits();
-  }, []);
+  const { data: creditsData } = useUserCredits();
+  const { data: session } = useUserSession();
+  const credits = creditsData?.credits ?? 0;
+  const hasActiveSubscription = creditsData?.hasActiveSubscription ?? false;
+  const isAuthenticated = !!session;
 
   useEffect(() => {
     if (!textareaRef.current) return;
@@ -67,31 +57,22 @@ export default function ChatBox({
   }, [disabled]);
 
   const handleSubmit = async () => {
+    // Require authentication before sending messages
+    if (!isAuthenticated) {
+      toast.error("Please sign in to send messages");
+      router.push("/sign-in");
+      return;
+    }
+
     const isFollowUp = chat.messages.length > 2;
 
     if (isFollowUp) {
       setIsCheckingCredits(true);
-      try {
-        const session = await authClient.getSession();
-        if (session.data) {
-          const response = await fetch("/api/user/credits");
-          if (response.ok) {
-            const data = await response.json();
-            setHasActiveSubscription(data.hasActiveSubscription);
-            setCredits(data.credits);
-            if (data.credits <= 0 && !data.hasActiveSubscription) {
-              setShowPricingModal(true);
-              setIsCheckingCredits(false);
-              return;
-            }
-          }
-        } else {
-          setShowPricingModal(true);
-          setIsCheckingCredits(false);
-          return;
-        }
-      } catch (error) {
-        console.error("Failed to check credits:", error);
+      // Check credits using cached data from TanStack Query
+      if (credits <= 0 && !hasActiveSubscription) {
+        setShowPricingModal(true);
+        setIsCheckingCredits(false);
+        return;
       }
       setIsCheckingCredits(false);
     }
@@ -120,6 +101,7 @@ export default function ChatBox({
 
   const selectedModel = MODELS.find((m) => m.value === chat.model);
   const isPaidModel = selectedModel?.paid ?? false;
+  const modelLabel = selectedModel?.label || chat.model;
 
   return (
     <>

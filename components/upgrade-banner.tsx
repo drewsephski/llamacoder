@@ -1,38 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PricingModal } from "./pricing-modal";
-import { Sparkles, Lock, Crown, X } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { Crown, Lock, X, Sparkles } from "lucide-react";
+import { useUserCredits } from "@/lib/queries";
 
 interface UpgradeBannerProps {
-  variant?: "chat" | "dashboard" | "model-locked" | "limit-reached";
+  variant?: "dashboard" | "model-locked" | "chat" | "limit-reached";
   messageCount?: number;
 }
 
-export function UpgradeBanner({ variant = "dashboard", messageCount = 0 }: UpgradeBannerProps) {
+export function UpgradeBanner({
+  variant = "dashboard",
+  messageCount = 0,
+}: UpgradeBannerProps) {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [hasSubscription, setHasSubscription] = useState<boolean | null>(null);
-  const [credits, setCredits] = useState(0);
 
-  useEffect(() => {
-    const checkStatus = async () => {
-      const session = await authClient.getSession();
-      if (session.data) {
-        const response = await fetch("/api/user/credits");
-        if (response.ok) {
-          const data = await response.json();
-          setHasSubscription(data.hasActiveSubscription);
-          setCredits(data.credits);
-        }
-      } else {
-        setHasSubscription(false);
-      }
-    };
-    checkStatus();
-  }, []);
+  const { data: creditsData } = useUserCredits();
+  const hasSubscription = creditsData?.hasActiveSubscription ?? false;
+  const credits = creditsData?.credits ?? 0;
 
   // Don't show if user has subscription
   if (hasSubscription === true) return null;
@@ -50,7 +38,8 @@ export function UpgradeBanner({ variant = "dashboard", messageCount = 0 }: Upgra
     "model-locked": {
       icon: Lock,
       title: "Premium model locked",
-      description: "Subscribe to unlock this model and 5+ other premium AI models.",
+      description:
+        "Subscribe to unlock this model and 5+ other premium AI models.",
       cta: "Unlock Models",
       color: "from-amber-500/10 to-orange-500/10 border-amber-500/20",
       iconColor: "text-amber-500",
@@ -58,9 +47,10 @@ export function UpgradeBanner({ variant = "dashboard", messageCount = 0 }: Upgra
     dashboard: {
       icon: Crown,
       title: "Unlock your full potential",
-      description: messageCount > 0
-        ? `You've created ${messageCount} project${messageCount === 1 ? "" : "s"}. Subscribe for unlimited premium generations.`
-        : "Subscribe to access GPT-5.4 and Claude Opus 4.6.",
+      description:
+        messageCount > 0
+          ? `You've created ${messageCount} project${messageCount === 1 ? "" : "s"}. Subscribe for unlimited premium generations.`
+          : "Subscribe to access GPT-5.4 and Claude Opus 4.6.",
       cta: "Get Premium",
       color: "from-amber-500/10 to-orange-500/10 border-amber-500/20",
       iconColor: "text-amber-500",
@@ -80,23 +70,27 @@ export function UpgradeBanner({ variant = "dashboard", messageCount = 0 }: Upgra
 
   return (
     <>
-      <div className={`relative overflow-hidden rounded-xl border bg-gradient-to-r ${v.color} p-4 mb-6`}>
+      <div
+        className={`relative overflow-hidden rounded-xl border bg-gradient-to-r ${v.color} mb-6 p-4`}
+      >
         <button
           onClick={() => setIsVisible(false)}
-          className="absolute top-2 right-2 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          className="absolute right-2 top-2 rounded-md p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
           aria-label="Dismiss"
         >
           <X className="h-4 w-4 text-muted-foreground" />
         </button>
-        
+
         <div className="flex items-start gap-4">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/80 ${v.iconColor}`}>
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/80 ${v.iconColor}`}
+          >
             <Icon className="h-5 w-5" />
           </div>
-          
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm mb-1">{v.title}</h3>
-            <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+
+          <div className="min-w-0 flex-1">
+            <h3 className="mb-1 text-sm font-semibold">{v.title}</h3>
+            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
               {v.description}
             </p>
             <div className="flex items-center gap-3">

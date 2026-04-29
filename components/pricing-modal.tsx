@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { MODELS } from "@/lib/constants";
 import { CREDIT_PACKS, MODEL_PRICING, getModelCreditCost } from "@/lib/billing";
 import { Button } from "./ui/button";
+import { useStripeCheckout } from "@/lib/queries";
 
 interface PricingModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ export function PricingModal({
 }: PricingModalProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"plans" | "credits">("plans");
+  const checkoutMutation = useStripeCheckout();
 
   const handleSubscribe = async (plan: string) => {
     if (!isAuthenticated) {
@@ -46,20 +48,7 @@ export function PricingModal({
 
     setIsLoading(plan);
     try {
-      const response = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ plan }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-
+      const data = await checkoutMutation.mutateAsync({ plan });
       window.location.href = data.url;
     } catch (error: any) {
       console.error("Checkout error:", error);
@@ -81,20 +70,7 @@ export function PricingModal({
 
     setIsLoading(`credits-${pack.credits}`);
     try {
-      const response = await fetch("/api/stripe/credits-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ pack: pack.key }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-
+      const data = await checkoutMutation.mutateAsync({ pack: pack.key });
       window.location.href = data.url;
     } catch (error: any) {
       console.error("Checkout error:", error);

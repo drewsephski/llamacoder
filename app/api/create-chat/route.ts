@@ -9,78 +9,62 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { MODELS, FREE_MODEL } from "@/lib/constants";
-import {
-  checkAnonymousUsageLimit,
-  checkAndConsumeCredits,
-  getModelCreditCost,
-} from "@/lib/billing";
+import { MODELS } from "@/lib/constants";
+import { checkAndConsumeCredits, getModelCreditCost } from "@/lib/billing";
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, model, quality, screenshotUrl, screenshotData } = await request.json();
-    
-    // Check authentication
+    const { prompt, model, quality, screenshotUrl, screenshotData } =
+      await request.json();
+
+    // Check authentication - required for all chat creation
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
+    if (!session) {
+      return NextResponse.json(
+        {
+          error: "AUTHENTICATION_REQUIRED",
+          message: "Please sign in to create a project",
+        },
+        { status: 401 },
+      );
+    }
+
     const prisma = getPrisma();
 
     // Check if selected model is free or paid
-    const selectedModel = MODELS.find(m => m.value === model);
+    const selectedModel = MODELS.find((m) => m.value === model);
     const isPaidModel = selectedModel?.paid ?? false;
 
-    // For unauthenticated users or users without credits, enforce free model
-    let resolvedModel = model;
+    // Authenticated user - use credit engine for all checks
+    const creditCheck = await checkAndConsumeCredits({
+      userId: session.user.id,
+      modelId: model,
+      description: `AI generation - ${selectedModel?.label || model}`,
+    });
 
-    if (!session) {
-      // Check anonymous usage limit (1 free generation)
-      const anonymousCheck = await checkAnonymousUsageLimit(request);
-      if (!anonymousCheck.allowed) {
+    if (!creditCheck.success) {
+      if (creditCheck.error === "FORBIDDEN_MODEL") {
         return NextResponse.json(
-          {
-            error: "ANONYMOUS_LIMIT_REACHED",
-            message: "You've used your free generation. Sign up to continue.",
-          },
-          { status: 402 }
+          { error: "FORBIDDEN_MODEL", message: "Upgrade to use this model" },
+          { status: 403 },
         );
       }
-
-      // Unauthenticated users must use free model
-      if (isPaidModel) {
-        return NextResponse.json(
-          { error: "PAID_MODEL_REQUIRES_AUTH", message: "Please sign in to use premium models" },
-          { status: 403 }
-        );
-      }
-      resolvedModel = FREE_MODEL;
-    } else {
-      // Authenticated user - use credit engine for all checks
-      const creditCheck = await checkAndConsumeCredits({
-        userId: session.user.id,
-        modelId: model,
-        description: `AI generation - ${selectedModel?.label || model}`,
-      });
-
-      if (!creditCheck.success) {
-        if (creditCheck.error === "FORBIDDEN_MODEL") {
-          return NextResponse.json(
-            { error: "FORBIDDEN_MODEL", message: "Upgrade to use this model" },
-            { status: 403 }
-          );
-        }
-        return NextResponse.json(
-          {
-            error: creditCheck.error,
-            message: creditCheck.error === "INSUFFICIENT_CREDITS"
+      return NextResponse.json(
+        {
+          error: creditCheck.error,
+          message:
+            creditCheck.error === "INSUFFICIENT_CREDITS"
               ? `Need ${getModelCreditCost(model)} credits for this model. Upgrade or buy credits to continue.`
               : "Unable to process request",
-          },
-          { status: 402 }
-        );
-      }
+        },
+        { status: 402 },
+      );
     }
+
+    let resolvedModel = model;
 
     const chat = await prisma.chat.create({
       data: {
@@ -156,7 +140,10 @@ export async function POST(request: NextRequest) {
 
         fullScreenshotDescription = screenshotResponse.text;
       } catch (err) {
-        console.warn("Screenshot processing failed, continuing without it:", err);
+        console.warn(
+          "Screenshot processing failed, continuing without it:",
+          err,
+        );
       }
     }
 
@@ -237,7 +224,10 @@ export async function POST(request: NextRequest) {
     });
 
     const lastMessage = newChat.messages
-      .sort((a: { position: number }, b: { position: number }) => a.position - b.position)
+      .sort(
+        (a: { position: number }, b: { position: number }) =>
+          a.position - b.position,
+      )
       .at(-1) as { id: string } | undefined;
     if (!lastMessage) throw new Error("No new message");
 

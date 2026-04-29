@@ -12,6 +12,15 @@ export async function createMessage(
   role: "assistant" | "user",
   files?: any[],
 ) {
+  // Check authentication
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("You must be signed in to send messages");
+  }
+
   const prisma = getPrisma();
   const chat = await prisma.chat.findUnique({
     where: { id: chatId },
@@ -19,9 +28,10 @@ export async function createMessage(
   });
   if (!chat) notFound();
 
-  const maxPosition = chat.messages.length > 0
-    ? Math.max(...chat.messages.map((m: any) => m.position))
-    : 0;
+  const maxPosition =
+    chat.messages.length > 0
+      ? Math.max(...chat.messages.map((m: any) => m.position))
+      : 0;
 
   // Deduct credit for user follow-up messages (not initial creation or assistant messages)
   const isFollowUpUserMessage = role === "user" && chat.messages.length >= 2;

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_IDS, CREDIT_PACK_CONFIGS } from "@/lib/stripe";
+import {
+  stripe,
+  STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_IDS,
+  CREDIT_PACK_CONFIGS,
+} from "@/lib/stripe";
 import { TIERS, normalizeTier } from "@/lib/billing/config";
 import { getPrisma } from "@/lib/prisma";
 
@@ -8,14 +13,18 @@ function getTierFromPriceId(priceId: string): "pro" | "pro_plus" | null {
   if (priceId === STRIPE_PRICE_IDS.pro) return "pro";
   if (priceId === STRIPE_PRICE_IDS.pro_plus) return "pro_plus";
   // Fallback: if it's the old STRIPE_PRICE_ID, treat as pro
-  if (process.env.STRIPE_PRICE_ID && priceId === process.env.STRIPE_PRICE_ID) return "pro";
+  if (process.env.STRIPE_PRICE_ID && priceId === process.env.STRIPE_PRICE_ID)
+    return "pro";
   return null;
 }
 
 // Helper to determine credit pack from price ID
-function getCreditPackFromPriceId(priceId: string): keyof typeof CREDIT_PACK_CONFIGS | null {
+function getCreditPackFromPriceId(
+  priceId: string,
+): keyof typeof CREDIT_PACK_CONFIGS | null {
   for (const [key, pack] of Object.entries(CREDIT_PACK_CONFIGS)) {
-    if (pack.priceId === priceId) return key as keyof typeof CREDIT_PACK_CONFIGS;
+    if (pack.priceId === priceId)
+      return key as keyof typeof CREDIT_PACK_CONFIGS;
   }
   return null;
 }
@@ -23,7 +32,8 @@ function getCreditPackFromPriceId(priceId: string): keyof typeof CREDIT_PACK_CON
 export async function POST(request: NextRequest) {
   console.log("[Stripe Webhook] Received request");
   console.log("[Stripe Webhook] Headers:", {
-    "stripe-signature": request.headers.get("stripe-signature")?.slice(0, 20) + "...",
+    "stripe-signature":
+      request.headers.get("stripe-signature")?.slice(0, 20) + "...",
     "content-type": request.headers.get("content-type"),
   });
 
@@ -34,15 +44,17 @@ export async function POST(request: NextRequest) {
     console.error("[Stripe Webhook] Missing stripe-signature header");
     return NextResponse.json(
       { error: "Missing stripe-signature header" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (!STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET === "whsec_...") {
-    console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured properly");
+    console.error(
+      "[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured properly",
+    );
     return NextResponse.json(
       { error: "Webhook secret not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -51,14 +63,22 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(
       payload,
       signature,
-      STRIPE_WEBHOOK_SECRET
+      STRIPE_WEBHOOK_SECRET,
     );
-    console.log("[Stripe Webhook] Event verified:", event.type, "ID:", event.id);
+    console.log(
+      "[Stripe Webhook] Event verified:",
+      event.type,
+      "ID:",
+      event.id,
+    );
   } catch (error: any) {
-    console.error("[Stripe Webhook] Signature verification failed:", error.message);
+    console.error(
+      "[Stripe Webhook] Signature verification failed:",
+      error.message,
+    );
     return NextResponse.json(
       { error: `Webhook signature verification failed: ${error.message}` },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -69,19 +89,34 @@ export async function POST(request: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object;
         const customerId = session.customer as string;
-        const sessionMetadata = session.metadata as { type?: string; credits?: string; pack?: string; userId?: string } || {};
+        const sessionMetadata =
+          (session.metadata as {
+            type?: string;
+            credits?: string;
+            pack?: string;
+            userId?: string;
+          }) || {};
+
+        // Get subscription metadata if available (for subscriptions)
+        const subscriptionMetadata =
+          (session as any).subscription_details?.metadata || {};
 
         // Check if this is a credit purchase (one-time payment)
         if (session.mode === "payment" && sessionMetadata.type === "credits") {
           const creditAmount = parseInt(sessionMetadata.credits || "0");
           const packName = sessionMetadata.pack || "unknown";
           const metadataUserId = sessionMetadata.userId;
-          
-          console.log("[Stripe Webhook] Processing credit purchase:", { creditAmount, packName, metadataUserId, customerId });
-          
+
+          console.log("[Stripe Webhook] Processing credit purchase:", {
+            creditAmount,
+            packName,
+            metadataUserId,
+            customerId,
+          });
+
           if (creditAmount > 0) {
             let userId: string | null = null;
-            
+
             // First try to find by userId from metadata (for credit-only purchases)
             if (metadataUserId) {
               const user = await prisma.user.findUnique({
@@ -89,10 +124,13 @@ export async function POST(request: NextRequest) {
               });
               if (user) {
                 userId = user.id;
-                console.log("[Stripe Webhook] Found user by metadata userId:", userId);
+                console.log(
+                  "[Stripe Webhook] Found user by metadata userId:",
+                  userId,
+                );
               }
             }
-            
+
             // Fallback: find user by customer ID via subscription
             if (!userId) {
               const existingSub = await prisma.subscription.findFirst({
@@ -100,7 +138,10 @@ export async function POST(request: NextRequest) {
               });
               if (existingSub) {
                 userId = existingSub.userId;
-                console.log("[Stripe Webhook] Found user by subscription customerId:", userId);
+                console.log(
+                  "[Stripe Webhook] Found user by subscription customerId:",
+                  userId,
+                );
               }
             }
 
@@ -112,7 +153,12 @@ export async function POST(request: NextRequest) {
                   credits: { increment: creditAmount },
                 },
               });
-              console.log("[Stripe Webhook] Added credits:", creditAmount, "to user:", userId);
+              console.log(
+                "[Stripe Webhook] Added credits:",
+                creditAmount,
+                "to user:",
+                userId,
+              );
 
               // Record credit history
               await prisma.creditHistory.create({
@@ -125,7 +171,12 @@ export async function POST(request: NextRequest) {
               });
               console.log("[Stripe Webhook] Recorded credit history");
             } else {
-              console.error("[Stripe Webhook] Could not find user for credit purchase. Customer:", customerId, "Metadata userId:", metadataUserId);
+              console.error(
+                "[Stripe Webhook] Could not find user for credit purchase. Customer:",
+                customerId,
+                "Metadata userId:",
+                metadataUserId,
+              );
             }
           }
           break;
@@ -142,95 +193,130 @@ export async function POST(request: NextRequest) {
           current_period_start: number;
           current_period_end: number;
           items: { data: Array<{ price: { id: string } }> };
+          metadata?: { tier?: string; userId?: string };
         };
         const priceId = subscription.items.data[0].price.id;
 
-        // Determine tier from price ID
-        const tier = getTierFromPriceId(priceId) || "pro";
+        // Determine tier from price ID or subscription metadata
+        const tier =
+          getTierFromPriceId(priceId) ||
+          (subscription.metadata?.tier as "pro" | "pro_plus") ||
+          "pro";
         const tierConfig = TIERS[tier];
 
-        // Find user by customer ID
-        const existingSub = await prisma.subscription.findFirst({
-          where: { stripeCustomerId: customerId },
+        // Get userId from subscription metadata (set during checkout)
+        const userId = subscription.metadata?.userId || sessionMetadata.userId;
+
+        console.log("[Stripe Webhook] Processing subscription:", {
+          subscriptionId,
+          customerId,
+          userId,
+          tier,
+          priceId,
+        });
+
+        if (!userId) {
+          console.error(
+            "[Stripe Webhook] No userId found in subscription or session metadata. Cannot process subscription.",
+          );
+          break;
+        }
+
+        // Find existing subscription by user
+        const existingSub = await prisma.subscription.findUnique({
+          where: { userId },
         });
 
         if (existingSub) {
-          // Update subscription
+          // Update existing subscription
           await prisma.subscription.update({
             where: { id: existingSub.id },
             data: {
+              stripeCustomerId: customerId,
               stripeSubscriptionId: subscriptionId,
               stripePriceId: priceId,
               status: subscription.status,
               tier: tier,
-              currentPeriodStart: new Date(subscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              currentPeriodStart: new Date(
+                subscription.current_period_start * 1000,
+              ),
+              currentPeriodEnd: new Date(
+                subscription.current_period_end * 1000,
+              ),
             },
           });
+          console.log(
+            "[Stripe Webhook] Updated subscription for user:",
+            userId,
+          );
 
           // Add credits to user for ALL tiers (no unlimited bypass)
           await prisma.user.update({
-            where: { id: existingSub.userId },
+            where: { id: userId },
             data: {
               credits: { increment: tierConfig.monthlyCredits },
             },
           });
+          console.log(
+            "[Stripe Webhook] Added",
+            tierConfig.monthlyCredits,
+            "credits to user:",
+            userId,
+          );
 
           // Record credit history
           await prisma.creditHistory.create({
             data: {
-              userId: existingSub.userId,
+              userId: userId,
               amount: tierConfig.monthlyCredits,
               type: "subscription",
               description: `${tierConfig.name} subscription - ${tierConfig.monthlyCredits} credits`,
             },
           });
         } else {
-          // NEW: Create subscription for new users
-          // Find user by customer ID or metadata
-          let userId: string | null = sessionMetadata.userId || null;
-          
-          if (!userId) {
-            // Look up by stripeCustomerId via user record
-            const userWithCustomer = await prisma.user.findFirst({
-              where: { subscription: { stripeCustomerId: customerId } },
-            });
-            if (userWithCustomer) {
-              userId = userWithCustomer.id;
-            }
-          }
-          
-          if (userId) {
-            // Create subscription record
-            await prisma.subscription.create({
-              data: {
-                userId: userId,
-                stripeCustomerId: customerId,
-                stripeSubscriptionId: subscriptionId,
-                stripePriceId: priceId,
-                status: subscription.status,
-                tier: tier,
-                currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-              },
-            });
-            
-            // Add credits
-            await prisma.user.update({
-              where: { id: userId },
-              data: { credits: { increment: tierConfig.monthlyCredits } },
-            });
-            
-            // Record credit history
-            await prisma.creditHistory.create({
-              data: {
-                userId: userId,
-                amount: tierConfig.monthlyCredits,
-                type: "subscription",
-                description: `${tierConfig.name} subscription - ${tierConfig.monthlyCredits} credits`,
-              },
-            });
-          }
+          // Create new subscription record
+          await prisma.subscription.create({
+            data: {
+              userId: userId,
+              stripeCustomerId: customerId,
+              stripeSubscriptionId: subscriptionId,
+              stripePriceId: priceId,
+              status: subscription.status,
+              tier: tier,
+              currentPeriodStart: new Date(
+                subscription.current_period_start * 1000,
+              ),
+              currentPeriodEnd: new Date(
+                subscription.current_period_end * 1000,
+              ),
+            },
+          });
+          console.log(
+            "[Stripe Webhook] Created subscription for user:",
+            userId,
+          );
+
+          // Add credits
+          await prisma.user.update({
+            where: { id: userId },
+            data: { credits: { increment: tierConfig.monthlyCredits } },
+          });
+          console.log(
+            "[Stripe Webhook] Added",
+            tierConfig.monthlyCredits,
+            "credits to user:",
+            userId,
+          );
+
+          // Record credit history
+          await prisma.creditHistory.create({
+            data: {
+              userId: userId,
+              amount: tierConfig.monthlyCredits,
+              type: "subscription",
+              description: `${tierConfig.name} subscription - ${tierConfig.monthlyCredits} credits`,
+            },
+          });
         }
         break;
       }
@@ -260,8 +346,12 @@ export async function POST(request: NextRequest) {
             where: { id: userSub.id },
             data: {
               status: subscription.status,
-              currentPeriodStart: new Date(subscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              currentPeriodStart: new Date(
+                subscription.current_period_start * 1000,
+              ),
+              currentPeriodEnd: new Date(
+                subscription.current_period_end * 1000,
+              ),
             },
           });
 
@@ -271,7 +361,10 @@ export async function POST(request: NextRequest) {
 
           // Add monthly credits for ALL tiers (no unlimited bypass)
           // Only skip if this is the first invoice (already handled in checkout.session.completed)
-          if (!stripeInvoice.billing_reason || stripeInvoice.billing_reason !== "subscription_create") {
+          if (
+            !stripeInvoice.billing_reason ||
+            stripeInvoice.billing_reason !== "subscription_create"
+          ) {
             await prisma.user.update({
               where: { id: userSub.userId },
               data: {
@@ -293,7 +386,9 @@ export async function POST(request: NextRequest) {
       }
 
       case "invoice.payment_failed": {
-        const failedInvoice = event.data.object as unknown as { subscription: string };
+        const failedInvoice = event.data.object as unknown as {
+          subscription: string;
+        };
         const subscriptionId = failedInvoice.subscription;
 
         await prisma.subscription.updateMany({
@@ -327,8 +422,12 @@ export async function POST(request: NextRequest) {
           where: { stripeSubscriptionId: subscriptionId },
           data: {
             status: stripeSubscription.status,
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+            currentPeriodStart: new Date(
+              stripeSubscription.current_period_start * 1000,
+            ),
+            currentPeriodEnd: new Date(
+              stripeSubscription.current_period_end * 1000,
+            ),
           },
         });
         break;
@@ -343,7 +442,7 @@ export async function POST(request: NextRequest) {
     console.error("Error processing webhook:", error);
     return NextResponse.json(
       { error: "Webhook processing failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

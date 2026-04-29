@@ -34,7 +34,6 @@ import Header from "@/components/header";
 import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
-import { getModelCreditCost } from "@/lib/billing";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/components/pricing-modal";
 import { OnboardingModal } from "@/components/onboarding-modal";
@@ -46,6 +45,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { HelpCircle } from "lucide-react";
+import {
+  useUserCredits,
+  useUserSession,
+  useCanCreateProject,
+  useCreateChat,
+} from "@/lib/queries";
+import { getModelCreditCost } from "@/lib/billing";
 
 export default function Home() {
   const { setStreamPromise } = use(Context);
@@ -54,9 +60,6 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(FREE_MODEL);
   const [quality, setQuality] = useState("low");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [userCredits, setUserCredits] = useState(0);
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
     undefined,
   );
@@ -80,15 +83,23 @@ export default function Home() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
-  const [credits, setCredits] = useState(0);
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
   const ringRef = useRef<HTMLDivElement>(null);
+
+  const { data: session } = useUserSession();
+  const { data: creditsData } = useUserCredits();
+  const { data: eligibility } = useCanCreateProject();
+  const createChatMutation = useCreateChat();
+
+  const isAuthenticated = !!session;
+  const hasActiveSubscription = creditsData?.hasActiveSubscription ?? false;
+  const userCredits = creditsData?.credits ?? 0;
+  const canUsePaidModels = isAuthenticated && hasActiveSubscription;
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
-    checkAuthStatus();
     const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
     if (!hasSeenOnboarding) {
       setShowOnboardingModal(true);
@@ -110,25 +121,6 @@ export default function Home() {
       }
     };
   }, [mousePosition]);
-
-  const checkAuthStatus = async () => {
-    try {
-      const session = await authClient.getSession();
-      if (session.data) {
-        setIsAuthenticated(true);
-        const response = await fetch("/api/user/credits");
-        if (response.ok) {
-          const data = await response.json();
-          setHasActiveSubscription(data.hasActiveSubscription);
-          setUserCredits(data.credits);
-        }
-      }
-    } catch (error) {
-      console.error("Error checking auth:", error);
-    }
-  };
-
-  const canUsePaidModels = isAuthenticated && hasActiveSubscription;
 
   const handleModelChange = (newModel: string) => {
     const selectedModel = MODELS.find((m) => m.value === newModel);
@@ -557,26 +549,32 @@ export default function Home() {
               action={async (formData) => {
                 setIsCheckingEligibility(true);
                 const currentModel = (formData.get("model") as string) || model;
+
+                // Require authentication before allowing chat creation
+                const session = await authClient.getSession();
+                if (!session.data) {
+                  toast.error("Please sign in to create a project");
+                  router.push("/sign-in?callbackUrl=/");
+                  setIsCheckingEligibility(false);
+                  return;
+                }
+
                 try {
-                  const session = await authClient.getSession();
-                  if (session.data) {
-                    const checkResponse = await fetch(
-                      `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
-                    );
-                    if (checkResponse.ok) {
-                      const eligibility = await checkResponse.json();
-                      if (!eligibility.canCreate) {
-                        setCredits(eligibility.credits);
-                        const cost =
-                          eligibility.modelCost ||
-                          getModelCreditCost(currentModel);
-                        toast.error(
-                          `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
-                        );
-                        setShowPricingModal(true);
-                        setIsCheckingEligibility(false);
-                        return;
-                      }
+                  const checkResponse = await fetch(
+                    `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
+                  );
+                  if (checkResponse.ok) {
+                    const eligibility = await checkResponse.json();
+                    if (!eligibility.canCreate) {
+                      const cost =
+                        eligibility.modelCost ||
+                        getModelCreditCost(currentModel);
+                      toast.error(
+                        `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
+                      );
+                      setShowPricingModal(true);
+                      setIsCheckingEligibility(false);
+                      return;
                     }
                   }
                 } catch (error) {
@@ -592,21 +590,15 @@ export default function Home() {
                     assert.ok(typeof model === "string");
                     assert.ok(quality === "high" || quality === "low");
 
-                    const response = await fetch("/api/create-chat", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
+                    const { chatId, lastMessageId } =
+                      await createChatMutation.mutateAsync({
                         prompt,
                         model,
                         quality,
                         screenshotUrl,
                         screenshotData,
-                      }),
-                    });
+                      });
 
-                    if (!response.ok) throw new Error("Failed to create chat");
-
-                    const { chatId, lastMessageId } = await response.json();
                     const streamPromise = fetch(
                       "/api/get-next-completion-stream-promise",
                       {

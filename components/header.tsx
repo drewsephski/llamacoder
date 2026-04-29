@@ -1,82 +1,47 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useState } from "react";
 
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
-import { authClient } from "@/lib/auth-client";
 import { MenuIcon, XIcon, Zap, Loader2, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PricingModal } from "@/components/pricing-modal";
 import { Button } from "@/components/ui/button";
+import {
+  useUserCredits,
+  useUserSession,
+  useStripeCheckout,
+} from "@/lib/queries";
+import { authClient } from "@/lib/auth-client";
 
 interface HeaderProps {
   onHelpClick?: () => void;
 }
 
 function Header({ onHelpClick }: HeaderProps) {
-  const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
-  const [hasSubscription, setHasSubscription] = useState(false);
-  const [isUpgrading, setIsUpgrading] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
 
-  useEffect(() => {
-    authClient
-      .getSession()
-      .then((result) => {
-        if (result.data) {
-          setSession(result.data);
-          // Fetch credits for authenticated users
-          fetchCredits();
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const { data: session, isLoading: sessionLoading } = useUserSession();
+  const { data: creditsData, isLoading: creditsLoading } = useUserCredits();
+  const checkoutMutation = useStripeCheckout();
 
-  const fetchCredits = async () => {
-    try {
-      const response = await fetch("/api/user/credits");
-      if (response.ok) {
-        const data = await response.json();
-        setCredits(data.credits);
-        setHasSubscription(data.hasActiveSubscription);
-      }
-    } catch (error) {
-      console.error("Error fetching credits:", error);
-    }
-  };
+  const credits = creditsData?.credits ?? null;
+  const hasSubscription = creditsData?.hasActiveSubscription ?? false;
+  const isUpgrading = checkoutMutation.isPending;
+  const loading = sessionLoading || creditsLoading;
 
   const handleUpgrade = async () => {
-    setIsUpgrading(true);
     try {
-      const response = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          toast.error("Please sign in to subscribe");
-          return;
-        }
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-
-      // Redirect to Stripe checkout
+      const data = await checkoutMutation.mutateAsync({ plan: "pro" });
       window.location.href = data.url;
     } catch (error: any) {
-      console.error("Checkout error:", error);
-      toast.error(error.message || "Something went wrong. Please try again.");
-    } finally {
-      setIsUpgrading(false);
+      if (error.message?.includes("sign in")) {
+        toast.error("Please sign in to subscribe");
+      } else {
+        toast.error(error.message || "Something went wrong. Please try again.");
+      }
     }
   };
 
