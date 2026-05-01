@@ -2,6 +2,7 @@ import { getPrisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import { renameProject } from "../actions";
 import { ProjectCardActions } from "@/components/project-card-actions";
 import { UnlockProgress } from "@/components/unlock-progress";
@@ -196,17 +197,22 @@ async function DashboardPage({
                 </span>
               </div>
               <AnimatedThemeToggleButton variant="horizontal" />
-              <form
-                action={async () => {
-                  "use server";
-                  redirect("/api/auth/sign-out");
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  await authClient.signOut({
+                    fetchOptions: {
+                      onSuccess: () => {
+                        window.location.href = "/";
+                      },
+                    },
+                  });
                 }}
               >
-                <Button type="submit" variant="ghost" size="sm">
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Sign out</span>
-                </Button>
-              </form>
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign out</span>
+              </Button>
             </div>
           </div>
         </div>
