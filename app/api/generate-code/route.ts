@@ -7,21 +7,19 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { MODELS } from "@/lib/constants";
 import { checkAndConsumeCredits, getModelCreditCost } from "@/lib/billing";
+import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 export async function POST(request: NextRequest) {
   try {
     const { chatId } = await request.json();
-    
+
     // Check authentication
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const prisma = getPrisma();
@@ -33,30 +31,24 @@ export async function POST(request: NextRequest) {
     });
 
     if (!chat) {
-      return NextResponse.json(
-        { error: "Chat not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
     }
 
     if (chat.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (!chat.plan) {
       return NextResponse.json(
         { error: "No plan found for this chat" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (chat.hasCode) {
       return NextResponse.json(
         { error: "Code already generated for this chat" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -71,11 +63,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: creditCheck.error,
-          message: creditCheck.error === "INSUFFICIENT_CREDITS"
-            ? `Need ${getModelCreditCost(chat.model)} credits for this model. Upgrade or buy credits to continue.`
-            : "Unable to process request",
+          message:
+            creditCheck.error === "INSUFFICIENT_CREDITS"
+              ? `Need ${getModelCreditCost(chat.model)} credits for this model. Upgrade or buy credits to continue.`
+              : "Unable to process request",
         },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
@@ -93,8 +86,11 @@ export async function POST(request: NextRequest) {
     const openrouter = createOpenRouter(options);
 
     // Generate code based on the plan
+    const models = getModelWithFallbacks(chat.model);
     const codeResponse = await generateText({
-      model: openrouter(chat.model),
+      model: openrouter(models[0], {
+        models: models.length > 1 ? models.slice(1) : undefined,
+      }),
       messages: [
         {
           role: "system",
@@ -146,7 +142,7 @@ export async function POST(request: NextRequest) {
     console.error("Error generating code:", error);
     return NextResponse.json(
       { error: "Failed to generate code" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

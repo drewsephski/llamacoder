@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { MODELS } from "@/lib/constants";
 import { checkAndConsumeCredits, getModelCreditCost } from "@/lib/billing";
+import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 export async function POST(request: NextRequest) {
   try {
@@ -91,8 +92,11 @@ export async function POST(request: NextRequest) {
     const openrouter = createOpenRouter(options);
 
     async function fetchTitle() {
+      const models = getModelWithFallbacks(model);
       const responseForChatTitle = await generateText({
-        model: openrouter(model),
+        model: openrouter(models[0], {
+          models: models.length > 1 ? models.slice(1) : undefined,
+        }),
         messages: [
           {
             role: "system",
@@ -114,9 +118,11 @@ export async function POST(request: NextRequest) {
     let fullScreenshotDescription;
     if (screenshotData) {
       try {
+        const models = getModelWithFallbacks(model);
         const screenshotResponse = await generateText({
-          model: openrouter(model, {
+          model: openrouter(models[0], {
             maxTokens: 1000,
+            models: models.length > 1 ? models.slice(1) : undefined,
           }),
           providerOptions: {
             openrouter: {
@@ -150,9 +156,11 @@ export async function POST(request: NextRequest) {
     let plan: string | null = null;
     let userMessage: string;
     if (quality === "high") {
+      const models = getModelWithFallbacks(model);
       let initialRes = await generateText({
-        model: openrouter(model, {
+        model: openrouter(models[0], {
           maxTokens: 3000,
+          models: models.length > 1 ? models.slice(1) : undefined,
         }),
         messages: [
           {

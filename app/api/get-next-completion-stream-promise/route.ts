@@ -2,6 +2,7 @@ import { getPrisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
+import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 function optimizeMessagesForTokens(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
@@ -84,9 +85,11 @@ export async function POST(req: Request) {
 
   const openrouter = createOpenRouter(options);
 
+  const models = getModelWithFallbacks(model);
   const res = streamText({
-    model: openrouter(model, {
+    model: openrouter(models[0], {
       maxTokens: 9000,
+      models: models.length > 1 ? models.slice(1) : undefined,
     }),
     providerOptions: {
       openrouter: {

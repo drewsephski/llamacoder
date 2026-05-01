@@ -1,9 +1,9 @@
-export const FREE_MODEL = "openrouter/free";
+export const FREE_MODEL = "tencent/hy3-preview:free";
 
 export const MODELS = [
   {
     label: "Free",
-    value: "openrouter/free",
+    value: "tencent/hy3-preview:free",
     free: true,
   },
   {
