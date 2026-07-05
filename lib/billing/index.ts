@@ -11,7 +11,9 @@ export {
 } from "./config";
 
 export {
+  checkCreditAvailability,
   checkAndConsumeCredits,
+  consumeCreditsForGeneration,
   addCredits,
   getUserCreditInfo,
   type CreditCheckResult,

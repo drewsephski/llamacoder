@@ -1,5 +1,6 @@
 import CodeRunner from "@/components/code-runner";
 import { getPrisma } from "@/lib/prisma";
+import { normalizeGeneratedFiles } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -47,7 +48,11 @@ export default async function SharePage({
     notFound();
   }
 
-  const files = extractAllCodeBlocks(message.content);
+  const files = normalizeGeneratedFiles(
+    ((message.files as any[]) || []).length > 0
+      ? (message.files as any[])
+      : extractAllCodeBlocks(message.content),
+  );
   if (files.length === 0) {
     notFound();
   }

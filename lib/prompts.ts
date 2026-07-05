@@ -17,6 +17,7 @@ Guidelines:
 - Skip code examples and commentary. Do not include any external API calls either.
 - Plan for a multi-file structure with a main App.tsx file and supporting components/utilities
 - ALWAYS plan for at least 3-5 files to ensure proper code organization and separation of concerns
+- Every planned import must map to either an installed package, an installed Shadcn UI module, or one of the files the model will generate
 - You CANNOT use any other libraries or frameworks besides those specified above (such as React router)
 If given a description of a screenshot, produce an implementation plan based on trying to replicate it as closely as possible.
 `;
@@ -42,16 +43,18 @@ export function getMainCodingPrompt() {
    **Project Structure:**
    - ALWAYS create multi-file React applications with proper file organization
    - Create at least 3-5 files for any application, distributing logic appropriately
-   - Main entry: \`src/App.tsx\` (contains routing/layout logic)
-   - Components: \`src/components/\` (individual UI components)
-   - Utilities: \`src/utils/\` (helper functions, hooks, constants)
-   - Types: \`src/types/\` (TypeScript interfaces and types)
+   - Main entry: \`App.tsx\` (contains routing/layout logic)
+   - Components: \`components/\` (individual generated UI components)
+   - Utilities: \`utils/\` (helper functions, hooks, constants)
+   - Types: \`types/\` (TypeScript interfaces and types)
    - NEVER put all application logic in a single file - always split into multiple files
    - CRITICAL: Even simple apps must be split into multiple files (minimum 3 files)
+   - CRITICAL: Do not output paths under \`src/\`; generated files run from the sandbox root
+   - CRITICAL: Do not output or redefine files under \`components/ui/\` or \`lib/utils\`; those are installed platform files
 
   **Code Quality:**
   - Use TypeScript exclusively
-  - Relative imports only (e.g., \`../components/Button\`)
+  - Use relative imports between generated files (e.g., \`./components/Button\`, \`../utils/data\`)
   - Complete, runnable code with no placeholders
   - Interactive components with proper state management
   - No external API calls
@@ -66,6 +69,9 @@ export function getMainCodingPrompt() {
   - NEVER import a component that doesn't exist or isn't exported - this causes "undefined" component errors
   - When creating a new component file, ALWAYS include the export statement at the end or beginning
   - For multi-file apps, double-check all import paths are correct before finalizing output
+  - If you import \`./utils/useThing\`, \`./components/Thing\`, or any custom hook/helper, you MUST output that file in the same response
+  - NEVER invent imports like \`@/lib/hooks/useDraggable\`, \`@/hooks/*\`, \`@/utils/*\`, or \`@/components/*\` unless you also generate the matching file and import it relatively
+  - For Framer Motion, use \`import { motion, AnimatePresence } from "framer-motion"\` and render \`<motion.div>\`; NEVER import or render a \`Motion\` component
 
   **Styling & Design:**
   - Tailwind CSS v3 - Use standard Tailwind utilities: bg-blue-500, p-4, w-full, h-96, text-sm, text-6xl, text-7xl, etc.
@@ -107,9 +113,14 @@ export function getMainCodingPrompt() {
   - **Date Formatting:** date-fns (NOT date-fns-tz)
 
    **Import Rules:**
-   - Use relative paths: \`import { Button } from "../components/ui/button"\`
+   - Use installed Shadcn imports exactly as documented, e.g. \`import { Button } from "@/components/ui/button"\`
+   - Use relative paths only for files you generate, e.g. \`import { ProjectCard } from "./components/ProjectCard"\`
    - Import React hooks directly: \`import { useState, useEffect } from "react"\`
    - No other libraries available (no zod, react-router, etc.)
+   - Before final answer, audit every generated import:
+     1. Package import: must be in Available Libraries.
+     2. Shadcn import: must be under \`@/components/ui/*\`.
+     3. Generated import: must be relative and must point to a file you output.
 
   ## Design Aesthetics
 
@@ -273,7 +284,7 @@ export function getMainCodingPrompt() {
 
    **File Format:**
    - Each file in separate fenced block with path:
-     \`\`\`tsx{path=src/App.tsx}
+     \`\`\`tsx{path=App.tsx}
      // file content here
      \`\`\`
    - REQUIRED: Every file MUST use the exact fence format above with \`{path=...}\`
@@ -284,6 +295,14 @@ export function getMainCodingPrompt() {
    - Only output changed files in iterations
    - Maintain stable file paths
    - ALWAYS create multiple files - never put all code in one file
+   - Required minimum file set for new apps:
+     \`\`\`tsx{path=App.tsx}
+     \`\`\`
+     \`\`\`tsx{path=components/SomeComponent.tsx}
+     \`\`\`
+     \`\`\`ts{path=types.ts}
+     \`\`\`
+     Add \`utils/\` or additional \`components/\` files when useful
 
 **Critical Rules:**
    - NEVER output Shadcn UI component definitions - they are already installed
@@ -292,6 +311,8 @@ export function getMainCodingPrompt() {
    - ALWAYS create multiple files - never put all code in one file
    - BEFORE finalizing, verify: all imports have matching exports, no undefined components, file paths are correct
    - Create at least 3-5 files for every application, even simple ones
+   - A response with only \`App.tsx\` is invalid
+   - A response where \`App.tsx\` imports a missing custom file is invalid
 
   **Special Cases:**
   - Placeholder images: \`<div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />\`

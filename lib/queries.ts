@@ -85,7 +85,10 @@ export function useCreateChat() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create chat");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || errorData?.error || "Failed to create chat",
+        );
       }
 
       return response.json();
@@ -93,7 +96,7 @@ export function useCreateChat() {
     onSuccess: () => {
       // Invalidate projects list after creating a chat
       queryClient.invalidateQueries({ queryKey: queryKeys.projects });
-      // Refresh credits as project creation may consume credits
+      // Refresh credits in case another generation completed while creating.
       queryClient.invalidateQueries({ queryKey: queryKeys.user.credits });
     },
   });

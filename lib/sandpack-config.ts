@@ -1,9 +1,11 @@
 import * as shadcnComponents from "@/lib/shadcn";
+import { normalizeGeneratedFiles } from "@/lib/generated-files";
 
 export function getSandpackConfig(
   files: Array<{ path: string; content: string }>,
 ) {
   const sandpackFiles: Record<string, string> = { ...shadcnFiles };
+  const normalizedFiles = normalizeGeneratedFiles(files);
 
   // Add tsconfig
   sandpackFiles["/tsconfig.json"] = `{
@@ -25,37 +27,20 @@ export function getSandpackConfig(
     }
   }`;
 
-  // Add user files
-  for (const file of files) {
-    // Normalize paths - remove leading slash if present, and ensure proper structure
-    let normalizedPath = file.path.startsWith("/")
-      ? file.path.slice(1)
-      : file.path;
-
-    // If path starts with src/, remove it to place files at root level
-    if (normalizedPath.startsWith("src/")) {
-      normalizedPath = normalizedPath.slice(4);
-    }
-
-    sandpackFiles[normalizedPath] = file.content;
+  for (const file of normalizedFiles) {
+    sandpackFiles[`/${file.path}`] = file.code;
   }
 
   // Ensure App.tsx is the entry point, or if not present, create one that imports the first file
-  if (!sandpackFiles["App.tsx"] && files.length > 0) {
+  if (!sandpackFiles["/App.tsx"] && normalizedFiles.length > 0) {
     const mainFile =
-      files.find((f) => f.path.endsWith(".tsx") || f.path.endsWith(".jsx")) ||
-      files[0];
+      normalizedFiles.find(
+        (f) => f.path.endsWith(".tsx") || f.path.endsWith(".jsx"),
+      ) || normalizedFiles[0];
 
-    // Normalize the path for import
-    let importPath = mainFile.path.startsWith("/")
-      ? mainFile.path.slice(1)
-      : mainFile.path;
-    if (importPath.startsWith("src/")) {
-      importPath = importPath.slice(4);
-    }
-    importPath = importPath.replace(/\.tsx?$/, "");
+    const importPath = mainFile.path.replace(/\.(tsx?|jsx?)$/, "");
 
-    sandpackFiles["App.tsx"] = `import React from 'react';
+    sandpackFiles["/App.tsx"] = `import React from 'react';
 import MainComponent from './${importPath}';
 
 export default function App() {
@@ -67,9 +52,7 @@ export default function App() {
     template: "react-ts" as const,
     files: sandpackFiles,
     options: {
-      externalResources: [
-        "https://cdn.tailwindcss.com",
-      ],
+      externalResources: ["https://cdn.tailwindcss.com"],
     },
     customSetup: {
       dependencies,

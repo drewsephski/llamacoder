@@ -1,11 +1,6 @@
 import { getPrisma } from "@/lib/prisma";
-import {
-  MODEL_PRICING,
-  TIERS,
-  getModelCreditCost,
-  normalizeTier,
-  type TierKey,
-} from "./config";
+import type { Prisma, PrismaClient } from "@prisma/client";
+import { TIERS, getModelCreditCost, normalizeTier } from "./config";
 
 export type CreditCheckResult =
   | {
@@ -18,9 +13,80 @@ export type CreditCheckResult =
       error: "INSUFFICIENT_CREDITS" | "FORBIDDEN_MODEL" | "USER_NOT_FOUND";
     };
 
+type BillingClient = PrismaClient | Prisma.TransactionClient;
+
+async function checkCreditAccess({
+  client,
+  userId,
+  modelId,
+}: {
+  client: BillingClient;
+  userId: string;
+  modelId: string;
+}): Promise<CreditCheckResult> {
+  const creditCost = getModelCreditCost(modelId);
+
+  const user = await client.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      credits: true,
+      subscription: {
+        select: {
+          status: true,
+          tier: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    return { success: false, error: "USER_NOT_FOUND" };
+  }
+
+  const hasActiveSubscription = user.subscription?.status === "active";
+  const tier = hasActiveSubscription
+    ? normalizeTier(user.subscription?.tier)
+    : "free";
+
+  const tierConfig = TIERS[tier];
+  if (tierConfig.allowedModels !== "all") {
+    const isAllowed = tierConfig.allowedModels.includes(modelId);
+    if (!isAllowed) {
+      return { success: false, error: "FORBIDDEN_MODEL" };
+    }
+  }
+
+  if (user.credits < creditCost) {
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+
+  return {
+    success: true,
+    creditsUsed: creditCost,
+    remainingCredits: user.credits,
+  };
+}
+
+export async function checkCreditAvailability({
+  userId,
+  modelId,
+}: {
+  userId: string;
+  modelId: string;
+}): Promise<CreditCheckResult> {
+  const prisma = getPrisma();
+
+  try {
+    return await checkCreditAccess({ client: prisma, userId, modelId });
+  } catch (error) {
+    console.error("[CreditEngine] Error in checkCreditAvailability:", error);
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+}
+
 /**
- * Check and consume credits for a generation.
- * This is the ONLY place where credits should be modified.
+ * Check and consume credits for a completed generation.
  *
  * All operations happen in a single atomic transaction to prevent race conditions.
  * Credits can never go negative due to the `credits: { gte: cost }` constraint.
@@ -30,49 +96,27 @@ export async function checkAndConsumeCredits({
   modelId,
   chatId,
   description,
+  status = "pending",
 }: {
   userId: string;
   modelId: string;
   chatId?: string;
   description?: string;
+  status?: string;
 }): Promise<CreditCheckResult> {
   const prisma = getPrisma();
   const creditCost = getModelCreditCost(modelId);
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // Fetch user with subscription for model access check
-      const user = await tx.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          credits: true,
-          subscription: {
-            select: {
-              status: true,
-              tier: true,
-            },
-          },
-        },
+      const access = await checkCreditAccess({
+        client: tx,
+        userId,
+        modelId,
       });
 
-      if (!user) {
-        return { success: false, error: "USER_NOT_FOUND" } as const;
-      }
-
-      // Determine effective tier
-      const hasActiveSubscription = user.subscription?.status === "active";
-      const tier = hasActiveSubscription
-        ? normalizeTier(user.subscription?.tier)
-        : "free";
-
-      // Check if tier allows this model
-      const tierConfig = TIERS[tier];
-      if (tierConfig.allowedModels !== "all") {
-        const isAllowed = tierConfig.allowedModels.includes(modelId);
-        if (!isAllowed) {
-          return { success: false, error: "FORBIDDEN_MODEL" } as const;
-        }
+      if (!access.success) {
+        return access;
       }
 
       // Check and deduct credits atomically
@@ -98,7 +142,8 @@ export async function checkAndConsumeCredits({
           amount: -creditCost,
           type: "usage",
           description:
-            description || `AI generation - ${modelId.split("/").pop() || modelId}`,
+            description ||
+            `AI generation - ${modelId.split("/").pop() || modelId}`,
           chatId: chatId || null,
         },
       });
@@ -110,7 +155,7 @@ export async function checkAndConsumeCredits({
           modelId,
           creditsUsed: creditCost,
           chatId: chatId || null,
-          status: "pending", // Will be updated after generation completes
+          status,
         },
       });
 
@@ -132,6 +177,75 @@ export async function checkAndConsumeCredits({
     console.error("[CreditEngine] Error in checkAndConsumeCredits:", error);
     return { success: false, error: "INSUFFICIENT_CREDITS" };
   }
+}
+
+export async function consumeCreditsForGeneration({
+  client,
+  userId,
+  modelId,
+  chatId,
+  description,
+  status = "completed",
+}: {
+  client: Prisma.TransactionClient;
+  userId: string;
+  modelId: string;
+  chatId?: string;
+  description?: string;
+  status?: string;
+}): Promise<CreditCheckResult> {
+  const creditCost = getModelCreditCost(modelId);
+  const access = await checkCreditAccess({ client, userId, modelId });
+
+  if (!access.success) {
+    return access;
+  }
+
+  const updateResult = await client.user.updateMany({
+    where: {
+      id: userId,
+      credits: { gte: creditCost },
+    },
+    data: {
+      credits: { decrement: creditCost },
+    },
+  });
+
+  if (updateResult.count === 0) {
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+
+  await client.creditHistory.create({
+    data: {
+      userId,
+      amount: -creditCost,
+      type: "usage",
+      description:
+        description || `AI generation - ${modelId.split("/").pop() || modelId}`,
+      chatId: chatId || null,
+    },
+  });
+
+  await client.generationLog.create({
+    data: {
+      userId,
+      modelId,
+      creditsUsed: creditCost,
+      chatId: chatId || null,
+      status,
+    },
+  });
+
+  const updatedUser = await client.user.findUnique({
+    where: { id: userId },
+    select: { credits: true },
+  });
+
+  return {
+    success: true,
+    creditsUsed: creditCost,
+    remainingCredits: updatedUser?.credits ?? 0,
+  };
 }
 
 /**
@@ -211,6 +325,7 @@ export async function getUserCreditInfo(userId: string) {
     credits: user.credits,
     tier,
     hasActiveSubscription,
-    subscriptionEndsAt: user.subscription?.currentPeriodEnd?.toISOString() || null,
+    subscriptionEndsAt:
+      user.subscription?.currentPeriodEnd?.toISOString() || null,
   };
 }

@@ -253,10 +253,14 @@ export const AnimatedThemeToggleButton = ({
         isDark ? "text-yellow-400" : "text-blue-600",
         className
       )}
-      style={{ width: 32, height: 32 }}
+      style={{ width: 28, height: 28 }}
       {...props}
     >
-      {isDark ? <Sun /> : <Moon />}
+      {isDark ? (
+        <Sun className="size-[18px]" />
+      ) : (
+        <Moon className="size-[18px]" />
+      )}
       <span className="sr-only">Toggle theme</span>
     </button>
   )

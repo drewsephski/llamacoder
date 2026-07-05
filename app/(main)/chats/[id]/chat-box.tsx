@@ -14,6 +14,7 @@ import { UpgradeBanner } from "@/components/upgrade-banner";
 import { useUserCredits, useUserSession } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchCompletionStream } from "@/lib/completion-stream";
 
 interface ChatBoxProps {
   chat: {
@@ -80,12 +81,9 @@ export default function ChatBox({
     startTransition(async () => {
       try {
         const message = await createMessage(chat.id, prompt, "user");
-        const streamPromise = fetch("/api/get-next-completion-stream-promise", {
-          method: "POST",
-          body: JSON.stringify({ messageId: message.id, model: chat.model }),
-        }).then((res) => {
-          if (!res.body) throw new Error("No body on response");
-          return res.body;
+        const streamPromise = fetchCompletionStream({
+          messageId: message.id,
+          model: chat.model,
         });
 
         onNewStreamPromiseAction(streamPromise);

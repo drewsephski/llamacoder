@@ -4,7 +4,11 @@ import { getPrisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { checkAndConsumeCredits } from "@/lib/billing";
+import {
+  checkCreditAvailability,
+  consumeCreditsForGeneration,
+} from "@/lib/billing";
+import { normalizeGeneratedFiles } from "@/lib/generated-files";
 
 export async function createMessage(
   chatId: string,
@@ -28,21 +32,23 @@ export async function createMessage(
   });
   if (!chat) notFound();
 
+  if (chat.userId && chat.userId !== session.user.id) {
+    throw new Error("You can only add messages to your own projects");
+  }
+
   const maxPosition =
     chat.messages.length > 0
       ? Math.max(...chat.messages.map((m: any) => m.position))
       : 0;
 
-  // Deduct credit for user follow-up messages (not initial creation or assistant messages)
+  // Follow-up user messages only reserve the right to start generation. Credits
+  // are charged when the assistant response is successfully persisted.
   const isFollowUpUserMessage = role === "user" && chat.messages.length >= 2;
 
   if (isFollowUpUserMessage && chat.userId) {
-    // Use the credit engine to check and consume credits
-    const creditCheck = await checkAndConsumeCredits({
+    const creditCheck = await checkCreditAvailability({
       userId: chat.userId,
       modelId: chat.model,
-      chatId,
-      description: `Follow-up message - ${chat.model}`,
     });
 
     if (!creditCheck.success) {
@@ -53,15 +59,44 @@ export async function createMessage(
     }
   }
 
-  const newMessage = await prisma.message.create({
-    data: {
-      role,
-      content: text,
-      files: files ? JSON.parse(JSON.stringify(files)) : null,
-      position: maxPosition + 1,
-      chatId,
-    },
-  });
+  const normalizedFiles =
+    role === "assistant" && files ? normalizeGeneratedFiles(files) : files;
+
+  const messageData = {
+    role,
+    content: text,
+    files: normalizedFiles ? JSON.parse(JSON.stringify(normalizedFiles)) : null,
+    position: maxPosition + 1,
+    chatId,
+  };
+
+  if (role === "assistant" && chat.userId) {
+    return await prisma.$transaction(async (tx) => {
+      const newMessage = await tx.message.create({
+        data: messageData,
+      });
+
+      const creditCheck = await consumeCreditsForGeneration({
+        client: tx,
+        userId: chat.userId!,
+        modelId: chat.model,
+        chatId,
+        description: `AI generation - ${chat.model}`,
+        status: "completed",
+      });
+
+      if (!creditCheck.success) {
+        if (creditCheck.error === "INSUFFICIENT_CREDITS") {
+          throw new Error("INSUFFICIENT_CREDITS");
+        }
+        throw new Error("CREDIT_CHECK_FAILED");
+      }
+
+      return newMessage;
+    });
+  }
+
+  const newMessage = await prisma.message.create({ data: messageData });
 
   return newMessage;
 }

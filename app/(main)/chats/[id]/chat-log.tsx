@@ -13,6 +13,7 @@ import { StickToBottom } from "use-stick-to-bottom";
 import { AppVersionButton } from "@/components/app-version-button";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { normalizeGeneratedFiles } from "@/lib/generated-files";
 
 export default function ChatLog({
   chat,
@@ -37,7 +38,8 @@ export default function ChatLog({
   const assistantMessages = chat.messages.filter(
     (m) =>
       m.role === "assistant" &&
-      (extractFirstCodeBlock(m.content) ||
+      (((m.files as any[]) || []).length > 0 ||
+        extractFirstCodeBlock(m.content) ||
         extractAllCodeBlocks(m.content).length > 0),
   );
 
@@ -110,13 +112,14 @@ export default function ChatLog({
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
                 <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-medium text-red-700 dark:text-red-400">
                   {streamError.message}
                 </p>
                 {streamError.partialText && (
                   <p className="mt-1.5 text-sm text-muted-foreground">
-                    Partial response received ({streamError.partialText.length} characters)
+                    Partial response received ({streamError.partialText.length}{" "}
+                    characters)
                   </p>
                 )}
                 {streamError.canRetry && onRetryAction && (
@@ -166,7 +169,11 @@ function AssistantMessage({
   previousMessage?: Message;
   isStreaming?: boolean;
 }) {
-  const allFiles = extractAllCodeBlocks(content);
+  const allFiles = normalizeGeneratedFiles(
+    ((message?.files as any[]) || []).length > 0
+      ? (message?.files as any[])
+      : extractAllCodeBlocks(content),
+  ).map((file) => ({ ...file, fullMatch: file.fullMatch || "" }));
   const segments = parseReplySegments(content);
   const fileSegments = segments.filter((s) => s.type === "file");
 
@@ -220,8 +227,11 @@ function AssistantMessage({
         {segments.map((seg, i) => {
           if (seg.type === "text") {
             return (
-              <div key={i} className="prose dark:prose-invert prose-p:leading-relaxed prose-p:text-[15px] max-w-none">
-                <Streamdown className="text-foreground break-words">
+              <div
+                key={i}
+                className="prose max-w-none dark:prose-invert prose-p:text-[15px] prose-p:leading-relaxed"
+              >
+                <Streamdown className="break-words text-foreground">
                   {seg.content}
                 </Streamdown>
               </div>
@@ -273,6 +283,10 @@ function AssistantMessage({
     );
   } else {
     // No code blocks, just show text
-    return <Streamdown className="prose dark:prose-invert text-foreground break-words">{content}</Streamdown>;
+    return (
+      <Streamdown className="prose break-words text-foreground dark:prose-invert">
+        {content}
+      </Streamdown>
+    );
   }
 }

@@ -18,6 +18,7 @@ import {
   getExtensionForLanguage,
   toTitleCase,
 } from "@/lib/utils";
+import { normalizeGeneratedFiles } from "@/lib/generated-files";
 import { useState, useEffect } from "react";
 import type { Chat, Message } from "./page";
 import { Share } from "./share";
@@ -69,7 +70,9 @@ export default function CodeViewer({
   isCheckingSession: boolean;
   onSave: () => void;
 }) {
-  const streamAllFiles = extractAllCodeBlocks(streamText);
+  const streamAllFiles = normalizeGeneratedFiles(
+    extractAllCodeBlocks(streamText),
+  ).map((file) => ({ ...file, fullMatch: file.fullMatch || "" }));
 
   // Extract the latest (possibly partial) code fence from the stream text
   function extractLatestStreamBlock(
@@ -105,9 +108,26 @@ export default function CodeViewer({
     // If an open fence remains at end, return it as partial; else return latest complete
     if (openTag) {
       const { language, path } = parseTag(openTag);
-      return { code: codeBuffer.join("\n"), language, path };
+      const normalized = normalizeGeneratedFiles([
+        { code: codeBuffer.join("\n"), language, path },
+      ])[0];
+      return normalized
+        ? {
+            code: normalized.code,
+            language: normalized.language,
+            path: normalized.path,
+          }
+        : undefined;
     }
-    return latestComplete;
+    if (!latestComplete) return undefined;
+    const normalized = normalizeGeneratedFiles([latestComplete])[0];
+    return normalized
+      ? {
+          code: normalized.code,
+          language: normalized.language,
+          path: normalized.path,
+        }
+      : undefined;
   }
 
   function parseTag(tag: string) {
@@ -178,7 +198,11 @@ export default function CodeViewer({
   // Helper to get files from a message (JSON field or extract from content)
   const getFilesFromMessage = (msg: Message) => {
     // extractAllCodeBlocks is needed for legacy 1 file apps
-    return (msg.files as any[]) || extractAllCodeBlocks(msg.content);
+    return normalizeGeneratedFiles(
+      ((msg.files as any[]) || []).length > 0
+        ? (msg.files as any[])
+        : extractAllCodeBlocks(msg.content),
+    ).map((file) => ({ ...file, fullMatch: file.fullMatch || "" }));
   };
 
   // Since each message now contains cumulative files, simplify the logic
@@ -206,9 +230,7 @@ export default function CodeViewer({
       : files.find((f) => f.path === "App.tsx") ||
         files.find((f) => f.path.endsWith(".tsx")) ||
         files[0];
-  const code = mainFile ? mainFile.code : "";
   const language = mainFile ? mainFile.language : "";
-  const rawFilename = mainFile ? mainFile.path : "";
 
   // Generate app title for display
   const generateAppTitle = (fileList: typeof files) => {
@@ -385,9 +407,7 @@ export default function CodeViewer({
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard">
-              Dashboard
-            </Link>
+            <Link href="/dashboard">Dashboard</Link>
           </Button>
           {!isSaved && (
             <Button
@@ -396,7 +416,13 @@ export default function CodeViewer({
               disabled={isSaving || isCheckingSession}
               className={!chat.userId ? "bg-green-600 hover:bg-green-700" : ""}
             >
-              {isSaving ? "Saving..." : isCheckingSession ? "Loading..." : !chat.userId ? "Sign Up to Save" : "Save"}
+              {isSaving
+                ? "Saving..."
+                : isCheckingSession
+                  ? "Loading..."
+                  : !chat.userId
+                    ? "Sign Up to Save"
+                    : "Save"}
             </Button>
           )}
           {isSaved && (
@@ -431,7 +457,7 @@ export default function CodeViewer({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden bg-background min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
         {activeTab === "code" ? (
           <StickToBottom
             className="relative flex-1 overflow-hidden *:!h-[inherit]"
@@ -458,7 +484,7 @@ export default function CodeViewer({
         ) : (
           <>
             {files.length > 0 && (
-              <div className="flex flex-1 min-h-0 items-center justify-center">
+              <div className="flex min-h-0 flex-1 items-center justify-center">
                 <CodeRunner
                   onRequestFix={onRequestFix}
                   language={language}
@@ -503,7 +529,9 @@ export default function CodeViewer({
             Download
           </Button>
         </div>
-        <div className="text-xs text-muted-foreground md:hidden">{chat.model}</div>
+        <div className="text-xs text-muted-foreground md:hidden">
+          {chat.model}
+        </div>
       </div>
     </>
   );

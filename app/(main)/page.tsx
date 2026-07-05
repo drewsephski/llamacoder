@@ -52,6 +52,7 @@ import {
   useCreateChat,
 } from "@/lib/queries";
 import { getModelCreditCost } from "@/lib/billing";
+import { fetchCompletionStream } from "@/lib/completion-stream";
 
 export default function Home() {
   const { setStreamPromise } = use(Context);
@@ -599,18 +600,9 @@ export default function Home() {
                         screenshotData,
                       });
 
-                    const streamPromise = fetch(
-                      "/api/get-next-completion-stream-promise",
-                      {
-                        method: "POST",
-                        body: JSON.stringify({
-                          messageId: lastMessageId,
-                          model,
-                        }),
-                      },
-                    ).then((res) => {
-                      if (!res.body) throw new Error("No body on response");
-                      return res.body;
+                    const streamPromise = fetchCompletionStream({
+                      messageId: lastMessageId,
+                      model,
                     });
 
                     startTransition(() => {

@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 import { getMainCodingPrompt } from "@/lib/prompts";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { MODELS } from "@/lib/constants";
-import { checkAndConsumeCredits, getModelCreditCost } from "@/lib/billing";
-import { getModelWithFallbacks } from "@/lib/model-fallbacks";
+import {
+  checkCreditAvailability,
+  consumeCreditsForGeneration,
+  getModelCreditCost,
+} from "@/lib/billing";
+import {
+  createAppOpenRouter,
+  createOpenRouterModel,
+  getAIErrorMessage,
+} from "@/lib/openrouter";
+import { extractAllCodeBlocks } from "@/lib/utils";
+import {
+  buildGeneratedFilesRepairPrompt,
+  formatGeneratedFilesMarkdown,
+  normalizeGeneratedFiles,
+  validateGeneratedFiles,
+} from "@/lib/generated-files";
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,11 +65,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check credits for code generation
-    const creditCheck = await checkAndConsumeCredits({
+    const creditCheck = await checkCreditAvailability({
       userId: session.user.id,
       modelId: chat.model,
-      description: `Code generation - ${chat.title}`,
     });
 
     if (!creditCheck.success) {
@@ -72,76 +83,128 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let options: Parameters<typeof createOpenRouter>[0] = {};
-    if (process.env.HELICONE_API_KEY) {
-      options.baseURL = "https://together.helicone.ai/v1";
-      options.headers = {
-        "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
-        "Helicone-Property-appname": "SquidCoder",
-        "Helicone-Session-Id": chat.id,
-        "Helicone-Session-Name": "SquidCoder Code Generation",
-      };
-    }
+    const openrouter = createAppOpenRouter({
+      sessionId: chat.id,
+      sessionName: "SquidCoder Code Generation",
+    });
 
-    const openrouter = createOpenRouter(options);
+    const generateCode = (userContent: string) =>
+      generateText({
+        model: createOpenRouterModel(openrouter, chat.model),
+        messages: [
+          {
+            role: "system",
+            content: getMainCodingPrompt(),
+          },
+          {
+            role: "user",
+            content: userContent,
+          },
+        ],
+      });
 
     // Generate code based on the plan
-    const models = getModelWithFallbacks(chat.model);
-    const codeResponse = await generateText({
-      model: openrouter(models[0], {
-        models: models.length > 1 ? models.slice(1) : undefined,
-      }),
-      messages: [
+    const codeResponse = await generateCode(chat.plan);
+
+    if (!codeResponse.text.trim()) {
+      return NextResponse.json(
         {
-          role: "system",
-          content: getMainCodingPrompt(),
+          error: "EMPTY_MODEL_RESPONSE",
+          message: "The model returned an empty response. Please retry.",
         },
+        { status: 502 },
+      );
+    }
+
+    let generatedText = codeResponse.text;
+    let generatedFiles = normalizeGeneratedFiles(
+      extractAllCodeBlocks(generatedText),
+    );
+    let diagnostics = validateGeneratedFiles(generatedFiles);
+
+    if (diagnostics.length > 0) {
+      const repairResponse = await generateCode(
+        buildGeneratedFilesRepairPrompt(
+          generatedText,
+          generatedFiles,
+          diagnostics,
+        ),
+      );
+      const repairedFiles = normalizeGeneratedFiles(
+        extractAllCodeBlocks(repairResponse.text),
+      );
+      const repairedDiagnostics = validateGeneratedFiles(repairedFiles);
+
+      if (repairResponse.text.trim() && repairedDiagnostics.length === 0) {
+        generatedText = repairResponse.text;
+        generatedFiles = repairedFiles;
+        diagnostics = repairedDiagnostics;
+      }
+    }
+
+    const content = generatedFiles.length
+      ? formatGeneratedFilesMarkdown(generatedFiles)
+      : generatedText;
+
+    if (!content.trim()) {
+      return NextResponse.json(
         {
-          role: "user",
-          content: chat.plan,
+          error: "EMPTY_MODEL_RESPONSE",
+          message: "The model returned an empty response. Please retry.",
         },
-      ],
-    });
+        { status: 502 },
+      );
+    }
 
-    // Create a message with the generated code
-    await prisma.message.create({
-      data: {
-        role: "assistant",
-        content: codeResponse.text,
-        chatId: chat.id,
-        position: 2,
-      },
-    });
+    if (diagnostics.length > 0) {
+      console.warn("Generated code saved with diagnostics:", diagnostics);
+    }
 
-    // Update chat to mark code as generated
-    await prisma.chat.update({
-      where: { id: chat.id },
-      data: { hasCode: true },
-    });
-
-    // Track plan approval and code generation in GenerationLog
-    try {
-      await prisma.generationLog.create({
+    const message = await prisma.$transaction(async (tx) => {
+      const createdMessage = await tx.message.create({
         data: {
-          userId: session.user.id,
-          modelId: chat.model,
-          creditsUsed: getModelCreditCost(chat.model),
-          status: "plan_approved",
+          role: "assistant",
+          content,
+          files: generatedFiles.length
+            ? JSON.parse(JSON.stringify(generatedFiles))
+            : null,
           chatId: chat.id,
+          position: 2,
         },
       });
-    } catch (logError) {
-      console.error("Failed to log plan approval:", logError);
-    }
+
+      await tx.chat.update({
+        where: { id: chat.id },
+        data: { hasCode: true },
+      });
+
+      const consumeResult = await consumeCreditsForGeneration({
+        client: tx,
+        userId: session.user.id,
+        modelId: chat.model,
+        chatId: chat.id,
+        description: `Code generation - ${chat.title}`,
+        status: "plan_approved",
+      });
+
+      if (!consumeResult.success) {
+        if (consumeResult.error === "INSUFFICIENT_CREDITS") {
+          throw new Error("INSUFFICIENT_CREDITS");
+        }
+        throw new Error("CREDIT_CHECK_FAILED");
+      }
+
+      return createdMessage;
+    });
 
     return NextResponse.json({
       success: true,
-      messageId: codeResponse.text, // This will be the content, not the ID
+      messageId: message.id,
     });
   } catch (error) {
-    console.error("Error generating code:", error);
+    console.error("Error generating code:", getAIErrorMessage(error));
     return NextResponse.json(
-      { error: "Failed to generate code" },
+      { error: "Failed to generate code", message: getAIErrorMessage(error) },
       { status: 500 },
     );
   }

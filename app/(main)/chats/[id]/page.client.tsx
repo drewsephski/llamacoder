@@ -7,8 +7,13 @@ import {
   extractFirstCodeBlock,
   extractAllCodeBlocks,
 } from "@/lib/utils";
+import {
+  formatGeneratedFilesMarkdown,
+  normalizeGeneratedFiles,
+  validateGeneratedFiles,
+} from "@/lib/generated-files";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { memo, startTransition, use, useEffect, useRef, useState } from "react";
 import ChatBox from "./chat-box";
 import ChatLog from "./chat-log";
@@ -20,6 +25,7 @@ import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle
 import { authClient } from "@/lib/auth-client";
 import { SignInModal } from "@/components/sign-in-modal";
 import { toast } from "sonner";
+import { fetchCompletionStream } from "@/lib/completion-stream";
 
 const HeaderChat = memo(({ chat }: { chat: Chat }) => {
   return (
@@ -40,11 +46,13 @@ const HeaderChat = memo(({ chat }: { chat: Chat }) => {
 HeaderChat.displayName = "HeaderChat";
 
 export default function PageClient({ chat }: { chat: Chat }) {
-  const context = use(Context);
-  const searchParams = useSearchParams();
+  const {
+    streamPromise: initialStreamPromise,
+    setStreamPromise: setContextStreamPromise,
+  } = use(Context);
   const [streamPromise, setStreamPromise] = useState<
     Promise<ReadableStream> | undefined
-  >(context.streamPromise);
+  >(initialStreamPromise);
   const [streamText, setStreamText] = useState("");
   const [isShowingCodeViewer, setIsShowingCodeViewer] = useState(
     chat.messages.some((m: Message) => m.role === "assistant"),
@@ -52,11 +60,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
   const router = useRouter();
   const isHandlingStreamRef = useRef(false);
+  const handledStreamPromiseRef = useRef<Promise<ReadableStream> | null>(null);
   const [activeMessage, setActiveMessage] = useState(
     chat.messages
       .filter(
         (m: Message) =>
-          m.role === "assistant" && extractFirstCodeBlock(m.content),
+          m.role === "assistant" &&
+          (((m.files as any[]) || []).length > 0 ||
+            extractFirstCodeBlock(m.content)),
       )
       .at(-1),
   );
@@ -123,20 +134,33 @@ export default function PageClient({ chat }: { chat: Chat }) {
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
     async function f() {
-      if (!streamPromise || isHandlingStreamRef.current) return;
+      if (
+        !streamPromise ||
+        isHandlingStreamRef.current ||
+        handledStreamPromiseRef.current === streamPromise
+      ) {
+        return;
+      }
 
+      handledStreamPromiseRef.current = streamPromise;
       isHandlingStreamRef.current = true;
-      context.setStreamPromise(undefined);
+      setContextStreamPromise(undefined);
 
-      const stream = await streamPromise;
       let didPushToCode = false;
       let didPushToPreview = false;
       let fullText = "";
 
-      reader = stream.getReader();
-      const decoder = new TextDecoder();
-
       try {
+        const stream = await streamPromise;
+
+        if (stream.locked) {
+          console.warn("Skipping duplicate stream reader for locked stream");
+          return;
+        }
+
+        reader = stream.getReader();
+        const decoder = new TextDecoder();
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -165,49 +189,68 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
         }
 
-        // Streaming complete
-        startTransition(async () => {
-          // Get all previous assistant messages with files
-          const previousAssistantMessages = chat.messages.filter(
-            (m: Message) =>
-              m.role === "assistant" &&
-              extractAllCodeBlocks(m.content).length > 0,
+        if (!fullText.trim()) {
+          throw new Error(
+            "The model returned an empty response. Please retry.",
+          );
+        }
+
+        const getFilesFromMessage = (msg: Message) =>
+          normalizeGeneratedFiles(
+            ((msg.files as any[]) || []).length > 0
+              ? (msg.files as any[])
+              : extractAllCodeBlocks(msg.content),
           );
 
-          // Extract all files from previous messages
-          const previousFiles = previousAssistantMessages.flatMap(
-            (msg: Message) => extractAllCodeBlocks(msg.content),
+        // Get all previous assistant messages with files
+        const previousAssistantMessages = chat.messages.filter(
+          (m: Message) =>
+            m.role === "assistant" && getFilesFromMessage(m).length > 0,
+        );
+
+        // Extract all files from previous messages
+        const previousFiles = previousAssistantMessages.flatMap(
+          (msg: Message) => getFilesFromMessage(msg),
+        );
+
+        // Extract files from current AI response
+        const currentFiles = normalizeGeneratedFiles(
+          extractAllCodeBlocks(fullText),
+        );
+
+        // Merge files (current overrides previous for same paths)
+        const fileMap = new Map();
+        previousFiles.forEach((file: any) => fileMap.set(file.path, file));
+        currentFiles.forEach((file: any) => fileMap.set(file.path, file));
+        const allFiles = normalizeGeneratedFiles(Array.from(fileMap.values()));
+        const diagnostics = validateGeneratedFiles(allFiles);
+
+        if (diagnostics.length > 0) {
+          console.warn(
+            "Generated stream completed with diagnostics:",
+            diagnostics,
           );
+        }
 
-          // Extract files from current AI response
-          const currentFiles = extractAllCodeBlocks(fullText);
+        const message = await createMessage(
+          chat.id,
+          fullText, // Store original AI response content (only changed files)
+          "assistant",
+          allFiles, // Store cumulative files
+        );
 
-          // Merge files (current overrides previous for same paths)
-          const fileMap = new Map();
-          previousFiles.forEach((file: any) => fileMap.set(file.path, file));
-          currentFiles.forEach((file: any) => fileMap.set(file.path, file));
-          const allFiles = Array.from(fileMap.values());
-
-          const message = await createMessage(
-            chat.id,
-            fullText, // Store original AI response content (only changed files)
-            "assistant",
-            allFiles, // Store cumulative files
-          );
-
-          startTransition(() => {
-            isHandlingStreamRef.current = false;
-            setStreamText("");
-            setStreamPromise(undefined);
-            setActiveMessage(message);
-            // When streaming finishes, switch to preview mode and keep the viewer open
-            setIsShowingCodeViewer(true);
-            setActiveTab("preview");
-            router.refresh();
-          });
+        startTransition(() => {
+          setStreamText("");
+          setStreamPromise(undefined);
+          setActiveMessage(message);
+          // When streaming finishes, switch to preview mode and keep the viewer open
+          setIsShowingCodeViewer(true);
+          setActiveTab("preview");
+          router.refresh();
         });
       } catch (error: any) {
         console.error("Stream reading error:", error);
+        setStreamPromise(undefined);
 
         // Set error state for UI
         setStreamError({
@@ -216,37 +259,19 @@ export default function PageClient({ chat }: { chat: Chat }) {
           canRetry: true,
         });
 
-        // Persist partial assistant message so user sees what failed
-        if (fullText) {
-          try {
-            const partialMessage = await createMessage(
-              chat.id,
-              fullText + "\n\n[Error: Response truncated - please retry]",
-              "assistant",
-              extractAllCodeBlocks(fullText),
-            );
-            setStreamError({
-              message: error.message || "Connection lost",
-              partialText: fullText,
-              canRetry: true,
-              failedMessageId: partialMessage.id,
-            });
-          } catch (saveError) {
-            console.error("Failed to save partial message:", saveError);
-            setStreamError({
-              message: error.message || "Connection lost",
-              partialText: fullText,
-              canRetry: true,
-            });
-          }
-        } else {
+        if (!fullText) {
           setStreamError({
             message: error.message || "Connection lost",
             partialText: "",
             canRetry: true,
           });
         }
-
+      } finally {
+        try {
+          reader?.releaseLock();
+        } catch {
+          // Ignore release errors from already-closed readers.
+        }
         isHandlingStreamRef.current = false;
       }
     }
@@ -254,12 +279,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
     f();
 
     return () => {
-      if (reader) {
-        reader.cancel();
-      }
-      isHandlingStreamRef.current = false;
+      // Do not cancel here. React dev effect replay can run cleanup while the
+      // stream should continue, and canceling makes the next reader race the
+      // still-locked stream.
     };
-  }, [chat.id, router, streamPromise, context]);
+  }, [chat.id, router, streamPromise, setContextStreamPromise]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
@@ -326,20 +350,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
                     "user",
                   );
 
-                  const streamPromise = fetch(
-                    "/api/get-next-completion-stream-promise",
-                    {
-                      method: "POST",
-                      body: JSON.stringify({
-                        messageId: message.id,
-                        model: chat.model,
-                      }),
-                    },
-                  ).then((res) => {
-                    if (!res.body) {
-                      throw new Error("No body on response");
-                    }
-                    return res.body;
+                  const streamPromise = fetchCompletionStream({
+                    messageId: message.id,
+                    model: chat.model,
                   });
                   setStreamPromise(streamPromise);
                   router.refresh();
@@ -354,25 +367,18 @@ export default function PageClient({ chat }: { chat: Chat }) {
                   if (!message) return;
 
                   // Helper to get files from a message (JSON field or extract from content)
-                  const getFilesFromMessage = (msg: Message) => {
-                    return (
-                      (msg.files as any[]) || extractAllCodeBlocks(msg.content)
+                  const getFilesFromMessage = (msg: Message) =>
+                    normalizeGeneratedFiles(
+                      ((msg.files as any[]) || []).length > 0
+                        ? (msg.files as any[])
+                        : extractAllCodeBlocks(msg.content),
                     );
-                  };
 
                   const restoredFiles = getFilesFromMessage(message);
                   if (restoredFiles.length === 0) return;
 
                   const explanation = `Version ${newVersion} was created by restoring version ${oldVersion}.`;
-                  const newContent =
-                    explanation +
-                    "\n\n" +
-                    restoredFiles
-                      .map(
-                        (file) =>
-                          `\`\`\`${file.language}{path=${file.path}}\n${file.code}\n\`\`\``,
-                      )
-                      .join("\n\n");
+                  const newContent = `${explanation}\n\n${formatGeneratedFilesMarkdown(restoredFiles)}`;
 
                   const newMessage = await createMessage(
                     chat.id,
