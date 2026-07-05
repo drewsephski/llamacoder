@@ -5,6 +5,7 @@ import { renameProject } from "../actions";
 import { ProjectCardActions } from "@/components/project-card-actions";
 import { UpgradeBanner } from "@/components/upgrade-banner";
 import { DashboardSignOutButton } from "@/components/dashboard-sign-out-button";
+import { DashboardCreditsButton } from "@/components/dashboard-credits-button";
 import { reconcileCheckoutSessionForUser } from "@/lib/billing/stripe-fulfillment";
 import { CREDIT_PACKS } from "@/lib/billing";
 import Link from "next/link";
@@ -206,13 +207,7 @@ async function DashboardPage({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5">
-                <Coins className="h-4 w-4 text-amber-500" />
-                <span className="text-sm font-medium">{userCredits}</span>
-                <span className="hidden text-xs text-muted-foreground sm:inline">
-                  credits
-                </span>
-              </div>
+              <DashboardCreditsButton credits={userCredits} />
               <AnimatedThemeToggleButton variant="horizontal" />
               <DashboardSignOutButton />
             </div>
