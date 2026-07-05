@@ -61,6 +61,10 @@ export async function createMessage(
 
   const normalizedFiles =
     role === "assistant" && files ? normalizeGeneratedFiles(files) : files;
+  const assistantHasFiles =
+    role === "assistant" &&
+    Array.isArray(normalizedFiles) &&
+    normalizedFiles.length > 0;
 
   const messageData = {
     role,
@@ -75,6 +79,13 @@ export async function createMessage(
       const newMessage = await tx.message.create({
         data: messageData,
       });
+
+      if (assistantHasFiles) {
+        await tx.chat.update({
+          where: { id: chatId },
+          data: { hasCode: true },
+        });
+      }
 
       const creditCheck = await consumeCreditsForGeneration({
         client: tx,
@@ -97,6 +108,13 @@ export async function createMessage(
   }
 
   const newMessage = await prisma.message.create({ data: messageData });
+
+  if (assistantHasFiles) {
+    await prisma.chat.update({
+      where: { id: chatId },
+      data: { hasCode: true },
+    });
+  }
 
   return newMessage;
 }
