@@ -27,6 +27,7 @@ function Header({ onHelpClick }: HeaderProps) {
 
   const credits = creditsData?.credits ?? null;
   const hasSubscription = creditsData?.hasActiveSubscription ?? false;
+  const currentTier = creditsData?.tier ?? "free";
   const loading = sessionLoading || creditsLoading;
 
   const openPricingModal = (tab: PricingTab = "plans") => {
@@ -274,6 +275,7 @@ function Header({ onHelpClick }: HeaderProps) {
         remainingCredits={credits ?? 0}
         isAuthenticated={!!session}
         initialTab={pricingInitialTab}
+        currentTier={currentTier}
       />
     </header>
   );

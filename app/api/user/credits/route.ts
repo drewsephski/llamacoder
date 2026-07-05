@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getPrisma } from "@/lib/prisma";
+import { normalizeTier } from "@/lib/billing";
 
 export async function GET() {
   try {
@@ -10,10 +11,7 @@ export async function GET() {
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const prisma = getPrisma();
@@ -24,6 +22,7 @@ export async function GET() {
         subscription: {
           select: {
             status: true,
+            tier: true,
             currentPeriodEnd: true,
           },
         },
@@ -31,22 +30,26 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    const hasActiveSubscription = user.subscription?.status === "active";
+    const tier = hasActiveSubscription
+      ? normalizeTier(user.subscription?.tier)
+      : "free";
 
     return NextResponse.json({
       credits: user.credits ?? 0,
-      hasActiveSubscription: user.subscription?.status === "active",
-      subscriptionEndsAt: user.subscription?.currentPeriodEnd?.toISOString() || null,
+      tier,
+      hasActiveSubscription,
+      subscriptionEndsAt:
+        user.subscription?.currentPeriodEnd?.toISOString() || null,
     });
   } catch (error: any) {
     console.error("Error fetching credits:", error);
     return NextResponse.json(
       { error: "Failed to fetch credits" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -4,9 +4,13 @@ import { headers } from "next/headers";
 import {
   stripe,
   getOrCreateStripeCustomerId,
+  isMissingStripeResourceError,
   STRIPE_PRICE_IDS,
+  upgradeSubscriptionTier,
 } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
+import { normalizeTier } from "@/lib/billing";
+import { syncSubscriptionFromStripe } from "@/lib/billing/stripe-fulfillment";
 
 type SubscriptionTier = keyof typeof STRIPE_PRICE_IDS;
 
@@ -82,9 +86,60 @@ function errorResponse(
   return NextResponse.redirect(redirectUrl, 303);
 }
 
+function successResponse(url: string, expectsJson: boolean) {
+  if (expectsJson) {
+    return NextResponse.json({ url });
+  }
+
+  return NextResponse.redirect(url, 303);
+}
+
+async function createSubscriptionCheckoutSession({
+  customerId,
+  userId,
+  tier,
+  priceId,
+  origin,
+}: {
+  customerId: string;
+  userId: string;
+  tier: SubscriptionTier;
+  priceId: string;
+  origin: string;
+}) {
+  return stripe.checkout.sessions.create({
+    customer: customerId,
+    client_reference_id: userId,
+    mode: "subscription",
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    success_url: `${origin}/dashboard?subscription_success=true&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/dashboard?subscription_canceled=true`,
+    metadata: {
+      type: "subscription",
+      tier,
+      userId,
+    },
+    subscription_data: {
+      metadata: {
+        tier,
+        userId,
+      },
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
+  let expectsJson = true;
+
   try {
     const body = await parseCheckoutRequest(request);
+    expectsJson = body.expectsJson;
     const priceTier = getTierForPriceId(body.priceId);
     const requestedPlan = body.plan ?? "pro";
 
@@ -93,7 +148,7 @@ export async function POST(request: NextRequest) {
         "Invalid subscription plan",
         400,
         request,
-        body.expectsJson,
+        expectsJson,
       );
     }
 
@@ -101,7 +156,7 @@ export async function POST(request: NextRequest) {
     const finalPriceId = body.priceId || STRIPE_PRICE_IDS[tier];
 
     if (!finalPriceId) {
-      return errorResponse("Invalid price ID", 400, request, body.expectsJson);
+      return errorResponse("Invalid price ID", 400, request, expectsJson);
     }
 
     const session = await auth.api.getSession({
@@ -113,7 +168,7 @@ export async function POST(request: NextRequest) {
         "You must be signed in to subscribe",
         401,
         request,
-        body.expectsJson,
+        expectsJson,
       );
     }
 
@@ -124,17 +179,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return errorResponse("User not found", 404, request, body.expectsJson);
-    }
-
-    // Check if user already has an active subscription
-    if (user.subscription && user.subscription.status === "active") {
-      return errorResponse(
-        "You already have an active subscription",
-        400,
-        request,
-        body.expectsJson,
-      );
+      return errorResponse("User not found", 404, request, expectsJson);
     }
 
     const customerId = await getOrCreateStripeCustomerId({
@@ -143,36 +188,106 @@ export async function POST(request: NextRequest) {
       name: user.name,
     });
 
+    const currentTier =
+      user.subscription?.status === "active"
+        ? normalizeTier(user.subscription.tier)
+        : "free";
+
     const origin =
       request.headers.get("origin") ||
       process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
       "http://localhost:3000";
 
-    // Create checkout session with direct price ID
-    const checkoutSession = await stripe.checkout.sessions.create({
-      customer: customerId,
-      client_reference_id: user.id,
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: finalPriceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `${origin}/dashboard?subscription_success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/dashboard?subscription_canceled=true`,
-      metadata: {
-        type: "subscription",
-        tier,
-        userId: user.id,
-      },
-      subscription_data: {
-        metadata: {
-          tier,
+    if (user.subscription?.status === "active") {
+      if (currentTier === tier) {
+        return errorResponse(
+          `You are already on the ${currentTier === "pro_plus" ? "Pro Plus" : "Pro"} plan`,
+          400,
+          request,
+          expectsJson,
+        );
+      }
+
+      if (currentTier === "pro_plus" || tier !== "pro_plus") {
+        return errorResponse(
+          "Plan downgrades are not supported from checkout",
+          400,
+          request,
+          expectsJson,
+        );
+      }
+
+      if (!user.subscription.stripeSubscriptionId) {
+        return errorResponse(
+          "Your current subscription is missing a Stripe subscription ID",
+          409,
+          request,
+          expectsJson,
+        );
+      }
+
+      let updatedSubscription;
+
+      try {
+        updatedSubscription = await upgradeSubscriptionTier({
+          subscriptionId: user.subscription.stripeSubscriptionId,
+          tier: "pro_plus",
           userId: user.id,
-        },
-      },
+        });
+      } catch (error) {
+        if (!isMissingStripeResourceError(error, "subscription")) {
+          throw error;
+        }
+
+        const checkoutSession = await createSubscriptionCheckoutSession({
+          customerId,
+          userId: user.id,
+          tier,
+          priceId: finalPriceId,
+          origin,
+        });
+
+        await prisma.subscription.update({
+          where: { id: user.subscription.id },
+          data: {
+            stripeCustomerId: customerId,
+            stripePriceId: finalPriceId,
+            stripeSubscriptionId: null,
+            status: "incomplete",
+            tier,
+          },
+        });
+
+        if (!checkoutSession.url) {
+          return errorResponse(
+            "Stripe did not return a checkout URL",
+            502,
+            request,
+            expectsJson,
+          );
+        }
+
+        return successResponse(checkoutSession.url, expectsJson);
+      }
+
+      await syncSubscriptionFromStripe({
+        subscriptionId: updatedSubscription.id,
+        fallbackCustomerId: customerId,
+        fallbackUserId: user.id,
+      });
+
+      return successResponse(
+        `${origin}/dashboard?subscription_updated=true`,
+        expectsJson,
+      );
+    }
+
+    const checkoutSession = await createSubscriptionCheckoutSession({
+      customerId,
+      userId: user.id,
+      tier,
+      priceId: finalPriceId,
+      origin,
     });
 
     // Create or update subscription record in database before checkout
@@ -209,15 +324,11 @@ export async function POST(request: NextRequest) {
         "Stripe did not return a checkout URL",
         502,
         request,
-        body.expectsJson,
+        expectsJson,
       );
     }
 
-    if (!body.expectsJson) {
-      return NextResponse.redirect(checkoutSession.url, 303);
-    }
-
-    return NextResponse.json({ url: checkoutSession.url });
+    return successResponse(checkoutSession.url, expectsJson);
   } catch (error: unknown) {
     console.error("Error creating checkout session:", error);
     const message =
@@ -225,6 +336,6 @@ export async function POST(request: NextRequest) {
         ? error.message
         : "Failed to create checkout session";
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(message, 500, request, expectsJson);
   }
 }

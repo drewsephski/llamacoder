@@ -7,7 +7,7 @@ import { UpgradeBanner } from "@/components/upgrade-banner";
 import { DashboardSignOutButton } from "@/components/dashboard-sign-out-button";
 import { DashboardCreditsButton } from "@/components/dashboard-credits-button";
 import { reconcileCheckoutSessionForUser } from "@/lib/billing/stripe-fulfillment";
-import { CREDIT_PACKS } from "@/lib/billing";
+import { CREDIT_PACKS, normalizeTier, type TierKey } from "@/lib/billing";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import {
@@ -63,6 +63,7 @@ async function DashboardPage({
   let userCredits = 0;
   let totalProjects = 0;
   let hasActiveSubscription = false;
+  let currentTier: TierKey = "free";
   const PROJECTS_PER_PAGE = 9;
   const FREE_PROJECT_LIMIT = 3;
   const resolvedSearchParams = await searchParams;
@@ -108,12 +109,16 @@ async function DashboardPage({
           subscription: {
             select: {
               status: true,
+              tier: true,
             },
           },
         },
       });
       userCredits = user?.credits || 0;
       hasActiveSubscription = user?.subscription?.status === "active";
+      currentTier = hasActiveSubscription
+        ? normalizeTier(user?.subscription?.tier)
+        : "free";
     } catch (error) {
       console.error("[Dashboard] Failed to fetch user credits:", error);
       userCredits = 0;
@@ -207,7 +212,10 @@ async function DashboardPage({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <DashboardCreditsButton credits={userCredits} />
+              <DashboardCreditsButton
+                credits={userCredits}
+                currentTier={currentTier}
+              />
               <AnimatedThemeToggleButton variant="horizontal" />
               <DashboardSignOutButton />
             </div>
@@ -585,7 +593,7 @@ async function DashboardPage({
                 </li>
               </ul>
               <Button variant="outline" className="w-full" disabled>
-                Current Plan
+                {currentTier === "free" ? "Current Plan" : "Included"}
               </Button>
             </div>
 
@@ -624,12 +632,22 @@ async function DashboardPage({
                   <span>Advanced features</span>
                 </li>
               </ul>
-              <form action="/api/stripe/checkout" method="POST">
-                <input type="hidden" name="plan" value="pro" />
-                <Button type="submit" className="w-full">
-                  Upgrade to Pro
+              {currentTier === "pro" ? (
+                <Button disabled className="w-full">
+                  Current Plan
                 </Button>
-              </form>
+              ) : currentTier === "pro_plus" ? (
+                <Button disabled variant="outline" className="w-full">
+                  Included in Pro Plus
+                </Button>
+              ) : (
+                <form action="/api/stripe/checkout" method="POST">
+                  <input type="hidden" name="plan" value="pro" />
+                  <Button type="submit" className="w-full">
+                    Upgrade to Pro
+                  </Button>
+                </form>
+              )}
             </div>
 
             {/* Pro Plus Plan */}
@@ -668,12 +686,20 @@ async function DashboardPage({
                   <span>Advanced features</span>
                 </li>
               </ul>
-              <form action="/api/stripe/checkout" method="POST">
-                <input type="hidden" name="plan" value="pro_plus" />
-                <Button type="submit" variant="outline" className="w-full">
-                  Get Pro Plus
+              {currentTier === "pro_plus" ? (
+                <Button disabled variant="outline" className="w-full">
+                  Current Plan
                 </Button>
-              </form>
+              ) : (
+                <form action="/api/stripe/checkout" method="POST">
+                  <input type="hidden" name="plan" value="pro_plus" />
+                  <Button type="submit" variant="outline" className="w-full">
+                    {currentTier === "pro"
+                      ? "Upgrade to Pro Plus"
+                      : "Get Pro Plus"}
+                  </Button>
+                </form>
+              )}
             </div>
           </div>
         </div>

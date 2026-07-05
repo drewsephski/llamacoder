@@ -63,11 +63,14 @@ export async function createStripeCustomer(email: string, name?: string) {
   });
 }
 
-function isMissingStripeCustomerError(error: unknown) {
+export function isMissingStripeResourceError(
+  error: unknown,
+  resourceName: string,
+) {
   return (
     error instanceof Stripe.errors.StripeInvalidRequestError &&
     error.code === "resource_missing" &&
-    error.message.includes("No such customer")
+    error.message.includes(`No such ${resourceName}`)
   );
 }
 
@@ -88,7 +91,7 @@ export async function getOrCreateStripeCustomerId({
         return existingCustomerId;
       }
     } catch (error) {
-      if (!isMissingStripeCustomerError(error)) {
+      if (!isMissingStripeResourceError(error, "customer")) {
         throw error;
       }
     }
@@ -130,6 +133,44 @@ export async function createCheckoutSession(
         credits: config.monthlyCredits.toString(),
       },
     },
+  });
+}
+
+export async function upgradeSubscriptionTier({
+  subscriptionId,
+  tier,
+  userId,
+}: {
+  subscriptionId: string;
+  tier: "pro_plus";
+  userId: string;
+}) {
+  const priceId = STRIPE_PRICE_IDS[tier];
+
+  if (!priceId) {
+    throw new Error(`Price ID not configured for tier: ${tier}`);
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const item = subscription.items.data[0];
+
+  if (!item) {
+    throw new Error(`Stripe subscription ${subscriptionId} has no items`);
+  }
+
+  return stripe.subscriptions.update(subscriptionId, {
+    items: [
+      {
+        id: item.id,
+        price: priceId,
+      },
+    ],
+    metadata: {
+      ...subscription.metadata,
+      tier,
+      userId,
+    },
+    proration_behavior: "always_invoice",
   });
 }
 

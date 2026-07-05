@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 
 interface DashboardCreditsButtonProps {
   credits: number;
+  currentTier?: "free" | "pro" | "pro_plus";
 }
 
 export function DashboardCreditsButton({
   credits,
+  currentTier = "free",
 }: DashboardCreditsButtonProps) {
   const [open, setOpen] = useState(false);
 
@@ -34,6 +36,7 @@ export function DashboardCreditsButton({
         remainingCredits={credits}
         isAuthenticated
         initialTab="credits"
+        currentTier={currentTier}
       />
     </>
   );

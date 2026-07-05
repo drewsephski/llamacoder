@@ -8,14 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Loader2,
-  Zap,
-  Check,
-  Sparkles,
-  Crown,
-  Lock,
-} from "lucide-react";
+import { Loader2, Zap, Check, Sparkles, Crown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { MODELS } from "@/lib/constants";
 import { CREDIT_PACKS, getModelCreditCost } from "@/lib/billing";
@@ -28,9 +21,11 @@ interface PricingModalProps {
   remainingCredits?: number;
   isAuthenticated?: boolean;
   initialTab?: PricingTab;
+  currentTier?: SubscriptionTier;
 }
 
 type PricingTab = "plans" | "credits";
+type SubscriptionTier = "free" | "pro" | "pro_plus";
 
 export function PricingModal({
   open,
@@ -38,6 +33,7 @@ export function PricingModal({
   remainingCredits = 0,
   isAuthenticated = false,
   initialTab = "plans",
+  currentTier = "free",
 }: PricingModalProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<PricingTab>(initialTab);
@@ -49,7 +45,7 @@ export function PricingModal({
     }
   }, [initialTab, open]);
 
-  const handleSubscribe = async (plan: string) => {
+  const handleSubscribe = async (plan: Exclude<SubscriptionTier, "free">) => {
     if (!isAuthenticated) {
       window.location.href = "/sign-in";
       return;
@@ -66,6 +62,9 @@ export function PricingModal({
       setIsLoading(null);
     }
   };
+
+  const isCurrentTier = (tier: SubscriptionTier) =>
+    isAuthenticated && currentTier === tier;
 
   const handleBuyCredits = async (pack: {
     key: string;
@@ -165,7 +164,7 @@ export function PricingModal({
                 disabled
                 className="w-full cursor-default rounded-xl bg-muted/60 px-4 py-2.5 text-sm font-medium text-muted-foreground"
               >
-                Current Plan
+                {currentTier === "free" ? "Current Plan" : "Included"}
               </Button>
             </div>
 
@@ -213,17 +212,31 @@ export function PricingModal({
                 </li>
               </ul>
 
-              <Button
-                onClick={() => handleSubscribe("pro")}
-                disabled={isLoading === "pro"}
-                className="min-h-[44px] w-full rounded-xl px-4 py-2.5"
-              >
-                {isLoading === "pro" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Subscribe"
-                )}
-              </Button>
+              {isCurrentTier("pro") ? (
+                <Button disabled className="min-h-[44px] w-full rounded-xl">
+                  Current Plan
+                </Button>
+              ) : currentTier === "pro_plus" ? (
+                <Button
+                  disabled
+                  variant="outline"
+                  className="min-h-[44px] w-full rounded-xl"
+                >
+                  Included in Pro Plus
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleSubscribe("pro")}
+                  disabled={isLoading === "pro"}
+                  className="min-h-[44px] w-full rounded-xl px-4 py-2.5"
+                >
+                  {isLoading === "pro" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Subscribe"
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Pro Plus Plan */}
@@ -267,17 +280,25 @@ export function PricingModal({
                 </li>
               </ul>
 
-              <Button
-                onClick={() => handleSubscribe("pro_plus")}
-                disabled={isLoading === "pro_plus"}
-                className="min-h-[44px] w-full rounded-xl border-b-[4px] border-amber-600 bg-amber-500 px-4 py-2.5 text-white hover:-translate-y-[1px] hover:border-b-[6px] hover:brightness-110 active:translate-y-[2px] active:border-b-[2px] active:brightness-90"
-              >
-                {isLoading === "pro_plus" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Subscribe"
-                )}
-              </Button>
+              {isCurrentTier("pro_plus") ? (
+                <Button disabled className="min-h-[44px] w-full rounded-xl">
+                  Current Plan
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleSubscribe("pro_plus")}
+                  disabled={isLoading === "pro_plus"}
+                  className="min-h-[44px] w-full rounded-xl border-b-[4px] border-amber-600 bg-amber-500 px-4 py-2.5 text-white hover:-translate-y-[1px] hover:border-b-[6px] hover:brightness-110 active:translate-y-[2px] active:border-b-[2px] active:brightness-90"
+                >
+                  {isLoading === "pro_plus" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : currentTier === "pro" ? (
+                    "Upgrade to Pro Plus"
+                  ) : (
+                    "Subscribe"
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         ) : (
