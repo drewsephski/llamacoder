@@ -93,39 +93,39 @@ export function PricingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl overflow-y-auto p-4 sm:p-6 lg:overflow-visible">
+      <DialogContent className="max-h-[calc(100svh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-5xl overflow-y-auto overscroll-contain p-4 sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:p-6 lg:overflow-visible">
         <DialogHeader className="text-left">
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight sm:gap-3 sm:text-3xl">
-            <Crown className="h-7 w-7 text-amber-500" />
-            Unlock Premium AI Models
+          <DialogTitle className="flex items-start gap-2 pr-7 text-xl font-bold leading-tight tracking-tight sm:items-center sm:gap-3 sm:pr-0 sm:text-3xl">
+            <Crown className="mt-0.5 h-6 w-6 shrink-0 text-amber-500 sm:mt-0 sm:h-7 sm:w-7" />
+            Unlock smarter AI models
           </DialogTitle>
-          <DialogDescription className="mt-2 text-base leading-relaxed text-muted-foreground">
+          <DialogDescription className="mt-2 pr-5 text-sm leading-relaxed text-muted-foreground sm:pr-0 sm:text-base">
             {remainingCredits > 0
               ? `You have ${remainingCredits} credit${remainingCredits === 1 ? "" : "s"} remaining.`
-              : "Upgrade to access powerful AI models and create more projects."}
+              : "Upgrade to access more capable models and create more projects."}
           </DialogDescription>
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="mt-4 flex gap-2 rounded-xl bg-muted/50 p-1 sm:mt-6">
+        <div className="mt-4 flex gap-1 rounded-xl bg-muted/50 p-1 sm:mt-6 sm:gap-2">
           <Button
             onClick={() => setActiveTab("plans")}
             variant={activeTab === "plans" ? "default" : "ghost"}
-            className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
+            className="min-h-11 flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-all sm:px-4"
           >
             Subscription Plans
           </Button>
           <Button
             onClick={() => setActiveTab("credits")}
             variant={activeTab === "credits" ? "default" : "ghost"}
-            className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
+            className="min-h-11 flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-all sm:px-4"
           >
             Buy Credits
           </Button>
         </div>
 
         {activeTab === "plans" ? (
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {/* Free Plan */}
             <div className="flex flex-col rounded-2xl border border-border/50 bg-muted/40 p-4 transition-colors hover:border-border/80 sm:p-6">
               <div className="mb-3 flex items-center gap-2.5">
@@ -137,7 +137,7 @@ export function PricingModal({
               </div>
               <p className="mb-6 text-sm text-muted-foreground">Forever free</p>
 
-              <ul className="mb-8 flex-1 space-y-3 text-sm">
+              <ul className="mb-5 flex-1 space-y-3 text-sm sm:mb-8">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
                   <span className="text-muted-foreground">
@@ -155,7 +155,7 @@ export function PricingModal({
                 <li className="flex items-start gap-2.5 opacity-50">
                   <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="text-muted-foreground">
-                    Premium models locked
+                    Smarter models locked
                   </span>
                 </li>
               </ul>
@@ -187,11 +187,11 @@ export function PricingModal({
                 100 credits/month
               </p>
 
-              <ul className="mb-8 flex-1 space-y-3 text-sm">
+              <ul className="mb-5 flex-1 space-y-3 text-sm sm:mb-8">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                   <span className="text-muted-foreground">
-                    All {paidModels.length}+ premium models
+                    All {paidModels.length}+ smarter models
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -253,7 +253,7 @@ export function PricingModal({
                 500 credits/month
               </p>
 
-              <ul className="mb-8 flex-1 space-y-3 text-sm">
+              <ul className="mb-5 flex-1 space-y-3 text-sm sm:mb-8">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   <span className="text-muted-foreground">
@@ -304,7 +304,7 @@ export function PricingModal({
         ) : (
           <div className="mt-6">
             <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-              Buy credits to use premium models. Credits never expire.
+              Buy credits to use smarter models. Credits never expire.
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[

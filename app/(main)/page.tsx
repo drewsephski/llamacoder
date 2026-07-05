@@ -17,7 +17,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   use,
@@ -26,7 +25,6 @@ import {
   useTransition,
   useEffect,
   useMemo,
-  memo,
 } from "react";
 
 import { Context } from "./providers";
@@ -44,14 +42,8 @@ import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { HelpCircle } from "lucide-react";
-import {
-  useUserCredits,
-  useUserSession,
-  useCanCreateProject,
-  useCreateChat,
-} from "@/lib/queries";
-import { getModelCreditCost } from "@/lib/billing";
+import { useUserCredits, useUserSession, useCreateChat } from "@/lib/queries";
+import { FREE_PROJECT_LIMIT, getModelCreditCost } from "@/lib/billing";
 import { fetchCompletionStream } from "@/lib/completion-stream";
 
 export default function Home() {
@@ -89,13 +81,23 @@ export default function Home() {
 
   const { data: session } = useUserSession();
   const { data: creditsData } = useUserCredits();
-  const { data: eligibility } = useCanCreateProject();
   const createChatMutation = useCreateChat();
 
   const isAuthenticated = !!session;
   const hasActiveSubscription = creditsData?.hasActiveSubscription ?? false;
   const userCredits = creditsData?.credits ?? 0;
   const canUsePaidModels = isAuthenticated && hasActiveSubscription;
+
+  const showProjectLimitPricing = (limit = FREE_PROJECT_LIMIT) => {
+    toast.error(`You've used all ${limit} free projects.`, {
+      description: "View pricing to keep building.",
+      action: {
+        label: "View pricing",
+        onClick: () => setShowPricingModal(true),
+      },
+    });
+    setShowPricingModal(true);
+  };
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -211,15 +213,6 @@ export default function Home() {
     setScreenshotData(undefined);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
-  const textareaResizePrompt = useMemo(
-    () =>
-      prompt
-        .split("\n")
-        .map((text) => (text === "" ? "a" : text))
-        .join("\n"),
-    [prompt],
-  );
 
   return (
     <>
@@ -483,9 +476,26 @@ export default function Home() {
           font-family: 'DM Sans', system-ui, sans-serif;
         }
         .dark .pro-badge { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+        @media (max-width: 639px) {
+          .select-trigger-custom {
+            min-height: 34px;
+            padding: 6px 8px;
+          }
+
+          .upload-btn {
+            width: 34px;
+            height: 34px;
+          }
+
+          .build-btn {
+            min-height: 42px;
+            min-width: 104px;
+          }
+        }
       `}</style>
 
-      <div className="font-sans-dm relative flex min-h-dvh w-full flex-col overflow-x-hidden">
+      <div className="font-sans-dm relative flex min-h-svh w-full flex-col overflow-x-clip">
         {/* Background layer */}
         <div
           ref={ringRef}
@@ -517,26 +527,26 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="isolate flex min-h-dvh flex-col">
+        <div className="isolate flex min-h-svh flex-col">
           <Header onHelpClick={() => setShowHelpPanel(true)} />
 
-          <div className="mt-16 flex flex-1 flex-col items-center px-4 sm:mt-20 lg:mt-24">
+          <div className="mt-8 flex flex-1 flex-col items-center px-4 pb-4 sm:mt-20 sm:pb-0 lg:mt-24">
             {/* Hero text */}
-            <div className="flex flex-col items-center gap-4 lg:gap-5">
+            <div className="flex flex-col items-center gap-3 sm:gap-4 lg:gap-5">
               <div className="animate-fade-up">
                 <span className="info-pill">AI-powered code generation</span>
               </div>
 
               <h1 className="animate-fade-up-1 text-center font-display tracking-tight text-foreground">
-                <span className="block text-[2.6rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                <span className="block text-[2.45rem] leading-[1.04] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
                   Turn ideas
                 </span>
-                <span className="shimmer-text mt-0.5 block text-[2.6rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                <span className="shimmer-text mt-0.5 block text-[2.45rem] leading-[1.04] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
                   into apps
                 </span>
               </h1>
 
-              <p className="animate-fade-up-2 max-w-sm text-center text-[15px] leading-relaxed text-muted-foreground/75 sm:text-base">
+              <p className="animate-fade-up-2 max-w-sm text-center text-sm leading-relaxed text-muted-foreground/75 sm:text-base">
                 Describe what you want to build. <br />
                 <span className="text-foreground/60">
                   We&apos;ll generate the code.
@@ -546,7 +556,7 @@ export default function Home() {
 
             {/* Main form */}
             <form
-              className="animate-fade-up-3 relative w-full max-w-2xl pt-8 lg:pt-12"
+              className="animate-fade-up-3 relative w-full max-w-2xl pt-6 sm:pt-8 lg:pt-12"
               action={async (formData) => {
                 setIsCheckingEligibility(true);
                 const currentModel = (formData.get("model") as string) || model;
@@ -567,6 +577,14 @@ export default function Home() {
                   if (checkResponse.ok) {
                     const eligibility = await checkResponse.json();
                     if (!eligibility.canCreate) {
+                      if (eligibility.error === "PROJECT_LIMIT_REACHED") {
+                        showProjectLimitPricing(
+                          eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
+                        );
+                        setIsCheckingEligibility(false);
+                        return;
+                      }
+
                       const cost =
                         eligibility.modelCost ||
                         getModelCreditCost(currentModel);
@@ -610,15 +628,20 @@ export default function Home() {
                       router.push(`/chats/${chatId}`);
                     });
                   } catch (error: any) {
-                    toast.error(error.message || "Failed to create project");
+                    const message = error.message || "Failed to create project";
+                    if (message.includes("free projects")) {
+                      showProjectLimitPricing();
+                      return;
+                    }
+                    toast.error(message);
                   }
                 });
               }}
             >
-              <Fieldset>
+              <Fieldset className="min-w-0">
                 {/* Compose box */}
                 <div className="compose-box w-full">
-                  <div className="compose-box-inner relative w-full pb-14 shadow-lg shadow-black/5 sm:pb-11">
+                  <div className="compose-box-inner relative w-full pb-16 shadow-lg shadow-black/5 sm:pb-11">
                     {/* Screenshot preview */}
                     {screenshotLoading && (
                       <div className="mx-3 mt-3">
@@ -662,7 +685,7 @@ export default function Home() {
                       placeholder="Build me a budgeting app..."
                       required
                       name="prompt"
-                      className="min-h-[90px] resize-none border-0 bg-transparent px-4 pt-4 text-[15px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       onKeyDown={(event) => {
@@ -678,17 +701,19 @@ export default function Home() {
                     {/* Toolbar */}
                     <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
                       {/* Left controls */}
-                      <div className="flex items-center gap-1">
+                      <div className="flex min-w-0 items-center gap-1">
                         {/* Model selector */}
                         <Select.Root
                           name="model"
                           value={model}
                           onValueChange={handleModelChange}
                         >
-                          <Select.Trigger className="select-trigger-custom">
+                          <Select.Trigger className="select-trigger-custom max-w-[120px] sm:max-w-none">
                             <Select.Value aria-label={model}>
-                              <span className="flex items-center gap-1.5">
-                                {selectedModel?.label}
+                              <span className="flex min-w-0 items-center gap-1.5">
+                                <span className="truncate">
+                                  {selectedModel?.label}
+                                </span>
                                 {selectedModel?.paid && (
                                   <span className="pro-badge">PRO</span>
                                 )}
@@ -699,7 +724,7 @@ export default function Home() {
                             </Select.Icon>
                           </Select.Trigger>
                           <Select.Portal>
-                            <Select.Content className="min-w-[240px] overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover">
+                            <Select.Content className="max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover sm:min-w-[240px]">
                               <Select.Viewport className="p-1.5">
                                 {MODELS.map((m) => {
                                   const isLocked = m.paid && !canUsePaidModels;
@@ -756,7 +781,7 @@ export default function Home() {
                           </Select.Portal>
                         </Select.Root>
 
-                        <div className="toolbar-divider mx-1" />
+                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
                         {/* Quality selector */}
                         <Select.Root
@@ -808,7 +833,7 @@ export default function Home() {
                           </Select.Portal>
                         </Select.Root>
 
-                        <div className="toolbar-divider mx-1" />
+                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
                         {/* Upload */}
                         <div className="flex items-center gap-0.5">
@@ -879,7 +904,7 @@ export default function Home() {
                 </div>
 
                 {/* Suggested prompts */}
-                <div className="mt-5 flex w-full flex-wrap justify-center gap-2">
+                <div className="mt-4 flex w-full flex-wrap justify-center gap-2 sm:mt-5">
                   {SUGGESTED_PROMPTS.map((v) => (
                     <button
                       key={v.title}
@@ -904,7 +929,7 @@ export default function Home() {
                 </div>
 
                 {/* URL section */}
-                <div className="mb-10 mt-8 sm:mb-14">
+                <div className="mb-6 mt-6 sm:mb-14 sm:mt-8">
                   <div className="or-divider mb-5">or clone a site</div>
 
                   <div className="flex justify-center">

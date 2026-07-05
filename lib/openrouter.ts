@@ -2,6 +2,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
+export const GENERATED_CODE_MAX_TOKENS = 16000;
 
 type OpenRouterClient = ReturnType<typeof createOpenRouter>;
 type OpenRouterModelSettings = NonNullable<Parameters<OpenRouterClient>[1]>;

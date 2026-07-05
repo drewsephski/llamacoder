@@ -14,6 +14,8 @@ export const MODEL_PRICING: Record<string, { cost: number }> = {
   "anthropic/claude-opus-4.6": { cost: 7 },
 };
 
+export const FREE_PROJECT_LIMIT = 3;
+
 /**
  * Get the credit cost for a model.
  * Defaults to 1 credit if model not found in config.

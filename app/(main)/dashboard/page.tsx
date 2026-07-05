@@ -7,7 +7,12 @@ import { UpgradeBanner } from "@/components/upgrade-banner";
 import { DashboardSignOutButton } from "@/components/dashboard-sign-out-button";
 import { DashboardCreditsButton } from "@/components/dashboard-credits-button";
 import { reconcileCheckoutSessionForUser } from "@/lib/billing/stripe-fulfillment";
-import { CREDIT_PACKS, normalizeTier, type TierKey } from "@/lib/billing";
+import {
+  CREDIT_PACKS,
+  FREE_PROJECT_LIMIT,
+  normalizeTier,
+  type TierKey,
+} from "@/lib/billing";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import {
@@ -28,6 +33,7 @@ import {
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import { MODELS } from "@/lib/constants";
 
 // Professional model badge styles - no emojis
 function getModelBadgeClass(model: string): string {
@@ -41,13 +47,7 @@ function getModelBadgeClass(model: string): string {
 }
 
 function getModelLabel(model: string): string {
-  const m = model.toLowerCase();
-  if (m.includes("gpt")) return "GPT";
-  if (m.includes("claude")) return "Claude";
-  if (m.includes("gemini")) return "Gemini";
-  if (m.includes("deepseek")) return "DeepSeek";
-  if (m.includes("llama")) return "Llama";
-  return "AI";
+  return MODELS.find((m) => m.value === model)?.label ?? "AI";
 }
 
 async function DashboardPage({
@@ -65,7 +65,6 @@ async function DashboardPage({
   let hasActiveSubscription = false;
   let currentTier: TierKey = "free";
   const PROJECTS_PER_PAGE = 9;
-  const FREE_PROJECT_LIMIT = 3;
   const resolvedSearchParams = await searchParams;
   const currentPage = parseInt(resolvedSearchParams.page || "1", 10);
   const creditPackEntries = Object.entries(CREDIT_PACKS) as [
@@ -713,7 +712,7 @@ async function DashboardPage({
             <div>
               <h2 className="text-lg font-medium">Credit Packs</h2>
               <p className="text-sm text-muted-foreground">
-                One-time packs for premium models. Credits never expire.
+                One-time packs for smarter models. Credits never expire.
               </p>
             </div>
           </div>
@@ -747,7 +746,7 @@ async function DashboardPage({
                     </li>
                     <li className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-green-500" />
-                      <span>Works with all premium models</span>
+                      <span>Works with all smarter models</span>
                     </li>
                     <li className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-green-500" />

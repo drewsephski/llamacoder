@@ -4,8 +4,8 @@ import Image from "next/image";
 
 const Footer = memo(() => {
   return (
-    <footer className="mt-auto flex w-full items-center justify-between gap-4 px-6 pb-6 pt-4">
-      <div className="flex items-center gap-2.5 text-sm">
+    <footer className="mt-auto flex w-full flex-col items-center justify-center gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 text-center sm:flex-row sm:justify-between sm:gap-4 sm:px-6 sm:pb-6 sm:pt-4 sm:text-left">
+      <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm sm:justify-start">
         <Image
           src="/squidcoder-logo.svg"
           alt="Squid Coder"

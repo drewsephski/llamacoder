@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { getPrisma } from "@/lib/prisma";
-import { getModelCreditCost } from "@/lib/billing";
+import {
+  FREE_PROJECT_LIMIT,
+  checkProjectCreationEligibility,
+  getModelCreditCost,
+} from "@/lib/billing";
 import { FREE_MODEL } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
@@ -23,52 +26,28 @@ export async function GET(request: NextRequest) {
         hasExistingProjects: false,
         credits: 0,
         modelCost,
+        projectCount: 0,
+        projectLimit: FREE_PROJECT_LIMIT,
+        projectsRemaining: FREE_PROJECT_LIMIT,
       });
     }
 
-    const prisma = getPrisma();
-
-    // Check if user has any saved projects
-    const existingProjectsCount = await prisma.chat.count({
-      where: {
-        userId: session.user.id,
-      },
+    const eligibility = await checkProjectCreationEligibility({
+      userId: session.user.id,
+      modelId: selectedModel,
     });
-
-    const hasExistingProjects = existingProjectsCount > 0;
-
-    // Get user credits
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        credits: true,
-        subscription: {
-          select: {
-            status: true,
-          },
-        },
-      },
-    });
-
-    const credits = user?.credits || 0;
-    const hasActiveSubscription = user?.subscription?.status === "active";
-
-    // Logic:
-    // - First project is always free (only for free model)
-    // - Subsequent projects require enough credits for the selected model
-    // - Active subscription grants model access but still needs credits
-    const canCreate =
-      (!hasExistingProjects && selectedModel === FREE_MODEL) ||
-      credits >= modelCost ||
-      hasActiveSubscription;
 
     return NextResponse.json({
-      canCreate,
-      hasExistingProjects,
-      credits,
-      hasActiveSubscription,
-      modelCost,
-      shortfall: Math.max(0, modelCost - credits),
+      canCreate: eligibility.success,
+      error: eligibility.success ? undefined : eligibility.error,
+      hasExistingProjects: eligibility.projectCount > 0,
+      projectCount: eligibility.projectCount,
+      projectLimit: eligibility.projectLimit,
+      projectsRemaining: eligibility.projectsRemaining,
+      credits: eligibility.credits,
+      hasActiveSubscription: eligibility.hasActiveSubscription,
+      modelCost: eligibility.modelCost,
+      shortfall: Math.max(0, eligibility.modelCost - eligibility.credits),
     });
   } catch (error: any) {
     console.error("Error checking project creation eligibility:", error);

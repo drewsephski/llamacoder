@@ -10,6 +10,7 @@ import {
   getModelCreditCost,
 } from "@/lib/billing";
 import {
+  GENERATED_CODE_MAX_TOKENS,
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
@@ -21,6 +22,16 @@ import {
   normalizeGeneratedFiles,
   validateGeneratedFiles,
 } from "@/lib/generated-files";
+
+class CreditConsumptionError extends Error {
+  constructor(
+    public readonly code: "INSUFFICIENT_CREDITS" | "CREDIT_CHECK_FAILED",
+    message = code,
+  ) {
+    super(message);
+    this.name = "CreditConsumptionError";
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,7 +101,9 @@ export async function POST(request: NextRequest) {
 
     const generateCode = (userContent: string) =>
       generateText({
-        model: createOpenRouterModel(openrouter, chat.model),
+        model: createOpenRouterModel(openrouter, chat.model, {
+          maxTokens: GENERATED_CODE_MAX_TOKENS,
+        }),
         messages: [
           {
             role: "system",
@@ -189,9 +202,9 @@ export async function POST(request: NextRequest) {
 
       if (!consumeResult.success) {
         if (consumeResult.error === "INSUFFICIENT_CREDITS") {
-          throw new Error("INSUFFICIENT_CREDITS");
+          throw new CreditConsumptionError("INSUFFICIENT_CREDITS");
         }
-        throw new Error("CREDIT_CHECK_FAILED");
+        throw new CreditConsumptionError("CREDIT_CHECK_FAILED");
       }
 
       return createdMessage;
@@ -202,6 +215,19 @@ export async function POST(request: NextRequest) {
       messageId: message.id,
     });
   } catch (error) {
+    if (error instanceof CreditConsumptionError) {
+      return NextResponse.json(
+        {
+          error: error.code,
+          message:
+            error.code === "INSUFFICIENT_CREDITS"
+              ? "Credits were no longer available. Upgrade or buy credits to continue."
+              : "Unable to process credits for this generation.",
+        },
+        { status: error.code === "INSUFFICIENT_CREDITS" ? 402 : 500 },
+      );
+    }
+
     console.error("Error generating code:", getAIErrorMessage(error));
     return NextResponse.json(
       { error: "Failed to generate code", message: getAIErrorMessage(error) },

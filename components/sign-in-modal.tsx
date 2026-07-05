@@ -33,7 +33,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
     setLoading(true);
 
     try {
-      const { data, error } = await authClient.signIn.email({
+      const { error } = await authClient.signIn.email({
         email,
         password,
       });
@@ -121,7 +121,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/sign-up"
               className="font-medium text-primary hover:underline min-h-[44px] inline-flex items-center"

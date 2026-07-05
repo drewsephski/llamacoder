@@ -9,7 +9,10 @@ import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { MODELS } from "@/lib/constants";
-import { checkCreditAvailability, getModelCreditCost } from "@/lib/billing";
+import {
+  checkProjectCreationEligibility,
+  getModelCreditCost,
+} from "@/lib/billing";
 import {
   createAppOpenRouter,
   createOpenRouterModel,
@@ -88,13 +91,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const creditCheck = await checkCreditAvailability({
+    const eligibility = await checkProjectCreationEligibility({
       userId: session.user.id,
       modelId: model,
     });
 
-    if (!creditCheck.success) {
-      if (creditCheck.error === "FORBIDDEN_MODEL") {
+    if (!eligibility.success) {
+      if (eligibility.error === "PROJECT_LIMIT_REACHED") {
+        return NextResponse.json(
+          {
+            error: "PROJECT_LIMIT_REACHED",
+            message: `You've used all ${eligibility.projectLimit} free projects. View pricing to create more.`,
+          },
+          { status: 403 },
+        );
+      }
+
+      if (eligibility.error === "FORBIDDEN_MODEL") {
         return NextResponse.json(
           { error: "FORBIDDEN_MODEL", message: "Upgrade to use this model" },
           { status: 403 },
@@ -103,13 +116,13 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         {
-          error: creditCheck.error,
+          error: eligibility.error,
           message:
-            creditCheck.error === "INSUFFICIENT_CREDITS"
+            eligibility.error === "INSUFFICIENT_CREDITS"
               ? `Need ${getModelCreditCost(model)} credits for this model. Upgrade or buy credits to continue.`
               : "Unable to process request",
         },
-        { status: creditCheck.error === "USER_NOT_FOUND" ? 404 : 402 },
+        { status: eligibility.error === "USER_NOT_FOUND" ? 404 : 402 },
       );
     }
 

@@ -29,39 +29,46 @@ export function UpgradeBanner({
   const variants = {
     chat: {
       icon: Sparkles,
-      title: "Unlock smarter AI responses",
-      description: "Upgrade to access GPT-5.4 and Claude Opus 4.6.",
-      cta: "Upgrade Now",
-      color: "from-amber-500/10 to-orange-500/10 border-amber-500/20",
-      iconColor: "text-amber-500",
+      title: "Use smarter models",
+      description:
+        "Upgrade for access to more capable models that can reason more deeply and build with better context.",
+      cta: "View plans",
+      surface: "border-border/70 bg-card/70",
+      iconClass: "bg-muted/70 text-muted-foreground",
+      buttonVariant: "outline" as const,
     },
     "model-locked": {
       icon: Lock,
-      title: "Premium model locked",
+      title: "Smarter model locked",
       description:
-        "Subscribe to unlock this model and 5+ other premium AI models.",
-      cta: "Unlock Models",
-      color: "from-amber-500/10 to-orange-500/10 border-amber-500/20",
-      iconColor: "text-amber-500",
+        "Upgrade to use more capable models for harder prompts and more polished apps.",
+      cta: "View plans",
+      surface: "border-border/70 bg-card/70",
+      iconClass: "bg-muted/70 text-muted-foreground",
+      buttonVariant: "outline" as const,
     },
     dashboard: {
       icon: Crown,
-      title: "Unlock your full potential",
+      title: "Build with smarter models",
       description:
         messageCount > 0
-          ? `You've created ${messageCount} project${messageCount === 1 ? "" : "s"}. Subscribe for unlimited premium generations.`
-          : "Subscribe to access GPT-5.4 and Claude Opus 4.6.",
-      cta: "Get Premium",
-      color: "from-amber-500/10 to-orange-500/10 border-amber-500/20",
-      iconColor: "text-amber-500",
+          ? `You've created ${messageCount} project${messageCount === 1 ? "" : "s"}. Upgrade when you need more capable models and more generation room.`
+          : "Upgrade when you need more capable models for planning, reasoning, and code generation.",
+      cta: "View plans",
+      surface: "border-border/70 bg-card/70",
+      iconClass: "bg-muted/70 text-muted-foreground",
+      buttonVariant: "outline" as const,
     },
     "limit-reached": {
       icon: Lock,
       title: "Free project limit reached",
-      description: `You've created ${messageCount} of 3 free projects. Upgrade to create unlimited projects.`,
-      cta: "Upgrade for Unlimited",
-      color: "from-red-500/10 to-orange-500/10 border-red-500/20",
-      iconColor: "text-red-500",
+      description: `You've created ${messageCount} of 3 free projects. Upgrade to keep building with more capable models.`,
+      cta: "View plans",
+      surface:
+        "border-destructive/20 bg-destructive/5 dark:border-destructive/25 dark:bg-destructive/10",
+      iconClass:
+        "bg-destructive/10 text-destructive dark:bg-destructive/15 dark:text-red-300",
+      buttonVariant: "default" as const,
     },
   };
 
@@ -71,33 +78,34 @@ export function UpgradeBanner({
   return (
     <>
       <div
-        className={`relative overflow-hidden rounded-xl border bg-gradient-to-r ${v.color} mb-6 p-4`}
+        className={`relative mb-6 overflow-hidden rounded-xl border ${v.surface} p-3.5 shadow-sm shadow-black/[0.02] backdrop-blur-sm`}
       >
         <button
           onClick={() => setIsVisible(false)}
-          className="absolute right-2 top-2 rounded-md p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Dismiss"
         >
-          <X className="h-4 w-4 text-muted-foreground" />
+          <X className="h-3.5 w-3.5" />
         </button>
 
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 pr-5">
           <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/80 ${v.iconColor}`}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${v.iconClass}`}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className="h-4 w-4" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="mb-1 text-sm font-semibold">{v.title}</h3>
-            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+            <h3 className="mb-1 text-sm font-medium">{v.title}</h3>
+            <p className="mb-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
               {v.description}
             </p>
             <div className="flex items-center gap-3">
               <Button
                 size="sm"
+                variant={v.buttonVariant}
                 onClick={() => setShowPricingModal(true)}
-                className="h-8"
+                className="h-8 px-3"
               >
                 {v.cta}
               </Button>

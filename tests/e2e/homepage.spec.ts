@@ -1,0 +1,10 @@
+import { expect, test } from "@playwright/test";
+
+test("homepage renders the project prompt surface", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page).toHaveTitle(/Squid|Coder|Llama/i);
+  await expect(
+    page.getByRole("textbox").or(page.getByPlaceholder(/what|build|create/i)).first(),
+  ).toBeVisible();
+});

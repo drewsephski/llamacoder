@@ -2,6 +2,7 @@ import { getPrisma } from "@/lib/prisma";
 import { z } from "zod";
 import { streamText } from "ai";
 import {
+  GENERATED_CODE_MAX_TOKENS,
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
@@ -113,7 +114,7 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: createOpenRouterModel(openrouter, model, {
-        maxTokens: 9000,
+        maxTokens: GENERATED_CODE_MAX_TOKENS,
       }),
       providerOptions: {
         openrouter: {

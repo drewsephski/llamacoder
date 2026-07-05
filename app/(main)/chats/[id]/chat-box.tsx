@@ -5,14 +5,11 @@ import Spinner from "@/components/spinner";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createMessage } from "@/app/(main)/actions";
-import { type Chat } from "./page";
-import { MODELS, FREE_MODEL } from "@/lib/constants";
+import { MODELS } from "@/lib/constants";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
 import { PricingModal } from "@/components/pricing-modal";
 import { UpgradeBanner } from "@/components/upgrade-banner";
 import { useUserCredits, useUserSession } from "@/lib/queries";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchCompletionStream } from "@/lib/completion-stream";
 
@@ -32,10 +29,10 @@ export default function ChatBox({
   onNewStreamPromiseAction,
   isStreaming,
 }: ChatBoxProps) {
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
-  const [disabled, setDisabled] = useState(false);
+  const disabled = false;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isCheckingCredits, setIsCheckingCredits] = useState(false);

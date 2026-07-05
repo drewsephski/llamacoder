@@ -60,7 +60,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         <DialogHeader>
           <DialogTitle>Welcome to Squid Coder</DialogTitle>
           <DialogDescription className="mt-2">
-            Build apps with AI in seconds. Here's how to get started:
+            Build apps with AI in seconds. Here&apos;s how to get started:
           </DialogDescription>
         </DialogHeader>
 

@@ -1,6 +1,12 @@
 import { getPrisma } from "@/lib/prisma";
+import { FREE_MODEL } from "@/lib/constants";
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { TIERS, getModelCreditCost, normalizeTier } from "./config";
+import {
+  FREE_PROJECT_LIMIT,
+  TIERS,
+  getModelCreditCost,
+  normalizeTier,
+} from "./config";
 
 export type CreditCheckResult =
   | {
@@ -11,6 +17,31 @@ export type CreditCheckResult =
   | {
       success: false;
       error: "INSUFFICIENT_CREDITS" | "FORBIDDEN_MODEL" | "USER_NOT_FOUND";
+    };
+
+export type ProjectCreationEligibility =
+  | {
+      success: true;
+      projectCount: number;
+      projectLimit: number | null;
+      projectsRemaining: number | null;
+      credits: number;
+      modelCost: number;
+      hasActiveSubscription: boolean;
+    }
+  | {
+      success: false;
+      error:
+        | "PROJECT_LIMIT_REACHED"
+        | "INSUFFICIENT_CREDITS"
+        | "FORBIDDEN_MODEL"
+        | "USER_NOT_FOUND";
+      projectCount: number;
+      projectLimit: number | null;
+      projectsRemaining: number | null;
+      credits: number;
+      modelCost: number;
+      hasActiveSubscription: boolean;
     };
 
 type BillingClient = PrismaClient | Prisma.TransactionClient;
@@ -82,6 +113,126 @@ export async function checkCreditAvailability({
   } catch (error) {
     console.error("[CreditEngine] Error in checkCreditAvailability:", error);
     return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+}
+
+export async function checkProjectCreationEligibility({
+  client,
+  userId,
+  modelId,
+}: {
+  client?: BillingClient;
+  userId: string;
+  modelId: string;
+}): Promise<ProjectCreationEligibility> {
+  const prisma = client ?? getPrisma();
+  const modelCost = getModelCreditCost(modelId);
+
+  try {
+    const [projectCount, user] = await Promise.all([
+      prisma.chat.count({
+        where: { userId },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          credits: true,
+          subscription: {
+            select: {
+              status: true,
+              tier: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    if (!user) {
+      return {
+        success: false,
+        error: "USER_NOT_FOUND",
+        projectCount,
+        projectLimit: null,
+        projectsRemaining: null,
+        credits: 0,
+        modelCost,
+        hasActiveSubscription: false,
+      };
+    }
+
+    const hasActiveSubscription = user.subscription?.status === "active";
+    const projectLimit = hasActiveSubscription ? null : FREE_PROJECT_LIMIT;
+    const projectsRemaining =
+      projectLimit === null ? null : Math.max(0, projectLimit - projectCount);
+
+    const base = {
+      projectCount,
+      projectLimit,
+      projectsRemaining,
+      credits: user.credits,
+      modelCost,
+      hasActiveSubscription,
+    };
+
+    if (projectLimit !== null && projectCount >= projectLimit) {
+      return {
+        success: false,
+        error: "PROJECT_LIMIT_REACHED",
+        ...base,
+      };
+    }
+
+    const tier = hasActiveSubscription
+      ? normalizeTier(user.subscription?.tier)
+      : "free";
+    const tierConfig = TIERS[tier];
+
+    if (tierConfig.allowedModels !== "all") {
+      const isAllowed = tierConfig.allowedModels.includes(modelId);
+      if (!isAllowed) {
+        return {
+          success: false,
+          error: "FORBIDDEN_MODEL",
+          ...base,
+        };
+      }
+    }
+
+    if (projectCount === 0 && tier === "free" && modelId === FREE_MODEL) {
+      return {
+        success: true,
+        ...base,
+      };
+    }
+
+    if (user.credits < modelCost) {
+      return {
+        success: false,
+        error: "INSUFFICIENT_CREDITS",
+        ...base,
+      };
+    }
+
+    return {
+      success: true,
+      ...base,
+    };
+  } catch (error) {
+    console.error(
+      "[CreditEngine] Error in checkProjectCreationEligibility:",
+      error,
+    );
+    return {
+      success: false,
+      error: "INSUFFICIENT_CREDITS",
+      projectCount: 0,
+      projectLimit: null,
+      projectsRemaining: null,
+      credits: 0,
+      modelCost,
+      hasActiveSubscription: false,
+    };
   }
 }
 

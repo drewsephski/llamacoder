@@ -2,6 +2,7 @@
 
 import { memo, useState } from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import { MenuIcon, XIcon, Zap, HelpCircle } from "lucide-react";
@@ -41,16 +42,18 @@ function Header({ onHelpClick }: HeaderProps) {
   };
 
   return (
-    <header className="relative mx-auto flex w-full shrink-0 items-center justify-between px-4 py-4 sm:py-6">
+    <header className="sticky top-0 z-40 mx-auto flex w-full shrink-0 items-center justify-between bg-background/80 px-4 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/65 sm:py-6 md:relative md:bg-transparent md:backdrop-blur-none">
       <Link
         href="/"
         className="group flex min-w-0 flex-row items-center gap-3 transition-opacity hover:opacity-90"
       >
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 scale-[1.3] rounded-full bg-blue-500/10 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
-          <img
+          <Image
             src="/squidcoder-logo.svg"
             alt="Squid Coder"
+            width={36}
+            height={36}
             className="ease-[cubic-bezier(0.34,1.56,0.64,1)] relative z-10 h-9 object-contain transition-transform duration-500 group-hover:-rotate-1 group-hover:scale-[1.05]"
           />
         </div>
@@ -162,7 +165,7 @@ function Header({ onHelpClick }: HeaderProps) {
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         variant="ghost"
         size="icon"
-        className="size-10 md:hidden"
+        className="size-11 md:hidden"
         aria-label="Toggle menu"
       >
         {mobileMenuOpen ? (
@@ -179,8 +182,32 @@ function Header({ onHelpClick }: HeaderProps) {
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-full max-w-[280px] overflow-y-auto border-l border-border bg-background p-5 shadow-xl">
-            <div className="flex flex-col gap-4 pt-12">
+          <div className="absolute inset-x-3 top-3 max-h-[calc(100svh-1.5rem)] overflow-y-auto rounded-2xl border border-border bg-background p-4 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/squidcoder-logo.svg"
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="h-7 w-auto"
+                />
+                <span className="text-sm font-semibold tracking-tight">
+                  Menu
+                </span>
+              </div>
+              <Button
+                onClick={() => setMobileMenuOpen(false)}
+                variant="ghost"
+                size="icon"
+                className="size-10"
+                aria-label="Close menu"
+              >
+                <XIcon className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-3">
               {loading ? (
                 <span className="text-sm text-muted-foreground">Loading…</span>
               ) : session ? (
@@ -193,7 +220,7 @@ function Header({ onHelpClick }: HeaderProps) {
                         setMobileMenuOpen(false);
                       }}
                       variant="ghost"
-                      className="justify-start gap-2 bg-muted px-4 text-muted-foreground"
+                      className="min-h-12 justify-start gap-2 bg-muted px-4 text-muted-foreground"
                       aria-label="Buy more credits"
                     >
                       <Zap className="h-4 w-4 text-yellow-500" />
@@ -206,7 +233,7 @@ function Header({ onHelpClick }: HeaderProps) {
                         setMobileMenuOpen(false);
                       }}
                       size="sm"
-                      className="justify-start"
+                      className="min-h-12 justify-start"
                     >
                       <Zap className="h-4 w-4" />
                       Upgrade
@@ -216,7 +243,7 @@ function Header({ onHelpClick }: HeaderProps) {
                     asChild
                     variant="default"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="justify-start"
+                    className="min-h-12 justify-start"
                   >
                     <Link href="/dashboard">Dashboard</Link>
                   </Button>
@@ -226,7 +253,7 @@ function Header({ onHelpClick }: HeaderProps) {
                       setMobileMenuOpen(false);
                     }}
                     variant="default"
-                    className="justify-start"
+                    className="min-h-12 justify-start"
                   >
                     Sign Out
                   </Button>
@@ -239,7 +266,7 @@ function Header({ onHelpClick }: HeaderProps) {
                       setMobileMenuOpen(false);
                     }}
                     variant="default"
-                    className="justify-start"
+                    className="min-h-12 justify-start"
                   >
                     Pricing
                   </Button>
@@ -247,7 +274,7 @@ function Header({ onHelpClick }: HeaderProps) {
                     asChild
                     variant="default"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="justify-start"
+                    className="min-h-12 justify-start"
                   >
                     <Link href="/sign-in">Sign In</Link>
                   </Button>
@@ -255,14 +282,28 @@ function Header({ onHelpClick }: HeaderProps) {
                     asChild
                     variant="default"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="justify-start"
+                    className="min-h-12 justify-start"
                   >
                     <Link href="/sign-up">Sign Up</Link>
                   </Button>
                 </>
               )}
-              <div className="border-t border-border pt-4">
-                <AnimatedThemeToggleButton variant="horizontal" />
+              <div className="mt-1 border-t border-border pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <AnimatedThemeToggleButton variant="horizontal" />
+                  <Button
+                    className="size-11 text-foreground hover:bg-accent hover:text-white"
+                    onClick={() => {
+                      onHelpClick?.();
+                      setMobileMenuOpen(false);
+                    }}
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Help"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

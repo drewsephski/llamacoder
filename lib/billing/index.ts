@@ -3,6 +3,7 @@ export {
   MODEL_PRICING,
   TIERS,
   CREDIT_PACKS,
+  FREE_PROJECT_LIMIT,
   getModelCreditCost,
   canTierUseModel,
   normalizeTier,
@@ -12,11 +13,13 @@ export {
 
 export {
   checkCreditAvailability,
+  checkProjectCreationEligibility,
   checkAndConsumeCredits,
   consumeCreditsForGeneration,
   addCredits,
   getUserCreditInfo,
   type CreditCheckResult,
+  type ProjectCreationEligibility,
 } from "./credits";
 
 export {

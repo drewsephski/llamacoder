@@ -4,14 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PricingModal } from "./pricing-modal";
 import { MODELS } from "@/lib/constants";
+import { FREE_PROJECT_LIMIT } from "@/lib/billing";
 import { Lock, Check, Sparkles, Zap, Crown } from "lucide-react";
 import { useUserCredits } from "@/lib/queries";
 
 interface UnlockProgressProps {
   projectCount?: number;
 }
-
-const FREE_PROJECT_LIMIT = 3;
 
 const MILESTONES = [
   {
@@ -28,14 +27,14 @@ const MILESTONES = [
   },
   {
     icon: Lock,
-    label: "Premium Models",
-    description: "GPT-5.4, Claude Sonnet 4.5, Claude Opus 4.6",
+    label: "Smarter Models",
+    description: "More capable planning, reasoning, and code generation",
     requires: "subscription",
   },
   {
     icon: Crown,
     label: "Unlimited",
-    description: "Unlimited projects & models",
+    description: "Unlimited projects and model access",
     requires: "subscription",
   },
 ];
@@ -143,7 +142,7 @@ export function UnlockProgress({ projectCount = 0 }: UnlockProgressProps) {
         {!hasSubscription && (
           <div className="mt-4 border-t border-border pt-4">
             <p className="mb-2 text-xs font-medium text-muted-foreground">
-              Subscribe to unlock {paidModels.length} premium models:
+              Subscribe to unlock {paidModels.length} smarter models:
             </p>
             <div className="flex flex-wrap gap-1.5">
               {paidModels.map((model) => (

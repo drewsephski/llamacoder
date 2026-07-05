@@ -96,6 +96,7 @@ export function useCreateChat() {
     onSuccess: () => {
       // Invalidate projects list after creating a chat
       queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.canCreate });
       // Refresh credits in case another generation completed while creating.
       queryClient.invalidateQueries({ queryKey: queryKeys.user.credits });
     },

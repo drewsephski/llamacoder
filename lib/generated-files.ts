@@ -104,6 +104,7 @@ export function normalizeGeneratedPath(path: string) {
     .replace(/^["'`]+|["'`]+$/g, "")
     .replace(/\\/g, "/")
     .replace(/\/+/g, "/")
+    .replace(/^@\//, "")
     .replace(/^\//, "")
     .replace(/^\.\//, "")
     .replace(/^src\//, "");

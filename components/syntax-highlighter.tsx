@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import { getMonacoLanguage } from "@/lib/utils";
-import { Tree, Folder, File, type TreeViewElement } from "@/components/ui/file-tree";
+import {
+  Tree,
+  Folder,
+  File,
+  type TreeViewElement,
+} from "@/components/ui/file-tree";
 
 export default function SyntaxHighlighter({
   files,
@@ -19,20 +24,16 @@ export default function SyntaxHighlighter({
   const [activeFile, setActiveFile] = useState(0);
   const editorRef = useRef<any>(null);
 
-  // Keep the active file synced when an external activePath is provided
-  useEffect(() => {
-    if (!activePath) return;
-    const idx = files.findIndex((f) => f.path === activePath);
-    if (idx !== -1 && idx !== activeFile) {
-      setActiveFile(idx);
-    }
-  }, [activePath, files, activeFile]);
-
-  const file = files[activeFile];
-  const monacoLanguage = useMemo(
-    () => (file ? getMonacoLanguage(file.language) : "plaintext"),
-    [file?.language],
+  const activePathIndex = useMemo(
+    () => (activePath ? files.findIndex((f) => f.path === activePath) : -1),
+    [activePath, files],
   );
+  const selectedFileIndex =
+    activePathIndex !== -1
+      ? activePathIndex
+      : Math.min(activeFile, Math.max(files.length - 1, 0));
+  const file = files[selectedFileIndex];
+  const monacoLanguage = file ? getMonacoLanguage(file.language) : "plaintext";
 
   // Auto-scroll the editor to bottom when streaming updates arrive
   useEffect(() => {
@@ -46,21 +47,24 @@ export default function SyntaxHighlighter({
     if (typeof scrollHeight === "number") {
       editor.setScrollTop?.(scrollHeight);
     }
-  }, [file?.content, activeFile, isStreaming]);
-
-  if (files.length === 0) {
-    return <div className="p-4 text-muted-foreground">No files to display</div>;
-  }
+  }, [file, selectedFileIndex, isStreaming]);
 
   // Convert files to TreeViewElement format
   const treeElements = useMemo(() => buildTreeElements(files), [files]);
 
   // Handle file selection from tree
-  const handleFileSelect = useCallback((id: string) => {
-    if (disableSelection) return;
-    const index = files.findIndex((f) => f.path === id);
-    if (index !== -1) setActiveFile(index);
-  }, [disableSelection, files]);
+  const handleFileSelect = useCallback(
+    (id: string) => {
+      if (disableSelection) return;
+      const index = files.findIndex((f) => f.path === id);
+      if (index !== -1) setActiveFile(index);
+    },
+    [disableSelection, files],
+  );
+
+  if (files.length === 0) {
+    return <div className="p-4 text-muted-foreground">No files to display</div>;
+  }
 
   return (
     <div className="flex h-full flex-col md:flex-row">
@@ -74,11 +78,17 @@ export default function SyntaxHighlighter({
             <div className="h-32">
               <Tree
                 elements={treeElements}
-                initialSelectedId={files[activeFile]?.path}
+                initialSelectedId={files[selectedFileIndex]?.path}
                 indicator={true}
                 className="h-full"
               >
-                {treeElements.map((element) => renderTreeNode(element, handleFileSelect, files[activeFile]?.path))}
+                {treeElements.map((element) =>
+                  renderTreeNode(
+                    element,
+                    handleFileSelect,
+                    files[selectedFileIndex]?.path,
+                  ),
+                )}
               </Tree>
             </div>
           </div>
@@ -93,11 +103,17 @@ export default function SyntaxHighlighter({
             <div className="h-[calc(100%-2.5rem)]">
               <Tree
                 elements={treeElements}
-                initialSelectedId={files[activeFile]?.path}
+                initialSelectedId={files[selectedFileIndex]?.path}
                 indicator={true}
                 className="h-full"
               >
-                {treeElements.map((element) => renderTreeNode(element, handleFileSelect, files[activeFile]?.path))}
+                {treeElements.map((element) =>
+                  renderTreeNode(
+                    element,
+                    handleFileSelect,
+                    files[selectedFileIndex]?.path,
+                  ),
+                )}
               </Tree>
             </div>
           </div>
@@ -195,7 +211,7 @@ export default function SyntaxHighlighter({
                         <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
                       </div>
                       <span>
-                        AI is writing your{" "}
+                        Squid is generating your{" "}
                         {activePath ? activePath.split("/").pop() : "code"}...
                       </span>
                     </div>
@@ -254,8 +270,9 @@ function buildTreeElements(
     // Add files that are direct children of this folder
     files.forEach((file) => {
       const lastSlashIndex = file.path.lastIndexOf("/");
-      const fileParent = lastSlashIndex === -1 ? "" : file.path.substring(0, lastSlashIndex);
-      
+      const fileParent =
+        lastSlashIndex === -1 ? "" : file.path.substring(0, lastSlashIndex);
+
       if (fileParent === path) {
         const fileName = file.path.split("/").pop()!;
         directChildren.push({
@@ -311,7 +328,7 @@ function renderTreeNode(
         isSelect={activePath?.startsWith(element.id)}
       >
         {element.children?.map((child) =>
-          renderTreeNode(child, onSelect, activePath)
+          renderTreeNode(child, onSelect, activePath),
         )}
       </Folder>
     );

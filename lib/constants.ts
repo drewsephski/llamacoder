@@ -2,32 +2,32 @@ export const FREE_MODEL = "tencent/hy3-preview:free";
 
 export const MODELS = [
   {
-    label: "Free",
+    label: "Starter",
     value: "tencent/hy3-preview:free",
     free: true,
   },
   {
-    label: "DeepSeek V4 Flash",
+    label: "Fast Builder",
     value: "deepseek/deepseek-v4-flash",
     paid: true,
   },
   {
-    label: "DeepSeek V4 Pro",
+    label: "Pro Builder",
     value: "deepseek/deepseek-v4-pro",
     paid: true,
   },
   {
-    label: "GPT 5.4",
+    label: "Advanced Reasoning",
     value: "openai/gpt-5.4",
     paid: true,
   },
   {
-    label: "Claude Sonnet 4.5",
+    label: "Creative Builder",
     value: "anthropic/claude-sonnet-4.5",
     paid: true,
   },
   {
-    label: "Claude Opus 4.6",
+    label: "Expert Builder",
     value: "anthropic/claude-opus-4.6",
     paid: true,
   },
