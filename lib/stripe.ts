@@ -63,6 +63,42 @@ export async function createStripeCustomer(email: string, name?: string) {
   });
 }
 
+function isMissingStripeCustomerError(error: unknown) {
+  return (
+    error instanceof Stripe.errors.StripeInvalidRequestError &&
+    error.code === "resource_missing" &&
+    error.message.includes("No such customer")
+  );
+}
+
+export async function getOrCreateStripeCustomerId({
+  existingCustomerId,
+  email,
+  name,
+}: {
+  existingCustomerId?: string | null;
+  email: string;
+  name?: string | null;
+}) {
+  if (existingCustomerId) {
+    try {
+      const customer = await stripe.customers.retrieve(existingCustomerId);
+
+      if (!customer.deleted) {
+        return existingCustomerId;
+      }
+    } catch (error) {
+      if (!isMissingStripeCustomerError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  const customer = await createStripeCustomer(email, name || undefined);
+
+  return customer.id;
+}
+
 export async function createCheckoutSession(
   customerId: string,
   successUrl: string,

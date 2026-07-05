@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import {
-  createStripeCustomer,
   createCreditsCheckoutSession,
   CREDIT_PACKS,
+  getOrCreateStripeCustomerId,
 } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
 
@@ -120,16 +120,20 @@ export async function POST(request: NextRequest) {
       return errorResponse("User not found", 404, request, expectsJson);
     }
 
-    // Create or get existing Stripe customer
-    let customerId: string;
-    if (user.subscription?.stripeCustomerId) {
-      customerId = user.subscription.stripeCustomerId;
-    } else {
-      const customer = await createStripeCustomer(
-        user.email,
-        user.name || undefined,
-      );
-      customerId = customer.id;
+    const customerId = await getOrCreateStripeCustomerId({
+      existingCustomerId: user.subscription?.stripeCustomerId,
+      email: user.email,
+      name: user.name,
+    });
+
+    if (
+      user.subscription &&
+      user.subscription.stripeCustomerId !== customerId
+    ) {
+      await prisma.subscription.update({
+        where: { id: user.subscription.id },
+        data: { stripeCustomerId: customerId },
+      });
     }
 
     const origin =

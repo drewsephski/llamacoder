@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { stripe, createStripeCustomer, STRIPE_PRICE_IDS } from "@/lib/stripe";
+import {
+  stripe,
+  getOrCreateStripeCustomerId,
+  STRIPE_PRICE_IDS,
+} from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
 
 type SubscriptionTier = keyof typeof STRIPE_PRICE_IDS;
@@ -133,17 +137,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create or get existing Stripe customer
-    let customerId: string;
-    if (user.subscription?.stripeCustomerId) {
-      customerId = user.subscription.stripeCustomerId;
-    } else {
-      const customer = await createStripeCustomer(
-        user.email,
-        user.name || undefined,
-      );
-      customerId = customer.id;
-    }
+    const customerId = await getOrCreateStripeCustomerId({
+      existingCustomerId: user.subscription?.stripeCustomerId,
+      email: user.email,
+      name: user.name,
+    });
 
     const origin =
       request.headers.get("origin") ||
