@@ -3,11 +3,13 @@ import { readJson } from "../fixtures/builders";
 
 const {
   checkProjectCreationEligibilityMock,
+  createOpenRouterModelMock,
   generateTextMock,
   getSessionMock,
   prismaMock,
 } = vi.hoisted(() => ({
   checkProjectCreationEligibilityMock: vi.fn(),
+  createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   generateTextMock: vi.fn(),
   getSessionMock: vi.fn(),
   prismaMock: {
@@ -46,8 +48,9 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 });
 
 vi.mock("@/lib/openrouter", () => ({
+  VISION_ANALYSIS_MODEL: "google/gemini-2.5-flash",
   createAppOpenRouter: vi.fn(() => vi.fn()),
-  createOpenRouterModel: vi.fn(() => "openrouter-model"),
+  createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
 }));
@@ -81,6 +84,7 @@ describe("/api/create-chat", () => {
       ],
     });
     prismaMock.chat.update.mockResolvedValue({});
+    prismaMock.message.update.mockResolvedValue({});
     prismaMock.generationLog.create.mockResolvedValue({});
   });
 
@@ -178,6 +182,36 @@ describe("/api/create-chat", () => {
         title: "Build a polished habit tracker",
         plan: null,
         hasCode: false,
+      },
+    });
+  });
+
+  it("uses the dedicated vision model when analyzing an uploaded screenshot", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    generateTextMock
+      .mockResolvedValueOnce({ text: "Screenshot shows a kanban board." })
+      .mockResolvedValueOnce({ text: "Kanban Board" });
+
+    const response = await POST(
+      request({
+        prompt: "Build this",
+        model: "tencent/hy3-preview:free",
+        quality: "low",
+        screenshotData: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(createOpenRouterModelMock).toHaveBeenCalledWith(
+      expect.any(Function),
+      "google/gemini-2.5-flash",
+      { maxTokens: 1000 },
+    );
+    expect(prismaMock.message.update).toHaveBeenCalledWith({
+      where: { id: "user_msg" },
+      data: {
+        content:
+          "Build this\n\nRECREATE THIS APP AS CLOSELY AS POSSIBLE:\nScreenshot shows a kanban board.",
       },
     });
   });

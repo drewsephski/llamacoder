@@ -46,6 +46,31 @@ import { useUserCredits, useUserSession, useCreateChat } from "@/lib/queries";
 import { FREE_PROJECT_LIMIT, getModelCreditCost } from "@/lib/billing";
 import { fetchCompletionStream } from "@/lib/completion-stream";
 
+const ACCEPTED_SCREENSHOT_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]);
+const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error("Unable to read image file."));
+    };
+    reader.onerror = () => {
+      reject(new Error("Unable to read image file."));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function Home() {
   const { setStreamPromise } = use(Context);
   const router = useRouter();
@@ -162,20 +187,47 @@ export default function Home() {
     [],
   );
 
-  const handleScreenshotUpload = async (event: any) => {
+  const handleScreenshotUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!ACCEPTED_SCREENSHOT_TYPES.has(file.type)) {
+      toast.error("Please upload a PNG, JPEG, or WebP image.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_SCREENSHOT_FILE_SIZE_BYTES) {
+      toast.error("Please upload an image under 6 MB.");
+      event.target.value = "";
+      return;
+    }
+
     if (prompt.length === 0) setPrompt("Build this");
     setQuality("low");
     setScreenshotLoading(true);
-    let file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setScreenshotData(base64);
-    };
-    reader.readAsDataURL(file);
-    const { url } = await uploadToS3(file);
-    setScreenshotUrl(url);
-    setScreenshotLoading(false);
+    setScreenshotUrl(undefined);
+    setScreenshotData(undefined);
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setScreenshotData(dataUrl);
+      setScreenshotLoading(false);
+
+      uploadToS3(file)
+        .then(({ url }) => {
+          setScreenshotUrl(url);
+        })
+        .catch((error) => {
+          console.warn("Screenshot S3 upload failed:", error);
+        });
+    } catch (error: any) {
+      toast.error(error.message || "Unable to read image file.");
+      setScreenshotLoading(false);
+      event.target.value = "";
+    }
   };
 
   const handleUrlScrape = async () => {
@@ -896,7 +948,7 @@ export default function Home() {
                     {(isPending || isScrapingUrl) && (
                       <LoadingMessage
                         isHighQuality={quality === "high"}
-                        screenshotUrl={screenshotUrl}
+                        screenshotUrl={screenshotUrl ?? screenshotData}
                         isScrapingUrl={isScrapingUrl}
                       />
                     )}

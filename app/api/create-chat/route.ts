@@ -14,18 +14,29 @@ import {
   getModelCreditCost,
 } from "@/lib/billing";
 import {
+  VISION_ANALYSIS_MODEL,
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
 } from "@/lib/openrouter";
 import { z } from "zod";
 
+const IMAGE_DATA_URL_PATTERN = /^data:image\/(png|jpe?g|webp);base64,/i;
+const MAX_SCREENSHOT_DATA_URL_LENGTH = 8 * 1024 * 1024;
+
 const createChatSchema = z.object({
   prompt: z.string().trim().min(1, "Prompt is required"),
   model: z.string().min(1, "Model is required"),
   quality: z.enum(["high", "low"]),
   screenshotUrl: z.string().optional(),
-  screenshotData: z.string().optional(),
+  screenshotData: z
+    .string()
+    .max(
+      MAX_SCREENSHOT_DATA_URL_LENGTH,
+      "Image is too large. Please upload an image under 6 MB.",
+    )
+    .regex(IMAGE_DATA_URL_PATTERN, "Image must be a PNG, JPEG, or WebP file.")
+    .optional(),
 });
 
 function createFallbackTitle(prompt: string) {
@@ -205,7 +216,7 @@ export async function POST(request: NextRequest) {
     if (screenshotData) {
       try {
         const screenshotResponse = await generateText({
-          model: createOpenRouterModel(openrouter, model, {
+          model: createOpenRouterModel(openrouter, VISION_ANALYSIS_MODEL, {
             maxTokens: 1000,
           }),
           providerOptions: {
@@ -238,11 +249,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (fullScreenshotDescription && quality === "low") {
-      const content =
-        prompt +
-        "RECREATE THIS APP AS CLOSELY AS POSSIBLE: " +
-        fullScreenshotDescription;
+    if (fullScreenshotDescription) {
+      const content = `${prompt}\n\nRECREATE THIS APP AS CLOSELY AS POSSIBLE:\n${fullScreenshotDescription}`;
 
       await prisma.message
         .update({

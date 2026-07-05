@@ -3,6 +3,8 @@ import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
 export const GENERATED_CODE_MAX_TOKENS = 16000;
+export const VISION_ANALYSIS_MODEL =
+  process.env.OPENROUTER_VISION_MODEL || "google/gemini-2.5-flash";
 
 type OpenRouterClient = ReturnType<typeof createOpenRouter>;
 type OpenRouterModelSettings = NonNullable<Parameters<OpenRouterClient>[1]>;
