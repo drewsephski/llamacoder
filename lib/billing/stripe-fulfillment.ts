@@ -28,9 +28,6 @@ export function getTierFromPriceId(priceId?: string): SubscriptionTier | null {
   if (!priceId) return null;
   if (priceId === STRIPE_PRICE_IDS.pro) return "pro";
   if (priceId === STRIPE_PRICE_IDS.pro_plus) return "pro_plus";
-  if (process.env.STRIPE_PRICE_ID && priceId === process.env.STRIPE_PRICE_ID) {
-    return "pro";
-  }
   return null;
 }
 

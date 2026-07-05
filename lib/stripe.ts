@@ -4,55 +4,46 @@ import { TIERS, CREDIT_PACKS } from "./billing/config";
 // Re-export for backward compatibility
 export { TIERS as SUBSCRIPTION_TIERS, CREDIT_PACKS };
 
+function getRequiredEnv(name: string) {
+  const value = process.env[name];
+
+  if (!value || value.includes("...")) {
+    throw new Error(`${name} environment variable is required`);
+  }
+
+  return value;
+}
+
 // Validate required environment variables at module load time
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY environment variable is required");
-}
+const STRIPE_SECRET_KEY = getRequiredEnv("STRIPE_SECRET_KEY");
 
-if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  throw new Error("STRIPE_WEBHOOK_SECRET environment variable is required");
-}
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+export const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: "2026-04-22.dahlia",
 });
 
-export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+export const STRIPE_WEBHOOK_SECRET = getRequiredEnv("STRIPE_WEBHOOK_SECRET");
 
 // Subscription tier configurations
-// These match the Stripe Price IDs created via MCP
+// These must be configured per Stripe account; do not fall back to stale prices.
 export const STRIPE_PRICE_IDS = {
-  pro:
-    process.env.STRIPE_PRO_PRICE_ID ||
-    process.env.STRIPE_PRICE_ID ||
-    "price_1TQySsRZE8Whwvf0U4nEsJrt", // $9/month - 100 credits (fallback to old STRIPE_PRICE_ID)
-  pro_plus:
-    process.env.STRIPE_PRO_PLUS_PRICE_ID ||
-    process.env.STRIPE_UNLIMITED_PRICE_ID ||
-    "price_1TQyStRZE8Whwvf0mciJwsjS", // $29/month - 500 credits (was unlimited)
+  pro: getRequiredEnv("STRIPE_PRO_PRICE_ID"),
+  pro_plus: getRequiredEnv("STRIPE_PRO_PLUS_PRICE_ID"),
 };
 
 // Credit pack configurations with Stripe Price IDs
-// These match the Stripe Product Price IDs created via MCP
 export const CREDIT_PACK_CONFIGS = {
   small: {
-    priceId:
-      process.env.STRIPE_CREDITS_10_PRICE_ID ||
-      "price_1TQyStRZE8Whwvf0ofuH4dwB",
+    priceId: getRequiredEnv("STRIPE_CREDITS_10_PRICE_ID"),
     credits: CREDIT_PACKS.small.credits,
     price: CREDIT_PACKS.small.price,
   },
   medium: {
-    priceId:
-      process.env.STRIPE_CREDITS_25_PRICE_ID ||
-      "price_1TQyStRZE8Whwvf0Vwt9tbnK",
+    priceId: getRequiredEnv("STRIPE_CREDITS_25_PRICE_ID"),
     credits: CREDIT_PACKS.medium.credits,
     price: CREDIT_PACKS.medium.price,
   },
   large: {
-    priceId:
-      process.env.STRIPE_CREDITS_60_PRICE_ID ||
-      "price_1TQyStRZE8Whwvf0YJb0BFnI",
+    priceId: getRequiredEnv("STRIPE_CREDITS_60_PRICE_ID"),
     credits: CREDIT_PACKS.large.credits,
     price: CREDIT_PACKS.large.price,
   },
@@ -115,18 +106,6 @@ export async function createCreditsCheckoutSession(
   userId: string,
 ) {
   const pack = CREDIT_PACK_CONFIGS[creditPack];
-
-  if (!pack.priceId) {
-    // If no price ID configured, create a dynamic price
-    const price = await stripe.prices.create({
-      unit_amount: pack.price * 100, // Convert to cents
-      currency: "usd",
-      product_data: {
-        name: `${pack.credits} Credits Pack`,
-      },
-    });
-    pack.priceId = price.id;
-  }
 
   return stripe.checkout.sessions.create({
     customer: customerId,

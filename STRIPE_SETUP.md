@@ -17,32 +17,32 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Price IDs (already configured in your account)
-STRIPE_PRO_PRICE_ID=price_1TQySsRZE8Whwvf0U4nEsJrt
-STRIPE_PRO_PLUS_PRICE_ID=price_1TQyStRZE8Whwvf0mciJwsjS
-STRIPE_CREDITS_10_PRICE_ID=price_1TQyStRZE8Whwvf0ofuH4dwB
-STRIPE_CREDITS_25_PRICE_ID=price_1TQyStRZE8Whwvf0Vwt9tbnK
-STRIPE_CREDITS_60_PRICE_ID=price_1TQyStRZE8Whwvf0YJb0BFnI
+# Price IDs from the Squid test sandbox
+STRIPE_PRO_PRICE_ID=price_1TpdxnRWYMzP8fBmb1TwEQi0
+STRIPE_PRO_PLUS_PRICE_ID=price_1TpdxoRWYMzP8fBmd8LoWImi
+STRIPE_CREDITS_10_PRICE_ID=price_1TpdxoRWYMzP8fBmQpMHqmE8
+STRIPE_CREDITS_25_PRICE_ID=price_1TpdxpRWYMzP8fBm3unwqOlX
+STRIPE_CREDITS_60_PRICE_ID=price_1TpdxqRWYMzP8fBmrrx5DCLc
 ```
 
-## 2. Stripe Products (Already Created)
+## 2. Stripe Products
 
-Your Stripe account already has these products configured:
+The `Squid` test sandbox (`acct_1TbPJwRWYMzP8fBm`) has these active products configured:
 
 ### Subscription Plans
 
 | Plan | Price ID | Amount | Credits |
 |------|----------|--------|---------|
-| Pro | `price_1TQySsRZE8Whwvf0U4nEsJrt` | $9/month | 100 |
-| Pro Plus | `price_1TQyStRZE8Whwvf0mciJwsjS` | $29/month | 500 |
+| Squid Coder Pro | `price_1TpdxnRWYMzP8fBmb1TwEQi0` | $9/month | 100 |
+| Squid Coder Pro Plus | `price_1TpdxoRWYMzP8fBmd8LoWImi` | $29/month | 500 |
 
 ### Credit Packs (One-time Purchase)
 
 | Pack | Price ID | Amount | Credits |
 |------|----------|--------|---------|
-| Small | `price_1TQyStRZE8Whwvf0ofuH4dwB` | $5 | 10 |
-| Medium | `price_1TQyStRZE8Whwvf0Vwt9tbnK` | $10 | 25 |
-| Large | `price_1TQyStRZE8Whwvf0YJb0BFnI` | $20 | 60 |
+| Small | `price_1TpdxoRWYMzP8fBmQpMHqmE8` | $5 | 10 |
+| Medium | `price_1TpdxpRWYMzP8fBm3unwqOlX` | $10 | 25 |
+| Large | `price_1TpdxqRWYMzP8fBmrrx5DCLc` | $20 | 60 |
 
 ## 3. Webhook Setup
 
@@ -75,13 +75,17 @@ Your Stripe account already has these products configured:
 ### Production
 
 1. Go to Stripe Dashboard → Developers → Webhooks
-2. Add endpoint: `https://yourdomain.com/api/stripe/webhook`
+2. Add endpoint: `https://squidcoder.vercel.app/api/stripe/webhook`
 3. Select events:
    - `checkout.session.completed`
+   - `checkout.session.async_payment_succeeded`
    - `invoice.paid`
+   - `invoice.payment_succeeded`
+   - `invoice_payment.paid`
    - `invoice.payment_failed`
-   - `customer.subscription.deleted`
+   - `customer.subscription.created`
    - `customer.subscription.updated`
+   - `customer.subscription.deleted`
 4. Copy the signing secret to your production environment
 
 ## 4. Testing
