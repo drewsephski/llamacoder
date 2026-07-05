@@ -4,45 +4,34 @@ import { memo, useState } from "react";
 
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
-import { MenuIcon, XIcon, Zap, Loader2, HelpCircle } from "lucide-react";
-import { toast } from "sonner";
+import { MenuIcon, XIcon, Zap, HelpCircle } from "lucide-react";
 import { PricingModal } from "@/components/pricing-modal";
 import { Button } from "@/components/ui/button";
-import {
-  useUserCredits,
-  useUserSession,
-  useStripeCheckout,
-} from "@/lib/queries";
+import { useUserCredits, useUserSession } from "@/lib/queries";
 import { authClient } from "@/lib/auth-client";
 
 interface HeaderProps {
   onHelpClick?: () => void;
 }
 
+type PricingTab = "plans" | "credits";
+
 function Header({ onHelpClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingInitialTab, setPricingInitialTab] =
+    useState<PricingTab>("plans");
 
   const { data: session, isLoading: sessionLoading } = useUserSession();
   const { data: creditsData, isLoading: creditsLoading } = useUserCredits();
-  const checkoutMutation = useStripeCheckout();
 
   const credits = creditsData?.credits ?? null;
   const hasSubscription = creditsData?.hasActiveSubscription ?? false;
-  const isUpgrading = checkoutMutation.isPending;
   const loading = sessionLoading || creditsLoading;
 
-  const handleUpgrade = async () => {
-    try {
-      const data = await checkoutMutation.mutateAsync({ plan: "pro" });
-      window.location.href = data.url;
-    } catch (error: any) {
-      if (error.message?.includes("sign in")) {
-        toast.error("Please sign in to subscribe");
-      } else {
-        toast.error(error.message || "Something went wrong. Please try again.");
-      }
-    }
+  const openPricingModal = (tab: PricingTab = "plans") => {
+    setPricingInitialTab(tab);
+    setShowPricingModal(true);
   };
 
   const handleSignOut = async () => {
@@ -99,12 +88,18 @@ function Header({ onHelpClick }: HeaderProps) {
           <>
             {/* Credits / Upgrade Button */}
             {hasSubscription ? (
-              <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+              <Button
+                onClick={() => openPricingModal("credits")}
+                variant="ghost"
+                size="sm"
+                className="gap-2 bg-muted px-3 text-muted-foreground hover:bg-accent hover:text-white"
+                aria-label="Buy more credits"
+              >
                 <Zap className="h-4 w-4 text-yellow-500" />
                 <span>{credits ?? 0} credits</span>
-              </div>
+              </Button>
             ) : (
-              <Button onClick={() => setShowPricingModal(true)} size="sm">
+              <Button onClick={() => openPricingModal("plans")} size="sm">
                 <Zap className="h-4 w-4" />
                 Upgrade
               </Button>
@@ -129,7 +124,7 @@ function Header({ onHelpClick }: HeaderProps) {
         ) : (
           <>
             <Button
-              onClick={() => setShowPricingModal(true)}
+              onClick={() => openPricingModal("plans")}
               variant="ghost"
               size="sm"
               className="text-foreground hover:bg-accent hover:text-white"
@@ -191,14 +186,22 @@ function Header({ onHelpClick }: HeaderProps) {
                 <>
                   {/* Mobile Credits / Upgrade */}
                   {hasSubscription ? (
-                    <div className="flex items-center gap-2 rounded-md bg-muted px-4 py-2 text-sm text-muted-foreground">
+                    <Button
+                      onClick={() => {
+                        openPricingModal("credits");
+                        setMobileMenuOpen(false);
+                      }}
+                      variant="ghost"
+                      className="justify-start gap-2 bg-muted px-4 text-muted-foreground"
+                      aria-label="Buy more credits"
+                    >
                       <Zap className="h-4 w-4 text-yellow-500" />
                       <span>{credits ?? 0} credits</span>
-                    </div>
+                    </Button>
                   ) : (
                     <Button
                       onClick={() => {
-                        setShowPricingModal(true);
+                        openPricingModal("plans");
                         setMobileMenuOpen(false);
                       }}
                       size="sm"
@@ -231,7 +234,7 @@ function Header({ onHelpClick }: HeaderProps) {
                 <>
                   <Button
                     onClick={() => {
-                      setShowPricingModal(true);
+                      openPricingModal("plans");
                       setMobileMenuOpen(false);
                     }}
                     variant="default"
@@ -270,6 +273,7 @@ function Header({ onHelpClick }: HeaderProps) {
         onOpenChange={setShowPricingModal}
         remainingCredits={credits ?? 0}
         isAuthenticated={!!session}
+        initialTab={pricingInitialTab}
       />
     </header>
   );

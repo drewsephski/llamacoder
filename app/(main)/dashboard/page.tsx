@@ -6,6 +6,7 @@ import { ProjectCardActions } from "@/components/project-card-actions";
 import { UpgradeBanner } from "@/components/upgrade-banner";
 import { DashboardSignOutButton } from "@/components/dashboard-sign-out-button";
 import { reconcileCheckoutSessionForUser } from "@/lib/billing/stripe-fulfillment";
+import { CREDIT_PACKS } from "@/lib/billing";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import {
@@ -65,6 +66,10 @@ async function DashboardPage({
   const FREE_PROJECT_LIMIT = 3;
   const resolvedSearchParams = await searchParams;
   const currentPage = parseInt(resolvedSearchParams.page || "1", 10);
+  const creditPackEntries = Object.entries(CREDIT_PACKS) as [
+    keyof typeof CREDIT_PACKS,
+    (typeof CREDIT_PACKS)[keyof typeof CREDIT_PACKS],
+  ][];
 
   if (session) {
     const prisma = getPrisma();
@@ -675,6 +680,72 @@ async function DashboardPage({
                 </Button>
               </form>
             </div>
+          </div>
+        </div>
+
+        {/* Credit Packs Section */}
+        <div className="mx-auto mb-10 max-w-5xl">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Coins className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-medium">Credit Packs</h2>
+              <p className="text-sm text-muted-foreground">
+                One-time packs for premium models. Credits never expire.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {creditPackEntries.map(([key, pack]) => {
+              const isPopular = "popular" in pack && pack.popular;
+
+              return (
+                <div
+                  key={key}
+                  className={`relative rounded-xl border bg-card p-6 ${
+                    isPopular ? "border-2 border-primary" : "border-border"
+                  }`}
+                >
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                      Best Value
+                    </div>
+                  )}
+                  <div className="mb-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Coins className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">{pack.label}</h3>
+                    </div>
+                    <p className="text-3xl font-bold">${pack.price}</p>
+                  </div>
+                  <ul className="mb-6 space-y-3">
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span>{pack.credits} credits</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span>Works with all premium models</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span>No subscription required</span>
+                    </li>
+                  </ul>
+                  <form action="/api/stripe/credits-checkout" method="POST">
+                    <input type="hidden" name="pack" value={key} />
+                    <Button
+                      type="submit"
+                      variant={isPopular ? "default" : "outline"}
+                      className="w-full"
+                    >
+                      Buy Credits
+                    </Button>
+                  </form>
+                </div>
+              );
+            })}
           </div>
         </div>
         <Footer />

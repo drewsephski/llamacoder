@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,11 +15,10 @@ import {
   Sparkles,
   Crown,
   Lock,
-  Unlock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MODELS } from "@/lib/constants";
-import { CREDIT_PACKS, MODEL_PRICING, getModelCreditCost } from "@/lib/billing";
+import { CREDIT_PACKS, getModelCreditCost } from "@/lib/billing";
 import { Button } from "./ui/button";
 import { useStripeCheckout } from "@/lib/queries";
 
@@ -28,17 +27,27 @@ interface PricingModalProps {
   onOpenChange: (open: boolean) => void;
   remainingCredits?: number;
   isAuthenticated?: boolean;
+  initialTab?: PricingTab;
 }
+
+type PricingTab = "plans" | "credits";
 
 export function PricingModal({
   open,
   onOpenChange,
   remainingCredits = 0,
   isAuthenticated = false,
+  initialTab = "plans",
 }: PricingModalProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"plans" | "credits">("plans");
+  const [activeTab, setActiveTab] = useState<PricingTab>(initialTab);
   const checkoutMutation = useStripeCheckout();
+
+  useEffect(() => {
+    if (open) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, open]);
 
   const handleSubscribe = async (plan: string) => {
     if (!isAuthenticated) {
