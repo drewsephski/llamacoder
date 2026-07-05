@@ -1,12 +1,11 @@
 import { getPrisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
 import { renameProject } from "../actions";
 import { ProjectCardActions } from "@/components/project-card-actions";
-import { UnlockProgress } from "@/components/unlock-progress";
 import { UpgradeBanner } from "@/components/upgrade-banner";
+import { DashboardSignOutButton } from "@/components/dashboard-sign-out-button";
+import { reconcileCheckoutSessionForUser } from "@/lib/billing/stripe-fulfillment";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import {
@@ -16,9 +15,7 @@ import {
   Edit3,
   ArrowRight,
   FolderOpen,
-  LogOut,
   Layers,
-  MoreHorizontal,
   Coins,
   Check,
   Zap,
@@ -54,7 +51,7 @@ function getModelLabel(model: string): string {
 async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; session_id?: string }>;
 }) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -71,6 +68,21 @@ async function DashboardPage({
 
   if (session) {
     const prisma = getPrisma();
+
+    if (resolvedSearchParams.session_id) {
+      try {
+        await reconcileCheckoutSessionForUser({
+          checkoutSessionId: resolvedSearchParams.session_id,
+          userId: session.user.id,
+        });
+      } catch (error) {
+        console.error(
+          "[Dashboard] Failed to reconcile checkout session:",
+          error,
+        );
+      }
+    }
+
     totalProjects = await prisma.chat.count({
       where: { userId: session.user.id },
     });
@@ -197,22 +209,7 @@ async function DashboardPage({
                 </span>
               </div>
               <AnimatedThemeToggleButton variant="horizontal" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={async () => {
-                  await authClient.signOut({
-                    fetchOptions: {
-                      onSuccess: () => {
-                        window.location.href = "/";
-                      },
-                    },
-                  });
-                }}
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign out</span>
-              </Button>
+              <DashboardSignOutButton />
             </div>
           </div>
         </div>
@@ -551,7 +548,7 @@ async function DashboardPage({
         </div>
 
         {/* Pricing Section */}
-        <div className="mb-10">
+        <div className="mx-auto mb-10 max-w-5xl">
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
               <Crown className="h-4 w-4 text-primary" />
@@ -628,11 +625,7 @@ async function DashboardPage({
                 </li>
               </ul>
               <form action="/api/stripe/checkout" method="POST">
-                <input
-                  type="hidden"
-                  name="priceId"
-                  value="price_1TQySsRZE8Whwvf0U4nEsJrt"
-                />
+                <input type="hidden" name="plan" value="pro" />
                 <Button type="submit" className="w-full">
                   Upgrade to Pro
                 </Button>
@@ -676,11 +669,7 @@ async function DashboardPage({
                 </li>
               </ul>
               <form action="/api/stripe/checkout" method="POST">
-                <input
-                  type="hidden"
-                  name="priceId"
-                  value="price_1TQyStRZE8Whwvf0mciJwsjS"
-                />
+                <input type="hidden" name="plan" value="pro_plus" />
                 <Button type="submit" variant="outline" className="w-full">
                   Get Pro Plus
                 </Button>

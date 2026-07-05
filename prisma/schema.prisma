@@ -61,6 +61,7 @@ model User {
   credits       Int             @default(0)
   chats         Chat[]
   creditHistory CreditHistory[]
+  creditGrants  CreditGrant[]
   subscription  Subscription?
   accounts      Account[]
   sessions      Session[]
@@ -99,6 +100,33 @@ model CreditHistory {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model CreditGrant {
+  id                      String   @id @default(nanoid(16))
+  userId                  String
+  amount                  Int
+  type                    String
+  description             String?
+  dedupeKey               String   @unique
+  stripeEventId           String?
+  stripeCheckoutSessionId String?
+  stripeInvoiceId         String?
+  stripeSubscriptionId    String?
+  createdAt               DateTime @default(now())
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeEventId])
+  @@index([stripeCheckoutSessionId])
+  @@index([stripeInvoiceId])
+  @@index([stripeSubscriptionId])
+}
+
+model StripeWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
 }
 
 model AnonymousUsage {

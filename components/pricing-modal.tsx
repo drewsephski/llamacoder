@@ -85,7 +85,7 @@ export function PricingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[95vw] max-w-[95vw] overflow-y-auto p-4 sm:max-w-[90vw] sm:p-6 lg:max-w-7xl lg:overflow-visible">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl overflow-y-auto p-4 sm:p-6 lg:overflow-visible">
         <DialogHeader className="text-left">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight sm:gap-3 sm:text-3xl">
             <Crown className="h-7 w-7 text-amber-500" />
