@@ -321,8 +321,8 @@ export default function ChatBox({
                     <div className="relative flex h-16 w-16 items-center justify-center">
                       <div className="absolute inset-0 animate-pulse rounded-2xl bg-blue-500/10 ring-1 ring-blue-500/20" />
                       <img
-                        src="/squidcoder-logo.svg"
-                        alt="Squid Coder"
+                        src="/squidagent-logo.svg"
+                        alt="Squid Agent"
                         className="animate-bounce-subtle h-10 w-auto"
                       />
                       <div className="absolute -bottom-1 -right-1">

@@ -1,3 +1,3 @@
 export default function LogoSmall() {
-  return <img src="/squidcoder-logo.svg" alt="Squid Coder" className="h-8 w-auto" />;
+  return <img src="/squidagent-logo.svg" alt="Squid Agent" className="h-8 w-auto" />;
 }

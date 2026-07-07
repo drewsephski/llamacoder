@@ -27,14 +27,14 @@ STRIPE_CREDITS_60_PRICE_ID=price_1TpdxqRWYMzP8fBmrrx5DCLc
 
 ## 2. Stripe Products
 
-The `Squid` test sandbox (`acct_1TbPJwRWYMzP8fBm`) has these active products configured:
+The `SquidAgent` test sandbox (`acct_1TbPJwRWYMzP8fBm`) has these active products configured:
 
 ### Subscription Plans
 
 | Plan | Price ID | Amount | Credits |
 |------|----------|--------|---------|
-| Squid Coder Pro | `price_1TpdxnRWYMzP8fBmb1TwEQi0` | $9/month | 100 |
-| Squid Coder Pro Plus | `price_1TpdxoRWYMzP8fBmd8LoWImi` | $29/month | 500 |
+| Squid Agent Pro | `price_1TpdxnRWYMzP8fBmb1TwEQi0` | $9/month | 100 |
+| Squid Agent Pro Plus | `price_1TpdxoRWYMzP8fBmd8LoWImi` | $29/month | 500 |
 
 ### Credit Packs (One-time Purchase)
 
@@ -75,7 +75,7 @@ The `Squid` test sandbox (`acct_1TbPJwRWYMzP8fBm`) has these active products con
 ### Production
 
 1. Go to Stripe Dashboard → Developers → Webhooks
-2. Add endpoint: `https://squidcoder.vercel.app/api/stripe/webhook`
+2. Add endpoint: `https://squidagent.vercel.app/api/stripe/webhook`
 3. Select events:
    - `checkout.session.completed`
    - `checkout.session.async_payment_succeeded`

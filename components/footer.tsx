@@ -7,14 +7,14 @@ const Footer = memo(() => {
     <footer className="mt-auto flex w-full flex-col items-center justify-center gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 text-center sm:flex-row sm:justify-between sm:gap-4 sm:px-6 sm:pb-6 sm:pt-4 sm:text-left">
       <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm sm:justify-start">
         <Image
-          src="/squidcoder-logo.svg"
-          alt="Squid Coder"
+          src="/squidagent-logo.svg"
+          alt="Squid Agent"
           width={24}
           height={24}
           className="h-6 w-auto opacity-90 transition-opacity hover:opacity-100"
         />
         <span className="font-medium tracking-tight text-foreground/80">
-          Squid Coder
+          Squid Agent
         </span>
         <span className="text-border">·</span>
         <span className="text-xs text-muted-foreground/60">

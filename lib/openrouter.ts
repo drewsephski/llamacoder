@@ -17,7 +17,7 @@ export function createAppOpenRouter({
   sessionName: string;
 }) {
   const options: Parameters<typeof createOpenRouter>[0] = {
-    appName: "SquidCoder",
+    appName: "SquidAgent",
     appUrl:
       process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
       process.env.BETTER_AUTH_URL ||
@@ -32,7 +32,7 @@ export function createAppOpenRouter({
     options.baseURL = "https://together.helicone.ai/v1";
     options.headers = {
       "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
-      "Helicone-Property-appname": "SquidCoder",
+      "Helicone-Property-appname": "SquidAgent",
       "Helicone-Session-Id": sessionId,
       "Helicone-Session-Name": sessionName,
     };

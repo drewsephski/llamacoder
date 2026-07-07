@@ -50,8 +50,8 @@ function Header({ onHelpClick }: HeaderProps) {
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 scale-[1.3] rounded-full bg-blue-500/10 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
           <Image
-            src="/squidcoder-logo.svg"
-            alt="Squid Coder"
+            src="/squidagent-logo.svg"
+            alt="Squid Agent"
             width={36}
             height={36}
             className="ease-[cubic-bezier(0.34,1.56,0.64,1)] relative z-10 h-9 object-contain transition-transform duration-500 group-hover:-rotate-1 group-hover:scale-[1.05]"
@@ -186,7 +186,7 @@ function Header({ onHelpClick }: HeaderProps) {
             <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Image
-                  src="/squidcoder-logo.svg"
+                  src="/squidagent-logo.svg"
                   alt=""
                   width={28}
                   height={28}

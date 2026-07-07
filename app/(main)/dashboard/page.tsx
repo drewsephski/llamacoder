@@ -141,8 +141,8 @@ async function DashboardPage({
             <div className="flex h-16 items-center justify-between">
               <Link href="/" className="flex items-center">
                 <img
-                  src="/squidcoder-logo.svg"
-                  alt="Squid Coder"
+                  src="/squidagent-logo.svg"
+                  alt="Squid Agent"
                   className="h-8 w-auto"
                 />
               </Link>
@@ -200,8 +200,8 @@ async function DashboardPage({
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center">
                 <img
-                  src="/squidcoder-logo.svg"
-                  alt="Squid Coder"
+                  src="/squidagent-logo.svg"
+                  alt="Squid Agent"
                   className="h-8 w-auto"
                 />
               </Link>

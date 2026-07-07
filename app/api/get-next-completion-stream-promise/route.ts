@@ -120,7 +120,7 @@ export async function POST(req: Request) {
 
     const openrouter = createAppOpenRouter({
       sessionId: message.chatId,
-      sessionName: "SquidCoder Chat",
+      sessionName: "SquidAgent Chat",
     });
 
     const guardedMessages = messages.map((m) => ({

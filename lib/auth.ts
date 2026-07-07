@@ -29,6 +29,23 @@ const normalizeUrl = (value?: string) => {
   }
 };
 
+function getBaseUrl() {
+  const explicitBaseUrl = normalizeUrl(process.env.BETTER_AUTH_URL);
+  if (explicitBaseUrl) {
+    return explicitBaseUrl;
+  }
+  // Vercel production deployment
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Vercel production custom domain
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  // Default to localhost
+  return "http://localhost:3000";
+}
+
 const getTrustedOrigins = () => {
   const envTrustedOrigins = [
     process.env.BETTER_AUTH_TRUSTED_ORIGINS,
@@ -53,23 +70,6 @@ if (process.env.NODE_ENV === "production") {
     `[better-auth] resolved config: baseURL=${resolvedBaseURL}, trustedOrigins=${resolvedTrustedOrigins.join(",") || "(none)"}`,
   );
 }
-
-const getBaseUrl = () => {
-  const explicitBaseUrl = normalizeUrl(process.env.BETTER_AUTH_URL);
-  if (explicitBaseUrl) {
-    return explicitBaseUrl;
-  }
-  // Vercel production deployment
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  // Vercel production custom domain
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  // Default to localhost
-  return "http://localhost:3000";
-};
 
 export const auth = betterAuth({
   database: prismaAdapter(getPrisma(), {
@@ -104,14 +104,14 @@ export const auth = betterAuth({
         const result = await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ||
-            "Squid Coder <onboarding@resend.dev>",
+            "Squid Agent <onboarding@resend.dev>",
           to: data.user.email,
           subject: "Reset your password",
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #111; font-size: 24px; margin-bottom: 16px;">Reset your password</h1>
               <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
-                Click the button below to reset your password for Squid Coder.
+                Click the button below to reset your password for Squid Agent.
               </p>
               <a href="${resetUrl}" 
                  style="display: inline-block; background: #000; color: #fff; padding: 12px 24px; 

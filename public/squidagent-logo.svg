@@ -55,7 +55,7 @@
   <!-- Tech Spark / Star at the tip -->
   <path d="M 200 5 L 206 28 L 229 34 L 206 40 L 200 63 L 194 40 L 171 34 L 194 28 Z" fill="url(#grad-spark)" filter="url(#spark-glow)" />
 
-  <!-- Coder Eyes (< >) -->
+  <!-- Agent Eyes (< >) -->
   <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.15))">
     <path d="M 185 155 L 165 170 L 185 185" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
     <path d="M 215 155 L 235 170 L 215 185" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />

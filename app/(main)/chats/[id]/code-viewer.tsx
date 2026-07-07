@@ -317,7 +317,7 @@ export default function CodeViewer({
 
     // Generate app title for filename
     const appTitle = generateAppTitle(files);
-    const filename = `${appTitle.replace(/[^a-zA-Z0-9]/g, "-")}-squidcoder.zip`;
+    const filename = `${appTitle.replace(/[^a-zA-Z0-9]/g, "-")}-squidagent.zip`;
 
     // Create a download link and trigger the download
     const url = URL.createObjectURL(content);

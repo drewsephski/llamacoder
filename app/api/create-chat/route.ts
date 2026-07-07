@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
 
     const openrouter = createAppOpenRouter({
       sessionId: chat.id,
-      sessionName: "SquidCoder Chat",
+      sessionName: "SquidAgent Chat",
     });
 
     let fullScreenshotDescription: string | undefined;

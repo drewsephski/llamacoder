@@ -10,11 +10,11 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-let title = "Squid Coder – AI Code Generator";
+let title = "Squid Agent – AI Code Generator";
 let description = "Generate your next app with advanced AI models";
-let url = "https://squidcoder.io/";
-let ogimage = "https://squidcoder.io/og-image.png";
-let sitename = "squidcoder.io";
+let url = "https://squidagent.app/";
+let ogimage = "https://squidagent.app/og-image.png";
+let sitename = "squidagent.app";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`h-full ${dmSans.variable}`}>
       <head>
-        <PlausibleProvider domain="squidcoder.io" />
+        <PlausibleProvider domain="squidagent.app" />
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground antialiased font-sans">
         {children}

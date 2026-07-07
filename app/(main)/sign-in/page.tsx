@@ -89,8 +89,8 @@ function SignInForm() {
             className="mb-8 inline-flex items-center justify-center transition-transform hover:scale-105"
           >
             <img
-              src="/squidcoder-logo.svg"
-              alt="Squid Coder"
+              src="/squidagent-logo.svg"
+              alt="Squid Agent"
               className="h-16 w-auto"
             />
           </Link>

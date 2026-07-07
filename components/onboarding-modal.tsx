@@ -58,7 +58,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Welcome to Squid Coder</DialogTitle>
+          <DialogTitle>Welcome to Squid Agent</DialogTitle>
           <DialogDescription className="mt-2">
             Build apps with AI in seconds. Here&apos;s how to get started:
           </DialogDescription>

@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     const openrouter = createAppOpenRouter({
       sessionId: chat.id,
-      sessionName: "SquidCoder Code Generation",
+      sessionName: "SquidAgent Code Generation",
     });
 
     const generateCode = (userContent: string) =>
