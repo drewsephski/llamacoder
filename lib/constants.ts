@@ -8,27 +8,27 @@ export const MODELS = [
   },
   {
     label: "Fast Builder",
-    value: "google/gemini-2.5-flash-lite",
-    paid: true,
-  },
-  {
-    label: "Pro Builder",
     value: "deepseek/deepseek-v4-flash",
     paid: true,
   },
   {
+    label: "Pro Builder",
+    value: "deepseek/deepseek-v4-pro",
+    paid: true,
+  },
+  {
     label: "Advanced Reasoning",
-    value: "openai/gpt-5-mini",
+    value: "openai/gpt-5.4",
     paid: true,
   },
   {
     label: "Creative Builder",
-    value: "anthropic/claude-sonnet-5",
+    value: "anthropic/claude-sonnet-4.5",
     paid: true,
   },
   {
     label: "Expert Builder",
-    value: "openai/gpt-5.5",
+    value: "anthropic/claude-opus-4.6",
     paid: true,
   },
 ];
