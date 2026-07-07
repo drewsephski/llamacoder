@@ -7,8 +7,14 @@ import { FREE_MODEL } from "@/lib/constants";
  */
 export const MODEL_PRICING: Record<string, { cost: number }> = {
   [FREE_MODEL]: { cost: 1 },
+  "google/gemini-2.5-flash-lite": { cost: 2 },
   "deepseek/deepseek-v4-flash": { cost: 2 },
   "deepseek/deepseek-v4-pro": { cost: 3 },
+  "openai/gpt-5-mini": { cost: 4 },
+  "anthropic/claude-sonnet-5": { cost: 6 },
+  "openai/gpt-5.5": { cost: 8 },
+
+  // Legacy historical model IDs kept for backwards compatibility with existing chats.
   "openai/gpt-5.4": { cost: 7 },
   "anthropic/claude-sonnet-4.5": { cost: 6 },
   "anthropic/claude-opus-4.6": { cost: 7 },
