@@ -113,14 +113,14 @@ export function getMainCodingPrompt() {
   - **Date Formatting:** date-fns (NOT date-fns-tz)
 
   - **Select compatibility (critical):**
-    - `@/components/ui/select` exports supported in this repo are `Select`, `SelectContent`, `SelectGroup`, `SelectItem`, `SelectLabel`, `SelectScrollDownButton`, `SelectScrollUpButton`, `SelectSeparator`, `SelectTrigger`, and `SelectValue`.
-    - Do not use `SelectItemText` or `Select.ItemText`.
+    - \`@/components/ui/select\` exports supported in this repo are \`Select\`, \`SelectContent\`, \`SelectGroup\`, \`SelectItem\`, \`SelectLabel\`, \`SelectScrollDownButton\`, \`SelectScrollUpButton\`, \`SelectSeparator\`, \`SelectTrigger\`, and \`SelectValue\`.
+    - Do not use \`SelectItemText\` or \`Select.ItemText\`.
     - Render item labels as direct children:
 
       <SelectItem value="system">System</SelectItem>
 
   - **Clipboard safety (critical):**
-    - Never call `writeText` directly without a fallback path.
+    - Never call \`writeText\` directly without a fallback path.
     - Use a guarded helper:
 
       const copyText = async (text: string) => {
@@ -154,7 +154,7 @@ export function getMainCodingPrompt() {
      2. Shadcn import: must be under \`@/components/ui/*\`.
      3. Generated import: must be relative and must point to a file you output.
 
-  - `@/components/ui/select` compatibility rules are mandatory: use documented exports only and do not emit `SelectItemText`.
+  - \`@/components/ui/select\` compatibility rules are mandatory: use documented exports only and do not emit \`SelectItemText\`.
 
   ## Design Aesthetics
 
