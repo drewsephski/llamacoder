@@ -7,9 +7,57 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const STARTER_CREDITS = 5;
 
+const normalizeUrl = (value?: string) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const withProtocol = /^(https?:)?\/\//.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  try {
+    const url = new URL(withProtocol);
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return trimmed;
+  }
+};
+
+const getTrustedOrigins = () => {
+  const envTrustedOrigins = [
+    process.env.BETTER_AUTH_TRUSTED_ORIGINS,
+    process.env.NEXT_PUBLIC_BETTER_AUTH_TRUSTED_ORIGINS,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .flatMap((value) =>
+      value
+        .split(",")
+        .map((origin) => normalizeUrl(origin.trim()) || origin.trim())
+        .filter(Boolean),
+    );
+
+  return [...new Set(envTrustedOrigins)];
+};
+
+const resolvedBaseURL = getBaseUrl();
+const resolvedTrustedOrigins = getTrustedOrigins();
+
+if (process.env.NODE_ENV === "production") {
+  console.info(
+    `[better-auth] resolved config: baseURL=${resolvedBaseURL}, trustedOrigins=${resolvedTrustedOrigins.join(",") || "(none)"}`,
+  );
+}
+
 const getBaseUrl = () => {
-  if (process.env.BETTER_AUTH_URL) {
-    return process.env.BETTER_AUTH_URL;
+  const explicitBaseUrl = normalizeUrl(process.env.BETTER_AUTH_URL);
+  if (explicitBaseUrl) {
+    return explicitBaseUrl;
   }
   // Vercel production deployment
   if (process.env.VERCEL_URL) {
@@ -27,7 +75,8 @@ export const auth = betterAuth({
   database: prismaAdapter(getPrisma(), {
     provider: "postgresql",
   }),
-  baseURL: getBaseUrl(),
+  baseURL: resolvedBaseURL,
+  trustedOrigins: resolvedTrustedOrigins,
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -38,16 +87,24 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async (data, request) => {
-      console.log("[sendResetPassword] Starting email send to:", data.user.email);
+      console.log(
+        "[sendResetPassword] Starting email send to:",
+        data.user.email,
+      );
       console.log("[sendResetPassword] Token:", data.token);
-      console.log("[sendResetPassword] RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
-      
+      console.log(
+        "[sendResetPassword] RESEND_API_KEY exists:",
+        !!process.env.RESEND_API_KEY,
+      );
+
       const resetUrl = `${getBaseUrl()}/reset-password?token=${data.token}`;
       console.log("[sendResetPassword] Reset URL:", resetUrl);
 
       try {
         const result = await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || "Squid Coder <onboarding@resend.dev>",
+          from:
+            process.env.RESEND_FROM_EMAIL ||
+            "Squid Coder <onboarding@resend.dev>",
           to: data.user.email,
           subject: "Reset your password",
           html: `
@@ -119,7 +176,10 @@ export const auth = betterAuth({
               }),
             ]);
           } catch (error) {
-            console.error("[databaseHooks] Failed to set initial credits:", error);
+            console.error(
+              "[databaseHooks] Failed to set initial credits:",
+              error,
+            );
             // Don't throw - allow user creation to succeed even if credits fail
           }
         },
