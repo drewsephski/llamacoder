@@ -115,4 +115,30 @@ describe("generated file normalization", () => {
     expect(file.code).toContain('import { motion } from "framer-motion";');
     expect(file.code).toContain("<motion.div />");
   });
+
+  it("normalizes invalid Select export patterns", () => {
+    const [file] = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { Select, SelectItemText } from "@/components/ui/select";\nexport default function App() { return <SelectItemText>System</SelectItemText>; }',
+      },
+    ]);
+
+    expect(file.code).not.toContain("SelectItemText");
+    expect(file.code).toContain('import { Select, SelectItem } from "@/components/ui/select";');
+    expect(file.code).toContain("<SelectItem>System</SelectItem>");
+  });
+
+  it("normalizes clipboard calls to avoid unhandled permission errors", () => {
+    const [file] = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'export default async function App() { await navigator.clipboard.writeText("ok"); }',
+      },
+    ]);
+
+    expect(file.code).toContain(
+      'await (navigator?.clipboard?.writeText?.("ok") ?? Promise.resolve()).catch(() => {});',
+    );
+  });
 });

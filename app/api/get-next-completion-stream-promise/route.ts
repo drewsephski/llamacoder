@@ -1,6 +1,8 @@
 import { getPrisma } from "@/lib/prisma";
 import { z } from "zod";
 import { streamText } from "ai";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import {
   GENERATED_CODE_MAX_TOKENS,
   createAppOpenRouter,
@@ -62,13 +64,39 @@ export async function POST(req: Request) {
     }
     const { messageId, model } = parsed.data;
 
-    const message = await prisma.message.findUnique({
-      where: { id: messageId },
+    const session = await auth.api.getSession({
+      headers: await headers(),
     });
 
-    if (!message) {
+    if (!session) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      include: {
+        chat: {
+          select: {
+            id: true,
+            model: true,
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (!message || !message.chat) {
       return new Response("Message not found", { status: 404 });
     }
+
+    if (message.chat.userId !== session.user.id) {
+      return new Response("Forbidden", { status: 403 });
+    }
+
+    if (message.chat.model !== model) {
+      return new Response("Model mismatch", { status: 400 });
+    }
+    const chatModel = message.chat.model;
 
     const messagesRes = await prisma.message.findMany({
       where: { chatId: message.chatId, position: { lte: message.position } },
@@ -113,7 +141,7 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-      model: createOpenRouterModel(openrouter, model, {
+      model: createOpenRouterModel(openrouter, chatModel, {
         maxTokens: GENERATED_CODE_MAX_TOKENS,
       }),
       providerOptions: {

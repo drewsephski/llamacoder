@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildMessage, collectStream } from "../fixtures/builders";
 
-const { prismaMock, streamTextMock } = vi.hoisted(() => ({
+const { prismaMock, streamTextMock, getSessionMock } = vi.hoisted(() => ({
   streamTextMock: vi.fn(),
   prismaMock: {
     message: {
@@ -9,6 +9,15 @@ const { prismaMock, streamTextMock } = vi.hoisted(() => ({
       findMany: vi.fn(),
     },
   },
+  getSessionMock: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  auth: { api: { getSession: getSessionMock } },
+}));
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => new Headers()),
 }));
 
 vi.mock("ai", () => ({
@@ -46,6 +55,7 @@ async function* chunks(parts: string[]) {
 describe("/api/get-next-completion-stream-promise", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
   });
 
   it("rejects invalid requests and missing messages", async () => {
@@ -53,15 +63,73 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(response.status).toBe(400);
     await expect(response.text()).resolves.toBe("Invalid request");
 
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
     prismaMock.message.findUnique.mockResolvedValueOnce(null);
     response = await POST(request({ messageId: "msg_1", model: "model_1" }));
     expect(response.status).toBe(404);
     await expect(response.text()).resolves.toBe("Message not found");
   });
 
-  it("orders history, trims old messages, appends the generation guard, and streams text", async () => {
+  it("requires authentication", async () => {
+    getSessionMock.mockResolvedValueOnce(null);
+    const response = await POST(request({ messageId: "msg_1", model: "model_1" }));
+
+    expect(response.status).toBe(401);
+    await expect(response.text()).resolves.toBe("Unauthorized");
+  });
+
+  it("rejects requests for chats the session does not own", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_2" } });
     prismaMock.message.findUnique.mockResolvedValueOnce(
-      buildMessage({ id: "msg_12", chatId: "chat_1", position: 12 }),
+      buildMessage({
+        id: "msg_12",
+        chatId: "chat_1",
+        position: 12,
+        chat: {
+          userId: "user_1",
+          model: "model_1",
+        },
+      }),
+    );
+
+    const response = await POST(request({ messageId: "msg_12", model: "model_1" }));
+
+    expect(response.status).toBe(403);
+    await expect(response.text()).resolves.toBe("Forbidden");
+  });
+
+  it("fails when client-sent model does not match the chat model", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_12",
+        chatId: "chat_1",
+        position: 12,
+        chat: {
+          userId: "user_1",
+          model: "stored-model",
+        },
+      }),
+    );
+
+    const response = await POST(request({ messageId: "msg_12", model: "wrong-model" }));
+
+    expect(response.status).toBe(400);
+    await expect(response.text()).resolves.toBe("Model mismatch");
+  });
+
+  it("orders history, trims old messages, appends the generation guard, and streams text", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_12",
+        chatId: "chat_1",
+        position: 12,
+        chat: {
+          userId: "user_1",
+          model: "model_1",
+        },
+      }),
     );
     prismaMock.message.findMany.mockResolvedValueOnce([
       { role: "system", content: "system" },

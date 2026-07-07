@@ -112,6 +112,38 @@ export function getMainCodingPrompt() {
   - **Animations:** Framer Motion
   - **Date Formatting:** date-fns (NOT date-fns-tz)
 
+  - **Select compatibility (critical):**
+    - `@/components/ui/select` exports supported in this repo are `Select`, `SelectContent`, `SelectGroup`, `SelectItem`, `SelectLabel`, `SelectScrollDownButton`, `SelectScrollUpButton`, `SelectSeparator`, `SelectTrigger`, and `SelectValue`.
+    - Do not use `SelectItemText` or `Select.ItemText`.
+    - Render item labels as direct children:
+
+      <SelectItem value="system">System</SelectItem>
+
+  - **Clipboard safety (critical):**
+    - Never call `writeText` directly without a fallback path.
+    - Use a guarded helper:
+
+      const copyText = async (text: string) => {
+        try {
+          if (!navigator?.clipboard?.writeText) {
+            throw new Error("Clipboard API unavailable");
+          }
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.left = "-9999px";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          textarea.setSelectionRange(0, textarea.value.length);
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+        }
+      };
+
    **Import Rules:**
    - Use installed Shadcn imports exactly as documented, e.g. \`import { Button } from "@/components/ui/button"\`
    - Use relative paths only for files you generate, e.g. \`import { ProjectCard } from "./components/ProjectCard"\`
@@ -121,6 +153,8 @@ export function getMainCodingPrompt() {
      1. Package import: must be in Available Libraries.
      2. Shadcn import: must be under \`@/components/ui/*\`.
      3. Generated import: must be relative and must point to a file you output.
+
+  - `@/components/ui/select` compatibility rules are mandatory: use documented exports only and do not emit `SelectItemText`.
 
   ## Design Aesthetics
 

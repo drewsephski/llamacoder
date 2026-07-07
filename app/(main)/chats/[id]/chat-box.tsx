@@ -32,10 +32,10 @@ export default function ChatBox({
   const [, startTransition] = useTransition();
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
-  const disabled = false;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isCheckingCredits, setIsCheckingCredits] = useState(false);
+  const disabled = isStreaming || isCheckingCredits;
   const didFocusOnce = useRef(false);
 
   const { data: creditsData } = useUserCredits();
@@ -55,6 +55,8 @@ export default function ChatBox({
   }, [disabled]);
 
   const handleSubmit = async () => {
+    if (disabled) return;
+
     // Require authentication before sending messages
     if (!isAuthenticated) {
       toast.error("Please sign in to send messages");
@@ -254,12 +256,13 @@ export default function ChatBox({
                 name="prompt"
                 className="min-h-[88px] resize-none border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed placeholder:text-muted-foreground/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    const target = event.target;
-                    if (!(target instanceof HTMLTextAreaElement)) return;
-                    target.closest("form")?.requestSubmit();
-                  }
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      if (disabled) return;
+                      event.preventDefault();
+                      const target = event.target;
+                      if (!(target instanceof HTMLTextAreaElement)) return;
+                      target.closest("form")?.requestSubmit();
+                    }
                 }}
               />
 
@@ -302,10 +305,10 @@ export default function ChatBox({
                 {/* Right: submit */}
                 <button
                   type="submit"
-                  disabled={isCheckingCredits || prompt.length === 0}
+                  disabled={disabled || prompt.length === 0}
                   className="send-btn bg-primary text-primary-foreground"
                 >
-                  <Spinner loading={disabled || isCheckingCredits}>
+                  <Spinner loading={disabled}>
                     <ArrowRightIcon className="size-[15px]" />
                   </Spinner>
                 </button>

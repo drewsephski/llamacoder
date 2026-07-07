@@ -60,3 +60,14 @@ export const SUGGESTED_PROMPTS = [
       "Make a beautiful scientific calculator with a history panel that shows past calculations. Support basic arithmetic, percentages, parentheses, and common functions like square root and exponents. Style it with a modern glassmorphism design.",
   },
 ];
+
+export const ACCEPTED_SCREENSHOT_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+] as const;
+
+export const MAX_SCREENSHOT_BYTES = 6 * 1024 * 1024;
+export const MAX_SCREENSHOT_SIZE_MB = MAX_SCREENSHOT_BYTES / (1024 * 1024);
+export const MAX_SCREENSHOT_DATA_URL_LENGTH =
+  Math.ceil((MAX_SCREENSHOT_BYTES * 4) / 3) + 32;

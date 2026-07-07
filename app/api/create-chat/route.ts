@@ -19,10 +19,17 @@ import {
   createOpenRouterModel,
   getAIErrorMessage,
 } from "@/lib/openrouter";
+import {
+  ACCEPTED_SCREENSHOT_MIME_TYPES,
+  MAX_SCREENSHOT_DATA_URL_LENGTH,
+  MAX_SCREENSHOT_SIZE_MB,
+} from "@/lib/constants";
 import { z } from "zod";
 
-const IMAGE_DATA_URL_PATTERN = /^data:image\/(png|jpe?g|webp);base64,/i;
-const MAX_SCREENSHOT_DATA_URL_LENGTH = 8 * 1024 * 1024;
+const IMAGE_DATA_URL_PATTERN = new RegExp(
+  `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
+  "i",
+);
 
 const createChatSchema = z.object({
   prompt: z.string().trim().min(1, "Prompt is required"),
@@ -33,7 +40,7 @@ const createChatSchema = z.object({
     .string()
     .max(
       MAX_SCREENSHOT_DATA_URL_LENGTH,
-      "Image is too large. Please upload an image under 6 MB.",
+      `Image is too large. Please upload an image under ${MAX_SCREENSHOT_SIZE_MB} MB.`,
     )
     .regex(IMAGE_DATA_URL_PATTERN, "Image must be a PNG, JPEG, or WebP file.")
     .optional(),

@@ -345,11 +345,59 @@ function getRelativeImportPath(fromPath: string, toPath: string) {
 }
 
 function normalizeCommonCodegenMistakes(code: string) {
+  return normalizeSelectCodegenErrors(
+    normalizeClipboardWrites(
+      code
+        .replace(
+          /import\s*{\s*Motion\s*}\s*from\s*["']framer-motion["'];?/g,
+          'import { motion } from "framer-motion";',
+        )
+        .replace(/<Motion(\s|>)/g, "<motion.div$1")
+        .replace(/<\/Motion>/g, "</motion.div>"),
+    ),
+  );
+}
+
+function normalizeSelectCodegenErrors(code: string) {
+  const normalized = code
+    .replace(
+      /import\s*{([\s\S]*?)}\s*from\s*["']@\/components\/ui\/select["'];?/g,
+      (match, importBlock) => {
+        if (!/SelectItemText/.test(importBlock)) {
+          return match;
+        }
+
+        const cleanedItems = importBlock
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .filter((item) =>
+            !/^SelectItemText(?:\s+as\s+.*)?$/.test(item),
+          );
+
+        if (cleanedItems.length === 0) {
+          return "";
+        }
+
+        return `import { ${cleanedItems.join(", ")} } from "@/components/ui/select";`;
+      },
+    )
+    .replace(/<\s*SelectItemText\b([^>]*)>/g, "<SelectItem$1>")
+    .replace(/<\/\s*SelectItemText\s*>/g, "</SelectItem>")
+    .replace(/<\s*Select\.ItemText\b([^>]*)>/g, "<Select.Item$1>")
+    .replace(/<\/\s*Select\.ItemText\s*>/g, "</Select.Item>");
+
+  return normalized;
+}
+
+function normalizeClipboardWrites(code: string) {
   return code
     .replace(
-      /import\s*{\s*Motion\s*}\s*from\s*["']framer-motion["'];?/g,
-      'import { motion } from "framer-motion";',
+      /await\s+(?:window\.)?navigator\.clipboard\.writeText\(([^;\n]+)\);/g,
+      "await (navigator?.clipboard?.writeText?.($1) ?? Promise.resolve()).catch(() => {});",
     )
-    .replace(/<Motion(\s|>)/g, "<motion.div$1")
-    .replace(/<\/Motion>/g, "</motion.div>");
+    .replace(
+      /(^|[^a-zA-Z0-9_$])(?:window\.)?navigator\.clipboard\.writeText\(([^;\n]+)\);/g,
+      "$1(navigator?.clipboard?.writeText?.($2) ?? Promise.resolve()).catch(() => {});",
+    );
 }
