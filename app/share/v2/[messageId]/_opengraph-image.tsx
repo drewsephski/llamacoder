@@ -34,7 +34,7 @@ export default async function Image({
 
   let title = message
     ? message.chat.title
-    : "An app generated on SquidCoder.io";
+    : "An app generated on Squid Agent.app";
 
   return new ImageResponse(
     (

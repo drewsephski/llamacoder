@@ -23,7 +23,7 @@ export async function generateMetadata({
 
   return {
     title,
-    description: `An app generated on SquidCoder.io: ${title}`,
+    description: `An app generated on Squid Agent.app: ${title}`,
     openGraph: {
       images: [`/api/og?${searchParams}`],
     },
@@ -69,12 +69,12 @@ export default async function SharePage({
       <div className="fixed bottom-4 right-4 z-50 hidden md:block">
         <a
           className="inline-flex shrink-0 items-center rounded-full border border-border bg-background px-3.5 py-1.5 text-xs text-foreground shadow-lg transition-shadow hover:shadow-sm"
-          href={`https://squidcoder.io/?ref=${messageId}`}
+          href={`https://squidagent.app/?ref=${messageId}`}
           target="_blank"
           rel="noopener noreferrer"
         >
           <span className="text-center">
-            Powered by <span className="font-semibold">SquidCoder</span>
+            Powered by <span className="font-semibold">Squid Agent</span>
           </span>
         </a>
       </div>
