@@ -362,17 +362,17 @@ function normalizeSelectCodegenErrors(code: string) {
   const normalized = code
     .replace(
       /import\s*{([\s\S]*?)}\s*from\s*["']@\/components\/ui\/select["'];?/g,
-      (match, importBlock) => {
+      (match: string, importBlock: string) => {
         if (!/SelectItemText/.test(importBlock)) {
           return match;
         }
 
         const cleanedItems = importBlock
           .split(",")
-          .map((item) => item.trim())
+          .map((item: string) => item.trim())
           .filter(Boolean)
-          .filter((item) =>
-            !/^SelectItemText(?:\s+as\s+.*)?$/.test(item),
+          .filter(
+            (item: string) => !/^SelectItemText(?:\s+as\s+.*)?$/.test(item),
           );
 
         if (cleanedItems.length === 0) {
