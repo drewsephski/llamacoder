@@ -5,13 +5,36 @@ import { FREE_MODEL } from "@/lib/constants";
  * All models cost credits - even the "free" model costs 1 credit for consistency.
  * Free users get 5 credits to start, which covers 5 free generations.
  */
+const COST_BAND = {
+  // Free control lane: lowest-cost path with strict token constraints.
+  free: 1,
+  // Fast defaults for routine coding prompts.
+  starter: 2,
+  // Vision-assisted coding lanes with higher token/value tradeoff.
+  vision: 3,
+  // Strong code-specialized lane with competitive premium.
+  proCode: 3,
+  // Creative/visual exploration lane; lower cost to run broadly.
+  creative: 2,
+  // Higher-compute reasoning and architecture support.
+  advanced: 5,
+  // Premium rescue lane for hardest tasks.
+  expert: 7,
+} as const;
+
 export const MODEL_PRICING: Record<string, { cost: number }> = {
   [FREE_MODEL]: { cost: 1 },
-  "deepseek/deepseek-v4-flash": { cost: 2 },
-  "deepseek/deepseek-v4-pro": { cost: 3 },
-  "openai/gpt-5.4": { cost: 7 },
-  "anthropic/claude-sonnet-4.5": { cost: 6 },
-  "anthropic/claude-opus-4.6": { cost: 7 },
+  "deepseek/deepseek-v4-flash": { cost: COST_BAND.starter },
+  // Fast balanced multimodal builder for screenshot-first flows.
+  "google/gemini-3-flash-preview": { cost: COST_BAND.vision },
+  // Cheaper multimodal code lane with strong coding focus.
+  "moonshotai/kimi-k2.7-code": { cost: COST_BAND.proCode },
+  // Lowest-cost broad multimodal tier for iterations and variants.
+  "google/gemini-3.1-flash-lite": { cost: COST_BAND.creative },
+  // High-context reasoning for architecture and complex edits.
+  "z-ai/glm-5.2": { cost: COST_BAND.advanced },
+  // Reserved for the hardest one-off refactors and rescue runs.
+  "anthropic/claude-opus-4.6": { cost: COST_BAND.expert },
 };
 
 export const FREE_PROJECT_LIMIT = 3;

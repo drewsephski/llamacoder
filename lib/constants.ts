@@ -1,35 +1,58 @@
 export const FREE_MODEL = "tencent/hy3-preview:free";
 
-export const MODELS = [
+type ModelOption = {
+  label: string;
+  value: string;
+  paid?: boolean;
+  free?: boolean;
+  /**
+   * Keeps slot rendering explicit when options expand in future.
+   */
+  group: "free" | "paid";
+};
+
+export const MODELS: ModelOption[] = [
+  {
+    label: "Starter (Free)",
+    value: FREE_MODEL,
+    free: true,
+    group: "free",
+  },
   {
     label: "Starter",
-    value: "tencent/hy3-preview:free",
-    free: true,
+    value: "deepseek/deepseek-v4-flash",
+    paid: true,
+    group: "paid",
   },
   {
     label: "Fast Builder",
-    value: "deepseek/deepseek-v4-flash",
+    value: "google/gemini-3-flash-preview",
     paid: true,
+    group: "paid",
   },
   {
     label: "Pro Builder",
-    value: "deepseek/deepseek-v4-pro",
+    value: "moonshotai/kimi-k2.7-code",
     paid: true,
+    group: "paid",
   },
   {
     label: "Advanced Reasoning",
-    value: "openai/gpt-5.4",
+    value: "z-ai/glm-5.2",
     paid: true,
+    group: "paid",
   },
   {
     label: "Creative Builder",
-    value: "anthropic/claude-sonnet-4.5",
+    value: "google/gemini-3.1-flash-lite",
     paid: true,
+    group: "paid",
   },
   {
     label: "Expert Builder",
     value: "anthropic/claude-opus-4.6",
     paid: true,
+    group: "paid",
   },
 ];
 

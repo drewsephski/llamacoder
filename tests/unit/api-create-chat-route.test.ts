@@ -48,7 +48,7 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 });
 
 vi.mock("@/lib/openrouter", () => ({
-  VISION_ANALYSIS_MODEL: "google/gemini-2.5-flash",
+  VISION_ANALYSIS_MODEL: "google/gemini-3-flash-preview",
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>
@@ -204,7 +204,7 @@ describe("/api/create-chat", () => {
     expect(response.status).toBe(200);
     expect(createOpenRouterModelMock).toHaveBeenCalledWith(
       expect.any(Function),
-      "google/gemini-2.5-flash",
+      "google/gemini-3-flash-preview",
       { maxTokens: 1000 },
     );
     expect(prismaMock.message.update).toHaveBeenCalledWith({
