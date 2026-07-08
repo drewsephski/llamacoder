@@ -215,6 +215,9 @@ async function DashboardPage({
                 credits={userCredits}
                 currentTier={currentTier}
               />
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/dashboard/usage">Usage</Link>
+              </Button>
               <AnimatedThemeToggleButton variant="horizontal" />
               <DashboardSignOutButton />
             </div>

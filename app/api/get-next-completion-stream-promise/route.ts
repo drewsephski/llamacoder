@@ -9,6 +9,7 @@ import {
   createOpenRouterModel,
   getAIErrorMessage,
   getAIErrorStatus,
+  getOpenRouterProviderOptions,
 } from "@/lib/openrouter";
 
 function optimizeMessagesForTokens(
@@ -49,8 +50,12 @@ Generation completeness requirements:
 - Output App.tsx plus at least two supporting source files using fenced blocks like \`\`\`tsx{path=components/Widget.tsx}.
 - Do not use src/ in generated paths; files run from the sandbox root.
 - Every custom component, hook, utility, or type import must point to a file you output in this response or an existing previous generated file.
+- Every import style must match the target export exactly: use default imports only for default exports, and named imports only for named exports.
+- Example: \`export default function Footer()\` requires \`import Footer from "./components/Footer"\`; \`export function Footer()\` requires \`import { Footer } from "./components/Footer"\`.
+- Do not import from a barrel path like \`./components\` unless that exact index file exists and re-exports the requested symbols.
 - Do not invent imports such as "@/lib/hooks/*", "@/hooks/*", or "@/utils/*". Use relative imports for generated files.
 - Shadcn imports under "@/components/ui/*" and "@/lib/utils" are already installed and should not be redefined.
+- If you call \`cn(...)\`, import it with \`import { cn } from "@/lib/utils"\`.
 - For Framer Motion, import lowercase motion: import { motion } from "framer-motion".
 `;
 
@@ -144,11 +149,7 @@ export async function POST(req: Request) {
       model: createOpenRouterModel(openrouter, chatModel, {
         maxTokens: GENERATED_CODE_MAX_TOKENS,
       }),
-      providerOptions: {
-        openrouter: {
-          reasoning: { enabled: false },
-        },
-      },
+      providerOptions: getOpenRouterProviderOptions(chatModel),
       messages: guardedMessages,
       temperature: 0.4,
       onError({ error }) {

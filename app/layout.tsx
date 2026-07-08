@@ -10,11 +10,12 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-let title = "Squid Agent – AI Code Generator";
-let description = "Generate your next app with advanced AI models";
-let url = "https://squidagent.app/";
-let ogimage = "https://squidagent.app/og-image.png";
-let sitename = "squidagent.app";
+const title = "Squid - AI App Builder for Exportable React Code You Own";
+const description =
+  "Build clean, exportable React apps with transparent credits, visible quality checks, reversible edits, and no platform lock-in.";
+const url = "https://squidagent.app/";
+const ogimage = "https://squidagent.app/og-image.png";
+const sitename = "Squid";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -24,8 +25,25 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(url),
-  title,
+  title: {
+    default: title,
+    template: "%s | Squid",
+  },
   description,
+  applicationName: "Squid",
+  alternates: {
+    canonical: "/",
+  },
+  keywords: [
+    "AI app builder",
+    "exportable React code",
+    "React app generator",
+    "AI React builder",
+    "transparent AI credits",
+    "Lovable alternative",
+    "Bolt alternative",
+    "v0 alternative",
+  ],
   icons: {
     icon: "/favicon.ico",
   },
@@ -56,7 +74,7 @@ export default function RootLayout({
       <head>
         <PlausibleProvider domain="squidagent.app" />
       </head>
-      <body className="flex min-h-full flex-col bg-background text-foreground antialiased font-sans">
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground antialiased">
         {children}
       </body>
     </html>

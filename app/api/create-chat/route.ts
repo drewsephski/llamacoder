@@ -18,6 +18,7 @@ import {
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
+  getOpenRouterProviderOptions,
 } from "@/lib/openrouter";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
@@ -226,11 +227,7 @@ export async function POST(request: NextRequest) {
           model: createOpenRouterModel(openrouter, VISION_ANALYSIS_MODEL, {
             maxTokens: 1000,
           }),
-          providerOptions: {
-            openrouter: {
-              reasoning: { enabled: false },
-            },
-          },
+          providerOptions: getOpenRouterProviderOptions(VISION_ANALYSIS_MODEL),
           temperature: 0.4,
           messages: [
             {
@@ -363,7 +360,12 @@ export async function POST(request: NextRequest) {
           data: {
             userId: session.user.id,
             modelId: model,
-            creditsUsed: getModelCreditCost(model),
+            creditsUsed: 0,
+            estimatedCredits: getModelCreditCost(model),
+            actualCredits: 0,
+            refundedCredits: 0,
+            reason: `Plan generation - ${title}`,
+            phase: "planning",
             status: "plan_generated",
             chatId: chat.id,
           },

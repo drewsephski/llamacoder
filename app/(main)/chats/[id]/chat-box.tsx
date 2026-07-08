@@ -12,6 +12,7 @@ import { UpgradeBanner } from "@/components/upgrade-banner";
 import { useUserCredits, useUserSession } from "@/lib/queries";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchCompletionStream } from "@/lib/completion-stream";
+import { getModelCreditCost } from "@/lib/billing";
 
 interface ChatBoxProps {
   chat: {
@@ -99,6 +100,11 @@ export default function ChatBox({
   const selectedModel = MODELS.find((m) => m.value === chat.model);
   const isPaidModel = selectedModel?.paid ?? false;
   const modelLabel = selectedModel?.label || chat.model;
+  const modelCreditCost = getModelCreditCost(chat.model);
+  const projectedCreditsAfterGeneration = Math.max(
+    0,
+    credits - modelCreditCost,
+  );
 
   return (
     <>
@@ -256,13 +262,13 @@ export default function ChatBox({
                 name="prompt"
                 className="min-h-[88px] resize-none border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed placeholder:text-muted-foreground/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      if (disabled) return;
-                      event.preventDefault();
-                      const target = event.target;
-                      if (!(target instanceof HTMLTextAreaElement)) return;
-                      target.closest("form")?.requestSubmit();
-                    }
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    if (disabled) return;
+                    event.preventDefault();
+                    const target = event.target;
+                    if (!(target instanceof HTMLTextAreaElement)) return;
+                    target.closest("form")?.requestSubmit();
+                  }
                 }}
               />
 
@@ -292,6 +298,17 @@ export default function ChatBox({
                         : `${credits} credits`}
                     </div>
                   )}
+
+                  <div
+                    className="credit-tag hidden sm:inline-flex"
+                    title="Follow-up generations are charged after the response is saved. Repair attempts are free."
+                  >
+                    {modelCreditCost} credit
+                    {modelCreditCost === 1 ? "" : "s"} on success
+                    {!hasActiveSubscription
+                      ? `, ${projectedCreditsAfterGeneration} left`
+                      : ""}
+                  </div>
 
                   {isStreaming && (
                     <div className="streaming-indicator ml-1">

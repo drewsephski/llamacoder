@@ -244,10 +244,10 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
 
   /* Model badge colors - professional palette */
   .model-gpt {
-    @apply border-emerald-500/20 bg-emerald-500/10 text-emerald-400;
+    @apply border-amber-500/30 bg-amber-500/10 text-amber-500;
   }
   .model-claude {
-    @apply border-orange-500/20 bg-orange-500/10 text-orange-400;
+    @apply border-yellow-500/30 bg-yellow-500/10 text-yellow-500;
   }
   .model-gemini {
     @apply border-blue-500/20 bg-blue-500/10 text-blue-400;

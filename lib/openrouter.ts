@@ -5,9 +5,18 @@ const MAX_OPENROUTER_FALLBACK_MODELS = 3;
 export const GENERATED_CODE_MAX_TOKENS = 16000;
 export const VISION_ANALYSIS_MODEL =
   process.env.OPENROUTER_VISION_MODEL || "google/gemini-3-flash-preview";
+const MANDATORY_REASONING_MODELS = new Set(["x-ai/grok-4.3", "openai/gpt-5.5"]);
+const MANDATORY_REASONING_MODEL_PREFIXES = ["openai/gpt-5", "x-ai/grok-4"];
 
 type OpenRouterClient = ReturnType<typeof createOpenRouter>;
 type OpenRouterModelSettings = NonNullable<Parameters<OpenRouterClient>[1]>;
+type OpenRouterProviderOptions = {
+  openrouter: {
+    reasoning?: {
+      enabled: boolean;
+    };
+  };
+};
 
 export function createAppOpenRouter({
   sessionId,
@@ -64,6 +73,31 @@ export function createOpenRouterModel(
     ...settings,
     models: fallbacks,
   });
+}
+
+export function requiresOpenRouterReasoning(model: string) {
+  const { primary } = getOpenRouterModelRoute(model);
+
+  return (
+    MANDATORY_REASONING_MODELS.has(primary) ||
+    MANDATORY_REASONING_MODEL_PREFIXES.some((prefix) =>
+      primary.startsWith(prefix),
+    )
+  );
+}
+
+export function getOpenRouterProviderOptions(
+  model: string,
+): OpenRouterProviderOptions | undefined {
+  if (requiresOpenRouterReasoning(model)) {
+    return undefined;
+  }
+
+  return {
+    openrouter: {
+      reasoning: { enabled: false },
+    },
+  };
 }
 
 export function getAIErrorMessage(error: unknown) {

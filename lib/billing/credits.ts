@@ -248,12 +248,16 @@ export async function checkAndConsumeCredits({
   chatId,
   description,
   status = "pending",
+  phase = "generation",
+  tokensUsed,
 }: {
   userId: string;
   modelId: string;
   chatId?: string;
   description?: string;
   status?: string;
+  phase?: string;
+  tokensUsed?: number;
 }): Promise<CreditCheckResult> {
   const prisma = getPrisma();
   const creditCost = getModelCreditCost(modelId);
@@ -305,6 +309,14 @@ export async function checkAndConsumeCredits({
           userId,
           modelId,
           creditsUsed: creditCost,
+          estimatedCredits: creditCost,
+          actualCredits: creditCost,
+          refundedCredits: 0,
+          reason:
+            description ||
+            `AI generation - ${modelId.split("/").pop() || modelId}`,
+          phase,
+          tokensUsed,
           chatId: chatId || null,
           status,
         },
@@ -337,6 +349,8 @@ export async function consumeCreditsForGeneration({
   chatId,
   description,
   status = "completed",
+  phase = "generation",
+  tokensUsed,
 }: {
   client: Prisma.TransactionClient;
   userId: string;
@@ -344,6 +358,8 @@ export async function consumeCreditsForGeneration({
   chatId?: string;
   description?: string;
   status?: string;
+  phase?: string;
+  tokensUsed?: number;
 }): Promise<CreditCheckResult> {
   const creditCost = getModelCreditCost(modelId);
   const access = await checkCreditAccess({ client, userId, modelId });
@@ -382,6 +398,13 @@ export async function consumeCreditsForGeneration({
       userId,
       modelId,
       creditsUsed: creditCost,
+      estimatedCredits: creditCost,
+      actualCredits: creditCost,
+      refundedCredits: 0,
+      reason:
+        description || `AI generation - ${modelId.split("/").pop() || modelId}`,
+      phase,
+      tokensUsed,
       chatId: chatId || null,
       status,
     },

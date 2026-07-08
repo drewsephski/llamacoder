@@ -54,6 +54,11 @@ vi.mock("@/lib/openrouter", () => ({
   createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
+  getOpenRouterProviderOptions: vi.fn(() => ({
+    openrouter: {
+      reasoning: { enabled: false },
+    },
+  })),
 }));
 
 import { POST } from "@/app/api/create-chat/route";

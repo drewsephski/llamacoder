@@ -20,6 +20,22 @@ export type GeneratedFileDiagnostic = {
   message: string;
 };
 
+export type GeneratedFilesQualityReport = {
+  generatedAt: string;
+  filesGenerated: number;
+  sourceFiles: number;
+  importsResolved: number;
+  unresolvedImports: GeneratedFileDiagnostic[];
+  protectedPathsBlocked: number;
+  accessibilityWarnings: GeneratedFileDiagnostic[];
+  diagnostics: GeneratedFileDiagnostic[];
+  status: "passed" | "warning";
+};
+
+export type GeneratedFilesStats = {
+  protectedPathsBlocked: number;
+};
+
 const PROTECTED_MODULE_PATHS = new Set([
   "components/ui/accordion",
   "components/ui/alert",
@@ -65,6 +81,20 @@ const PROTECTED_MODULE_PATHS = new Set([
 
 const IMPORT_SOURCE_REGEX =
   /\b(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
+const IMPORT_DECLARATION_REGEX =
+  /\bimport\s+(type\s+)?([\s\S]*?)\s+from\s+["']([^"']+)["'];?/g;
+
+type ImportDeclaration = {
+  source: string;
+  defaultImport?: string;
+  namedImports: { imported: string; local: string }[];
+};
+
+type ModuleExportSignature = {
+  hasDefault: boolean;
+  defaultName?: string;
+  namedExports: Set<string>;
+};
 
 function stripExtension(path: string) {
   return path.replace(/\.(tsx|ts|jsx|js|json|css)$/i, "");
@@ -121,10 +151,14 @@ export function normalizeGeneratedPath(path: string) {
 
 export function normalizeGeneratedFiles(files: RawGeneratedFile[]) {
   const byPath = new Map<string, GeneratedFile>();
+  let protectedPathsBlocked = 0;
 
   for (const file of files) {
     const path = normalizeGeneratedPath(file.path);
-    if (!path) continue;
+    if (!path) {
+      protectedPathsBlocked += 1;
+      continue;
+    }
 
     const code = file.code ?? file.content ?? "";
     if (!code.trim()) continue;
@@ -137,10 +171,38 @@ export function normalizeGeneratedFiles(files: RawGeneratedFile[]) {
     });
   }
 
-  return Array.from(byPath.values()).map((file) => ({
+  const normalizedFiles = Array.from(byPath.values()).map((file) => ({
     ...file,
     code: rewriteResolvableAliasImports(file, byPath),
   }));
+
+  attachGeneratedFilesStats(normalizedFiles, { protectedPathsBlocked });
+
+  return normalizedFiles;
+}
+
+export function attachGeneratedFilesStats<T extends GeneratedFile[]>(
+  files: T,
+  stats: GeneratedFilesStats,
+) {
+  Object.defineProperty(files, "protectedPathsBlocked", {
+    value: stats.protectedPathsBlocked,
+    enumerable: false,
+    configurable: true,
+  });
+
+  return files;
+}
+
+export function readGeneratedFilesStats(files: GeneratedFile[]) {
+  return {
+    protectedPathsBlocked:
+      typeof (files as unknown as { protectedPathsBlocked?: unknown })
+        .protectedPathsBlocked === "number"
+        ? (files as unknown as { protectedPathsBlocked: number })
+            .protectedPathsBlocked
+        : 0,
+  };
 }
 
 export function validateGeneratedFiles(files: GeneratedFile[]) {
@@ -177,9 +239,53 @@ export function validateGeneratedFiles(files: GeneratedFile[]) {
         });
       }
     }
+
+    for (const importDeclaration of extractImportDeclarations(file.code)) {
+      const { source } = importDeclaration;
+      if (!isInternalGeneratedImport(source)) continue;
+
+      const normalizedSource = normalizeModulePath(source);
+      if (PROTECTED_MODULE_PATHS.has(stripExtension(normalizedSource)))
+        continue;
+
+      const targetFile = resolveGeneratedImportFile(file.path, source, files);
+      if (!targetFile) continue;
+
+      diagnostics.push(
+        ...validateImportBindings(file.path, importDeclaration, targetFile),
+      );
+    }
   }
 
   return diagnostics;
+}
+
+export function buildGeneratedFilesQualityReport(
+  files: GeneratedFile[],
+): GeneratedFilesQualityReport {
+  const diagnostics = validateGeneratedFiles(files);
+  const unresolvedImports = diagnostics.filter((diagnostic) =>
+    diagnostic.message.startsWith("Unresolved internal import"),
+  );
+  const accessibilityWarnings = validateBasicAccessibility(files);
+  const importsResolved = countResolvedInternalImports(files);
+  const { protectedPathsBlocked } = readGeneratedFilesStats(files);
+  const sourceFiles = files.filter((file) =>
+    /\.(tsx|ts|jsx|js)$/i.test(file.path),
+  ).length;
+  const warningCount = diagnostics.length + accessibilityWarnings.length;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    filesGenerated: files.length,
+    sourceFiles,
+    importsResolved,
+    unresolvedImports,
+    protectedPathsBlocked,
+    accessibilityWarnings,
+    diagnostics,
+    status: warningCount === 0 ? "passed" : "warning",
+  };
 }
 
 export function formatGeneratedFilesMarkdown(files: GeneratedFile[]) {
@@ -218,7 +324,10 @@ Requirements:
 - Output only complete files in fenced code blocks using \`\`\`tsx{path=App.tsx} format.
 - Include App.tsx plus at least two supporting source files.
 - Every relative or @/ internal import must resolve to a file you output, except installed shadcn imports under "@/components/ui/*" and "@/lib/utils".
+- Every import style must match the target file's exports: named imports require named exports, and default imports require default exports.
+- If a file exports \`export default function Footer()\`, import it as \`import Footer from "./components/Footer"\`; if it exports \`export function Footer()\`, import it as \`import { Footer } from "./components/Footer"\`.
 - Do not import custom hooks/utilities unless you also output their files.
+- If you call \`cn(...)\`, import it with \`import { cn } from "@/lib/utils"\`.
 - Use \`import { motion } from "framer-motion"\` for Framer Motion.
 
 Original response:
@@ -260,6 +369,240 @@ function extractImportSources(code: string) {
   return Array.from(sources);
 }
 
+function extractImportDeclarations(code: string) {
+  const imports: ImportDeclaration[] = [];
+  let match: RegExpExecArray | null;
+
+  IMPORT_DECLARATION_REGEX.lastIndex = 0;
+
+  while ((match = IMPORT_DECLARATION_REGEX.exec(code)) !== null) {
+    const clause = match[2].trim();
+    const source = match[3];
+    const namedImports = extractNamedImports(clause);
+    const defaultImport = extractDefaultImport(clause);
+
+    if (!defaultImport && namedImports.length === 0) continue;
+
+    imports.push({
+      source,
+      defaultImport,
+      namedImports,
+    });
+  }
+
+  return imports;
+}
+
+function extractDefaultImport(importClause: string) {
+  if (importClause.startsWith("{") || importClause.startsWith("*")) {
+    return undefined;
+  }
+
+  const withoutNamedBlock = importClause.replace(/{[\s\S]*}/g, "");
+  const withoutNamespace = withoutNamedBlock.replace(/\*\s+as\s+\w+/g, "");
+  const candidate = withoutNamespace.split(",")[0]?.trim();
+
+  return candidate && /^[A-Za-z_$][\w$]*$/.test(candidate)
+    ? candidate
+    : undefined;
+}
+
+function extractNamedImports(importClause: string) {
+  const namedBlock = importClause.match(/{([\s\S]*?)}/)?.[1];
+  if (!namedBlock) return [];
+
+  return namedBlock
+    .split(",")
+    .map((item) => item.trim().replace(/^type\s+/, ""))
+    .filter(Boolean)
+    .map((item) => {
+      const [imported, local] = item.split(/\s+as\s+/).map((part) => part.trim());
+      return {
+        imported,
+        local: local || imported,
+      };
+    })
+    .filter(({ imported, local }) =>
+      [imported, local].every((name) => /^[A-Za-z_$][\w$]*$/.test(name)),
+    );
+}
+
+function validateImportBindings(
+  importingPath: string,
+  importDeclaration: ImportDeclaration,
+  targetFile: GeneratedFile,
+) {
+  if (!/\.(tsx|ts|jsx|js)$/i.test(targetFile.path)) return [];
+
+  const diagnostics: GeneratedFileDiagnostic[] = [];
+  const exportSignature = extractModuleExportSignature(targetFile.code);
+
+  if (importDeclaration.defaultImport && !exportSignature.hasDefault) {
+    const expectedNamedExport = exportSignature.namedExports.has(
+      importDeclaration.defaultImport,
+    );
+
+    diagnostics.push({
+      path: importingPath,
+      message: expectedNamedExport
+        ? `Default import "${importDeclaration.defaultImport}" from "${importDeclaration.source}" is invalid because ${targetFile.path} exports "${importDeclaration.defaultImport}" only as a named export. Use import { ${importDeclaration.defaultImport} } from "${importDeclaration.source}" or add a default export.`
+        : `Default import "${importDeclaration.defaultImport}" from "${importDeclaration.source}" is invalid because ${targetFile.path} has no default export. Add a default export or change the import to match its named exports.`,
+    });
+  }
+
+  for (const namedImport of importDeclaration.namedImports) {
+    if (namedImport.imported === "default") {
+      if (!exportSignature.hasDefault) {
+        diagnostics.push({
+          path: importingPath,
+          message: `Named default import "${namedImport.local}" from "${importDeclaration.source}" is invalid because ${targetFile.path} has no default export.`,
+        });
+      }
+      continue;
+    }
+
+    if (exportSignature.namedExports.has(namedImport.imported)) continue;
+
+    const defaultExportHint =
+      exportSignature.hasDefault &&
+      (!exportSignature.defaultName ||
+        exportSignature.defaultName === namedImport.imported)
+        ? ` It has a default export; use import ${namedImport.local} from "${importDeclaration.source}" or export "${namedImport.imported}" by name.`
+        : "";
+
+    diagnostics.push({
+      path: importingPath,
+      message: `Named import "${namedImport.imported}" from "${importDeclaration.source}" is invalid because ${targetFile.path} does not export "${namedImport.imported}".${defaultExportHint}`,
+    });
+  }
+
+  return diagnostics;
+}
+
+function extractModuleExportSignature(code: string): ModuleExportSignature {
+  const codeWithoutComments = stripCodeComments(code);
+  const namedExports = new Set<string>();
+  let hasDefault = /\bexport\s+default\b/.test(codeWithoutComments);
+  let defaultName = codeWithoutComments.match(
+    /\bexport\s+default\s+(?:async\s+)?(?:function|class)?\s*([A-Za-z_$][\w$]*)?/,
+  )?.[1];
+
+  for (const regex of [
+    /\bexport\s+(?:declare\s+)?(?:async\s+)?(?:function|class|interface|type|enum)\s+([A-Za-z_$][\w$]*)/g,
+    /\bexport\s+(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)/g,
+  ]) {
+    let match: RegExpExecArray | null;
+    regex.lastIndex = 0;
+
+    while ((match = regex.exec(codeWithoutComments)) !== null) {
+      namedExports.add(match[1]);
+    }
+  }
+
+  const exportListRegex =
+    /\bexport\s*{([\s\S]*?)}(?:\s*from\s*["'][^"']+["'])?\s*;?/g;
+  let exportListMatch: RegExpExecArray | null;
+
+  while ((exportListMatch = exportListRegex.exec(codeWithoutComments)) !== null) {
+    for (const specifier of exportListMatch[1].split(",")) {
+      const cleanSpecifier = specifier.trim().replace(/^type\s+/, "");
+      if (!cleanSpecifier) continue;
+
+      const [localName, exportedName = localName] = cleanSpecifier
+        .split(/\s+as\s+/)
+        .map((part) => part.trim());
+
+      if (!localName || !exportedName) continue;
+
+      if (exportedName === "default") {
+        hasDefault = true;
+        defaultName = localName === "default" ? defaultName : localName;
+      } else if (/^[A-Za-z_$][\w$]*$/.test(exportedName)) {
+        namedExports.add(exportedName);
+      }
+    }
+  }
+
+  return {
+    hasDefault,
+    defaultName,
+    namedExports,
+  };
+}
+
+function stripCodeComments(code: string) {
+  return code
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
+function countResolvedInternalImports(files: GeneratedFile[]) {
+  let resolved = 0;
+
+  for (const file of files) {
+    for (const source of extractImportSources(file.code)) {
+      if (!isInternalGeneratedImport(source)) continue;
+
+      const normalizedSource = normalizeModulePath(source);
+      if (PROTECTED_MODULE_PATHS.has(stripExtension(normalizedSource))) {
+        resolved += 1;
+        continue;
+      }
+
+      if (resolveGeneratedImport(file.path, source, files)) {
+        resolved += 1;
+      }
+    }
+  }
+
+  return resolved;
+}
+
+function validateBasicAccessibility(files: GeneratedFile[]) {
+  const warnings: GeneratedFileDiagnostic[] = [];
+
+  for (const file of files) {
+    if (!/\.(tsx|jsx)$/i.test(file.path)) continue;
+
+    const emptyButtonMatches = file.code.matchAll(
+      /<button\b(?![^>]*aria-label=)[^>]*>\s*(?:<[^>]+>\s*)*<\/button>/g,
+    );
+    for (const _match of emptyButtonMatches) {
+      warnings.push({
+        path: file.path,
+        message: "Button appears to have no visible text or aria-label.",
+      });
+    }
+
+    const inputMatches = file.code.matchAll(/<input\b([^>]*)>/g);
+    for (const match of inputMatches) {
+      const attrs = match[1] || "";
+      const hasAccessibleName =
+        /\b(?:aria-label|aria-labelledby|id|placeholder)=/.test(attrs);
+      if (!hasAccessibleName) {
+        warnings.push({
+          path: file.path,
+          message:
+            "Input appears to be missing an accessible name, id, or placeholder.",
+        });
+      }
+    }
+
+    const imageMatches = file.code.matchAll(/<img\b([^>]*)>/g);
+    for (const match of imageMatches) {
+      const attrs = match[1] || "";
+      if (!/\balt=/.test(attrs)) {
+        warnings.push({
+          path: file.path,
+          message: "Image appears to be missing alt text.",
+        });
+      }
+    }
+  }
+
+  return warnings;
+}
+
 function isInternalGeneratedImport(source: string) {
   return (
     source.startsWith("@/") ||
@@ -274,12 +617,23 @@ function resolveGeneratedImport(
   source: string,
   files: Iterable<GeneratedFile>,
 ) {
-  const candidates = getImportCandidates(fromPath, source);
-  const normalizedFilePaths = new Set(
-    Array.from(files, (file) => stripExtension(file.path)),
-  );
+  return Boolean(resolveGeneratedImportFile(fromPath, source, files));
+}
 
-  return candidates.some((candidate) => normalizedFilePaths.has(candidate));
+function resolveGeneratedImportFile(
+  fromPath: string,
+  source: string,
+  files: Iterable<GeneratedFile>,
+) {
+  const candidates = getImportCandidates(fromPath, source);
+
+  for (const file of files) {
+    if (candidates.includes(stripExtension(file.path))) {
+      return file;
+    }
+  }
+
+  return null;
 }
 
 function rewriteResolvableAliasImports(
@@ -345,17 +699,78 @@ function getRelativeImportPath(fromPath: string, toPath: string) {
 }
 
 function normalizeCommonCodegenMistakes(code: string) {
-  return normalizeSelectCodegenErrors(
-    normalizeClipboardWrites(
-      code
-        .replace(
-          /import\s*{\s*Motion\s*}\s*from\s*["']framer-motion["'];?/g,
-          'import { motion } from "framer-motion";',
-        )
-        .replace(/<Motion(\s|>)/g, "<motion.div$1")
-        .replace(/<\/Motion>/g, "</motion.div>"),
+  return ensureCnImport(
+    normalizeSelectCodegenErrors(
+      normalizeClipboardWrites(
+        code
+          .replace(
+            /import\s*{\s*Motion\s*}\s*from\s*["']framer-motion["'];?/g,
+            'import { motion } from "framer-motion";',
+          )
+          .replace(/<Motion(\s|>)/g, "<motion.div$1")
+          .replace(/<\/Motion>/g, "</motion.div>"),
+      ),
     ),
   );
+}
+
+function ensureCnImport(code: string) {
+  if (!/\bcn\s*\(/.test(code) || hasCnBinding(code)) return code;
+
+  const libUtilsImportRegex =
+    /import\s*{([\s\S]*?)}\s*from\s*["']@\/lib\/utils["'];?/;
+
+  if (libUtilsImportRegex.test(code)) {
+    return code.replace(
+      libUtilsImportRegex,
+      (_match: string, importBlock: string) => {
+        const imports = importBlock
+          .split(",")
+          .map((item: string) => item.trim())
+          .filter(Boolean);
+
+        if (!imports.some((item: string) => /^cn(?:\s+as\s+cn)?$/.test(item))) {
+          imports.push("cn");
+        }
+
+        return `import { ${imports.join(", ")} } from "@/lib/utils";`;
+      },
+    );
+  }
+
+  return insertImportAfterDirectives(code, 'import { cn } from "@/lib/utils";');
+}
+
+function hasCnBinding(code: string) {
+  if (
+    extractImportDeclarations(code).some(
+      (importDeclaration) =>
+        importDeclaration.defaultImport === "cn" ||
+        importDeclaration.namedImports.some(
+          (namedImport) => namedImport.local === "cn",
+        ),
+    )
+  ) {
+    return true;
+  }
+
+  return /\b(?:const|let|var|function|class)\s+cn\b/.test(stripCodeComments(code));
+}
+
+function insertImportAfterDirectives(code: string, importLine: string) {
+  const lines = code.split("\n");
+  let insertIndex = 0;
+
+  while (
+    insertIndex < lines.length &&
+    (/^\s*$/.test(lines[insertIndex]) ||
+      /^\s*["']use\s+\w+["'];?\s*$/.test(lines[insertIndex]))
+  ) {
+    insertIndex += 1;
+  }
+
+  lines.splice(insertIndex, 0, importLine);
+  return lines.join("\n");
 }
 
 function normalizeSelectCodegenErrors(code: string) {

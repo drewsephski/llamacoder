@@ -2,7 +2,12 @@
 
 import CloseIcon from "@/components/icons/close-icon";
 import RefreshIcon from "@/components/icons/refresh";
-import { DownloadIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  DownloadIcon,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -18,7 +23,17 @@ import {
   getExtensionForLanguage,
   toTitleCase,
 } from "@/lib/utils";
-import { normalizeGeneratedFiles } from "@/lib/generated-files";
+import {
+  attachGeneratedFilesStats,
+  buildGeneratedFilesQualityReport,
+  normalizeGeneratedFiles,
+  readGeneratedFilesStats,
+  type GeneratedFile,
+} from "@/lib/generated-files";
+import {
+  dependencies as sandpackDependencies,
+  shadcnFiles,
+} from "@/lib/sandpack-config";
 import { useState, useEffect } from "react";
 import type { Chat, Message } from "./page";
 import { Share } from "./share";
@@ -72,7 +87,7 @@ export default function CodeViewer({
 }) {
   const streamAllFiles = normalizeGeneratedFiles(
     extractAllCodeBlocks(streamText),
-  ).map((file) => ({ ...file, fullMatch: file.fullMatch || "" }));
+  );
 
   // Extract the latest (possibly partial) code fence from the stream text
   function extractLatestStreamBlock(
@@ -170,29 +185,24 @@ export default function CodeViewer({
       });
     }
   }
+  attachGeneratedFilesStats(
+    mergedStreamFiles,
+    readGeneratedFilesStats(streamAllFiles),
+  );
 
   // Utility to merge base files with overlay files (overlay wins on conflicts)
-  function mergeFiles(
-    base: Array<{
-      code: string;
-      language: string;
-      path: string;
-      fullMatch: string;
-    }>,
-    overlay: Array<{
-      code: string;
-      language: string;
-      path: string;
-      fullMatch: string;
-    }>,
-  ) {
-    const map = new Map<
-      string,
-      { code: string; language: string; path: string; fullMatch: string }
-    >();
+  function mergeFiles(base: GeneratedFile[], overlay: GeneratedFile[]) {
+    const map = new Map<string, GeneratedFile>();
     base.forEach((f) => map.set(f.path, f));
     overlay.forEach((f) => map.set(f.path, f));
-    return Array.from(map.values());
+    const merged = Array.from(map.values());
+    const baseStats = readGeneratedFilesStats(base);
+    const overlayStats = readGeneratedFilesStats(overlay);
+
+    return attachGeneratedFilesStats(merged, {
+      protectedPathsBlocked:
+        baseStats.protectedPathsBlocked + overlayStats.protectedPathsBlocked,
+    });
   }
 
   // Helper to get files from a message (JSON field or extract from content)
@@ -202,7 +212,7 @@ export default function CodeViewer({
       ((msg.files as any[]) || []).length > 0
         ? (msg.files as any[])
         : extractAllCodeBlocks(msg.content),
-    ).map((file) => ({ ...file, fullMatch: file.fullMatch || "" }));
+    );
   };
 
   // Since each message now contains cumulative files, simplify the logic
@@ -267,6 +277,10 @@ export default function CodeViewer({
   };
 
   const appTitle = generateAppTitle(files);
+  const qualityReport = buildGeneratedFilesQualityReport(files);
+  const qualityWarningCount =
+    qualityReport.diagnostics.length +
+    qualityReport.accessibilityWarnings.length;
 
   const allAssistantMessages = assistantMessages.some(
     (m) => m.id === message?.id,
@@ -306,17 +320,342 @@ export default function CodeViewer({
     if (files.length === 0) return;
 
     const zip = new JSZip();
+    const appTitle = generateAppTitle(files);
+    const packageName =
+      appTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "squid-generated-app";
 
-    // Add each file to the zip
+    // Add each generated file to the zip
     files.forEach((file) => {
       zip.file(file.path, file.code);
     });
 
+    for (const [path, content] of Object.entries(shadcnFiles)) {
+      if (path === "/public/index.html") continue;
+
+      const exportPath = path.replace(/^\//, "");
+      if (!files.some((file) => file.path === exportPath)) {
+        zip.file(exportPath, content);
+      }
+    }
+
+    if (!files.some((file) => file.path === "main.tsx")) {
+      zip.file(
+        "main.tsx",
+        [
+          'import React from "react";',
+          'import { createRoot } from "react-dom/client";',
+          'import App from "./App";',
+          'import "./styles.css";',
+          "",
+          'createRoot(document.getElementById("root")!).render(',
+          "  <React.StrictMode>",
+          "    <App />",
+          "  </React.StrictMode>,",
+          ");",
+        ].join("\n"),
+      );
+    }
+
+    if (!files.some((file) => file.path === "styles.css")) {
+      zip.file(
+        "styles.css",
+        [
+          "@tailwind base;",
+          "@tailwind components;",
+          "@tailwind utilities;",
+          "",
+          ":root {",
+          "  --background: 0 0% 100%;",
+          "  --foreground: 222.2 84% 4.9%;",
+          "  --card: 0 0% 100%;",
+          "  --card-foreground: 222.2 84% 4.9%;",
+          "  --popover: 0 0% 100%;",
+          "  --popover-foreground: 222.2 84% 4.9%;",
+          "  --primary: 221.2 83.2% 53.3%;",
+          "  --primary-foreground: 210 40% 98%;",
+          "  --secondary: 210 40% 96.1%;",
+          "  --secondary-foreground: 222.2 47.4% 11.2%;",
+          "  --muted: 210 40% 96.1%;",
+          "  --muted-foreground: 215.4 16.3% 46.9%;",
+          "  --accent: 210 40% 96.1%;",
+          "  --accent-foreground: 222.2 47.4% 11.2%;",
+          "  --destructive: 0 84.2% 60.2%;",
+          "  --destructive-foreground: 210 40% 98%;",
+          "  --border: 214.3 31.8% 91.4%;",
+          "  --input: 214.3 31.8% 91.4%;",
+          "  --ring: 221.2 83.2% 53.3%;",
+          "  --radius: 0.5rem;",
+          "}",
+          "",
+          ".dark {",
+          "  --background: 222.2 84% 4.9%;",
+          "  --foreground: 210 40% 98%;",
+          "  --card: 222.2 84% 4.9%;",
+          "  --card-foreground: 210 40% 98%;",
+          "  --popover: 222.2 84% 4.9%;",
+          "  --popover-foreground: 210 40% 98%;",
+          "  --primary: 217.2 91.2% 59.8%;",
+          "  --primary-foreground: 222.2 47.4% 11.2%;",
+          "  --secondary: 217.2 32.6% 17.5%;",
+          "  --secondary-foreground: 210 40% 98%;",
+          "  --muted: 217.2 32.6% 17.5%;",
+          "  --muted-foreground: 215 20.2% 65.1%;",
+          "  --accent: 217.2 32.6% 17.5%;",
+          "  --accent-foreground: 210 40% 98%;",
+          "  --destructive: 0 62.8% 30.6%;",
+          "  --destructive-foreground: 210 40% 98%;",
+          "  --border: 217.2 32.6% 17.5%;",
+          "  --input: 217.2 32.6% 17.5%;",
+          "  --ring: 224.3 76.3% 48%;",
+          "}",
+          "",
+          "* {",
+          "  border-color: hsl(var(--border));",
+          "}",
+          "",
+          "body {",
+          "  margin: 0;",
+          "  min-width: 320px;",
+          "  min-height: 100vh;",
+          "}",
+        ].join("\n"),
+      );
+    }
+
+    zip.file(
+      "index.html",
+      [
+        "<!doctype html>",
+        '<html lang="en">',
+        "  <head>",
+        '    <meta charset="UTF-8" />',
+        '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+        `    <title>${appTitle}</title>`,
+        "  </head>",
+        "  <body>",
+        '    <div id="root"></div>',
+        '    <script type="module" src="/main.tsx"></script>',
+        "  </body>",
+        "</html>",
+      ].join("\n"),
+    );
+
+    zip.file(
+      "package.json",
+      JSON.stringify(
+        {
+          name: packageName,
+          version: "0.1.0",
+          private: true,
+          type: "module",
+          scripts: {
+            dev: "vite --host 0.0.0.0",
+            build: "tsc --noEmit && vite build",
+            preview: "vite preview",
+            typecheck: "tsc --noEmit",
+          },
+          dependencies: inferPackageDependencies(files),
+          devDependencies: {
+            "@types/node": "latest",
+            "@vitejs/plugin-react": "latest",
+            autoprefixer: "latest",
+            postcss: "latest",
+            tailwindcss: "latest",
+            typescript: "latest",
+            vite: "latest",
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    zip.file(
+      "README.md",
+      [
+        `# ${appTitle}`,
+        "",
+        "Generated by Squid.",
+        "",
+        "## Run locally",
+        "",
+        "```bash",
+        "pnpm install",
+        "pnpm dev",
+        "```",
+        "",
+        "## Included artifacts",
+        "",
+        "- `squid-manifest.json`: generated file manifest and export metadata.",
+        "- `squid-quality-report.json`: import, file, and accessibility diagnostics.",
+        "- `vercel.json`, `netlify.toml`, and `wrangler.toml`: starter deploy config.",
+        "",
+        "The quality report is a smoke check, not a substitute for a full production review.",
+      ].join("\n"),
+    );
+
+    zip.file(
+      "squid-manifest.json",
+      JSON.stringify(
+        {
+          appTitle,
+          exportedAt: new Date().toISOString(),
+          source: "Squid",
+          files: files.map((file) => ({
+            path: file.path,
+            language: file.language,
+            bytes: new Blob([file.code]).size,
+          })),
+        },
+        null,
+        2,
+      ),
+    );
+
+    zip.file(
+      "squid-quality-report.json",
+      JSON.stringify(qualityReport, null, 2),
+    );
+    zip.file(
+      "tsconfig.json",
+      JSON.stringify(
+        {
+          compilerOptions: {
+            target: "ES2020",
+            useDefineForClassFields: true,
+            lib: ["DOM", "DOM.Iterable", "ES2020"],
+            allowJs: false,
+            skipLibCheck: true,
+            esModuleInterop: true,
+            allowSyntheticDefaultImports: true,
+            strict: true,
+            forceConsistentCasingInFileNames: true,
+            module: "ESNext",
+            moduleResolution: "Node",
+            resolveJsonModule: true,
+            isolatedModules: true,
+            noEmit: true,
+            jsx: "react-jsx",
+            baseUrl: ".",
+            paths: {
+              "@/*": ["./*"],
+            },
+          },
+          include: ["**/*.ts", "**/*.tsx"],
+        },
+        null,
+        2,
+      ),
+    );
+    zip.file(
+      "vite.config.ts",
+      [
+        'import { defineConfig } from "vite";',
+        'import react from "@vitejs/plugin-react";',
+        'import path from "node:path";',
+        "",
+        "export default defineConfig({",
+        "  plugins: [react()],",
+        "  resolve: {",
+        '    alias: { "@": path.resolve(__dirname, ".") },',
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+    zip.file(
+      "tailwind.config.ts",
+      [
+        'import type { Config } from "tailwindcss";',
+        "",
+        "export default {",
+        '  content: ["./index.html", "./**/*.{ts,tsx}"],',
+        "  theme: {",
+        "    extend: {",
+        "      colors: {",
+        '        border: "hsl(var(--border))",',
+        '        input: "hsl(var(--input))",',
+        '        ring: "hsl(var(--ring))",',
+        '        background: "hsl(var(--background))",',
+        '        foreground: "hsl(var(--foreground))",',
+        "        primary: {",
+        '          DEFAULT: "hsl(var(--primary))",',
+        '          foreground: "hsl(var(--primary-foreground))",',
+        "        },",
+        "        secondary: {",
+        '          DEFAULT: "hsl(var(--secondary))",',
+        '          foreground: "hsl(var(--secondary-foreground))",',
+        "        },",
+        "        destructive: {",
+        '          DEFAULT: "hsl(var(--destructive))",',
+        '          foreground: "hsl(var(--destructive-foreground))",',
+        "        },",
+        "        muted: {",
+        '          DEFAULT: "hsl(var(--muted))",',
+        '          foreground: "hsl(var(--muted-foreground))",',
+        "        },",
+        "        accent: {",
+        '          DEFAULT: "hsl(var(--accent))",',
+        '          foreground: "hsl(var(--accent-foreground))",',
+        "        },",
+        "        popover: {",
+        '          DEFAULT: "hsl(var(--popover))",',
+        '          foreground: "hsl(var(--popover-foreground))",',
+        "        },",
+        "        card: {",
+        '          DEFAULT: "hsl(var(--card))",',
+        '          foreground: "hsl(var(--card-foreground))",',
+        "        },",
+        "      },",
+        '      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },',
+        "    },",
+        "  },",
+        '  plugins: [require("tailwindcss-animate")],',
+        "} satisfies Config;",
+      ].join("\n"),
+    );
+    zip.file(
+      "postcss.config.js",
+      [
+        "export default {",
+        "  plugins: {",
+        "    tailwindcss: {},",
+        "    autoprefixer: {},",
+        "  },",
+        "};",
+      ].join("\n"),
+    );
+    zip.file(
+      "vercel.json",
+      JSON.stringify(
+        { rewrites: [{ source: "/(.*)", destination: "/" }] },
+        null,
+        2,
+      ),
+    );
+    zip.file(
+      "netlify.toml",
+      [
+        "[build]",
+        '  command = "pnpm build"',
+        '  publish = "dist"',
+        "",
+        "[[redirects]]",
+        '  from = "/*"',
+        '  to = "/index.html"',
+        "  status = 200",
+      ].join("\n"),
+    );
+    zip.file(
+      "wrangler.toml",
+      [`name = "${packageName}"`, 'pages_build_output_dir = "dist"'].join("\n"),
+    );
+
     // Generate the zip file
     const content = await zip.generateAsync({ type: "blob" });
 
-    // Generate app title for filename
-    const appTitle = generateAppTitle(files);
     const filename = `${appTitle.replace(/[^a-zA-Z0-9]/g, "-")}-squidagent.zip`;
 
     // Create a download link and trigger the download
@@ -330,7 +669,7 @@ export default function CodeViewer({
     URL.revokeObjectURL(url);
 
     toast.success("Files downloaded!", {
-      description: `${files.length} files downloaded as ${filename}`,
+      description: `${files.length} source files plus export metadata downloaded as ${filename}`,
     });
   };
 
@@ -403,6 +742,27 @@ export default function CodeViewer({
             >
               Restore
             </Button>
+          )}
+          {!disabledControls && (
+            <div
+              className={`hidden items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium md:inline-flex ${
+                qualityReport.status === "passed"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+              }`}
+              title={
+                qualityReport.status === "passed"
+                  ? "Generated imports resolved with no basic warnings."
+                  : `${qualityWarningCount} quality warning${qualityWarningCount === 1 ? "" : "s"} found.`
+              }
+            >
+              {qualityReport.status === "passed" ? (
+                <CheckCircle2 className="size-3.5" />
+              ) : (
+                <AlertTriangle className="size-3.5" />
+              )}
+              Quality {qualityReport.status === "passed" ? "passed" : "review"}
+            </div>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -498,7 +858,7 @@ export default function CodeViewer({
       </div>
 
       <div className="flex items-center justify-between border-t border-border px-4 py-4">
-        <div className="inline-flex items-center gap-2.5 text-sm">
+        <div className="inline-flex min-w-0 items-center gap-2.5 text-sm">
           <Share
             message={
               disabledControls
@@ -526,13 +886,49 @@ export default function CodeViewer({
             className="hidden md:inline-flex"
           >
             <DownloadIcon className="size-3" />
-            Download
+            Export
           </Button>
         </div>
-        <div className="text-xs text-muted-foreground md:hidden">
-          {chat.model}
+        <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          {!disabledControls && (
+            <div className="hidden min-w-0 items-center gap-2 lg:flex">
+              <ShieldCheck className="size-3.5 shrink-0 text-primary" />
+              <span className="truncate">
+                {qualityReport.filesGenerated} files,{" "}
+                {qualityReport.importsResolved} imports resolved
+                {qualityWarningCount > 0
+                  ? `, ${qualityWarningCount} warnings`
+                  : ", no warnings"}
+              </span>
+            </div>
+          )}
+          <span className="md:hidden">{chat.model}</span>
         </div>
       </div>
     </>
   );
+}
+
+function inferPackageDependencies(
+  files: Array<{ code: string }>,
+): Record<string, string> {
+  const source = files.map((file) => file.code).join("\n");
+  const dependencies: Record<string, string> = {
+    ...sandpackDependencies,
+    "class-variance-authority": "latest",
+    clsx: "latest",
+    "lucide-react": "latest",
+    react: "latest",
+    "react-dom": "latest",
+    "tailwind-merge": "latest",
+  };
+
+  if (source.includes("framer-motion"))
+    dependencies["framer-motion"] = "latest";
+  if (source.includes("recharts")) dependencies.recharts = "latest";
+  if (source.includes("@radix-ui/react-")) {
+    dependencies["@radix-ui/react-slot"] = "latest";
+  }
+
+  return dependencies;
 }

@@ -5,6 +5,7 @@ import { buildChat, buildMessage } from "../fixtures/builders";
 const {
   checkCreditAvailabilityMock,
   consumeCreditsForGenerationMock,
+  getModelCreditCostMock,
   getSessionMock,
   notFoundMock,
   prismaMock,
@@ -12,13 +13,15 @@ const {
 } = vi.hoisted(() => ({
   checkCreditAvailabilityMock: vi.fn(),
   consumeCreditsForGenerationMock: vi.fn(),
+  getModelCreditCostMock: vi.fn(() => 1),
   getSessionMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
   txMock: {
-    message: { create: vi.fn() },
+    message: { create: vi.fn(), update: vi.fn() },
     chat: { update: vi.fn() },
+    generationLog: { create: vi.fn() },
   },
   prismaMock: {
     $transaction: vi.fn(),
@@ -51,13 +54,17 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("@/lib/billing", () => ({
   checkCreditAvailability: checkCreditAvailabilityMock,
   consumeCreditsForGeneration: consumeCreditsForGenerationMock,
+  getModelCreditCost: getModelCreditCostMock,
 }));
 
 import {
+  createFreeRepairAssistantMessage,
   createMessage,
+  createPreviewRepairMessage,
   deleteProject,
   duplicateProject,
   renameProject,
+  restoreVersionAsCheckpoint,
   saveProject,
 } from "@/app/(main)/actions";
 
@@ -79,6 +86,8 @@ describe("server actions", () => {
       remainingCredits: 4,
     });
     txMock.message.create.mockResolvedValue({ id: "assistant_1" });
+    txMock.message.update.mockResolvedValue({});
+    txMock.generationLog.create.mockResolvedValue({});
     prismaMock.message.create.mockResolvedValue({ id: "user_msg_2" });
   });
 
@@ -166,7 +175,136 @@ describe("server actions", () => {
       modelId: FREE_MODEL,
       chatId: "chat_1",
       description: `AI generation - ${FREE_MODEL}`,
+      phase: "follow_up",
       status: "completed",
+    });
+  });
+
+  it("creates preview repair messages and saves the matching repair response without charging credits", async () => {
+    prismaMock.chat.findUnique
+      .mockResolvedValueOnce(
+        buildChat({
+          messages: [
+            buildMessage({ position: 0, role: "system" }),
+            buildMessage({ position: 1, role: "user" }),
+            buildMessage({
+              id: "assistant_1",
+              position: 2,
+              role: "assistant",
+              files: [
+                {
+                  path: "App.tsx",
+                  code: "export default function App() { return null; }",
+                },
+              ],
+            }),
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        buildChat({
+          messages: [
+            buildMessage({ position: 0, role: "system" }),
+            buildMessage({ position: 1, role: "user" }),
+            buildMessage({
+              id: "repair_user_1",
+              position: 3,
+              role: "user",
+              files: {
+                kind: "preview_repair_request",
+                chargeCredits: false,
+                usedAt: null,
+              },
+            }),
+          ],
+        }),
+      );
+    prismaMock.message.create.mockResolvedValueOnce({ id: "repair_user_1" });
+
+    await expect(
+      createPreviewRepairMessage("chat_1", "ReferenceError: x is not defined"),
+    ).resolves.toEqual({ id: "repair_user_1" });
+
+    await createFreeRepairAssistantMessage("chat_1", "repair_user_1", "fixed", [
+      {
+        path: "App.tsx",
+        code: "export default function App() { return <main />; }",
+      },
+    ]);
+
+    expect(consumeCreditsForGenerationMock).not.toHaveBeenCalled();
+    expect(txMock.message.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        role: "assistant",
+        files: expect.arrayContaining([
+          expect.objectContaining({ path: "App.tsx" }),
+        ]),
+      }),
+    });
+    expect(txMock.message.update).toHaveBeenCalledWith({
+      where: { id: "repair_user_1" },
+      data: {
+        files: expect.objectContaining({
+          kind: "preview_repair_request",
+          chargeCredits: false,
+          usedAt: expect.any(String),
+        }),
+      },
+    });
+    expect(txMock.generationLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        creditsUsed: 0,
+        actualCredits: 0,
+        phase: "preview_repair",
+        status: "free_repair",
+      }),
+    });
+  });
+
+  it("restores an old assistant version as a new checkpoint without charging credits", async () => {
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        messages: [
+          buildMessage({ position: 0, role: "system" }),
+          buildMessage({ position: 1, role: "user" }),
+          buildMessage({
+            id: "assistant_old",
+            position: 2,
+            role: "assistant",
+            files: [
+              {
+                path: "App.tsx",
+                code: "export default function App() { return <main />; }",
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    prismaMock.message.create.mockResolvedValueOnce({ id: "restored_1" });
+
+    await expect(
+      restoreVersionAsCheckpoint({
+        chatId: "chat_1",
+        sourceMessageId: "assistant_old",
+        oldVersion: 1,
+        newVersion: 3,
+      }),
+    ).resolves.toEqual({ id: "restored_1" });
+
+    expect(consumeCreditsForGenerationMock).not.toHaveBeenCalled();
+    expect(prismaMock.message.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        role: "assistant",
+        content: expect.stringContaining("restoring version 1"),
+        files: expect.arrayContaining([
+          expect.objectContaining({ path: "App.tsx" }),
+        ]),
+      }),
+    });
+    expect(prismaMock.chat.update).toHaveBeenCalledWith({
+      where: { id: "chat_1" },
+      data: { hasCode: true },
     });
   });
 

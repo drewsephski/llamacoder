@@ -1,4 +1,11 @@
-import { FREE_MODEL, LEGACY_FREE_MODEL } from "@/lib/constants";
+import {
+  FREE_MODEL,
+  LEGACY_MIMO_STARTER_MODEL,
+  LEGACY_SECONDARY_STARTER_MODEL,
+  LEGACY_FREE_MODEL,
+  SAFE_GPT_MODEL,
+  SECONDARY_STARTER_MODEL,
+} from "@/lib/constants";
 
 /**
  * Credit cost per model.
@@ -8,19 +15,45 @@ import { FREE_MODEL, LEGACY_FREE_MODEL } from "@/lib/constants";
 const COST_BAND = {
   // Free control lane: lowest-cost path with strict token constraints.
   free: 1,
+  // Low-cost long-context coding models with strong price/performance.
+  budgetCode: 2,
   // Fast multimodal builder for screenshot-first flows.
   vision: 3,
   // Strong code-specialized lane with competitive premium.
   proCode: 3,
+  // Frontier-class models with lower output pricing than Opus.
+  frontierEfficient: 4,
+  // Frontier coding model priced for higher provider output costs.
+  premiumCode: 6,
 } as const;
 
 export const MODEL_PRICING: Record<string, { cost: number }> = {
   [FREE_MODEL]: { cost: COST_BAND.free },
   [LEGACY_FREE_MODEL]: { cost: COST_BAND.free },
+  [SECONDARY_STARTER_MODEL]: { cost: COST_BAND.free },
+  [LEGACY_SECONDARY_STARTER_MODEL]: { cost: COST_BAND.free },
+  [LEGACY_MIMO_STARTER_MODEL]: { cost: COST_BAND.free },
   // Fast balanced multimodal builder for screenshot-first flows.
   "google/gemini-3-flash-preview": { cost: COST_BAND.vision },
   // Cheaper multimodal code lane with strong coding focus.
   "moonshotai/kimi-k2.7-code": { cost: COST_BAND.proCode },
+  // Strong budget coding options with lower provider output pricing.
+  "deepseek/deepseek-v4-pro": { cost: COST_BAND.budgetCode },
+  // Legacy Grok chats are routed to MiniMax M3 at generation time.
+  "x-ai/grok-4.3": { cost: COST_BAND.budgetCode },
+  "z-ai/glm-5.2": { cost: COST_BAND.budgetCode },
+  "minimax/minimax-m3": { cost: COST_BAND.budgetCode },
+  // Agentic coding model priced close to the existing advanced lane.
+  "qwen/qwen3.7-max": { cost: COST_BAND.proCode },
+  // Frontier-efficient premium models.
+  "anthropic/claude-sonnet-5": { cost: COST_BAND.frontierEfficient },
+  "google/gemini-3.1-pro-preview": { cost: COST_BAND.frontierEfficient },
+  // Strong non-thinking GPT model with 1M context and lower output pricing.
+  [SAFE_GPT_MODEL]: { cost: COST_BAND.frontierEfficient },
+  // Legacy GPT-5 chats are routed to GPT-4.1 at generation time.
+  "openai/gpt-5.5": { cost: COST_BAND.frontierEfficient },
+  // Current Opus coding option for complex multi-file and agentic coding work.
+  "anthropic/claude-opus-4.8": { cost: COST_BAND.premiumCode },
 };
 
 export const FREE_PROJECT_LIMIT = 3;
@@ -40,7 +73,13 @@ export function getModelCreditCost(modelId: string): number {
 export const TIERS = {
   free: {
     monthlyCredits: 5,
-    allowedModels: [FREE_MODEL, LEGACY_FREE_MODEL] as string[] | "all",
+    allowedModels: [
+      FREE_MODEL,
+      LEGACY_FREE_MODEL,
+      SECONDARY_STARTER_MODEL,
+      LEGACY_SECONDARY_STARTER_MODEL,
+      LEGACY_MIMO_STARTER_MODEL,
+    ] as string[] | "all",
     price: 0,
     name: "Free",
   },

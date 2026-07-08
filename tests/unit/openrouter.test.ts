@@ -11,7 +11,10 @@ import {
   getAIErrorMessage,
   getAIErrorStatus,
   getOpenRouterModelRoute,
+  getOpenRouterProviderOptions,
+  requiresOpenRouterReasoning,
 } from "@/lib/openrouter";
+import { SECONDARY_STARTER_MODEL } from "@/lib/constants";
 
 describe("OpenRouter helpers", () => {
   beforeEach(() => {
@@ -39,11 +42,40 @@ describe("OpenRouter helpers", () => {
     getModelWithFallbacksMock.mockReturnValue(["paid/model"]);
     const openrouter = vi.fn();
 
-    createOpenRouterModel(openrouter as never, "paid/model", { maxTokens: 200 });
+    createOpenRouterModel(openrouter as never, "paid/model", {
+      maxTokens: 200,
+    });
 
     expect(openrouter).toHaveBeenCalledWith("paid/model", {
       maxTokens: 200,
       models: undefined,
+    });
+  });
+
+  it("uses normalized routes for removed mandatory-reasoning models", () => {
+    getModelWithFallbacksMock.mockImplementation((model: string) => {
+      if (model === "x-ai/grok-4.3") return ["minimax/minimax-m3"];
+      if (model === "openai/gpt-5.5") return ["openai/gpt-4.1"];
+      return [model];
+    });
+
+    expect(requiresOpenRouterReasoning("x-ai/grok-4.3")).toBe(false);
+    expect(requiresOpenRouterReasoning("openai/gpt-5.5")).toBe(false);
+    expect(getOpenRouterProviderOptions("x-ai/grok-4.3")).toEqual({
+      openrouter: {
+        reasoning: { enabled: false },
+      },
+    });
+  });
+
+  it("keeps reasoning disabled for ordinary models", () => {
+    getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
+
+    expect(requiresOpenRouterReasoning(SECONDARY_STARTER_MODEL)).toBe(false);
+    expect(getOpenRouterProviderOptions(SECONDARY_STARTER_MODEL)).toEqual({
+      openrouter: {
+        reasoning: { enabled: false },
+      },
     });
   });
 

@@ -88,12 +88,13 @@ export function PricingModal({
     }
   };
 
-  const freeModel = MODELS.find((m) => m.free);
+  const starterModels = MODELS.filter((m) => m.group === "free");
   const paidModels = MODELS.filter((m) => m.paid);
+  const premiumModels = MODELS.filter((m) => m.group === "premium");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100svh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-5xl overflow-y-auto overscroll-contain p-4 sm:max-h-[90vh] sm:w-[calc(100vw-2rem)] sm:p-6 lg:overflow-visible">
+      <DialogContent className="max-h-[calc(100svh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-5xl gap-0 overflow-y-auto overscroll-contain p-4 sm:max-h-[calc(100svh-3rem)] sm:w-[calc(100vw-2rem)] sm:p-5">
         <DialogHeader className="text-left">
           <DialogTitle className="flex items-start gap-2 pr-7 text-xl font-bold leading-tight tracking-tight sm:items-center sm:gap-3 sm:pr-0 sm:text-3xl">
             <Crown className="mt-0.5 h-6 w-6 shrink-0 text-amber-500 sm:mt-0 sm:h-7 sm:w-7" />
@@ -107,7 +108,7 @@ export function PricingModal({
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="mt-4 flex gap-1 rounded-xl bg-muted/50 p-1 sm:mt-6 sm:gap-2">
+        <div className="mt-4 flex gap-1 rounded-xl bg-muted/50 p-1 sm:mt-5 sm:gap-2">
           <Button
             onClick={() => setActiveTab("plans")}
             variant={activeTab === "plans" ? "default" : "ghost"}
@@ -125,9 +126,9 @@ export function PricingModal({
         </div>
 
         {activeTab === "plans" ? (
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:mt-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {/* Free Plan */}
-            <div className="flex flex-col rounded-2xl border border-border/50 bg-muted/40 p-4 transition-colors hover:border-border/80 sm:p-6">
+            <div className="flex flex-col rounded-xl border border-border/50 bg-muted/40 p-4 transition-colors hover:border-border/80 sm:p-5">
               <div className="mb-3 flex items-center gap-2.5">
                 <Zap className="h-5 w-5 text-green-500" />
                 <h3 className="text-lg font-semibold">Free</h3>
@@ -135,13 +136,13 @@ export function PricingModal({
               <div className="mb-1 flex items-baseline gap-1">
                 <span className="text-3xl font-bold">$0</span>
               </div>
-              <p className="mb-6 text-sm text-muted-foreground">Forever free</p>
+              <p className="mb-4 text-sm text-muted-foreground">Forever free</p>
 
-              <ul className="mb-5 flex-1 space-y-3 text-sm sm:mb-8">
+              <ul className="mb-5 flex-1 space-y-2.5 text-sm sm:mb-6">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
                   <span className="text-muted-foreground">
-                    {freeModel?.label} model only
+                    {starterModels.length} starter models
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -169,7 +170,7 @@ export function PricingModal({
             </div>
 
             {/* Pro Plan */}
-            <div className="relative flex flex-col rounded-2xl border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent p-4 shadow-lg shadow-blue-500/5 dark:from-blue-950/30 dark:to-transparent sm:p-6">
+            <div className="relative flex flex-col rounded-xl border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent p-4 shadow-lg shadow-blue-500/5 dark:from-blue-950/30 dark:to-transparent sm:p-5">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                   Popular
@@ -183,11 +184,11 @@ export function PricingModal({
                 <span className="text-3xl font-bold">$9</span>
                 <span className="text-sm text-muted-foreground">/mo</span>
               </div>
-              <p className="mb-6 text-sm text-muted-foreground">
+              <p className="mb-4 text-sm text-muted-foreground">
                 100 credits/month
               </p>
 
-              <ul className="mb-5 flex-1 space-y-3 text-sm sm:mb-8">
+              <ul className="mb-5 flex-1 space-y-2.5 text-sm sm:mb-6">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                   <span className="text-muted-foreground">
@@ -240,7 +241,7 @@ export function PricingModal({
             </div>
 
             {/* Pro Plus Plan */}
-            <div className="flex flex-col rounded-2xl border border-border/50 bg-muted/40 p-4 transition-colors hover:border-border/80 sm:p-6">
+            <div className="flex flex-col rounded-xl border border-border/50 bg-muted/40 p-4 transition-colors hover:border-border/80 sm:p-5">
               <div className="mb-3 flex items-center gap-2.5">
                 <Crown className="h-5 w-5 text-amber-500" />
                 <h3 className="text-lg font-semibold">Pro Plus</h3>
@@ -249,11 +250,11 @@ export function PricingModal({
                 <span className="text-3xl font-bold">$29</span>
                 <span className="text-sm text-muted-foreground">/mo</span>
               </div>
-              <p className="mb-6 text-sm text-muted-foreground">
+              <p className="mb-4 text-sm text-muted-foreground">
                 500 credits/month
               </p>
 
-              <ul className="mb-5 flex-1 space-y-3 text-sm sm:mb-8">
+              <ul className="mb-5 flex-1 space-y-2.5 text-sm sm:mb-6">
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   <span className="text-muted-foreground">
@@ -269,7 +270,7 @@ export function PricingModal({
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   <span className="text-muted-foreground">
-                    Early access to new models
+                    {premiumModels.length} premium frontier models
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -302,8 +303,8 @@ export function PricingModal({
             </div>
           </div>
         ) : (
-          <div className="mt-6">
-            <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
+          <div className="mt-5">
+            <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
               Buy credits to use smarter models. Credits never expire.
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -329,7 +330,7 @@ export function PricingModal({
               ].map((pack) => (
                 <div
                   key={pack.key}
-                  className={`flex flex-col rounded-2xl border p-4 transition-colors hover:border-border/80 sm:p-6 ${
+                  className={`flex flex-col rounded-xl border p-4 transition-colors hover:border-border/80 sm:p-5 ${
                     pack.popular
                       ? "border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent shadow-lg shadow-blue-500/5 dark:from-blue-950/30 dark:to-transparent"
                       : "border-border/50 bg-muted/40"
@@ -343,8 +344,8 @@ export function PricingModal({
                   <div className="mb-1 flex items-baseline gap-1">
                     <span className="text-4xl font-bold">{pack.credits}</span>
                   </div>
-                  <p className="mb-6 text-sm text-muted-foreground">credits</p>
-                  <div className="mb-6 flex items-baseline gap-1">
+                  <p className="mb-4 text-sm text-muted-foreground">credits</p>
+                  <div className="mb-5 flex items-baseline gap-1">
                     <span className="text-3xl font-bold">${pack.price}</span>
                   </div>
                   <Button
@@ -361,30 +362,39 @@ export function PricingModal({
                 </div>
               ))}
             </div>
-            <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
-              1 credit = 1 free-model generation. Paid models cost 3 credits.
+            <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+              1 credit = 1 starter-model generation. Advanced models cost 2-3
+              credits; premium models cost 4-6 credits.
             </p>
           </div>
         )}
 
         {/* Model Comparison */}
-        <div className="mt-8 border-t border-border/50 pt-6">
-          <h4 className="mb-4 text-sm font-semibold">Available Models</h4>
-          <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-3">
+        <div className="mt-6 border-t border-border/50 pt-5">
+          <h4 className="mb-3 text-sm font-semibold">Available Models</h4>
+          <div className="grid grid-cols-1 gap-1.5 text-[13px] sm:grid-cols-2 lg:grid-cols-3">
             {MODELS.map((m) => (
               <div
                 key={m.value}
-                className={`flex items-center justify-between rounded-xl p-3 ${
+                className={`flex min-w-0 items-center justify-between gap-3 rounded-lg px-3 py-2.5 ${
                   m.free
                     ? "border border-green-200/50 bg-green-50/50 dark:border-green-900/30 dark:bg-green-950/20"
-                    : "border border-border/50 bg-muted/40"
+                    : m.group === "premium"
+                      ? "border border-amber-300/60 bg-amber-50/60 dark:border-yellow-500/25 dark:bg-yellow-950/20"
+                      : "border border-border/50 bg-muted/40"
                 }`}
               >
-                <span className="flex items-center gap-2 font-medium">
+                <span className="min-w-0 truncate font-medium">
                   {m.label}
                 </span>
                 <span
-                  className={`text-xs font-medium ${m.free ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+                  className={`shrink-0 text-xs font-medium ${
+                    m.free
+                      ? "text-green-600 dark:text-green-400"
+                      : m.group === "premium"
+                        ? "text-amber-600 dark:text-yellow-400"
+                        : "text-muted-foreground"
+                  }`}
                 >
                   {m.free
                     ? `${getModelCreditCost(m.value)} credit`
@@ -395,7 +405,7 @@ export function PricingModal({
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
           Cancel anytime. Credits never expire. Powered by Stripe.
         </p>
       </DialogContent>

@@ -118,6 +118,11 @@ export async function POST(request: NextRequest) {
 
     // Generate code based on the plan
     const codeResponse = await generateCode(chat.plan);
+    const tokensUsed =
+      typeof (codeResponse as { usage?: { totalTokens?: unknown } }).usage
+        ?.totalTokens === "number"
+        ? (codeResponse as { usage: { totalTokens: number } }).usage.totalTokens
+        : undefined;
 
     if (!codeResponse.text.trim()) {
       return NextResponse.json(
@@ -170,7 +175,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (diagnostics.length > 0) {
-      console.warn("Generated code saved with diagnostics:", diagnostics);
+      console.warn("Generated code rejected with diagnostics:", diagnostics);
+      return NextResponse.json(
+        {
+          error: "UNRUNNABLE_GENERATED_CODE",
+          message:
+            "The model returned code with import/export issues that could not be repaired automatically. Please retry generation.",
+          diagnostics,
+        },
+        { status: 502 },
+      );
     }
 
     const message = await prisma.$transaction(async (tx) => {
@@ -197,7 +211,9 @@ export async function POST(request: NextRequest) {
         modelId: chat.model,
         chatId: chat.id,
         description: `Code generation - ${chat.title}`,
+        phase: "initial_generation",
         status: "plan_approved",
+        tokensUsed,
       });
 
       if (!consumeResult.success) {

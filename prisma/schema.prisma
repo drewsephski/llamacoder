@@ -142,18 +142,24 @@ model AnonymousUsage {
 }
 
 model GenerationLog {
-  id          String   @id @default(nanoid(16))
-  userId      String?
-  modelId     String
-  creditsUsed Int
-  tokensUsed  Int?
-  status      String
-  chatId      String?
-  createdAt   DateTime @default(now())
+  id               String   @id @default(nanoid(16))
+  userId           String?
+  modelId          String
+  creditsUsed      Int
+  estimatedCredits Int?
+  actualCredits    Int?
+  refundedCredits  Int      @default(0)
+  tokensUsed       Int?
+  reason           String?
+  phase            String?
+  status           String
+  chatId           String?
+  createdAt        DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([modelId])
   @@index([createdAt])
+  @@index([chatId, createdAt])
 }
 
 model Session {

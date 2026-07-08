@@ -1,6 +1,12 @@
 "use client";
 
-import { createMessage, saveProject } from "@/app/(main)/actions";
+import {
+  createFreeRepairAssistantMessage,
+  createMessage,
+  createPreviewRepairMessage,
+  restoreVersionAsCheckpoint,
+  saveProject,
+} from "@/app/(main)/actions";
 import LogoSmall from "@/components/icons/logo-small";
 import {
   parseReplySegments,
@@ -8,7 +14,6 @@ import {
   extractAllCodeBlocks,
 } from "@/lib/utils";
 import {
-  formatGeneratedFilesMarkdown,
   normalizeGeneratedFiles,
   validateGeneratedFiles,
 } from "@/lib/generated-files";
@@ -61,6 +66,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const router = useRouter();
   const isHandlingStreamRef = useRef(false);
   const handledStreamPromiseRef = useRef<Promise<ReadableStream> | null>(null);
+  const freeRepairRequestIdRef = useRef<string | null>(null);
   const [activeMessage, setActiveMessage] = useState(
     chat.messages
       .filter(
@@ -232,14 +238,23 @@ export default function PageClient({ chat }: { chat: Chat }) {
           );
         }
 
-        const message = await createMessage(
-          chat.id,
-          fullText, // Store original AI response content (only changed files)
-          "assistant",
-          allFiles, // Store cumulative files
-        );
+        const repairMessageId = freeRepairRequestIdRef.current;
+        const message = repairMessageId
+          ? await createFreeRepairAssistantMessage(
+              chat.id,
+              repairMessageId,
+              fullText,
+              allFiles,
+            )
+          : await createMessage(
+              chat.id,
+              fullText, // Store original AI response content (only changed files)
+              "assistant",
+              allFiles, // Store cumulative files
+            );
 
         startTransition(() => {
+          freeRepairRequestIdRef.current = null;
           setStreamText("");
           setStreamPromise(undefined);
           setActiveMessage(message);
@@ -251,6 +266,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
       } catch (error: any) {
         console.error("Stream reading error:", error);
         setStreamPromise(undefined);
+        freeRepairRequestIdRef.current = null;
 
         // Set error state for UI
         setStreamError({
@@ -342,13 +358,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
               onSave={handleSave}
               onRequestFix={(error: string) => {
                 startTransition(async () => {
-                  let newMessageText = `The code is not working. Can you fix it? Here's the error:\n\n`;
-                  newMessageText += error.trimStart();
-                  const message = await createMessage(
+                  const message = await createPreviewRepairMessage(
                     chat.id,
-                    newMessageText,
-                    "user",
+                    error,
                   );
+                  freeRepairRequestIdRef.current = message.id;
 
                   const streamPromise = fetchCompletionStream({
                     messageId: message.id,
@@ -365,27 +379,12 @@ export default function PageClient({ chat }: { chat: Chat }) {
               ) => {
                 startTransition(async () => {
                   if (!message) return;
-
-                  // Helper to get files from a message (JSON field or extract from content)
-                  const getFilesFromMessage = (msg: Message) =>
-                    normalizeGeneratedFiles(
-                      ((msg.files as any[]) || []).length > 0
-                        ? (msg.files as any[])
-                        : extractAllCodeBlocks(msg.content),
-                    );
-
-                  const restoredFiles = getFilesFromMessage(message);
-                  if (restoredFiles.length === 0) return;
-
-                  const explanation = `Version ${newVersion} was created by restoring version ${oldVersion}.`;
-                  const newContent = `${explanation}\n\n${formatGeneratedFilesMarkdown(restoredFiles)}`;
-
-                  const newMessage = await createMessage(
-                    chat.id,
-                    newContent,
-                    "assistant",
-                    restoredFiles,
-                  );
+                  const newMessage = await restoreVersionAsCheckpoint({
+                    chatId: chat.id,
+                    sourceMessageId: message.id,
+                    oldVersion,
+                    newVersion,
+                  });
                   setActiveMessage(newMessage);
                   router.refresh();
                 });

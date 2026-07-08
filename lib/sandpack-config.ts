@@ -60,7 +60,7 @@ export default function App() {
   };
 }
 
-const shadcnFiles = {
+export const shadcnFiles = {
   "/lib/utils.ts": shadcnComponents.utils,
   "/components/ui/accordion.tsx": shadcnComponents.accordian,
   "/components/ui/alert-dialog.tsx": shadcnComponents.alertDialog,
@@ -124,7 +124,7 @@ const shadcnFiles = {
   `,
 };
 
-const dependencies = {
+export const dependencies = {
   "lucide-react": "latest",
   recharts: "2.9.0",
   "react-router-dom": "latest",

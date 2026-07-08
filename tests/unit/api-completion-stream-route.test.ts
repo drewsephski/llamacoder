@@ -35,15 +35,23 @@ vi.mock("@/lib/openrouter", () => ({
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
   getAIErrorStatus: () => 502,
+  getOpenRouterProviderOptions: vi.fn(() => ({
+    openrouter: {
+      reasoning: { enabled: false },
+    },
+  })),
 }));
 
 import { POST } from "@/app/api/get-next-completion-stream-promise/route";
 
 function request(body: unknown) {
-  return new Request("http://localhost/api/get-next-completion-stream-promise", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  return new Request(
+    "http://localhost/api/get-next-completion-stream-promise",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 async function* chunks(parts: string[]) {
@@ -72,7 +80,9 @@ describe("/api/get-next-completion-stream-promise", () => {
 
   it("requires authentication", async () => {
     getSessionMock.mockResolvedValueOnce(null);
-    const response = await POST(request({ messageId: "msg_1", model: "model_1" }));
+    const response = await POST(
+      request({ messageId: "msg_1", model: "model_1" }),
+    );
 
     expect(response.status).toBe(401);
     await expect(response.text()).resolves.toBe("Unauthorized");
@@ -92,7 +102,9 @@ describe("/api/get-next-completion-stream-promise", () => {
       }),
     );
 
-    const response = await POST(request({ messageId: "msg_12", model: "model_1" }));
+    const response = await POST(
+      request({ messageId: "msg_12", model: "model_1" }),
+    );
 
     expect(response.status).toBe(403);
     await expect(response.text()).resolves.toBe("Forbidden");
@@ -112,7 +124,9 @@ describe("/api/get-next-completion-stream-promise", () => {
       }),
     );
 
-    const response = await POST(request({ messageId: "msg_12", model: "wrong-model" }));
+    const response = await POST(
+      request({ messageId: "msg_12", model: "wrong-model" }),
+    );
 
     expect(response.status).toBe(400);
     await expect(response.text()).resolves.toBe("Model mismatch");
@@ -149,7 +163,9 @@ describe("/api/get-next-completion-stream-promise", () => {
       textStream: chunks(["hello", " ", "world"]),
     });
 
-    const response = await POST(request({ messageId: "msg_12", model: "model_1" }));
+    const response = await POST(
+      request({ messageId: "msg_12", model: "model_1" }),
+    );
 
     expect(response.status).toBe(200);
     await expect(collectStream(response)).resolves.toBe("hello world");

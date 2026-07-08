@@ -117,6 +117,14 @@ function Header({ onHelpClick }: HeaderProps) {
               <Link href="/dashboard">Dashboard</Link>
             </Button>
             <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-foreground hover:bg-accent hover:text-white"
+            >
+              <Link href="/dashboard/usage">Usage</Link>
+            </Button>
+            <Button
               onClick={handleSignOut}
               variant="ghost"
               size="sm"
@@ -246,6 +254,14 @@ function Header({ onHelpClick }: HeaderProps) {
                     className="min-h-12 justify-start"
                   >
                     <Link href="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="default"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="min-h-12 justify-start"
+                  >
+                    <Link href="/dashboard/usage">Usage</Link>
                   </Button>
                   <Button
                     onClick={() => {

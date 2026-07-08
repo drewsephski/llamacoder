@@ -25,7 +25,9 @@ import {
   useRef,
   useTransition,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useCallback,
 } from "react";
 
 import { Context } from "./providers";
@@ -78,7 +80,7 @@ const BUILT_WITH_SQUID_PROJECTS = [
     featured: true,
   },
   {
-    name: "portfolios.chat",
+    name: "PortfolioOS",
     href: "https://portfolios.chat",
     description:
       "An AI-native professional identity site where portfolios answer questions in real time.",
@@ -87,7 +89,7 @@ const BUILT_WITH_SQUID_PROJECTS = [
     gradient: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #f8fafc 100%)",
   },
   {
-    name: "slotflow.fit",
+    name: "Slotflow",
     href: "https://slotflow.fit",
     description:
       "A scheduling surface for coordinating group availability without spreadsheet back-and-forth.",
@@ -115,6 +117,15 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
+/** Derives a clean, display-friendly hostname for the browser-chrome mockups. */
+function getDisplayHostname(href: string) {
+  try {
+    return new URL(href).hostname.replace(/^www\./, "");
+  } catch {
+    return href;
+  }
+}
+
 export default function Home() {
   const { setStreamPromise } = use(Context);
   const router = useRouter();
@@ -131,6 +142,8 @@ export default function Home() {
   const [screenshotLoading, setScreenshotLoading] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [isScrapingUrl, setIsScrapingUrl] = useState(false);
+  const [isModelSelectOpen, setIsModelSelectOpen] = useState(false);
+  const modelSelectScrollRef = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -222,27 +235,109 @@ export default function Home() {
     () => MODELS.find((m) => m.value === model),
     [model],
   );
+  const currentModelOption = useMemo(() => {
+    if (selectedModel) return selectedModel;
+
+    const currentModelValue = model.trim();
+    if (!currentModelValue) return null;
+
+    return {
+      label: model.split("/").pop() || model,
+      value: model,
+      paid: true,
+      featured: false,
+      group: "paid" as const,
+      summary: "Previously selected model.",
+    };
+  }, [model, selectedModel]);
+
+  const visibleSelectorModels = useMemo(() => {
+    if (
+      !currentModelOption ||
+      MODELS.some((modelOption) => modelOption.value === model)
+    ) {
+      return MODELS;
+    }
+
+    return [...MODELS, currentModelOption];
+  }, [currentModelOption, model]);
 
   const modelOptionsByGroup = useMemo(
     () => ({
-      free: MODELS.filter((modelOption) => modelOption.group === "free"),
-      paid: MODELS.filter((modelOption) => modelOption.group === "paid"),
+      free: visibleSelectorModels.filter(
+        (modelOption) => modelOption.group === "free",
+      ),
+      paid: visibleSelectorModels.filter(
+        (modelOption) => modelOption.group === "paid",
+      ),
+      premium: visibleSelectorModels.filter(
+        (modelOption) => modelOption.group === "premium",
+      ),
     }),
-    [],
+    [visibleSelectorModels],
   );
 
-  const getCreditBadgeClass = (isFreeModel: boolean) =>
-    isFreeModel
-      ? "text-emerald-500 dark:text-emerald-400"
-      : "text-blue-500 dark:text-blue-400";
+  const getCreditBadgeClass = (group: (typeof MODELS)[number]["group"]) => {
+    if (group === "free") return "text-emerald-500 dark:text-emerald-400";
+    if (group === "premium") return "text-amber-500 dark:text-yellow-400";
+    return "text-blue-500 dark:text-blue-400";
+  };
 
   const qualityOptions = useMemo(
     () => [
-      { value: "low", label: "Faster" },
-      { value: "high", label: "Smarter" },
+      { value: "low", label: "Faster", Icon: LightningBoltIcon },
+      { value: "high", label: "Smarter", Icon: Sparkles },
     ],
     [],
   );
+
+  const restoreModelSelectScroll = useCallback(() => {
+    const { x, y } = modelSelectScrollRef.current;
+    window.scrollTo(x, y);
+    document.documentElement.scrollTop = y;
+    document.body.scrollTop = y;
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isModelSelectOpen) return;
+
+    let secondFrame: number | undefined;
+    const firstFrame = window.requestAnimationFrame(() => {
+      restoreModelSelectScroll();
+      secondFrame = window.requestAnimationFrame(restoreModelSelectScroll);
+    });
+    const interval = window.setInterval(restoreModelSelectScroll, 25);
+    const timeout = window.setTimeout(() => {
+      restoreModelSelectScroll();
+      window.clearInterval(interval);
+    }, 350);
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame !== undefined) {
+        window.cancelAnimationFrame(secondFrame);
+      }
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+    };
+  }, [isModelSelectOpen, restoreModelSelectScroll]);
+
+  const handleModelSelectOpenChange = (open: boolean) => {
+    if (open) {
+      modelSelectScrollRef.current = {
+        x: window.scrollX,
+        y: window.scrollY,
+      };
+    }
+
+    setIsModelSelectOpen(open);
+
+    if (!open) {
+      window.requestAnimationFrame(() => {
+        restoreModelSelectScroll();
+      });
+    }
+  };
 
   const handleScreenshotUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -326,10 +421,12 @@ export default function Home() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap');
 
         .font-display { font-family: 'Instrument Serif', Georgia, serif; }
         .font-sans-dm { font-family: 'DM Sans', system-ui, sans-serif; }
+        .font-mono-jb { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+        body[data-scroll-locked] { margin-right: 0 !important; }
 
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(18px); }
@@ -355,6 +452,15 @@ export default function Home() {
           0%, 100% { border-color: rgba(59,130,246,0.2); }
           50% { border-color: rgba(59,130,246,0.5); }
         }
+        @keyframes livePulse {
+          0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+          70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+        @keyframes meshDrift {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-2%, 2%) scale(1.05); }
+        }
 
         .animate-fade-up { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-fade-up-1 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
@@ -368,7 +474,7 @@ export default function Home() {
             150deg,
             hsl(var(--foreground)) 0%,
             rgba(0, 98, 255, 1) 100%
-          );  
+          );
           background-size: 200% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -575,16 +681,208 @@ export default function Home() {
         .dark .info-pill { color: #0095ff; background: rgba(12,168,255,0.06); }
 
         .pro-badge {
-          padding: 1px 6px;
-          border-radius: 4px;
-          background: rgba(245,158,11,0.12);
-          color: #b45309;
-          font-size: 10px;
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          padding: 1px 5px 1px 3px;
+          border-radius: 5px;
+          background: linear-gradient(120deg, rgba(59,130,246,0.16), rgba(99,102,241,0.16));
+          border: 1px solid rgba(59,130,246,0.25);
+          color: #2563eb;
+          font-size: 9px;
           font-weight: 600;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.03em;
           font-family: 'DM Sans', system-ui, sans-serif;
         }
-        .dark .pro-badge { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .dark .pro-badge { background: linear-gradient(120deg, rgba(59,130,246,0.22), rgba(99,102,241,0.22)); color: #93c5fd; border-color: rgba(59,130,246,0.3); }
+        .premium-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          padding: 1px 5px 1px 3px;
+          border-radius: 5px;
+          background: linear-gradient(120deg, rgba(245,158,11,0.18), rgba(250,204,21,0.18));
+          border: 1px solid rgba(245,158,11,0.32);
+          color: #b45309;
+          font-size: 9px;
+          font-weight: 650;
+          letter-spacing: 0.03em;
+          font-family: 'DM Sans', system-ui, sans-serif;
+        }
+        .dark .premium-badge { background: linear-gradient(120deg, rgba(245,158,11,0.24), rgba(250,204,21,0.18)); color: #facc15; border-color: rgba(250,204,21,0.34); }
+
+        /* ---------- Premium model selector ---------- */
+        .model-trigger {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 8px 4px 7px;
+          border-radius: 9px;
+          border: 1px solid transparent;
+          background: hsl(var(--muted) / 0.45);
+          font-family: 'DM Sans', system-ui, sans-serif;
+          transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+        .model-trigger:hover {
+          background: hsl(var(--muted) / 0.75);
+          border-color: hsl(var(--border) / 0.7);
+        }
+        .model-trigger[data-state="open"] {
+          background: hsl(var(--background));
+          border-color: rgba(59,130,246,0.35);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.07);
+        }
+        .model-status-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #22c55e;
+          box-shadow: 0 0 0 2px rgba(34,197,94,0.18);
+          flex-shrink: 0;
+        }
+        .model-trigger-label {
+          font-size: 11.5px;
+          font-weight: 500;
+          color: hsl(var(--foreground));
+          max-width: 88px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .model-select-content {
+          border-radius: 12px;
+          overflow: hidden;
+          background: hsl(var(--popover));
+          box-shadow: 0 16px 36px -14px rgba(0,0,0,0.28), 0 3px 12px rgba(0,0,0,0.06);
+          border: 1px solid hsl(var(--border) / 0.6);
+          transform-origin: var(--radix-select-content-transform-origin);
+          animation: selectContentIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: transform, opacity;
+        }
+        .model-select-content[data-state="closed"] {
+          animation: selectContentOut 0.12s ease-in;
+        }
+        .model-select-header {
+          padding: 8px 10px 7px;
+          border-bottom: 1px solid hsl(var(--border) / 0.5);
+          background: linear-gradient(180deg, rgba(59,130,246,0.05), transparent);
+        }
+        .model-select-header-title {
+          font-family: 'DM Sans', system-ui, sans-serif;
+          font-size: 11.5px;
+          font-weight: 600;
+          color: hsl(var(--foreground));
+        }
+        .model-select-header-sub {
+          font-family: 'DM Sans', system-ui, sans-serif;
+          font-size: 9.5px;
+          color: hsl(var(--muted-foreground));
+          margin-top: 0;
+        }
+
+        .model-item {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 6px 8px 6px 7px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 12px;
+          line-height: 1.2;
+          transition: background 0.14s ease;
+        }
+        .model-item[data-highlighted] {
+          background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(99,102,241,0.03));
+          outline: none;
+        }
+
+        @keyframes selectContentIn {
+          from { opacity: 0; transform: translateY(4px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes selectContentOut {
+          from { opacity: 1; transform: translateY(0) scale(1); }
+          to { opacity: 0; transform: translateY(4px) scale(0.98); }
+        }
+        .model-item[data-disabled] {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+        .model-item-tier-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        .model-item-tier-dot.is-free {
+          background: #22c55e;
+          box-shadow: 0 0 0 2px rgba(34,197,94,0.14);
+        }
+        .model-item-tier-dot.is-pro {
+          background: linear-gradient(135deg, #3b82f6, #6366f1);
+          box-shadow: 0 0 0 2px rgba(59,130,246,0.14);
+        }
+        .model-item-tier-dot.is-premium {
+          background: linear-gradient(135deg, #f59e0b, #facc15);
+          box-shadow: 0 0 0 2px rgba(245,158,11,0.18);
+        }
+        .model-credit-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          padding: 1px 5px;
+          border-radius: 99px;
+          font-size: 9.5px;
+          font-weight: 600;
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          background: hsl(var(--muted) / 0.6);
+        }
+
+        /* ---------- Quality segmented toggle ---------- */
+        .quality-toggle {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          padding: 2px;
+          border-radius: 10px;
+          background: hsl(var(--muted) / 0.5);
+          gap: 2px;
+        }
+        .quality-toggle-thumb {
+          position: absolute;
+          top: 2px;
+          bottom: 2px;
+          border-radius: 8px;
+          background: hsl(var(--background));
+          box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px hsl(var(--border) / 0.6);
+          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .quality-toggle-option {
+          position: relative;
+          z-index: 1;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 5px 10px;
+          border-radius: 8px;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          font-size: 12.5px;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+          color: hsl(var(--muted-foreground));
+          cursor: pointer;
+          transition: color 0.2s ease;
+          background: transparent;
+          border: none;
+          white-space: nowrap;
+        }
+        .quality-toggle-option.is-active {
+          color: hsl(var(--foreground));
+        }
 
         @media (max-width: 639px) {
           .select-trigger-custom {
@@ -601,6 +899,123 @@ export default function Home() {
             min-height: 42px;
             min-width: 104px;
           }
+
+          .model-trigger-label { max-width: 76px; }
+        }
+
+        /* ---------- Built with Squid showcase ---------- */
+        .showcase-panel {
+          position: relative;
+          border-radius: 28px;
+          border: 1px solid hsl(var(--border) / 0.6);
+          background: linear-gradient(180deg, hsl(var(--muted) / 0.35), hsl(var(--background)));
+          overflow: hidden;
+        }
+        .showcase-panel::before {
+          content: '';
+          position: absolute;
+          top: -30%;
+          right: -10%;
+          width: 60%;
+          height: 70%;
+          background: radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%);
+          animation: meshDrift 14s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .showcase-panel::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
+          background-size: 42px 42px;
+          -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
+          pointer-events: none;
+          opacity: 0.6;
+        }
+
+        .live-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px 4px 8px;
+          border-radius: 99px;
+          border: 1px solid hsl(var(--border) / 0.6);
+          background: hsl(var(--background) / 0.8);
+          backdrop-filter: blur(6px);
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 10.5px;
+          font-weight: 500;
+          letter-spacing: 0.04em;
+          color: hsl(var(--muted-foreground));
+        }
+        .live-badge-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #22c55e;
+          animation: livePulse 2s infinite;
+        }
+
+        .browser-window {
+          position: relative;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1px solid hsl(var(--border) / 0.7);
+          background: hsl(var(--card));
+          box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+          transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease;
+        }
+        .browser-window:hover {
+          transform: translateY(-4px);
+          border-color: rgba(59,130,246,0.4);
+          box-shadow: 0 24px 48px -18px rgba(0,0,0,0.28), 0 0 0 1px rgba(59,130,246,0.12);
+        }
+        .browser-chrome {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 9px 12px;
+          background: hsl(var(--muted) / 0.55);
+          border-bottom: 1px solid hsl(var(--border) / 0.6);
+        }
+        .browser-dots {
+          display: flex;
+          gap: 5px;
+          flex-shrink: 0;
+        }
+        .browser-dots span {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: hsl(var(--muted-foreground) / 0.25);
+        }
+        .browser-url-bar {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 3px 10px;
+          border-radius: 6px;
+          background: hsl(var(--background) / 0.8);
+          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-size: 10.5px;
+          color: hsl(var(--muted-foreground));
+          min-width: 0;
+        }
+        .browser-url-bar span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .browser-url-lock {
+          width: 7px;
+          height: 7px;
+          border-radius: 2px;
+          border: 1.2px solid hsl(var(--muted-foreground) / 0.5);
+          flex-shrink: 0;
         }
       `}</style>
 
@@ -810,21 +1225,35 @@ export default function Home() {
                     {/* Toolbar */}
                     <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
                       {/* Left controls */}
-                      <div className="flex min-w-0 items-center gap-1">
-                        {/* Model selector */}
+                      <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+                        {/* Model selector — premium trigger */}
                         <Select.Root
                           name="model"
+                          open={isModelSelectOpen}
                           value={model}
+                          onOpenChange={handleModelSelectOpenChange}
                           onValueChange={handleModelChange}
                         >
-                          <Select.Trigger className="select-trigger-custom max-w-[120px] sm:max-w-none">
+                          <Select.Trigger className="model-trigger">
+                            <span className="model-status-dot" />
                             <Select.Value aria-label={model}>
                               <span className="flex min-w-0 items-center gap-1.5">
-                                <span className="truncate">
-                                  {selectedModel?.label}
+                                <span className="model-trigger-label">
+                                  {currentModelOption?.label ?? "Select model"}
                                 </span>
-                                {selectedModel?.paid && (
-                                  <span className="pro-badge">PRO</span>
+                                {currentModelOption?.paid && (
+                                  <span
+                                    className={
+                                      currentModelOption.group === "premium"
+                                        ? "premium-badge"
+                                        : "pro-badge"
+                                    }
+                                  >
+                                    <Sparkles className="size-2.5" />
+                                    {currentModelOption.group === "premium"
+                                      ? "PREMIUM"
+                                      : "PRO"}
+                                  </span>
                                 )}
                               </span>
                             </Select.Value>
@@ -833,8 +1262,23 @@ export default function Home() {
                             </Select.Icon>
                           </Select.Trigger>
                           <Select.Portal>
-                            <Select.Content className="max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover sm:min-w-[240px]">
-                              <Select.Viewport className="p-1.5">
+                            <Select.Content
+                              position="popper"
+                              side="top"
+                              align="start"
+                              sideOffset={8}
+                              collisionPadding={12}
+                              className="model-select-content max-w-[calc(100vw-1.5rem)] sm:min-w-[226px]"
+                            >
+                              <div className="model-select-header">
+                                <div className="model-select-header-title">
+                                  Choose a model
+                                </div>
+                                <div className="model-select-header-sub">
+                                  Swap any time — cost updates instantly
+                                </div>
+                              </div>
+                              <Select.Viewport className="p-1">
                                 {[
                                   ...(modelOptionsByGroup.free.length > 0
                                     ? [
@@ -852,9 +1296,17 @@ export default function Home() {
                                         },
                                       ]
                                     : []),
+                                  ...(modelOptionsByGroup.premium.length > 0
+                                    ? [
+                                        {
+                                          label: "Premium Models",
+                                          models: modelOptionsByGroup.premium,
+                                        },
+                                      ]
+                                    : []),
                                 ].map((group) => (
                                   <Select.Group key={group.label}>
-                                    <Select.Label className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
+                                    <Select.Label className="px-2 pb-0.5 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
                                       {group.label}
                                     </Select.Label>
                                     {group.models.map((m) => {
@@ -864,7 +1316,13 @@ export default function Home() {
                                         m.value,
                                       );
                                       const creditBadgeClass =
-                                        getCreditBadgeClass(Boolean(m.free));
+                                        getCreditBadgeClass(m.group);
+                                      const tierDotClass =
+                                        m.group === "premium"
+                                          ? "is-premium"
+                                          : m.group === "free"
+                                            ? "is-free"
+                                            : "is-pro";
 
                                       return (
                                         <Select.Item
@@ -875,9 +1333,13 @@ export default function Home() {
                                             if (isLocked)
                                               setShowPricingModal(true);
                                           }}
-                                          className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? "opacity-50" : ""}`}
+                                          onFocus={restoreModelSelectScroll}
+                                          className={`model-item ${isLocked ? "opacity-50" : ""}`}
                                         >
-                                          <div className="flex items-center gap-2">
+                                          <div className="flex min-w-0 items-center gap-2">
+                                            <span
+                                              className={`model-item-tier-dot ${tierDotClass}`}
+                                            />
                                             <Select.ItemText
                                               className={
                                                 m.free
@@ -888,18 +1350,27 @@ export default function Home() {
                                               {m.label}
                                             </Select.ItemText>
                                             {isLocked && (
-                                              <span className="pro-badge">
-                                                PRO
+                                              <span
+                                                className={
+                                                  m.group === "premium"
+                                                    ? "premium-badge"
+                                                    : "pro-badge"
+                                                }
+                                              >
+                                                <Sparkles className="size-2" />
+                                                {m.group === "premium"
+                                                  ? "PREMIUM"
+                                                  : "PRO"}
                                               </span>
                                             )}
                                           </div>
-                                          <div className="flex items-center gap-2">
+                                          <div className="flex flex-shrink-0 items-center gap-2">
                                             <span
-                                              className={`inline-flex items-center gap-1 text-[11px] font-medium tabular-nums ${creditBadgeClass}`}
+                                              className={`model-credit-pill ${creditBadgeClass}`}
                                             >
-                                              {creditCost}{" "}
+                                              {creditCost}
                                               <Coins
-                                                className={`size-3 ${creditBadgeClass}`}
+                                                className={`size-2 ${creditBadgeClass}`}
                                               />
                                             </span>
                                             <Select.ItemIndicator>
@@ -919,55 +1390,36 @@ export default function Home() {
 
                         <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
-                        {/* Quality selector */}
-                        <Select.Root
-                          name="quality"
-                          value={quality}
-                          onValueChange={setQuality}
-                        >
-                          <Select.Trigger className="select-trigger-custom">
-                            <Select.Value aria-label={quality}>
-                              <span className="max-sm:hidden">
-                                {quality === "low" ? (
-                                  <span className="flex items-center gap-1.5">
-                                    <LightningBoltIcon className="size-3 text-amber-500" />
-                                    Faster
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center gap-1.5">
-                                    <Sparkles className="size-3 text-blue-500" />
-                                    Smarter
-                                  </span>
-                                )}
-                              </span>
-                              <span className="sm:hidden">
-                                <LightningBoltIcon className="size-3.5" />
-                              </span>
-                            </Select.Value>
-                            <Select.Icon>
-                              <ChevronDownIcon className="size-3 opacity-50" />
-                            </Select.Icon>
-                          </Select.Trigger>
-                          <Select.Portal>
-                            <Select.Content className="overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover">
-                              <Select.Viewport className="p-1.5">
-                                {qualityOptions.map((q) => (
-                                  <Select.Item
-                                    key={q.value}
-                                    value={q.value}
-                                    className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
-                                  >
-                                    <Select.ItemText>{q.label}</Select.ItemText>
-                                    <Select.ItemIndicator>
-                                      <CheckIcon className="size-3.5 text-primary" />
-                                    </Select.ItemIndicator>
-                                  </Select.Item>
-                                ))}
-                              </Select.Viewport>
-                              <Select.Arrow />
-                            </Select.Content>
-                          </Select.Portal>
-                        </Select.Root>
+                        {/* Quality — segmented toggle */}
+                        <input type="hidden" name="quality" value={quality} />
+                        <div className="quality-toggle">
+                          <div
+                            className="quality-toggle-thumb"
+                            style={{
+                              left: quality === "low" ? 2 : "50%",
+                              width: "calc(50% - 2px)",
+                            }}
+                          />
+                          {qualityOptions.map((q) => (
+                            <button
+                              key={q.value}
+                              type="button"
+                              onClick={() => setQuality(q.value)}
+                              className={`quality-toggle-option ${quality === q.value ? "is-active" : ""}`}
+                            >
+                              <q.Icon
+                                className={`size-3 ${
+                                  quality === q.value
+                                    ? q.value === "low"
+                                      ? "text-amber-500"
+                                      : "text-blue-500"
+                                    : ""
+                                }`}
+                              />
+                              <span className="max-sm:hidden">{q.label}</span>
+                            </button>
+                          ))}
+                        </div>
 
                         <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
@@ -1161,29 +1613,43 @@ function BuiltWithSquidSection() {
       id="built-with-squid"
       className="relative z-10 w-full px-4 pb-14 pt-4 sm:px-6 sm:pb-20 sm:pt-8"
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-7">
-        <div className="grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-end">
+      <div className="showcase-panel mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 py-10 sm:px-9 sm:py-14">
+        <div className="relative grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-end">
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-blue-500/80">
-              Built with Squid
-            </p>
-            <h2 className="mt-3 max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl">
+            <div className="live-badge">
+              <span className="live-badge-dot" />
+              LIVE ON SQUID
+            </div>
+            <h2 className="mt-4 max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl">
               Real projects shipped from prompts.
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
             A small showcase of sites and tools built with Squid, from polished
-            agency pages to AI-native portfolio and coordination products.
+            agency pages to AI-native portfolio and coordination products —
+            every window below is a real, deployed app.
           </p>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+        <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
           <a
             href={featuredProject.href}
             target="_blank"
             rel="noreferrer"
-            className="group overflow-hidden rounded-lg border border-border/70 bg-background/70 shadow-sm shadow-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 dark:bg-card/70"
+            className="browser-window group flex flex-col"
           >
+            <div className="browser-chrome">
+              <div className="browser-dots">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="browser-url-bar">
+                <span className="browser-url-lock" />
+                <span>{getDisplayHostname(featuredProject.href)}</span>
+              </div>
+              <ExternalLink className="size-3.5 flex-shrink-0 text-muted-foreground/60 transition-colors group-hover:text-blue-500" />
+            </div>
             <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
               <Image
                 src={featuredProject.imageSrc}
@@ -1192,12 +1658,12 @@ function BuiltWithSquidSection() {
                 loading="eager"
                 unoptimized
                 sizes="(min-width: 1024px) 62rem, 100vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+                className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.015]"
               />
             </div>
             <div className="flex flex-col gap-5 border-t border-border/70 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
               <div className="min-w-0">
-                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="font-mono-jb text-[10.5px] uppercase tracking-[0.14em] text-blue-500/80">
                   {featuredProject.category}
                 </p>
                 <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
@@ -1209,20 +1675,31 @@ function BuiltWithSquidSection() {
               </div>
               <span className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-blue-500">
                 View project
-                <ExternalLink className="size-4" />
+                <ExternalLink className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </span>
             </div>
           </a>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
             {galleryProjects.map((project) => (
               <a
                 key={project.href}
                 href={project.href}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex min-h-[220px] flex-col overflow-hidden rounded-lg border border-border/70 bg-background/70 shadow-sm shadow-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/10 dark:bg-card/70"
+                className="browser-window group flex min-h-[240px] flex-col"
               >
+                <div className="browser-chrome">
+                  <div className="browser-dots">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div className="browser-url-bar">
+                    <span className="browser-url-lock" />
+                    <span>{getDisplayHostname(project.href)}</span>
+                  </div>
+                </div>
                 <div
                   className="relative flex min-h-28 flex-1 items-end overflow-hidden p-4"
                   style={{
@@ -1238,7 +1715,7 @@ function BuiltWithSquidSection() {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    <p className="font-mono-jb text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       {project.category}
                     </p>
                     <ExternalLink className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-blue-500" />

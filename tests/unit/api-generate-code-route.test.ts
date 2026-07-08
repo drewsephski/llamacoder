@@ -80,6 +80,20 @@ const completeGeneratedApp = [
   "```",
 ].join("\n");
 
+const invalidImportGeneratedApp = [
+  "```tsx{path=App.tsx}",
+  'import { Footer } from "./components/Footer";',
+  'import Header from "./components/Header";',
+  "export default function App() { return <><Header /><Footer /></>; }",
+  "```",
+  "```tsx{path=components/Header.tsx}",
+  "export function Header() { return <header />; }",
+  "```",
+  "```tsx{path=components/Footer.tsx}",
+  "export default function Footer() { return <footer />; }",
+  "```",
+].join("\n");
+
 describe("/api/generate-code", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -154,8 +168,61 @@ describe("/api/generate-code", () => {
       modelId: FREE_MODEL,
       chatId: "chat_1",
       description: "Code generation - Calculator",
+      phase: "initial_generation",
       status: "plan_approved",
+      tokensUsed: undefined,
     });
+  });
+
+  it("repairs import/export mismatches before persisting generated files", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat());
+    generateTextMock
+      .mockResolvedValueOnce({ text: invalidImportGeneratedApp })
+      .mockResolvedValueOnce({ text: completeGeneratedApp });
+
+    const response = await POST(request({ chatId: "chat_1" }));
+
+    expect(response.status).toBe(200);
+    expect(generateTextMock).toHaveBeenCalledTimes(2);
+    expect(generateTextMock.mock.calls[1][0].messages[1].content).toContain(
+      'Named import "Footer" from "./components/Footer" is invalid',
+    );
+    expect(txMock.message.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        role: "assistant",
+        files: expect.arrayContaining([
+          expect.objectContaining({
+            path: "App.tsx",
+            code: expect.stringContaining(
+              'import { Footer } from "./components/Footer";',
+            ),
+          }),
+        ]),
+      }),
+    });
+  });
+
+  it("rejects unrepairable generated files before charging credits", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat());
+    generateTextMock
+      .mockResolvedValueOnce({ text: invalidImportGeneratedApp })
+      .mockResolvedValueOnce({ text: invalidImportGeneratedApp });
+
+    const response = await POST(request({ chatId: "chat_1" }));
+
+    expect(response.status).toBe(502);
+    await expect(readJson(response)).resolves.toMatchObject({
+      error: "UNRUNNABLE_GENERATED_CODE",
+      diagnostics: expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining('Named import "Footer"'),
+        }),
+      ]),
+    });
+    expect(txMock.message.create).not.toHaveBeenCalled();
+    expect(consumeCreditsForGenerationMock).not.toHaveBeenCalled();
   });
 
   it("returns a payment error if credits disappear before transaction commit", async () => {
