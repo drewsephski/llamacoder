@@ -13,6 +13,7 @@ import { useUserCredits, useUserSession } from "@/lib/queries";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchCompletionStream } from "@/lib/completion-stream";
 import { getModelCreditCost } from "@/lib/billing";
+import { GenerationLoader } from "@/components/generation-loader";
 
 interface ChatBoxProps {
   chat: {
@@ -227,14 +228,6 @@ export default function ChatBox({
           box-shadow: 0 0 4px rgba(34,197,94,0.6);
         }
 
-        .animate-bounce-subtle {
-          animation: bounceSubtle 2s ease-in-out infinite;
-        }
-
-        @keyframes bounceSubtle {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-4px); }
-        }
       `}</style>
 
       <div className="chatbox-wrap mx-auto mb-4 flex w-full max-w-4xl shrink-0 flex-col px-4 sm:px-6">
@@ -333,23 +326,15 @@ export default function ChatBox({
 
               {/* Loading overlay */}
               {disabled && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[18px] bg-background dark:bg-card">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="relative flex h-16 w-16 items-center justify-center">
-                      <div className="absolute inset-0 animate-pulse rounded-2xl bg-blue-500/10 ring-1 ring-blue-500/20" />
-                      <img
-                        src="/squidagent-logo.svg"
-                        alt="Squid Agent"
-                        className="animate-bounce-subtle h-10 w-auto"
-                      />
-                      <div className="absolute -bottom-1 -right-1">
-                        <Spinner className="size-4 text-blue-500" />
-                      </div>
-                    </div>
-                    <p className="text-center text-[15px] font-semibold text-foreground">
-                      Generating response…
-                    </p>
-                  </div>
+                <div className="absolute inset-0 z-20 flex items-center justify-center overflow-hidden rounded-[18px] bg-background/95 px-4 py-3 backdrop-blur-md dark:bg-card/95">
+                  <GenerationLoader
+                    variant="compact"
+                    label={
+                      isCheckingCredits
+                        ? "Checking credits"
+                        : "Generating response"
+                    }
+                  />
                 </div>
               )}
             </div>

@@ -161,5 +161,7 @@ export const dependencies = {
   "tailwind-merge": "^2.4.0",
   "tailwindcss-animate": "^1.0.7",
   "framer-motion": "^11.15.0",
+  "react-dnd": "latest",
+  "react-dnd-html5-backend": "latest",
   vaul: "^0.9.1",
 };
