@@ -1,4 +1,5 @@
-export const FREE_MODEL = "tencent/hy3-preview:free";
+export const FREE_MODEL = "deepseek/deepseek-v4-flash";
+export const LEGACY_FREE_MODEL = "tencent/hy3-preview:free";
 
 type ModelOption = {
   label: string;
@@ -13,44 +14,20 @@ type ModelOption = {
 
 export const MODELS: ModelOption[] = [
   {
-    label: "Starter (Free)",
+    label: "DeepSeek V4 Flash",
     value: FREE_MODEL,
     free: true,
     group: "free",
   },
   {
-    label: "Starter",
-    value: "deepseek/deepseek-v4-flash",
-    paid: true,
-    group: "paid",
-  },
-  {
-    label: "Fast Builder",
+    label: "Gemini 3 Flash Preview",
     value: "google/gemini-3-flash-preview",
     paid: true,
     group: "paid",
   },
   {
-    label: "Pro Builder",
+    label: "Kimi K2.7 Code",
     value: "moonshotai/kimi-k2.7-code",
-    paid: true,
-    group: "paid",
-  },
-  {
-    label: "Advanced Reasoning",
-    value: "z-ai/glm-5.2",
-    paid: true,
-    group: "paid",
-  },
-  {
-    label: "Creative Builder",
-    value: "google/gemini-3.1-flash-lite",
-    paid: true,
-    group: "paid",
-  },
-  {
-    label: "Expert Builder",
-    value: "anthropic/claude-opus-4.6",
     paid: true,
     group: "paid",
   },

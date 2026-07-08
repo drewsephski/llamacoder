@@ -37,7 +37,9 @@ describe("billing credit engine", () => {
       checkCreditAvailability({ userId: "missing", modelId: FREE_MODEL }),
     ).resolves.toEqual({ success: false, error: "USER_NOT_FOUND" });
 
-    prismaMock.user.findUnique.mockResolvedValueOnce(buildUser({ credits: 10 }));
+    prismaMock.user.findUnique.mockResolvedValueOnce(
+      buildUser({ credits: 10 }),
+    );
     await expect(
       checkCreditAvailability({ userId: "user_1", modelId: "openai/gpt-5.4" }),
     ).resolves.toEqual({ success: false, error: "FORBIDDEN_MODEL" });
@@ -59,11 +61,11 @@ describe("billing credit engine", () => {
     await expect(
       checkCreditAvailability({
         userId: "user_1",
-        modelId: "anthropic/claude-opus-4.6",
+        modelId: "moonshotai/kimi-k2.7-code",
       }),
     ).resolves.toMatchObject({
       success: true,
-      creditsUsed: 7,
+      creditsUsed: 3,
       remainingCredits: 7,
     });
   });

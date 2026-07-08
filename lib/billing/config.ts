@@ -1,4 +1,4 @@
-import { FREE_MODEL } from "@/lib/constants";
+import { FREE_MODEL, LEGACY_FREE_MODEL } from "@/lib/constants";
 
 /**
  * Credit cost per model.
@@ -8,33 +8,19 @@ import { FREE_MODEL } from "@/lib/constants";
 const COST_BAND = {
   // Free control lane: lowest-cost path with strict token constraints.
   free: 1,
-  // Fast defaults for routine coding prompts.
-  starter: 2,
-  // Vision-assisted coding lanes with higher token/value tradeoff.
+  // Fast multimodal builder for screenshot-first flows.
   vision: 3,
   // Strong code-specialized lane with competitive premium.
   proCode: 3,
-  // Creative/visual exploration lane; lower cost to run broadly.
-  creative: 2,
-  // Higher-compute reasoning and architecture support.
-  advanced: 5,
-  // Premium rescue lane for hardest tasks.
-  expert: 7,
 } as const;
 
 export const MODEL_PRICING: Record<string, { cost: number }> = {
-  [FREE_MODEL]: { cost: 1 },
-  "deepseek/deepseek-v4-flash": { cost: COST_BAND.starter },
+  [FREE_MODEL]: { cost: COST_BAND.free },
+  [LEGACY_FREE_MODEL]: { cost: COST_BAND.free },
   // Fast balanced multimodal builder for screenshot-first flows.
   "google/gemini-3-flash-preview": { cost: COST_BAND.vision },
   // Cheaper multimodal code lane with strong coding focus.
   "moonshotai/kimi-k2.7-code": { cost: COST_BAND.proCode },
-  // Lowest-cost broad multimodal tier for iterations and variants.
-  "google/gemini-3.1-flash-lite": { cost: COST_BAND.creative },
-  // High-context reasoning for architecture and complex edits.
-  "z-ai/glm-5.2": { cost: COST_BAND.advanced },
-  // Reserved for the hardest one-off refactors and rescue runs.
-  "anthropic/claude-opus-4.6": { cost: COST_BAND.expert },
 };
 
 export const FREE_PROJECT_LIMIT = 3;
@@ -54,7 +40,7 @@ export function getModelCreditCost(modelId: string): number {
 export const TIERS = {
   free: {
     monthlyCredits: 5,
-    allowedModels: [FREE_MODEL] as string[] | "all",
+    allowedModels: [FREE_MODEL, LEGACY_FREE_MODEL] as string[] | "all",
     price: 0,
     name: "Free",
   },

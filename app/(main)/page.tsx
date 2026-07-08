@@ -12,6 +12,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   Coins,
+  ExternalLink,
   Info,
   Link2,
   Sparkles,
@@ -52,6 +53,49 @@ const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/webp",
 ]);
 const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
+
+type BuiltWithSquidProject = {
+  name: string;
+  href: string;
+  description: string;
+  category: string;
+  featured?: boolean;
+  imageSrc?: string;
+  imageAlt?: string;
+  preview?: string;
+  gradient?: string;
+};
+
+const BUILT_WITH_SQUID_PROJECTS = [
+  {
+    name: "Phoenix Design Lab",
+    href: "https://phoenixdev.agency/demo",
+    description:
+      "A cinematic agency landing page with a red editorial art direction and bold one-screen positioning.",
+    category: "Design agency",
+    imageSrc: "/showcase/phoenix-design-lab.webp",
+    imageAlt: "Phoenix Design Lab homepage generated with Squid",
+    featured: true,
+  },
+  {
+    name: "portfolios.chat",
+    href: "https://portfolios.chat",
+    description:
+      "An AI-native professional identity site where portfolios answer questions in real time.",
+    category: "AI portfolio builder",
+    preview: "Conversational identity",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #f8fafc 100%)",
+  },
+  {
+    name: "slotflow.fit",
+    href: "https://slotflow.fit",
+    description:
+      "A scheduling surface for coordinating group availability without spreadsheet back-and-forth.",
+    category: "Event coordination",
+    preview: "Effortless coordination",
+    gradient: "linear-gradient(135deg, #062f2f 0%, #14b8a6 50%, #f7fee7 100%)",
+  },
+] satisfies readonly BuiltWithSquidProject[];
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -178,6 +222,19 @@ export default function Home() {
     () => MODELS.find((m) => m.value === model),
     [model],
   );
+
+  const modelOptionsByGroup = useMemo(
+    () => ({
+      free: MODELS.filter((modelOption) => modelOption.group === "free"),
+      paid: MODELS.filter((modelOption) => modelOption.group === "paid"),
+    }),
+    [],
+  );
+
+  const getCreditBadgeClass = (isFreeModel: boolean) =>
+    isFreeModel
+      ? "text-emerald-500 dark:text-emerald-400"
+      : "text-blue-500 dark:text-blue-400";
 
   const qualityOptions = useMemo(
     () => [
@@ -778,55 +835,82 @@ export default function Home() {
                           <Select.Portal>
                             <Select.Content className="max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl bg-popover shadow-xl ring-1 ring-border/60 dark:bg-popover sm:min-w-[240px]">
                               <Select.Viewport className="p-1.5">
-                                {MODELS.map((m) => {
-                                  const isLocked = m.paid && !canUsePaidModels;
-                                  const creditCost = getModelCreditCost(
-                                    m.value,
-                                  );
-                                  return (
-                                    <Select.Item
-                                      key={m.value}
-                                      value={m.value}
-                                      disabled={isLocked}
-                                      onClick={() => {
-                                        if (isLocked) setShowPricingModal(true);
-                                      }}
-                                      className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? "opacity-50" : ""}`}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <Select.ItemText
-                                          className={
-                                            m.free
-                                              ? "font-medium text-emerald-600 dark:text-emerald-400"
-                                              : "text-foreground"
-                                          }
+                                {[
+                                  ...(modelOptionsByGroup.free.length > 0
+                                    ? [
+                                        {
+                                          label: "Starter Models",
+                                          models: modelOptionsByGroup.free,
+                                        },
+                                      ]
+                                    : []),
+                                  ...(modelOptionsByGroup.paid.length > 0
+                                    ? [
+                                        {
+                                          label: "Advanced Models",
+                                          models: modelOptionsByGroup.paid,
+                                        },
+                                      ]
+                                    : []),
+                                ].map((group) => (
+                                  <Select.Group key={group.label}>
+                                    <Select.Label className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
+                                      {group.label}
+                                    </Select.Label>
+                                    {group.models.map((m) => {
+                                      const isLocked =
+                                        m.paid && !canUsePaidModels;
+                                      const creditCost = getModelCreditCost(
+                                        m.value,
+                                      );
+                                      const creditBadgeClass =
+                                        getCreditBadgeClass(Boolean(m.free));
+
+                                      return (
+                                        <Select.Item
+                                          key={m.value}
+                                          value={m.value}
+                                          disabled={isLocked}
+                                          onClick={() => {
+                                            if (isLocked)
+                                              setShowPricingModal(true);
+                                          }}
+                                          className={`flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isLocked ? "opacity-50" : ""}`}
                                         >
-                                          {m.label}
-                                        </Select.ItemText>
-                                        {isLocked && (
-                                          <span className="pro-badge">PRO</span>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <span
-                                          className={`inline-flex items-center gap-1 text-[11px] font-medium tabular-nums ${
-                                            m.free
-                                              ? "text-emerald-500 dark:text-emerald-400"
-                                              : creditCost >= 6
-                                                ? "text-amber-500 dark:text-amber-400"
-                                                : "text-muted-foreground/70"
-                                          }`}
-                                        >
-                                          {creditCost}{" "}
-                                          <Coins className="size-3" />
-                                        </span>
-                                        <Select.ItemIndicator>
-                                          <CheckIcon className="size-3.5 text-primary" />
-                                        </Select.ItemIndicator>
-                                      </div>
-                                    </Select.Item>
-                                  );
-                                })}
+                                          <div className="flex items-center gap-2">
+                                            <Select.ItemText
+                                              className={
+                                                m.free
+                                                  ? "font-medium text-emerald-600 dark:text-emerald-400"
+                                                  : "text-foreground"
+                                              }
+                                            >
+                                              {m.label}
+                                            </Select.ItemText>
+                                            {isLocked && (
+                                              <span className="pro-badge">
+                                                PRO
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span
+                                              className={`inline-flex items-center gap-1 text-[11px] font-medium tabular-nums ${creditBadgeClass}`}
+                                            >
+                                              {creditCost}{" "}
+                                              <Coins
+                                                className={`size-3 ${creditBadgeClass}`}
+                                              />
+                                            </span>
+                                            <Select.ItemIndicator>
+                                              <CheckIcon className="size-3.5 text-primary" />
+                                            </Select.ItemIndicator>
+                                          </div>
+                                        </Select.Item>
+                                      );
+                                    })}
+                                  </Select.Group>
+                                ))}
                               </Select.Viewport>
                               <Select.Arrow />
                             </Select.Content>
@@ -1035,6 +1119,7 @@ export default function Home() {
             </form>
           </div>
 
+          <BuiltWithSquidSection />
           <HoverBrandLogo />
           <Footer />
         </div>
@@ -1058,6 +1143,119 @@ export default function Home() {
         />
       </div>
     </>
+  );
+}
+
+function BuiltWithSquidSection() {
+  const featuredProject = BUILT_WITH_SQUID_PROJECTS.find(
+    (project) => project.featured,
+  );
+  const galleryProjects = BUILT_WITH_SQUID_PROJECTS.filter(
+    (project) => !project.featured,
+  );
+
+  if (!featuredProject?.imageSrc || !featuredProject.imageAlt) return null;
+
+  return (
+    <section
+      id="built-with-squid"
+      className="relative z-10 w-full px-4 pb-14 pt-4 sm:px-6 sm:pb-20 sm:pt-8"
+    >
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-7">
+        <div className="grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-end">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-blue-500/80">
+              Built with Squid
+            </p>
+            <h2 className="mt-3 max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl">
+              Real projects shipped from prompts.
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+            A small showcase of sites and tools built with Squid, from polished
+            agency pages to AI-native portfolio and coordination products.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+          <a
+            href={featuredProject.href}
+            target="_blank"
+            rel="noreferrer"
+            className="group overflow-hidden rounded-lg border border-border/70 bg-background/70 shadow-sm shadow-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 dark:bg-card/70"
+          >
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+              <Image
+                src={featuredProject.imageSrc}
+                alt={featuredProject.imageAlt}
+                fill
+                loading="eager"
+                unoptimized
+                sizes="(min-width: 1024px) 62rem, 100vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+              />
+            </div>
+            <div className="flex flex-col gap-5 border-t border-border/70 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
+              <div className="min-w-0">
+                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                  {featuredProject.category}
+                </p>
+                <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+                  {featuredProject.name}
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {featuredProject.description}
+                </p>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-blue-500">
+                View project
+                <ExternalLink className="size-4" />
+              </span>
+            </div>
+          </a>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            {galleryProjects.map((project) => (
+              <a
+                key={project.href}
+                href={project.href}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex min-h-[220px] flex-col overflow-hidden rounded-lg border border-border/70 bg-background/70 shadow-sm shadow-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/10 dark:bg-card/70"
+              >
+                <div
+                  className="relative flex min-h-28 flex-1 items-end overflow-hidden p-4"
+                  style={{
+                    background:
+                      project.gradient ??
+                      "linear-gradient(135deg, #111827 0%, #326df5 100%)",
+                  }}
+                >
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(180deg,transparent,rgba(0,0,0,0.25))]" />
+                  <p className="relative max-w-[12rem] text-xl font-semibold leading-none tracking-tight text-white">
+                    {project.preview ?? project.name}
+                  </p>
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                      {project.category}
+                    </p>
+                    <ExternalLink className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-blue-500" />
+                  </div>
+                  <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
+                    {project.name}
+                  </h3>
+                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                    {project.description}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

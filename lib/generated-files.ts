@@ -375,8 +375,8 @@ function normalizeSelectCodegenErrors(code: string) {
             (item: string) => !/^SelectItemText(?:\s+as\s+.*)?$/.test(item),
           );
 
-        if (cleanedItems.length === 0) {
-          return "";
+        if (!cleanedItems.includes("SelectItem")) {
+          cleanedItems.push("SelectItem");
         }
 
         return `import { ${cleanedItems.join(", ")} } from "@/components/ui/select";`;

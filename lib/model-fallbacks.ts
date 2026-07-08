@@ -1,16 +1,17 @@
+import { FREE_MODEL, LEGACY_FREE_MODEL } from "@/lib/constants";
+
 export const FALLBACK_MODELS = {
-  free: "tencent/hy3-preview:free",
-  freeFallbacks: [
-    "qwen/qwen3-coder:free",
-    "openai/gpt-oss-120b:free",
-    "openrouter/free",
-  ],
+  free: FREE_MODEL,
 };
 
 export function getModelWithFallbacks(model: string): string[] {
-  // If it's the free model, return the fallback chain
+  // Route stored legacy free chats through the current free model.
+  if (model === LEGACY_FREE_MODEL) {
+    return [FALLBACK_MODELS.free];
+  }
+
   if (model === FALLBACK_MODELS.free) {
-    return [FALLBACK_MODELS.free, ...FALLBACK_MODELS.freeFallbacks];
+    return [FALLBACK_MODELS.free];
   }
 
   // For paid models, just return the model itself (no fallbacks)

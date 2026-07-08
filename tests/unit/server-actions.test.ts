@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FREE_MODEL } from "@/lib/constants";
 import { buildChat, buildMessage } from "../fixtures/builders";
 
 const {
@@ -114,7 +115,7 @@ describe("server actions", () => {
 
     expect(checkCreditAvailabilityMock).toHaveBeenCalledWith({
       userId: "user_1",
-      modelId: "tencent/hy3-preview:free",
+      modelId: FREE_MODEL,
     });
     expect(consumeCreditsForGenerationMock).not.toHaveBeenCalled();
     expect(prismaMock.message.create).toHaveBeenCalledWith({
@@ -140,13 +141,18 @@ describe("server actions", () => {
         path: "App.tsx",
         code: "export default function App() { return <main />; }",
       },
-      { path: "components/One.tsx", code: "export function One() { return null; }" },
+      {
+        path: "components/One.tsx",
+        code: "export function One() { return null; }",
+      },
     ]);
 
     expect(txMock.message.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         role: "assistant",
-        files: expect.arrayContaining([expect.objectContaining({ path: "App.tsx" })]),
+        files: expect.arrayContaining([
+          expect.objectContaining({ path: "App.tsx" }),
+        ]),
         position: 2,
       }),
     });
@@ -157,27 +163,41 @@ describe("server actions", () => {
     expect(consumeCreditsForGenerationMock).toHaveBeenCalledWith({
       client: txMock,
       userId: "user_1",
-      modelId: "tencent/hy3-preview:free",
+      modelId: FREE_MODEL,
       chatId: "chat_1",
-      description: "AI generation - tencent/hy3-preview:free",
+      description: `AI generation - ${FREE_MODEL}`,
       status: "completed",
     });
   });
 
   it("enforces save, rename, delete, and duplicate project constraints", async () => {
-    prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat({ userId: null }));
-    prismaMock.chat.update.mockResolvedValueOnce(buildChat({ userId: "user_1" }));
-    await expect(saveProject("chat_1")).resolves.toMatchObject({ userId: "user_1" });
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({ userId: null }),
+    );
+    prismaMock.chat.update.mockResolvedValueOnce(
+      buildChat({ userId: "user_1" }),
+    );
+    await expect(saveProject("chat_1")).resolves.toMatchObject({
+      userId: "user_1",
+    });
 
-    prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat({ userId: "user_1" }));
-    prismaMock.chat.update.mockResolvedValueOnce(buildChat({ title: "Renamed" }));
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({ userId: "user_1" }),
+    );
+    prismaMock.chat.update.mockResolvedValueOnce(
+      buildChat({ title: "Renamed" }),
+    );
     await expect(renameProject("chat_1", "Renamed")).resolves.toMatchObject({
       title: "Renamed",
     });
 
-    prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat({ userId: "user_1" }));
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({ userId: "user_1" }),
+    );
     await expect(deleteProject("chat_1")).resolves.toBeUndefined();
-    expect(prismaMock.chat.delete).toHaveBeenCalledWith({ where: { id: "chat_1" } });
+    expect(prismaMock.chat.delete).toHaveBeenCalledWith({
+      where: { id: "chat_1" },
+    });
 
     prismaMock.chat.findUnique.mockResolvedValueOnce(
       buildChat({
@@ -185,7 +205,9 @@ describe("server actions", () => {
         messages: [buildMessage({ id: "msg_1", files: [{ path: "App.tsx" }] })],
       }),
     );
-    prismaMock.chat.create.mockResolvedValueOnce(buildChat({ id: "chat_copy" }));
+    prismaMock.chat.create.mockResolvedValueOnce(
+      buildChat({ id: "chat_copy" }),
+    );
 
     await expect(duplicateProject("chat_1")).resolves.toMatchObject({
       id: "chat_copy",

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FREE_MODEL } from "@/lib/constants";
 import { buildChat, readJson } from "../fixtures/builders";
 
 const {
@@ -104,7 +105,9 @@ describe("/api/generate-code", () => {
     const response = await POST(request({ chatId: "chat_1" }));
 
     expect(response.status).toBe(401);
-    await expect(readJson(response)).resolves.toEqual({ error: "Unauthorized" });
+    await expect(readJson(response)).resolves.toEqual({
+      error: "Unauthorized",
+    });
   });
 
   it("requires an approved plan before generating code", async () => {
@@ -148,7 +151,7 @@ describe("/api/generate-code", () => {
     expect(consumeCreditsForGenerationMock).toHaveBeenCalledWith({
       client: txMock,
       userId: "user_1",
-      modelId: "tencent/hy3-preview:free",
+      modelId: FREE_MODEL,
       chatId: "chat_1",
       description: "Code generation - Calculator",
       status: "plan_approved",

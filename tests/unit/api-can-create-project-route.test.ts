@@ -74,14 +74,14 @@ describe("/api/user/can-create-project", () => {
       }),
     );
 
-    const response = await GET(request("openai/gpt-5.4"));
+    const response = await GET(request("moonshotai/kimi-k2.7-code"));
 
     await expect(readJson(response)).resolves.toMatchObject({
       canCreate: false,
       hasActiveSubscription: true,
       credits: 0,
-      modelCost: 7,
-      shortfall: 7,
+      modelCost: 3,
+      shortfall: 3,
     });
   });
 

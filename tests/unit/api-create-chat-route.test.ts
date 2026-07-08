@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FREE_MODEL } from "@/lib/constants";
 import { readJson } from "../fixtures/builders";
 
 const {
@@ -116,7 +117,7 @@ describe("/api/create-chat", () => {
     const response = await POST(
       request({
         prompt: "Build a timer",
-        model: "tencent/hy3-preview:free",
+        model: FREE_MODEL,
         quality: "low",
       }),
     );
@@ -143,7 +144,7 @@ describe("/api/create-chat", () => {
     const response = await POST(
       request({
         prompt: "Build a fourth app",
-        model: "tencent/hy3-preview:free",
+        model: FREE_MODEL,
         quality: "low",
       }),
     );
@@ -163,7 +164,7 @@ describe("/api/create-chat", () => {
     const response = await POST(
       request({
         prompt: "Build a polished habit tracker with streak charts",
-        model: "tencent/hy3-preview:free",
+        model: FREE_MODEL,
         quality: "low",
       }),
     );
@@ -195,7 +196,7 @@ describe("/api/create-chat", () => {
     const response = await POST(
       request({
         prompt: "Build this",
-        model: "tencent/hy3-preview:free",
+        model: FREE_MODEL,
         quality: "low",
         screenshotData: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
       }),

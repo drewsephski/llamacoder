@@ -10,7 +10,7 @@ import { FREE_MODEL } from "@/lib/constants";
 describe("billing config", () => {
   it("uses deterministic model costs and defaults unknown models to one credit", () => {
     expect(getModelCreditCost(FREE_MODEL)).toBe(1);
-    expect(getModelCreditCost("anthropic/claude-opus-4.6")).toBe(7);
+    expect(getModelCreditCost("moonshotai/kimi-k2.7-code")).toBe(3);
     expect(getModelCreditCost("unknown/model")).toBe(1);
   });
 

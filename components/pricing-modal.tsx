@@ -191,7 +191,7 @@ export function PricingModal({
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                   <span className="text-muted-foreground">
-                    All {paidModels.length}+ smarter models
+                    All {paidModels.length} smarter models
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -362,8 +362,7 @@ export function PricingModal({
               ))}
             </div>
             <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
-              1 credit = 1 generation with standard models. Premium models cost
-              2+ credits.
+              1 credit = 1 free-model generation. Paid models cost 3 credits.
             </p>
           </div>
         )}
