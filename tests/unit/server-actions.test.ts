@@ -245,6 +245,7 @@ describe("server actions", () => {
               files: {
                 kind: "preview_repair_request",
                 chargeCredits: false,
+                sourceMessageId: "assistant_1",
                 usedAt: null,
               },
             }),
@@ -288,6 +289,7 @@ describe("server actions", () => {
         files: expect.objectContaining({
           kind: "preview_repair_request",
           chargeCredits: false,
+          sourceMessageId: "assistant_1",
           usedAt: expect.any(String),
         }),
       },

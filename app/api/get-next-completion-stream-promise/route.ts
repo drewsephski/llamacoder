@@ -16,6 +16,19 @@ import {
   releaseCreditHold,
   reserveCreditHold,
 } from "@/lib/billing";
+import {
+  formatGeneratedFilesMarkdown,
+  normalizeGeneratedFiles,
+  type GeneratedFile,
+} from "@/lib/generated-files";
+import { extractAllCodeBlocks } from "@/lib/utils";
+
+type CompletionMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+  files?: unknown;
+  id?: string;
+};
 
 function optimizeMessagesForTokens(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
@@ -41,6 +54,73 @@ function optimizeMessagesForTokens(
     }
     return msg;
   });
+}
+
+function getStoredGeneratedFiles(message: CompletionMessage) {
+  return normalizeGeneratedFiles(
+    Array.isArray(message.files) && message.files.length > 0
+      ? (message.files as any[])
+      : extractAllCodeBlocks(message.content),
+  );
+}
+
+function getRepairSourceFiles(
+  messages: CompletionMessage[],
+  sourceMessageId?: string,
+) {
+  const sourceMessage = sourceMessageId
+    ? messages.find((message) => message.id === sourceMessageId)
+    : messages
+        .slice()
+        .reverse()
+        .find(
+          (message) =>
+            message.role === "assistant" &&
+            getStoredGeneratedFiles(message).length > 0,
+        );
+
+  if (!sourceMessage || sourceMessage.role !== "assistant") {
+    return [];
+  }
+
+  return getStoredGeneratedFiles(sourceMessage);
+}
+
+function buildPreviewRepairMessages({
+  systemContent,
+  repairRequest,
+  sourceFiles,
+}: {
+  systemContent?: string;
+  repairRequest: string;
+  sourceFiles: GeneratedFile[];
+}) {
+  const repairPrompt = `Repair the existing generated React + TypeScript app.
+
+Preview/runtime error:
+${repairRequest}
+
+Current source files:
+${formatGeneratedFilesMarkdown(sourceFiles)}
+
+Requirements:
+- Make the minimal code change needed to fix the error.
+- Preserve all unrelated files, components, copy, state, imports, styling, and behavior.
+- Return only complete files that changed, using fenced code blocks like \`\`\`tsx{path=App.tsx}.
+- Do not regenerate unchanged files.
+- Keep existing paths unless a new file is required to fix the error.
+- Every internal import in changed files must resolve to an existing current file or a changed file you return.
+- If the fix requires changing an export/import pair, return every affected file in full.`;
+
+  return [
+    systemContent
+      ? { role: "system" as const, content: systemContent }
+      : undefined,
+    { role: "user" as const, content: repairPrompt },
+  ].filter(Boolean) as {
+    role: "system" | "user" | "assistant";
+    content: string;
+  }[];
 }
 
 const requestSchema = z.object({
@@ -110,7 +190,7 @@ export async function POST(req: Request) {
     }
     const chatModel = message.chat.model;
     const messageMetadata = message.files as
-      | { kind?: string; chargeCredits?: boolean }
+      | { kind?: string; chargeCredits?: boolean; sourceMessageId?: string }
       | null
       | undefined;
     const isFreeRepairRequest =
@@ -142,6 +222,8 @@ export async function POST(req: Request) {
       orderBy: { position: "asc" },
     });
 
+    const rawMessages = messagesRes as CompletionMessage[];
+
     let messages = z
       .array(
         z.object({
@@ -151,33 +233,60 @@ export async function POST(req: Request) {
       )
       .parse(messagesRes);
 
-    messages = optimizeMessagesForTokens(messages);
+    let guardedMessages: {
+      role: "system" | "user" | "assistant";
+      content: string;
+    }[];
 
-    if (messages.length > 10) {
-      messages = [messages[0], messages[1], messages[2], ...messages.slice(-7)];
+    if (isFreeRepairRequest) {
+      const sourceFiles = getRepairSourceFiles(
+        rawMessages,
+        messageMetadata.sourceMessageId,
+      );
+
+      if (sourceFiles.length === 0) {
+        return new Response("Repair source files not found", { status: 400 });
+      }
+
+      guardedMessages = buildPreviewRepairMessages({
+        systemContent: rawMessages.find((m) => m.role === "system")?.content,
+        repairRequest: message.content,
+        sourceFiles,
+      });
+    } else {
+      messages = optimizeMessagesForTokens(messages);
+
+      if (messages.length > 10) {
+        messages = [
+          messages[0],
+          messages[1],
+          messages[2],
+          ...messages.slice(-7),
+        ];
+      }
+
+      guardedMessages = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+      const lastUserMessageIndex = guardedMessages.findLastIndex(
+        (m) => m.role === "user",
+      );
+
+      if (lastUserMessageIndex !== -1) {
+        guardedMessages[lastUserMessageIndex] = {
+          ...guardedMessages[lastUserMessageIndex],
+          content:
+            guardedMessages[lastUserMessageIndex].content +
+            GENERATION_COMPLETENESS_GUARD,
+        };
+      }
     }
 
     const openrouter = createAppOpenRouter({
       sessionId: message.chatId,
       sessionName: "SquidAgent Chat",
     });
-
-    const guardedMessages = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-    const lastUserMessageIndex = guardedMessages.findLastIndex(
-      (m) => m.role === "user",
-    );
-
-    if (lastUserMessageIndex !== -1) {
-      guardedMessages[lastUserMessageIndex] = {
-        ...guardedMessages[lastUserMessageIndex],
-        content:
-          guardedMessages[lastUserMessageIndex].content +
-          GENERATION_COMPLETENESS_GUARD,
-      };
-    }
 
     const result = streamText({
       model: createOpenRouterModel(openrouter, chatModel, {

@@ -180,6 +180,7 @@ export async function releaseReservedCreditHold(holdId: string) {
 export async function createPreviewRepairMessage(
   chatId: string,
   error: string,
+  options?: { sourceMessageId?: string },
 ) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -200,14 +201,35 @@ export async function createPreviewRepairMessage(
     throw new Error("You can only repair your own projects");
   }
 
-  const hasGeneratedFiles = chat.messages.some(
+  const sourceMessage = options?.sourceMessageId
+    ? chat.messages.find(
+        (message: any) => message.id === options.sourceMessageId,
+      )
+    : chat.messages
+        .slice()
+        .reverse()
+        .find(
+          (message: any) =>
+            message.role === "assistant" &&
+            Array.isArray(message.files) &&
+            message.files.length > 0,
+        );
+  const sourceFiles =
+    sourceMessage?.role === "assistant" && Array.isArray(sourceMessage.files)
+      ? normalizeGeneratedFiles(sourceMessage.files as any[])
+      : [];
+  if (options?.sourceMessageId && sourceMessage?.role !== "assistant") {
+    throw new Error("Repair source version was not found");
+  }
+
+  const hasAnyGeneratedFiles = chat.messages.some(
     (message: any) =>
       message.role === "assistant" &&
       Array.isArray(message.files) &&
       message.files.length > 0,
   );
 
-  if (!hasGeneratedFiles) {
+  if (!hasAnyGeneratedFiles || !sourceMessage || sourceFiles.length === 0) {
     throw new Error("Repairs require an existing generated version");
   }
 
@@ -225,6 +247,7 @@ export async function createPreviewRepairMessage(
       files: {
         kind: "preview_repair_request",
         chargeCredits: false,
+        sourceMessageId: sourceMessage.id,
         usedAt: null,
       },
       position: maxPosition + 1,

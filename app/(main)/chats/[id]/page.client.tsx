@@ -73,6 +73,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     null,
   );
   const freeRepairRequestIdRef = useRef<string | null>(null);
+  const freeRepairSourceMessageIdRef = useRef<string | null>(null);
   const [activeMessage, setActiveMessage] = useState(
     chat.messages
       .filter(
@@ -222,10 +223,20 @@ export default function PageClient({ chat }: { chat: Chat }) {
             m.role === "assistant" && getFilesFromMessage(m).length > 0,
         );
 
-        // Extract all files from previous messages
-        const previousFiles = previousAssistantMessages.flatMap(
-          (msg: Message) => getFilesFromMessage(msg),
-        );
+        const repairSourceMessageId = freeRepairSourceMessageIdRef.current;
+        const repairSourceMessage = repairSourceMessageId
+          ? previousAssistantMessages.find(
+              (msg: Message) => msg.id === repairSourceMessageId,
+            )
+          : undefined;
+
+        // Repairs are intentionally partial. Merge them onto the version that
+        // produced the preview error, not onto an unrelated newer checkpoint.
+        const previousFiles = repairSourceMessage
+          ? getFilesFromMessage(repairSourceMessage)
+          : previousAssistantMessages.flatMap((msg: Message) =>
+              getFilesFromMessage(msg),
+            );
 
         // Extract files from current AI response
         const currentFiles = normalizeGeneratedFiles(
@@ -264,6 +275,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
         startTransition(() => {
           freeRepairRequestIdRef.current = null;
+          freeRepairSourceMessageIdRef.current = null;
           setStreamText("");
           setStreamPromise(undefined);
           setActiveMessage(message);
@@ -279,6 +291,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         }
         setStreamPromise(undefined);
         freeRepairRequestIdRef.current = null;
+        freeRepairSourceMessageIdRef.current = null;
 
         // Set error state for UI
         setStreamError({
@@ -311,7 +324,13 @@ export default function PageClient({ chat }: { chat: Chat }) {
       // stream should continue, and canceling makes the next reader race the
       // still-locked stream.
     };
-  }, [chat.id, router, streamPromise, setContextStreamPromise]);
+  }, [
+    chat.id,
+    chat.messages,
+    router,
+    streamPromise,
+    setContextStreamPromise,
+  ]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
@@ -373,8 +392,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
                   const message = await createPreviewRepairMessage(
                     chat.id,
                     error,
+                    { sourceMessageId: activeMessage?.id },
                   );
                   freeRepairRequestIdRef.current = message.id;
+                  freeRepairSourceMessageIdRef.current =
+                    activeMessage?.id || null;
 
                   const streamPromise = fetchCompletionStream({
                     messageId: message.id,

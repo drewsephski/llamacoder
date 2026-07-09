@@ -206,4 +206,90 @@ describe("/api/get-next-completion-stream-promise", () => {
     });
     expect(call.messages.at(-1).content).toContain("final user");
   });
+
+  it("uses current files for free preview repairs without the full-generation guard or credit hold", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "repair_msg_1",
+        chatId: "chat_1",
+        position: 4,
+        content:
+          "The code is not working. Can you fix it? Here's the error:\n\nReferenceError: total is not defined",
+        files: {
+          kind: "preview_repair_request",
+          chargeCredits: false,
+          sourceMessageId: "assistant_1",
+        },
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { id: "system_1", role: "system", content: "system prompt" },
+      { id: "user_1", role: "user", content: "build calculator" },
+      {
+        id: "assistant_1",
+        role: "assistant",
+        content: "created app",
+        files: [
+          {
+            path: "App.tsx",
+            language: "tsx",
+            code: "export default function App() { return <main>{total}</main>; }",
+          },
+          {
+            path: "components/Display.tsx",
+            language: "tsx",
+            code: "export function Display() { return <p />; }",
+          },
+        ],
+      },
+      {
+        id: "repair_msg_1",
+        role: "user",
+        content:
+          "The code is not working. Can you fix it? Here's the error:\n\nReferenceError: total is not defined",
+        files: {
+          kind: "preview_repair_request",
+          chargeCredits: false,
+          sourceMessageId: "assistant_1",
+        },
+      },
+    ]);
+    streamTextMock.mockReturnValueOnce({
+      textStream: chunks([
+        "```tsx{path=App.tsx}\nexport default function App() { return <main>0</main>; }\n```",
+      ]),
+    });
+
+    const response = await POST(
+      request({ messageId: "repair_msg_1", model: "model_1" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-credit-hold-id")).toBeNull();
+    await expect(collectStream(response)).resolves.toContain(
+      "export default function App()",
+    );
+    expect(reserveCreditHoldMock).not.toHaveBeenCalled();
+    const call = streamTextMock.mock.calls[0][0];
+    expect(call.messages).toHaveLength(2);
+    expect(call.messages[1].content).toContain(
+      "Return only complete files that changed",
+    );
+    expect(call.messages[1].content).toContain("path=App.tsx");
+    expect(call.messages[1].content).toContain(
+      "ReferenceError: total is not defined",
+    );
+    expect(call.messages[1].content).not.toContain(
+      "Generation completeness requirements:",
+    );
+    expect(call.messages[1].content).not.toContain(
+      "Output a complete multi-file React + TypeScript app",
+    );
+  });
 });
