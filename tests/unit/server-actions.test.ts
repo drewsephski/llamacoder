@@ -5,19 +5,27 @@ import { buildChat, buildMessage } from "../fixtures/builders";
 const {
   checkCreditAvailabilityMock,
   consumeCreditsForGenerationMock,
+  getModelCreditHoldCostMock,
+  generateFollowUpPromptsMock,
   getModelCreditCostMock,
   getSessionMock,
   notFoundMock,
   prismaMock,
+  releaseCreditHoldMock,
+  saveMessageFollowUpPromptsMock,
   txMock,
 } = vi.hoisted(() => ({
   checkCreditAvailabilityMock: vi.fn(),
   consumeCreditsForGenerationMock: vi.fn(),
+  getModelCreditHoldCostMock: vi.fn(() => 1),
+  generateFollowUpPromptsMock: vi.fn(),
   getModelCreditCostMock: vi.fn(() => 1),
   getSessionMock: vi.fn(),
+  releaseCreditHoldMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
+  saveMessageFollowUpPromptsMock: vi.fn(),
   txMock: {
     message: { create: vi.fn(), update: vi.fn() },
     chat: { update: vi.fn() },
@@ -32,6 +40,7 @@ const {
       update: vi.fn(),
     },
     message: { create: vi.fn() },
+    creditHold: { findUnique: vi.fn() },
   },
 }));
 
@@ -55,6 +64,13 @@ vi.mock("@/lib/billing", () => ({
   checkCreditAvailability: checkCreditAvailabilityMock,
   consumeCreditsForGeneration: consumeCreditsForGenerationMock,
   getModelCreditCost: getModelCreditCostMock,
+  getModelCreditHoldCost: getModelCreditHoldCostMock,
+  releaseCreditHold: releaseCreditHoldMock,
+}));
+
+vi.mock("@/lib/follow-up-prompts", () => ({
+  generateFollowUpPrompts: generateFollowUpPromptsMock,
+  saveMessageFollowUpPrompts: saveMessageFollowUpPromptsMock,
 }));
 
 import {
@@ -85,10 +101,16 @@ describe("server actions", () => {
       creditsUsed: 1,
       remainingCredits: 4,
     });
+    generateFollowUpPromptsMock.mockResolvedValue([
+      "Polish the calculator UI",
+      "Add realistic calculator data",
+      "Make the calculator mobile-ready",
+    ]);
     txMock.message.create.mockResolvedValue({ id: "assistant_1" });
     txMock.message.update.mockResolvedValue({});
     txMock.generationLog.create.mockResolvedValue({});
     prismaMock.message.create.mockResolvedValue({ id: "user_msg_2" });
+    releaseCreditHoldMock.mockResolvedValue({ success: true });
   });
 
   it("requires auth before creating messages", async () => {
@@ -165,6 +187,15 @@ describe("server actions", () => {
         position: 2,
       }),
     });
+    expect(saveMessageFollowUpPromptsMock).toHaveBeenCalledWith(
+      prismaMock,
+      "assistant_1",
+      [
+        "Polish the calculator UI",
+        "Add realistic calculator data",
+        "Make the calculator mobile-ready",
+      ],
+    );
     expect(txMock.chat.update).toHaveBeenCalledWith({
       where: { id: "chat_1" },
       data: { hasCode: true },
@@ -177,6 +208,7 @@ describe("server actions", () => {
       description: `AI generation - ${FREE_MODEL}`,
       phase: "follow_up",
       status: "completed",
+      generatedText: "done",
     });
   });
 
@@ -241,6 +273,15 @@ describe("server actions", () => {
         ]),
       }),
     });
+    expect(saveMessageFollowUpPromptsMock).toHaveBeenCalledWith(
+      prismaMock,
+      "assistant_1",
+      [
+        "Polish the calculator UI",
+        "Add realistic calculator data",
+        "Make the calculator mobile-ready",
+      ],
+    );
     expect(txMock.message.update).toHaveBeenCalledWith({
       where: { id: "repair_user_1" },
       data: {

@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FREE_MODEL } from "@/lib/constants";
+import { FREE_MODEL, LEGACY_QWEN_MAX_MODEL } from "@/lib/constants";
 import { buildSubscription, buildUser, readJson } from "../fixtures/builders";
 
 const { getSessionMock, prismaMock } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
   prismaMock: {
     chat: { count: vi.fn() },
-    user: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn(), updateMany: vi.fn() },
+    creditGrant: { findMany: vi.fn(), update: vi.fn() },
+    creditHold: { findMany: vi.fn(), updateMany: vi.fn() },
   },
 }));
 
@@ -33,7 +35,19 @@ function request(model = FREE_MODEL) {
 describe("/api/user/can-create-project", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.creditGrant.findMany.mockResolvedValue([]);
+    prismaMock.creditHold.findMany.mockResolvedValue([]);
   });
+
+  function grant(amount: number) {
+    return {
+      id: `grant_${amount}`,
+      type: "subscription",
+      remainingAmount: amount,
+      expiresAt: null,
+      createdAt: new Date("2026-07-01T00:00:00.000Z"),
+    };
+  }
 
   it("allows anonymous users to start the anonymous project flow", async () => {
     getSessionMock.mockResolvedValueOnce(null);
@@ -49,7 +63,7 @@ describe("/api/user/can-create-project", () => {
     });
   });
 
-  it("allows the first signed-in project only for the free model", async () => {
+  it("requires signed-in users to have credits for the first starter project", async () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
     prismaMock.chat.count.mockResolvedValueOnce(0);
     prismaMock.user.findUnique.mockResolvedValueOnce(buildUser({ credits: 0 }));
@@ -57,7 +71,8 @@ describe("/api/user/can-create-project", () => {
     const response = await GET(request(FREE_MODEL));
 
     await expect(readJson(response)).resolves.toMatchObject({
-      canCreate: true,
+      canCreate: false,
+      error: "INSUFFICIENT_CREDITS",
       hasExistingProjects: false,
       credits: 0,
       modelCost: 1,
@@ -74,14 +89,14 @@ describe("/api/user/can-create-project", () => {
       }),
     );
 
-    const response = await GET(request("moonshotai/kimi-k2.7-code"));
+    const response = await GET(request(LEGACY_QWEN_MAX_MODEL));
 
     await expect(readJson(response)).resolves.toMatchObject({
       canCreate: false,
       hasActiveSubscription: true,
       credits: 0,
-      modelCost: 3,
-      shortfall: 3,
+      modelCost: 8,
+      shortfall: 8,
     });
   });
 
@@ -89,6 +104,9 @@ describe("/api/user/can-create-project", () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
     prismaMock.chat.count.mockResolvedValueOnce(3);
     prismaMock.user.findUnique.mockResolvedValueOnce(buildUser({ credits: 5 }));
+    prismaMock.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(5)]);
 
     const response = await GET(request(FREE_MODEL));
 

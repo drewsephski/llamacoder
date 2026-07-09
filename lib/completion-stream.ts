@@ -1,5 +1,9 @@
 "use client";
 
+export type CompletionStream = ReadableStream<Uint8Array> & {
+  creditHoldId?: string;
+};
+
 export async function fetchCompletionStream({
   messageId,
   model,
@@ -24,5 +28,8 @@ export async function fetchCompletionStream({
     throw new Error("Generation did not return a response body");
   }
 
-  return response.body;
+  const body = response.body as CompletionStream;
+  body.creditHoldId = response.headers.get("x-credit-hold-id") || undefined;
+
+  return body;
 }

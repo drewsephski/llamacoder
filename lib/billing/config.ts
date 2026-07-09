@@ -1,6 +1,9 @@
 import {
   FREE_MODEL,
+  LEGACY_GEMINI_PRO_MODEL,
+  LEGACY_KIMI_CODE_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
+  LEGACY_QWEN_MAX_MODEL,
   LEGACY_SECONDARY_STARTER_MODEL,
   LEGACY_FREE_MODEL,
   SAFE_GPT_MODEL,
@@ -8,62 +11,241 @@ import {
 } from "@/lib/constants";
 
 /**
- * Credit cost per model.
- * All models cost credits - even the "free" model costs 1 credit for consistency.
- * Free users get 5 credits to start, which covers 5 free generations.
+ * Dynamic credit pricing by output size.
+ * Credits are charged only after a new app version is successfully saved.
  */
-const COST_BAND = {
-  // Free control lane: lowest-cost path with strict token constraints.
-  free: 1,
-  // Low-cost long-context coding models with strong price/performance.
-  budgetCode: 2,
-  // Fast multimodal builder for screenshot-first flows.
-  vision: 3,
-  // Strong code-specialized lane with competitive premium.
-  proCode: 3,
-  // Frontier-class models with lower output pricing than Opus.
-  frontierEfficient: 4,
-  // Frontier coding model priced for higher provider output costs.
-  premiumCode: 6,
-} as const;
+export type GenerationSizeBand = "small" | "standard" | "large" | "xl";
 
-export const MODEL_PRICING: Record<string, { cost: number }> = {
-  [FREE_MODEL]: { cost: COST_BAND.free },
-  [LEGACY_FREE_MODEL]: { cost: COST_BAND.free },
-  [SECONDARY_STARTER_MODEL]: { cost: COST_BAND.free },
-  [LEGACY_SECONDARY_STARTER_MODEL]: { cost: COST_BAND.free },
-  [LEGACY_MIMO_STARTER_MODEL]: { cost: COST_BAND.free },
-  // Fast balanced multimodal builder for screenshot-first flows.
-  "google/gemini-3-flash-preview": { cost: COST_BAND.vision },
-  // Cheaper multimodal code lane with strong coding focus.
-  "moonshotai/kimi-k2.7-code": { cost: COST_BAND.proCode },
-  // Strong budget coding options with lower provider output pricing.
-  "deepseek/deepseek-v4-pro": { cost: COST_BAND.budgetCode },
-  // Legacy Grok chats are routed to MiniMax M3 at generation time.
-  "x-ai/grok-4.3": { cost: COST_BAND.budgetCode },
-  "z-ai/glm-5.2": { cost: COST_BAND.budgetCode },
-  "minimax/minimax-m3": { cost: COST_BAND.budgetCode },
-  // Agentic coding model priced close to the existing advanced lane.
-  "qwen/qwen3.7-max": { cost: COST_BAND.proCode },
-  // Frontier-efficient premium models.
-  "anthropic/claude-sonnet-5": { cost: COST_BAND.frontierEfficient },
-  "google/gemini-3.1-pro-preview": { cost: COST_BAND.frontierEfficient },
-  // Strong non-thinking GPT model with 1M context and lower output pricing.
-  [SAFE_GPT_MODEL]: { cost: COST_BAND.frontierEfficient },
-  // Legacy GPT-5 chats are routed to GPT-4.1 at generation time.
-  "openai/gpt-5.5": { cost: COST_BAND.frontierEfficient },
-  // Current Opus coding option for complex multi-file and agentic coding work.
-  "anthropic/claude-opus-4.8": { cost: COST_BAND.premiumCode },
+type ModelTier = "starter" | "efficient" | "advanced" | "premium";
+
+type ModelPricing = {
+  tier: ModelTier;
+  bands: Record<GenerationSizeBand, number>;
+};
+
+export const MODEL_PRICING: Record<string, ModelPricing> = {
+  [FREE_MODEL]: {
+    tier: "starter",
+    bands: { small: 1, standard: 1, large: 1, xl: 1 },
+  },
+  [LEGACY_FREE_MODEL]: {
+    tier: "starter",
+    bands: { small: 1, standard: 1, large: 1, xl: 1 },
+  },
+  [SECONDARY_STARTER_MODEL]: {
+    tier: "starter",
+    bands: { small: 1, standard: 1, large: 1, xl: 1 },
+  },
+  [LEGACY_SECONDARY_STARTER_MODEL]: {
+    tier: "starter",
+    bands: { small: 1, standard: 1, large: 1, xl: 1 },
+  },
+  [LEGACY_MIMO_STARTER_MODEL]: {
+    tier: "starter",
+    bands: { small: 1, standard: 1, large: 1, xl: 1 },
+  },
+  "deepseek/deepseek-v4-pro": {
+    tier: "efficient",
+    bands: { small: 1, standard: 1, large: 2, xl: 2 },
+  },
+  "minimax/minimax-m3": {
+    tier: "efficient",
+    bands: { small: 1, standard: 1, large: 2, xl: 3 },
+  },
+  "z-ai/glm-5.2": {
+    tier: "efficient",
+    bands: { small: 1, standard: 3, large: 4, xl: 6 },
+  },
+  "google/gemini-3-flash-preview": {
+    tier: "efficient",
+    bands: { small: 1, standard: 3, large: 4, xl: 5 },
+  },
+  [LEGACY_KIMI_CODE_MODEL]: {
+    tier: "efficient",
+    bands: { small: 1, standard: 3, large: 4, xl: 5 },
+  },
+  "x-ai/grok-4.3": {
+    tier: "efficient",
+    bands: { small: 1, standard: 1, large: 2, xl: 3 },
+  },
+  [LEGACY_QWEN_MAX_MODEL]: {
+    tier: "advanced",
+    bands: { small: 2, standard: 4, large: 5, xl: 8 },
+  },
+  "x-ai/grok-4.5": {
+    tier: "advanced",
+    bands: { small: 3, standard: 5, large: 8, xl: 12 },
+  },
+  [SAFE_GPT_MODEL]: {
+    tier: "advanced",
+    bands: { small: 3, standard: 7, large: 10, xl: 15 },
+  },
+  "openai/gpt-5.5": {
+    tier: "advanced",
+    bands: { small: 3, standard: 7, large: 10, xl: 15 },
+  },
+  "anthropic/claude-sonnet-5": {
+    tier: "premium",
+    bands: { small: 4, standard: 8, large: 12, xl: 17 },
+  },
+  [LEGACY_GEMINI_PRO_MODEL]: {
+    tier: "premium",
+    bands: { small: 4, standard: 9, large: 14, xl: 20 },
+  },
+  "anthropic/claude-opus-4.8": {
+    tier: "premium",
+    bands: { small: 8, standard: 18, large: 30, xl: 42 },
+  },
 };
 
 export const FREE_PROJECT_LIMIT = 3;
+export const CREDIT_MODEL_COST_USD = 0.015;
+export const MODEL_COST_OVERHEAD_MULTIPLIER = 1.25;
+export const DEFAULT_ESTIMATED_INPUT_TOKENS = 25_000;
+
+const MODEL_TOKEN_PRICING: Record<
+  string,
+  { inputPricePerMillion: number; outputPricePerMillion: number }
+> = {
+  [FREE_MODEL]: { inputPricePerMillion: 0.09, outputPricePerMillion: 0.18 },
+  [LEGACY_FREE_MODEL]: {
+    inputPricePerMillion: 0.09,
+    outputPricePerMillion: 0.18,
+  },
+  [SECONDARY_STARTER_MODEL]: {
+    inputPricePerMillion: 0.1,
+    outputPricePerMillion: 0.4,
+  },
+  [LEGACY_SECONDARY_STARTER_MODEL]: {
+    inputPricePerMillion: 0.1,
+    outputPricePerMillion: 0.4,
+  },
+  [LEGACY_MIMO_STARTER_MODEL]: {
+    inputPricePerMillion: 0.1,
+    outputPricePerMillion: 0.4,
+  },
+  "deepseek/deepseek-v4-pro": {
+    inputPricePerMillion: 0.435,
+    outputPricePerMillion: 0.87,
+  },
+  "minimax/minimax-m3": {
+    inputPricePerMillion: 0.3,
+    outputPricePerMillion: 1.2,
+  },
+  "z-ai/glm-5.2": { inputPricePerMillion: 0.84, outputPricePerMillion: 2.64 },
+  "google/gemini-3-flash-preview": {
+    inputPricePerMillion: 0.5,
+    outputPricePerMillion: 3,
+  },
+  [LEGACY_KIMI_CODE_MODEL]: {
+    inputPricePerMillion: 0.5,
+    outputPricePerMillion: 3,
+  },
+  "x-ai/grok-4.3": { inputPricePerMillion: 0.3, outputPricePerMillion: 1.2 },
+  [LEGACY_QWEN_MAX_MODEL]: {
+    inputPricePerMillion: 1.25,
+    outputPricePerMillion: 3.75,
+  },
+  "x-ai/grok-4.5": { inputPricePerMillion: 2, outputPricePerMillion: 6 },
+  [SAFE_GPT_MODEL]: { inputPricePerMillion: 2, outputPricePerMillion: 8 },
+  "openai/gpt-5.5": { inputPricePerMillion: 2, outputPricePerMillion: 8 },
+  "anthropic/claude-sonnet-5": {
+    inputPricePerMillion: 2,
+    outputPricePerMillion: 10,
+  },
+  [LEGACY_GEMINI_PRO_MODEL]: {
+    inputPricePerMillion: 2,
+    outputPricePerMillion: 12,
+  },
+  "anthropic/claude-opus-4.8": {
+    inputPricePerMillion: 5,
+    outputPricePerMillion: 25,
+  },
+};
+
+const FALLBACK_PRICING: ModelPricing = {
+  tier: "starter",
+  bands: { small: 1, standard: 1, large: 1, xl: 1 },
+};
+
+function getModelPricing(modelId: string): ModelPricing {
+  return MODEL_PRICING[modelId] ?? FALLBACK_PRICING;
+}
+
+export function getGenerationSizeBand(outputTokens = 0): GenerationSizeBand {
+  if (outputTokens <= 4_000) return "small";
+  if (outputTokens <= 8_000) return "standard";
+  if (outputTokens <= 12_000) return "large";
+  return "xl";
+}
+
+export function estimateOutputTokensFromText(text: string): number {
+  return Math.max(1, Math.ceil(text.length / 4));
+}
+
+export function estimateModelCostUsd({
+  modelId,
+  inputTokens = DEFAULT_ESTIMATED_INPUT_TOKENS,
+  outputTokens,
+}: {
+  modelId: string;
+  inputTokens?: number;
+  outputTokens: number;
+}) {
+  const pricing =
+    MODEL_TOKEN_PRICING[modelId] ?? MODEL_TOKEN_PRICING[FREE_MODEL];
+  const estimatedModelCostUsd =
+    (inputTokens / 1_000_000) * pricing.inputPricePerMillion +
+    (outputTokens / 1_000_000) * pricing.outputPricePerMillion;
+  const riskAdjustedModelCostUsd =
+    estimatedModelCostUsd * MODEL_COST_OVERHEAD_MULTIPLIER;
+
+  return {
+    inputTokens,
+    outputTokens,
+    estimatedModelCostUsd,
+    riskAdjustedModelCostUsd,
+  };
+}
 
 /**
- * Get the credit cost for a model.
- * Defaults to 1 credit if model not found in config.
+ * Get the credit charge for a saved generation.
+ * Without output size, this returns the model's minimum charge for UI copy.
  */
-export function getModelCreditCost(modelId: string): number {
-  return MODEL_PRICING[modelId]?.cost ?? 1;
+export function getModelCreditCost(
+  modelId: string,
+  options?: { outputTokens?: number | null; generatedText?: string | null },
+): number {
+  const pricing = getModelPricing(modelId);
+  const outputTokens =
+    options?.outputTokens ??
+    (options?.generatedText
+      ? estimateOutputTokensFromText(options.generatedText)
+      : undefined);
+  const band = outputTokens
+    ? getGenerationSizeBand(outputTokens)
+    : "small";
+
+  return pricing.bands[band];
+}
+
+export function getModelCreditHoldCost(modelId: string): number {
+  return getModelPricing(modelId).bands.xl;
+}
+
+export function getModelCreditRange(modelId: string) {
+  const costs = Object.values(getModelPricing(modelId).bands);
+  return {
+    min: Math.min(...costs),
+    max: Math.max(...costs),
+  };
+}
+
+export function formatModelCreditRange(modelId: string): string {
+  const range = getModelCreditRange(modelId);
+  return range.min === range.max
+    ? `${range.min} credit${range.min === 1 ? "" : "s"}`
+    : `from ${range.min}-${range.max} credits`;
 }
 
 /**
@@ -82,18 +264,21 @@ export const TIERS = {
     ] as string[] | "all",
     price: 0,
     name: "Free",
+    rolloverCap: 0,
   },
   pro: {
     monthlyCredits: 100,
-    allowedModels: "all" as string[] | "all",
+    allowedTiers: ["starter", "efficient", "advanced"] as ModelTier[],
     price: 9,
     name: "Pro",
+    rolloverCap: 200,
   },
   pro_plus: {
     monthlyCredits: 500,
     allowedModels: "all" as string[] | "all",
     price: 29,
     name: "Pro Plus",
+    rolloverCap: 1_000,
   },
 };
 
@@ -118,6 +303,7 @@ export const CREDIT_PACKS = {
     credits: 60,
     price: 20,
     label: "60 Credits",
+    bestValue: true,
   },
 };
 
@@ -126,11 +312,28 @@ export type CreditPackKey = keyof typeof CREDIT_PACKS;
 /**
  * Check if a tier can use a specific model.
  */
-export function canTierUseModel(tier: TierKey, modelId: string): boolean {
+export function getModelTier(modelId: string): ModelTier {
+  return getModelPricing(modelId).tier;
+}
+
+export function canTierUseModel(
+  tier: TierKey,
+  modelId: string,
+  options?: { hasPurchasedCredits?: boolean },
+): boolean {
   const tierConfig = TIERS[tier];
   if (!tierConfig) return false;
 
+  if ("allowedTiers" in tierConfig) {
+    return tierConfig.allowedTiers.includes(getModelTier(modelId));
+  }
+
   if (tierConfig.allowedModels === "all") return true;
+
+  if (tier === "free" && options?.hasPurchasedCredits) {
+    return ["starter", "efficient"].includes(getModelTier(modelId));
+  }
+
   return tierConfig.allowedModels.includes(modelId);
 }
 

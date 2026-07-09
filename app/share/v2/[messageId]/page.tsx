@@ -1,10 +1,10 @@
-import CodeRunner from "@/components/code-runner";
 import { getPrisma } from "@/lib/prisma";
 import { normalizeGeneratedFiles } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { SharePageClient } from "./share-page-client";
 
 export async function generateMetadata({
   params,
@@ -43,7 +43,20 @@ export default async function SharePage({
   const { messageId } = await params;
 
   const prisma = getPrisma();
-  const message = await prisma.message.findUnique({ where: { id: messageId } });
+  const message = await prisma.message.findUnique({
+    where: { id: messageId },
+    include: {
+      chat: {
+        include: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
   if (!message) {
     notFound();
   }
@@ -58,27 +71,13 @@ export default async function SharePage({
   }
 
   return (
-    <div className="flex h-full w-full grow flex-col">
-      <div className="flex h-full grow items-center justify-center">
-        <CodeRunner
-          files={files.map((f) => ({ path: f.path, content: f.code }))}
-        />
-      </div>
-
-      {/* Floating desktop banner */}
-      <div className="fixed bottom-4 right-4 z-50 hidden md:block">
-        <a
-          className="inline-flex shrink-0 items-center rounded-full border border-border bg-background px-3.5 py-1.5 text-xs text-foreground shadow-lg transition-shadow hover:shadow-sm"
-          href={`https://squidagent.app/?ref=${messageId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span className="text-center">
-            Powered by <span className="font-semibold">Squid Agent</span>
-          </span>
-        </a>
-      </div>
-    </div>
+    <SharePageClient
+      messageId={message.id}
+      title={message.chat.title}
+      prompt={message.chat.prompt}
+      creatorName={message.chat.user?.name ?? "Squid creator"}
+      files={files.map((file) => ({ path: file.path, content: file.code }))}
+    />
   );
 }
 

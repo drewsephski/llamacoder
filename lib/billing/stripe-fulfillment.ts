@@ -4,8 +4,9 @@ import { CREDIT_PACK_CONFIGS, STRIPE_PRICE_IDS, stripe } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
 import { TIERS, normalizeTier, type TierKey } from "./config";
 
-type PaidCreditType = "purchase" | "subscription";
+type CreditGrantType = "purchase" | "subscription" | "referral";
 type SubscriptionTier = Extract<TierKey, "pro" | "pro_plus">;
+const REFERRAL_UPGRADE_CREDITS = 25;
 
 function asString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
@@ -127,6 +128,8 @@ async function grantCreditsOnce({
   type,
   description,
   dedupeKey,
+  expiresAt,
+  rolloverCap,
   stripeEventId,
   stripeCheckoutSessionId,
   stripeInvoiceId,
@@ -134,9 +137,11 @@ async function grantCreditsOnce({
 }: {
   userId: string;
   amount: number;
-  type: PaidCreditType;
+  type: CreditGrantType;
   description: string;
   dedupeKey: string;
+  expiresAt?: Date;
+  rolloverCap?: number;
   stripeEventId?: string;
   stripeCheckoutSessionId?: string;
   stripeInvoiceId?: string;
@@ -146,13 +151,57 @@ async function grantCreditsOnce({
 
   try {
     return await prisma.$transaction(async (tx) => {
+      if (type === "subscription" && rolloverCap) {
+        const carryoverLimit = Math.max(0, rolloverCap - amount);
+        const existingGrants =
+          (await tx.creditGrant.findMany({
+            where: {
+              userId,
+              type: "subscription",
+              remainingAmount: { gt: 0 },
+            },
+            orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }],
+            select: {
+              id: true,
+              remainingAmount: true,
+            },
+          })) ?? [];
+        const existingTotal = existingGrants.reduce(
+          (total, grant) => total + grant.remainingAmount,
+          0,
+        );
+        let trimAmount = Math.max(0, existingTotal - carryoverLimit);
+
+        for (const grant of existingGrants) {
+          if (trimAmount <= 0) break;
+
+          const decrement = Math.min(trimAmount, grant.remainingAmount);
+          await tx.creditGrant.update({
+            where: { id: grant.id },
+            data: { remainingAmount: { decrement } },
+          });
+          trimAmount -= decrement;
+        }
+
+        if (existingTotal > carryoverLimit) {
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              credits: { decrement: existingTotal - carryoverLimit },
+            },
+          });
+        }
+      }
+
       await tx.creditGrant.create({
         data: {
           userId,
           amount,
+          remainingAmount: amount,
           type,
           description,
           dedupeKey,
+          expiresAt,
           stripeEventId,
           stripeCheckoutSessionId,
           stripeInvoiceId,
@@ -187,6 +236,69 @@ async function grantCreditsOnce({
 
     throw error;
   }
+}
+
+async function grantReferralCreditsForUpgrade({
+  upgradedUserId,
+  eventId,
+}: {
+  upgradedUserId: string;
+  eventId?: string;
+}) {
+  const prisma = getPrisma();
+  const referral = await prisma.chat.findFirst({
+    where: {
+      userId: upgradedUserId,
+      referrerUserId: {
+        not: null,
+      },
+    },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      sourceMessageId: true,
+      sourceChatId: true,
+      referrerUserId: true,
+    },
+  });
+
+  if (
+    !referral?.referrerUserId ||
+    referral.referrerUserId === upgradedUserId
+  ) {
+    return { granted: false, reason: "no_referrer" };
+  }
+
+  const grant = await grantCreditsOnce({
+    userId: referral.referrerUserId,
+    amount: REFERRAL_UPGRADE_CREDITS,
+    type: "referral",
+    description: `Referral upgrade bonus - ${REFERRAL_UPGRADE_CREDITS} credits`,
+    dedupeKey: `referral:upgrade:${upgradedUserId}`,
+    stripeEventId: eventId,
+  });
+
+  if (grant.granted && referral.sourceMessageId && referral.sourceChatId) {
+    await prisma.shareEvent.create({
+      data: {
+        messageId: referral.sourceMessageId,
+        chatId: referral.sourceChatId,
+        eventType: "referral_credit_granted",
+        userId: upgradedUserId,
+        referrerUserId: referral.referrerUserId,
+        metadata: {
+          credits: REFERRAL_UPGRADE_CREDITS,
+          remixChatId: referral.id,
+        },
+      },
+    });
+  }
+
+  return {
+    granted: grant.granted,
+    referrerUserId: referral.referrerUserId,
+    credits: REFERRAL_UPGRADE_CREDITS,
+  };
 }
 
 async function getExpandedInvoice(invoiceId: string) {
@@ -284,6 +396,7 @@ export async function syncSubscriptionFromStripe({
     tier: tierKey,
     priceId,
     latestInvoiceId: getStripeId(subscription.latest_invoice),
+    currentPeriodEnd: period.currentPeriodEnd,
   };
 }
 
@@ -328,10 +441,18 @@ export async function fulfillPaidInvoice(
     type: "subscription",
     description: `${tierConfig.name} subscription invoice - ${tierConfig.monthlyCredits} credits`,
     dedupeKey: `stripe:invoice:${invoiceId}`,
+    expiresAt: syncedSubscription.currentPeriodEnd,
+    rolloverCap: tierConfig.rolloverCap,
     stripeEventId: eventId,
     stripeInvoiceId: invoiceId,
     stripeSubscriptionId: syncedSubscription.subscriptionId,
   });
+  const referralGrant = grant.granted
+    ? await grantReferralCreditsForUpgrade({
+        upgradedUserId: syncedSubscription.userId,
+        eventId,
+      })
+    : { granted: false, reason: "subscription_credit_not_granted" };
 
   return {
     fulfilled: grant.granted,
@@ -340,6 +461,7 @@ export async function fulfillPaidInvoice(
     invoiceId,
     tier: syncedSubscription.tier,
     credits: tierConfig.monthlyCredits,
+    referralGrant,
   };
 }
 
@@ -384,12 +506,19 @@ async function fulfillCreditPackCheckout(
     stripeEventId: eventId,
     stripeCheckoutSessionId: session.id,
   });
+  const referralGrant = grant.granted
+    ? await grantReferralCreditsForUpgrade({
+        upgradedUserId: userId,
+        eventId,
+      })
+    : { granted: false, reason: "credit_pack_not_granted" };
 
   return {
     fulfilled: grant.granted,
     userId,
     checkoutSessionId: session.id,
     credits: pack.credits,
+    referralGrant,
   };
 }
 

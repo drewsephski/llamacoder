@@ -195,7 +195,7 @@ function Header({ onHelpClick }: HeaderProps) {
               <div className="flex items-center gap-2">
                 <Image
                   src="/squidagent-logo.svg"
-                  alt=""
+                  alt="Squid Agent"
                   width={28}
                   height={28}
                   className="h-7 w-auto"

@@ -6,7 +6,15 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/compare/", "/blog/", "/benchmarks/", "/api/og/"],
+        allow: [
+          "/",
+          "/compare/",
+          "/blog/",
+          "/benchmarks/",
+          "/llms.txt",
+          "/sitemap.xml",
+          "/api/og/",
+        ],
         disallow: [
           "/api/",
           "/dashboard",

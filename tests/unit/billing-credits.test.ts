@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FREE_MODEL } from "@/lib/constants";
+import { FREE_MODEL, LEGACY_QWEN_MAX_MODEL } from "@/lib/constants";
 import { buildSubscription, buildUser } from "../fixtures/builders";
 import { createPrismaTransactionMock } from "../helpers/mock-prisma";
 
@@ -10,6 +10,8 @@ const prismaMock = vi.hoisted(() => {
   return {
     $transaction: vi.fn(),
     user: delegate(["findUnique", "update", "updateMany"]),
+    creditGrant: delegate(["create", "findMany", "update", "updateMany"]),
+    creditHold: delegate(["create", "findMany", "findUnique", "update", "updateMany"]),
   };
 });
 
@@ -24,12 +26,29 @@ import {
   checkProjectCreationEligibility,
   consumeCreditsForGeneration,
   getUserCreditInfo,
+  releaseExpiredCreditHolds,
+  reserveCreditHold,
 } from "@/lib/billing/credits";
 
 describe("billing credit engine", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.creditGrant.findMany.mockReset();
+    prismaMock.creditGrant.findMany.mockResolvedValue([]);
+    prismaMock.creditHold.findMany.mockReset();
+    prismaMock.creditHold.findMany.mockResolvedValue([]);
   });
+
+  function grant(amount: number, overrides: Record<string, unknown> = {}) {
+    return {
+      id: `grant_${amount}`,
+      type: "subscription",
+      remainingAmount: amount,
+      expiresAt: null,
+      createdAt: new Date("2026-07-01T00:00:00.000Z"),
+      ...overrides,
+    };
+  }
 
   it("reports missing users, forbidden models, and insufficient credits", async () => {
     prismaMock.user.findUnique.mockResolvedValueOnce(null);
@@ -53,21 +72,103 @@ describe("billing credit engine", () => {
   it("allows paid models for active tiers while still requiring credits", async () => {
     prismaMock.user.findUnique.mockResolvedValueOnce(
       buildUser({
-        credits: 7,
+        credits: 8,
         subscription: buildSubscription({ tier: "pro_plus" }),
       }),
     );
+    prismaMock.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(8)]);
 
     await expect(
       checkCreditAvailability({
         userId: "user_1",
-        modelId: "moonshotai/kimi-k2.7-code",
+        modelId: LEGACY_QWEN_MAX_MODEL,
       }),
     ).resolves.toMatchObject({
       success: true,
-      creditsUsed: 3,
-      remainingCredits: 7,
+      creditsUsed: 8,
+      remainingCredits: 8,
     });
+  });
+
+  it("rejects aggregate credits that are not backed by usable grants", async () => {
+    prismaMock.user.findUnique.mockResolvedValueOnce(
+      buildUser({
+        credits: 100,
+        subscription: buildSubscription({ tier: "pro_plus" }),
+      }),
+    );
+    prismaMock.creditGrant.findMany
+      .mockResolvedValueOnce([
+        grant(50, {
+          id: "expired_sub",
+          expiresAt: new Date("2026-01-01T00:00:00.000Z"),
+        }),
+      ])
+      .mockResolvedValueOnce([
+        grant(4, {
+          id: "purchase_1",
+          type: "purchase",
+          remainingAmount: 4,
+        }),
+      ]);
+
+    await expect(
+      checkCreditAvailability({
+        userId: "user_1",
+        modelId: LEGACY_QWEN_MAX_MODEL,
+      }),
+    ).resolves.toEqual({ success: false, error: "INSUFFICIENT_CREDITS" });
+  });
+
+  it("does not unlock efficient models from spent historical purchases", async () => {
+    prismaMock.user.findUnique.mockResolvedValueOnce(
+      buildUser({
+        credits: 10,
+        creditGrants: [],
+      }),
+    );
+    prismaMock.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        grant(10, { id: "bonus_1", type: "bonus", remainingAmount: 10 }),
+      ]);
+
+    await expect(
+      checkCreditAvailability({
+        userId: "user_1",
+        modelId: "deepseek/deepseek-v4-pro",
+      }),
+    ).resolves.toEqual({ success: false, error: "FORBIDDEN_MODEL" });
+  });
+
+  it("rejects a second hold when grant allocation loses the race", async () => {
+    const tx = createPrismaTransactionMock();
+    prismaMock.$transaction.mockImplementationOnce(async (callback) =>
+      callback(tx),
+    );
+    tx.user.findUnique.mockResolvedValueOnce(
+      buildUser({
+        credits: 42,
+        subscription: buildSubscription({ tier: "pro_plus" }),
+      }),
+    );
+    tx.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(42)])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(42)]);
+    tx.creditGrant.updateMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(
+      reserveCreditHold({
+        userId: "user_1",
+        modelId: "anthropic/claude-opus-4.8",
+      }),
+    ).resolves.toEqual({ success: false, error: "INSUFFICIENT_CREDITS" });
+
+    expect(tx.creditHold.create).not.toHaveBeenCalled();
   });
 
   it("enforces free project limits before checking credits for project creation", async () => {
@@ -75,7 +176,13 @@ describe("billing credit engine", () => {
       chat: { count: vi.fn().mockResolvedValue(3) },
       user: {
         findUnique: vi.fn().mockResolvedValue(buildUser({ credits: 10 })),
+        updateMany: vi.fn(),
       },
+      creditGrant: {
+        findMany: vi.fn().mockResolvedValue([grant(10)]),
+        update: vi.fn(),
+      },
+      creditHold: { findMany: vi.fn().mockResolvedValue([]) },
     };
 
     await expect(
@@ -103,7 +210,10 @@ describe("billing credit engine", () => {
             subscription: buildSubscription({ status: "active", tier: "pro" }),
           }),
         ),
+        updateMany: vi.fn(),
       },
+      creditGrant: { findMany: vi.fn().mockResolvedValue([]), update: vi.fn() },
+      creditHold: { findMany: vi.fn().mockResolvedValue([]) },
     };
 
     await expect(
@@ -128,6 +238,14 @@ describe("billing credit engine", () => {
     tx.user.findUnique
       .mockResolvedValueOnce(buildUser({ credits: 3 }))
       .mockResolvedValueOnce({ credits: 2 });
+    tx.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(3)])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(3)])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(2)]);
+    tx.creditGrant.updateMany.mockResolvedValueOnce({ count: 1 });
     tx.user.updateMany.mockResolvedValueOnce({ count: 1 });
 
     await expect(
@@ -165,9 +283,66 @@ describe("billing credit engine", () => {
     });
   });
 
+  it("expires stale active holds and restores their grant allocations", async () => {
+    const tx = createPrismaTransactionMock();
+    const now = new Date("2026-07-09T12:00:00.000Z");
+    prismaMock.$transaction.mockImplementationOnce(async (callback) =>
+      callback(tx),
+    );
+    tx.creditHold.findMany.mockResolvedValueOnce([
+      {
+        id: "hold_1",
+        userId: "user_1",
+        amountHeld: 3,
+        allocations: [{ grantId: "grant_1", amount: 3 }],
+      },
+    ]);
+    tx.creditHold.updateMany.mockResolvedValueOnce({ count: 1 });
+
+    await expect(
+      releaseExpiredCreditHolds({ userId: "user_1", now }),
+    ).resolves.toEqual({ expiredHolds: 1, creditsRestored: 3 });
+
+    expect(tx.creditHold.findMany).toHaveBeenCalledWith({
+      where: {
+        status: "active",
+        expiresAt: { lte: now },
+        userId: "user_1",
+      },
+      select: {
+        id: true,
+        userId: true,
+        amountHeld: true,
+        allocations: true,
+      },
+      orderBy: { expiresAt: "asc" },
+      take: 100,
+    });
+    expect(tx.creditHold.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "hold_1",
+        status: "active",
+        expiresAt: { lte: now },
+      },
+      data: { status: "expired" },
+    });
+    expect(tx.creditGrant.update).toHaveBeenCalledWith({
+      where: { id: "grant_1" },
+      data: { remainingAmount: { increment: 3 } },
+    });
+    expect(tx.user.update).toHaveBeenCalledWith({
+      where: { id: "user_1" },
+      data: { credits: { increment: 3 } },
+    });
+  });
+
   it("does not permit negative balances when the atomic update loses the race", async () => {
     const tx = createPrismaTransactionMock();
     tx.user.findUnique.mockResolvedValueOnce(buildUser({ credits: 1 }));
+    tx.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(1)]);
+    tx.creditGrant.updateMany.mockResolvedValueOnce({ count: 1 });
     tx.user.updateMany.mockResolvedValueOnce({ count: 0 });
 
     await expect(
@@ -211,6 +386,14 @@ describe("billing credit engine", () => {
         description: "Credit pack",
       },
     });
+    expect(tx.creditGrant.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "user_1",
+        amount: 20,
+        remainingAmount: 20,
+        type: "purchase",
+      }),
+    });
   });
 
   it("returns normalized user credit info", async () => {
@@ -223,11 +406,21 @@ describe("billing credit engine", () => {
         }),
       }),
     );
+    prismaMock.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(12)]);
 
     await expect(getUserCreditInfo("user_1")).resolves.toEqual({
       credits: 12,
+      creditBreakdown: {
+        totalCredits: 12,
+        subscriptionCredits: 12,
+        purchasedCredits: 0,
+        otherCredits: 0,
+      },
       tier: "pro_plus",
       hasActiveSubscription: true,
+      hasPurchasedCredits: false,
       subscriptionEndsAt: "2026-08-01T00:00:00.000Z",
     });
   });

@@ -81,9 +81,19 @@ const getChatById = cache(async (id: string) => {
   const allMessages = [...initialMessages, ...recentMessages].sort(
     (a, b) => a.position - b.position,
   );
+  const followUpPromptsByMessageId = await getFollowUpPromptsByMessageId(
+    prisma,
+    id,
+  );
+  const messages = allMessages.map((message) => {
+    const followUpPrompts = followUpPromptsByMessageId.get(message.id);
+    return followUpPrompts === undefined
+      ? message
+      : { ...message, followUpPrompts };
+  });
 
   // Calculate assistant messages count before the loaded range for correct versioning
-  const assistantMessagesInLoaded = allMessages.filter(
+  const assistantMessagesInLoaded = messages.filter(
     (m) => m.role === "assistant",
   );
   let assistantMessagesCountBefore = 0;
@@ -102,11 +112,32 @@ const getChatById = cache(async (id: string) => {
 
   return {
     ...chat,
-    messages: allMessages,
+    messages,
     totalMessages,
     assistantMessagesCountBefore,
   };
 });
+
+async function getFollowUpPromptsByMessageId(
+  prisma: ReturnType<typeof getPrisma>,
+  chatId: string,
+) {
+  try {
+    const rows = await prisma.$queryRaw<
+      { id: string; followUpPrompts: unknown }[]
+    >`
+      SELECT "id", "followUpPrompts"
+      FROM "Message"
+      WHERE "chatId" = ${chatId}
+        AND "followUpPrompts" IS NOT NULL
+    `;
+
+    return new Map(rows.map((row) => [row.id, row.followUpPrompts]));
+  } catch (error) {
+    console.warn("Failed to load follow-up prompts:", error);
+    return new Map<string, unknown>();
+  }
+}
 
 export type Chat = NonNullable<Awaited<ReturnType<typeof getChatById>>>;
 export type Message = Chat["messages"][number];

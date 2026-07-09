@@ -11,7 +11,9 @@ import { headers } from "next/headers";
 import { MODELS } from "@/lib/constants";
 import {
   checkProjectCreationEligibility,
-  getModelCreditCost,
+  getModelCreditHoldCost,
+  releaseCreditHold,
+  reserveCreditHold,
 } from "@/lib/billing";
 import {
   VISION_ANALYSIS_MODEL,
@@ -70,6 +72,14 @@ function normalizeGeneratedTitle(title: string | undefined, fallback: string) {
 export async function POST(request: NextRequest) {
   const prisma = getPrisma();
   const warnings: string[] = [];
+  let planningHoldId: string | undefined;
+
+  const releasePlanningHold = async () => {
+    if (!planningHoldId) return;
+
+    await releaseCreditHold({ holdId: planningHoldId });
+    planningHoldId = undefined;
+  };
 
   try {
     const parsed = createChatSchema.safeParse(
@@ -138,12 +148,33 @@ export async function POST(request: NextRequest) {
           error: eligibility.error,
           message:
             eligibility.error === "INSUFFICIENT_CREDITS"
-              ? `Need ${getModelCreditCost(model)} credits for this model. Upgrade or buy credits to continue.`
+              ? `Need ${getModelCreditHoldCost(model)} credits to start this model. Upgrade or buy credits to continue.`
               : "Unable to process request",
         },
         { status: eligibility.error === "USER_NOT_FOUND" ? 404 : 402 },
       );
     }
+
+    const hold = await reserveCreditHold({
+      userId: session.user.id,
+      modelId: model,
+      reason: "Project planning hold",
+      phase: "planning",
+    });
+
+    if (!hold.success) {
+      return NextResponse.json(
+        {
+          error: hold.error,
+          message:
+            hold.error === "INSUFFICIENT_CREDITS"
+              ? `Need ${getModelCreditHoldCost(model)} credits to start this model. Upgrade or buy credits to continue.`
+              : "Unable to process request",
+        },
+        { status: hold.error === "USER_NOT_FOUND" ? 404 : 402 },
+      );
+    }
+    planningHoldId = hold.holdId;
 
     const fallbackTitle = createFallbackTitle(prompt);
 
@@ -186,6 +217,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.error("Failed to persist chat:", error);
+      await releasePlanningHold();
 
       return NextResponse.json(
         {
@@ -204,6 +236,7 @@ export async function POST(request: NextRequest) {
       await prisma.chat.delete({ where: { id: chat.id } }).catch((error) => {
         console.error("Failed to delete incomplete chat:", error);
       });
+      await releasePlanningHold();
 
       return NextResponse.json(
         {
@@ -361,7 +394,7 @@ export async function POST(request: NextRequest) {
             userId: session.user.id,
             modelId: model,
             creditsUsed: 0,
-            estimatedCredits: getModelCreditCost(model),
+            estimatedCredits: getModelCreditHoldCost(model),
             actualCredits: 0,
             refundedCredits: 0,
             reason: `Plan generation - ${title}`,
@@ -375,6 +408,8 @@ export async function POST(request: NextRequest) {
         });
     }
 
+    await releasePlanningHold();
+
     return NextResponse.json({
       chatId: chat.id,
       lastMessageId: userMessage.id,
@@ -383,6 +418,7 @@ export async function POST(request: NextRequest) {
       warnings: warnings.length ? warnings : undefined,
     });
   } catch (error) {
+    await releasePlanningHold();
     console.error("Unexpected error creating chat:", error);
     return NextResponse.json(
       {

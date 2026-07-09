@@ -262,3 +262,248 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
     @apply border-border bg-muted text-muted-foreground;
   }
 }
+
+@keyframes rotate {
+  0% {
+    transform: rotateX(-20deg) rotateY(0deg) rotateZ(0deg);
+  }
+  5% {
+    transform: rotateX(-20deg) rotateY(-20deg) rotateZ(0deg);
+  }
+  20% {
+    transform: rotateX(30deg) rotateY(200deg) rotateZ(0deg);
+  }
+  25% {
+    transform: rotateX(-60deg) rotateY(150deg) rotateZ(0deg);
+  }
+  60% {
+    transform: rotateX(-20deg) rotateY(130deg) rotateZ(0deg);
+  }
+  65% {
+    transform: rotateX(-20deg) rotateY(120deg) rotateZ(0deg);
+  }
+  80% {
+    transform: rotateX(-20deg) rotateY(375deg) rotateZ(0deg);
+  }
+  85% {
+    transform: rotateX(-20deg) rotateY(357deg) rotateZ(0deg);
+  }
+  87% {
+    transform: rotateX(-20deg) rotateY(360deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(-20deg) rotateY(360deg) rotateZ(0deg);
+  }
+}
+
+@keyframes lid-screen {
+  0% {
+    background-position: left bottom;
+    transform: rotateX(0deg);
+  }
+  5% {
+    background-position: left bottom;
+    transform: rotateX(50deg);
+  }
+  20% {
+    background-position: -150px top;
+    transform: rotateX(-90deg);
+  }
+  25% {
+    background-position: left bottom;
+    transform: rotateX(15deg);
+  }
+  30% {
+    background-position: right top;
+    transform: rotateX(-5deg);
+  }
+  38% {
+    background-position: right top;
+    transform: rotateX(5deg);
+  }
+  48% {
+    background-position: right top;
+    transform: rotateX(0deg);
+  }
+  90% {
+    background-position: right top;
+    transform: rotateX(0deg);
+  }
+  100% {
+    background-position: right center;
+    transform: rotateX(0deg);
+  }
+}
+
+@keyframes lid-macbody {
+  0%,
+  50%,
+  100% {
+    transform: rotateX(-90deg);
+  }
+}
+
+@keyframes lid-keyboard-area {
+  0% {
+    background-color: #dfdfdf;
+  }
+  50% {
+    background-color: #bbb;
+  }
+  100% {
+    background-color: #dfdfdf;
+  }
+}
+
+@keyframes screen-shade {
+  0% {
+    background-position: -20px 0;
+  }
+  5% {
+    background-position: -40px 0;
+  }
+  20% {
+    background-position: 200px 0;
+  }
+  50% {
+    background-position: -200px 0;
+  }
+  80% {
+    background-position: 0 0;
+  }
+  85% {
+    background-position: -30px 0;
+  }
+  90% {
+    background-position: -20px 0;
+  }
+  100% {
+    background-position: -20px 0;
+  }
+}
+
+@keyframes keys {
+  0% {
+    box-shadow: 0 -2px 0 #222;
+  }
+  5% {
+    box-shadow: 1px -1px 0 #222;
+  }
+  20%,
+  25%,
+  60% {
+    box-shadow: -1px 1px 0 #222;
+  }
+  80%,
+  85%,
+  87%,
+  100% {
+    box-shadow: 0 -2px 0 #222;
+  }
+}
+
+@keyframes macbook-shadow-animation {
+  0% {
+    box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3);
+    transform: rotateX(80deg) rotateY(0deg) rotateZ(0deg);
+  }
+  5% {
+    box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3);
+    transform: rotateX(80deg) rotateY(10deg) rotateZ(0deg);
+  }
+  20% {
+    box-shadow: 0 0 50px 30px rgba(0, 0, 0, 0.3);
+    transform: rotateX(30deg) rotateY(-20deg) rotateZ(-20deg);
+  }
+  25% {
+    box-shadow: 0 0 35px 15px rgba(0, 0, 0, 0.1);
+    transform: rotateX(80deg) rotateY(-20deg) rotateZ(50deg);
+  }
+  60% {
+    box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3);
+    transform: rotateX(80deg) rotateY(0deg) rotateZ(-50deg) translateX(30px);
+  }
+  100% {
+    box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3);
+    transform: rotateX(80deg) rotateY(0deg) rotateZ(0deg);
+  }
+}
+
+@layer utilities {
+  .macbook-container {
+    perspective: 500px;
+  }
+
+  .macbook-inner,
+  .macbook-keyboard {
+    transform-style: preserve-3d;
+  }
+
+  .macbook-screen {
+    transform-origin: 50% 100%;
+    transform-style: preserve-3d;
+  }
+
+  .macbook-screen-face-one {
+    transform: translateZ(2px);
+  }
+
+  .macbook-body {
+    transform: rotateX(-90deg);
+    transform-origin: 50% 100%;
+    transform-style: preserve-3d;
+  }
+
+  .macbook-body-face-one {
+    transform: translateZ(-2px);
+    transform-style: preserve-3d;
+  }
+
+  .macbook-key {
+    transform: translateZ(-2px);
+  }
+
+  .macbook-shadow {
+    transform: rotateX(80deg) rotateY(0deg) rotateZ(0deg);
+  }
+
+  .custom-animate-rotate {
+    animation: rotate 10s ease-in-out infinite;
+  }
+
+  .custom-animate-lid-screen {
+    animation: lid-screen 10s ease-in-out infinite;
+  }
+
+  .custom-animate-lid-macbody {
+    animation: lid-macbody 10s ease-in-out infinite;
+  }
+
+  .custom-animate-lid-keyboard-area {
+    animation: lid-keyboard-area 10s ease-in-out infinite;
+  }
+
+  .custom-animate-screen-shade {
+    animation: screen-shade 10s ease-in-out infinite;
+  }
+
+  .custom-animate-keys {
+    animation: keys 10s ease-in-out infinite;
+  }
+
+  .custom-animate-macbook-shadow {
+    animation: macbook-shadow-animation 10s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .custom-animate-rotate,
+  .custom-animate-lid-screen,
+  .custom-animate-lid-macbody,
+  .custom-animate-lid-keyboard-area,
+  .custom-animate-screen-shade,
+  .custom-animate-keys,
+  .custom-animate-macbook-shadow {
+    animation: none;
+  }
+}

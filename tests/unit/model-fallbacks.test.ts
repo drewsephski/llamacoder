@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   FREE_MODEL,
+  LEGACY_GEMINI_PRO_MODEL,
+  LEGACY_KIMI_CODE_MODEL,
   LEGACY_FREE_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
+  LEGACY_QWEN_MAX_MODEL,
   LEGACY_SECONDARY_STARTER_MODEL,
   SAFE_GPT_MODEL,
   SECONDARY_STARTER_MODEL,
@@ -28,14 +31,26 @@ describe("model fallbacks", () => {
   });
 
   it("does not add fallback routes for paid models", () => {
-    expect(getModelWithFallbacks("moonshotai/kimi-k2.7-code")).toEqual([
-      "moonshotai/kimi-k2.7-code",
+    expect(getModelWithFallbacks("x-ai/grok-4.5")).toEqual([
+      "x-ai/grok-4.5",
     ]);
   });
 
   it("routes mandatory-reasoning legacy models to optional/no-thinking models", () => {
     expect(getModelWithFallbacks("openai/gpt-5.5")).toEqual([SAFE_GPT_MODEL]);
     expect(getModelWithFallbacks("x-ai/grok-4.3")).toEqual([
+      "minimax/minimax-m3",
+    ]);
+  });
+
+  it("routes removed provider-failing models to supported alternatives", () => {
+    expect(getModelWithFallbacks(LEGACY_GEMINI_PRO_MODEL)).toEqual([
+      "google/gemini-3-flash-preview",
+    ]);
+    expect(getModelWithFallbacks(LEGACY_QWEN_MAX_MODEL)).toEqual([
+      "minimax/minimax-m3",
+    ]);
+    expect(getModelWithFallbacks(LEGACY_KIMI_CODE_MODEL)).toEqual([
       "minimax/minimax-m3",
     ]);
   });

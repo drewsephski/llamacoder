@@ -7,12 +7,17 @@ import { headers } from "next/headers";
 import {
   checkCreditAvailability,
   consumeCreditsForGeneration,
-  getModelCreditCost,
+  getModelCreditHoldCost,
+  releaseCreditHold,
 } from "@/lib/billing";
 import {
   formatGeneratedFilesMarkdown,
   normalizeGeneratedFiles,
 } from "@/lib/generated-files";
+import {
+  generateFollowUpPrompts,
+  saveMessageFollowUpPrompts,
+} from "@/lib/follow-up-prompts";
 import { extractAllCodeBlocks } from "@/lib/utils";
 
 export async function createMessage(
@@ -20,6 +25,7 @@ export async function createMessage(
   text: string,
   role: "assistant" | "user",
   files?: any[],
+  options?: { creditHoldId?: string },
 ) {
   // Check authentication
   const session = await auth.api.getSession({
@@ -70,6 +76,14 @@ export async function createMessage(
     role === "assistant" &&
     Array.isArray(normalizedFiles) &&
     normalizedFiles.length > 0;
+  const followUpPrompts =
+    role === "assistant"
+      ? await generateFollowUpPrompts({
+          chat,
+          assistantContent: text,
+          files: Array.isArray(normalizedFiles) ? normalizedFiles : [],
+        })
+      : null;
 
   const messageData = {
     role,
@@ -80,7 +94,7 @@ export async function createMessage(
   };
 
   if (role === "assistant" && chat.userId) {
-    return await prisma.$transaction(async (tx) => {
+    const newMessage = await prisma.$transaction(async (tx) => {
       const newMessage = await tx.message.create({
         data: messageData,
       });
@@ -100,6 +114,8 @@ export async function createMessage(
         description: `AI generation - ${chat.model}`,
         phase: "follow_up",
         status: "completed",
+        creditHoldId: options?.creditHoldId,
+        generatedText: text,
       });
 
       if (!creditCheck.success) {
@@ -111,9 +127,23 @@ export async function createMessage(
 
       return newMessage;
     });
+
+    if (followUpPrompts) {
+      await saveMessageFollowUpPrompts(
+        prisma,
+        newMessage.id,
+        followUpPrompts,
+      );
+    }
+
+    return newMessage;
   }
 
   const newMessage = await prisma.message.create({ data: messageData });
+
+  if (followUpPrompts) {
+    await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
+  }
 
   if (assistantHasFiles) {
     await prisma.chat.update({
@@ -123,6 +153,28 @@ export async function createMessage(
   }
 
   return newMessage;
+}
+
+export async function releaseReservedCreditHold(holdId: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("You must be signed in to release credits");
+  }
+
+  const prisma = getPrisma();
+  const hold = await prisma.creditHold.findUnique({
+    where: { id: holdId },
+    select: { userId: true, status: true },
+  });
+
+  if (!hold || hold.userId !== session.user.id || hold.status !== "active") {
+    return { success: true };
+  }
+
+  return releaseCreditHold({ holdId });
 }
 
 export async function createPreviewRepairMessage(
@@ -230,8 +282,13 @@ export async function createFreeRepairAssistantMessage(
       : 0;
   const normalizedFiles = normalizeGeneratedFiles(files);
   const assistantHasFiles = normalizedFiles.length > 0;
+  const followUpPrompts = await generateFollowUpPrompts({
+    chat,
+    assistantContent: text,
+    files: normalizedFiles,
+  });
 
-  return await prisma.$transaction(async (tx) => {
+  const newMessage = await prisma.$transaction(async (tx) => {
     const newMessage = await tx.message.create({
       data: {
         role: "assistant",
@@ -266,7 +323,7 @@ export async function createFreeRepairAssistantMessage(
         userId: chat.userId!,
         modelId: chat.model,
         creditsUsed: 0,
-        estimatedCredits: getModelCreditCost(chat.model),
+        estimatedCredits: getModelCreditHoldCost(chat.model),
         actualCredits: 0,
         refundedCredits: 0,
         reason: "Free preview repair",
@@ -278,6 +335,10 @@ export async function createFreeRepairAssistantMessage(
 
     return newMessage;
   });
+
+  await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
+
+  return newMessage;
 }
 
 export async function restoreVersionAsCheckpoint({
@@ -334,6 +395,11 @@ export async function restoreVersionAsCheckpoint({
       : 0;
   const explanation = `Version ${newVersion} was created by restoring version ${oldVersion}.`;
   const content = `${explanation}\n\n${formatGeneratedFilesMarkdown(restoredFiles)}`;
+  const followUpPrompts = await generateFollowUpPrompts({
+    chat,
+    assistantContent: content,
+    files: restoredFiles,
+  });
 
   const newMessage = await prisma.message.create({
     data: {
@@ -344,6 +410,8 @@ export async function restoreVersionAsCheckpoint({
       chatId,
     },
   });
+
+  await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
 
   await prisma.chat.update({
     where: { id: chatId },

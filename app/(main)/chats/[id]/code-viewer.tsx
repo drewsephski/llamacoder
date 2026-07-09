@@ -6,10 +6,23 @@ import {
   AlertTriangle,
   CheckCircle2,
   DownloadIcon,
+  ExternalLink,
+  FlaskConical,
+  Loader2,
+  MousePointer2,
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
+import { SiNetlify } from "react-icons/si";
 import { toast } from "sonner";
+import { Vercel } from "@/logos/vercel";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -25,15 +38,16 @@ import {
 } from "@/lib/utils";
 import {
   attachGeneratedFilesStats,
-  buildGeneratedFilesQualityReport,
   normalizeGeneratedFiles,
   readGeneratedFilesStats,
   type GeneratedFile,
 } from "@/lib/generated-files";
+import { buildExportBundle, getExportFilename } from "@/lib/export-bundle";
 import {
-  dependencies as sandpackDependencies,
-  shadcnFiles,
-} from "@/lib/sandpack-config";
+  buildTargetedPreviewEditPrompt,
+  formatPreviewElementSelection,
+  type PreviewElementSelection,
+} from "@/lib/targeted-preview-edit";
 import { useState, useEffect } from "react";
 import type { Chat, Message } from "./page";
 import { Share } from "./share";
@@ -61,6 +75,7 @@ export default function CodeViewer({
   onTabChange,
   onClose,
   onRequestFix,
+  onRequestTargetedEdit,
   onRestore,
   isSaved,
   isSaving,
@@ -75,6 +90,7 @@ export default function CodeViewer({
   onTabChange: (v: "code" | "preview") => void;
   onClose: () => void;
   onRequestFix: (e: string) => void;
+  onRequestTargetedEdit: (prompt: string) => void;
   onRestore: (
     message: Message | undefined,
     oldVersion: number,
@@ -277,10 +293,24 @@ export default function CodeViewer({
   };
 
   const appTitle = generateAppTitle(files);
-  const qualityReport = buildGeneratedFilesQualityReport(files);
+  const exportBundle = buildExportBundle(files);
+  const qualityReport = exportBundle.qualityReport;
   const qualityWarningCount =
     qualityReport.diagnostics.length +
     qualityReport.accessibilityWarnings.length;
+  const [isVerifyingExport, setIsVerifyingExport] = useState(false);
+  const [verifiedExportStatus, setVerifiedExportStatus] = useState<
+    "verified" | "warning" | "failed" | null
+  >(null);
+  const [previewSelectionMode, setPreviewSelectionMode] = useState(false);
+  const [previewSelection, setPreviewSelection] =
+    useState<PreviewElementSelection | null>(null);
+  const [previewEditInstruction, setPreviewEditInstruction] = useState("");
+  const [previewTestNonce, setPreviewTestNonce] = useState(0);
+  const [previewTestReport, setPreviewTestReport] = useState<string | null>(
+    null,
+  );
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const allAssistantMessages = assistantMessages.some(
     (m) => m.id === message?.id,
@@ -301,6 +331,10 @@ export default function CodeViewer({
 
   const [refresh, setRefresh] = useState(0);
   const disabledControls = !!streamText || files.length === 0;
+  const canSubmitTargetedEdit =
+    !disabledControls &&
+    !!previewSelection &&
+    previewEditInstruction.trim().length > 0;
   const selectValue = disabledControls
     ? undefined
     : (allAssistantMessages.length - 1 - currentVersionIndex).toString();
@@ -320,343 +354,38 @@ export default function CodeViewer({
     if (files.length === 0) return;
 
     const zip = new JSZip();
-    const appTitle = generateAppTitle(files);
-    const packageName =
-      appTitle
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "") || "squid-generated-app";
+    const bundle = buildExportBundle(files);
 
-    // Add each generated file to the zip
-    files.forEach((file) => {
-      zip.file(file.path, file.code);
-    });
+    if (message?.id) {
+      setIsVerifyingExport(true);
+      try {
+        const response = await fetch(`/api/export/${message.id}`, {
+          method: "POST",
+        });
+        const data = await response.json().catch(() => null);
 
-    for (const [path, content] of Object.entries(shadcnFiles)) {
-      if (path === "/public/index.html") continue;
-
-      const exportPath = path.replace(/^\//, "");
-      if (!files.some((file) => file.path === exportPath)) {
-        zip.file(exportPath, content);
+        if (response.ok) {
+          setVerifiedExportStatus(data.status);
+          toast.success("Export verified by Squid", {
+            description: `Status: ${data.status}`,
+          });
+        } else {
+          toast.warning("Export downloaded without saved verification", {
+            description: data?.message || "Unable to persist verification.",
+          });
+        }
+      } finally {
+        setIsVerifyingExport(false);
       }
     }
 
-    if (!files.some((file) => file.path === "main.tsx")) {
-      zip.file(
-        "main.tsx",
-        [
-          'import React from "react";',
-          'import { createRoot } from "react-dom/client";',
-          'import App from "./App";',
-          'import "./styles.css";',
-          "",
-          'createRoot(document.getElementById("root")!).render(',
-          "  <React.StrictMode>",
-          "    <App />",
-          "  </React.StrictMode>,",
-          ");",
-        ].join("\n"),
-      );
+    for (const file of bundle.files) {
+      zip.file(file.path, file.content);
     }
-
-    if (!files.some((file) => file.path === "styles.css")) {
-      zip.file(
-        "styles.css",
-        [
-          "@tailwind base;",
-          "@tailwind components;",
-          "@tailwind utilities;",
-          "",
-          ":root {",
-          "  --background: 0 0% 100%;",
-          "  --foreground: 222.2 84% 4.9%;",
-          "  --card: 0 0% 100%;",
-          "  --card-foreground: 222.2 84% 4.9%;",
-          "  --popover: 0 0% 100%;",
-          "  --popover-foreground: 222.2 84% 4.9%;",
-          "  --primary: 221.2 83.2% 53.3%;",
-          "  --primary-foreground: 210 40% 98%;",
-          "  --secondary: 210 40% 96.1%;",
-          "  --secondary-foreground: 222.2 47.4% 11.2%;",
-          "  --muted: 210 40% 96.1%;",
-          "  --muted-foreground: 215.4 16.3% 46.9%;",
-          "  --accent: 210 40% 96.1%;",
-          "  --accent-foreground: 222.2 47.4% 11.2%;",
-          "  --destructive: 0 84.2% 60.2%;",
-          "  --destructive-foreground: 210 40% 98%;",
-          "  --border: 214.3 31.8% 91.4%;",
-          "  --input: 214.3 31.8% 91.4%;",
-          "  --ring: 221.2 83.2% 53.3%;",
-          "  --radius: 0.5rem;",
-          "}",
-          "",
-          ".dark {",
-          "  --background: 222.2 84% 4.9%;",
-          "  --foreground: 210 40% 98%;",
-          "  --card: 222.2 84% 4.9%;",
-          "  --card-foreground: 210 40% 98%;",
-          "  --popover: 222.2 84% 4.9%;",
-          "  --popover-foreground: 210 40% 98%;",
-          "  --primary: 217.2 91.2% 59.8%;",
-          "  --primary-foreground: 222.2 47.4% 11.2%;",
-          "  --secondary: 217.2 32.6% 17.5%;",
-          "  --secondary-foreground: 210 40% 98%;",
-          "  --muted: 217.2 32.6% 17.5%;",
-          "  --muted-foreground: 215 20.2% 65.1%;",
-          "  --accent: 217.2 32.6% 17.5%;",
-          "  --accent-foreground: 210 40% 98%;",
-          "  --destructive: 0 62.8% 30.6%;",
-          "  --destructive-foreground: 210 40% 98%;",
-          "  --border: 217.2 32.6% 17.5%;",
-          "  --input: 217.2 32.6% 17.5%;",
-          "  --ring: 224.3 76.3% 48%;",
-          "}",
-          "",
-          "* {",
-          "  border-color: hsl(var(--border));",
-          "}",
-          "",
-          "body {",
-          "  margin: 0;",
-          "  min-width: 320px;",
-          "  min-height: 100vh;",
-          "}",
-        ].join("\n"),
-      );
-    }
-
-    zip.file(
-      "index.html",
-      [
-        "<!doctype html>",
-        '<html lang="en">',
-        "  <head>",
-        '    <meta charset="UTF-8" />',
-        '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-        `    <title>${appTitle}</title>`,
-        "  </head>",
-        "  <body>",
-        '    <div id="root"></div>',
-        '    <script type="module" src="/main.tsx"></script>',
-        "  </body>",
-        "</html>",
-      ].join("\n"),
-    );
-
-    zip.file(
-      "package.json",
-      JSON.stringify(
-        {
-          name: packageName,
-          version: "0.1.0",
-          private: true,
-          type: "module",
-          scripts: {
-            dev: "vite --host 0.0.0.0",
-            build: "tsc --noEmit && vite build",
-            preview: "vite preview",
-            typecheck: "tsc --noEmit",
-          },
-          dependencies: inferPackageDependencies(files),
-          devDependencies: {
-            "@types/node": "latest",
-            "@vitejs/plugin-react": "latest",
-            autoprefixer: "latest",
-            postcss: "latest",
-            tailwindcss: "latest",
-            typescript: "latest",
-            vite: "latest",
-          },
-        },
-        null,
-        2,
-      ),
-    );
-
-    zip.file(
-      "README.md",
-      [
-        `# ${appTitle}`,
-        "",
-        "Generated by Squid.",
-        "",
-        "## Run locally",
-        "",
-        "```bash",
-        "pnpm install",
-        "pnpm dev",
-        "```",
-        "",
-        "## Included artifacts",
-        "",
-        "- `squid-manifest.json`: generated file manifest and export metadata.",
-        "- `squid-quality-report.json`: import, file, and accessibility diagnostics.",
-        "- `vercel.json`, `netlify.toml`, and `wrangler.toml`: starter deploy config.",
-        "",
-        "The quality report is a smoke check, not a substitute for a full production review.",
-      ].join("\n"),
-    );
-
-    zip.file(
-      "squid-manifest.json",
-      JSON.stringify(
-        {
-          appTitle,
-          exportedAt: new Date().toISOString(),
-          source: "Squid",
-          files: files.map((file) => ({
-            path: file.path,
-            language: file.language,
-            bytes: new Blob([file.code]).size,
-          })),
-        },
-        null,
-        2,
-      ),
-    );
-
-    zip.file(
-      "squid-quality-report.json",
-      JSON.stringify(qualityReport, null, 2),
-    );
-    zip.file(
-      "tsconfig.json",
-      JSON.stringify(
-        {
-          compilerOptions: {
-            target: "ES2020",
-            useDefineForClassFields: true,
-            lib: ["DOM", "DOM.Iterable", "ES2020"],
-            allowJs: false,
-            skipLibCheck: true,
-            esModuleInterop: true,
-            allowSyntheticDefaultImports: true,
-            strict: true,
-            forceConsistentCasingInFileNames: true,
-            module: "ESNext",
-            moduleResolution: "Node",
-            resolveJsonModule: true,
-            isolatedModules: true,
-            noEmit: true,
-            jsx: "react-jsx",
-            baseUrl: ".",
-            paths: {
-              "@/*": ["./*"],
-            },
-          },
-          include: ["**/*.ts", "**/*.tsx"],
-        },
-        null,
-        2,
-      ),
-    );
-    zip.file(
-      "vite.config.ts",
-      [
-        'import { defineConfig } from "vite";',
-        'import react from "@vitejs/plugin-react";',
-        'import path from "node:path";',
-        "",
-        "export default defineConfig({",
-        "  plugins: [react()],",
-        "  resolve: {",
-        '    alias: { "@": path.resolve(__dirname, ".") },',
-        "  },",
-        "});",
-      ].join("\n"),
-    );
-    zip.file(
-      "tailwind.config.ts",
-      [
-        'import type { Config } from "tailwindcss";',
-        "",
-        "export default {",
-        '  content: ["./index.html", "./**/*.{ts,tsx}"],',
-        "  theme: {",
-        "    extend: {",
-        "      colors: {",
-        '        border: "hsl(var(--border))",',
-        '        input: "hsl(var(--input))",',
-        '        ring: "hsl(var(--ring))",',
-        '        background: "hsl(var(--background))",',
-        '        foreground: "hsl(var(--foreground))",',
-        "        primary: {",
-        '          DEFAULT: "hsl(var(--primary))",',
-        '          foreground: "hsl(var(--primary-foreground))",',
-        "        },",
-        "        secondary: {",
-        '          DEFAULT: "hsl(var(--secondary))",',
-        '          foreground: "hsl(var(--secondary-foreground))",',
-        "        },",
-        "        destructive: {",
-        '          DEFAULT: "hsl(var(--destructive))",',
-        '          foreground: "hsl(var(--destructive-foreground))",',
-        "        },",
-        "        muted: {",
-        '          DEFAULT: "hsl(var(--muted))",',
-        '          foreground: "hsl(var(--muted-foreground))",',
-        "        },",
-        "        accent: {",
-        '          DEFAULT: "hsl(var(--accent))",',
-        '          foreground: "hsl(var(--accent-foreground))",',
-        "        },",
-        "        popover: {",
-        '          DEFAULT: "hsl(var(--popover))",',
-        '          foreground: "hsl(var(--popover-foreground))",',
-        "        },",
-        "        card: {",
-        '          DEFAULT: "hsl(var(--card))",',
-        '          foreground: "hsl(var(--card-foreground))",',
-        "        },",
-        "      },",
-        '      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },',
-        "    },",
-        "  },",
-        '  plugins: [require("tailwindcss-animate")],',
-        "} satisfies Config;",
-      ].join("\n"),
-    );
-    zip.file(
-      "postcss.config.js",
-      [
-        "export default {",
-        "  plugins: {",
-        "    tailwindcss: {},",
-        "    autoprefixer: {},",
-        "  },",
-        "};",
-      ].join("\n"),
-    );
-    zip.file(
-      "vercel.json",
-      JSON.stringify(
-        { rewrites: [{ source: "/(.*)", destination: "/" }] },
-        null,
-        2,
-      ),
-    );
-    zip.file(
-      "netlify.toml",
-      [
-        "[build]",
-        '  command = "pnpm build"',
-        '  publish = "dist"',
-        "",
-        "[[redirects]]",
-        '  from = "/*"',
-        '  to = "/index.html"',
-        "  status = 200",
-      ].join("\n"),
-    );
-    zip.file(
-      "wrangler.toml",
-      [`name = "${packageName}"`, 'pages_build_output_dir = "dist"'].join("\n"),
-    );
 
     // Generate the zip file
     const content = await zip.generateAsync({ type: "blob" });
-
-    const filename = `${appTitle.replace(/[^a-zA-Z0-9]/g, "-")}-squidagent.zip`;
+    const filename = getExportFilename(bundle.appTitle);
 
     // Create a download link and trigger the download
     const url = URL.createObjectURL(content);
@@ -670,6 +399,37 @@ export default function CodeViewer({
 
     toast.success("Files downloaded!", {
       description: `${files.length} source files plus export metadata downloaded as ${filename}`,
+    });
+    setIsExportDialogOpen(false);
+  };
+
+  const handleTargetedEdit = () => {
+    if (!previewSelection || !previewEditInstruction.trim()) return;
+
+    onRequestTargetedEdit(
+      buildTargetedPreviewEditPrompt({
+        appTitle,
+        instruction: previewEditInstruction,
+        selection: previewSelection,
+        files,
+      }),
+    );
+    setPreviewSelection(null);
+    setPreviewSelectionMode(false);
+    setPreviewEditInstruction("");
+  };
+
+  const openDeployProvider = (provider: "vercel" | "netlify") => {
+    const providerName = provider === "vercel" ? "Vercel" : "Netlify";
+    const providerUrl =
+      provider === "vercel"
+        ? "https://vercel.com/new"
+        : "https://app.netlify.com/start";
+
+    window.open(providerUrl, "_blank", "noopener,noreferrer");
+    toast.info(`Opened ${providerName}`, {
+      description:
+        "Download the repo from Squid, then import it into the deploy provider.",
     });
   };
 
@@ -847,6 +607,19 @@ export default function CodeViewer({
               <div className="flex min-h-0 flex-1 items-center justify-center">
                 <CodeRunner
                   onRequestFix={onRequestFix}
+                  onPreviewSelection={(selection) => {
+                    setPreviewSelection(selection);
+                    setPreviewSelectionMode(false);
+                    toast.success("Element selected", {
+                      description: "Describe the edit, then apply it.",
+                    });
+                  }}
+                  previewSelectionMode={previewSelectionMode}
+                  previewTestNonce={previewTestNonce}
+                  onPreviewTestReport={(report) => {
+                    setPreviewTestReport(report);
+                    toast.success("Preview test complete");
+                  }}
                   language={language}
                   files={files.map((f) => ({ path: f.path, content: f.code }))}
                   key={refresh}
@@ -878,57 +651,185 @@ export default function CodeViewer({
             Refresh
           </Button>
           <Button
-            variant="outline"
+            variant={previewSelectionMode ? "default" : "outline"}
             size="sm"
-            onClick={handleDownloadFiles}
+            onClick={() => {
+              setActivePreviewTab(onTabChange);
+              setPreviewSelectionMode((value) => !value);
+            }}
             disabled={disabledControls}
-            title="Download files"
+            title="Select an element in the preview"
             className="hidden md:inline-flex"
           >
-            <DownloadIcon className="size-3" />
-            Export
+            <MousePointer2 className="size-3" />
+            Select
+          </Button>
+          {previewSelection && (
+            <input
+              type="text"
+              value={previewEditInstruction}
+              onChange={(event) => setPreviewEditInstruction(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleTargetedEdit();
+                }
+              }}
+              placeholder="Describe edit..."
+              aria-label="Describe the selected element edit"
+              title={formatPreviewElementSelection(previewSelection)}
+              disabled={disabledControls}
+              className="hidden h-9 w-56 rounded-md border border-border bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary md:block"
+            />
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTargetedEdit}
+            disabled={!canSubmitTargetedEdit}
+            className="hidden md:inline-flex"
+          >
+            Edit selected
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setActivePreviewTab(onTabChange);
+              setPreviewTestNonce((value) => value + 1);
+            }}
+            disabled={disabledControls}
+            className="hidden md:inline-flex"
+          >
+            <FlaskConical className="size-3" />
+            Test
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExportDialogOpen(true)}
+            disabled={disabledControls || isVerifyingExport}
+            title="Export project"
+            className="hidden md:inline-flex"
+          >
+            {isVerifyingExport ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <DownloadIcon className="size-3" />
+            )}
+            {isVerifyingExport ? "Verifying" : "Export"}
           </Button>
         </div>
         <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           {!disabledControls && (
             <div className="hidden min-w-0 items-center gap-2 lg:flex">
-              <ShieldCheck className="size-3.5 shrink-0 text-primary" />
+              <ShieldCheck
+                className={`size-3.5 shrink-0 ${
+                  verifiedExportStatus === "verified"
+                    ? "text-emerald-500"
+                    : "text-primary"
+                }`}
+              />
               <span className="truncate">
-                {qualityReport.filesGenerated} files,{" "}
-                {qualityReport.importsResolved} imports resolved
-                {qualityWarningCount > 0
-                  ? `, ${qualityWarningCount} warnings`
-                  : ", no warnings"}
+                {verifiedExportStatus
+                  ? `Verified by Squid: ${verifiedExportStatus}`
+                  : previewTestReport ||
+                    `${qualityReport.filesGenerated} files, ${qualityReport.importsResolved} imports resolved${
+                      qualityWarningCount > 0
+                        ? `, ${qualityWarningCount} warnings`
+                        : ", no warnings"
+                    }`}
               </span>
             </div>
           )}
           <span className="md:hidden">{chat.model}</span>
         </div>
       </div>
+
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Export {appTitle}</DialogTitle>
+            <DialogDescription>
+              Download a verified source bundle or open a deploy provider. The
+              export includes Vite, Tailwind, Vercel, Netlify, and Workers
+              config files.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3">
+            <button
+              type="button"
+              onClick={() => openDeployProvider("vercel")}
+              disabled={disabledControls || isVerifyingExport}
+              className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-blue-500/50 hover:bg-blue-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
+                <Vercel className="size-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  Deploy to Vercel
+                  <ExternalLink className="size-3.5 text-muted-foreground transition-colors group-hover:text-blue-500" />
+                </span>
+                <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                  Opens Vercel import. Use the downloaded repo; it includes
+                  `vercel.json` for SPA routing.
+                </span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openDeployProvider("netlify")}
+              disabled={disabledControls || isVerifyingExport}
+              className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
+                <SiNetlify className="size-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  Deploy to Netlify
+                  <ExternalLink className="size-3.5 text-muted-foreground transition-colors group-hover:text-emerald-500" />
+                </span>
+                <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                  Opens Netlify import. Use the downloaded repo; it includes
+                  `netlify.toml` with the build and redirect settings.
+                </span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownloadFiles}
+              disabled={disabledControls || isVerifyingExport}
+              className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                {isVerifyingExport ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <DownloadIcon className="size-4" />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="text-sm font-semibold text-foreground">
+                  {isVerifyingExport ? "Verifying export" : "Download ZIP"}
+                </span>
+                <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                  Saves the complete source bundle with package scripts,
+                  quality report, and deploy config files.
+                </span>
+              </span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
 
-function inferPackageDependencies(
-  files: Array<{ code: string }>,
-): Record<string, string> {
-  const source = files.map((file) => file.code).join("\n");
-  const dependencies: Record<string, string> = {
-    ...sandpackDependencies,
-    "class-variance-authority": "latest",
-    clsx: "latest",
-    "lucide-react": "latest",
-    react: "latest",
-    "react-dom": "latest",
-    "tailwind-merge": "latest",
-  };
-
-  if (source.includes("framer-motion"))
-    dependencies["framer-motion"] = "latest";
-  if (source.includes("recharts")) dependencies.recharts = "latest";
-  if (source.includes("@radix-ui/react-")) {
-    dependencies["@radix-ui/react-slot"] = "latest";
-  }
-
-  return dependencies;
+function setActivePreviewTab(onTabChange: (value: "code" | "preview") => void) {
+  onTabChange("preview");
 }

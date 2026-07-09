@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { getPrisma } from "@/lib/prisma";
-import { normalizeTier } from "@/lib/billing";
+import { getUserCreditInfo } from "@/lib/billing";
 
 export async function GET() {
   try {
@@ -14,36 +13,19 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        credits: true,
-        subscription: {
-          select: {
-            status: true,
-            tier: true,
-            currentPeriodEnd: true,
-          },
-        },
-      },
-    });
+    const user = await getUserCreditInfo(session.user.id);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const hasActiveSubscription = user.subscription?.status === "active";
-    const tier = hasActiveSubscription
-      ? normalizeTier(user.subscription?.tier)
-      : "free";
-
     return NextResponse.json({
-      credits: user.credits ?? 0,
-      tier,
-      hasActiveSubscription,
-      subscriptionEndsAt:
-        user.subscription?.currentPeriodEnd?.toISOString() || null,
+      credits: user.credits,
+      creditBreakdown: user.creditBreakdown,
+      tier: user.tier,
+      hasActiveSubscription: user.hasActiveSubscription,
+      hasPurchasedCredits: user.hasPurchasedCredits,
+      subscriptionEndsAt: user.subscriptionEndsAt,
     });
   } catch (error: any) {
     console.error("Error fetching credits:", error);

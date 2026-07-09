@@ -7,7 +7,9 @@ import { headers } from "next/headers";
 import {
   checkCreditAvailability,
   consumeCreditsForGeneration,
-  getModelCreditCost,
+  getModelCreditHoldCost,
+  releaseCreditHold,
+  reserveCreditHold,
 } from "@/lib/billing";
 import {
   GENERATED_CODE_MAX_TOKENS,
@@ -22,6 +24,11 @@ import {
   normalizeGeneratedFiles,
   validateGeneratedFiles,
 } from "@/lib/generated-files";
+import {
+  generateFollowUpPrompts,
+  saveMessageFollowUpPrompts,
+} from "@/lib/follow-up-prompts";
+import { recoverStaleGenerationLocks } from "@/lib/generation-recovery";
 
 class CreditConsumptionError extends Error {
   constructor(
@@ -34,6 +41,29 @@ class CreditConsumptionError extends Error {
 }
 
 export async function POST(request: NextRequest) {
+  let reservedHoldId: string | undefined;
+  let generationStarted = false;
+  let activeChatId: string | undefined;
+
+  const releaseHoldAndResetChat = async () => {
+    if (reservedHoldId) {
+      await releaseCreditHold({ holdId: reservedHoldId });
+      reservedHoldId = undefined;
+    }
+
+    if (generationStarted && activeChatId) {
+      await getPrisma()
+        .chat.updateMany({
+          where: { id: activeChatId, generationStatus: "in_progress" },
+          data: { generationStatus: "idle", generationStartedAt: null },
+        })
+        .catch((error) => {
+          console.error("Failed to reset generation state:", error);
+        });
+      generationStarted = false;
+    }
+  };
+
   try {
     const { chatId } = await request.json();
 
@@ -47,6 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     const prisma = getPrisma();
+    await recoverStaleGenerationLocks({ client: prisma });
 
     // Fetch chat with plan
     const chat = await prisma.chat.findUnique({
@@ -75,6 +106,31 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    activeChatId = chat.id;
+
+    const generationStart = await prisma.chat.updateMany({
+      where: {
+        id: chat.id,
+        userId: session.user.id,
+        hasCode: false,
+        generationStatus: { not: "in_progress" },
+      },
+      data: {
+        generationStatus: "in_progress",
+        generationStartedAt: new Date(),
+      },
+    });
+
+    if (generationStart.count === 0) {
+      return NextResponse.json(
+        {
+          error: "GENERATION_IN_PROGRESS",
+          message: "Code generation is already running for this project.",
+        },
+        { status: 409 },
+      );
+    }
+    generationStarted = true;
 
     const creditCheck = await checkCreditAvailability({
       userId: session.user.id,
@@ -82,17 +138,41 @@ export async function POST(request: NextRequest) {
     });
 
     if (!creditCheck.success) {
+      await releaseHoldAndResetChat();
       return NextResponse.json(
         {
           error: creditCheck.error,
           message:
             creditCheck.error === "INSUFFICIENT_CREDITS"
-              ? `Need ${getModelCreditCost(chat.model)} credits for this model. Upgrade or buy credits to continue.`
+              ? `Need ${getModelCreditHoldCost(chat.model)} credits to start this model. Upgrade or buy credits to continue.`
               : "Unable to process request",
         },
         { status: 402 },
       );
     }
+
+    const hold = await reserveCreditHold({
+      userId: session.user.id,
+      modelId: chat.model,
+      chatId: chat.id,
+      reason: `Code generation hold - ${chat.title}`,
+      phase: "initial_generation",
+    });
+
+    if (!hold.success) {
+      await releaseHoldAndResetChat();
+      return NextResponse.json(
+        {
+          error: hold.error,
+          message:
+            hold.error === "INSUFFICIENT_CREDITS"
+              ? `Need ${getModelCreditHoldCost(chat.model)} credits to start this model. Upgrade or buy credits to continue.`
+              : "Unable to process request",
+        },
+        { status: hold.error === "USER_NOT_FOUND" ? 404 : 402 },
+      );
+    }
+    reservedHoldId = hold.holdId;
 
     const openrouter = createAppOpenRouter({
       sessionId: chat.id,
@@ -118,13 +198,32 @@ export async function POST(request: NextRequest) {
 
     // Generate code based on the plan
     const codeResponse = await generateCode(chat.plan);
+    const usage = (codeResponse as {
+      usage?: {
+        totalTokens?: unknown;
+        inputTokens?: unknown;
+        promptTokens?: unknown;
+        outputTokens?: unknown;
+        completionTokens?: unknown;
+      };
+    }).usage;
     const tokensUsed =
-      typeof (codeResponse as { usage?: { totalTokens?: unknown } }).usage
-        ?.totalTokens === "number"
-        ? (codeResponse as { usage: { totalTokens: number } }).usage.totalTokens
-        : undefined;
+      typeof usage?.totalTokens === "number" ? usage.totalTokens : undefined;
+    const inputTokens =
+      typeof usage?.inputTokens === "number"
+        ? usage.inputTokens
+        : typeof usage?.promptTokens === "number"
+          ? usage.promptTokens
+          : undefined;
+    const outputTokens =
+      typeof usage?.outputTokens === "number"
+        ? usage.outputTokens
+        : typeof usage?.completionTokens === "number"
+          ? usage.completionTokens
+          : undefined;
 
     if (!codeResponse.text.trim()) {
+      await releaseHoldAndResetChat();
       return NextResponse.json(
         {
           error: "EMPTY_MODEL_RESPONSE",
@@ -165,6 +264,7 @@ export async function POST(request: NextRequest) {
       : generatedText;
 
     if (!content.trim()) {
+      await releaseHoldAndResetChat();
       return NextResponse.json(
         {
           error: "EMPTY_MODEL_RESPONSE",
@@ -176,6 +276,7 @@ export async function POST(request: NextRequest) {
 
     if (diagnostics.length > 0) {
       console.warn("Generated code rejected with diagnostics:", diagnostics);
+      await releaseHoldAndResetChat();
       return NextResponse.json(
         {
           error: "UNRUNNABLE_GENERATED_CODE",
@@ -186,6 +287,12 @@ export async function POST(request: NextRequest) {
         { status: 502 },
       );
     }
+
+    const followUpPrompts = await generateFollowUpPrompts({
+      chat,
+      assistantContent: content,
+      files: generatedFiles,
+    });
 
     const message = await prisma.$transaction(async (tx) => {
       const createdMessage = await tx.message.create({
@@ -202,7 +309,11 @@ export async function POST(request: NextRequest) {
 
       await tx.chat.update({
         where: { id: chat.id },
-        data: { hasCode: true },
+        data: {
+          hasCode: true,
+          generationStatus: "completed",
+          generationStartedAt: null,
+        },
       });
 
       const consumeResult = await consumeCreditsForGeneration({
@@ -212,8 +323,12 @@ export async function POST(request: NextRequest) {
         chatId: chat.id,
         description: `Code generation - ${chat.title}`,
         phase: "initial_generation",
-        status: "plan_approved",
+        status: "completed",
+        creditHoldId: reservedHoldId,
         tokensUsed,
+        inputTokens,
+        outputTokens,
+        generatedText: content,
       });
 
       if (!consumeResult.success) {
@@ -225,12 +340,18 @@ export async function POST(request: NextRequest) {
 
       return createdMessage;
     });
+    reservedHoldId = undefined;
+    generationStarted = false;
+
+    await saveMessageFollowUpPrompts(prisma, message.id, followUpPrompts);
 
     return NextResponse.json({
       success: true,
       messageId: message.id,
     });
   } catch (error) {
+    await releaseHoldAndResetChat();
+
     if (error instanceof CreditConsumptionError) {
       return NextResponse.json(
         {

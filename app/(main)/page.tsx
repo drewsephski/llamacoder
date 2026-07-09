@@ -43,10 +43,16 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import { Macbook } from "@/components/ui/animated-3d-mac-book-air";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserCredits, useUserSession, useCreateChat } from "@/lib/queries";
-import { FREE_PROJECT_LIMIT, getModelCreditCost } from "@/lib/billing";
+import {
+  FREE_PROJECT_LIMIT,
+  canTierUseModel,
+  getModelCreditHoldCost,
+  getModelCreditRange,
+} from "@/lib/billing";
 import { fetchCompletionStream } from "@/lib/completion-stream";
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
@@ -61,6 +67,7 @@ type BuiltWithSquidProject = {
   href: string;
   description: string;
   category: string;
+  creatorName?: string;
   featured?: boolean;
   imageSrc?: string;
   imageAlt?: string;
@@ -68,7 +75,7 @@ type BuiltWithSquidProject = {
   gradient?: string;
 };
 
-const BUILT_WITH_SQUID_PROJECTS = [
+const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
   {
     name: "Phoenix Design Lab",
     href: "https://phoenixdev.agency/demo",
@@ -77,6 +84,7 @@ const BUILT_WITH_SQUID_PROJECTS = [
     category: "Design agency",
     imageSrc: "/showcase/phoenix-design-lab.webp",
     imageAlt: "Phoenix Design Lab homepage generated with Squid",
+    preview: "Phoenix Design Lab",
     featured: true,
   },
   {
@@ -85,6 +93,8 @@ const BUILT_WITH_SQUID_PROJECTS = [
     description:
       "An AI-native professional identity site where portfolios answer questions in real time.",
     category: "AI portfolio builder",
+    imageSrc: "/showcase/portfolio-os.png",
+    imageAlt: "PortfolioOS homepage generated with Squid",
     preview: "Conversational identity",
     gradient: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #f8fafc 100%)",
   },
@@ -94,10 +104,129 @@ const BUILT_WITH_SQUID_PROJECTS = [
     description:
       "A scheduling surface for coordinating group availability without spreadsheet back-and-forth.",
     category: "Event coordination",
+    imageSrc: "/showcase/slotflow.png",
+    imageAlt: "Slotflow homepage generated with Squid",
     preview: "Effortless coordination",
     gradient: "linear-gradient(135deg, #062f2f 0%, #14b8a6 50%, #f7fee7 100%)",
   },
-] satisfies readonly BuiltWithSquidProject[];
+];
+
+const homepageFaq = [
+  {
+    question: "What is Squid Agent?",
+    answer:
+      "Squid Agent is an AI app builder for generating React applications from prompts, screenshots, and website references. It focuses on exportable source code, visible quality checks, transparent credit use, and reversible project history.",
+  },
+  {
+    question: "Who is Squid Agent for?",
+    answer:
+      "Squid Agent is built for founders, builders, designers, and product teams who want to prototype full React apps quickly while keeping the generated code inspectable, editable, and portable.",
+  },
+  {
+    question: "Can I export the code from Squid Agent?",
+    answer:
+      "Yes. Squid Agent is designed around code ownership. Generated projects can be downloaded with source files, project metadata, run instructions, and quality information so teams can continue work outside the product.",
+  },
+  {
+    question: "How does Squid Agent handle AI credits?",
+    answer:
+      "Squid Agent shows model cost before generation and records successful usage after work is saved. The product is designed to make credit spend visible instead of hiding cost inside retries or unclear repair loops.",
+  },
+] as const;
+
+const homepageNarrativeBlocks = [
+  {
+    label: "Input",
+    side: "left",
+    question: "What can you build with Squid Agent?",
+    body: "Squid Agent turns plain-language product ideas, uploaded screenshots, and website references into working React apps. The product is designed for builders who want fast generation without giving up practical ownership of the result: source files, project-level context, quality signals, and export paths remain visible after the AI has finished.",
+  },
+  {
+    label: "Ownership",
+    side: "right",
+    question: "How does Squid Agent keep generated code portable?",
+    body: "Generated projects are treated as code artifacts, not disposable previews. Squid Agent emphasizes exportable React source, complete file structure, run instructions, and metadata that helps a developer understand what was produced and continue work in a normal development workflow.",
+  },
+  {
+    label: "Review",
+    side: "left",
+    question: "Why are visible quality checks important?",
+    body: "AI-generated apps can look finished while still hiding broken imports, missing dependencies, inaccessible controls, or overwritten framework files. Squid Agent surfaces quality information so teams can inspect the result before they rely on it, remix it, or export it.",
+  },
+  {
+    label: "Credits",
+    side: "right",
+    question: "How does Squid Agent make AI credit use clearer?",
+    body: "Squid Agent shows the selected model and expected credit cost before a generation starts. That makes the buying moment easier to understand and helps avoid the common problem of discovering spend only after retries, repairs, or failed outputs have already happened.",
+  },
+] as const;
+
+const homepageStructuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://squidagent.app/#organization",
+      name: "Squid Agent",
+      url: "https://squidagent.app/",
+      logo: "https://squidagent.app/squidagent-logo.svg",
+      sameAs: [
+        "https://www.instagram.com/drew.sepeczi",
+        "https://github.com/drewsephski",
+      ],
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://squidagent.app/#software",
+      name: "Squid Agent",
+      alternateName: "Squid",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Web",
+      url: "https://squidagent.app/",
+      image: "https://squidagent.app/og-image.png",
+      description:
+        "AI app builder for generating exportable React applications from prompts, screenshots, and website references.",
+      creator: {
+        "@id": "https://squidagent.app/#organization",
+      },
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+        category: "Free starter plan",
+      },
+      featureList: [
+        "Prompt-to-React app generation",
+        "Screenshot-to-code generation",
+        "Website reference capture",
+        "Exportable source code",
+        "Transparent AI credit pricing",
+        "Reversible project versions",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://squidagent.app/#website",
+      name: "Squid Agent",
+      url: "https://squidagent.app/",
+      publisher: {
+        "@id": "https://squidagent.app/#organization",
+      },
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://squidagent.app/#faq",
+      mainEntity: homepageFaq.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+    },
+  ],
+};
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -117,10 +246,13 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
-/** Derives a clean, display-friendly hostname for the browser-chrome mockups. */
-function getDisplayHostname(href: string) {
+/** Derives a clean, display-friendly URL for the browser-chrome mockups. */
+function getDisplayPreviewUrl(href: string) {
   try {
-    return new URL(href).hostname.replace(/^www\./, "");
+    const url = new URL(href);
+    const pathname = url.pathname === "/" ? "" : url.pathname;
+
+    return `${url.protocol}//${url.hostname.replace(/^www\./, "")}${pathname}`;
   } catch {
     return href;
   }
@@ -166,9 +298,15 @@ export default function Home() {
   const createChatMutation = useCreateChat();
 
   const isAuthenticated = !!session;
-  const hasActiveSubscription = creditsData?.hasActiveSubscription ?? false;
+  const currentTier = creditsData?.tier ?? "free";
+  const hasPurchasedCredits = creditsData?.hasPurchasedCredits ?? false;
   const userCredits = creditsData?.credits ?? 0;
-  const canUsePaidModels = isAuthenticated && hasActiveSubscription;
+  const canUseModel = useCallback(
+    (modelId: string) =>
+      isAuthenticated &&
+      canTierUseModel(currentTier, modelId, { hasPurchasedCredits }),
+    [currentTier, hasPurchasedCredits, isAuthenticated],
+  );
 
   const showProjectLimitPricing = (limit = FREE_PROJECT_LIMIT) => {
     toast.error(`You've used all ${limit} free projects.`, {
@@ -208,8 +346,7 @@ export default function Home() {
   }, [mousePosition]);
 
   const handleModelChange = (newModel: string) => {
-    const selectedModel = MODELS.find((m) => m.value === newModel);
-    if (selectedModel?.paid && !canUsePaidModels) {
+    if (!canUseModel(newModel)) {
       setShowPricingModal(true);
       return;
     }
@@ -420,6 +557,12 @@ export default function Home() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(homepageStructuredData),
+        }}
+      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -908,18 +1051,22 @@ export default function Home() {
           position: relative;
           border-radius: 28px;
           border: 1px solid hsl(var(--border) / 0.6);
-          background: linear-gradient(180deg, hsl(var(--muted) / 0.35), hsl(var(--background)));
+          background:
+            radial-gradient(ellipse 90% 70% at 82% 8%, rgba(59,130,246,0.10), transparent 62%),
+            linear-gradient(180deg, hsl(var(--muted) / 0.35), hsl(var(--background)));
           overflow: hidden;
         }
         .showcase-panel::before {
           content: '';
           position: absolute;
-          top: -30%;
-          right: -10%;
-          width: 60%;
-          height: 70%;
-          background: radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%);
+          inset: -45%;
+          background:
+            radial-gradient(ellipse 44% 32% at 74% 28%, rgba(59,130,246,0.13), rgba(59,130,246,0.055) 34%, transparent 66%),
+            radial-gradient(ellipse 38% 28% at 58% 18%, rgba(99,102,241,0.07), transparent 64%),
+            radial-gradient(ellipse 46% 36% at 22% 42%, rgba(14,165,233,0.045), transparent 68%);
           animation: meshDrift 14s ease-in-out infinite;
+          filter: blur(22px);
+          opacity: 0.95;
           pointer-events: none;
         }
         .showcase-panel::after {
@@ -933,7 +1080,22 @@ export default function Home() {
           -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
           mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
           pointer-events: none;
-          opacity: 0.6;
+          opacity: 0.9;
+        }
+
+        @media (max-width: 767px) {
+          .showcase-panel {
+            background:
+              radial-gradient(ellipse 120% 58% at 50% 0%, rgba(59,130,246,0.09), transparent 68%),
+              linear-gradient(180deg, hsl(var(--muted) / 0.34), hsl(var(--background)));
+          }
+          .showcase-panel::before {
+            inset: -38%;
+            background:
+              radial-gradient(ellipse 60% 34% at 52% 16%, rgba(59,130,246,0.11), rgba(59,130,246,0.045) 38%, transparent 70%),
+              radial-gradient(ellipse 54% 32% at 78% 36%, rgba(99,102,241,0.055), transparent 72%);
+            filter: blur(26px);
+          }
         }
 
         .live-badge {
@@ -1030,7 +1192,7 @@ export default function Home() {
           <div className="relative max-h-[953px] w-full">
             <Image
               src={bgImg}
-              alt=""
+              alt="Blue halo background behind the Squid Agent app builder"
               className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
                 isHoveringRing
                   ? "scale-[1.01] opacity-70 dark:opacity-15"
@@ -1111,7 +1273,7 @@ export default function Home() {
 
                       const cost =
                         eligibility.modelCost ||
-                        getModelCreditCost(currentModel);
+                        getModelCreditHoldCost(currentModel);
                       toast.error(
                         `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
                       );
@@ -1291,7 +1453,7 @@ export default function Home() {
                                   ...(modelOptionsByGroup.paid.length > 0
                                     ? [
                                         {
-                                          label: "Advanced Models",
+                                          label: "Efficient & Advanced Models",
                                           models: modelOptionsByGroup.paid,
                                         },
                                       ]
@@ -1310,11 +1472,14 @@ export default function Home() {
                                       {group.label}
                                     </Select.Label>
                                     {group.models.map((m) => {
-                                      const isLocked =
-                                        m.paid && !canUsePaidModels;
-                                      const creditCost = getModelCreditCost(
+                                      const isLocked = !canUseModel(m.value);
+                                      const creditRange = getModelCreditRange(
                                         m.value,
                                       );
+                                      const creditLabel =
+                                        creditRange.min === creditRange.max
+                                          ? `${creditRange.min}`
+                                          : `from ${creditRange.min}`;
                                       const creditBadgeClass =
                                         getCreditBadgeClass(m.group);
                                       const tierDotClass =
@@ -1368,7 +1533,7 @@ export default function Home() {
                                             <span
                                               className={`model-credit-pill ${creditBadgeClass}`}
                                             >
-                                              {creditCost}
+                                              {creditLabel}
                                               <Coins
                                                 className={`size-2 ${creditBadgeClass}`}
                                               />
@@ -1571,9 +1736,13 @@ export default function Home() {
             </form>
           </div>
 
+          <HomepageAnswerSection />
           <BuiltWithSquidSection />
+          <HomepageFaqSection />
           <HoverBrandLogo />
-          <Footer />
+
+          <LandingMacbookSection />
+          <Footer showPageLinks />
         </div>
 
         <PricingModal
@@ -1581,6 +1750,7 @@ export default function Home() {
           onOpenChange={setShowPricingModal}
           remainingCredits={userCredits}
           isAuthenticated={isAuthenticated}
+          currentTier={currentTier}
         />
         <OnboardingModal
           isOpen={showOnboardingModal}
@@ -1598,15 +1768,185 @@ export default function Home() {
   );
 }
 
-function BuiltWithSquidSection() {
-  const featuredProject = BUILT_WITH_SQUID_PROJECTS.find(
-    (project) => project.featured,
-  );
-  const galleryProjects = BUILT_WITH_SQUID_PROJECTS.filter(
-    (project) => !project.featured,
-  );
+function HomepageAnswerSection() {
+  return (
+    <section
+      aria-labelledby="squid-agent-overview"
+      className="relative z-10 w-full px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-6"
+    >
+      <div className="mx-auto w-full max-w-6xl border-y border-border/60 py-12 sm:py-16">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
+            AI app builder
+          </p>
+          <h2
+            id="squid-agent-overview"
+            className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
+          >
+            From prompt to owned React code.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
+            The homepage copy is arranged around the actual product path: give
+            Squid Agent intent, inspect the result, understand the cost, and
+            leave with code you can keep.
+          </p>
+        </div>
 
-  if (!featuredProject?.imageSrc || !featuredProject.imageAlt) return null;
+        <div className="relative mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-[minmax(0,1fr)_4rem_minmax(0,1fr)] md:gap-x-6 md:gap-y-10">
+          <div className="pointer-events-none absolute left-1/2 top-3 hidden h-[calc(100%-1.5rem)] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-border to-transparent md:block" />
+          {homepageNarrativeBlocks.map((block) => {
+            const isLeft = block.side === "left";
+
+            return (
+              <div key={block.question} className="grid gap-4 md:contents">
+                {isLeft ? (
+                  <HomepageNarrativeArticle
+                    block={block}
+                    className="md:col-start-1"
+                  />
+                ) : (
+                  <div className="hidden md:col-start-1 md:block" />
+                )}
+
+                <div className="relative hidden items-center justify-center md:col-start-2 md:flex">
+                  <span className="relative z-10 flex size-5 items-center justify-center rounded-full border border-blue-500/30 bg-background shadow-[0_0_0_6px_hsl(var(--background)),0_0_28px_rgba(59,130,246,0.22)]">
+                    <span className="size-1.5 rounded-full bg-blue-500" />
+                  </span>
+                </div>
+
+                {isLeft ? (
+                  <div className="hidden md:col-start-3 md:block" />
+                ) : (
+                  <HomepageNarrativeArticle
+                    block={block}
+                    className="md:col-start-3 md:translate-y-8"
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomepageNarrativeArticle({
+  block,
+  className = "",
+}: {
+  block: (typeof homepageNarrativeBlocks)[number];
+  className?: string;
+}) {
+  return (
+    <article
+      className={`relative rounded-[24px] border border-border/70 bg-background/80 p-5 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur sm:p-6 ${className}`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <p className="font-mono-jb text-[10px] font-medium uppercase tracking-[0.16em] text-blue-500">
+          {block.label}
+        </p>
+        <span className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+      </div>
+      <h2 className="mt-4 text-2xl font-semibold leading-tight tracking-normal text-foreground">
+        {block.question}
+      </h2>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        {block.body}
+      </p>
+    </article>
+  );
+}
+
+function HomepageFaqSection() {
+  return (
+    <section
+      aria-labelledby="squid-agent-faq"
+      className="relative z-10 w-full px-4 pb-16 sm:px-6 sm:pb-24"
+    >
+      <div className="mx-auto grid w-full max-w-6xl gap-8 border-t border-border/60 pt-12 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:pt-16">
+        <div className="mx-auto max-w-xl text-center lg:mx-0 lg:text-left">
+          <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
+            FAQ
+          </p>
+          <h2
+            id="squid-agent-faq"
+            className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
+          >
+            Clear answers for people and crawlers.
+          </h2>
+          <p className="mt-5 text-base leading-7 text-muted-foreground">
+            These answers make the product definition, audience, export model,
+            and credit behavior explicit without burying them inside the hero or
+            project showcase.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {homepageFaq.map((item) => (
+            <article
+              key={item.question}
+              className="rounded-[22px] border border-border/70 bg-background/80 p-5 shadow-[0_16px_42px_-34px_rgba(0,0,0,0.55)] backdrop-blur"
+            >
+              <h3 className="text-lg font-semibold leading-snug tracking-normal text-foreground">
+                {item.question}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {item.answer}
+              </p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BuiltWithSquidSection() {
+  const [projects, setProjects] = useState<BuiltWithSquidProject[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/gallery")
+      .then((response) => (response.ok ? response.json() : { apps: [] }))
+      .then((data) => {
+        if (!cancelled) {
+          setProjects(Array.isArray(data.apps) ? data.apps : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProjects([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleProjects =
+    projects.length > 0 ? projects : [...BUILT_WITH_SQUID_PROJECTS];
+  const featuredProject =
+    visibleProjects.find((project) => project.featured) ?? visibleProjects[0];
+  const galleryProjects = visibleProjects
+    .filter((project) => project.href !== featuredProject?.href)
+    .slice(0, 4);
+
+  if (!featuredProject) return null;
+
+  const getProjectGradient = (project: BuiltWithSquidProject, index: number) =>
+    project.gradient ??
+    [
+      "linear-gradient(135deg, #111827 0%, #2563eb 55%, #f8fafc 100%)",
+      "linear-gradient(135deg, #0f2f2e 0%, #0d9488 52%, #f0fdfa 100%)",
+      "linear-gradient(135deg, #2f1731 0%, #db2777 55%, #fff7ed 100%)",
+      "linear-gradient(135deg, #172554 0%, #4f46e5 52%, #ecfeff 100%)",
+    ][index % 4];
+
+  const featuredGradient = getProjectGradient(featuredProject, 0);
+  const featuredPreview =
+    featuredProject.preview ??
+    featuredProject.name.split(/\s+/).slice(0, 4).join(" ");
 
   return (
     <section
@@ -1618,16 +1958,15 @@ function BuiltWithSquidSection() {
           <div>
             <div className="live-badge">
               <span className="live-badge-dot" />
-              LIVE ON SQUID
+              {projects.length > 0 ? "LIVE ON SQUID" : "BUILT WITH SQUID"}
             </div>
             <h2 className="mt-4 max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl">
               Real projects shipped from prompts.
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            A small showcase of sites and tools built with Squid, from polished
-            agency pages to AI-native portfolio and coordination products —
-            every window below is a real, deployed app.
+            A showcase of sites and tools built with Squid. Each window links to
+            a public preview users can remix, copy, or download.
           </p>
         </div>
 
@@ -1646,20 +1985,37 @@ function BuiltWithSquidSection() {
               </div>
               <div className="browser-url-bar">
                 <span className="browser-url-lock" />
-                <span>{getDisplayHostname(featuredProject.href)}</span>
+                <span>{getDisplayPreviewUrl(featuredProject.href)}</span>
               </div>
               <ExternalLink className="size-3.5 flex-shrink-0 text-muted-foreground/60 transition-colors group-hover:text-blue-500" />
             </div>
-            <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-              <Image
-                src={featuredProject.imageSrc}
-                alt={featuredProject.imageAlt}
-                fill
-                loading="eager"
-                unoptimized
-                sizes="(min-width: 1024px) 62rem, 100vw"
-                className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.015]"
-              />
+            <div
+              className="relative flex aspect-[16/9] w-full items-end overflow-hidden p-6"
+              style={
+                featuredProject.imageSrc
+                  ? undefined
+                  : { background: featuredGradient }
+              }
+            >
+              {featuredProject.imageSrc ? (
+                <Image
+                  src={featuredProject.imageSrc}
+                  alt={
+                    featuredProject.imageAlt ??
+                    `${featuredProject.name} project preview built with Squid`
+                  }
+                  fill
+                  sizes="(min-width: 1024px) 62rem, 100vw"
+                  className="object-cover object-top"
+                />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(255,255,255,0.46),transparent_26%),linear-gradient(180deg,transparent,rgba(0,0,0,0.28))]" />
+                  <p className="relative max-w-md text-4xl font-semibold leading-none tracking-normal text-white sm:text-5xl">
+                    {featuredPreview}
+                  </p>
+                </>
+              )}
             </div>
             <div className="flex flex-col gap-5 border-t border-border/70 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
               <div className="min-w-0">
@@ -1672,6 +2028,11 @@ function BuiltWithSquidSection() {
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                   {featuredProject.description}
                 </p>
+                {featuredProject.creatorName && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Shared by {featuredProject.creatorName}
+                  </p>
+                )}
               </div>
               <span className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-blue-500">
                 View project
@@ -1681,7 +2042,7 @@ function BuiltWithSquidSection() {
           </a>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-            {galleryProjects.map((project) => (
+            {galleryProjects.map((project, index) => (
               <a
                 key={project.href}
                 href={project.href}
@@ -1697,21 +2058,40 @@ function BuiltWithSquidSection() {
                   </div>
                   <div className="browser-url-bar">
                     <span className="browser-url-lock" />
-                    <span>{getDisplayHostname(project.href)}</span>
+                    <span>{getDisplayPreviewUrl(project.href)}</span>
                   </div>
                 </div>
                 <div
-                  className="relative flex min-h-28 flex-1 items-end overflow-hidden p-4"
+                  className={
+                    project.imageSrc
+                      ? "relative aspect-[1908/959] w-full flex-none overflow-hidden bg-white"
+                      : "relative flex min-h-28 flex-1 items-end overflow-hidden p-4"
+                  }
                   style={{
-                    background:
-                      project.gradient ??
-                      "linear-gradient(135deg, #111827 0%, #326df5 100%)",
+                    background: project.imageSrc
+                      ? undefined
+                      : getProjectGradient(project, index + 1),
                   }}
                 >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(180deg,transparent,rgba(0,0,0,0.25))]" />
-                  <p className="relative max-w-[12rem] text-xl font-semibold leading-none tracking-tight text-white">
-                    {project.preview ?? project.name}
-                  </p>
+                  {project.imageSrc ? (
+                    <Image
+                      src={project.imageSrc}
+                      alt={
+                        project.imageAlt ??
+                        `${project.name} project preview built with Squid`
+                      }
+                      fill
+                      sizes="(min-width: 1024px) 20rem, 50vw"
+                      className="object-contain object-center"
+                    />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(180deg,transparent,rgba(0,0,0,0.25))]" />
+                      <p className="relative max-w-[12rem] text-xl font-semibold leading-none tracking-tight text-white">
+                        {project.preview ?? project.name}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between gap-3">
@@ -1726,6 +2106,11 @@ function BuiltWithSquidSection() {
                   <p className="mt-2 text-sm leading-5 text-muted-foreground">
                     {project.description}
                   </p>
+                  {project.creatorName && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Shared by {project.creatorName}
+                    </p>
+                  )}
                 </div>
               </a>
             ))}
@@ -1736,6 +2121,20 @@ function BuiltWithSquidSection() {
   );
 }
 
+function LandingMacbookSection() {
+  return (
+    <section
+      aria-label="Animated MacBook Air"
+      className="relative z-10 w-full overflow-hidden px-4 pb-10 pt-2 sm:px-6 sm:pb-14"
+    >
+      <div className="mx-auto flex h-[230px] w-full max-w-6xl items-center justify-center border-t border-border/60 sm:h-[270px]">
+        <div className="relative h-[220px] w-full max-w-md">
+          <Macbook className="scale-125 sm:scale-150" />
+        </div>
+      </div>
+    </section>
+  );
+}
 function LoadingMessage({
   isHighQuality,
   screenshotUrl,

@@ -623,7 +623,11 @@ async function DashboardPage({
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>All AI models</span>
+                  <span>Rollover up to 200</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>Starter, Efficient, and Advanced models</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
@@ -673,7 +677,7 @@ async function DashboardPage({
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>All AI models</span>
+                  <span>All models, including Premium</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
@@ -681,7 +685,7 @@ async function DashboardPage({
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Credit rollover</span>
+                  <span>Credit rollover up to 1,000</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-green-500" />
@@ -715,24 +719,27 @@ async function DashboardPage({
             <div>
               <h2 className="text-lg font-medium">Credit Packs</h2>
               <p className="text-sm text-muted-foreground">
-                One-time packs for smarter models. Credits never expire.
+                One-time packs for smarter models. Purchased credits never expire.
               </p>
             </div>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {creditPackEntries.map(([key, pack]) => {
               const isPopular = "popular" in pack && pack.popular;
+              const isBestValue = "bestValue" in pack && pack.bestValue;
 
               return (
                 <div
                   key={key}
                   className={`relative rounded-xl border bg-card p-6 ${
-                    isPopular ? "border-2 border-primary" : "border-border"
+                    isBestValue || isPopular
+                      ? "border-2 border-primary"
+                      : "border-border"
                   }`}
                 >
-                  {isPopular && (
+                  {(isBestValue || isPopular) && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                      Best Value
+                      {isBestValue ? "Best Value" : "Most Popular"}
                     </div>
                   )}
                   <div className="mb-4">

@@ -5,21 +5,29 @@ import { buildChat, readJson } from "../fixtures/builders";
 const {
   consumeCreditsForGenerationMock,
   checkCreditAvailabilityMock,
+  releaseCreditHoldMock,
+  reserveCreditHoldMock,
+  generateFollowUpPromptsMock,
   generateTextMock,
   getSessionMock,
   prismaMock,
+  saveMessageFollowUpPromptsMock,
   txMock,
 } = vi.hoisted(() => ({
   consumeCreditsForGenerationMock: vi.fn(),
   checkCreditAvailabilityMock: vi.fn(),
+  releaseCreditHoldMock: vi.fn(),
+  reserveCreditHoldMock: vi.fn(),
+  generateFollowUpPromptsMock: vi.fn(),
   generateTextMock: vi.fn(),
   getSessionMock: vi.fn(),
+  saveMessageFollowUpPromptsMock: vi.fn(),
   txMock: {
     message: { create: vi.fn() },
     chat: { update: vi.fn() },
   },
   prismaMock: {
-    chat: { findUnique: vi.fn() },
+    chat: { findUnique: vi.fn(), updateMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -46,6 +54,8 @@ vi.mock("@/lib/billing", async (importOriginal) => {
     ...actual,
     checkCreditAvailability: checkCreditAvailabilityMock,
     consumeCreditsForGeneration: consumeCreditsForGenerationMock,
+    releaseCreditHold: releaseCreditHoldMock,
+    reserveCreditHold: reserveCreditHoldMock,
   };
 });
 
@@ -55,6 +65,11 @@ vi.mock("@/lib/openrouter", () => ({
   createOpenRouterModel: vi.fn(() => "openrouter-model"),
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
+}));
+
+vi.mock("@/lib/follow-up-prompts", () => ({
+  generateFollowUpPrompts: generateFollowUpPromptsMock,
+  saveMessageFollowUpPrompts: saveMessageFollowUpPromptsMock,
 }));
 
 import { POST } from "@/app/api/generate-code/route";
@@ -105,11 +120,24 @@ describe("/api/generate-code", () => {
       creditsUsed: 1,
       remainingCredits: 5,
     });
+    reserveCreditHoldMock.mockResolvedValue({
+      success: true,
+      holdId: "hold_1",
+      creditsUsed: 1,
+      remainingCredits: 4,
+    });
+    releaseCreditHoldMock.mockResolvedValue({ success: true });
     consumeCreditsForGenerationMock.mockResolvedValue({
       success: true,
       creditsUsed: 1,
       remainingCredits: 4,
     });
+    prismaMock.chat.updateMany.mockResolvedValue({ count: 1 });
+    generateFollowUpPromptsMock.mockResolvedValue([
+      "Add keyboard shortcuts",
+      "Polish the mobile layout",
+      "Add realistic sample data",
+    ]);
     txMock.message.create.mockResolvedValue({ id: "assistant_1" });
   });
 
@@ -158,9 +186,18 @@ describe("/api/generate-code", () => {
         ]),
       }),
     });
+    expect(saveMessageFollowUpPromptsMock).toHaveBeenCalledWith(
+      prismaMock,
+      "assistant_1",
+      [
+        "Add keyboard shortcuts",
+        "Polish the mobile layout",
+        "Add realistic sample data",
+      ],
+    );
     expect(txMock.chat.update).toHaveBeenCalledWith({
       where: { id: "chat_1" },
-      data: { hasCode: true },
+      data: expect.objectContaining({ hasCode: true }),
     });
     expect(consumeCreditsForGenerationMock).toHaveBeenCalledWith({
       client: txMock,
@@ -169,8 +206,30 @@ describe("/api/generate-code", () => {
       chatId: "chat_1",
       description: "Code generation - Calculator",
       phase: "initial_generation",
-      status: "plan_approved",
+      status: "completed",
+      creditHoldId: "hold_1",
       tokensUsed: undefined,
+      inputTokens: undefined,
+      outputTokens: undefined,
+      generatedText: expect.stringContaining("```tsx{path=App.tsx}"),
+    });
+  });
+
+  it("rejects before model execution when a credit hold cannot be reserved", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat());
+    reserveCreditHoldMock.mockResolvedValueOnce({
+      success: false,
+      error: "INSUFFICIENT_CREDITS",
+    });
+
+    const response = await POST(request({ chatId: "chat_1" }));
+
+    expect(response.status).toBe(402);
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(prismaMock.chat.updateMany).toHaveBeenCalledWith({
+      where: { id: "chat_1", generationStatus: "in_progress" },
+      data: { generationStatus: "idle", generationStartedAt: null },
     });
   });
 

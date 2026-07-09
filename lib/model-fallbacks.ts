@@ -1,7 +1,10 @@
 import {
   FREE_MODEL,
+  LEGACY_GEMINI_PRO_MODEL,
+  LEGACY_KIMI_CODE_MODEL,
   LEGACY_FREE_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
+  LEGACY_QWEN_MAX_MODEL,
   LEGACY_SECONDARY_STARTER_MODEL,
   SAFE_GPT_MODEL,
   SECONDARY_STARTER_MODEL,
@@ -10,7 +13,9 @@ import {
 export const FALLBACK_MODELS = {
   free: FREE_MODEL,
   gpt: SAFE_GPT_MODEL,
+  gemini: "google/gemini-3-flash-preview",
   advancedCode: "minimax/minimax-m3",
+  legacyKimiCode: "minimax/minimax-m3",
 };
 
 export function getModelWithFallbacks(model: string): string[] {
@@ -36,8 +41,20 @@ export function getModelWithFallbacks(model: string): string[] {
     return [FALLBACK_MODELS.gpt];
   }
 
-  if (model.startsWith("x-ai/grok-4")) {
+  if (model === "x-ai/grok-4.3") {
     return [FALLBACK_MODELS.advancedCode];
+  }
+
+  if (model === LEGACY_GEMINI_PRO_MODEL) {
+    return [FALLBACK_MODELS.gemini];
+  }
+
+  if (model === LEGACY_QWEN_MAX_MODEL) {
+    return [FALLBACK_MODELS.advancedCode];
+  }
+
+  if (model === LEGACY_KIMI_CODE_MODEL) {
+    return [FALLBACK_MODELS.legacyKimiCode];
   }
 
   // For paid models, just return the model itself (no fallbacks)

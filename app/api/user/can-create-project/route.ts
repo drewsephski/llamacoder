@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import {
   FREE_PROJECT_LIMIT,
   checkProjectCreationEligibility,
-  getModelCreditCost,
+  getModelCreditHoldCost,
 } from "@/lib/billing";
 import { FREE_MODEL } from "@/lib/constants";
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Extract model from query params to check model-specific credit cost
     const { searchParams } = new URL(request.url);
     const selectedModel = searchParams.get("model") || FREE_MODEL;
-    const modelCost = getModelCreditCost(selectedModel);
+    const modelCost = getModelCreditHoldCost(selectedModel);
 
     // If not signed in, allow creation (anonymous users can create one project)
     if (!session) {

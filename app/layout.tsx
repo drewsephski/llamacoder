@@ -10,12 +10,13 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const title = "Squid - AI App Builder for Exportable React Code You Own";
+const title =
+  "Squid Agent - AI App Builder for Exportable React Code You Own";
 const description =
-  "Build clean, exportable React apps with transparent credits, visible quality checks, reversible edits, and no platform lock-in.";
+  "Generate exportable React apps from prompts and screenshots with transparent credits, quality checks, reversible edits, and no platform lock-in.";
 const url = "https://squidagent.app/";
 const ogimage = "https://squidagent.app/og-image.png";
-const sitename = "Squid";
+const sitename = "Squid Agent";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -27,12 +28,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(url),
   title: {
     default: title,
-    template: "%s | Squid",
+    template: "%s | Squid Agent",
   },
   description,
-  applicationName: "Squid",
+  applicationName: "Squid Agent",
   alternates: {
-    canonical: "/",
+    canonical: url,
   },
   keywords: [
     "AI app builder",

@@ -28,11 +28,30 @@ export function getSandpackConfig(
   }`;
 
   for (const file of normalizedFiles) {
-    sandpackFiles[`/${file.path}`] = file.code;
+    if (file.path === "App.tsx") {
+      sandpackFiles["/App.generated.tsx"] = file.code;
+    } else {
+      sandpackFiles[`/${file.path}`] = file.code;
+    }
   }
 
-  // Ensure App.tsx is the entry point, or if not present, create one that imports the first file
-  if (!sandpackFiles["/App.tsx"] && normalizedFiles.length > 0) {
+  sandpackFiles["/squid-preview-inspector.tsx"] =
+    squidPreviewInspectorComponent;
+
+  // Ensure App.tsx is the entry point, wrapping it with preview-only tooling.
+  if (sandpackFiles["/App.generated.tsx"]) {
+    sandpackFiles["/App.tsx"] = `import GeneratedApp from "./App.generated";
+import { SquidPreviewInspector } from "./squid-preview-inspector";
+
+export default function App() {
+  return (
+    <>
+      <SquidPreviewInspector />
+      <GeneratedApp />
+    </>
+  );
+}`;
+  } else if (normalizedFiles.length > 0) {
     const mainFile =
       normalizedFiles.find(
         (f) => f.path.endsWith(".tsx") || f.path.endsWith(".jsx"),
@@ -42,9 +61,15 @@ export function getSandpackConfig(
 
     sandpackFiles["/App.tsx"] = `import React from 'react';
 import MainComponent from './${importPath}';
+import { SquidPreviewInspector } from "./squid-preview-inspector";
 
 export default function App() {
-  return <MainComponent />;
+  return (
+    <>
+      <SquidPreviewInspector />
+      <MainComponent />
+    </>
+  );
 }`;
   }
 
@@ -123,6 +148,170 @@ export const shadcnFiles = {
   </html>
   `,
 };
+
+const squidPreviewInspectorComponent = `"use client";
+
+import { useEffect } from "react";
+
+const PREVIEW_SOURCE = "squid-preview-inspector";
+const PARENT_SOURCE = "squid-preview-parent";
+
+export function SquidPreviewInspector() {
+  useEffect(() => {
+    let selectionMode = false;
+
+    function ensureSelectionStyles() {
+      if (document.getElementById("squid-preview-selection-style")) return;
+
+      const style = document.createElement("style");
+      style.id = "squid-preview-selection-style";
+      style.textContent = [
+        "body.squid-preview-selecting,",
+        "body.squid-preview-selecting * {",
+        "  cursor: crosshair !important;",
+        "}",
+        "body.squid-preview-selecting *:hover {",
+        "  outline: 2px solid #2563eb !important;",
+        "  outline-offset: 2px !important;",
+        "}",
+      ].join("\\n");
+      document.head.appendChild(style);
+    }
+
+    function setSelectionMode(enabled: boolean) {
+      selectionMode = enabled;
+      ensureSelectionStyles();
+      document.body?.classList.toggle("squid-preview-selecting", enabled);
+    }
+
+    function getDomPath(element: Element) {
+      const segments: string[] = [];
+      let current: Element | null = element;
+
+      while (current && current !== document.body) {
+        const parent: Element | null = current.parentElement;
+        const tag = current.tagName.toLowerCase();
+        const id = current.id ? "#" + current.id : "";
+        const className =
+          typeof current.className === "string" && current.className.trim()
+            ? "." + current.className.trim().split(/\\s+/).slice(0, 3).join(".")
+            : "";
+        const index = parent
+          ? Array.from(parent.children)
+              .filter((child) => child.tagName === current?.tagName)
+              .indexOf(current) + 1
+          : 1;
+
+        segments.unshift(tag + id + className + ":nth-of-type(" + index + ")");
+        current = parent;
+      }
+
+      return segments.join(" > ");
+    }
+
+    function getSelectionAttributes(element: Element) {
+      const attributeNames = [
+        "type",
+        "name",
+        "placeholder",
+        "title",
+        "data-testid",
+        "aria-current",
+        "aria-expanded",
+        "aria-pressed",
+      ];
+      const attributes: Record<string, string> = {};
+
+      for (const name of attributeNames) {
+        const value = element.getAttribute(name);
+        if (value) attributes[name] = value.slice(0, 160);
+      }
+
+      return Object.keys(attributes).length > 0 ? attributes : undefined;
+    }
+
+    function getElementRect(element: Element) {
+      const rect = element.getBoundingClientRect();
+      return {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+
+    function serializeSelection(target: Element) {
+      return {
+        tagName: target.tagName.toLowerCase(),
+        domPath: getDomPath(target),
+        text:
+          target.textContent?.replace(/\\s+/g, " ").trim().slice(0, 240) ||
+          "",
+        id: target.id || undefined,
+        className:
+          typeof target.className === "string"
+            ? target.className.slice(0, 240)
+            : undefined,
+        role: target.getAttribute("role") || undefined,
+        ariaLabel: target.getAttribute("aria-label") || undefined,
+        href: target instanceof HTMLAnchorElement ? target.href : undefined,
+        imageAlt:
+          target instanceof HTMLImageElement ? target.alt || undefined : undefined,
+        attributes: getSelectionAttributes(target),
+        rect: getElementRect(target),
+        html: target.outerHTML.replace(/\\s+/g, " ").trim().slice(0, 600),
+      };
+    }
+
+    function postReady() {
+      window.parent?.postMessage({ source: PREVIEW_SOURCE, type: "ready" }, "*");
+    }
+
+    function onMessage(event: MessageEvent) {
+      const message = event.data;
+      if (!message || message.source !== PARENT_SOURCE) return;
+
+      if (message.type === "set-selection-mode") {
+        setSelectionMode(Boolean(message.enabled));
+      }
+
+      if (message.type === "ping") {
+        postReady();
+      }
+    }
+
+    function onClick(event: MouseEvent) {
+      if (!selectionMode) return;
+      if (!(event.target instanceof Element)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectionMode(false);
+      window.parent?.postMessage(
+        {
+          source: PREVIEW_SOURCE,
+          type: "selected",
+          selection: serializeSelection(event.target),
+        },
+        "*",
+      );
+    }
+
+    window.addEventListener("message", onMessage);
+    window.addEventListener("click", onClick, true);
+    ensureSelectionStyles();
+    postReady();
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("click", onClick, true);
+      document.body?.classList.remove("squid-preview-selecting");
+    };
+  }, []);
+
+  return null;
+}
+`;
 
 export const dependencies = {
   "lucide-react": "latest",

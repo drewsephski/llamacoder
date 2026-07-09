@@ -79,6 +79,13 @@ describe("OpenRouter helpers", () => {
     });
   });
 
+  it("leaves current Grok 4-family models on their reasoning-required route", () => {
+    getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
+
+    expect(requiresOpenRouterReasoning("x-ai/grok-4.5")).toBe(true);
+    expect(getOpenRouterProviderOptions("x-ai/grok-4.5")).toBeUndefined();
+  });
+
   it("maps provider errors to user-facing messages and statuses", () => {
     const providerError = Object.assign(new Error("Bad gateway"), {
       responseBody: JSON.stringify({ error: { message: "quota exceeded" } }),

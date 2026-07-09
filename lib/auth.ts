@@ -166,6 +166,16 @@ export const auth = betterAuth({
                 where: { id: user.id },
                 data: { credits: STARTER_CREDITS },
               }),
+              prisma.creditGrant.create({
+                data: {
+                  userId: user.id,
+                  amount: STARTER_CREDITS,
+                  remainingAmount: STARTER_CREDITS,
+                  type: "bonus",
+                  dedupeKey: `welcome:${user.id}`,
+                  description: "Welcome bonus - starter credits",
+                },
+              }),
               prisma.creditHistory.create({
                 data: {
                   userId: user.id,

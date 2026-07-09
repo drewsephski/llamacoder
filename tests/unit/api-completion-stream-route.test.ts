@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildMessage, collectStream } from "../fixtures/builders";
 
-const { prismaMock, streamTextMock, getSessionMock } = vi.hoisted(() => ({
+const {
+  getSessionMock,
+  prismaMock,
+  releaseCreditHoldMock,
+  reserveCreditHoldMock,
+  streamTextMock,
+} = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
+  releaseCreditHoldMock: vi.fn(),
+  reserveCreditHoldMock: vi.fn(),
   streamTextMock: vi.fn(),
   prismaMock: {
     message: {
@@ -9,7 +18,6 @@ const { prismaMock, streamTextMock, getSessionMock } = vi.hoisted(() => ({
       findMany: vi.fn(),
     },
   },
-  getSessionMock: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -27,6 +35,15 @@ vi.mock("ai", () => ({
 vi.mock("@/lib/prisma", () => ({
   getPrisma: () => prismaMock,
 }));
+
+vi.mock("@/lib/billing", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/billing")>();
+  return {
+    ...actual,
+    releaseCreditHold: releaseCreditHoldMock,
+    reserveCreditHold: reserveCreditHoldMock,
+  };
+});
 
 vi.mock("@/lib/openrouter", () => ({
   GENERATED_CODE_MAX_TOKENS: 16000,
@@ -64,6 +81,13 @@ describe("/api/get-next-completion-stream-promise", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
+    reserveCreditHoldMock.mockResolvedValue({
+      success: true,
+      holdId: "hold_1",
+      creditsUsed: 1,
+      remainingCredits: 4,
+    });
+    releaseCreditHoldMock.mockResolvedValue({ success: true });
   });
 
   it("rejects invalid requests and missing messages", async () => {
@@ -168,6 +192,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("x-credit-hold-id")).toBe("hold_1");
     await expect(collectStream(response)).resolves.toBe("hello world");
     expect(prismaMock.message.findMany).toHaveBeenCalledWith({
       where: { chatId: "chat_1", position: { lte: 12 } },

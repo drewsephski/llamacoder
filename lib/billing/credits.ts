@@ -1,9 +1,12 @@
 import { getPrisma } from "@/lib/prisma";
-import { FREE_MODEL } from "@/lib/constants";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import {
   FREE_PROJECT_LIMIT,
-  TIERS,
+  canTierUseModel,
+  estimateOutputTokensFromText,
+  estimateModelCostUsd,
+  getGenerationSizeBand,
+  getModelCreditHoldCost,
   getModelCreditCost,
   normalizeTier,
 } from "./config";
@@ -18,6 +21,23 @@ export type CreditCheckResult =
       success: false;
       error: "INSUFFICIENT_CREDITS" | "FORBIDDEN_MODEL" | "USER_NOT_FOUND";
     };
+
+export type CreditHoldResult =
+  | {
+      success: true;
+      holdId: string;
+      creditsUsed: number;
+      remainingCredits: number;
+    }
+  | {
+      success: false;
+      error: "INSUFFICIENT_CREDITS" | "FORBIDDEN_MODEL" | "USER_NOT_FOUND";
+    };
+
+export type ExpiredCreditHoldsResult = {
+  expiredHolds: number;
+  creditsRestored: number;
+};
 
 export type ProjectCreationEligibility =
   | {
@@ -46,22 +66,269 @@ export type ProjectCreationEligibility =
 
 type BillingClient = PrismaClient | Prisma.TransactionClient;
 
+export const CREDIT_HOLD_EXPIRES_AFTER_MS = 30 * 60 * 1000;
+
+type CreditGrantForConsumption = {
+  id: string;
+  type: string;
+  remainingAmount: number;
+  expiresAt: Date | null;
+  createdAt: Date;
+};
+
+type CreditAllocation = {
+  grantId: string;
+  amount: number;
+};
+
+function getHasPurchasedCredits(user: {
+  creditGrants?: { id: string }[] | null;
+}) {
+  return Boolean(user.creditGrants?.length);
+}
+
+function isGrantUsable(grant: CreditGrantForConsumption, now = new Date()) {
+  if (grant.remainingAmount <= 0) return false;
+  return !grant.expiresAt || grant.expiresAt > now;
+}
+
+function sortConsumableGrants(grants: CreditGrantForConsumption[]) {
+  return [...grants].sort((a, b) => {
+    const priority = (grant: CreditGrantForConsumption) =>
+      grant.type === "subscription" ? 0 : 1;
+    const priorityDiff = priority(a) - priority(b);
+    if (priorityDiff !== 0) return priorityDiff;
+
+    const aExpiry = a.expiresAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const bExpiry = b.expiresAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    if (aExpiry !== bExpiry) return aExpiry - bExpiry;
+
+    return a.createdAt.getTime() - b.createdAt.getTime();
+  });
+}
+
+async function getUsableCreditGrants({
+  client,
+  userId,
+}: {
+  client: BillingClient;
+  userId: string;
+}) {
+  await releaseExpiredCreditHolds({ client, userId });
+
+  const expiredGrants =
+    (await client.creditGrant.findMany({
+      where: {
+        userId,
+        remainingAmount: { gt: 0 },
+        expiresAt: { lte: new Date() },
+      },
+      select: { id: true, remainingAmount: true },
+    })) ?? [];
+  const expiredTotal = expiredGrants.reduce(
+    (total, grant) => total + grant.remainingAmount,
+    0,
+  );
+
+  if (expiredTotal > 0) {
+    for (const grant of expiredGrants) {
+      await client.creditGrant.update({
+        where: { id: grant.id },
+        data: { remainingAmount: 0 },
+      });
+    }
+
+    await client.user.updateMany({
+      where: { id: userId, credits: { gte: expiredTotal } },
+      data: { credits: { decrement: expiredTotal } },
+    });
+  }
+
+  const grants =
+    (await client.creditGrant.findMany({
+      where: {
+        userId,
+        remainingAmount: { gt: 0 },
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      select: {
+        id: true,
+        type: true,
+        remainingAmount: true,
+        expiresAt: true,
+        createdAt: true,
+      },
+    })) ?? [];
+
+  return sortConsumableGrants(
+    grants.filter((candidate) => isGrantUsable(candidate)),
+  );
+}
+
+async function getUsableCreditBalance({
+  client,
+  userId,
+}: {
+  client: BillingClient;
+  userId: string;
+}) {
+  const grants = await getUsableCreditGrants({ client, userId });
+  return grants.reduce((total, grant) => total + grant.remainingAmount, 0);
+}
+
+async function getUsableCreditBreakdown({
+  client,
+  userId,
+}: {
+  client: BillingClient;
+  userId: string;
+}) {
+  const grants = await getUsableCreditGrants({ client, userId });
+
+  return grants.reduce(
+    (totals, grant) => {
+      if (grant.type === "purchase") {
+        totals.purchasedCredits += grant.remainingAmount;
+      } else if (grant.type === "subscription") {
+        totals.subscriptionCredits += grant.remainingAmount;
+      } else {
+        totals.otherCredits += grant.remainingAmount;
+      }
+
+      totals.totalCredits += grant.remainingAmount;
+      return totals;
+    },
+    {
+      totalCredits: 0,
+      subscriptionCredits: 0,
+      purchasedCredits: 0,
+      otherCredits: 0,
+    },
+  );
+}
+
+async function decrementUsableCreditGrants({
+  client,
+  userId,
+  amount,
+}: {
+  client: BillingClient;
+  userId: string;
+  amount: number;
+}) {
+  const grants = await getUsableCreditGrants({ client, userId });
+  const available = grants.reduce(
+    (total, grant) => total + grant.remainingAmount,
+    0,
+  );
+
+  if (available < amount) {
+    return null;
+  }
+
+  let remaining = amount;
+  const allocations: CreditAllocation[] = [];
+
+  for (const grant of grants) {
+    if (remaining <= 0) break;
+
+    const decrement = Math.min(remaining, grant.remainingAmount);
+    const updateResult = await client.creditGrant.updateMany({
+      where: { id: grant.id, remainingAmount: { gte: decrement } },
+      data: { remainingAmount: { decrement } },
+    });
+
+    if (updateResult.count === 0) {
+      throw new Error("CREDIT_GRANT_RACE");
+    }
+
+    allocations.push({ grantId: grant.id, amount: decrement });
+    remaining -= decrement;
+  }
+
+  return allocations;
+}
+
+async function incrementCreditGrantAllocations({
+  client,
+  allocations,
+}: {
+  client: BillingClient;
+  allocations: CreditAllocation[];
+}) {
+  for (const allocation of allocations) {
+    await client.creditGrant.update({
+      where: { id: allocation.grantId },
+      data: { remainingAmount: { increment: allocation.amount } },
+    });
+  }
+}
+
+function parseCreditAllocations(value: Prisma.JsonValue): CreditAllocation[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (
+      item &&
+      typeof item === "object" &&
+      "grantId" in item &&
+      "amount" in item &&
+      typeof item.grantId === "string" &&
+      typeof item.amount === "number" &&
+      item.amount > 0
+    ) {
+      return [{ grantId: item.grantId, amount: item.amount }];
+    }
+
+    return [];
+  });
+}
+
+function refundUnusedAllocations(
+  allocations: CreditAllocation[],
+  amountToRefund: number,
+) {
+  let remaining = amountToRefund;
+  const refunds: CreditAllocation[] = [];
+
+  for (const allocation of [...allocations].reverse()) {
+    if (remaining <= 0) break;
+
+    const amount = Math.min(remaining, allocation.amount);
+    refunds.push({ grantId: allocation.grantId, amount });
+    remaining -= amount;
+  }
+
+  return refunds;
+}
+
 async function checkCreditAccess({
   client,
   userId,
   modelId,
+  requiredCredits,
 }: {
   client: BillingClient;
   userId: string;
   modelId: string;
+  requiredCredits?: number;
 }): Promise<CreditCheckResult> {
-  const creditCost = getModelCreditCost(modelId);
+  const creditCost = requiredCredits ?? getModelCreditHoldCost(modelId);
 
   const user = await client.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
       credits: true,
+      creditGrants: {
+        where: {
+          type: "purchase",
+          remainingAmount: { gt: 0 },
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        select: { id: true },
+        take: 1,
+      },
       subscription: {
         select: {
           status: true,
@@ -80,22 +347,22 @@ async function checkCreditAccess({
     ? normalizeTier(user.subscription?.tier)
     : "free";
 
-  const tierConfig = TIERS[tier];
-  if (tierConfig.allowedModels !== "all") {
-    const isAllowed = tierConfig.allowedModels.includes(modelId);
-    if (!isAllowed) {
-      return { success: false, error: "FORBIDDEN_MODEL" };
-    }
+  const isAllowed = canTierUseModel(tier, modelId, {
+    hasPurchasedCredits: getHasPurchasedCredits(user),
+  });
+  if (!isAllowed) {
+    return { success: false, error: "FORBIDDEN_MODEL" };
   }
 
-  if (user.credits < creditCost) {
+  const usableCredits = await getUsableCreditBalance({ client, userId });
+  if (usableCredits < creditCost) {
     return { success: false, error: "INSUFFICIENT_CREDITS" };
   }
 
   return {
     success: true,
     creditsUsed: creditCost,
-    remainingCredits: user.credits,
+    remainingCredits: usableCredits,
   };
 }
 
@@ -126,7 +393,7 @@ export async function checkProjectCreationEligibility({
   modelId: string;
 }): Promise<ProjectCreationEligibility> {
   const prisma = client ?? getPrisma();
-  const modelCost = getModelCreditCost(modelId);
+  const modelCost = getModelCreditHoldCost(modelId);
 
   try {
     const [projectCount, user] = await Promise.all([
@@ -138,6 +405,15 @@ export async function checkProjectCreationEligibility({
         select: {
           id: true,
           credits: true,
+          creditGrants: {
+            where: {
+              type: "purchase",
+              remainingAmount: { gt: 0 },
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+            },
+            select: { id: true },
+            take: 1,
+          },
           subscription: {
             select: {
               status: true,
@@ -170,10 +446,15 @@ export async function checkProjectCreationEligibility({
       projectCount,
       projectLimit,
       projectsRemaining,
-      credits: user.credits,
+      credits: 0,
       modelCost,
       hasActiveSubscription,
     };
+    const usableCredits = await getUsableCreditBalance({
+      client: prisma,
+      userId,
+    });
+    base.credits = usableCredits;
 
     if (projectLimit !== null && projectCount >= projectLimit) {
       return {
@@ -186,27 +467,18 @@ export async function checkProjectCreationEligibility({
     const tier = hasActiveSubscription
       ? normalizeTier(user.subscription?.tier)
       : "free";
-    const tierConfig = TIERS[tier];
-
-    if (tierConfig.allowedModels !== "all") {
-      const isAllowed = tierConfig.allowedModels.includes(modelId);
-      if (!isAllowed) {
-        return {
-          success: false,
-          error: "FORBIDDEN_MODEL",
-          ...base,
-        };
-      }
-    }
-
-    if (projectCount === 0 && tier === "free" && modelId === FREE_MODEL) {
+    const isAllowed = canTierUseModel(tier, modelId, {
+      hasPurchasedCredits: getHasPurchasedCredits(user),
+    });
+    if (!isAllowed) {
       return {
-        success: true,
+        success: false,
+        error: "FORBIDDEN_MODEL",
         ...base,
       };
     }
 
-    if (user.credits < modelCost) {
+    if (usableCredits < modelCost) {
       return {
         success: false,
         error: "INSUFFICIENT_CREDITS",
@@ -236,6 +508,424 @@ export async function checkProjectCreationEligibility({
   }
 }
 
+function getGenerationChargeDetails({
+  modelId,
+  inputTokens,
+  outputTokens,
+  generatedText,
+}: {
+  modelId: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  generatedText?: string;
+}) {
+  const actualOutputTokens =
+    outputTokens ??
+    (generatedText ? estimateOutputTokensFromText(generatedText) : undefined);
+  const creditCost = getModelCreditCost(modelId, {
+    outputTokens: actualOutputTokens,
+  });
+  const estimatedCreditCost = getModelCreditHoldCost(modelId);
+  const costOutputTokens =
+    actualOutputTokens ??
+    (generatedText ? estimateOutputTokensFromText(generatedText) : 1);
+  const costEstimate = estimateModelCostUsd({
+    modelId,
+    inputTokens,
+    outputTokens: costOutputTokens,
+  });
+  const generationSize = getGenerationSizeBand(costOutputTokens);
+
+  return {
+    creditCost,
+    estimatedCreditCost,
+    costEstimate,
+    generationSize,
+  };
+}
+
+async function createUsageAuditRecords({
+  client,
+  userId,
+  modelId,
+  creditCost,
+  estimatedCreditCost,
+  costEstimate,
+  generationSize,
+  chatId,
+  description,
+  phase,
+  status,
+  tokensUsed,
+}: {
+  client: BillingClient;
+  userId: string;
+  modelId: string;
+  creditCost: number;
+  estimatedCreditCost: number;
+  costEstimate: ReturnType<typeof estimateModelCostUsd>;
+  generationSize: string;
+  chatId?: string;
+  description?: string;
+  phase?: string;
+  status: string;
+  tokensUsed?: number;
+}) {
+  const reason =
+    description || `AI generation - ${modelId.split("/").pop() || modelId}`;
+
+  await client.creditHistory.create({
+    data: {
+      userId,
+      amount: -creditCost,
+      type: "usage",
+      description: reason,
+      chatId: chatId || null,
+    },
+  });
+
+  await client.generationLog.create({
+    data: {
+      userId,
+      modelId,
+      creditsUsed: creditCost,
+      estimatedCredits: estimatedCreditCost,
+      actualCredits: creditCost,
+      refundedCredits: 0,
+      reason,
+      phase,
+      tokensUsed,
+      inputTokens: costEstimate.inputTokens,
+      outputTokens: costEstimate.outputTokens,
+      generationSize,
+      estimatedModelCostUsd: costEstimate.estimatedModelCostUsd,
+      riskAdjustedModelCostUsd: costEstimate.riskAdjustedModelCostUsd,
+      chatId: chatId || null,
+      status,
+    },
+  });
+}
+
+export async function reserveCreditHold({
+  userId,
+  modelId,
+  chatId,
+  amount = getModelCreditHoldCost(modelId),
+  reason,
+  phase = "generation",
+}: {
+  userId: string;
+  modelId: string;
+  chatId?: string;
+  amount?: number;
+  reason?: string;
+  phase?: string;
+}): Promise<
+  CreditHoldResult
+> {
+  const prisma = getPrisma();
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const access = await checkCreditAccess({
+        client: tx,
+        userId,
+        modelId,
+        requiredCredits: amount,
+      });
+
+      if (!access.success) return access;
+
+      const allocations = await decrementUsableCreditGrants({
+        client: tx,
+        userId,
+        amount,
+      });
+
+      if (!allocations) {
+        return { success: false, error: "INSUFFICIENT_CREDITS" } as const;
+      }
+
+      const updateResult = await tx.user.updateMany({
+        where: { id: userId, credits: { gte: amount } },
+        data: { credits: { decrement: amount } },
+      });
+
+      if (updateResult.count === 0) {
+        await incrementCreditGrantAllocations({ client: tx, allocations });
+        return { success: false, error: "INSUFFICIENT_CREDITS" } as const;
+      }
+
+      const hold = await tx.creditHold.create({
+        data: {
+          userId,
+          chatId: chatId || null,
+          modelId,
+          amountHeld: amount,
+          amountCaptured: 0,
+          status: "active",
+          reason,
+          phase,
+          allocations: JSON.parse(JSON.stringify(allocations)),
+          expiresAt: new Date(Date.now() + CREDIT_HOLD_EXPIRES_AFTER_MS),
+        },
+        select: { id: true },
+      });
+
+      const remainingCredits = await getUsableCreditBalance({
+        client: tx,
+        userId,
+      });
+
+      return {
+        success: true,
+        holdId: hold.id,
+        creditsUsed: amount,
+        remainingCredits,
+      };
+    });
+  } catch (error) {
+    console.error("[CreditEngine] Error in reserveCreditHold:", error);
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+}
+
+async function releaseExpiredCreditHoldsWithClient({
+  client,
+  userId,
+  now,
+  limit,
+}: {
+  client: BillingClient;
+  userId?: string;
+  now: Date;
+  limit: number;
+}): Promise<ExpiredCreditHoldsResult> {
+  const expiredHolds =
+    (await client.creditHold.findMany({
+      where: {
+        status: "active",
+        expiresAt: { lte: now },
+        ...(userId ? { userId } : {}),
+      },
+      select: {
+        id: true,
+        userId: true,
+        amountHeld: true,
+        allocations: true,
+      },
+      orderBy: { expiresAt: "asc" },
+      take: limit,
+    })) ?? [];
+
+  let expiredCount = 0;
+  let creditsRestored = 0;
+
+  for (const hold of expiredHolds) {
+    const updateResult = await client.creditHold.updateMany({
+      where: {
+        id: hold.id,
+        status: "active",
+        expiresAt: { lte: now },
+      },
+      data: { status: "expired" },
+    });
+
+    if (updateResult.count === 0) continue;
+
+    const allocations = parseCreditAllocations(hold.allocations);
+    await incrementCreditGrantAllocations({ client, allocations });
+    await client.user.update({
+      where: { id: hold.userId },
+      data: { credits: { increment: hold.amountHeld } },
+    });
+
+    expiredCount += 1;
+    creditsRestored += hold.amountHeld;
+  }
+
+  return { expiredHolds: expiredCount, creditsRestored };
+}
+
+export async function releaseExpiredCreditHolds({
+  client,
+  userId,
+  now = new Date(),
+  limit = 100,
+}: {
+  client?: BillingClient;
+  userId?: string;
+  now?: Date;
+  limit?: number;
+} = {}): Promise<ExpiredCreditHoldsResult> {
+  const boundedLimit = Math.max(1, Math.min(limit, 500));
+
+  if (client) {
+    return releaseExpiredCreditHoldsWithClient({
+      client,
+      userId,
+      now,
+      limit: boundedLimit,
+    });
+  }
+
+  const prisma = getPrisma();
+  return prisma.$transaction((tx) =>
+    releaseExpiredCreditHoldsWithClient({
+      client: tx,
+      userId,
+      now,
+      limit: boundedLimit,
+    }),
+  );
+}
+
+export async function releaseCreditHold({
+  holdId,
+}: {
+  holdId: string;
+}): Promise<{ success: boolean }> {
+  const prisma = getPrisma();
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const hold = await tx.creditHold.findUnique({
+        where: { id: holdId },
+        select: {
+          id: true,
+          userId: true,
+          amountHeld: true,
+          status: true,
+          allocations: true,
+        },
+      });
+
+      if (!hold || hold.status !== "active") return;
+
+      const allocations = parseCreditAllocations(hold.allocations);
+      await incrementCreditGrantAllocations({ client: tx, allocations });
+      await tx.user.update({
+        where: { id: hold.userId },
+        data: { credits: { increment: hold.amountHeld } },
+      });
+      await tx.creditHold.update({
+        where: { id: hold.id },
+        data: { status: "released" },
+      });
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("[CreditEngine] Error in releaseCreditHold:", error);
+    return { success: false };
+  }
+}
+
+export async function captureCreditHold({
+  client,
+  holdId,
+  userId,
+  modelId,
+  chatId,
+  description,
+  status = "completed",
+  phase = "generation",
+  tokensUsed,
+  inputTokens,
+  outputTokens,
+  generatedText,
+}: {
+  client: Prisma.TransactionClient;
+  holdId: string;
+  userId: string;
+  modelId: string;
+  chatId?: string;
+  description?: string;
+  status?: string;
+  phase?: string;
+  tokensUsed?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  generatedText?: string;
+}): Promise<CreditCheckResult> {
+  const hold = await client.creditHold.findUnique({
+    where: { id: holdId },
+    select: {
+      id: true,
+      userId: true,
+      modelId: true,
+      amountHeld: true,
+      status: true,
+      allocations: true,
+    },
+  });
+
+  if (
+    !hold ||
+    hold.status !== "active" ||
+    hold.userId !== userId ||
+    hold.modelId !== modelId
+  ) {
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+
+  const { creditCost, estimatedCreditCost, costEstimate, generationSize } =
+    getGenerationChargeDetails({
+      modelId,
+      inputTokens,
+      outputTokens,
+      generatedText,
+    });
+
+  if (creditCost > hold.amountHeld) {
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+
+  const refundAmount = hold.amountHeld - creditCost;
+  if (refundAmount > 0) {
+    const refunds = refundUnusedAllocations(
+      parseCreditAllocations(hold.allocations),
+      refundAmount,
+    );
+    await incrementCreditGrantAllocations({ client, allocations: refunds });
+    await client.user.update({
+      where: { id: userId },
+      data: { credits: { increment: refundAmount } },
+    });
+  }
+
+  await createUsageAuditRecords({
+    client,
+    userId,
+    modelId,
+    creditCost,
+    estimatedCreditCost,
+    costEstimate,
+    generationSize,
+    chatId,
+    description,
+    phase,
+    status,
+    tokensUsed,
+  });
+
+  await client.creditHold.update({
+    where: { id: hold.id },
+    data: {
+      amountCaptured: creditCost,
+      status: "captured",
+    },
+  });
+
+  const remainingCredits = await getUsableCreditBalance({ client, userId });
+
+  return {
+    success: true,
+    creditsUsed: creditCost,
+    remainingCredits,
+  };
+}
+
 /**
  * Check and consume credits for a completed generation.
  *
@@ -250,6 +940,9 @@ export async function checkAndConsumeCredits({
   status = "pending",
   phase = "generation",
   tokensUsed,
+  inputTokens,
+  outputTokens,
+  generatedText,
 }: {
   userId: string;
   modelId: string;
@@ -258,9 +951,18 @@ export async function checkAndConsumeCredits({
   status?: string;
   phase?: string;
   tokensUsed?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  generatedText?: string;
 }): Promise<CreditCheckResult> {
   const prisma = getPrisma();
-  const creditCost = getModelCreditCost(modelId);
+  const { creditCost, estimatedCreditCost, costEstimate, generationSize } =
+    getGenerationChargeDetails({
+      modelId,
+      inputTokens,
+      outputTokens,
+      generatedText,
+    });
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -268,14 +970,23 @@ export async function checkAndConsumeCredits({
         client: tx,
         userId,
         modelId,
+        requiredCredits: creditCost,
       });
 
       if (!access.success) {
         return access;
       }
 
-      // Check and deduct credits atomically
-      // The updateMany with `credits: { gte: creditCost }` ensures no negative balances
+      const allocations = await decrementUsableCreditGrants({
+        client: tx,
+        userId,
+        amount: creditCost,
+      });
+
+      if (!allocations) {
+        return { success: false, error: "INSUFFICIENT_CREDITS" } as const;
+      }
+
       const updateResult = await tx.user.updateMany({
         where: {
           id: userId,
@@ -287,51 +998,34 @@ export async function checkAndConsumeCredits({
       });
 
       if (updateResult.count === 0) {
+        await incrementCreditGrantAllocations({ client: tx, allocations });
         return { success: false, error: "INSUFFICIENT_CREDITS" } as const;
       }
 
-      // Create credit history record
-      await tx.creditHistory.create({
-        data: {
-          userId,
-          amount: -creditCost,
-          type: "usage",
-          description:
-            description ||
-            `AI generation - ${modelId.split("/").pop() || modelId}`,
-          chatId: chatId || null,
-        },
+      await createUsageAuditRecords({
+        client: tx,
+        userId,
+        modelId,
+        creditCost,
+        estimatedCreditCost,
+        costEstimate,
+        generationSize,
+        chatId,
+        description,
+        phase,
+        status,
+        tokensUsed,
       });
 
-      // Log generation for analytics
-      await tx.generationLog.create({
-        data: {
-          userId,
-          modelId,
-          creditsUsed: creditCost,
-          estimatedCredits: creditCost,
-          actualCredits: creditCost,
-          refundedCredits: 0,
-          reason:
-            description ||
-            `AI generation - ${modelId.split("/").pop() || modelId}`,
-          phase,
-          tokensUsed,
-          chatId: chatId || null,
-          status,
-        },
-      });
-
-      // Return new credit balance
-      const updatedUser = await tx.user.findUnique({
-        where: { id: userId },
-        select: { credits: true },
+      const remainingCredits = await getUsableCreditBalance({
+        client: tx,
+        userId,
       });
 
       return {
         success: true,
         creditsUsed: creditCost,
-        remainingCredits: updatedUser?.credits ?? 0,
+        remainingCredits,
       } as const;
     });
 
@@ -350,7 +1044,11 @@ export async function consumeCreditsForGeneration({
   description,
   status = "completed",
   phase = "generation",
+  creditHoldId,
   tokensUsed,
+  inputTokens,
+  outputTokens,
+  generatedText,
 }: {
   client: Prisma.TransactionClient;
   userId: string;
@@ -359,13 +1057,55 @@ export async function consumeCreditsForGeneration({
   description?: string;
   status?: string;
   phase?: string;
+  creditHoldId?: string;
   tokensUsed?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  generatedText?: string;
 }): Promise<CreditCheckResult> {
-  const creditCost = getModelCreditCost(modelId);
-  const access = await checkCreditAccess({ client, userId, modelId });
+  if (creditHoldId) {
+    return captureCreditHold({
+      client,
+      holdId: creditHoldId,
+      userId,
+      modelId,
+      chatId,
+      description,
+      status,
+      phase,
+      tokensUsed,
+      inputTokens,
+      outputTokens,
+      generatedText,
+    });
+  }
+
+  const { creditCost, estimatedCreditCost, costEstimate, generationSize } =
+    getGenerationChargeDetails({
+      modelId,
+      inputTokens,
+      outputTokens,
+      generatedText,
+    });
+  const access = await checkCreditAccess({
+    client,
+    userId,
+    modelId,
+    requiredCredits: creditCost,
+  });
 
   if (!access.success) {
     return access;
+  }
+
+  const allocations = await decrementUsableCreditGrants({
+    client,
+    userId,
+    amount: creditCost,
+  });
+
+  if (!allocations) {
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
   }
 
   const updateResult = await client.user.updateMany({
@@ -379,46 +1119,34 @@ export async function consumeCreditsForGeneration({
   });
 
   if (updateResult.count === 0) {
+    await incrementCreditGrantAllocations({ client, allocations });
     return { success: false, error: "INSUFFICIENT_CREDITS" };
   }
 
-  await client.creditHistory.create({
-    data: {
-      userId,
-      amount: -creditCost,
-      type: "usage",
-      description:
-        description || `AI generation - ${modelId.split("/").pop() || modelId}`,
-      chatId: chatId || null,
-    },
+  await createUsageAuditRecords({
+    client,
+    userId,
+    modelId,
+    creditCost,
+    estimatedCreditCost,
+    costEstimate,
+    generationSize,
+    chatId,
+    description,
+    phase,
+    status,
+    tokensUsed,
   });
 
-  await client.generationLog.create({
-    data: {
-      userId,
-      modelId,
-      creditsUsed: creditCost,
-      estimatedCredits: creditCost,
-      actualCredits: creditCost,
-      refundedCredits: 0,
-      reason:
-        description || `AI generation - ${modelId.split("/").pop() || modelId}`,
-      phase,
-      tokensUsed,
-      chatId: chatId || null,
-      status,
-    },
-  });
-
-  const updatedUser = await client.user.findUnique({
-    where: { id: userId },
-    select: { credits: true },
+  const remainingCredits = await getUsableCreditBalance({
+    client,
+    userId,
   });
 
   return {
     success: true,
     creditsUsed: creditCost,
-    remainingCredits: updatedUser?.credits ?? 0,
+    remainingCredits,
   };
 }
 
@@ -446,6 +1174,17 @@ export async function addCredits({
         where: { id: userId },
         data: { credits: { increment: amount } },
         select: { credits: true },
+      });
+
+      await tx.creditGrant.create({
+        data: {
+          userId,
+          amount,
+          remainingAmount: amount,
+          type,
+          description,
+          dedupeKey: `manual:${type}:${userId}:${Date.now()}`,
+        },
       });
 
       // Create history record
@@ -478,6 +1217,15 @@ export async function getUserCreditInfo(userId: string) {
     where: { id: userId },
     select: {
       credits: true,
+      creditGrants: {
+        where: {
+          type: "purchase",
+          remainingAmount: { gt: 0 },
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        select: { id: true },
+        take: 1,
+      },
       subscription: {
         select: {
           status: true,
@@ -495,10 +1243,17 @@ export async function getUserCreditInfo(userId: string) {
     ? normalizeTier(user.subscription?.tier)
     : "free";
 
+  const creditBreakdown = await getUsableCreditBreakdown({
+    client: prisma,
+    userId,
+  });
+
   return {
-    credits: user.credits,
+    credits: creditBreakdown.totalCredits,
+    creditBreakdown,
     tier,
     hasActiveSubscription,
+    hasPurchasedCredits: getHasPurchasedCredits(user),
     subscriptionEndsAt:
       user.subscription?.currentPeriodEnd?.toISOString() || null,
   };

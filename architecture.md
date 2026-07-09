@@ -33,7 +33,7 @@ sequenceDiagram
 
     U->>V: Send request (create chat / stream completion)
     V->>OR: Initialize provider with custom config
-    OR->>M: Route to specific models (Llama, Qwen, Kimi)
+    OR->>M: Route to specific models (DeepSeek, Gemini, Qwen)
     M->>OR: Return model responses
     OR->>V: Process responses (generateText / streamText)
     V->>U: Return formatted response

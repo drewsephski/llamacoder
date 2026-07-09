@@ -5,10 +5,18 @@ export {
   CREDIT_PACKS,
   FREE_PROJECT_LIMIT,
   getModelCreditCost,
+  getModelCreditHoldCost,
+  getModelCreditRange,
+  formatModelCreditRange,
+  getGenerationSizeBand,
+  estimateOutputTokensFromText,
+  estimateModelCostUsd,
+  getModelTier,
   canTierUseModel,
   normalizeTier,
   type TierKey,
   type CreditPackKey,
+  type GenerationSizeBand,
 } from "./config";
 
 export {
@@ -16,9 +24,14 @@ export {
   checkProjectCreationEligibility,
   checkAndConsumeCredits,
   consumeCreditsForGeneration,
+  reserveCreditHold,
+  releaseCreditHold,
+  releaseExpiredCreditHolds,
+  captureCreditHold,
   addCredits,
   getUserCreditInfo,
   type CreditCheckResult,
+  type ExpiredCreditHoldsResult,
   type ProjectCreationEligibility,
 } from "./credits";
 

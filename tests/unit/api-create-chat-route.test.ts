@@ -8,11 +8,15 @@ const {
   generateTextMock,
   getSessionMock,
   prismaMock,
+  releaseCreditHoldMock,
+  reserveCreditHoldMock,
 } = vi.hoisted(() => ({
   checkProjectCreationEligibilityMock: vi.fn(),
   createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   generateTextMock: vi.fn(),
   getSessionMock: vi.fn(),
+  releaseCreditHoldMock: vi.fn(),
+  reserveCreditHoldMock: vi.fn(),
   prismaMock: {
     chat: {
       create: vi.fn(),
@@ -45,6 +49,8 @@ vi.mock("@/lib/billing", async (importOriginal) => {
   return {
     ...actual,
     checkProjectCreationEligibility: checkProjectCreationEligibilityMock,
+    releaseCreditHold: releaseCreditHoldMock,
+    reserveCreditHold: reserveCreditHoldMock,
   };
 });
 
@@ -82,6 +88,13 @@ describe("/api/create-chat", () => {
       modelCost: 1,
       hasActiveSubscription: false,
     });
+    reserveCreditHoldMock.mockResolvedValue({
+      success: true,
+      holdId: "hold_1",
+      creditsUsed: 1,
+      remainingCredits: 4,
+    });
+    releaseCreditHoldMock.mockResolvedValue({ success: true });
     prismaMock.chat.create.mockResolvedValue({
       id: "chat_1",
       messages: [

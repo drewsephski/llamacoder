@@ -4,6 +4,7 @@ import {
   createFreeRepairAssistantMessage,
   createMessage,
   createPreviewRepairMessage,
+  releaseReservedCreditHold,
   restoreVersionAsCheckpoint,
   saveProject,
 } from "@/app/(main)/actions";
@@ -30,7 +31,10 @@ import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle
 import { authClient } from "@/lib/auth-client";
 import { SignInModal } from "@/components/sign-in-modal";
 import { toast } from "sonner";
-import { fetchCompletionStream } from "@/lib/completion-stream";
+import {
+  fetchCompletionStream,
+  type CompletionStream,
+} from "@/lib/completion-stream";
 
 const HeaderChat = memo(({ chat }: { chat: Chat }) => {
   return (
@@ -56,7 +60,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     setStreamPromise: setContextStreamPromise,
   } = use(Context);
   const [streamPromise, setStreamPromise] = useState<
-    Promise<ReadableStream> | undefined
+    Promise<CompletionStream> | undefined
   >(initialStreamPromise);
   const [streamText, setStreamText] = useState("");
   const [isShowingCodeViewer, setIsShowingCodeViewer] = useState(
@@ -65,7 +69,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
   const router = useRouter();
   const isHandlingStreamRef = useRef(false);
-  const handledStreamPromiseRef = useRef<Promise<ReadableStream> | null>(null);
+  const handledStreamPromiseRef = useRef<Promise<CompletionStream> | null>(
+    null,
+  );
   const freeRepairRequestIdRef = useRef<string | null>(null);
   const [activeMessage, setActiveMessage] = useState(
     chat.messages
@@ -155,9 +161,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
       let didPushToCode = false;
       let didPushToPreview = false;
       let fullText = "";
+      let creditHoldId: string | undefined;
 
       try {
         const stream = await streamPromise;
+        creditHoldId = stream.creditHoldId;
 
         if (stream.locked) {
           console.warn("Skipping duplicate stream reader for locked stream");
@@ -251,6 +259,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
               fullText, // Store original AI response content (only changed files)
               "assistant",
               allFiles, // Store cumulative files
+              { creditHoldId },
             );
 
         startTransition(() => {
@@ -265,6 +274,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
         });
       } catch (error: any) {
         console.error("Stream reading error:", error);
+        if (creditHoldId) {
+          await releaseReservedCreditHold(creditHoldId);
+        }
         setStreamPromise(undefined);
         freeRepairRequestIdRef.current = null;
 
@@ -370,6 +382,25 @@ export default function PageClient({ chat }: { chat: Chat }) {
                   });
                   setStreamPromise(streamPromise);
                   router.refresh();
+                });
+              }}
+              onRequestTargetedEdit={(prompt: string) => {
+                startTransition(async () => {
+                  try {
+                    const message = await createMessage(chat.id, prompt, "user");
+                    const streamPromise = fetchCompletionStream({
+                      messageId: message.id,
+                      model: chat.model,
+                    });
+                    setStreamPromise(streamPromise);
+                    router.refresh();
+                  } catch (error: any) {
+                    toast.error(
+                      error.message === "INSUFFICIENT_CREDITS"
+                        ? "You need more credits to edit this project."
+                        : error.message || "Failed to start selected edit",
+                    );
+                  }
                 });
               }}
               onRestore={async (

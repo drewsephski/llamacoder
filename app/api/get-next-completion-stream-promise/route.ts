@@ -11,6 +11,11 @@ import {
   getAIErrorStatus,
   getOpenRouterProviderOptions,
 } from "@/lib/openrouter";
+import {
+  getModelCreditHoldCost,
+  releaseCreditHold,
+  reserveCreditHold,
+} from "@/lib/billing";
 
 function optimizeMessagesForTokens(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
@@ -60,6 +65,8 @@ Generation completeness requirements:
 `;
 
 export async function POST(req: Request) {
+  let holdId: string | undefined;
+
   try {
     const prisma = getPrisma();
 
@@ -102,6 +109,33 @@ export async function POST(req: Request) {
       return new Response("Model mismatch", { status: 400 });
     }
     const chatModel = message.chat.model;
+    const messageMetadata = message.files as
+      | { kind?: string; chargeCredits?: boolean }
+      | null
+      | undefined;
+    const isFreeRepairRequest =
+      messageMetadata?.kind === "preview_repair_request" &&
+      messageMetadata.chargeCredits === false;
+
+    if (!isFreeRepairRequest) {
+      const hold = await reserveCreditHold({
+        userId: session.user.id,
+        modelId: chatModel,
+        chatId: message.chat.id,
+        reason: "Follow-up generation hold",
+        phase: "follow_up",
+      });
+
+      if (!hold.success) {
+        return new Response(
+          hold.error === "INSUFFICIENT_CREDITS"
+            ? `Need ${getModelCreditHoldCost(chatModel)} credits to start this model. Upgrade or buy credits to continue.`
+            : "Unable to process request",
+          { status: hold.error === "USER_NOT_FOUND" ? 404 : 402 },
+        );
+      }
+      holdId = hold.holdId;
+    }
 
     const messagesRes = await prisma.message.findMany({
       where: { chatId: message.chatId, position: { lte: message.position } },
@@ -157,8 +191,11 @@ export async function POST(req: Request) {
       },
     });
 
-    return createReadableTextStreamResponse(result.textStream);
+    return createReadableTextStreamResponse(result.textStream, holdId);
   } catch (error) {
+    if (holdId) {
+      await releaseCreditHold({ holdId });
+    }
     console.error(
       "Failed to start completion stream:",
       getAIErrorMessage(error),
@@ -172,7 +209,10 @@ export async function POST(req: Request) {
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-function createReadableTextStreamResponse(textStream: AsyncIterable<string>) {
+function createReadableTextStreamResponse(
+  textStream: AsyncIterable<string>,
+  holdId?: string,
+) {
   const encoder = new TextEncoder();
 
   return new Response(
@@ -192,6 +232,7 @@ function createReadableTextStreamResponse(textStream: AsyncIterable<string>) {
     {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
+        ...(holdId ? { "x-credit-hold-id": holdId } : {}),
       },
     },
   );

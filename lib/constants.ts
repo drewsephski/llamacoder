@@ -2,6 +2,9 @@ export const FREE_MODEL = "deepseek/deepseek-v4-flash";
 export const LEGACY_FREE_MODEL = "tencent/hy3-preview:free";
 export const LEGACY_SECONDARY_STARTER_MODEL = "minimax/minimax-m2.5";
 export const LEGACY_MIMO_STARTER_MODEL = "xiaomi/mimo-v2.5";
+export const LEGACY_KIMI_CODE_MODEL = "moonshotai/kimi-k2.7-code";
+export const LEGACY_GEMINI_PRO_MODEL = "google/gemini-3.1-pro-preview";
+export const LEGACY_QWEN_MAX_MODEL = "qwen/qwen3.7-max";
 export const SECONDARY_STARTER_MODEL = "google/gemini-2.5-flash-lite";
 export const SAFE_GPT_MODEL = "openai/gpt-4.1";
 
@@ -40,17 +43,10 @@ export const MODELS: ModelOption[] = [
     summary: "Fast multimodal builder for screenshot-first app work.",
   },
   {
-    label: "Kimi K2.7 Code",
-    value: "moonshotai/kimi-k2.7-code",
-    paid: true,
-    group: "paid",
-    summary: "Coding-focused long-context model for agentic code synthesis.",
-  },
-  {
     label: "GPT-4.1",
     value: SAFE_GPT_MODEL,
     paid: true,
-    group: "premium",
+    group: "paid",
     summary: "Strong non-thinking GPT coding model with a 1M-token context.",
   },
   {
@@ -70,20 +66,12 @@ export const MODELS: ModelOption[] = [
     summary: "Efficient Claude coding model with strong agentic performance.",
   },
   {
-    label: "Gemini 3.1 Pro Preview",
-    value: "google/gemini-3.1-pro-preview",
-    paid: true,
-    featured: false,
-    group: "premium",
-    summary: "Google frontier model for agentic coding and tool workflows.",
-  },
-  {
-    label: "Qwen3.7 Max",
-    value: "qwen/qwen3.7-max",
+    label: "Grok 4.5",
+    value: "x-ai/grok-4.5",
     paid: true,
     featured: false,
     group: "paid",
-    summary: "Agent-centric coding model with a 1M-token context window.",
+    summary: "xAI frontier model for complex coding and app generation.",
   },
   {
     label: "DeepSeek V4 Pro",

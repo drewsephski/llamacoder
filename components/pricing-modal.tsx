@@ -11,7 +11,11 @@ import {
 import { Loader2, Zap, Check, Sparkles, Crown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { MODELS } from "@/lib/constants";
-import { CREDIT_PACKS, getModelCreditCost } from "@/lib/billing";
+import {
+  CREDIT_PACKS,
+  formatModelCreditRange,
+  getModelTier,
+} from "@/lib/billing";
 import { Button } from "./ui/button";
 import { useStripeCheckout } from "@/lib/queries";
 
@@ -88,9 +92,20 @@ export function PricingModal({
     }
   };
 
-  const starterModels = MODELS.filter((m) => m.group === "free");
-  const paidModels = MODELS.filter((m) => m.paid);
-  const premiumModels = MODELS.filter((m) => m.group === "premium");
+  const starterModels = MODELS.filter(
+    (m) => getModelTier(m.value) === "starter",
+  );
+  const efficientModels = MODELS.filter(
+    (m) => getModelTier(m.value) === "efficient",
+  );
+  const advancedModels = MODELS.filter(
+    (m) => getModelTier(m.value) === "advanced",
+  );
+  const premiumModels = MODELS.filter(
+    (m) => getModelTier(m.value) === "premium",
+  );
+  const proModelCount =
+    starterModels.length + efficientModels.length + advancedModels.length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -192,13 +207,13 @@ export function PricingModal({
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                   <span className="text-muted-foreground">
-                    All {paidModels.length} smarter models
+                    {proModelCount} starter, efficient, and advanced models
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                   <span className="text-muted-foreground">
-                    100 credits monthly
+                    100 credits monthly, rollover cap 200
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -264,7 +279,7 @@ export function PricingModal({
                 <li className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   <span className="text-muted-foreground">
-                    500 credits monthly
+                    500 credits monthly, rollover cap 1,000
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -305,7 +320,7 @@ export function PricingModal({
         ) : (
           <div className="mt-5">
             <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-              Buy credits to use smarter models. Credits never expire.
+              Buy credits to use smarter models. Purchased credits never expire.
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
@@ -314,31 +329,47 @@ export function PricingModal({
                   credits: CREDIT_PACKS.small.credits,
                   price: CREDIT_PACKS.small.price,
                   popular: false,
+                  bestValue: false,
                 },
                 {
                   key: "medium",
                   credits: CREDIT_PACKS.medium.credits,
                   price: CREDIT_PACKS.medium.price,
-                  popular: true,
+                  popular:
+                    "popular" in CREDIT_PACKS.medium &&
+                    Boolean(CREDIT_PACKS.medium.popular),
+                  bestValue:
+                    "bestValue" in CREDIT_PACKS.medium &&
+                    Boolean(CREDIT_PACKS.medium.bestValue),
                 },
                 {
                   key: "large",
                   credits: CREDIT_PACKS.large.credits,
                   price: CREDIT_PACKS.large.price,
-                  popular: false,
+                  popular:
+                    "popular" in CREDIT_PACKS.large &&
+                    Boolean(CREDIT_PACKS.large.popular),
+                  bestValue:
+                    "bestValue" in CREDIT_PACKS.large &&
+                    Boolean(CREDIT_PACKS.large.bestValue),
                 },
               ].map((pack) => (
                 <div
                   key={pack.key}
                   className={`flex flex-col rounded-xl border p-4 transition-colors hover:border-border/80 sm:p-5 ${
-                    pack.popular
+                    pack.bestValue
                       ? "border-2 border-blue-500/50 bg-gradient-to-b from-blue-50/50 to-transparent shadow-lg shadow-blue-500/5 dark:from-blue-950/30 dark:to-transparent"
                       : "border-border/50 bg-muted/40"
                   }`}
                 >
-                  {pack.popular && (
+                  {pack.bestValue && (
                     <span className="mb-3 w-fit rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                       Best Value
+                    </span>
+                  )}
+                  {pack.popular && !pack.bestValue && (
+                    <span className="mb-3 w-fit rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                      Most Popular
                     </span>
                   )}
                   <div className="mb-1 flex items-baseline gap-1">
@@ -363,8 +394,8 @@ export function PricingModal({
               ))}
             </div>
             <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-              1 credit = 1 starter-model generation. Advanced models cost 2-3
-              credits; premium models cost 4-6 credits.
+              Credits are charged only when a new app version is saved. Final
+              cost depends on model and generation size.
             </p>
           </div>
         )}
@@ -396,9 +427,7 @@ export function PricingModal({
                         : "text-muted-foreground"
                   }`}
                 >
-                  {m.free
-                    ? `${getModelCreditCost(m.value)} credit`
-                    : `${getModelCreditCost(m.value)} credits`}
+                  {formatModelCreditRange(m.value)}
                 </span>
               </div>
             ))}
@@ -406,7 +435,8 @@ export function PricingModal({
         </div>
 
         <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
-          Cancel anytime. Credits never expire. Powered by Stripe.
+          Cancel anytime. Purchased credits never expire; subscription credits
+          refresh monthly. Powered by Stripe.
         </p>
       </DialogContent>
     </Dialog>

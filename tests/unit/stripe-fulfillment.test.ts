@@ -9,6 +9,8 @@ const { prismaMock, stripeMock } = vi.hoisted(() => {
   return {
     prismaMock: {
       $transaction: vi.fn(),
+      chat: delegate(["findFirst"]),
+      shareEvent: delegate(["create"]),
       subscription: delegate(["findFirst", "updateMany", "upsert"]),
       stripeWebhookEvent: delegate(["findUnique", "upsert"]),
     },
@@ -93,6 +95,7 @@ function paidInvoice(overrides: Record<string, unknown> = {}) {
 describe("Stripe fulfillment", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.chat.findFirst.mockResolvedValue(null);
   });
 
   it("syncs subscriptions from Stripe into the local tier model", async () => {
@@ -140,6 +143,7 @@ describe("Stripe fulfillment", () => {
       invoiceId: "in_1",
       tier: "pro",
       credits: 100,
+      referralGrant: { granted: false, reason: "no_referrer" },
     });
 
     expect(tx.creditGrant.create).toHaveBeenCalledWith({
@@ -209,6 +213,7 @@ describe("Stripe fulfillment", () => {
       userId: "user_1",
       checkoutSessionId: "cs_1",
       credits: 25,
+      referralGrant: { granted: false, reason: "no_referrer" },
     });
 
     expect(tx.creditGrant.create).toHaveBeenCalledWith({

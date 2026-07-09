@@ -18,36 +18,84 @@ model GeneratedApp {
 }
 
 model Chat {
-  id                String    @id @default(nanoid(16))
-  model             String
-  quality           String
-  prompt            String
-  title             String
-  llamaCoderVersion String    @default("v2")
-  shadcn            Boolean
-  plan              String?
-  hasCode           Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  userId            String?
-  user              User?     @relation(fields: [userId], references: [id])
-  messages          Message[]
+  id                  String    @id @default(nanoid(16))
+  model               String
+  quality             String
+  prompt              String
+  title               String
+  llamaCoderVersion   String    @default("v2")
+  shadcn              Boolean
+  plan                String?
+  hasCode             Boolean   @default(false)
+  generationStatus    String    @default("idle")
+  generationStartedAt DateTime?
+  sourceMessageId     String?
+  sourceChatId        String?
+  referrerUserId      String?
+  createdAt           DateTime  @default(now())
+  userId              String?
+  user                User?     @relation(fields: [userId], references: [id])
+  messages            Message[]
 
   @@index([createdAt])
   @@index([userId])
+  @@index([generationStatus])
+  @@index([sourceMessageId])
+  @@index([sourceChatId])
+  @@index([referrerUserId])
 }
 
 model Message {
-  id        String   @id @default(nanoid(16))
-  role      String
-  content   String
-  files     Json?
-  chatId    String
-  position  Int
-  createdAt DateTime @default(now())
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  id              String   @id @default(nanoid(16))
+  role            String
+  content         String
+  files           Json?
+  followUpPrompts Json?
+  chatId          String
+  position        Int
+  createdAt       DateTime @default(now())
+  chat            Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
   @@index([chatId])
   @@index([chatId, createdAt])
+}
+
+model ExportArtifact {
+  id        String   @id @default(nanoid(16))
+  messageId String
+  chatId    String
+  userId    String?
+  appTitle  String
+  status    String
+  fileCount Int
+  manifest  Json
+  report    Json
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@index([chatId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ShareEvent {
+  id             String   @id @default(nanoid(16))
+  messageId      String
+  chatId         String
+  eventType      String
+  visitorId      String?
+  userId         String?
+  referrerUserId String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([messageId])
+  @@index([chatId])
+  @@index([eventType])
+  @@index([visitorId])
+  @@index([userId])
+  @@index([referrerUserId])
+  @@index([createdAt])
 }
 
 model User {
@@ -103,24 +151,48 @@ model CreditHistory {
 }
 
 model CreditGrant {
-  id                      String   @id @default(nanoid(16))
+  id                      String    @id @default(nanoid(16))
   userId                  String
   amount                  Int
+  remainingAmount         Int       @default(0)
   type                    String
   description             String?
-  dedupeKey               String   @unique
+  dedupeKey               String    @unique
   stripeEventId           String?
   stripeCheckoutSessionId String?
   stripeInvoiceId         String?
   stripeSubscriptionId    String?
-  createdAt               DateTime @default(now())
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt               DateTime?
+  createdAt               DateTime  @default(now())
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, type, remainingAmount])
+  @@index([expiresAt])
   @@index([stripeEventId])
   @@index([stripeCheckoutSessionId])
   @@index([stripeInvoiceId])
   @@index([stripeSubscriptionId])
+}
+
+model CreditHold {
+  id             String   @id @default(nanoid(16))
+  userId         String
+  chatId         String?
+  modelId        String
+  amountHeld     Int
+  amountCaptured Int      @default(0)
+  status         String
+  reason         String?
+  phase          String?
+  allocations    Json
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([chatId, status])
+  @@index([expiresAt])
 }
 
 model StripeWebhookEvent {
@@ -142,19 +214,24 @@ model AnonymousUsage {
 }
 
 model GenerationLog {
-  id               String   @id @default(nanoid(16))
-  userId           String?
-  modelId          String
-  creditsUsed      Int
-  estimatedCredits Int?
-  actualCredits    Int?
-  refundedCredits  Int      @default(0)
-  tokensUsed       Int?
-  reason           String?
-  phase            String?
-  status           String
-  chatId           String?
-  createdAt        DateTime @default(now())
+  id                       String   @id @default(nanoid(16))
+  userId                   String?
+  modelId                  String
+  creditsUsed              Int
+  estimatedCredits         Int?
+  actualCredits            Int?
+  refundedCredits          Int      @default(0)
+  tokensUsed               Int?
+  inputTokens              Int?
+  outputTokens             Int?
+  generationSize           String?
+  estimatedModelCostUsd    Float?
+  riskAdjustedModelCostUsd Float?
+  reason                   String?
+  phase                    String?
+  status                   String
+  chatId                   String?
+  createdAt                DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([modelId])

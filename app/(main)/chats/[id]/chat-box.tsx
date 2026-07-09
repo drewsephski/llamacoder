@@ -11,8 +11,10 @@ import { PricingModal } from "@/components/pricing-modal";
 import { UpgradeBanner } from "@/components/upgrade-banner";
 import { useUserCredits, useUserSession } from "@/lib/queries";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchCompletionStream } from "@/lib/completion-stream";
-import { getModelCreditCost } from "@/lib/billing";
+import {
+  fetchCompletionStream,
+  type CompletionStream,
+} from "@/lib/completion-stream";
 import { GenerationLoader } from "@/components/generation-loader";
 
 interface ChatBoxProps {
@@ -22,7 +24,7 @@ interface ChatBoxProps {
     model: string;
     messages: any[];
   };
-  onNewStreamPromiseAction: (streamPromise: Promise<ReadableStream>) => void;
+  onNewStreamPromiseAction: (streamPromise: Promise<CompletionStream>) => void;
   isStreaming: boolean;
 }
 
@@ -45,6 +47,7 @@ export default function ChatBox({
   const credits = creditsData?.credits ?? 0;
   const hasActiveSubscription = creditsData?.hasActiveSubscription ?? false;
   const isAuthenticated = !!session;
+  const latestFollowUpPrompts = getLatestFollowUpPrompts(chat.messages);
 
   useEffect(() => {
     if (!textareaRef.current) return;
@@ -101,11 +104,14 @@ export default function ChatBox({
   const selectedModel = MODELS.find((m) => m.value === chat.model);
   const isPaidModel = selectedModel?.paid ?? false;
   const modelLabel = selectedModel?.label || chat.model;
-  const modelCreditCost = getModelCreditCost(chat.model);
-  const projectedCreditsAfterGeneration = Math.max(
-    0,
-    credits - modelCreditCost,
-  );
+
+  const handleFollowUpPromptSelect = (followUpPrompt: string) => {
+    if (disabled) return;
+    setPrompt(followUpPrompt);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+  };
 
   return (
     <>
@@ -118,16 +124,13 @@ export default function ChatBox({
           border-radius: 18px;
           border: 1px solid hsl(var(--border) / 0.55);
           background: hsl(var(--background) / 0.88);
-          backdrop-filter: blur(16px) saturate(160%);
-          transition: border-color 0.22s ease, box-shadow 0.22s ease;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+          backdrop-filter: blur(10px) saturate(140%);
+          transition: border-color 0.22s ease;
+          box-shadow: none;
         }
         .chatbox-field:focus-within {
           border-color: rgba(59,130,246,0.4);
-          box-shadow:
-            0 0 0 3px rgba(59,130,246,0.06),
-            0 4px 24px rgba(0,0,0,0.07),
-            0 2px 6px rgba(59,130,246,0.05);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.06);
         }
         .dark .chatbox-field {
           background: hsl(var(--card) / 0.8);
@@ -153,7 +156,6 @@ export default function ChatBox({
         }
         .send-btn:hover:not(:disabled) {
           transform: scale(1.08);
-          box-shadow: 0 4px 14px rgba(59,130,246,0.28);
         }
         .send-btn:active:not(:disabled) {
           transform: scale(0.96);
@@ -177,15 +179,6 @@ export default function ChatBox({
           max-width: 160px;
         }
 
-        .credit-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 11.5px;
-          color: hsl(var(--muted-foreground) / 0.7);
-          letter-spacing: -0.01em;
-        }
-
         .streaming-indicator {
           display: flex;
           align-items: center;
@@ -206,28 +199,6 @@ export default function ChatBox({
           40% { transform: scale(1.1); opacity: 1; }
         }
 
-        .credit-live {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 2px 7px;
-          border-radius: 5px;
-          background: rgba(34,197,94,0.07);
-          border: 1px solid rgba(34,197,94,0.18);
-          color: #16a34a;
-          font-size: 11px;
-          font-weight: 500;
-        }
-        .dark .credit-live { color: #4ade80; background: rgba(34,197,94,0.05); }
-
-        .credit-live-dot {
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          background: #22c55e;
-          box-shadow: 0 0 4px rgba(34,197,94,0.6);
-        }
-
       `}</style>
 
       <div className="chatbox-wrap mx-auto mb-4 flex w-full max-w-4xl shrink-0 flex-col px-4 sm:px-6">
@@ -236,6 +207,22 @@ export default function ChatBox({
             variant={isPaidModel ? "model-locked" : "chat"}
             messageCount={chat.messages.length / 2}
           />
+        )}
+
+        {!isStreaming && latestFollowUpPrompts.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {latestFollowUpPrompts.map((followUpPrompt) => (
+              <button
+                key={followUpPrompt}
+                type="button"
+                disabled={disabled}
+                onClick={() => handleFollowUpPromptSelect(followUpPrompt)}
+                className="rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-left text-[12.5px] font-medium text-muted-foreground transition hover:border-blue-400/50 hover:bg-blue-50/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card/70 dark:hover:bg-blue-950/30"
+              >
+                {followUpPrompt}
+              </button>
+            ))}
+          </div>
         )}
 
         <form className="relative flex w-full" action={handleSubmit}>
@@ -267,7 +254,7 @@ export default function ChatBox({
 
               {/* Footer bar */}
               <div className="flex w-full items-center justify-between gap-2 px-3 pb-3 pt-0.5">
-                {/* Left: model + credits */}
+                {/* Left: model */}
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="model-tag" title={chat.model}>
                     <svg
@@ -281,26 +268,6 @@ export default function ChatBox({
                       <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
                     </svg>
                     <span className="truncate">{modelLabel}</span>
-                  </div>
-
-                  {credits !== null && (
-                    <div className="credit-live">
-                      <div className="credit-live-dot" />
-                      {hasActiveSubscription
-                        ? "Unlimited"
-                        : `${credits} credits`}
-                    </div>
-                  )}
-
-                  <div
-                    className="credit-tag hidden sm:inline-flex"
-                    title="Follow-up generations are charged after the response is saved. Repair attempts are free."
-                  >
-                    {modelCreditCost} credit
-                    {modelCreditCost === 1 ? "" : "s"} on success
-                    {!hasActiveSubscription
-                      ? `, ${projectedCreditsAfterGeneration} left`
-                      : ""}
                   </div>
 
                   {isStreaming && (
@@ -326,7 +293,7 @@ export default function ChatBox({
 
               {/* Loading overlay */}
               {disabled && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center overflow-hidden rounded-[18px] bg-background/95 px-4 py-3 backdrop-blur-md dark:bg-card/95">
+                <div className="absolute inset-0 z-20 flex items-stretch justify-stretch overflow-hidden rounded-[18px] bg-background/95 p-0 backdrop-blur-md dark:bg-card/95">
                   <GenerationLoader
                     variant="compact"
                     label={
@@ -362,5 +329,22 @@ export default function ChatBox({
         remainingCredits={credits || 0}
       />
     </>
+  );
+}
+
+function getLatestFollowUpPrompts(messages: any[]) {
+  const latestAssistantMessage = messages
+    .filter((message) => message.role === "assistant")
+    .at(-1);
+
+  const prompts = latestAssistantMessage?.followUpPrompts;
+
+  if (!Array.isArray(prompts)) {
+    return [];
+  }
+
+  return prompts.filter(
+    (prompt): prompt is string =>
+      typeof prompt === "string" && prompt.trim().length > 0,
   );
 }

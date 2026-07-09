@@ -5,10 +5,11 @@ import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NoiseTexture } from "@/components/ui/noise-texture";
+import type { CompletionStream } from "@/lib/completion-stream";
 
 export const Context = createContext<{
-  streamPromise?: Promise<ReadableStream>;
-  setStreamPromise: (v: Promise<ReadableStream> | undefined) => void;
+  streamPromise?: Promise<CompletionStream>;
+  setStreamPromise: (v: Promise<CompletionStream> | undefined) => void;
 }>({
   setStreamPromise: () => {},
 });
@@ -26,7 +27,8 @@ const queryClient = new QueryClient({
 });
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const [streamPromise, setStreamPromise] = useState<Promise<ReadableStream>>();
+  const [streamPromise, setStreamPromise] =
+    useState<Promise<CompletionStream>>();
 
   return (
     <QueryClientProvider client={queryClient}>

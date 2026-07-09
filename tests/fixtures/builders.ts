@@ -37,6 +37,8 @@ export function buildChat(overrides: Record<string, unknown> = {}) {
     shadcn: true,
     plan: "Build the app with App.tsx and components.",
     hasCode: false,
+    generationStatus: "idle",
+    generationStartedAt: null,
     userId: "user_1",
     createdAt: new Date("2026-07-01T00:00:00.000Z"),
     messages: [],

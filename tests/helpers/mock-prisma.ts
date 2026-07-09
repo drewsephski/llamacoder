@@ -17,10 +17,18 @@ export function createPrismaMock() {
       "findMany",
       "findUnique",
       "update",
+      "updateMany",
     ]),
     message: createDelegateMock(["create", "findMany", "findUnique", "update"]),
     creditHistory: createDelegateMock(["create"]),
-    creditGrant: createDelegateMock(["create"]),
+    creditGrant: createDelegateMock(["create", "findMany", "update", "updateMany"]),
+    creditHold: createDelegateMock([
+      "create",
+      "findMany",
+      "findUnique",
+      "update",
+      "updateMany",
+    ]),
     generationLog: createDelegateMock(["create"]),
     anonymousUsage: createDelegateMock(["create", "findFirst", "update"]),
     stripeWebhookEvent: createDelegateMock(["findUnique", "upsert"]),
@@ -31,10 +39,17 @@ export function createPrismaMock() {
 export function createPrismaTransactionMock() {
   return {
     user: createDelegateMock(["findUnique", "update", "updateMany"]),
-    chat: createDelegateMock(["create", "update"]),
+    chat: createDelegateMock(["create", "update", "updateMany"]),
     message: createDelegateMock(["create"]),
     creditHistory: createDelegateMock(["create"]),
-    creditGrant: createDelegateMock(["create"]),
+    creditGrant: createDelegateMock(["create", "findMany", "update", "updateMany"]),
+    creditHold: createDelegateMock([
+      "create",
+      "findMany",
+      "findUnique",
+      "update",
+      "updateMany",
+    ]),
     generationLog: createDelegateMock(["create"]),
   };
 }
