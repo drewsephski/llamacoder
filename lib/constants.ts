@@ -3,18 +3,39 @@ export const LEGACY_FREE_MODEL = "tencent/hy3-preview:free";
 export const LEGACY_SECONDARY_STARTER_MODEL = "minimax/minimax-m2.5";
 export const LEGACY_MIMO_STARTER_MODEL = "xiaomi/mimo-v2.5";
 export const LEGACY_KIMI_CODE_MODEL = "moonshotai/kimi-k2.7-code";
+export const LEGACY_MINIMAX_M3_MODEL = "minimax/minimax-m3";
 export const LEGACY_GEMINI_PRO_MODEL = "google/gemini-3.1-pro-preview";
 export const LEGACY_QWEN_MAX_MODEL = "qwen/qwen3.7-max";
 export const SECONDARY_STARTER_MODEL = "google/gemini-2.5-flash-lite";
 export const SAFE_GPT_MODEL = "openai/gpt-4.1";
 
-type ModelOption = {
+export const REASONING_EFFORTS = [
+  "xhigh",
+  "high",
+  "medium",
+  "low",
+  "minimal",
+] as const;
+
+export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
+
+export type ModelReasoningCapability =
+  | { supported: false; mandatory: false }
+  | {
+      supported: true;
+      mandatory: boolean;
+      supportedEfforts?: readonly ReasoningEffort[];
+      defaultEffort?: ReasoningEffort;
+    };
+
+export type ModelOption = {
   label: string;
   value: string;
   paid?: boolean;
   free?: boolean;
   featured?: boolean;
   summary: string;
+  reasoning: ModelReasoningCapability;
   /**
    * Keeps slot rendering explicit when options expand in future.
    */
@@ -28,12 +49,19 @@ export const MODELS: ModelOption[] = [
     free: true,
     group: "free",
     summary: "Fast free starter model for simple app generation.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["xhigh", "high"],
+      defaultEffort: "high",
+    },
   },
   {
     label: "Gemini 2.5 Flash Lite",
     value: SECONDARY_STARTER_MODEL,
     group: "free",
     summary: "Fast low-cost Gemini starter model for app generation.",
+    reasoning: { supported: true, mandatory: false },
   },
   {
     label: "Gemini 3 Flash Preview",
@@ -41,6 +69,12 @@ export const MODELS: ModelOption[] = [
     paid: true,
     group: "paid",
     summary: "Fast multimodal builder for screenshot-first app work.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["high", "medium", "low", "minimal"],
+      defaultEffort: "medium",
+    },
   },
   {
     label: "GPT-4.1",
@@ -48,6 +82,7 @@ export const MODELS: ModelOption[] = [
     paid: true,
     group: "paid",
     summary: "Strong non-thinking GPT coding model with a 1M-token context.",
+    reasoning: { supported: false, mandatory: false },
   },
   {
     label: "Claude Opus 4.8",
@@ -56,6 +91,12 @@ export const MODELS: ModelOption[] = [
     group: "premium",
     summary:
       "Top Claude option for complex multi-step coding and orchestration.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["xhigh", "high", "medium", "low"],
+      defaultEffort: "medium",
+    },
   },
   {
     label: "Claude Sonnet 5",
@@ -64,6 +105,12 @@ export const MODELS: ModelOption[] = [
     featured: false,
     group: "premium",
     summary: "Efficient Claude coding model with strong agentic performance.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["xhigh", "high", "medium", "low"],
+      defaultEffort: "medium",
+    },
   },
   {
     label: "Grok 4.5",
@@ -72,6 +119,12 @@ export const MODELS: ModelOption[] = [
     featured: false,
     group: "paid",
     summary: "xAI frontier model for complex coding and app generation.",
+    reasoning: {
+      supported: true,
+      mandatory: true,
+      supportedEfforts: ["high", "medium", "low"],
+      defaultEffort: "high",
+    },
   },
   {
     label: "DeepSeek V4 Pro",
@@ -80,6 +133,12 @@ export const MODELS: ModelOption[] = [
     featured: false,
     group: "paid",
     summary: "Low-cost long-context reasoning and software engineering model.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["xhigh", "high"],
+      defaultEffort: "high",
+    },
   },
   {
     label: "GLM 5.2",
@@ -88,16 +147,29 @@ export const MODELS: ModelOption[] = [
     featured: false,
     group: "paid",
     summary: "Open-weight long-horizon coding and automation model.",
-  },
-  {
-    label: "MiniMax M3",
-    value: "minimax/minimax-m3",
-    paid: true,
-    featured: false,
-    group: "paid",
-    summary: "Low-cost 1M-context model for coding and agentic tool use.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["xhigh", "high"],
+      defaultEffort: "high",
+    },
   },
 ];
+
+export function getModelReasoningCapability(
+  model: string,
+): ModelReasoningCapability {
+  return (
+    MODELS.find((option) => option.value === model)?.reasoning ?? {
+      supported: false,
+      mandatory: false,
+    }
+  );
+}
+
+export function isActiveModelId(model: string): boolean {
+  return MODELS.some((option) => option.value === model);
+}
 
 export const SUGGESTED_PROMPTS = [
   {

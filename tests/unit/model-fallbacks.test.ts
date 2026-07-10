@@ -3,6 +3,7 @@ import {
   FREE_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
+  LEGACY_MINIMAX_M3_MODEL,
   LEGACY_FREE_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
   LEGACY_QWEN_MAX_MODEL,
@@ -31,15 +32,13 @@ describe("model fallbacks", () => {
   });
 
   it("does not add fallback routes for paid models", () => {
-    expect(getModelWithFallbacks("x-ai/grok-4.5")).toEqual([
-      "x-ai/grok-4.5",
-    ]);
+    expect(getModelWithFallbacks("x-ai/grok-4.5")).toEqual(["x-ai/grok-4.5"]);
   });
 
   it("routes mandatory-reasoning legacy models to optional/no-thinking models", () => {
     expect(getModelWithFallbacks("openai/gpt-5.5")).toEqual([SAFE_GPT_MODEL]);
     expect(getModelWithFallbacks("x-ai/grok-4.3")).toEqual([
-      "minimax/minimax-m3",
+      "deepseek/deepseek-v4-pro",
     ]);
   });
 
@@ -48,10 +47,13 @@ describe("model fallbacks", () => {
       "google/gemini-3-flash-preview",
     ]);
     expect(getModelWithFallbacks(LEGACY_QWEN_MAX_MODEL)).toEqual([
-      "minimax/minimax-m3",
+      "deepseek/deepseek-v4-pro",
     ]);
     expect(getModelWithFallbacks(LEGACY_KIMI_CODE_MODEL)).toEqual([
-      "minimax/minimax-m3",
+      "deepseek/deepseek-v4-pro",
+    ]);
+    expect(getModelWithFallbacks(LEGACY_MINIMAX_M3_MODEL)).toEqual([
+      "deepseek/deepseek-v4-pro",
     ]);
   });
 });

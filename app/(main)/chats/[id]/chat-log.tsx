@@ -12,13 +12,22 @@ import { Streamdown } from "streamdown";
 import { StickToBottom } from "use-stick-to-bottom";
 import { AppVersionButton } from "@/components/app-version-button";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, LoaderCircle, RefreshCw } from "lucide-react";
 import { normalizeGeneratedFiles } from "@/lib/generated-files";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
+import type { GenerationStatus } from "@/features/generation/contracts";
 
 export default function ChatLog({
   chat,
   activeMessage,
   streamText,
+  reasoningText,
+  generationStatus,
+  isStreaming,
   onMessageClickAction,
   streamError,
   onRetryAction,
@@ -26,6 +35,9 @@ export default function ChatLog({
   chat: Chat;
   activeMessage?: Message;
   streamText: string;
+  reasoningText: string;
+  generationStatus: GenerationStatus;
+  isStreaming: boolean;
   onMessageClickAction: (v: Message) => void;
   streamError?: {
     message: string;
@@ -85,25 +97,49 @@ export default function ChatLog({
                     .indexOf(message.id);
                   return idx > 0 ? assistantMessages[idx - 1] : undefined;
                 })()}
-                isActive={!streamText && activeMessage?.id === message.id}
+                isActive={!isStreaming && activeMessage?.id === message.id}
                 onMessageClickAction={onMessageClickAction}
-                isStreaming={!!streamText}
+                isStreaming={isStreaming}
               />
             )}
           </Fragment>
         ))}
 
-        {streamText && (
-          <AssistantMessage
-            content={streamText}
-            version={
-              (chat.assistantMessagesCountBefore || 0) +
-              assistantMessages.length +
-              1
-            }
-            isActive={true}
-            previousMessage={assistantMessages.at(-1)}
-          />
+        {isStreaming && (
+          <div className="flex flex-col gap-4">
+            {reasoningText ? (
+              <Reasoning
+                className="w-full"
+                isStreaming={generationStatus.phase === "reasoning"}
+              >
+                <ReasoningTrigger />
+                <ReasoningContent>{reasoningText}</ReasoningContent>
+              </Reasoning>
+            ) : (
+              <div
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+                role="status"
+                aria-live="polite"
+              >
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+                <span>{generationStatus.label}</span>
+              </div>
+            )}
+
+            {streamText && (
+              <AssistantMessage
+                content={streamText}
+                version={
+                  (chat.assistantMessagesCountBefore || 0) +
+                  assistantMessages.length +
+                  1
+                }
+                isActive={true}
+                previousMessage={assistantMessages.at(-1)}
+                isStreaming={true}
+              />
+            )}
+          </div>
         )}
 
         {streamError && (

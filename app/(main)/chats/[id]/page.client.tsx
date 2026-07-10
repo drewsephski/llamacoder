@@ -34,7 +34,13 @@ import { toast } from "sonner";
 import {
   fetchCompletionStream,
   type CompletionStream,
-} from "@/lib/completion-stream";
+} from "@/features/generation/client/completion-stream";
+import {
+  DEFAULT_GENERATION_STATUS,
+  generationStatusSchema,
+  type GenerationStatus,
+} from "@/features/generation/contracts";
+import type { UIMessageChunk } from "ai";
 
 const HeaderChat = memo(({ chat }: { chat: Chat }) => {
   return (
@@ -63,6 +69,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
     Promise<CompletionStream> | undefined
   >(initialStreamPromise);
   const [streamText, setStreamText] = useState("");
+  const [reasoningText, setReasoningText] = useState("");
+  const [generationStatus, setGenerationStatus] = useState<GenerationStatus>(
+    DEFAULT_GENERATION_STATUS,
+  );
   const [isShowingCodeViewer, setIsShowingCodeViewer] = useState(
     chat.messages.some((m: Message) => m.role === "assistant"),
   );
@@ -144,7 +154,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
   };
 
   useEffect(() => {
-    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    let reader: ReadableStreamDefaultReader<UIMessageChunk> | null = null;
 
     async function f() {
       if (
@@ -162,27 +172,58 @@ export default function PageClient({ chat }: { chat: Chat }) {
       let didPushToCode = false;
       let didPushToPreview = false;
       let fullText = "";
+      let fullReasoning = "";
       let creditHoldId: string | undefined;
 
       try {
+        setReasoningText("");
+        setGenerationStatus(DEFAULT_GENERATION_STATUS);
         const stream = await streamPromise;
         creditHoldId = stream.creditHoldId;
 
-        if (stream.locked) {
+        if (stream.events.locked) {
           console.warn("Skipping duplicate stream reader for locked stream");
           return;
         }
 
-        reader = stream.getReader();
-        const decoder = new TextDecoder();
+        reader = stream.events.getReader();
 
         while (true) {
-          const { done, value } = await reader.read();
+          const { done, value: event } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          fullText += chunk;
+          if (event.type === "data-generation-status") {
+            const parsedStatus = generationStatusSchema.safeParse(event.data);
+            if (parsedStatus.success) {
+              setGenerationStatus(parsedStatus.data);
+            }
+            continue;
+          }
+
+          if (event.type === "reasoning-delta") {
+            fullReasoning += event.delta;
+            setReasoningText(fullReasoning);
+            setGenerationStatus({
+              phase: "reasoning",
+              label: "Working through the design",
+            });
+            continue;
+          }
+
+          if (event.type === "error") {
+            throw new Error(event.errorText);
+          }
+
+          if (event.type !== "text-delta") {
+            continue;
+          }
+
+          fullText += event.delta;
           setStreamText(fullText);
+          setGenerationStatus({
+            phase: "writing-code",
+            label: "Writing your app",
+          });
 
           if (
             !didPushToCode &&
@@ -277,6 +318,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
           freeRepairRequestIdRef.current = null;
           freeRepairSourceMessageIdRef.current = null;
           setStreamText("");
+          setReasoningText("");
+          setGenerationStatus(DEFAULT_GENERATION_STATUS);
           setStreamPromise(undefined);
           setActiveMessage(message);
           // When streaming finishes, switch to preview mode and keep the viewer open
@@ -290,6 +333,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
           await releaseReservedCreditHold(creditHoldId);
         }
         setStreamPromise(undefined);
+        setReasoningText("");
+        setGenerationStatus(DEFAULT_GENERATION_STATUS);
         freeRepairRequestIdRef.current = null;
         freeRepairSourceMessageIdRef.current = null;
 
@@ -324,13 +369,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
       // stream should continue, and canceling makes the next reader race the
       // still-locked stream.
     };
-  }, [
-    chat.id,
-    chat.messages,
-    router,
-    streamPromise,
-    setContextStreamPromise,
-  ]);
+  }, [chat.id, chat.messages, router, streamPromise, setContextStreamPromise]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
@@ -343,6 +382,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
           <ChatLog
             chat={chat}
             streamText={streamText}
+            reasoningText={reasoningText}
+            generationStatus={generationStatus}
+            isStreaming={!!streamPromise}
             activeMessage={activeMessage}
             streamError={streamError}
             onRetryAction={handleRetry}
@@ -409,7 +451,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
               onRequestTargetedEdit={(prompt: string) => {
                 startTransition(async () => {
                   try {
-                    const message = await createMessage(chat.id, prompt, "user");
+                    const message = await createMessage(
+                      chat.id,
+                      prompt,
+                      "user",
+                    );
                     const streamPromise = fetchCompletionStream({
                       messageId: message.id,
                       model: chat.model,

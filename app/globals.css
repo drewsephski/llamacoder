@@ -102,6 +102,44 @@
     overscroll-behavior: none;
     overflow-x: clip;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Native accordions animate their intrinsic height in browsers that support
+   the details content pseudo-element. Other browsers retain the accessible
+   native open/close behavior without a layout-jumping JavaScript fallback. */
+@supports selector(details::details-content) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow-y: clip;
+    transition:
+      block-size 300ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease,
+      content-visibility 300ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  details::details-content {
+    transition: none;
+  }
 }
 
 ::-webkit-scrollbar {

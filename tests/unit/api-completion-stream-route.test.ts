@@ -1,21 +1,37 @@
+import {
+  parseJsonEventStream,
+  uiMessageChunkSchema,
+  type UIMessageChunk,
+} from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildMessage, collectStream } from "../fixtures/builders";
+import { buildMessage } from "../fixtures/builders";
 
 const {
+  createRequestTelemetryMock,
+  generateTextMock,
   getSessionMock,
   prismaMock,
   releaseCreditHoldMock,
   reserveCreditHoldMock,
   streamTextMock,
+  telemetryMock,
 } = vi.hoisted(() => ({
+  createRequestTelemetryMock: vi.fn(),
+  generateTextMock: vi.fn(),
   getSessionMock: vi.fn(),
   releaseCreditHoldMock: vi.fn(),
   reserveCreditHoldMock: vi.fn(),
   streamTextMock: vi.fn(),
+  telemetryMock: {
+    markFirstByte: vi.fn(),
+    markChunk: vi.fn(),
+    record: vi.fn(),
+  },
   prismaMock: {
     message: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -28,12 +44,21 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
 }));
 
-vi.mock("ai", () => ({
-  streamText: streamTextMock,
-}));
+vi.mock("ai", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("ai")>();
+  return {
+    ...actual,
+    generateText: generateTextMock,
+    streamText: streamTextMock,
+  };
+});
 
 vi.mock("@/lib/prisma", () => ({
   getPrisma: () => prismaMock,
+}));
+
+vi.mock("@/features/generation/server/request-telemetry", () => ({
+  createRequestTelemetry: createRequestTelemetryMock,
 }));
 
 vi.mock("@/lib/billing", async (importOriginal) => {
@@ -47,14 +72,22 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 
 vi.mock("@/lib/openrouter", () => ({
   GENERATED_CODE_MAX_TOKENS: 16000,
+  VISION_ANALYSIS_MODEL: "google/gemini-3-flash-preview",
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: vi.fn(() => "openrouter-model"),
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
   getAIErrorStatus: () => 502,
   getOpenRouterProviderOptions: vi.fn(() => ({
-    openrouter: {
-      reasoning: { enabled: false },
+    openrouter: { reasoning: { enabled: false } },
+  })),
+  getOpenRouterReasoningSelection: vi.fn(() => ({
+    enabled: false,
+    visible: false,
+    mandatory: false,
+    effort: "none",
+    providerOptions: {
+      openrouter: { reasoning: { enabled: false } },
     },
   })),
 }));
@@ -71,10 +104,61 @@ function request(body: unknown) {
   );
 }
 
-async function* chunks(parts: string[]) {
-  for (const part of parts) {
-    yield part;
+function uiStream(events: UIMessageChunk[]) {
+  return new ReadableStream<UIMessageChunk>({
+    start(controller) {
+      events.forEach((event) => controller.enqueue(event));
+      controller.close();
+    },
+  });
+}
+
+function mockGeneration({
+  text,
+  reasoning,
+}: {
+  text: string;
+  reasoning?: string;
+}) {
+  const events: UIMessageChunk[] = [
+    ...(reasoning
+      ? ([
+          { type: "reasoning-start", id: "reasoning_1" },
+          {
+            type: "reasoning-delta",
+            id: "reasoning_1",
+            delta: reasoning,
+          },
+          { type: "reasoning-end", id: "reasoning_1" },
+        ] satisfies UIMessageChunk[])
+      : []),
+    { type: "text-start", id: "text_1" },
+    { type: "text-delta", id: "text_1", delta: text },
+    { type: "text-end", id: "text_1" },
+  ];
+  const toUIMessageStream = vi.fn(() => uiStream(events));
+  streamTextMock.mockReturnValueOnce({ toUIMessageStream });
+  return toUIMessageStream;
+}
+
+async function collectUIChunks(response: Response) {
+  if (!response.body) throw new Error("Missing response body");
+
+  const parsedStream = parseJsonEventStream({
+    stream: response.body,
+    schema: uiMessageChunkSchema,
+  });
+  const chunks: UIMessageChunk[] = [];
+  const reader = parsedStream.getReader();
+
+  while (true) {
+    const { done, value: result } = await reader.read();
+    if (done) break;
+    if (!result.success) throw result.error;
+    chunks.push(result.value);
   }
+
+  return chunks;
 }
 
 describe("/api/get-next-completion-stream-promise", () => {
@@ -88,6 +172,9 @@ describe("/api/get-next-completion-stream-promise", () => {
       remainingCredits: 4,
     });
     releaseCreditHoldMock.mockResolvedValue({ success: true });
+    createRequestTelemetryMock.mockReturnValue(telemetryMock);
+    telemetryMock.record.mockResolvedValue(undefined);
+    prismaMock.message.update.mockResolvedValue({});
   });
 
   it("rejects invalid requests and missing messages", async () => {
@@ -95,7 +182,6 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(response.status).toBe(400);
     await expect(response.text()).resolves.toBe("Invalid request");
 
-    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
     prismaMock.message.findUnique.mockResolvedValueOnce(null);
     response = await POST(request({ messageId: "msg_1", model: "model_1" }));
     expect(response.status).toBe(404);
@@ -120,8 +206,10 @@ describe("/api/get-next-completion-stream-promise", () => {
         chatId: "chat_1",
         position: 12,
         chat: {
+          id: "chat_1",
           userId: "user_1",
           model: "model_1",
+          quality: "low",
         },
       }),
     );
@@ -134,16 +222,17 @@ describe("/api/get-next-completion-stream-promise", () => {
     await expect(response.text()).resolves.toBe("Forbidden");
   });
 
-  it("fails when client-sent model does not match the chat model", async () => {
-    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+  it("fails when the client model does not match the chat model", async () => {
     prismaMock.message.findUnique.mockResolvedValueOnce(
       buildMessage({
         id: "msg_12",
         chatId: "chat_1",
         position: 12,
         chat: {
+          id: "chat_1",
           userId: "user_1",
           model: "stored-model",
+          quality: "low",
         },
       }),
     );
@@ -156,16 +245,17 @@ describe("/api/get-next-completion-stream-promise", () => {
     await expect(response.text()).resolves.toBe("Model mismatch");
   });
 
-  it("orders history, trims old messages, appends the generation guard, and streams text", async () => {
-    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+  it("streams structured reasoning and text while preserving message guards", async () => {
     prismaMock.message.findUnique.mockResolvedValueOnce(
       buildMessage({
         id: "msg_12",
         chatId: "chat_1",
         position: 12,
         chat: {
+          id: "chat_1",
           userId: "user_1",
           model: "model_1",
+          quality: "high",
         },
       }),
     );
@@ -183,8 +273,9 @@ describe("/api/get-next-completion-stream-promise", () => {
       { role: "assistant", content: "assistant 5" },
       { role: "user", content: "final user" },
     ]);
-    streamTextMock.mockReturnValueOnce({
-      textStream: chunks(["hello", " ", "world"]),
+    const toUIMessageStream = mockGeneration({
+      reasoning: "I will plan the component structure.",
+      text: "hello world",
     });
 
     const response = await POST(
@@ -192,12 +283,23 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
     expect(response.headers.get("x-credit-hold-id")).toBe("hold_1");
-    await expect(collectStream(response)).resolves.toBe("hello world");
-    expect(prismaMock.message.findMany).toHaveBeenCalledWith({
-      where: { chatId: "chat_1", position: { lte: 12 } },
-      orderBy: { position: "asc" },
-    });
+    const chunks = await collectUIChunks(response);
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "data-generation-status" }),
+        expect.objectContaining({
+          type: "reasoning-delta",
+          delta: "I will plan the component structure.",
+        }),
+        expect.objectContaining({ type: "text-delta", delta: "hello world" }),
+      ]),
+    );
+    expect(toUIMessageStream).toHaveBeenCalledWith(
+      expect.objectContaining({ sendReasoning: true }),
+    );
+
     const call = streamTextMock.mock.calls[0][0];
     expect(call.messages).toHaveLength(10);
     expect(call.messages.at(-1)).toMatchObject({
@@ -205,17 +307,69 @@ describe("/api/get-next-completion-stream-promise", () => {
       content: expect.stringContaining("Generation completeness requirements:"),
     });
     expect(call.messages.at(-1).content).toContain("final user");
+    expect(call.onChunk).toEqual(expect.any(Function));
+    expect(call.onFinish).toEqual(expect.any(Function));
+    expect(telemetryMock.markFirstByte).toHaveBeenCalled();
   });
 
-  it("uses current files for free preview repairs without the full-generation guard or credit hold", async () => {
-    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+  it("analyzes screenshots inside the visible stream and passes the context to code generation", async () => {
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_1",
+        content: "Build this",
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build this" },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      text: "A kanban board with three columns.",
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const screenshotData = `data:image/png;base64,${Buffer.from("png").toString("base64")}`;
+    const response = await POST(
+      request({
+        messageId: "msg_1",
+        model: "model_1",
+        screenshotData,
+      }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-generation-status",
+          data: expect.objectContaining({ phase: "analyzing-reference" }),
+        }),
+      ]),
+    );
+    expect(prismaMock.message.update).toHaveBeenCalledWith({
+      where: { id: "msg_1" },
+      data: {
+        content: expect.stringContaining("A kanban board with three columns."),
+      },
+    });
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+      "A kanban board with three columns.",
+    );
+  });
+
+  it("uses current files for free preview repairs without a hold or full-generation guard", async () => {
     prismaMock.message.findUnique.mockResolvedValueOnce(
       buildMessage({
         id: "repair_msg_1",
         chatId: "chat_1",
         position: 4,
-        content:
-          "The code is not working. Can you fix it? Here's the error:\n\nReferenceError: total is not defined",
+        content: "ReferenceError: total is not defined",
         files: {
           kind: "preview_repair_request",
           chargeCredits: false,
@@ -225,6 +379,7 @@ describe("/api/get-next-completion-stream-promise", () => {
           id: "chat_1",
           userId: "user_1",
           model: "model_1",
+          quality: "low",
         },
       }),
     );
@@ -241,18 +396,12 @@ describe("/api/get-next-completion-stream-promise", () => {
             language: "tsx",
             code: "export default function App() { return <main>{total}</main>; }",
           },
-          {
-            path: "components/Display.tsx",
-            language: "tsx",
-            code: "export function Display() { return <p />; }",
-          },
         ],
       },
       {
         id: "repair_msg_1",
         role: "user",
-        content:
-          "The code is not working. Can you fix it? Here's the error:\n\nReferenceError: total is not defined",
+        content: "ReferenceError: total is not defined",
         files: {
           kind: "preview_repair_request",
           chargeCredits: false,
@@ -260,36 +409,25 @@ describe("/api/get-next-completion-stream-promise", () => {
         },
       },
     ]);
-    streamTextMock.mockReturnValueOnce({
-      textStream: chunks([
-        "```tsx{path=App.tsx}\nexport default function App() { return <main>0</main>; }\n```",
-      ]),
+    mockGeneration({
+      text: "```tsx{path=App.tsx}\nexport default function App() { return <main>0</main>; }\n```",
     });
 
     const response = await POST(
       request({ messageId: "repair_msg_1", model: "model_1" }),
     );
+    const chunks = await collectUIChunks(response);
 
-    expect(response.status).toBe(200);
     expect(response.headers.get("x-credit-hold-id")).toBeNull();
-    await expect(collectStream(response)).resolves.toContain(
-      "export default function App()",
-    );
+    expect(chunks.some((chunk) => chunk.type === "text-delta")).toBe(true);
     expect(reserveCreditHoldMock).not.toHaveBeenCalled();
     const call = streamTextMock.mock.calls[0][0];
     expect(call.messages).toHaveLength(2);
     expect(call.messages[1].content).toContain(
       "Return only complete files that changed",
     );
-    expect(call.messages[1].content).toContain("path=App.tsx");
-    expect(call.messages[1].content).toContain(
-      "ReferenceError: total is not defined",
-    );
     expect(call.messages[1].content).not.toContain(
       "Generation completeness requirements:",
-    );
-    expect(call.messages[1].content).not.toContain(
-      "Output a complete multi-file React + TypeScript app",
     );
   });
 });

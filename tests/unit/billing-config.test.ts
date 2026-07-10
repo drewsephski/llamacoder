@@ -10,6 +10,7 @@ import {
   FREE_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
+  LEGACY_MINIMAX_M3_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
   LEGACY_QWEN_MAX_MODEL,
   LEGACY_SECONDARY_STARTER_MODEL,
@@ -26,7 +27,7 @@ describe("billing config", () => {
     expect(getModelCreditCost("deepseek/deepseek-v4-pro")).toBe(1);
     expect(getModelCreditCost("x-ai/grok-4.3")).toBe(1);
     expect(getModelCreditCost("z-ai/glm-5.2")).toBe(1);
-    expect(getModelCreditCost("minimax/minimax-m3")).toBe(1);
+    expect(getModelCreditCost(LEGACY_MINIMAX_M3_MODEL)).toBe(1);
     expect(getModelCreditCost(LEGACY_KIMI_CODE_MODEL)).toBe(1);
     expect(getModelCreditCost(LEGACY_QWEN_MAX_MODEL)).toBe(2);
     expect(getModelCreditCost("anthropic/claude-sonnet-5")).toBe(4);
@@ -34,7 +35,9 @@ describe("billing config", () => {
     expect(getModelCreditCost(LEGACY_GEMINI_PRO_MODEL)).toBe(4);
     expect(getModelCreditCost(SAFE_GPT_MODEL)).toBe(3);
     expect(getModelCreditCost("anthropic/claude-opus-4.8")).toBe(8);
-    expect(getModelCreditCost("anthropic/claude-opus-4.8", { outputTokens: 15_000 })).toBe(42);
+    expect(
+      getModelCreditCost("anthropic/claude-opus-4.8", { outputTokens: 15_000 }),
+    ).toBe(42);
     expect(getModelCreditHoldCost("anthropic/claude-opus-4.8")).toBe(42);
     expect(getModelCreditCost("openai/gpt-5.5")).toBe(3);
     expect(getModelCreditCost("unknown/model")).toBe(1);
@@ -49,11 +52,14 @@ describe("billing config", () => {
     [12_000, 5],
     [12_001, 8],
     [15_000, 8],
-  ])("prices legacy Qwen output boundary %i tokens", (outputTokens, expected) => {
-    const modelId = LEGACY_QWEN_MAX_MODEL;
-    expect(getModelCreditCost(modelId, { outputTokens })).toBe(expected);
-    expect(getModelCreditHoldCost(modelId)).toBeGreaterThanOrEqual(expected);
-  });
+  ])(
+    "prices legacy Qwen output boundary %i tokens",
+    (outputTokens, expected) => {
+      const modelId = LEGACY_QWEN_MAX_MODEL;
+      expect(getModelCreditCost(modelId, { outputTokens })).toBe(expected);
+      expect(getModelCreditHoldCost(modelId)).toBeGreaterThanOrEqual(expected);
+    },
+  );
 
   it("enforces tier model access from the config", () => {
     expect(canTierUseModel("free", FREE_MODEL)).toBe(true);

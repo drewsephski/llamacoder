@@ -3,7 +3,6 @@
 
 import Fieldset from "@/components/fieldset";
 import ArrowRightIcon from "@/components/icons/arrow-right";
-import LightningBoltIcon from "@/components/icons/lightning-bolt";
 import Spinner from "@/components/spinner";
 import bgImg from "@/public/halo.png";
 import * as Select from "@radix-ui/react-select";
@@ -53,7 +52,7 @@ import {
   getModelCreditHoldCost,
   getModelCreditRange,
 } from "@/lib/billing";
-import { fetchCompletionStream } from "@/lib/completion-stream";
+import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/png",
@@ -382,9 +381,11 @@ export default function Home() {
       label: model.split("/").pop() || model,
       value: model,
       paid: true,
+      free: false,
       featured: false,
       group: "paid" as const,
       summary: "Previously selected model.",
+      reasoning: { supported: false, mandatory: false } as const,
     };
   }, [model, selectedModel]);
 
@@ -419,14 +420,6 @@ export default function Home() {
     if (group === "premium") return "text-amber-500 dark:text-yellow-400";
     return "text-blue-500 dark:text-blue-400";
   };
-
-  const qualityOptions = useMemo(
-    () => [
-      { value: "low", label: "Faster", Icon: LightningBoltIcon },
-      { value: "high", label: "Smarter", Icon: Sparkles },
-    ],
-    [],
-  );
 
   const restoreModelSelectScroll = useCallback(() => {
     const { x, y } = modelSelectScrollRef.current;
@@ -985,46 +978,32 @@ export default function Home() {
           background: hsl(var(--muted) / 0.6);
         }
 
-        /* ---------- Quality segmented toggle ---------- */
-        .quality-toggle {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          padding: 2px;
-          border-radius: 10px;
-          background: hsl(var(--muted) / 0.5);
-          gap: 2px;
-        }
-        .quality-toggle-thumb {
-          position: absolute;
-          top: 2px;
-          bottom: 2px;
-          border-radius: 8px;
-          background: hsl(var(--background));
-          box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px hsl(var(--border) / 0.6);
-          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .quality-toggle-option {
-          position: relative;
-          z-index: 1;
+        /* ---------- Plan mode toggle ---------- */
+        .plan-mode-toggle {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          padding: 5px 10px;
+          padding: 7px 9px;
+          border: 1px solid transparent;
           border-radius: 8px;
+          background: hsl(var(--muted) / 0.5);
           font-family: 'DM Sans', system-ui, sans-serif;
           font-size: 12.5px;
           font-weight: 500;
           letter-spacing: -0.01em;
           color: hsl(var(--muted-foreground));
           cursor: pointer;
-          transition: color 0.2s ease;
-          background: transparent;
-          border: none;
+          transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
           white-space: nowrap;
         }
-        .quality-toggle-option.is-active {
+        .plan-mode-toggle:hover {
           color: hsl(var(--foreground));
+        }
+        .plan-mode-toggle.is-active {
+          color: rgb(59 130 246);
+          border-color: rgb(59 130 246 / 0.22);
+          background: rgb(59 130 246 / 0.08);
+          box-shadow: 0 0 0 1px rgb(59 130 246 / 0.04);
         }
 
         @media (max-width: 639px) {
@@ -1307,6 +1286,7 @@ export default function Home() {
                     const streamPromise = fetchCompletionStream({
                       messageId: lastMessageId,
                       model,
+                      screenshotData,
                     });
 
                     startTransition(() => {
@@ -1555,36 +1535,24 @@ export default function Home() {
 
                         <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
-                        {/* Quality — segmented toggle */}
+                        {/* Plan mode */}
                         <input type="hidden" name="quality" value={quality} />
-                        <div className="quality-toggle">
-                          <div
-                            className="quality-toggle-thumb"
-                            style={{
-                              left: quality === "low" ? 2 : "50%",
-                              width: "calc(50% - 2px)",
-                            }}
-                          />
-                          {qualityOptions.map((q) => (
-                            <button
-                              key={q.value}
-                              type="button"
-                              onClick={() => setQuality(q.value)}
-                              className={`quality-toggle-option ${quality === q.value ? "is-active" : ""}`}
-                            >
-                              <q.Icon
-                                className={`size-3 ${
-                                  quality === q.value
-                                    ? q.value === "low"
-                                      ? "text-amber-500"
-                                      : "text-blue-500"
-                                    : ""
-                                }`}
-                              />
-                              <span className="max-sm:hidden">{q.label}</span>
-                            </button>
-                          ))}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQuality((current) =>
+                              current === "high" ? "low" : "high",
+                            )
+                          }
+                          aria-pressed={quality === "high"}
+                          aria-label="Plan mode"
+                          title="Plan the project structure before building"
+                          className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
+                        >
+                          <Sparkles className="size-3" aria-hidden="true" />
+                          <span className="sm:hidden">Plan</span>
+                          <span className="hidden sm:inline">Plan mode</span>
+                        </button>
 
                         <div className="toolbar-divider mx-0.5 sm:mx-1" />
 

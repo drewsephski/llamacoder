@@ -3,34 +3,37 @@ import { FREE_MODEL } from "@/lib/constants";
 import { readJson } from "../fixtures/builders";
 
 const {
+  afterMock,
+  afterTasks,
   checkProjectCreationEligibilityMock,
   createOpenRouterModelMock,
   generateTextMock,
   getSessionMock,
   prismaMock,
-  releaseCreditHoldMock,
-  reserveCreditHoldMock,
 } = vi.hoisted(() => ({
+  afterMock: vi.fn(),
+  afterTasks: [] as Array<() => Promise<void> | void>,
   checkProjectCreationEligibilityMock: vi.fn(),
   createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   generateTextMock: vi.fn(),
   getSessionMock: vi.fn(),
-  releaseCreditHoldMock: vi.fn(),
-  reserveCreditHoldMock: vi.fn(),
   prismaMock: {
     chat: {
       create: vi.fn(),
       delete: vi.fn(),
       update: vi.fn(),
     },
-    message: { update: vi.fn() },
-    generationLog: { create: vi.fn() },
   },
 }));
 
 vi.mock("ai", () => ({
   generateText: generateTextMock,
 }));
+
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, after: afterMock };
+});
 
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: getSessionMock } },
@@ -49,8 +52,6 @@ vi.mock("@/lib/billing", async (importOriginal) => {
   return {
     ...actual,
     checkProjectCreationEligibility: checkProjectCreationEligibilityMock,
-    releaseCreditHold: releaseCreditHoldMock,
-    reserveCreditHold: reserveCreditHoldMock,
   };
 });
 
@@ -79,6 +80,10 @@ function request(body: unknown) {
 describe("/api/create-chat", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    afterTasks.length = 0;
+    afterMock.mockImplementation((task: () => Promise<void> | void) => {
+      afterTasks.push(task);
+    });
     checkProjectCreationEligibilityMock.mockResolvedValue({
       success: true,
       projectCount: 0,
@@ -88,13 +93,6 @@ describe("/api/create-chat", () => {
       modelCost: 1,
       hasActiveSubscription: false,
     });
-    reserveCreditHoldMock.mockResolvedValue({
-      success: true,
-      holdId: "hold_1",
-      creditsUsed: 1,
-      remainingCredits: 4,
-    });
-    releaseCreditHoldMock.mockResolvedValue({ success: true });
     prismaMock.chat.create.mockResolvedValue({
       id: "chat_1",
       messages: [
@@ -103,8 +101,6 @@ describe("/api/create-chat", () => {
       ],
     });
     prismaMock.chat.update.mockResolvedValue({});
-    prismaMock.message.update.mockResolvedValue({});
-    prismaMock.generationLog.create.mockResolvedValue({});
   });
 
   it("rejects invalid JSON/body", async () => {
@@ -175,9 +171,8 @@ describe("/api/create-chat", () => {
     expect(prismaMock.chat.create).not.toHaveBeenCalled();
   });
 
-  it("falls back when title generation fails and returns the stable response shape", async () => {
+  it("returns immediately and keeps the fallback title when async title generation fails", async () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
-    generateTextMock.mockRejectedValueOnce(new Error("provider down"));
 
     const response = await POST(
       request({
@@ -193,23 +188,41 @@ describe("/api/create-chat", () => {
       lastMessageId: "user_msg",
       plan: null,
       hasCode: false,
-      warnings: ["TITLE_GENERATION_FAILED"],
     });
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(afterTasks).toHaveLength(1);
+
+    generateTextMock.mockRejectedValueOnce(new Error("provider down"));
+    await afterTasks[0]();
+    expect(prismaMock.chat.update).not.toHaveBeenCalled();
+  });
+
+  it("generates and persists the title after the response is returned", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    generateTextMock.mockResolvedValueOnce({ text: "Habit Streaks" });
+
+    const response = await POST(
+      request({
+        prompt: "Build a polished habit tracker with streak charts",
+        model: FREE_MODEL,
+        quality: "high",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(generateTextMock).not.toHaveBeenCalled();
+
+    await afterTasks[0]();
     expect(prismaMock.chat.update).toHaveBeenCalledWith({
       where: { id: "chat_1" },
       data: {
-        title: "Build a polished habit tracker",
-        plan: null,
-        hasCode: false,
+        title: "Habit Streaks",
       },
     });
   });
 
-  it("uses the dedicated vision model when analyzing an uploaded screenshot", async () => {
+  it("does not block chat creation on screenshot analysis", async () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
-    generateTextMock
-      .mockResolvedValueOnce({ text: "Screenshot shows a kanban board." })
-      .mockResolvedValueOnce({ text: "Kanban Board" });
 
     const response = await POST(
       request({
@@ -221,17 +234,7 @@ describe("/api/create-chat", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(createOpenRouterModelMock).toHaveBeenCalledWith(
-      expect.any(Function),
-      "google/gemini-3-flash-preview",
-      { maxTokens: 1000 },
-    );
-    expect(prismaMock.message.update).toHaveBeenCalledWith({
-      where: { id: "user_msg" },
-      data: {
-        content:
-          "Build this\n\nRECREATE THIS APP AS CLOSELY AS POSSIBLE:\nScreenshot shows a kanban board.",
-      },
-    });
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(afterTasks).toHaveLength(1);
   });
 });

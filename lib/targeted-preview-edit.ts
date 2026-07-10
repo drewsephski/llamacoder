@@ -2,6 +2,7 @@ import {
   formatGeneratedFilesMarkdown,
   type GeneratedFile,
 } from "@/lib/generated-files";
+import { z } from "zod";
 
 export type PreviewElementSelection = {
   tagName: string;
@@ -22,6 +23,29 @@ export type PreviewElementSelection = {
   };
   html?: string;
 };
+
+export const previewElementSelectionSchema: z.ZodType<PreviewElementSelection> =
+  z.object({
+    tagName: z.string(),
+    domPath: z.string(),
+    text: z.string(),
+    id: z.string().optional(),
+    className: z.string().optional(),
+    role: z.string().optional(),
+    ariaLabel: z.string().optional(),
+    href: z.string().optional(),
+    imageAlt: z.string().optional(),
+    attributes: z.record(z.string(), z.string()).optional(),
+    rect: z
+      .object({
+        x: z.number(),
+        y: z.number(),
+        width: z.number(),
+        height: z.number(),
+      })
+      .optional(),
+    html: z.string().optional(),
+  });
 
 export function formatPreviewElementSelection(
   selection: PreviewElementSelection,

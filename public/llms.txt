@@ -1,27 +1,36 @@
 # Squid Agent
 
-> Squid Agent is an AI app builder for generating exportable React applications from prompts, screenshots, and website references.
+> Squid Agent generates exportable Vite + React applications from prompts, screenshots, and website references. The product emphasizes visible model credit estimates, reversible code checkpoints, generated-file diagnostics, and verified export bundles.
 
-## Primary Site
+## Primary Pages
 
-- [Homepage](https://squidagent.app/): Build React apps from prompts, screenshots, or website references.
-- [Sitemap](https://squidagent.app/sitemap.xml): Full crawlable URL list for public pages.
-- [Robots](https://squidagent.app/robots.txt): Crawler access policy.
+- [Home](https://squidagent.app/): Build a React application with Squid Agent.
+- [Comparisons](https://squidagent.app/compare): Evidence-led comparisons of current AI app builders.
+- [Guides](https://squidagent.app/blog): Production-minded guidance for AI-generated React apps.
+- [Benchmarks](https://squidagent.app/benchmarks): Reproducible AI app builder evaluation methods.
+- [Contact](https://squidagent.app/contact): Support, billing, privacy, and security contact information.
 
-## Product Positioning
+## Current Comparisons
 
-- Squid Agent generates React app code that users can inspect, remix, and export.
-- The product emphasizes transparent AI credit costs before generation.
-- Generated projects are designed to include source files, project metadata, run instructions, and quality information.
-- Squid Agent supports prompt-to-app generation, screenshot-to-code generation, and website reference capture.
+- [Squid vs Lovable](https://squidagent.app/compare/squid-vs-lovable): React export, GitHub sync, credits, version history, quality evidence, and product fit.
+- [Squid vs Bolt.new](https://squidagent.app/compare/squid-vs-bolt): Tokens, project export, GitHub, version history, verification, and product fit.
+- [Squid vs v0](https://squidagent.app/compare/squid-vs-v0): React and Next.js workflows, code export, Git, checkpoints, and quality evidence.
 
-## Key Public Pages
+## Guides
 
-- [Squid vs Lovable](https://squidagent.app/compare/squid-vs-lovable): Comparison focused on ownership, credit transparency, rollback, and export quality.
-- [Squid vs Bolt](https://squidagent.app/compare/squid-vs-bolt): Comparison focused on predictable credits, source ownership, rollback, and quality checks.
-- [Squid vs v0](https://squidagent.app/compare/squid-vs-v0): Comparison focused on exportable React apps, rollback, and ownership-first generation.
-- [Screenshot-To-React Benchmark](https://squidagent.app/benchmarks/screenshot-to-react): Benchmark criteria for visual match, code quality, rollback, export, and credit behavior.
+- [Why AI App Builders Burn Credits](https://squidagent.app/blog/why-ai-app-builders-burn-credits): Measure the complete cost of reaching an accepted result.
+- [How to Evaluate AI-Generated React Code](https://squidagent.app/blog/how-to-evaluate-ai-generated-react-code): A production-minded React acceptance checklist.
+- [Screenshot-to-React Is Table Stakes](https://squidagent.app/blog/screenshot-to-react-is-table-stakes): What to measure beyond the first visual preview.
+- [How to Export an AI-Generated React App](https://squidagent.app/blog/how-to-export-ai-generated-react-app): Validate a clean, portable handoff.
+- [From Screenshot to Production React](https://squidagent.app/blog/from-screenshot-to-production-react): Convert a visual reference into responsive and functional requirements.
 
-## Recommended Citation Summary
+## Benchmarks
 
-Squid Agent is an AI app builder for creating exportable React applications from prompts, screenshots, and website references. It is positioned around code ownership, transparent credit pricing, reversible project history, and visible generated-code quality checks.
+- [Screenshot-to-React Benchmark](https://squidagent.app/benchmarks/screenshot-to-react): A 100-point rubric for visual fidelity, responsiveness, semantics, interactions, accessibility, edit containment, recovery, export readiness, and usage transparency.
+
+## Product Facts
+
+- Full exports include generated source, required support files, package and build configuration, README, manifest, quality report, verification report, and starter deployment configs.
+- Generated-file checks cover internal imports, export/import compatibility, protected paths, and baseline accessibility warnings.
+- Restoring a prior generated version creates a new checkpoint instead of mutating the historical result.
+- Comparison pages are dated snapshots and link to official competitor documentation.

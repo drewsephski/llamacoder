@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  turbopack: {},
+  turbopack: {
+    root: process.cwd(),
+  },
   webpack: (config, options) => {
     if (options.nextRuntime === "edge") {
       if (!config.resolve.conditionNames) {

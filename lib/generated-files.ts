@@ -36,6 +36,18 @@ export type GeneratedFilesStats = {
   protectedPathsBlocked: number;
 };
 
+export function parseStoredGeneratedFiles(value: unknown): RawGeneratedFile[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.filter(
+    (file): file is RawGeneratedFile =>
+      !!file &&
+      typeof file === "object" &&
+      typeof file.path === "string" &&
+      (typeof file.code === "string" || typeof file.content === "string"),
+  );
+}
+
 const PROTECTED_MODULE_PATHS = new Set([
   "components/ui/accordion",
   "components/ui/alert",
@@ -416,7 +428,9 @@ function extractNamedImports(importClause: string) {
     .map((item) => item.trim().replace(/^type\s+/, ""))
     .filter(Boolean)
     .map((item) => {
-      const [imported, local] = item.split(/\s+as\s+/).map((part) => part.trim());
+      const [imported, local] = item
+        .split(/\s+as\s+/)
+        .map((part) => part.trim());
       return {
         imported,
         local: local || imported,
@@ -503,7 +517,9 @@ function extractModuleExportSignature(code: string): ModuleExportSignature {
     /\bexport\s*{([\s\S]*?)}(?:\s*from\s*["'][^"']+["'])?\s*;?/g;
   let exportListMatch: RegExpExecArray | null;
 
-  while ((exportListMatch = exportListRegex.exec(codeWithoutComments)) !== null) {
+  while (
+    (exportListMatch = exportListRegex.exec(codeWithoutComments)) !== null
+  ) {
     for (const specifier of exportListMatch[1].split(",")) {
       const cleanSpecifier = specifier.trim().replace(/^type\s+/, "");
       if (!cleanSpecifier) continue;
@@ -754,7 +770,9 @@ function hasCnBinding(code: string) {
     return true;
   }
 
-  return /\b(?:const|let|var|function|class)\s+cn\b/.test(stripCodeComments(code));
+  return /\b(?:const|let|var|function|class)\s+cn\b/.test(
+    stripCodeComments(code),
+  );
 }
 
 function insertImportAfterDirectives(code: string, importLine: string) {

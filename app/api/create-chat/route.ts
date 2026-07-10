@@ -1,10 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
-import {
-  getMainCodingPrompt,
-  screenshotToCodePrompt,
-  softwareArchitectPrompt,
-} from "@/lib/prompts";
+import { getMainCodingPrompt } from "@/lib/prompts";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -12,11 +8,8 @@ import { MODELS } from "@/lib/constants";
 import {
   checkProjectCreationEligibility,
   getModelCreditHoldCost,
-  releaseCreditHold,
-  reserveCreditHold,
 } from "@/lib/billing";
 import {
-  VISION_ANALYSIS_MODEL,
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
@@ -71,15 +64,6 @@ function normalizeGeneratedTitle(title: string | undefined, fallback: string) {
 
 export async function POST(request: NextRequest) {
   const prisma = getPrisma();
-  const warnings: string[] = [];
-  let planningHoldId: string | undefined;
-
-  const releasePlanningHold = async () => {
-    if (!planningHoldId) return;
-
-    await releaseCreditHold({ holdId: planningHoldId });
-    planningHoldId = undefined;
-  };
 
   try {
     const parsed = createChatSchema.safeParse(
@@ -96,7 +80,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt, model, quality, screenshotData } = parsed.data;
+    const { prompt, model, quality } = parsed.data;
     const selectedModel = MODELS.find((m) => m.value === model);
 
     if (!selectedModel) {
@@ -155,27 +139,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hold = await reserveCreditHold({
-      userId: session.user.id,
-      modelId: model,
-      reason: "Project planning hold",
-      phase: "planning",
-    });
-
-    if (!hold.success) {
-      return NextResponse.json(
-        {
-          error: hold.error,
-          message:
-            hold.error === "INSUFFICIENT_CREDITS"
-              ? `Need ${getModelCreditHoldCost(model)} credits to start this model. Upgrade or buy credits to continue.`
-              : "Unable to process request",
-        },
-        { status: hold.error === "USER_NOT_FOUND" ? 404 : 402 },
-      );
-    }
-    planningHoldId = hold.holdId;
-
     const fallbackTitle = createFallbackTitle(prompt);
 
     let chat: {
@@ -217,7 +180,6 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.error("Failed to persist chat:", error);
-      await releasePlanningHold();
 
       return NextResponse.json(
         {
@@ -236,7 +198,6 @@ export async function POST(request: NextRequest) {
       await prisma.chat.delete({ where: { id: chat.id } }).catch((error) => {
         console.error("Failed to delete incomplete chat:", error);
       });
-      await releasePlanningHold();
 
       return NextResponse.json(
         {
@@ -247,178 +208,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const openrouter = createAppOpenRouter({
-      sessionId: chat.id,
-      sessionName: "SquidAgent Chat",
-    });
-
-    let fullScreenshotDescription: string | undefined;
-
-    if (screenshotData) {
+    after(async () => {
       try {
-        const screenshotResponse = await generateText({
-          model: createOpenRouterModel(openrouter, VISION_ANALYSIS_MODEL, {
-            maxTokens: 1000,
-          }),
-          providerOptions: getOpenRouterProviderOptions(VISION_ANALYSIS_MODEL),
-          temperature: 0.4,
+        const openrouter = createAppOpenRouter({
+          sessionId: chat.id,
+          sessionName: "SquidAgent Chat",
+        });
+        const responseForChatTitle = await generateText({
+          model: createOpenRouterModel(openrouter, model, { maxTokens: 32 }),
+          providerOptions: getOpenRouterProviderOptions(model, "low"),
           messages: [
             {
+              role: "system",
+              content:
+                "Create a succinct 3-5 word title for this app-building conversation. Return only the title.",
+            },
+            {
               role: "user",
-              content: [
-                { type: "text", text: screenshotToCodePrompt },
-                {
-                  type: "image",
-                  image: screenshotData,
-                },
-              ],
+              content: prompt,
             },
           ],
         });
 
-        fullScreenshotDescription = screenshotResponse.text || undefined;
+        await prisma.chat.update({
+          where: { id: chat.id },
+          data: {
+            title: normalizeGeneratedTitle(
+              responseForChatTitle.text,
+              fallbackTitle,
+            ),
+          },
+        });
       } catch (error) {
-        warnings.push("SCREENSHOT_PROCESSING_FAILED");
         console.warn(
-          "Screenshot processing failed, continuing without it:",
+          "Title generation failed, keeping fallback title:",
           getAIErrorMessage(error),
         );
       }
-    }
-
-    if (fullScreenshotDescription) {
-      const content = `${prompt}\n\nRECREATE THIS APP AS CLOSELY AS POSSIBLE:\n${fullScreenshotDescription}`;
-
-      await prisma.message
-        .update({
-          where: { id: userMessage.id },
-          data: { content },
-        })
-        .catch((error) => {
-          warnings.push("SCREENSHOT_MESSAGE_UPDATE_FAILED");
-          console.error(
-            "Failed to attach screenshot context to message:",
-            error,
-          );
-        });
-    }
-
-    const [title, plan] = await Promise.all([
-      (async () => {
-        try {
-          const responseForChatTitle = await generateText({
-            model: createOpenRouterModel(openrouter, model, {
-              maxTokens: 32,
-            }),
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a chatbot helping the user create a simple app or script, and your current job is to create a succinct title, maximum 3-5 words, for the chat given their initial prompt. Please return only the title.",
-              },
-              {
-                role: "user",
-                content: prompt,
-              },
-            ],
-          });
-
-          return normalizeGeneratedTitle(
-            responseForChatTitle.text,
-            fallbackTitle,
-          );
-        } catch (error) {
-          warnings.push("TITLE_GENERATION_FAILED");
-          console.warn(
-            "Title generation failed, using fallback title:",
-            getAIErrorMessage(error),
-          );
-          return fallbackTitle;
-        }
-      })(),
-      (async () => {
-        if (quality !== "high") return null;
-
-        try {
-          const initialRes = await generateText({
-            model: createOpenRouterModel(openrouter, model, {
-              maxTokens: 3000,
-            }),
-            messages: [
-              {
-                role: "system",
-                content: softwareArchitectPrompt,
-              },
-              {
-                role: "user",
-                content: fullScreenshotDescription
-                  ? fullScreenshotDescription + prompt
-                  : prompt,
-              },
-            ],
-            temperature: 0.4,
-          });
-
-          return initialRes.text || null;
-        } catch (error) {
-          warnings.push("PLAN_GENERATION_FAILED");
-          console.warn(
-            "Plan generation failed, continuing without plan:",
-            getAIErrorMessage(error),
-          );
-          return null;
-        }
-      })(),
-    ]);
-
-    await prisma.chat
-      .update({
-        where: {
-          id: chat.id,
-        },
-        data: {
-          title,
-          plan,
-          hasCode: false,
-        },
-      })
-      .catch((error) => {
-        warnings.push("CHAT_ENRICHMENT_UPDATE_FAILED");
-        console.error("Failed to update chat enrichment fields:", error);
-      });
-
-    if (plan) {
-      await prisma.generationLog
-        .create({
-          data: {
-            userId: session.user.id,
-            modelId: model,
-            creditsUsed: 0,
-            estimatedCredits: getModelCreditHoldCost(model),
-            actualCredits: 0,
-            refundedCredits: 0,
-            reason: `Plan generation - ${title}`,
-            phase: "planning",
-            status: "plan_generated",
-            chatId: chat.id,
-          },
-        })
-        .catch((error) => {
-          console.error("Failed to log plan generation:", error);
-        });
-    }
-
-    await releasePlanningHold();
+    });
 
     return NextResponse.json({
       chatId: chat.id,
       lastMessageId: userMessage.id,
-      plan,
+      plan: null,
       hasCode: false,
-      warnings: warnings.length ? warnings : undefined,
     });
   } catch (error) {
-    await releasePlanningHold();
     console.error("Unexpected error creating chat:", error);
     return NextResponse.json(
       {

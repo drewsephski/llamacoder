@@ -5,7 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NoiseTexture } from "@/components/ui/noise-texture";
-import type { CompletionStream } from "@/lib/completion-stream";
+import type { CompletionStream } from "@/features/generation/client/completion-stream";
 
 export const Context = createContext<{
   streamPromise?: Promise<CompletionStream>;

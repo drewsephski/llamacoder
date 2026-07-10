@@ -1,21 +1,32 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import {
+  getModelReasoningCapability,
+  type ReasoningEffort,
+} from "@/lib/constants";
 import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
 export const GENERATED_CODE_MAX_TOKENS = 16000;
 export const VISION_ANALYSIS_MODEL =
   process.env.OPENROUTER_VISION_MODEL || "google/gemini-3-flash-preview";
-const MANDATORY_REASONING_MODELS = new Set(["x-ai/grok-4.3", "openai/gpt-5.5"]);
-const MANDATORY_REASONING_MODEL_PREFIXES = ["openai/gpt-5", "x-ai/grok-4"];
-
 type OpenRouterClient = ReturnType<typeof createOpenRouter>;
 type OpenRouterModelSettings = NonNullable<Parameters<OpenRouterClient>[1]>;
 type OpenRouterProviderOptions = {
   openrouter: {
-    reasoning?: {
-      enabled: boolean;
-    };
+    reasoning:
+      | { enabled: boolean; exclude?: boolean }
+      | { effort: ReasoningEffort; exclude?: boolean };
   };
+};
+
+export type GenerationQuality = "high" | "low";
+
+export type OpenRouterReasoningSelection = {
+  enabled: boolean;
+  visible: boolean;
+  mandatory: boolean;
+  effort: ReasoningEffort | "default" | "none";
+  providerOptions?: OpenRouterProviderOptions;
 };
 
 export function createAppOpenRouter({
@@ -77,27 +88,61 @@ export function createOpenRouterModel(
 
 export function requiresOpenRouterReasoning(model: string) {
   const { primary } = getOpenRouterModelRoute(model);
+  return getModelReasoningCapability(primary).mandatory;
+}
 
-  return (
-    MANDATORY_REASONING_MODELS.has(primary) ||
-    MANDATORY_REASONING_MODEL_PREFIXES.some((prefix) =>
-      primary.startsWith(prefix),
-    )
-  );
+export function getOpenRouterReasoningSelection(
+  model: string,
+  quality: GenerationQuality,
+): OpenRouterReasoningSelection {
+  const { primary } = getOpenRouterModelRoute(model);
+  const capability = getModelReasoningCapability(primary);
+
+  if (!capability.supported) {
+    return {
+      enabled: false,
+      visible: false,
+      mandatory: false,
+      effort: "none",
+    };
+  }
+
+  if (!capability.mandatory && quality === "low") {
+    return {
+      enabled: false,
+      visible: false,
+      mandatory: false,
+      effort: "none",
+      providerOptions: {
+        openrouter: { reasoning: { enabled: false } },
+      },
+    };
+  }
+
+  const selectedEffort = capability.supportedEfforts?.includes("low")
+    ? "low"
+    : capability.defaultEffort || capability.supportedEfforts?.[0];
+
+  return {
+    enabled: true,
+    visible: true,
+    mandatory: capability.mandatory,
+    effort: selectedEffort || "default",
+    providerOptions: {
+      openrouter: {
+        reasoning: selectedEffort
+          ? { effort: selectedEffort, exclude: false }
+          : { enabled: true, exclude: false },
+      },
+    },
+  };
 }
 
 export function getOpenRouterProviderOptions(
   model: string,
+  quality: GenerationQuality = "low",
 ): OpenRouterProviderOptions | undefined {
-  if (requiresOpenRouterReasoning(model)) {
-    return undefined;
-  }
-
-  return {
-    openrouter: {
-      reasoning: { enabled: false },
-    },
-  };
+  return getOpenRouterReasoningSelection(model, quality).providerOptions;
 }
 
 export function getAIErrorMessage(error: unknown) {

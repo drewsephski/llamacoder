@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname),
+      "server-only": path.resolve(__dirname, "tests/helpers/server-only.ts"),
     },
   },
   test: {
@@ -19,7 +20,11 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      include: ["app/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "components/**/*.tsx"],
+      include: [
+        "app/**/*.{ts,tsx}",
+        "lib/**/*.{ts,tsx}",
+        "components/**/*.tsx",
+      ],
       exclude: [
         "app/**/layout.tsx",
         "app/**/loading.tsx",

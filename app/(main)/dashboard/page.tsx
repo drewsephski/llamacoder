@@ -1,6 +1,7 @@
 import { getPrisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import type { Metadata } from "next";
 import { renameProject } from "../actions";
 import { ProjectCardActions } from "@/components/project-card-actions";
 import { UpgradeBanner } from "@/components/upgrade-banner";
@@ -13,6 +14,7 @@ import {
   normalizeTier,
   type TierKey,
 } from "@/lib/billing";
+
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import {
@@ -34,6 +36,12 @@ import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { MODELS } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "Manage Squid Agent projects, credits, and account activity.",
+  robots: { index: false, follow: false },
+};
 
 // Professional model badge styles - no emojis
 function getModelBadgeClass(model: string): string {
@@ -719,7 +727,8 @@ async function DashboardPage({
             <div>
               <h2 className="text-lg font-medium">Credit Packs</h2>
               <p className="text-sm text-muted-foreground">
-                One-time packs for smarter models. Purchased credits never expire.
+                One-time packs for smarter models. Purchased credits never
+                expire.
               </p>
             </div>
           </div>

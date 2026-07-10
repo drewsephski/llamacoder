@@ -1,15 +1,22 @@
 import { getPrisma } from "@/lib/prisma";
 import { z } from "zod";
-import { streamText } from "ai";
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateText,
+  streamText,
+} from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import {
   GENERATED_CODE_MAX_TOKENS,
+  VISION_ANALYSIS_MODEL,
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
   getAIErrorStatus,
   getOpenRouterProviderOptions,
+  getOpenRouterReasoningSelection,
 } from "@/lib/openrouter";
 import {
   getModelCreditHoldCost,
@@ -22,6 +29,14 @@ import {
   type GeneratedFile,
 } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
+import { screenshotToCodePrompt } from "@/lib/prompts";
+import {
+  ACCEPTED_SCREENSHOT_MIME_TYPES,
+  MAX_SCREENSHOT_DATA_URL_LENGTH,
+  MAX_SCREENSHOT_SIZE_MB,
+} from "@/lib/constants";
+import type { GenerationStatus } from "@/features/generation/contracts";
+import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
 
 type CompletionMessage = {
   role: "system" | "user" | "assistant";
@@ -123,9 +138,22 @@ Requirements:
   }[];
 }
 
+const imageDataUrlPattern = new RegExp(
+  `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
+  "i",
+);
+
 const requestSchema = z.object({
   messageId: z.string().min(1),
   model: z.string().min(1),
+  screenshotData: z
+    .string()
+    .max(
+      MAX_SCREENSHOT_DATA_URL_LENGTH,
+      `Image is too large. Please upload an image under ${MAX_SCREENSHOT_SIZE_MB} MB.`,
+    )
+    .regex(imageDataUrlPattern, "Image must be a PNG, JPEG, or WebP file.")
+    .optional(),
 });
 
 const GENERATION_COMPLETENESS_GUARD = `
@@ -154,7 +182,7 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return new Response("Invalid request", { status: 400 });
     }
-    const { messageId, model } = parsed.data;
+    const { messageId, model, screenshotData } = parsed.data;
 
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -171,6 +199,7 @@ export async function POST(req: Request) {
           select: {
             id: true,
             model: true,
+            quality: true,
             userId: true,
           },
         },
@@ -189,6 +218,7 @@ export async function POST(req: Request) {
       return new Response("Model mismatch", { status: 400 });
     }
     const chatModel = message.chat.model;
+    const quality = message.chat.quality === "high" ? "high" : "low";
     const messageMetadata = message.files as
       | { kind?: string; chargeCredits?: boolean; sourceMessageId?: string }
       | null
@@ -287,20 +317,159 @@ export async function POST(req: Request) {
       sessionId: message.chatId,
       sessionName: "SquidAgent Chat",
     });
-
-    const result = streamText({
-      model: createOpenRouterModel(openrouter, chatModel, {
-        maxTokens: GENERATED_CODE_MAX_TOKENS,
-      }),
-      providerOptions: getOpenRouterProviderOptions(chatModel),
-      messages: guardedMessages,
-      temperature: 0.4,
-      onError({ error }) {
-        console.error("OpenRouter streaming error:", getAIErrorMessage(error));
-      },
+    const reasoning = getOpenRouterReasoningSelection(chatModel, quality);
+    const telemetry = createRequestTelemetry({
+      userId: session.user.id,
+      chatId: message.chatId,
+      messageId,
+      modelId: chatModel,
+      quality,
+      reasoning,
     });
 
-    return createReadableTextStreamResponse(result.textStream, holdId);
+    const stream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        const writeStatus = (status: GenerationStatus) => {
+          writer.write({
+            type: "data-generation-status",
+            data: status,
+            transient: true,
+          });
+        };
+
+        try {
+          writeStatus({
+            phase: "preparing",
+            label: "Preparing your project",
+          });
+
+          if (screenshotData) {
+            writeStatus({
+              phase: "analyzing-reference",
+              label: "Analyzing your reference image",
+            });
+
+            try {
+              const screenshotResponse = await generateText({
+                model: createOpenRouterModel(
+                  openrouter,
+                  VISION_ANALYSIS_MODEL,
+                  {
+                    maxTokens: 1000,
+                  },
+                ),
+                providerOptions: getOpenRouterProviderOptions(
+                  VISION_ANALYSIS_MODEL,
+                  "low",
+                ),
+                temperature: 0.4,
+                messages: [
+                  {
+                    role: "user",
+                    content: [
+                      { type: "text", text: screenshotToCodePrompt },
+                      { type: "image", image: screenshotData },
+                    ],
+                  },
+                ],
+              });
+
+              if (screenshotResponse.text) {
+                const screenshotContext = `\n\nRECREATE THIS APP AS CLOSELY AS POSSIBLE:\n${screenshotResponse.text}`;
+                const lastUserMessageIndex = guardedMessages.findLastIndex(
+                  (candidate) => candidate.role === "user",
+                );
+
+                if (lastUserMessageIndex !== -1) {
+                  guardedMessages[lastUserMessageIndex] = {
+                    ...guardedMessages[lastUserMessageIndex],
+                    content:
+                      guardedMessages[lastUserMessageIndex].content +
+                      screenshotContext,
+                  };
+                }
+
+                await prisma.message.update({
+                  where: { id: messageId },
+                  data: { content: message.content + screenshotContext },
+                });
+              }
+            } catch (error) {
+              console.warn(
+                "Screenshot processing failed, continuing without it:",
+                getAIErrorMessage(error),
+              );
+            }
+          }
+
+          writeStatus(
+            reasoning.visible
+              ? { phase: "reasoning", label: "Working through the design" }
+              : { phase: "writing-code", label: "Writing your app" },
+          );
+
+          const result = streamText({
+            model: createOpenRouterModel(openrouter, chatModel, {
+              maxTokens: GENERATED_CODE_MAX_TOKENS,
+              usage: { include: true },
+            }),
+            providerOptions: reasoning.providerOptions,
+            messages: guardedMessages,
+            temperature: 0.4,
+            onChunk({ chunk }) {
+              if (
+                chunk.type === "reasoning-delta" ||
+                chunk.type === "text-delta"
+              ) {
+                telemetry.markChunk(chunk.type);
+              }
+            },
+            async onFinish({ usage, finishReason }) {
+              await telemetry.record({
+                status: finishReason === "error" ? "error" : "completed",
+                usage,
+                finishReason,
+              });
+            },
+            async onAbort() {
+              await telemetry.record({ status: "aborted" });
+            },
+            async onError({ error }) {
+              console.error(
+                "OpenRouter streaming error:",
+                getAIErrorMessage(error),
+              );
+              await telemetry.record({ status: "error", error });
+            },
+          });
+
+          const observedStream = result
+            .toUIMessageStream({
+              sendReasoning: true,
+              onError: getAIErrorMessage,
+            })
+            .pipeThrough(
+              new TransformStream({
+                transform(event, controller) {
+                  telemetry.markFirstByte();
+                  controller.enqueue(event);
+                },
+              }),
+            );
+
+          writer.merge(observedStream);
+        } catch (error) {
+          await telemetry.record({ status: "error", error });
+          throw error;
+        }
+      },
+      onError: getAIErrorMessage,
+    });
+
+    return createUIMessageStreamResponse({
+      stream,
+      headers: holdId ? { "x-credit-hold-id": holdId } : undefined,
+    });
   } catch (error) {
     if (holdId) {
       await releaseCreditHold({ holdId });
@@ -317,32 +486,3 @@ export async function POST(req: Request) {
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
-
-function createReadableTextStreamResponse(
-  textStream: AsyncIterable<string>,
-  holdId?: string,
-) {
-  const encoder = new TextEncoder();
-
-  return new Response(
-    new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const textPart of textStream) {
-            controller.enqueue(encoder.encode(textPart));
-          }
-          controller.close();
-        } catch (error) {
-          console.error("Completion stream failed:", getAIErrorMessage(error));
-          controller.error(new Error(getAIErrorMessage(error)));
-        }
-      },
-    }),
-    {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        ...(holdId ? { "x-credit-hold-id": holdId } : {}),
-      },
-    },
-  );
-}

@@ -1,0 +1,22 @@
+# Squid Agent AI crawler guide
+
+Squid Agent's canonical AI-readable product summary is available at:
+https://squidagent.app/llms.txt
+
+Primary public pages:
+- https://squidagent.app/
+- https://squidagent.app/compare/squid-vs-lovable
+- https://squidagent.app/compare/squid-vs-bolt
+- https://squidagent.app/compare/squid-vs-v0
+- https://squidagent.app/benchmarks/screenshot-to-react
+
+Policy and trust pages:
+- https://squidagent.app/privacy
+- https://squidagent.app/terms
+- https://squidagent.app/cookies
+- https://squidagent.app/contact
+
+Contact:
+- Email: support@squidagent.app
+- GitHub: https://github.com/drewsephski
+- Instagram: https://www.instagram.com/drew.sepeczi

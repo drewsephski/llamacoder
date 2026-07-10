@@ -239,6 +239,36 @@ model GenerationLog {
   @@index([chatId, createdAt])
 }
 
+model AiRequestLog {
+  id                          String    @id @default(nanoid(16))
+  userId                      String?
+  chatId                      String?
+  messageId                   String?
+  modelId                     String
+  quality                     String
+  reasoningEnabled            Boolean
+  reasoningMandatory          Boolean
+  reasoningEffort             String
+  timeToFirstByteMs           Int?
+  timeToFirstReasoningDeltaMs Int?
+  timeToFirstTextDeltaMs      Int?
+  inputTokens                 Int?
+  outputTokens                Int?
+  reasoningTokens             Int?
+  totalTokens                 Int?
+  finishReason                String?
+  status                      String
+  errorMessage                String?
+  startedAt                   DateTime
+  completedAt                 DateTime?
+  createdAt                   DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([chatId, createdAt])
+  @@index([modelId, createdAt])
+  @@map("AIRequestLog")
+}
+
 model Session {
   id        String   @id
   expiresAt DateTime

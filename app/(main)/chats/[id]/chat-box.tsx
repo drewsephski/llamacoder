@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   fetchCompletionStream,
   type CompletionStream,
-} from "@/lib/completion-stream";
+} from "@/features/generation/client/completion-stream";
 import { GenerationLoader } from "@/components/generation-loader";
 
 interface ChatBoxProps {

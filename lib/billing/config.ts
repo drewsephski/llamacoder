@@ -2,6 +2,7 @@ import {
   FREE_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
+  LEGACY_MINIMAX_M3_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
   LEGACY_QWEN_MAX_MODEL,
   LEGACY_SECONDARY_STARTER_MODEL,
@@ -48,9 +49,9 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     tier: "efficient",
     bands: { small: 1, standard: 1, large: 2, xl: 2 },
   },
-  "minimax/minimax-m3": {
+  [LEGACY_MINIMAX_M3_MODEL]: {
     tier: "efficient",
-    bands: { small: 1, standard: 1, large: 2, xl: 3 },
+    bands: { small: 1, standard: 1, large: 2, xl: 2 },
   },
   "z-ai/glm-5.2": {
     tier: "efficient",
@@ -128,9 +129,9 @@ const MODEL_TOKEN_PRICING: Record<
     inputPricePerMillion: 0.435,
     outputPricePerMillion: 0.87,
   },
-  "minimax/minimax-m3": {
-    inputPricePerMillion: 0.3,
-    outputPricePerMillion: 1.2,
+  [LEGACY_MINIMAX_M3_MODEL]: {
+    inputPricePerMillion: 0.435,
+    outputPricePerMillion: 0.87,
   },
   "z-ai/glm-5.2": { inputPricePerMillion: 0.84, outputPricePerMillion: 2.64 },
   "google/gemini-3-flash-preview": {
@@ -222,9 +223,7 @@ export function getModelCreditCost(
     (options?.generatedText
       ? estimateOutputTokensFromText(options.generatedText)
       : undefined);
-  const band = outputTokens
-    ? getGenerationSizeBand(outputTokens)
-    : "small";
+  const band = outputTokens ? getGenerationSizeBand(outputTokens) : "small";
 
   return pricing.bands[band];
 }
@@ -283,6 +282,7 @@ export const TIERS = {
 };
 
 export type TierKey = keyof typeof TIERS;
+export const TIER_KEYS = Object.keys(TIERS) as [TierKey, ...TierKey[]];
 
 /**
  * Credit pack configurations for one-time purchases.
