@@ -1,0 +1,47 @@
+---
+title: Product tool prompts
+description: Detailed prompts for operational dashboards, approval workflows, portals, and internal tools.
+---
+
+Product tools benefit from explicit data and state requirements. Name the decision the interface supports, then specify only the regions and controls needed for that decision.
+
+## Content approval queue
+
+<Prompt title="Content approval queue" text={`Build a content approval workspace for a six-person marketing team.
+
+The primary job is to review draft campaign assets and either approve them, request a revision, or assign another reviewer.
+
+Include:
+
+- A queue with campaign, asset type, owner, due date, revision count, and status
+- Filters for campaign, reviewer, asset type, and overdue status
+- A split detail view with the asset preview, version notes, comments, and approval controls
+- A revision request form that requires a clear reason
+- Selected, no-results, validation, submitted, and permission-limited states
+
+Use realistic sample campaigns. Keep filters when the user opens and closes an item. Make approval update both the detail view and queue. Use a precise, professional interface with compact rows, generous detail-view spacing, and a restrained violet accent.`} />
+
+## Field service dispatcher
+
+<Prompt title="Dispatch board" text={`Build a dispatch board for a residential HVAC company coordinating eight technicians.
+
+Show today's jobs on a time-based schedule alongside a technician list. Each job should include service window, customer area, equipment type, urgency, estimated duration, and assignment status. Let the dispatcher select a job, inspect context, and reassign it to an available technician.
+
+Include conflicts, unassigned jobs, travel-time warnings, a no-jobs state, and a successful reassignment state. Use a dense desktop-first layout that collapses into a useful mobile job list. Use color semantically for urgency and conflicts; do not turn every job into a decorative card.`} />
+
+## Expense review portal
+
+<Prompt title="Expense review portal" text={`Build an expense review portal for a finance manager at a 40-person consulting firm.
+
+The manager needs to review submitted expenses, inspect receipts and policy flags, approve clean items in batches, and return questionable items with a reason.
+
+Include a sortable table, employee and policy filters, receipt detail panel, flag explanations, multi-select, batch approval confirmation, and a return-for-clarification form. Seed realistic fictional records. Include partial selection, loading, no-results, validation, and completed states.
+
+Use a restrained finance interface with excellent numeric alignment, compact rows, clear semantic status colors, and minimal decoration.`} />
+
+## Protect existing behavior during refinement
+
+<Prompt
+  title="Product-tool follow-up"
+  text={`Change the queue and detail view only. Preserve the current navigation, sample records, filters, and visual tokens. Make batch selection keyboard-accessible, add an indeterminate select-all state, and require confirmation before approving more than five items.`}
+/>

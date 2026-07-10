@@ -186,6 +186,72 @@ describe("Stripe fulfillment", () => {
     expect(tx.creditHistory.create).not.toHaveBeenCalled();
   });
 
+  it("grants prorated subscription credits only in proportion to collected revenue", async () => {
+    const tx = createPrismaTransactionMock();
+    stripeMock.subscriptions.retrieve.mockResolvedValueOnce(subscription());
+    prismaMock.$transaction.mockImplementationOnce(async (callback) =>
+      callback(tx),
+    );
+    tx.user.update.mockResolvedValueOnce({ credits: 50 });
+
+    await expect(
+      fulfillPaidInvoice(
+        paidInvoice({ total_excluding_tax: 450, amount_paid: 450 }) as never,
+        "evt_proration",
+      ),
+    ).resolves.toMatchObject({
+      fulfilled: true,
+      credits: 50,
+    });
+
+    expect(tx.creditGrant.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        amount: 50,
+        grossRevenueUsd: 4.5,
+        netRevenueUsd: 4.0695,
+      }),
+    });
+    expect(
+      tx.creditGrant.create.mock.calls[0][0].data.unitRevenueUsd,
+    ).toBeCloseTo(0.08139);
+  });
+
+  it("trims rollover to the cap and extends retained grants to the new period", async () => {
+    const tx = createPrismaTransactionMock();
+    const nextPeriodEnd = new Date(1_785_456_000 * 1000);
+    stripeMock.subscriptions.retrieve.mockResolvedValueOnce(subscription());
+    prismaMock.$transaction.mockImplementationOnce(async (callback) =>
+      callback(tx),
+    );
+    tx.creditGrant.findMany.mockResolvedValueOnce([
+      { id: "grant_old_1", remainingAmount: 80 },
+      { id: "grant_old_2", remainingAmount: 70 },
+    ]);
+    tx.user.update
+      .mockResolvedValueOnce({ credits: 100 })
+      .mockResolvedValueOnce({ credits: 200 });
+
+    await fulfillPaidInvoice(paidInvoice() as never, "evt_rollover");
+
+    expect(tx.creditGrant.update).toHaveBeenCalledWith({
+      where: { id: "grant_old_1" },
+      data: { remainingAmount: { decrement: 50 } },
+    });
+    expect(tx.user.update).toHaveBeenNthCalledWith(1, {
+      where: { id: "user_1" },
+      data: { credits: { decrement: 50 } },
+    });
+    expect(tx.creditGrant.updateMany).toHaveBeenCalledWith({
+      where: {
+        userId: "user_1",
+        type: "subscription",
+        remainingAmount: { gt: 0 },
+        OR: [{ expiresAt: null }, { expiresAt: { gt: expect.any(Date) } }],
+      },
+      data: { expiresAt: nextPeriodEnd },
+    });
+  });
+
   it("fulfills credit-pack checkouts with session dedupe keys", async () => {
     const tx = createPrismaTransactionMock();
     prismaMock.$transaction.mockImplementationOnce(async (callback) =>

@@ -163,6 +163,9 @@ model CreditGrant {
   stripeInvoiceId         String?
   stripeSubscriptionId    String?
   expiresAt               DateTime?
+  grossRevenueUsd         Float?
+  netRevenueUsd           Float?
+  unitRevenueUsd          Float?
   createdAt               DateTime  @default(now())
   user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -176,19 +179,27 @@ model CreditGrant {
 }
 
 model CreditHold {
-  id             String   @id @default(nanoid(16))
-  userId         String
-  chatId         String?
-  modelId        String
-  amountHeld     Int
-  amountCaptured Int      @default(0)
-  status         String
-  reason         String?
-  phase          String?
-  allocations    Json
-  expiresAt      DateTime
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                       String   @id @default(nanoid(16))
+  userId                   String
+  chatId                   String?
+  modelId                  String
+  amountHeld               Int
+  amountCaptured           Int      @default(0)
+  status                   String
+  reason                   String?
+  phase                    String?
+  allocations              Json
+  providerCostUsd          Float    @default(0)
+  upstreamInferenceCostUsd Float    @default(0)
+  inputTokens              Int      @default(0)
+  outputTokens             Int      @default(0)
+  reasoningTokens          Int      @default(0)
+  totalTokens              Int      @default(0)
+  provider                 String?
+  providerRequestId        String?
+  expiresAt                DateTime
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   @@index([userId, status])
   @@index([chatId, status])
@@ -227,6 +238,12 @@ model GenerationLog {
   generationSize           String?
   estimatedModelCostUsd    Float?
   riskAdjustedModelCostUsd Float?
+  actualModelCostUsd       Float?
+  upstreamInferenceCostUsd Float?
+  reasoningTokens          Int?
+  provider                 String?
+  estimatedRevenueUsd      Float?
+  estimatedGrossMarginUsd  Float?
   reason                   String?
   phase                    String?
   status                   String
@@ -244,7 +261,9 @@ model AiRequestLog {
   userId                      String?
   chatId                      String?
   messageId                   String?
+  creditHoldId                String?
   modelId                     String
+  requestKind                 String
   quality                     String
   reasoningEnabled            Boolean
   reasoningMandatory          Boolean
@@ -256,6 +275,11 @@ model AiRequestLog {
   outputTokens                Int?
   reasoningTokens             Int?
   totalTokens                 Int?
+  cachedInputTokens           Int?
+  provider                    String?
+  providerRequestId           String?
+  providerCostUsd             Float?
+  upstreamInferenceCostUsd    Float?
   finishReason                String?
   status                      String
   errorMessage                String?
@@ -266,6 +290,7 @@ model AiRequestLog {
   @@index([userId, createdAt])
   @@index([chatId, createdAt])
   @@index([modelId, createdAt])
+  @@index([creditHoldId])
   @@map("AIRequestLog")
 }
 

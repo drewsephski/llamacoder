@@ -1,7 +1,10 @@
 import {
   FREE_MODEL,
+  LEGACY_CLAUDE_OPUS_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
+  LEGACY_GPT_5_4_MODEL,
   LEGACY_KIMI_CODE_MODEL,
+  LEGACY_LAGUNA_MODEL,
   LEGACY_MINIMAX_M3_MODEL,
   LEGACY_FREE_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
@@ -16,6 +19,7 @@ export const FALLBACK_MODELS = {
   gpt: SAFE_GPT_MODEL,
   gemini: "google/gemini-3-flash-preview",
   advancedCode: "deepseek/deepseek-v4-pro",
+  premium: "anthropic/claude-opus-4.8",
 };
 
 export function getModelWithFallbacks(model: string): string[] {
@@ -37,8 +41,16 @@ export function getModelWithFallbacks(model: string): string[] {
   }
 
   // Route saved mandatory-reasoning chats through optional/no-thinking models.
-  if (model.startsWith("openai/gpt-5")) {
+  if (model === LEGACY_GPT_5_4_MODEL || model === "openai/gpt-5.5") {
     return [FALLBACK_MODELS.gpt];
+  }
+
+  if (model === LEGACY_CLAUDE_OPUS_MODEL) {
+    return [FALLBACK_MODELS.premium];
+  }
+
+  if (model === LEGACY_LAGUNA_MODEL) {
+    return [FALLBACK_MODELS.free];
   }
 
   if (model === "x-ai/grok-4.3") {

@@ -4,6 +4,7 @@ import { ArrowRight, Github, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
+  { href: "/docs", label: "Docs" },
   { href: "/compare", label: "Compare" },
   { href: "/blog", label: "Guides" },
   { href: "/benchmarks", label: "Benchmark" },
@@ -99,6 +100,7 @@ export function MarketingFooter() {
           title="Product"
           links={[
             { href: "/", label: "Build an app" },
+            { href: "/docs", label: "Documentation" },
             { href: "/dashboard", label: "Dashboard" },
             { href: "/dashboard/usage", label: "Usage ledger" },
             { href: "/contact", label: "Contact" },

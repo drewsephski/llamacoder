@@ -95,8 +95,8 @@ describe("/api/user/can-create-project", () => {
       canCreate: false,
       hasActiveSubscription: true,
       credits: 0,
-      modelCost: 8,
-      shortfall: 8,
+      modelCost: 3,
+      shortfall: 3,
     });
   });
 

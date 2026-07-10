@@ -1,0 +1,43 @@
+---
+title: Quality checks
+description: Interpret generated-file diagnostics and verification information, then complete the runtime and product checks that automation cannot replace.
+---
+
+Generated apps can look complete while still containing broken imports, invalid exports, inaccessible controls, or incomplete project support files. Squid checks known structural risks so those issues are visible before export.
+
+## What automated checks can catch
+
+Depending on the project and generation path, checks can identify issues such as:
+
+- Missing internal import targets
+- Import and export mismatches
+- Invalid or protected project paths
+- Missing required project support files
+- Baseline accessibility warnings in generated markup
+
+These checks are evidence about known failure modes. They are not a guarantee that every interaction, layout, security boundary, or business rule is correct.
+
+## What you still need to test
+
+- Complete the primary workflow from start to success.
+- Try an empty state, invalid input, and a recovery path.
+- Resize to desktop and mobile viewports.
+- Navigate with a keyboard and inspect focus visibility.
+- Confirm content, calculations, and domain rules.
+- Install and build the export in a clean environment.
+
+## Respond to a failed check
+
+Use the exact failure as the scope of the repair.
+
+<Prompt title="Diagnostic repair" text={`Fix the unresolved internal import reported for src/components/AccountDrawer.tsx.
+
+Preserve the current interface, account data, drawer behavior, and all unrelated files. Update the import or generated file boundary so the project resolves cleanly, then verify that selecting an account still opens the drawer.
+
+Do not redesign the dashboard or replace working components.`} />
+
+<Callout title="A passing check is not production approval" type="warn">
+  Automated diagnostics cover known structural rules. Product correctness,
+  visual acceptance, privacy, security, and deployment behavior still require
+  review in the environment where the app will run.
+</Callout>

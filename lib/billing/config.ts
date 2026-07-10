@@ -10,6 +10,7 @@ import {
   SAFE_GPT_MODEL,
   SECONDARY_STARTER_MODEL,
 } from "@/lib/constants";
+import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 /**
  * Dynamic credit pricing by output size.
@@ -47,7 +48,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   },
   "deepseek/deepseek-v4-pro": {
     tier: "efficient",
-    bands: { small: 1, standard: 1, large: 2, xl: 2 },
+    bands: { small: 2, standard: 2, large: 2, xl: 3 },
   },
   [LEGACY_MINIMAX_M3_MODEL]: {
     tier: "efficient",
@@ -55,11 +56,11 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   },
   "z-ai/glm-5.2": {
     tier: "efficient",
-    bands: { small: 1, standard: 3, large: 4, xl: 6 },
+    bands: { small: 3, standard: 4, large: 5, xl: 6 },
   },
   "google/gemini-3-flash-preview": {
     tier: "efficient",
-    bands: { small: 1, standard: 3, large: 4, xl: 5 },
+    bands: { small: 3, standard: 4, large: 5, xl: 6 },
   },
   [LEGACY_KIMI_CODE_MODEL]: {
     tier: "efficient",
@@ -75,19 +76,19 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   },
   "x-ai/grok-4.5": {
     tier: "advanced",
-    bands: { small: 3, standard: 5, large: 8, xl: 12 },
+    bands: { small: 7, standard: 9, large: 11, xl: 13 },
   },
   [SAFE_GPT_MODEL]: {
     tier: "advanced",
-    bands: { small: 3, standard: 7, large: 10, xl: 15 },
+    bands: { small: 7, standard: 10, large: 13, xl: 15 },
   },
   "openai/gpt-5.5": {
     tier: "advanced",
-    bands: { small: 3, standard: 7, large: 10, xl: 15 },
+    bands: { small: 7, standard: 10, large: 13, xl: 15 },
   },
   "anthropic/claude-sonnet-5": {
     tier: "premium",
-    bands: { small: 4, standard: 8, large: 12, xl: 17 },
+    bands: { small: 8, standard: 11, large: 15, xl: 18 },
   },
   [LEGACY_GEMINI_PRO_MODEL]: {
     tier: "premium",
@@ -95,7 +96,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   },
   "anthropic/claude-opus-4.8": {
     tier: "premium",
-    bands: { small: 8, standard: 18, large: 30, xl: 42 },
+    bands: { small: 19, standard: 28, large: 36, xl: 44 },
   },
 };
 
@@ -103,10 +104,39 @@ export const FREE_PROJECT_LIMIT = 3;
 export const CREDIT_MODEL_COST_USD = 0.015;
 export const MODEL_COST_OVERHEAD_MULTIPLIER = 1.25;
 export const DEFAULT_ESTIMATED_INPUT_TOKENS = 25_000;
+export const STRIPE_CARD_PERCENT_FEE = 0.029;
+export const STRIPE_CARD_FIXED_FEE_USD = 0.3;
 
-const MODEL_TOKEN_PRICING: Record<
+export function estimateStripeNetRevenueUsd(grossRevenueUsd: number) {
+  if (grossRevenueUsd <= 0) return 0;
+
+  return Math.max(
+    0,
+    grossRevenueUsd * (1 - STRIPE_CARD_PERCENT_FEE) -
+      STRIPE_CARD_FIXED_FEE_USD,
+  );
+}
+
+export function getCostBasedCreditCharge(providerCostUsd: number) {
+  if (!Number.isFinite(providerCostUsd) || providerCostUsd <= 0) return 0;
+
+  return Math.max(
+    1,
+    Math.ceil(
+      (providerCostUsd * MODEL_COST_OVERHEAD_MULTIPLIER) /
+        CREDIT_MODEL_COST_USD,
+    ),
+  );
+}
+
+export type ModelTokenPricing = {
+  inputPricePerMillion: number;
+  outputPricePerMillion: number;
+};
+
+export const MODEL_TOKEN_PRICING: Record<
   string,
-  { inputPricePerMillion: number; outputPricePerMillion: number }
+  ModelTokenPricing
 > = {
   [FREE_MODEL]: { inputPricePerMillion: 0.09, outputPricePerMillion: 0.18 },
   [LEGACY_FREE_MODEL]: {
@@ -164,13 +194,43 @@ const MODEL_TOKEN_PRICING: Record<
   },
 };
 
-const FALLBACK_PRICING: ModelPricing = {
-  tier: "starter",
-  bands: { small: 1, standard: 1, large: 1, xl: 1 },
-};
+function getResolvedPricingModelId(modelId: string) {
+  const [resolvedModelId] = getModelWithFallbacks(modelId);
+  if (resolvedModelId && resolvedModelId !== modelId) return resolvedModelId;
 
-function getModelPricing(modelId: string): ModelPricing {
-  return MODEL_PRICING[modelId] ?? FALLBACK_PRICING;
+  return modelId;
+}
+
+function getModelPricing(modelId: string): ModelPricing | undefined {
+  return MODEL_PRICING[getResolvedPricingModelId(modelId)];
+}
+
+export function hasModelPricing(modelId: string) {
+  const resolvedModelId = getResolvedPricingModelId(modelId);
+  return Boolean(
+    MODEL_PRICING[resolvedModelId] && MODEL_TOKEN_PRICING[resolvedModelId],
+  );
+}
+
+export function getModelTokenPricing(modelId: string): ModelTokenPricing {
+  const resolvedModelId = getResolvedPricingModelId(modelId);
+  const pricing = MODEL_TOKEN_PRICING[resolvedModelId];
+
+  if (!pricing) {
+    throw new Error(`UNPRICED_MODEL:${modelId}`);
+  }
+
+  return pricing;
+}
+
+function requireModelPricing(modelId: string): ModelPricing {
+  const pricing = getModelPricing(modelId);
+
+  if (!pricing) {
+    throw new Error(`UNPRICED_MODEL:${modelId}`);
+  }
+
+  return pricing;
 }
 
 export function getGenerationSizeBand(outputTokens = 0): GenerationSizeBand {
@@ -193,8 +253,7 @@ export function estimateModelCostUsd({
   inputTokens?: number;
   outputTokens: number;
 }) {
-  const pricing =
-    MODEL_TOKEN_PRICING[modelId] ?? MODEL_TOKEN_PRICING[FREE_MODEL];
+  const pricing = getModelTokenPricing(modelId);
   const estimatedModelCostUsd =
     (inputTokens / 1_000_000) * pricing.inputPricePerMillion +
     (outputTokens / 1_000_000) * pricing.outputPricePerMillion;
@@ -217,7 +276,7 @@ export function getModelCreditCost(
   modelId: string,
   options?: { outputTokens?: number | null; generatedText?: string | null },
 ): number {
-  const pricing = getModelPricing(modelId);
+  const pricing = requireModelPricing(modelId);
   const outputTokens =
     options?.outputTokens ??
     (options?.generatedText
@@ -229,11 +288,11 @@ export function getModelCreditCost(
 }
 
 export function getModelCreditHoldCost(modelId: string): number {
-  return getModelPricing(modelId).bands.xl;
+  return requireModelPricing(modelId).bands.xl;
 }
 
 export function getModelCreditRange(modelId: string) {
-  const costs = Object.values(getModelPricing(modelId).bands);
+  const costs = Object.values(requireModelPricing(modelId).bands);
   return {
     min: Math.min(...costs),
     max: Math.max(...costs),
@@ -313,7 +372,7 @@ export type CreditPackKey = keyof typeof CREDIT_PACKS;
  * Check if a tier can use a specific model.
  */
 export function getModelTier(modelId: string): ModelTier {
-  return getModelPricing(modelId).tier;
+  return requireModelPricing(modelId).tier;
 }
 
 export function canTierUseModel(
@@ -323,6 +382,7 @@ export function canTierUseModel(
 ): boolean {
   const tierConfig = TIERS[tier];
   if (!tierConfig) return false;
+  if (!hasModelPricing(modelId)) return false;
 
   if ("allowedTiers" in tierConfig) {
     return tierConfig.allowedTiers.includes(getModelTier(modelId));

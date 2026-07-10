@@ -1,0 +1,40 @@
+---
+title: SaaS health dashboard
+description: Build a focused analytics workspace that helps a customer-success lead identify at-risk accounts and decide what to do next.
+---
+
+This example uses metrics to support a decision. It avoids a wall of decorative charts by connecting every visualization to an account-level workflow.
+
+## Initial prompt
+
+<Prompt title="SaaS health dashboard" text={`Build a customer health dashboard for the customer-success lead at a B2B collaboration product.
+
+The primary job is to identify accounts that need attention this week and understand why.
+
+Include:
+
+- A compact header with date range and segment filters
+- A summary of active accounts, healthy revenue, at-risk revenue, and upcoming renewals
+- A 12-week health trend with healthy, watch, and at-risk segments
+- An account table with company, plan, owner, health score, trend, usage change, open support issues, and renewal date
+- A detail drawer that explains the selected account's health score and shows recommended next actions
+- Loading, no-results, selected, and filter-applied states
+
+Filters must update the summaries, trend, table, and visible result count. Selecting a row must preserve filter state. Use realistic fictional account data and accessible chart labels.
+
+Use a polished, data-dense B2B interface with a white background, charcoal text, fine borders, compact controls, and semantic green, amber, and red. Avoid decorative KPI cards, gradients, and unrelated marketing content.`} />
+
+## Acceptance checklist
+
+- Changing a segment changes all visible analytics, not only the table.
+- The table remains the primary information surface.
+- Health colors are backed by text labels or icons.
+- The detail drawer explains the score rather than repeating it.
+- Empty and no-results states tell the user how to recover.
+- The mobile version prioritizes the account list and essential filters.
+
+## Focused follow-up
+
+<Prompt title="Dashboard refinement" text={`Keep the current data model, visual system, and account table. Improve the health trend and account drawer only.
+
+Make the trend readable without relying on color, add exact values on focus or hover, and explain which changes contributed to the selected account's score. Do not add new metrics or dashboard cards.`} />

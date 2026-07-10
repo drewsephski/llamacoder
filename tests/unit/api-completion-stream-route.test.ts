@@ -9,6 +9,7 @@ import { buildMessage } from "../fixtures/builders";
 const {
   createRequestTelemetryMock,
   generateTextMock,
+  getModelCreditHoldCostMock,
   getSessionMock,
   prismaMock,
   releaseCreditHoldMock,
@@ -18,6 +19,9 @@ const {
 } = vi.hoisted(() => ({
   createRequestTelemetryMock: vi.fn(),
   generateTextMock: vi.fn(),
+  getModelCreditHoldCostMock: vi.fn((model: string) =>
+    model === "google/gemini-3-flash-preview" ? 6 : 10,
+  ),
   getSessionMock: vi.fn(),
   releaseCreditHoldMock: vi.fn(),
   reserveCreditHoldMock: vi.fn(),
@@ -65,6 +69,7 @@ vi.mock("@/lib/billing", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/billing")>();
   return {
     ...actual,
+    getModelCreditHoldCost: getModelCreditHoldCostMock,
     releaseCreditHold: releaseCreditHoldMock,
     reserveCreditHold: reserveCreditHoldMock,
   };
@@ -286,6 +291,10 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(response.headers.get("content-type")).toContain("text/event-stream");
     expect(response.headers.get("x-credit-hold-id")).toBe("hold_1");
     const chunks = await collectUIChunks(response);
+
+    expect(reserveCreditHoldMock).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 10 }),
+    );
     expect(chunks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: "data-generation-status" }),
@@ -343,6 +352,10 @@ describe("/api/get-next-completion-stream-promise", () => {
       }),
     );
     const chunks = await collectUIChunks(response);
+
+    expect(reserveCreditHoldMock).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 16 }),
+    );
 
     expect(chunks).toEqual(
       expect.arrayContaining([
@@ -414,13 +427,18 @@ describe("/api/get-next-completion-stream-promise", () => {
     });
 
     const response = await POST(
-      request({ messageId: "repair_msg_1", model: "model_1" }),
+      request({
+        messageId: "repair_msg_1",
+        model: "model_1",
+        screenshotData: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+      }),
     );
     const chunks = await collectUIChunks(response);
 
     expect(response.headers.get("x-credit-hold-id")).toBeNull();
     expect(chunks.some((chunk) => chunk.type === "text-delta")).toBe(true);
     expect(reserveCreditHoldMock).not.toHaveBeenCalled();
+    expect(generateTextMock).not.toHaveBeenCalled();
     const call = streamTextMock.mock.calls[0][0];
     expect(call.messages).toHaveLength(2);
     expect(call.messages[1].content).toContain(

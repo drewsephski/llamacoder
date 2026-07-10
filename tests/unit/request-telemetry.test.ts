@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { aiRequestLogCreateMock } = vi.hoisted(() => ({
+const { aiRequestLogCreateMock, creditHoldUpdateManyMock } = vi.hoisted(() => ({
   aiRequestLogCreateMock: vi.fn(),
+  creditHoldUpdateManyMock: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   getPrisma: () => ({
     aiRequestLog: { create: aiRequestLogCreateMock },
+    creditHold: { updateMany: creditHoldUpdateManyMock },
   }),
 }));
 
@@ -17,6 +19,7 @@ describe("AI request telemetry", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-07-10T18:00:00.000Z"));
     aiRequestLogCreateMock.mockReset().mockResolvedValue({});
+    creditHoldUpdateManyMock.mockReset().mockResolvedValue({ count: 1 });
   });
 
   afterEach(() => {
@@ -110,6 +113,68 @@ describe("AI request telemetry", () => {
         status: "error",
         errorMessage: "provider",
         reasoningEffort: "none",
+      }),
+    });
+  });
+
+  it("persists exact OpenRouter cost and accumulates it onto the active hold", async () => {
+    const telemetry = createRequestTelemetry({
+      userId: "user_1",
+      chatId: "chat_1",
+      messageId: "message_1",
+      modelId: "openai/gpt-4.1",
+      creditHoldId: "hold_1",
+      requestKind: "generation",
+      quality: "low",
+      reasoning: {
+        enabled: false,
+        visible: false,
+        mandatory: false,
+        effort: "none",
+      },
+    });
+
+    await telemetry.record({
+      status: "completed",
+      finishReason: "stop",
+      providerRequestId: "request_1",
+      providerMetadata: {
+        openrouter: {
+          provider: "OpenAI",
+          usage: {
+            cost: 0.12,
+            costDetails: { upstreamInferenceCost: 0.1 },
+            promptTokens: 2_000,
+            promptTokensDetails: { cachedTokens: 500 },
+            completionTokens: 1_000,
+            completionTokensDetails: { reasoningTokens: 100 },
+            totalTokens: 3_000,
+          },
+        },
+      },
+    });
+
+    expect(creditHoldUpdateManyMock).toHaveBeenCalledWith({
+      where: { id: "hold_1", status: "active" },
+      data: {
+        providerCostUsd: { increment: 0.12 },
+        upstreamInferenceCostUsd: { increment: 0.1 },
+        inputTokens: { increment: 2_000 },
+        outputTokens: { increment: 1_000 },
+        reasoningTokens: { increment: 100 },
+        totalTokens: { increment: 3_000 },
+        provider: "OpenAI",
+        providerRequestId: "request_1",
+      },
+    });
+    expect(aiRequestLogCreateMock).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        creditHoldId: "hold_1",
+        requestKind: "generation",
+        provider: "OpenAI",
+        providerCostUsd: 0.12,
+        upstreamInferenceCostUsd: 0.1,
+        cachedInputTokens: 500,
       }),
     });
   });

@@ -1,0 +1,53 @@
+---
+title: Prompting guide
+description: Give Squid the product context, behavioral requirements, and visual direction it needs to build a coherent app.
+---
+
+A strong app-building prompt is closer to a compact product brief than a list of technologies. It tells Squid what the user needs to do, which information matters, and how the result should feel.
+
+## The four useful layers
+
+1. **Product context:** audience, use case, and the primary job.
+2. **Information:** the data, labels, and hierarchy the interface must show.
+3. **Behavior:** controls, transitions, validation, and success or empty states.
+4. **Direction:** density, typography, color, references, and responsive priorities.
+
+<Cards>
+  <Card
+    title="Prompt anatomy"
+    description="Turn those four layers into a complete prompt without over-specifying the code."
+    href="/docs/prompting/prompt-anatomy"
+  />
+  <Card
+    title="Starter apps"
+    description="Copy adaptable prompts for approachable first projects."
+    href="/docs/prompting/starter-apps"
+  />
+  <Card
+    title="Landing pages"
+    description="Build specific public pages grounded in a real offer and audience."
+    href="/docs/prompting/landing-pages"
+  />
+  <Card
+    title="Product tools"
+    description="Start with richer dashboards, portals, and operational workflows."
+    href="/docs/prompting/product-tools"
+  />
+</Cards>
+
+## What to leave out
+
+You rarely need to prescribe every component name, folder, CSS class, or dependency. Over-specifying implementation can force unrelated decisions before the product structure is clear.
+
+Instead of “use seven cards in a three-column grid,” say what the user must compare and which item deserves the most emphasis. Instead of “add animations everywhere,” describe the moment where motion should clarify a state change.
+
+## Keep follow-ups testable
+
+Use follow-up prompts to isolate one kind of change:
+
+- **Behavior:** “Keep the layout unchanged; make filters update the results and empty state.”
+- **Content:** “Keep the structure; replace generic sample data with realistic field-service jobs.”
+- **Visual system:** “Keep the workflow; reduce border density and strengthen type hierarchy.”
+- **Responsive:** “Keep desktop unchanged; make the detail panel usable below 768px.”
+
+That makes each new checkpoint easier to compare with the previous one.

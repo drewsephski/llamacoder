@@ -6,6 +6,9 @@ export const LEGACY_KIMI_CODE_MODEL = "moonshotai/kimi-k2.7-code";
 export const LEGACY_MINIMAX_M3_MODEL = "minimax/minimax-m3";
 export const LEGACY_GEMINI_PRO_MODEL = "google/gemini-3.1-pro-preview";
 export const LEGACY_QWEN_MAX_MODEL = "qwen/qwen3.7-max";
+export const LEGACY_GPT_5_4_MODEL = "openai/gpt-5.4";
+export const LEGACY_CLAUDE_OPUS_MODEL = "anthropic/claude-opus-4.6";
+export const LEGACY_LAGUNA_MODEL = "poolside/laguna-xs-2.1";
 export const SECONDARY_STARTER_MODEL = "google/gemini-2.5-flash-lite";
 export const SAFE_GPT_MODEL = "openai/gpt-4.1";
 

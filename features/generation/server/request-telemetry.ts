@@ -4,6 +4,7 @@ import type {
   GenerationQuality,
   OpenRouterReasoningSelection,
 } from "@/lib/openrouter";
+import { getOpenRouterUsageMetadata } from "@/lib/openrouter";
 import { getPrisma } from "@/lib/prisma";
 
 type TelemetryStatus = "completed" | "error" | "aborted";
@@ -13,6 +14,8 @@ type RequestTelemetryOptions = {
   chatId: string;
   messageId: string;
   modelId: string;
+  creditHoldId?: string;
+  requestKind?: "generation" | "free_repair" | "screenshot" | "title";
   quality: GenerationQuality;
   reasoning: OpenRouterReasoningSelection;
 };
@@ -45,11 +48,17 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
     status,
     usage,
     finishReason,
+    providerMetadata,
+    providerRequestId,
+    provider,
     error,
   }: {
     status: TelemetryStatus;
     usage?: LanguageModelUsage;
     finishReason?: string;
+    providerMetadata?: unknown;
+    providerRequestId?: string;
+    provider?: string;
     error?: unknown;
   }) => {
     if (recorded) return;
@@ -62,13 +71,45 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
           ? error
           : undefined;
 
+    const openRouterUsage = getOpenRouterUsageMetadata(providerMetadata);
+    const inputTokens = openRouterUsage?.inputTokens ?? usage?.inputTokens;
+    const outputTokens = openRouterUsage?.outputTokens ?? usage?.outputTokens;
+    const reasoningTokens =
+      openRouterUsage?.reasoningTokens ??
+      usage?.outputTokenDetails.reasoningTokens;
+    const totalTokens = openRouterUsage?.totalTokens ?? usage?.totalTokens;
+    const resolvedProvider = openRouterUsage?.provider ?? provider;
+    const prisma = getPrisma();
+
     try {
-      await getPrisma().aiRequestLog.create({
+      if (options.creditHoldId && status === "completed") {
+        await prisma.creditHold.updateMany({
+          where: { id: options.creditHoldId, status: "active" },
+          data: {
+            providerCostUsd: {
+              increment: openRouterUsage?.providerCostUsd ?? 0,
+            },
+            upstreamInferenceCostUsd: {
+              increment: openRouterUsage?.upstreamInferenceCostUsd ?? 0,
+            },
+            inputTokens: { increment: inputTokens ?? 0 },
+            outputTokens: { increment: outputTokens ?? 0 },
+            reasoningTokens: { increment: reasoningTokens ?? 0 },
+            totalTokens: { increment: totalTokens ?? 0 },
+            provider: resolvedProvider,
+            providerRequestId,
+          },
+        });
+      }
+
+      await prisma.aiRequestLog.create({
         data: {
           userId: options.userId,
           chatId: options.chatId,
           messageId: options.messageId,
+          creditHoldId: options.creditHoldId,
           modelId: options.modelId,
+          requestKind: options.requestKind ?? "generation",
           quality: options.quality,
           reasoningEnabled: options.reasoning.enabled,
           reasoningMandatory: options.reasoning.mandatory,
@@ -76,10 +117,16 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
           timeToFirstByteMs,
           timeToFirstReasoningDeltaMs,
           timeToFirstTextDeltaMs,
-          inputTokens: usage?.inputTokens,
-          outputTokens: usage?.outputTokens,
-          reasoningTokens: usage?.outputTokenDetails.reasoningTokens,
-          totalTokens: usage?.totalTokens,
+          inputTokens,
+          outputTokens,
+          reasoningTokens,
+          totalTokens,
+          cachedInputTokens: openRouterUsage?.cachedInputTokens,
+          provider: resolvedProvider,
+          providerRequestId,
+          providerCostUsd: openRouterUsage?.providerCostUsd,
+          upstreamInferenceCostUsd:
+            openRouterUsage?.upstreamInferenceCostUsd,
           finishReason,
           status,
           errorMessage: errorMessage?.slice(0, 2000),

@@ -14,6 +14,7 @@ type FooterProps = {
 
 const primaryLinks = [
   { href: "/", label: "Home" },
+  { href: "/docs", label: "Docs" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/usage", label: "Usage" },
   { href: "/sign-in", label: "Sign in" },

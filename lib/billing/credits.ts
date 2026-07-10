@@ -5,9 +5,12 @@ import {
   canTierUseModel,
   estimateOutputTokensFromText,
   estimateModelCostUsd,
+  getCostBasedCreditCharge,
   getGenerationSizeBand,
   getModelCreditHoldCost,
   getModelCreditCost,
+  hasModelPricing,
+  MODEL_COST_OVERHEAD_MULTIPLIER,
   normalizeTier,
 } from "./config";
 
@@ -74,11 +77,13 @@ type CreditGrantForConsumption = {
   remainingAmount: number;
   expiresAt: Date | null;
   createdAt: Date;
+  unitRevenueUsd?: number | null;
 };
 
 type CreditAllocation = {
   grantId: string;
   amount: number;
+  unitRevenueUsd?: number;
 };
 
 function getHasPurchasedCredits(user: {
@@ -157,6 +162,7 @@ async function getUsableCreditGrants({
         remainingAmount: true,
         expiresAt: true,
         createdAt: true,
+        unitRevenueUsd: true,
       },
     })) ?? [];
 
@@ -242,7 +248,11 @@ async function decrementUsableCreditGrants({
       throw new Error("CREDIT_GRANT_RACE");
     }
 
-    allocations.push({ grantId: grant.id, amount: decrement });
+    allocations.push({
+      grantId: grant.id,
+      amount: decrement,
+      unitRevenueUsd: grant.unitRevenueUsd ?? 0,
+    });
     remaining -= decrement;
   }
 
@@ -277,7 +287,17 @@ function parseCreditAllocations(value: Prisma.JsonValue): CreditAllocation[] {
       typeof item.amount === "number" &&
       item.amount > 0
     ) {
-      return [{ grantId: item.grantId, amount: item.amount }];
+      return [
+        {
+          grantId: item.grantId,
+          amount: item.amount,
+          unitRevenueUsd:
+            "unitRevenueUsd" in item &&
+            typeof item.unitRevenueUsd === "number"
+              ? item.unitRevenueUsd
+              : 0,
+        },
+      ];
     }
 
     return [];
@@ -295,11 +315,44 @@ function refundUnusedAllocations(
     if (remaining <= 0) break;
 
     const amount = Math.min(remaining, allocation.amount);
-    refunds.push({ grantId: allocation.grantId, amount });
+    refunds.push({
+      grantId: allocation.grantId,
+      amount,
+      unitRevenueUsd: allocation.unitRevenueUsd,
+    });
     remaining -= amount;
   }
 
   return refunds;
+}
+
+function subtractAllocationRefunds(
+  allocations: CreditAllocation[],
+  refunds: CreditAllocation[],
+) {
+  const refundedByGrant = new Map<string, number>();
+  for (const refund of refunds) {
+    refundedByGrant.set(
+      refund.grantId,
+      (refundedByGrant.get(refund.grantId) ?? 0) + refund.amount,
+    );
+  }
+
+  return allocations.flatMap((allocation) => {
+    const capturedAmount =
+      allocation.amount - (refundedByGrant.get(allocation.grantId) ?? 0);
+    return capturedAmount > 0
+      ? [{ ...allocation, amount: capturedAmount }]
+      : [];
+  });
+}
+
+function getAllocationRevenueUsd(allocations: CreditAllocation[]) {
+  return allocations.reduce(
+    (total, allocation) =>
+      total + allocation.amount * (allocation.unitRevenueUsd ?? 0),
+    0,
+  );
 }
 
 async function checkCreditAccess({
@@ -313,6 +366,10 @@ async function checkCreditAccess({
   modelId: string;
   requiredCredits?: number;
 }): Promise<CreditCheckResult> {
+  if (!hasModelPricing(modelId)) {
+    return { success: false, error: "FORBIDDEN_MODEL" };
+  }
+
   const creditCost = requiredCredits ?? getModelCreditHoldCost(modelId);
 
   const user = await client.user.findUnique({
@@ -393,7 +450,9 @@ export async function checkProjectCreationEligibility({
   modelId: string;
 }): Promise<ProjectCreationEligibility> {
   const prisma = client ?? getPrisma();
-  const modelCost = getModelCreditHoldCost(modelId);
+  const modelCost = hasModelPricing(modelId)
+    ? getModelCreditHoldCost(modelId)
+    : 0;
 
   try {
     const [projectCount, user] = await Promise.all([
@@ -513,18 +572,24 @@ function getGenerationChargeDetails({
   inputTokens,
   outputTokens,
   generatedText,
+  providerCostUsd,
 }: {
   modelId: string;
   inputTokens?: number;
   outputTokens?: number;
   generatedText?: string;
+  providerCostUsd?: number;
 }) {
   const actualOutputTokens =
     outputTokens ??
     (generatedText ? estimateOutputTokensFromText(generatedText) : undefined);
-  const creditCost = getModelCreditCost(modelId, {
+  const sizeBasedCreditCost = getModelCreditCost(modelId, {
     outputTokens: actualOutputTokens,
   });
+  const creditCost = Math.max(
+    sizeBasedCreditCost,
+    getCostBasedCreditCharge(providerCostUsd ?? 0),
+  );
   const estimatedCreditCost = getModelCreditHoldCost(modelId);
   const costOutputTokens =
     actualOutputTokens ??
@@ -534,6 +599,11 @@ function getGenerationChargeDetails({
     inputTokens,
     outputTokens: costOutputTokens,
   });
+  if (providerCostUsd !== undefined && providerCostUsd >= 0) {
+    costEstimate.estimatedModelCostUsd = providerCostUsd;
+    costEstimate.riskAdjustedModelCostUsd =
+      providerCostUsd * MODEL_COST_OVERHEAD_MULTIPLIER;
+  }
   const generationSize = getGenerationSizeBand(costOutputTokens);
 
   return {
@@ -557,6 +627,12 @@ async function createUsageAuditRecords({
   phase,
   status,
   tokensUsed,
+  reasoningTokens,
+  provider,
+  actualModelCostUsd,
+  upstreamInferenceCostUsd,
+  estimatedRevenueUsd,
+  refundedCredits = 0,
 }: {
   client: BillingClient;
   userId: string;
@@ -570,6 +646,12 @@ async function createUsageAuditRecords({
   phase?: string;
   status: string;
   tokensUsed?: number;
+  reasoningTokens?: number;
+  provider?: string;
+  actualModelCostUsd?: number;
+  upstreamInferenceCostUsd?: number;
+  estimatedRevenueUsd?: number;
+  refundedCredits?: number;
 }) {
   const reason =
     description || `AI generation - ${modelId.split("/").pop() || modelId}`;
@@ -591,15 +673,24 @@ async function createUsageAuditRecords({
       creditsUsed: creditCost,
       estimatedCredits: estimatedCreditCost,
       actualCredits: creditCost,
-      refundedCredits: 0,
+      refundedCredits,
       reason,
       phase,
       tokensUsed,
       inputTokens: costEstimate.inputTokens,
       outputTokens: costEstimate.outputTokens,
+      reasoningTokens,
       generationSize,
       estimatedModelCostUsd: costEstimate.estimatedModelCostUsd,
       riskAdjustedModelCostUsd: costEstimate.riskAdjustedModelCostUsd,
+      actualModelCostUsd,
+      upstreamInferenceCostUsd,
+      provider,
+      estimatedRevenueUsd,
+      estimatedGrossMarginUsd:
+        estimatedRevenueUsd !== undefined && actualModelCostUsd !== undefined
+          ? estimatedRevenueUsd - actualModelCostUsd
+          : undefined,
       chatId: chatId || null,
       status,
     },
@@ -610,7 +701,7 @@ export async function reserveCreditHold({
   userId,
   modelId,
   chatId,
-  amount = getModelCreditHoldCost(modelId),
+  amount,
   reason,
   phase = "generation",
 }: {
@@ -626,12 +717,17 @@ export async function reserveCreditHold({
   const prisma = getPrisma();
 
   try {
+    if (!hasModelPricing(modelId)) {
+      return { success: false, error: "FORBIDDEN_MODEL" };
+    }
+    const holdAmount = amount ?? getModelCreditHoldCost(modelId);
+
     return await prisma.$transaction(async (tx) => {
       const access = await checkCreditAccess({
         client: tx,
         userId,
         modelId,
-        requiredCredits: amount,
+        requiredCredits: holdAmount,
       });
 
       if (!access.success) return access;
@@ -639,7 +735,7 @@ export async function reserveCreditHold({
       const allocations = await decrementUsableCreditGrants({
         client: tx,
         userId,
-        amount,
+        amount: holdAmount,
       });
 
       if (!allocations) {
@@ -647,8 +743,8 @@ export async function reserveCreditHold({
       }
 
       const updateResult = await tx.user.updateMany({
-        where: { id: userId, credits: { gte: amount } },
-        data: { credits: { decrement: amount } },
+        where: { id: userId, credits: { gte: holdAmount } },
+        data: { credits: { decrement: holdAmount } },
       });
 
       if (updateResult.count === 0) {
@@ -661,7 +757,7 @@ export async function reserveCreditHold({
           userId,
           chatId: chatId || null,
           modelId,
-          amountHeld: amount,
+          amountHeld: holdAmount,
           amountCaptured: 0,
           status: "active",
           reason,
@@ -680,7 +776,7 @@ export async function reserveCreditHold({
       return {
         success: true,
         holdId: hold.id,
-        creditsUsed: amount,
+        creditsUsed: holdAmount,
         remainingCredits,
       };
     });
@@ -802,6 +898,12 @@ export async function releaseCreditHold({
 
       if (!hold || hold.status !== "active") return;
 
+      const claimResult = await tx.creditHold.updateMany({
+        where: { id: hold.id, status: "active" },
+        data: { status: "releasing" },
+      });
+      if (claimResult.count === 0) return;
+
       const allocations = parseCreditAllocations(hold.allocations);
       await incrementCreditGrantAllocations({ client: tx, allocations });
       await tx.user.update({
@@ -834,6 +936,10 @@ export async function captureCreditHold({
   inputTokens,
   outputTokens,
   generatedText,
+  providerCostUsd,
+  upstreamInferenceCostUsd,
+  reasoningTokens,
+  provider,
 }: {
   client: Prisma.TransactionClient;
   holdId: string;
@@ -847,6 +953,10 @@ export async function captureCreditHold({
   inputTokens?: number;
   outputTokens?: number;
   generatedText?: string;
+  providerCostUsd?: number;
+  upstreamInferenceCostUsd?: number;
+  reasoningTokens?: number;
+  provider?: string;
 }): Promise<CreditCheckResult> {
   const hold = await client.creditHold.findUnique({
     where: { id: holdId },
@@ -857,6 +967,13 @@ export async function captureCreditHold({
       amountHeld: true,
       status: true,
       allocations: true,
+      providerCostUsd: true,
+      upstreamInferenceCostUsd: true,
+      inputTokens: true,
+      outputTokens: true,
+      reasoningTokens: true,
+      totalTokens: true,
+      provider: true,
     },
   });
 
@@ -872,41 +989,67 @@ export async function captureCreditHold({
   const { creditCost, estimatedCreditCost, costEstimate, generationSize } =
     getGenerationChargeDetails({
       modelId,
-      inputTokens,
-      outputTokens,
+      inputTokens: hold.inputTokens || inputTokens,
+      outputTokens: hold.outputTokens || outputTokens,
       generatedText,
+      providerCostUsd:
+        hold.providerCostUsd > 0 ? hold.providerCostUsd : providerCostUsd,
     });
 
   if (creditCost > hold.amountHeld) {
     return { success: false, error: "INSUFFICIENT_CREDITS" };
   }
 
+  const claimResult = await client.creditHold.updateMany({
+    where: {
+      id: hold.id,
+      userId,
+      modelId,
+      status: "active",
+    },
+    data: { status: "capturing" },
+  });
+  if (claimResult.count === 0) {
+    return { success: false, error: "INSUFFICIENT_CREDITS" };
+  }
+
+  const allocations = parseCreditAllocations(hold.allocations);
   const refundAmount = hold.amountHeld - creditCost;
+  let refunds: CreditAllocation[] = [];
   if (refundAmount > 0) {
-    const refunds = refundUnusedAllocations(
-      parseCreditAllocations(hold.allocations),
-      refundAmount,
-    );
+    refunds = refundUnusedAllocations(allocations, refundAmount);
     await incrementCreditGrantAllocations({ client, allocations: refunds });
     await client.user.update({
       where: { id: userId },
       data: { credits: { increment: refundAmount } },
     });
   }
+  const capturedAllocations = subtractAllocationRefunds(allocations, refunds);
+  const estimatedRevenueUsd = getAllocationRevenueUsd(capturedAllocations);
 
   await createUsageAuditRecords({
     client,
     userId,
     modelId,
     creditCost,
-    estimatedCreditCost,
+    estimatedCreditCost: hold.amountHeld || estimatedCreditCost,
     costEstimate,
     generationSize,
     chatId,
     description,
     phase,
     status,
-    tokensUsed,
+    tokensUsed: hold.totalTokens || tokensUsed,
+    reasoningTokens: hold.reasoningTokens || reasoningTokens,
+    provider: hold.provider || provider,
+    actualModelCostUsd:
+      hold.providerCostUsd > 0 ? hold.providerCostUsd : providerCostUsd,
+    upstreamInferenceCostUsd:
+      hold.upstreamInferenceCostUsd > 0
+        ? hold.upstreamInferenceCostUsd
+        : upstreamInferenceCostUsd,
+    estimatedRevenueUsd,
+    refundedCredits: refundAmount,
   });
 
   await client.creditHold.update({
@@ -943,6 +1086,10 @@ export async function checkAndConsumeCredits({
   inputTokens,
   outputTokens,
   generatedText,
+  providerCostUsd,
+  upstreamInferenceCostUsd,
+  reasoningTokens,
+  provider,
 }: {
   userId: string;
   modelId: string;
@@ -954,6 +1101,10 @@ export async function checkAndConsumeCredits({
   inputTokens?: number;
   outputTokens?: number;
   generatedText?: string;
+  providerCostUsd?: number;
+  upstreamInferenceCostUsd?: number;
+  reasoningTokens?: number;
+  provider?: string;
 }): Promise<CreditCheckResult> {
   const prisma = getPrisma();
   const { creditCost, estimatedCreditCost, costEstimate, generationSize } =
@@ -962,6 +1113,7 @@ export async function checkAndConsumeCredits({
       inputTokens,
       outputTokens,
       generatedText,
+      providerCostUsd,
     });
 
   try {
@@ -1015,6 +1167,11 @@ export async function checkAndConsumeCredits({
         phase,
         status,
         tokensUsed,
+        reasoningTokens,
+        provider,
+        actualModelCostUsd: providerCostUsd,
+        upstreamInferenceCostUsd,
+        estimatedRevenueUsd: getAllocationRevenueUsd(allocations),
       });
 
       const remainingCredits = await getUsableCreditBalance({
@@ -1049,6 +1206,10 @@ export async function consumeCreditsForGeneration({
   inputTokens,
   outputTokens,
   generatedText,
+  providerCostUsd,
+  upstreamInferenceCostUsd,
+  reasoningTokens,
+  provider,
 }: {
   client: Prisma.TransactionClient;
   userId: string;
@@ -1062,6 +1223,10 @@ export async function consumeCreditsForGeneration({
   inputTokens?: number;
   outputTokens?: number;
   generatedText?: string;
+  providerCostUsd?: number;
+  upstreamInferenceCostUsd?: number;
+  reasoningTokens?: number;
+  provider?: string;
 }): Promise<CreditCheckResult> {
   if (creditHoldId) {
     return captureCreditHold({
@@ -1077,6 +1242,10 @@ export async function consumeCreditsForGeneration({
       inputTokens,
       outputTokens,
       generatedText,
+      providerCostUsd,
+      upstreamInferenceCostUsd,
+      reasoningTokens,
+      provider,
     });
   }
 
@@ -1086,6 +1255,7 @@ export async function consumeCreditsForGeneration({
       inputTokens,
       outputTokens,
       generatedText,
+      providerCostUsd,
     });
   const access = await checkCreditAccess({
     client,
@@ -1136,6 +1306,11 @@ export async function consumeCreditsForGeneration({
     phase,
     status,
     tokensUsed,
+    reasoningTokens,
+    provider,
+    actualModelCostUsd: providerCostUsd,
+    upstreamInferenceCostUsd,
+    estimatedRevenueUsd: getAllocationRevenueUsd(allocations),
   });
 
   const remainingCredits = await getUsableCreditBalance({
@@ -1184,6 +1359,9 @@ export async function addCredits({
           type,
           description,
           dedupeKey: `manual:${type}:${userId}:${Date.now()}`,
+          grossRevenueUsd: 0,
+          netRevenueUsd: 0,
+          unitRevenueUsd: 0,
         },
       });
 

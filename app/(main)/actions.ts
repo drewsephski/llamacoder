@@ -14,6 +14,7 @@ import {
   formatGeneratedFilesMarkdown,
   normalizeGeneratedFiles,
 } from "@/lib/generated-files";
+import { assertFreeRepairAvailable } from "@/features/generation/free-repair-policy";
 import {
   generateFollowUpPrompts,
   saveMessageFollowUpPrompts,
@@ -232,6 +233,8 @@ export async function createPreviewRepairMessage(
   if (!hasAnyGeneratedFiles || !sourceMessage || sourceFiles.length === 0) {
     throw new Error("Repairs require an existing generated version");
   }
+
+  assertFreeRepairAvailable(chat.messages, sourceMessage.id);
 
   const maxPosition =
     chat.messages.length > 0

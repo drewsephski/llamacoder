@@ -1,0 +1,50 @@
+---
+title: Screenshot to app
+description: Use visual references as design evidence while keeping behavior, responsiveness, and implementation requirements explicit.
+---
+
+Screenshots communicate layout, hierarchy, color, typography, and density quickly. They do not fully specify interactions, responsive rules, data behavior, or accessibility. Your prompt should supply those missing dimensions.
+
+## Prepare the reference
+
+Use a clear PNG, JPEG, or WebP image. Crop unrelated browser chrome if it is not part of the target interface, and avoid uploading secrets, private customer data, or credentials.
+
+For a website reference, identify the exact page and state you care about. A public homepage and a signed-in product screen imply very different structures.
+
+## Describe what to preserve
+
+<Prompt title="Reference instructions" text={`Use the attached screenshot as the source of truth for the layout hierarchy, spacing density, typography relationships, surface colors, border treatment, and selected states.
+
+Do not copy the original brand, personal information, or static screenshot pixels into the app. Recreate the interface with semantic React components and make all specified controls functional.`} />
+
+Then add the product behavior: what the user selects, edits, submits, and sees afterward.
+
+## Verify in two passes
+
+First, compare the visual system:
+
+- First-viewport composition
+- Region widths and alignment
+- Typography scale and line breaks
+- Color and border contrast
+- Density, spacing, and container model
+
+Then test product behavior:
+
+- Controls change the correct state.
+- Selected values remain visible.
+- Errors and empty states are recoverable.
+- Mobile behavior preserves the primary task.
+- Focus order and labels remain understandable without the screenshot.
+
+<Callout title="A visual match is not a finished app" type="warn">
+  A static-looking preview can still have inert controls, missing states, or
+  fragile responsive behavior. Evaluate fidelity and functionality separately.
+</Callout>
+
+## Make follow-ups measurable
+
+<Prompt
+  title="Responsive follow-up"
+  text={`Keep the desktop implementation and visual tokens unchanged. Improve the interface below 768px: turn the list and detail regions into separate navigable views, preserve selection and draft state between them, keep primary actions within reach, and eliminate horizontal scrolling.`}
+/>

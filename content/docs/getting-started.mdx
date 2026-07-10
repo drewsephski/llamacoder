@@ -1,0 +1,78 @@
+---
+title: Getting started
+description: Create a focused first project, review the generated app, make a controlled edit, and prepare the code for handoff.
+---
+
+This guide takes you through the complete Squid workflow. You do not need to decide on a component library, directory structure, or exact implementation before you begin.
+
+## 1. Pick one primary job
+
+Start with the most important thing the user should be able to accomplish. A narrow first version gives the model enough room to make coherent product and design decisions.
+
+Good first jobs include:
+
+- Triage a list of support requests.
+- Schedule an appointment and receive confirmation.
+- Complete a short quiz and review the score.
+- Track a focus session and recent history.
+- Compare a small set of business metrics.
+
+Avoid combining unrelated products in one first prompt. “Build a CRM, support desk, landing page, and analytics suite” produces competing priorities before you have validated any one workflow.
+
+## 2. Describe the product surface
+
+Use this short structure:
+
+<Prompt title="First-project template" text={`Build a [type of app] for [specific audience].
+
+The primary job is to [single outcome].
+
+Include:
+
+- [required screen or region]
+- [important data or control]
+- [interaction that must work]
+- [empty, success, or error state]
+
+The interface should feel [two or three concrete visual qualities]. Prioritize the working product experience over a marketing landing page.`} />
+
+You can attach a screenshot or add a website reference when the visual direction is important. Explain what to preserve from the reference—layout, density, typography, color, or interaction—not just “make it like this.”
+
+## 3. Review the first result
+
+Check the generated app in this order:
+
+1. Can the primary task be completed?
+2. Are the important states visible and understandable?
+3. Does the information hierarchy match the user’s job?
+4. Does the mobile layout remain usable?
+5. Are the generated files organized clearly enough to continue editing?
+
+<Callout title="Treat the first result as a working draft" type="info">
+  The first generation establishes the product structure. Focused follow-up
+  edits are usually more predictable than restarting with an increasingly long
+  master prompt.
+</Callout>
+
+## 4. Make one focused edit
+
+Name the exact surface, change, and acceptance criteria.
+
+<Prompt title="Focused follow-up" text={`Improve the feedback detail panel only.
+
+Keep the current navigation, table, filters, data, and color palette unchanged. Make the selected feedback easier to scan by grouping customer context, message content, and internal tags into three clear regions.
+
+The panel must still work at tablet widths and should close with both the close button and Escape key.`} />
+
+This boundary matters. It tells Squid what must change and what must remain stable.
+
+## 5. Inspect and export
+
+Before handing the project to another developer or repository:
+
+- Open the file view and confirm the expected screens and components exist.
+- Review quality and verification information for unresolved issues.
+- Test the main interaction in the preview.
+- Export the project and follow the included run instructions in a clean local directory.
+
+Continue with [Iterate with follow-ups](/docs/workflows/iterate-with-followups) or [Export and handoff](/docs/workflows/export-and-handoff).

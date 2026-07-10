@@ -4,7 +4,7 @@ import { getMainCodingPrompt } from "@/lib/prompts";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { MODELS } from "@/lib/constants";
+import { FREE_MODEL, MODELS } from "@/lib/constants";
 import {
   checkProjectCreationEligibility,
   getModelCreditHoldCost,
@@ -14,7 +14,9 @@ import {
   createOpenRouterModel,
   getAIErrorMessage,
   getOpenRouterProviderOptions,
+  getOpenRouterReasoningSelection,
 } from "@/lib/openrouter";
+import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
   MAX_SCREENSHOT_DATA_URL_LENGTH,
@@ -214,9 +216,21 @@ export async function POST(request: NextRequest) {
           sessionId: chat.id,
           sessionName: "SquidAgent Chat",
         });
+        const titleTelemetry = createRequestTelemetry({
+          userId: session.user.id,
+          chatId: chat.id,
+          messageId: userMessage.id,
+          modelId: FREE_MODEL,
+          requestKind: "title",
+          quality: "low",
+          reasoning: getOpenRouterReasoningSelection(FREE_MODEL, "low"),
+        });
         const responseForChatTitle = await generateText({
-          model: createOpenRouterModel(openrouter, model, { maxTokens: 32 }),
-          providerOptions: getOpenRouterProviderOptions(model, "low"),
+          model: createOpenRouterModel(openrouter, FREE_MODEL, {
+            maxTokens: 32,
+            usage: { include: true },
+          }),
+          providerOptions: getOpenRouterProviderOptions(FREE_MODEL, "low"),
           messages: [
             {
               role: "system",
@@ -228,6 +242,14 @@ export async function POST(request: NextRequest) {
               content: prompt,
             },
           ],
+        });
+
+        await titleTelemetry.record({
+          status: "completed",
+          usage: responseForChatTitle.usage,
+          finishReason: responseForChatTitle.finishReason,
+          providerMetadata: responseForChatTitle.providerMetadata,
+          providerRequestId: responseForChatTitle.response?.id,
         });
 
         await prisma.chat.update({

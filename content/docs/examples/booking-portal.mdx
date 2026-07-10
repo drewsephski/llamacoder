@@ -1,0 +1,41 @@
+---
+title: Appointment booking portal
+description: Build an end-to-end booking flow with service selection, real availability states, validation, and confirmation.
+---
+
+This example is useful for testing multi-step state, form behavior, and mobile ergonomics.
+
+## Initial prompt
+
+<Prompt title="Appointment booking portal" text={`Build an appointment booking portal for Harbor Physio, a neighborhood physical therapy clinic.
+
+The primary job is to choose a visit type, clinician, date, and available time, then submit contact details and receive a clear confirmation.
+
+Include:
+
+- Visit types for initial evaluation, follow-up, and return-to-sport assessment
+- Clinician cards with specialties and availability
+- A date strip and time-slot picker with unavailable, selected, and limited states
+- A contact form with name, email, phone, and optional note
+- A review step before submission
+- Validation, submitting, error, and success states
+- A final confirmation with appointment details and a clear change-appointment action
+
+Selections must persist while moving backward and forward. Disable continuation until the current step is complete. Use fictional availability and contact details.
+
+Use a calm, trustworthy healthcare design with off-white surfaces, deep teal, warm photography used sparingly, accessible contrast, and excellent mobile touch targets. Avoid medical claims, account dashboards, and a marketing-heavy homepage.`} />
+
+## Acceptance checklist
+
+- Each step has one clear next action.
+- Unavailable times cannot be selected.
+- Back navigation preserves earlier choices.
+- Errors appear next to the field and in an accessible summary.
+- The success state repeats the full booking details.
+- The flow is comfortable at a 390px viewport.
+
+## Focused follow-up
+
+<Prompt title="Booking refinement" text={`Keep the current services, clinicians, branding, and step order. Improve validation and recovery only.
+
+Add inline errors after a field is touched, focus the first invalid field on submit, preserve all valid values after an error, and provide a retry path if the final booking request fails.`} />

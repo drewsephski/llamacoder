@@ -2,7 +2,12 @@ import type Stripe from "stripe";
 import { Prisma } from "@prisma/client";
 import { CREDIT_PACK_CONFIGS, STRIPE_PRICE_IDS, stripe } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
-import { TIERS, normalizeTier, type TierKey } from "./config";
+import {
+  TIERS,
+  estimateStripeNetRevenueUsd,
+  normalizeTier,
+  type TierKey,
+} from "./config";
 
 type CreditGrantType = "purchase" | "subscription" | "referral";
 type SubscriptionTier = Extract<TierKey, "pro" | "pro_plus">;
@@ -134,6 +139,8 @@ async function grantCreditsOnce({
   stripeCheckoutSessionId,
   stripeInvoiceId,
   stripeSubscriptionId,
+  grossRevenueUsd,
+  netRevenueUsd,
 }: {
   userId: string;
   amount: number;
@@ -146,6 +153,8 @@ async function grantCreditsOnce({
   stripeCheckoutSessionId?: string;
   stripeInvoiceId?: string;
   stripeSubscriptionId?: string;
+  grossRevenueUsd?: number;
+  netRevenueUsd?: number;
 }) {
   const prisma = getPrisma();
 
@@ -159,6 +168,7 @@ async function grantCreditsOnce({
               userId,
               type: "subscription",
               remainingAmount: { gt: 0 },
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
             },
             orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }],
             select: {
@@ -191,6 +201,18 @@ async function grantCreditsOnce({
             },
           });
         }
+
+        if (expiresAt) {
+          await tx.creditGrant.updateMany({
+            where: {
+              userId,
+              type: "subscription",
+              remainingAmount: { gt: 0 },
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+            },
+            data: { expiresAt },
+          });
+        }
       }
 
       await tx.creditGrant.create({
@@ -206,6 +228,12 @@ async function grantCreditsOnce({
           stripeCheckoutSessionId,
           stripeInvoiceId,
           stripeSubscriptionId,
+          grossRevenueUsd,
+          netRevenueUsd,
+          unitRevenueUsd:
+            amount > 0 && netRevenueUsd !== undefined
+              ? netRevenueUsd / amount
+              : 0,
         },
       });
 
@@ -236,6 +264,42 @@ async function grantCreditsOnce({
 
     throw error;
   }
+}
+
+function getRevenueBackedSubscriptionCredits({
+  invoice,
+  monthlyCredits,
+  monthlyPriceUsd,
+}: {
+  invoice: Stripe.Invoice;
+  monthlyCredits: number;
+  monthlyPriceUsd: number;
+}) {
+  const invoiceWithRevenue = invoice as Stripe.Invoice & {
+    total_excluding_tax?: number | null;
+    subtotal_excluding_tax?: number | null;
+    amount_paid?: number;
+  };
+  const fullPriceCents = Math.round(monthlyPriceUsd * 100);
+  const revenueCents =
+    invoiceWithRevenue.total_excluding_tax ??
+    invoiceWithRevenue.subtotal_excluding_tax ??
+    invoiceWithRevenue.amount_paid ??
+    fullPriceCents;
+
+  if (fullPriceCents <= 0 || revenueCents <= 0) {
+    return { credits: 0, grossRevenueUsd: 0, netRevenueUsd: 0 };
+  }
+
+  const grossRevenueUsd = revenueCents / 100;
+  return {
+    credits: Math.min(
+      monthlyCredits,
+      Math.floor((monthlyCredits * revenueCents) / fullPriceCents),
+    ),
+    grossRevenueUsd,
+    netRevenueUsd: estimateStripeNetRevenueUsd(grossRevenueUsd),
+  };
 }
 
 async function grantReferralCreditsForUpgrade({
@@ -435,17 +499,33 @@ export async function fulfillPaidInvoice(
     throw new Error(`Unknown subscription tier: ${syncedSubscription.tier}`);
   }
 
+  const revenueBackedGrant = getRevenueBackedSubscriptionCredits({
+    invoice: expandedInvoice,
+    monthlyCredits: tierConfig.monthlyCredits,
+    monthlyPriceUsd: tierConfig.price,
+  });
+  if (revenueBackedGrant.credits <= 0) {
+    return {
+      fulfilled: false,
+      reason: "invoice_without_credit_revenue",
+      userId: syncedSubscription.userId,
+      invoiceId,
+    };
+  }
+
   const grant = await grantCreditsOnce({
     userId: syncedSubscription.userId,
-    amount: tierConfig.monthlyCredits,
+    amount: revenueBackedGrant.credits,
     type: "subscription",
-    description: `${tierConfig.name} subscription invoice - ${tierConfig.monthlyCredits} credits`,
+    description: `${tierConfig.name} subscription invoice - ${revenueBackedGrant.credits} credits`,
     dedupeKey: `stripe:invoice:${invoiceId}`,
     expiresAt: syncedSubscription.currentPeriodEnd,
     rolloverCap: tierConfig.rolloverCap,
     stripeEventId: eventId,
     stripeInvoiceId: invoiceId,
     stripeSubscriptionId: syncedSubscription.subscriptionId,
+    grossRevenueUsd: revenueBackedGrant.grossRevenueUsd,
+    netRevenueUsd: revenueBackedGrant.netRevenueUsd,
   });
   const referralGrant = grant.granted
     ? await grantReferralCreditsForUpgrade({
@@ -460,7 +540,7 @@ export async function fulfillPaidInvoice(
     subscriptionId: syncedSubscription.subscriptionId,
     invoiceId,
     tier: syncedSubscription.tier,
-    credits: tierConfig.monthlyCredits,
+    credits: revenueBackedGrant.credits,
     referralGrant,
   };
 }
@@ -505,6 +585,8 @@ async function fulfillCreditPackCheckout(
     dedupeKey: `stripe:checkout-session:${session.id}`,
     stripeEventId: eventId,
     stripeCheckoutSessionId: session.id,
+    grossRevenueUsd: pack.price,
+    netRevenueUsd: estimateStripeNetRevenueUsd(pack.price),
   });
   const referralGrant = grant.granted
     ? await grantReferralCreditsForUpgrade({

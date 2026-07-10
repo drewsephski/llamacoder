@@ -65,6 +65,10 @@ vi.mock("@/lib/openrouter", () => ({
   createOpenRouterModel: vi.fn(() => "openrouter-model"),
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
+  getOpenRouterProviderOptions: vi.fn(() => ({
+    openrouter: { reasoning: { enabled: false } },
+  })),
+  getOpenRouterUsageMetadata: vi.fn(() => null),
 }));
 
 vi.mock("@/lib/follow-up-prompts", () => ({
@@ -212,6 +216,10 @@ describe("/api/generate-code", () => {
       inputTokens: undefined,
       outputTokens: undefined,
       generatedText: expect.stringContaining("```tsx{path=App.tsx}"),
+      providerCostUsd: undefined,
+      upstreamInferenceCostUsd: undefined,
+      reasoningTokens: undefined,
+      provider: undefined,
     });
   });
 

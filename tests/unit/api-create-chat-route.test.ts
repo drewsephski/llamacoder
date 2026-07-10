@@ -66,6 +66,13 @@ vi.mock("@/lib/openrouter", () => ({
       reasoning: { enabled: false },
     },
   })),
+  getOpenRouterUsageMetadata: vi.fn(() => null),
+  getOpenRouterReasoningSelection: vi.fn(() => ({
+    enabled: false,
+    visible: false,
+    mandatory: false,
+    effort: "none",
+  })),
 }));
 
 import { POST } from "@/app/api/create-chat/route";

@@ -1,0 +1,45 @@
+---
+title: Screenshot-led redesign
+description: Combine a visual reference with explicit product requirements so the result preserves intent instead of merely copying pixels.
+---
+
+Attach the screenshot before submitting this prompt. The prompt tells Squid which visual qualities to preserve and which product behavior to implement.
+
+## Initial prompt
+
+<Prompt title="Screenshot-led redesign" text={`Rebuild the attached desktop interface as a responsive customer support inbox for a small ecommerce team.
+
+Use the screenshot as the visual reference for:
+
+- Overall density and three-region layout
+- Typography scale and row rhythm
+- Border, surface, and selected-state treatment
+- Compact header and filter control styling
+
+Do not copy brand names, private data, or decorative content from the screenshot.
+
+The working product must include:
+
+- An inbox list with customer, subject, channel, priority, assignee, and time
+- Search plus channel, status, and assignee filters
+- A selected conversation view with message history and customer context
+- A reply composer with send, internal note, and attachment states
+- Loading, no-results, no-selection, draft, sending, sent, and error states
+
+Preserve filter and draft state when moving between conversations. At tablet and mobile widths, keep the inbox and conversation usable as separate navigable views. Prioritize fidelity to the screenshot's hierarchy and density while meeting these behavior requirements.`} />
+
+## What to compare
+
+Review the result against both the screenshot and the product brief:
+
+- Does the first viewport preserve the reference’s hierarchy and density?
+- Do type sizes, borders, radii, and selected states feel consistent?
+- Is the screenshot treated as a reference rather than shipped as static UI?
+- Do search, filters, selection, and reply states actually work?
+- Does the mobile layout preserve the task instead of shrinking the desktop canvas?
+
+## Focused follow-up
+
+<Prompt title="Fidelity follow-up" text={`Keep all current functionality and sample conversations. Improve visual fidelity to the attached reference only.
+
+Match the header height, list-row density, type hierarchy, divider contrast, selected-row treatment, and detail-column width. Do not add new content, cards, gradients, or controls. Keep the current mobile navigation behavior.`} />

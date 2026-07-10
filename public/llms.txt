@@ -5,6 +5,7 @@
 ## Primary Pages
 
 - [Home](https://squidagent.app/): Build a React application with Squid Agent.
+- [Documentation](https://squidagent.app/docs): Practical build guides, example apps, prompt collections, workflows, and product details.
 - [Comparisons](https://squidagent.app/compare): Evidence-led comparisons of current AI app builders.
 - [Guides](https://squidagent.app/blog): Production-minded guidance for AI-generated React apps.
 - [Benchmarks](https://squidagent.app/benchmarks): Reproducible AI app builder evaluation methods.

@@ -1,0 +1,42 @@
+---
+title: Focus timer
+description: Build a compact interactive timer with explicit states, adjustable sessions, history, and accessible controls.
+---
+
+A timer is a good example because visual polish is easy to see, but correctness depends on state transitions and control behavior.
+
+## Initial prompt
+
+<Prompt title="Focus timer" text={`Build a focus timer for a freelance illustrator who alternates deep-work sessions and short breaks.
+
+The primary job is to start a timed session, see remaining time at a glance, pause or resume safely, and record completed sessions.
+
+Include:
+
+- Focus, short-break, and long-break modes
+- Adjustable durations in a compact settings panel
+- Start, pause, resume, reset, and skip controls
+- A progress ring with a large readable time display
+- Today's completed sessions and total focus time
+- Idle, running, paused, completed, and reduced-motion states
+- Keyboard shortcuts with visible help
+
+Timer controls must update the interface correctly and never create multiple overlapping timers. A completed focus session should be added to today's history before the next break begins.
+
+Use a quiet studio aesthetic with warm gray, near-black text, one saturated coral accent, large numeric typography, and almost no decorative chrome. Make the primary controls usable on mobile.`} />
+
+## Acceptance checklist
+
+- The timer never speeds up after repeated pause/resume actions.
+- Reset and skip have clearly different outcomes.
+- Mode and duration changes are visible before starting.
+- Completed sessions appear in history exactly once.
+- Controls have labels beyond color and icon shape.
+- Reduced motion does not hide essential state changes.
+
+## Focused follow-up
+
+<Prompt
+  title="Timer refinement"
+  text={`Preserve the current visual design and session settings. Fix timer-state behavior only: prevent duplicate intervals, keep the exact remaining time through pause and resume, add a confirmation before reset while running, and record each completed focus session once.`}
+/>

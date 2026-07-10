@@ -1,0 +1,11 @@
+{
+  "title": "Squid Agent Docs",
+  "pages": [
+    "index",
+    "getting-started",
+    "prompting",
+    "examples",
+    "workflows",
+    "product"
+  ]
+}

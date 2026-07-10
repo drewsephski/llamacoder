@@ -1,0 +1,75 @@
+---
+title: Anatomy of a strong prompt
+description: A repeatable structure for specifying the audience, workflow, states, content, and visual direction of an app.
+---
+
+The goal is not to make a prompt long. The goal is to remove ambiguity from the product decisions that matter.
+
+## 1. Name the audience and job
+
+“Build a dashboard” leaves both the data and decisions undefined. “Build a morning operations dashboard for a regional delivery manager” gives the interface a real point of view.
+
+State the primary job as a verb: triage, schedule, compare, approve, publish, review, or track.
+
+## 2. List essential regions
+
+Describe screens or regions by their purpose:
+
+- A queue for work that needs attention.
+- A detail view with enough context to make a decision.
+- Filters that match how the audience thinks about the data.
+- A success state that confirms what changed.
+
+This is more durable than micromanaging containers and grid columns.
+
+## 3. Specify interactions and states
+
+If a control must work, say what it changes. Include the non-happy states that make the surface feel complete.
+
+<Prompt
+  title="Interaction requirements"
+  text={`The status filter must update the visible jobs and result count. Selecting a row opens its detail panel without losing the current filters. Saving a reassignment should update the row, show a brief confirmation, and preserve the selected job. Include a useful no-results state and a disabled save state when nothing changed.`}
+/>
+
+## 4. Give visual direction with evidence
+
+Use concrete qualities that affect implementation:
+
+- Dense or spacious
+- Editorial or utilitarian
+- High-contrast or quiet
+- Sharp or rounded
+- Image-led or data-led
+- One accent color or a broader semantic palette
+
+If you provide a visual reference, explain which parts matter. A screenshot can guide layout and styling, but your text should still define the desired product behavior.
+
+## 5. Protect the scope
+
+End with the priority and important exclusions.
+
+<Prompt title="Complete prompt" text={`Build a shift handoff workspace for charge nurses in a 24-bed hospital unit.
+
+The primary job is to review unresolved patient-care tasks before accepting the next shift.
+
+Include:
+
+- A unit overview with bed number, patient initials, acuity, and outstanding task count
+- Filters for acuity, task owner, and overdue status
+- A patient detail drawer with task history, notes, and a clear accept-handoff action
+- Selected, loading, no-results, validation, and success states
+- Realistic but fictional sample data with no sensitive information
+
+The filters must update the visible rows and counts. Opening and closing the detail drawer must preserve the current filters. Accepting a handoff should update the patient row and show a confirmation.
+
+Use a calm, high-clarity clinical interface with compact spacing, strong type hierarchy, restrained blue and teal accents, and accessible contrast. Prioritize the handoff workflow over analytics, settings, or marketing content.`} />
+
+## A quick self-review
+
+Before submitting, ask:
+
+- Is there one primary user and one primary job?
+- Did I name the data that drives the screen?
+- Did I say which interactions must work?
+- Did I include at least one non-happy state?
+- Is the visual direction specific without prescribing every CSS decision?

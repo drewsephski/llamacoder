@@ -40,17 +40,30 @@ describe("OpenRouter helpers", () => {
   });
 
   it("omits fallback settings for models without fallbacks", () => {
-    getModelWithFallbacksMock.mockReturnValue(["paid/model"]);
+    getModelWithFallbacksMock.mockReturnValue([SAFE_GPT_MODEL]);
     const openrouter = vi.fn();
 
-    createOpenRouterModel(openrouter as never, "paid/model", {
+    createOpenRouterModel(openrouter as never, SAFE_GPT_MODEL, {
       maxTokens: 200,
     });
 
-    expect(openrouter).toHaveBeenCalledWith("paid/model", {
+    expect(openrouter).toHaveBeenCalledWith(SAFE_GPT_MODEL, {
       maxTokens: 200,
       models: undefined,
+      provider: {
+        sort: "price",
+        max_price: { prompt: 2, completion: 8 },
+      },
     });
+  });
+
+  it("rejects an unpriced route before making a provider request", () => {
+    getModelWithFallbacksMock.mockReturnValue(["unknown/model"]);
+    const openrouter = vi.fn();
+
+    expect(() => createOpenRouterModel(openrouter as never, "unknown/model"))
+      .toThrow("UNPRICED_MODEL:unknown/model");
+    expect(openrouter).not.toHaveBeenCalled();
   });
 
   it("uses normalized routes for removed mandatory-reasoning models", () => {

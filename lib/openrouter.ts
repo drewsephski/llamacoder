@@ -3,6 +3,7 @@ import {
   getModelReasoningCapability,
   type ReasoningEffort,
 } from "@/lib/constants";
+import { getModelTokenPricing, hasModelPricing } from "@/lib/billing/config";
 import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
@@ -79,11 +80,67 @@ export function createOpenRouterModel(
   settings: OpenRouterModelSettings = {},
 ) {
   const { primary, fallbacks } = getOpenRouterModelRoute(model);
+  if (!hasModelPricing(primary)) {
+    throw new Error(`UNPRICED_MODEL:${model}`);
+  }
+
+  const tokenPricing = getModelTokenPricing(primary);
+  const configuredProvider = settings.provider;
 
   return openrouter(primary, {
     ...settings,
     models: fallbacks,
+    provider: {
+      sort: "price",
+      ...configuredProvider,
+      max_price: {
+        prompt: tokenPricing.inputPricePerMillion,
+        completion: tokenPricing.outputPricePerMillion,
+        ...configuredProvider?.max_price,
+      },
+    },
   });
+}
+
+type OpenRouterUsageMetadata = {
+  provider?: unknown;
+  usage?: {
+    cost?: unknown;
+    costDetails?: { upstreamInferenceCost?: unknown };
+    promptTokens?: unknown;
+    promptTokensDetails?: { cachedTokens?: unknown };
+    completionTokens?: unknown;
+    totalTokens?: unknown;
+    completionTokensDetails?: { reasoningTokens?: unknown };
+  };
+};
+
+export function getOpenRouterUsageMetadata(providerMetadata: unknown) {
+  if (!providerMetadata || typeof providerMetadata !== "object") return null;
+
+  const openrouter = (providerMetadata as { openrouter?: unknown }).openrouter;
+  if (!openrouter || typeof openrouter !== "object") return null;
+
+  const metadata = openrouter as OpenRouterUsageMetadata;
+  const usage = metadata.usage;
+  const asFiniteNumber = (value: unknown) =>
+    typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+  return {
+    provider:
+      typeof metadata.provider === "string" ? metadata.provider : undefined,
+    providerCostUsd: asFiniteNumber(usage?.cost),
+    upstreamInferenceCostUsd: asFiniteNumber(
+      usage?.costDetails?.upstreamInferenceCost,
+    ),
+    inputTokens: asFiniteNumber(usage?.promptTokens),
+    cachedInputTokens: asFiniteNumber(usage?.promptTokensDetails?.cachedTokens),
+    outputTokens: asFiniteNumber(usage?.completionTokens),
+    reasoningTokens: asFiniteNumber(
+      usage?.completionTokensDetails?.reasoningTokens,
+    ),
+    totalTokens: asFiniteNumber(usage?.totalTokens),
+  };
 }
 
 export function requiresOpenRouterReasoning(model: string) {

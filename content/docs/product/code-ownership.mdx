@@ -1,0 +1,39 @@
+---
+title: Code ownership and checkpoints
+description: Work with generated React files, preserve project history, and move accepted source into your own development workflow.
+---
+
+Squid is designed around exportable React code. The generated project is visible as files, can be refined through follow-up prompts, and can be downloaded for continued development outside the product.
+
+## Generated files
+
+The file view is the durable representation of the current app. Use it to confirm:
+
+- The main entry point and feature components are present.
+- Imports resolve to generated files or installed dependencies.
+- Configuration files match the generated runtime.
+- Important behavior is implemented in code rather than represented only by static markup.
+
+## Checkpoints
+
+Each saved generation or accepted edit becomes part of the project history. That makes it possible to compare the current result with an earlier one and recover when a follow-up introduces a regression.
+
+Restoring a previous result should be treated as creating a new current checkpoint from known-good code, not rewriting the historical record.
+
+## Portability
+
+A portable project needs more than component source. It also needs enough context to install, run, inspect, and deploy the app in another environment. Review the exported README, package configuration, manifest, and quality information that accompany the generated files.
+
+<Callout title="Ownership still includes responsibility" type="info">
+  Exportable source gives you control over the project. You should still review
+  generated code, licenses, data handling, accessibility, security, and
+  external-service configuration before production use.
+</Callout>
+
+## A handoff-focused follow-up
+
+<Prompt title="Prepare for handoff" text={`Prepare this project for a developer handoff without changing the approved interface.
+
+Preserve all working screens, interactions, copy, sample data, routes, and visual tokens. Improve file naming and component boundaries only where they are currently confusing, remove dead code, and make required setup assumptions explicit in the project README.
+
+Do not add features, dependencies, services, or a new design system.`} />

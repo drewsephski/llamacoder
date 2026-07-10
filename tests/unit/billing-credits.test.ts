@@ -21,6 +21,7 @@ vi.mock("@/lib/prisma", () => ({
 
 import {
   addCredits,
+  captureCreditHold,
   checkAndConsumeCredits,
   checkCreditAvailability,
   checkProjectCreationEligibility,
@@ -87,7 +88,7 @@ describe("billing credit engine", () => {
       }),
     ).resolves.toMatchObject({
       success: true,
-      creditsUsed: 8,
+      creditsUsed: 3,
       remainingCredits: 8,
     });
   });
@@ -107,10 +108,10 @@ describe("billing credit engine", () => {
         }),
       ])
       .mockResolvedValueOnce([
-        grant(4, {
+        grant(2, {
           id: "purchase_1",
           type: "purchase",
-          remainingAmount: 4,
+          remainingAmount: 2,
         }),
       ]);
 
@@ -334,6 +335,107 @@ describe("billing credit engine", () => {
       where: { id: "user_1" },
       data: { credits: { increment: 3 } },
     });
+  });
+
+  it("captures from exact provider cost and refunds the unused hold atomically", async () => {
+    const tx = createPrismaTransactionMock();
+    tx.creditHold.findUnique.mockResolvedValueOnce({
+      id: "hold_1",
+      userId: "user_1",
+      modelId: "openai/gpt-4.1",
+      amountHeld: 15,
+      status: "active",
+      allocations: [
+        { grantId: "grant_1", amount: 15, unitRevenueUsd: 0.02 },
+      ],
+      providerCostUsd: 0.12,
+      upstreamInferenceCostUsd: 0.1,
+      inputTokens: 2_000,
+      outputTokens: 1_000,
+      reasoningTokens: 100,
+      totalTokens: 3_000,
+      provider: "OpenAI",
+    });
+    tx.creditHold.updateMany.mockResolvedValueOnce({ count: 1 });
+    tx.creditGrant.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([grant(5)]);
+
+    await expect(
+      captureCreditHold({
+        client: tx as never,
+        holdId: "hold_1",
+        userId: "user_1",
+        modelId: "openai/gpt-4.1",
+        chatId: "chat_1",
+      }),
+    ).resolves.toEqual({
+      success: true,
+      creditsUsed: 10,
+      remainingCredits: 5,
+    });
+
+    expect(tx.creditHold.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "hold_1",
+        userId: "user_1",
+        modelId: "openai/gpt-4.1",
+        status: "active",
+      },
+      data: { status: "capturing" },
+    });
+    expect(tx.creditGrant.update).toHaveBeenCalledWith({
+      where: { id: "grant_1" },
+      data: { remainingAmount: { increment: 5 } },
+    });
+    expect(tx.user.update).toHaveBeenCalledWith({
+      where: { id: "user_1" },
+      data: { credits: { increment: 5 } },
+    });
+    expect(tx.generationLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        creditsUsed: 10,
+        refundedCredits: 5,
+        actualModelCostUsd: 0.12,
+        upstreamInferenceCostUsd: 0.1,
+        estimatedRevenueUsd: 0.2,
+        estimatedGrossMarginUsd: 0.08000000000000002,
+      }),
+    });
+  });
+
+  it("does not refund or charge when another hold finalizer wins the claim", async () => {
+    const tx = createPrismaTransactionMock();
+    tx.creditHold.findUnique.mockResolvedValueOnce({
+      id: "hold_1",
+      userId: "user_1",
+      modelId: FREE_MODEL,
+      amountHeld: 1,
+      status: "active",
+      allocations: [{ grantId: "grant_1", amount: 1 }],
+      providerCostUsd: 0,
+      upstreamInferenceCostUsd: 0,
+      inputTokens: 100,
+      outputTokens: 100,
+      reasoningTokens: 0,
+      totalTokens: 200,
+      provider: null,
+    });
+    tx.creditHold.updateMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(
+      captureCreditHold({
+        client: tx as never,
+        holdId: "hold_1",
+        userId: "user_1",
+        modelId: FREE_MODEL,
+      }),
+    ).resolves.toEqual({ success: false, error: "INSUFFICIENT_CREDITS" });
+
+    expect(tx.creditGrant.update).not.toHaveBeenCalled();
+    expect(tx.user.update).not.toHaveBeenCalled();
+    expect(tx.creditHistory.create).not.toHaveBeenCalled();
+    expect(tx.generationLog.create).not.toHaveBeenCalled();
   });
 
   it("does not permit negative balances when the atomic update loses the race", async () => {

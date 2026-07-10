@@ -16,6 +16,8 @@ import {
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
+  getOpenRouterProviderOptions,
+  getOpenRouterUsageMetadata,
 } from "@/lib/openrouter";
 import { extractAllCodeBlocks } from "@/lib/utils";
 import {
@@ -151,12 +153,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const holdAmount = getModelCreditHoldCost(chat.model) * 2;
     const hold = await reserveCreditHold({
       userId: session.user.id,
       modelId: chat.model,
       chatId: chat.id,
       reason: `Code generation hold - ${chat.title}`,
       phase: "initial_generation",
+      amount: holdAmount,
     });
 
     if (!hold.success) {
@@ -166,7 +170,7 @@ export async function POST(request: NextRequest) {
           error: hold.error,
           message:
             hold.error === "INSUFFICIENT_CREDITS"
-              ? `Need ${getModelCreditHoldCost(chat.model)} credits to start this model. Upgrade or buy credits to continue.`
+              ? `Need ${holdAmount} credits to cover generation and one automatic repair attempt. Unused credits are returned automatically.`
               : "Unable to process request",
         },
         { status: hold.error === "USER_NOT_FOUND" ? 404 : 402 },
@@ -183,7 +187,12 @@ export async function POST(request: NextRequest) {
       generateText({
         model: createOpenRouterModel(openrouter, chat.model, {
           maxTokens: GENERATED_CODE_MAX_TOKENS,
+          usage: { include: true },
         }),
+        providerOptions: getOpenRouterProviderOptions(
+          chat.model,
+          chat.quality === "high" ? "high" : "low",
+        ),
         messages: [
           {
             role: "system",
@@ -207,20 +216,28 @@ export async function POST(request: NextRequest) {
         completionTokens?: unknown;
       };
     }).usage;
-    const tokensUsed =
+    let tokensUsed =
       typeof usage?.totalTokens === "number" ? usage.totalTokens : undefined;
-    const inputTokens =
+    let inputTokens =
       typeof usage?.inputTokens === "number"
         ? usage.inputTokens
         : typeof usage?.promptTokens === "number"
           ? usage.promptTokens
           : undefined;
-    const outputTokens =
+    let outputTokens =
       typeof usage?.outputTokens === "number"
         ? usage.outputTokens
         : typeof usage?.completionTokens === "number"
           ? usage.completionTokens
           : undefined;
+    const initialProviderUsage = getOpenRouterUsageMetadata(
+      codeResponse.providerMetadata,
+    );
+    let providerCostUsd = initialProviderUsage?.providerCostUsd;
+    let upstreamInferenceCostUsd =
+      initialProviderUsage?.upstreamInferenceCostUsd;
+    let reasoningTokens = initialProviderUsage?.reasoningTokens;
+    let provider = initialProviderUsage?.provider;
 
     if (!codeResponse.text.trim()) {
       await releaseHoldAndResetChat();
@@ -247,6 +264,35 @@ export async function POST(request: NextRequest) {
           diagnostics,
         ),
       );
+      const repairProviderUsage = getOpenRouterUsageMetadata(
+        repairResponse.providerMetadata,
+      );
+      providerCostUsd =
+        (providerCostUsd ?? 0) + (repairProviderUsage?.providerCostUsd ?? 0);
+      upstreamInferenceCostUsd =
+        (upstreamInferenceCostUsd ?? 0) +
+        (repairProviderUsage?.upstreamInferenceCostUsd ?? 0);
+      inputTokens =
+        (inputTokens ?? 0) +
+        (repairProviderUsage?.inputTokens ??
+          repairResponse.usage?.inputTokens ??
+          0);
+      outputTokens =
+        (outputTokens ?? 0) +
+        (repairProviderUsage?.outputTokens ??
+          repairResponse.usage?.outputTokens ??
+          0);
+      reasoningTokens =
+        (reasoningTokens ?? 0) +
+        (repairProviderUsage?.reasoningTokens ??
+          repairResponse.usage?.outputTokenDetails.reasoningTokens ??
+          0);
+      tokensUsed =
+        (tokensUsed ?? 0) +
+        (repairProviderUsage?.totalTokens ??
+          repairResponse.usage?.totalTokens ??
+          0);
+      provider = repairProviderUsage?.provider ?? provider;
       const repairedFiles = normalizeGeneratedFiles(
         extractAllCodeBlocks(repairResponse.text),
       );
@@ -329,6 +375,10 @@ export async function POST(request: NextRequest) {
         inputTokens,
         outputTokens,
         generatedText: content,
+        providerCostUsd,
+        upstreamInferenceCostUsd,
+        reasoningTokens,
+        provider,
       });
 
       if (!consumeResult.success) {

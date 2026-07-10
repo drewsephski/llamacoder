@@ -32,9 +32,11 @@ import { extractAllCodeBlocks } from "@/lib/utils";
 import { screenshotToCodePrompt } from "@/lib/prompts";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
+  FREE_MODEL,
   MAX_SCREENSHOT_DATA_URL_LENGTH,
   MAX_SCREENSHOT_SIZE_MB,
 } from "@/lib/constants";
+import { DEFAULT_ESTIMATED_INPUT_TOKENS } from "@/lib/billing/config";
 import type { GenerationStatus } from "@/features/generation/contracts";
 import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
 
@@ -69,6 +71,48 @@ function optimizeMessagesForTokens(
     }
     return msg;
   });
+}
+
+const MAX_INPUT_CHARACTERS = DEFAULT_ESTIMATED_INPUT_TOKENS * 3;
+
+function clampMessagesToBillingBudget(
+  messages: { role: "system" | "user" | "assistant"; content: string }[],
+) {
+  if (
+    messages.reduce((total, message) => total + message.content.length, 0) <=
+    MAX_INPUT_CHARACTERS
+  ) {
+    return messages;
+  }
+
+  const systemMessage = messages.find((message) => message.role === "system");
+  const nonSystemMessages = messages.filter(
+    (message) => message !== systemMessage,
+  );
+  const kept: typeof messages = [];
+  let remaining = Math.max(
+    0,
+    MAX_INPUT_CHARACTERS - (systemMessage?.content.length ?? 0),
+  );
+
+  for (let index = nonSystemMessages.length - 1; index >= 0; index -= 1) {
+    const message = nonSystemMessages[index];
+    if (remaining <= 0) break;
+
+    if (message.content.length <= remaining) {
+      kept.unshift(message);
+      remaining -= message.content.length;
+      continue;
+    }
+
+    kept.unshift({
+      ...message,
+      content: `[Earlier context truncated]\n${message.content.slice(-remaining)}`,
+    });
+    remaining = 0;
+  }
+
+  return systemMessage ? [systemMessage, ...kept] : kept;
 }
 
 function getStoredGeneratedFiles(message: CompletionMessage) {
@@ -226,6 +270,12 @@ export async function POST(req: Request) {
     const isFreeRepairRequest =
       messageMetadata?.kind === "preview_repair_request" &&
       messageMetadata.chargeCredits === false;
+    const executionModel = isFreeRepairRequest ? FREE_MODEL : chatModel;
+    const executionQuality = isFreeRepairRequest ? "low" : quality;
+    const holdAmount = isFreeRepairRequest
+      ? 0
+      : getModelCreditHoldCost(chatModel) +
+        (screenshotData ? getModelCreditHoldCost(VISION_ANALYSIS_MODEL) : 0);
 
     if (!isFreeRepairRequest) {
       const hold = await reserveCreditHold({
@@ -234,12 +284,13 @@ export async function POST(req: Request) {
         chatId: message.chat.id,
         reason: "Follow-up generation hold",
         phase: "follow_up",
+        amount: holdAmount,
       });
 
       if (!hold.success) {
         return new Response(
           hold.error === "INSUFFICIENT_CREDITS"
-            ? `Need ${getModelCreditHoldCost(chatModel)} credits to start this model. Upgrade or buy credits to continue.`
+            ? `Need ${holdAmount} credits to start this request. Unused credits are returned automatically.`
             : "Unable to process request",
           { status: hold.error === "USER_NOT_FOUND" ? 404 : 402 },
         );
@@ -317,13 +368,18 @@ export async function POST(req: Request) {
       sessionId: message.chatId,
       sessionName: "SquidAgent Chat",
     });
-    const reasoning = getOpenRouterReasoningSelection(chatModel, quality);
+    const reasoning = getOpenRouterReasoningSelection(
+      executionModel,
+      executionQuality,
+    );
     const telemetry = createRequestTelemetry({
       userId: session.user.id,
       chatId: message.chatId,
       messageId,
-      modelId: chatModel,
-      quality,
+      modelId: executionModel,
+      creditHoldId: holdId,
+      requestKind: isFreeRepairRequest ? "free_repair" : "generation",
+      quality: executionQuality,
       reasoning,
     });
 
@@ -343,19 +399,33 @@ export async function POST(req: Request) {
             label: "Preparing your project",
           });
 
-          if (screenshotData) {
+          if (screenshotData && !isFreeRepairRequest) {
             writeStatus({
               phase: "analyzing-reference",
               label: "Analyzing your reference image",
             });
 
             try {
+              const screenshotTelemetry = createRequestTelemetry({
+                userId: session.user.id,
+                chatId: message.chatId,
+                messageId,
+                modelId: VISION_ANALYSIS_MODEL,
+                creditHoldId: holdId,
+                requestKind: "screenshot",
+                quality: "low",
+                reasoning: getOpenRouterReasoningSelection(
+                  VISION_ANALYSIS_MODEL,
+                  "low",
+                ),
+              });
               const screenshotResponse = await generateText({
                 model: createOpenRouterModel(
                   openrouter,
                   VISION_ANALYSIS_MODEL,
                   {
                     maxTokens: 1000,
+                    usage: { include: true },
                   },
                 ),
                 providerOptions: getOpenRouterProviderOptions(
@@ -372,6 +442,14 @@ export async function POST(req: Request) {
                     ],
                   },
                 ],
+              });
+
+              await screenshotTelemetry.record({
+                status: "completed",
+                usage: screenshotResponse.usage,
+                finishReason: screenshotResponse.finishReason,
+                providerMetadata: screenshotResponse.providerMetadata,
+                providerRequestId: screenshotResponse.response?.id,
               });
 
               if (screenshotResponse.text) {
@@ -409,12 +487,14 @@ export async function POST(req: Request) {
           );
 
           const result = streamText({
-            model: createOpenRouterModel(openrouter, chatModel, {
-              maxTokens: GENERATED_CODE_MAX_TOKENS,
+            model: createOpenRouterModel(openrouter, executionModel, {
+              maxTokens: isFreeRepairRequest
+                ? 4_000
+                : GENERATED_CODE_MAX_TOKENS,
               usage: { include: true },
             }),
             providerOptions: reasoning.providerOptions,
-            messages: guardedMessages,
+            messages: clampMessagesToBillingBudget(guardedMessages),
             temperature: 0.4,
             onChunk({ chunk }) {
               if (
@@ -424,11 +504,20 @@ export async function POST(req: Request) {
                 telemetry.markChunk(chunk.type);
               }
             },
-            async onFinish({ usage, finishReason }) {
+            async onFinish({
+              usage,
+              finishReason,
+              providerMetadata,
+              response,
+              model: completedModel,
+            }) {
               await telemetry.record({
                 status: finishReason === "error" ? "error" : "completed",
                 usage,
                 finishReason,
+                providerMetadata,
+                providerRequestId: response?.id,
+                provider: completedModel.provider,
               });
             },
             async onAbort() {

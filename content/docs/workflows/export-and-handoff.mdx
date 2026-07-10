@@ -1,0 +1,52 @@
+---
+title: Export and handoff
+description: Inspect the generated project, download a portable bundle, and validate it in a clean development environment.
+---
+
+Export is the point where a generated preview becomes a project another developer can own. Treat it as a verification step, not only a download action.
+
+## Before export
+
+- Complete the primary interaction in the live preview.
+- Review generated-file diagnostics and quality information.
+- Confirm that the selected checkpoint is the version you intend to hand off.
+- Inspect the file tree for expected source, configuration, and support files.
+- Remove placeholder copy or fictional data that should not ship.
+
+## What the bundle is for
+
+Squid exports are designed to include the generated source plus the support files and project information needed to continue in a normal development workflow. The exact contents can vary with the generated project, so inspect the exported README and manifest instead of assuming every project has the same dependencies.
+
+## Validate in a clean directory
+
+1. Extract the bundle outside the Squid repository.
+2. Read the included run instructions.
+3. Install with the package manager named by the project.
+4. Start the local app and test the primary path.
+5. Run the included build, lint, or verification commands when present.
+6. Review environment variables before connecting external services.
+
+```bash
+# Example only — use the commands included with your export.
+pnpm install
+pnpm dev
+```
+
+<Callout title="Never copy production secrets into a prompt" type="warn">
+  Add credentials through the destination environment’s secret management after
+  export. Keep API keys, tokens, private customer data, and regulated
+  information out of prompts and generated source.
+</Callout>
+
+## Handoff notes
+
+Give the next developer:
+
+- The original product brief and important follow-up prompts
+- The accepted checkpoint and any known limitations
+- The primary user path and expected states
+- Required environment variables without secret values
+- The quality or verification issues that remain
+- Screenshots of the accepted desktop and mobile result
+
+That context is often as valuable as the source itself.

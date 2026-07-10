@@ -304,6 +304,38 @@ describe("server actions", () => {
     });
   });
 
+  it("limits included preview repair to one request per source version", async () => {
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        messages: [
+          buildMessage({ position: 0, role: "system" }),
+          buildMessage({
+            id: "assistant_1",
+            position: 1,
+            role: "assistant",
+            files: [{ path: "App.tsx", code: "export default 1" }],
+          }),
+          buildMessage({
+            id: "repair_user_1",
+            position: 2,
+            role: "user",
+            files: {
+              kind: "preview_repair_request",
+              chargeCredits: false,
+              sourceMessageId: "assistant_1",
+              usedAt: "2026-07-10T18:00:00.000Z",
+            },
+          }),
+        ],
+      }),
+    );
+
+    await expect(
+      createPreviewRepairMessage("chat_1", "ReferenceError: x is not defined"),
+    ).rejects.toThrow("already used its included preview repair");
+    expect(prismaMock.message.create).not.toHaveBeenCalled();
+  });
+
   it("restores an old assistant version as a new checkpoint without charging credits", async () => {
     prismaMock.chat.findUnique.mockResolvedValueOnce(
       buildChat({

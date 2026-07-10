@@ -1,0 +1,66 @@
+---
+title: Build better apps with Squid
+description: Practical documentation for turning prompts, screenshots, and website references into React apps you can inspect, improve, and export.
+---
+
+Squid Agent is an AI app builder centered on a simple promise: move quickly without giving up the code. Describe the product surface you need, review the generated React project, refine it with follow-up instructions, and export the result when it is ready.
+
+<Callout title="Start with the workflow, not the framework" type="tip">
+  The strongest prompts describe who the app is for, what they need to
+  accomplish, and what a successful state looks like. Squid handles the
+  implementation details from there.
+</Callout>
+
+## Choose a starting point
+
+<Cards>
+  <Card
+    title="Build your first app"
+    description="Go from a product idea to a working React project, then make a focused first edit."
+    href="/docs/getting-started"
+  />
+  <Card
+    title="Write a stronger prompt"
+    description="Use a repeatable prompt structure that produces a specific, testable product surface."
+    href="/docs/prompting/prompt-anatomy"
+  />
+  <Card
+    title="Browse example apps"
+    description="Copy complete prompts for dashboards, portals, timers, and screenshot-led redesigns."
+    href="/docs/examples"
+  />
+  <Card
+    title="Explore prompt collections"
+    description="Start from curated prompts for product tools, landing pages, and internal workflows."
+    href="/docs/prompting/starter-apps"
+  />
+</Cards>
+
+## The core loop
+
+1. **Describe the outcome.** Name the audience, their primary job, the required data, and the important states.
+2. **Choose your input.** Start from text, attach a screenshot, or provide a website reference when visual context matters.
+3. **Review the generated app.** Use the live preview and file view to check behavior, hierarchy, and project structure.
+4. **Refine one concern at a time.** Ask for a focused change so the edit is easy to evaluate and reverse.
+5. **Inspect and export.** Review quality signals and download the source when the project is ready to continue elsewhere.
+
+## A useful first prompt
+
+<Prompt title="Customer feedback workspace" text={`Build a customer feedback workspace for a three-person product team.
+
+The main screen should help the team scan incoming feedback, filter by source and sentiment, and open one item to see the full message, customer details, tags, and linked product area.
+
+Include:
+
+- A compact left navigation with Inbox, Themes, Customers, and Settings
+- A searchable feedback table with realistic sample data
+- Source and sentiment filters with visible selected states
+- A detail panel that opens from a table row
+- Empty, loading, and no-results states
+- Responsive behavior that turns the table into readable mobile rows
+
+Use a calm, editorial visual system with strong typography, restrained borders, and one blue accent. Prioritize the working inbox experience over a marketing page.`} />
+
+## What to read next
+
+If this is your first project, continue with [Getting started](/docs/getting-started). If you already know what you want to build, jump to the [prompt anatomy](/docs/prompting/prompt-anatomy) or copy an [example app prompt](/docs/examples).

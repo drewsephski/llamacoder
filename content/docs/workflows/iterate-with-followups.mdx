@@ -1,0 +1,54 @@
+---
+title: Iterate with follow-ups
+description: Improve a generated project through contained edits that name the target, preserve stable behavior, and define acceptance criteria.
+---
+
+Follow-up prompts work best when they read like a focused change request. Name the surface you want changed, what must remain stable, and how you will judge the result.
+
+## Use the target–preserve–verify pattern
+
+<Prompt title="Follow-up template" text={`Change [specific surface or behavior].
+
+Preserve [working layout, data, components, routes, or visual tokens that must not change].
+
+The result must [observable acceptance criteria, including responsive or accessibility behavior].
+
+Do not [likely scope expansion or unrelated redesign].`} />
+
+## Repair correctness before polish
+
+When something is broken, include reproduction details:
+
+<Prompt title="Behavior repair" text={`Fix the status filter on the projects table.
+
+Currently, choosing Archived changes the selected control but leaves every row visible. Preserve the table columns, records, sorting, pagination, and visual design.
+
+The selected status must filter the rows and result count, show the existing no-results state when appropriate, and remain selected after opening and closing a project. Do not redesign the table.`} />
+
+## Separate content and design edits
+
+Combining new sample data, a visual redesign, a navigation change, and a behavior fix makes it difficult to identify what caused a regression. Make each concern a separate checkpoint when practical.
+
+Useful edit boundaries include:
+
+- One screen or component
+- One interaction path
+- Mobile behavior only
+- Copy and data only
+- Color and typography only
+- Accessibility behavior only
+
+## Review the diff in the product
+
+After each edit:
+
+1. Re-run the interaction you changed.
+2. Check the surfaces you explicitly protected.
+3. Compare desktop and mobile if the layout changed.
+4. Inspect the generated files for accidental scope expansion.
+5. Restore an earlier checkpoint if the edit moved the project backward.
+
+<Callout title="State what not to change" type="tip">
+  Preservation constraints are especially useful once you like the product
+  structure. They help keep a small fix from becoming an accidental redesign.
+</Callout>

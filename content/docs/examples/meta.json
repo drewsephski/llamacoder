@@ -1,0 +1,10 @@
+{
+  "title": "Example apps",
+  "pages": [
+    "index",
+    "analytics-dashboard",
+    "booking-portal",
+    "focus-timer",
+    "screenshot-redesign"
+  ]
+}

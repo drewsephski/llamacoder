@@ -1,0 +1,39 @@
+---
+title: How Squid works
+description: Understand project generation, checkpoints, source ownership, quality evidence, model selection, and visible credit use.
+---
+
+Squid turns a prompt and optional visual references into a multi-file React project. The product keeps the generated files, preview, follow-up history, quality evidence, and export path connected so you can evaluate the result as code—not only as an image.
+
+<Cards>
+  <Card
+    title="Code ownership"
+    description="Understand checkpoints, generated files, and portable exports."
+    href="/docs/product/code-ownership"
+  />
+  <Card
+    title="Quality checks"
+    description="Use diagnostics and verification evidence without confusing them with production acceptance."
+    href="/docs/product/quality-checks"
+  />
+  <Card
+    title="Credits and models"
+    description="Choose a model with the visible estimate and understand how successful work is recorded."
+    href="/docs/product/credits-and-models"
+  />
+</Cards>
+
+## Project lifecycle
+
+1. A project starts from a text prompt, screenshot, or website reference.
+2. Squid selects the requested model and generates a structured React application.
+3. Generated files are normalized and checked before the result is saved.
+4. The preview and file view expose the current checkpoint.
+5. Follow-up requests create new project history instead of erasing the earlier result.
+6. Export packages the accepted source for work outside Squid.
+
+## Use the right evidence
+
+The preview answers “what does this version look and feel like?” The file view answers “what was generated?” Quality information answers “which known structural checks passed or need attention?” A clean external build answers “can this bundle run in a fresh environment?”
+
+No single one replaces the others.
