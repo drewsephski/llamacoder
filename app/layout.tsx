@@ -12,7 +12,7 @@ const dmSans = DM_Sans({
 
 const title = "Squid Agent - AI App Builder for Exportable React Code You Own";
 const description =
-  "Generate exportable React apps from prompts and screenshots with transparent credits, quality checks, reversible edits, and no platform lock-in.";
+  "Research current docs and APIs, plan your product, and generate exportable React apps with transparent credits, quality checks, and no platform lock-in.";
 const url = "https://squidagent.app/";
 const ogimage = "https://squidagent.app/og-image.png";
 const sitename = "Squid Agent";
@@ -38,6 +38,9 @@ export const metadata: Metadata = {
     "exportable React code",
     "React app generator",
     "AI React builder",
+    "AI web research",
+    "AI app planning",
+    "React app plan mode",
     "transparent AI credits",
     "Lovable alternative",
     "Bolt alternative",

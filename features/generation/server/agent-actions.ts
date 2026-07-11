@@ -229,6 +229,7 @@ export async function createAgentAssistantMessage(
         userId: session.user.id,
         modelId: chat.model,
         chatId,
+        messageId: created.id,
         description: `AI developer response - ${chat.model}`,
         phase: "follow_up",
         status: "completed",

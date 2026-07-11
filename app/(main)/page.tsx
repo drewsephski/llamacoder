@@ -114,7 +114,7 @@ const homepageFaq = [
   {
     question: "What is Squid Agent?",
     answer:
-      "Squid Agent is an AI app builder for generating React applications from prompts, screenshots, and website references. It focuses on exportable source code, visible quality checks, transparent credit use, and reversible project history.",
+      "Squid Agent is an AI app builder that can research the live web, plan a product with you, and generate React applications from prompts, screenshots, and website references. It keeps the resulting source code, quality checks, credit use, and project history visible.",
   },
   {
     question: "Who is Squid Agent for?",
@@ -127,6 +127,16 @@ const homepageFaq = [
       "Yes. Squid Agent is designed around code ownership. Generated projects can be downloaded with source files, project metadata, run instructions, and quality information so teams can continue work outside the product.",
   },
   {
+    question: "Can Squid Agent research current documentation and APIs?",
+    answer:
+      "Yes. Squid Agent can search the web for up-to-date documentation, API references, package guidance, and other external facts before it answers or generates code. Research is triggered automatically when a request depends on current information, and you can request web search explicitly.",
+  },
+  {
+    question: "What does Plan mode do?",
+    answer:
+      "Plan mode runs a guided planning workflow before code generation. Squid Agent asks a compact set of consequential questions, turns the answers into a structured project specification, presents the plan for review, and starts building only after you approve it.",
+  },
+  {
     question: "How does Squid Agent handle AI credits?",
     answer:
       "Squid Agent shows model cost before generation and records successful usage after work is saved. The product is designed to make credit spend visible instead of hiding cost inside retries or unclear repair loops.",
@@ -137,26 +147,38 @@ const homepageNarrativeBlocks = [
   {
     label: "Input",
     side: "left",
-    question: "What can you build with Squid Agent?",
-    body: "Squid Agent turns plain-language product ideas, uploaded screenshots, and website references into working React apps. The product is designed for builders who want fast generation without giving up practical ownership of the result: source files, project-level context, quality signals, and export paths remain visible after the AI has finished.",
+    question: "Start with an idea, screenshot, or website.",
+    body: "Describe a product in plain language, upload a visual reference, or point Squid Agent at an existing site. It carries that context through the build instead of reducing your request to a one-shot mockup.",
+  },
+  {
+    label: "Research",
+    side: "right",
+    question: "Build with current docs, APIs, and facts.",
+    body: "When a request depends on external knowledge, Squid Agent can search the live web before it writes code. It researches up-to-date documentation, API references, packages, integrations, and time-sensitive data so the build is grounded in current sources rather than stale model memory.",
+  },
+  {
+    label: "Plan mode",
+    side: "left",
+    question: "Work through the plan before the build.",
+    body: "Turn on Plan mode for a guided planning pipeline. Squid Agent asks a compact set of high-impact questions, confirms consequential decisions, assembles a structured specification, and gives you an explicit plan to approve before code generation begins.",
+  },
+  {
+    label: "Quality",
+    side: "right",
+    question: "See whether the generated app holds together.",
+    body: "Squid Agent checks generated files for broken imports, incompatible exports, protected-path changes, missing dependencies, and baseline accessibility issues. The result is a visible quality signal you can inspect before you iterate or export.",
   },
   {
     label: "Ownership",
-    side: "right",
-    question: "How does Squid Agent keep generated code portable?",
-    body: "Generated projects are treated as code artifacts, not disposable previews. Squid Agent emphasizes exportable React source, complete file structure, run instructions, and metadata that helps a developer understand what was produced and continue work in a normal development workflow.",
-  },
-  {
-    label: "Review",
     side: "left",
-    question: "Why are visible quality checks important?",
-    body: "AI-generated apps can look finished while still hiding broken imports, missing dependencies, inaccessible controls, or overwritten framework files. Squid Agent surfaces quality information so teams can inspect the result before they rely on it, remix it, or export it.",
+    question: "Leave with code you can keep.",
+    body: "Generated projects are real code artifacts, not disposable previews. Export the React source, complete file structure, run instructions, project metadata, and quality information, then continue in your own development workflow without platform lock-in.",
   },
   {
     label: "Credits",
     side: "right",
-    question: "How does Squid Agent make AI credit use clearer?",
-    body: "Squid Agent shows the selected model and expected credit cost before a generation starts. That makes the buying moment easier to understand and helps avoid the common problem of discovering spend only after retries, repairs, or failed outputs have already happened.",
+    question: "Know the model and cost before you run.",
+    body: "Choose the model that fits the work and see its expected credit cost before generation starts. Squid Agent keeps successful usage visible so you can understand what a build cost without decoding token math or discovering spend after the fact.",
   },
 ] as const;
 
@@ -184,7 +206,7 @@ const homepageStructuredData = {
       url: "https://squidagent.app/",
       image: "https://squidagent.app/og-image.png",
       description:
-        "AI app builder for generating exportable React applications from prompts, screenshots, and website references.",
+        "AI app builder with live web research and a guided planning workflow for generating exportable React applications from prompts, screenshots, and website references.",
       creator: {
         "@id": "https://squidagent.app/#organization",
       },
@@ -198,6 +220,8 @@ const homepageStructuredData = {
         "Prompt-to-React app generation",
         "Screenshot-to-code generation",
         "Website reference capture",
+        "Live web research for current documentation and APIs",
+        "Guided Plan mode with explicit approval before code generation",
         "Exportable source code",
         "Transparent AI credit pricing",
         "Reversible project versions",
@@ -1201,7 +1225,9 @@ export default function Home() {
             {/* Hero text */}
             <div className="flex flex-col items-center gap-3 sm:gap-4 lg:gap-5">
               <div className="animate-fade-up">
-                <span className="info-pill">AI-powered code generation</span>
+                <span className="info-pill">
+                  Research, plan, and build with AI
+                </span>
               </div>
 
               <h1 className="animate-fade-up-1 text-center font-display tracking-tight text-foreground">
@@ -1214,9 +1240,9 @@ export default function Home() {
               </h1>
 
               <p className="animate-fade-up-2 max-w-sm text-center text-sm leading-relaxed text-muted-foreground/75 sm:text-base">
-                Describe what you want to build. <br />
+                Research current docs and APIs. Plan the product. <br />
                 <span className="text-foreground/60">
-                  We&apos;ll generate the code.
+                  Generate React code you can keep.
                 </span>
               </p>
             </div>
@@ -1750,18 +1776,18 @@ function HomepageAnswerSection() {
       <div className="mx-auto w-full max-w-6xl border-y border-border/60 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
           <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
-            AI app builder
+            Beyond one-shot generation
           </p>
           <h2
             id="squid-agent-overview"
             className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
           >
-            From prompt to owned React code.
+            Research. Plan. Build. Own.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            The homepage copy is arranged around the actual product path: give
-            Squid Agent intent, inspect the result, understand the cost, and
-            leave with code you can keep.
+            Squid Agent brings current web knowledge and a deliberate planning
+            workflow into the same pipeline that generates, checks, and exports
+            your React application.
           </p>
         </div>
 
@@ -1846,12 +1872,11 @@ function HomepageFaqSection() {
             id="squid-agent-faq"
             className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
           >
-            Clear answers for people and crawlers.
+            Know what happens before you build.
           </h2>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
-            These answers make the product definition, audience, export model,
-            and credit behavior explicit without burying them inside the hero or
-            project showcase.
+            Learn how research, planning, code generation, ownership, and
+            credits work before you commit a project.
           </p>
         </div>
 

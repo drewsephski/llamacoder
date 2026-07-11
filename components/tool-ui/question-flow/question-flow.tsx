@@ -132,7 +132,7 @@ function OptionItem({
       disabled={isDisabled}
       className={cn(
         "group peer relative h-auto min-h-[50px] w-full justify-start text-left text-sm font-medium",
-        "hover:bg-transparent! hover:translate-y-0! hover:border-b-[4px]! hover:brightness-100! @md/question-flow:text-sm rounded-none border-0 bg-transparent px-0 py-2 text-base shadow-none transition-none",
+        "hover:!bg-transparent hover:!translate-y-0 hover:!border-b-0 hover:!brightness-100 @md/question-flow:text-sm rounded-none border-0 bg-transparent px-0 py-2 text-base shadow-none transition-none",
         isFirst && "pb-2.5",
         hasAdjacentOptions && "py-2.5",
       )}

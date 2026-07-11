@@ -623,6 +623,7 @@ async function createUsageAuditRecords({
   costEstimate,
   generationSize,
   chatId,
+  messageId,
   description,
   phase,
   status,
@@ -642,6 +643,7 @@ async function createUsageAuditRecords({
   costEstimate: ReturnType<typeof estimateModelCostUsd>;
   generationSize: string;
   chatId?: string;
+  messageId?: string;
   description?: string;
   phase?: string;
   status: string;
@@ -692,6 +694,7 @@ async function createUsageAuditRecords({
           ? estimatedRevenueUsd - actualModelCostUsd
           : undefined,
       chatId: chatId || null,
+      messageId: messageId || null,
       status,
     },
   });
@@ -927,6 +930,7 @@ export async function captureCreditHold({
   userId,
   modelId,
   chatId,
+  messageId,
   description,
   status = "completed",
   phase = "generation",
@@ -944,6 +948,7 @@ export async function captureCreditHold({
   userId: string;
   modelId: string;
   chatId?: string;
+  messageId?: string;
   description?: string;
   status?: string;
   phase?: string;
@@ -1034,6 +1039,7 @@ export async function captureCreditHold({
     costEstimate,
     generationSize,
     chatId,
+    messageId,
     description,
     phase,
     status,
@@ -1196,6 +1202,7 @@ export async function consumeCreditsForGeneration({
   userId,
   modelId,
   chatId,
+  messageId,
   description,
   status = "completed",
   phase = "generation",
@@ -1213,6 +1220,7 @@ export async function consumeCreditsForGeneration({
   userId: string;
   modelId: string;
   chatId?: string;
+  messageId?: string;
   description?: string;
   status?: string;
   phase?: string;
@@ -1233,6 +1241,7 @@ export async function consumeCreditsForGeneration({
       userId,
       modelId,
       chatId,
+      messageId,
       description,
       status,
       phase,
@@ -1300,6 +1309,7 @@ export async function consumeCreditsForGeneration({
     costEstimate,
     generationSize,
     chatId,
+    messageId,
     description,
     phase,
     status,

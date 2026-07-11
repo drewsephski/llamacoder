@@ -206,6 +206,7 @@ export async function createMessage(
         userId: session.user.id,
         modelId: chat.model,
         chatId,
+        messageId: newMessage.id,
         description: `AI generation - ${chat.model}`,
         phase: "follow_up",
         status: "completed",
@@ -455,6 +456,7 @@ export async function createFreeRepairAssistantMessage(
         phase: "preview_repair",
         status: "free_repair",
         chatId,
+        messageId: newMessage.id,
       },
     });
 

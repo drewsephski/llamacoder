@@ -249,12 +249,14 @@ model GenerationLog {
   phase                    String?
   status                   String
   chatId                   String?
+  messageId                String?
   createdAt                DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([modelId])
   @@index([createdAt])
   @@index([chatId, createdAt])
+  @@index([messageId])
 }
 
 model AiRequestLog {

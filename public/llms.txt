@@ -1,6 +1,6 @@
 # Squid Agent
 
-> Squid Agent generates exportable Vite + React applications from prompts, screenshots, and website references. The product emphasizes visible model credit estimates, reversible code checkpoints, generated-file diagnostics, and verified export bundles.
+> Squid Agent researches current documentation, APIs, and external facts; guides complex builds through a plan-and-approval workflow; and generates exportable Vite + React applications from prompts, screenshots, and website references. The product emphasizes visible model credit estimates, reversible code checkpoints, generated-file diagnostics, and verified export bundles.
 
 ## Primary Pages
 
@@ -31,6 +31,8 @@
 
 ## Product Facts
 
+- Live web research grounds answers and generated apps in current documentation, API references, package guidance, and time-sensitive external facts.
+- Plan mode asks targeted questions, builds a structured project specification, presents it for explicit approval, and begins code generation after approval.
 - Full exports include generated source, required support files, package and build configuration, README, manifest, quality report, verification report, and starter deployment configs.
 - Generated-file checks cover internal imports, export/import compatibility, protected paths, and baseline accessibility warnings.
 - Restoring a prior generated version creates a new checkpoint instead of mutating the historical result.
