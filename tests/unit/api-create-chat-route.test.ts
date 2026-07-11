@@ -6,6 +6,7 @@ const {
   afterMock,
   afterTasks,
   checkProjectCreationEligibilityMock,
+  consumeRateLimitMock,
   createOpenRouterModelMock,
   generateTextMock,
   getSessionMock,
@@ -14,6 +15,7 @@ const {
   afterMock: vi.fn(),
   afterTasks: [] as Array<() => Promise<void> | void>,
   checkProjectCreationEligibilityMock: vi.fn(),
+  consumeRateLimitMock: vi.fn(),
   createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   generateTextMock: vi.fn(),
   getSessionMock: vi.fn(),
@@ -75,6 +77,10 @@ vi.mock("@/lib/openrouter", () => ({
   })),
 }));
 
+vi.mock("@/features/security/server/rate-limit", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+}));
+
 import { POST } from "@/app/api/create-chat/route";
 
 function request(body: unknown) {
@@ -100,6 +106,7 @@ describe("/api/create-chat", () => {
       modelCost: 1,
       hasActiveSubscription: false,
     });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5 });
     prismaMock.chat.create.mockResolvedValue({
       id: "chat_1",
       messages: [

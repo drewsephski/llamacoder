@@ -69,7 +69,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full ${dmSans.variable}`}>
+    <html
+      lang="en"
+      className={`h-full ${dmSans.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <PlausibleProvider domain="squidagent.app" />
       </head>

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createResearchWindow,
   extractRecentWebSources,
+  extractWebSources,
 } from "@/features/generation/research-policy";
 
 describe("research policy", () => {
@@ -69,6 +70,41 @@ describe("research policy", () => {
         url: "https://example.com/recent",
         publishedDate: "2026-06-20T09:00:00.000Z",
         excerpt: "Verified current facts",
+      },
+    ]);
+  });
+
+  it("keeps authoritative undated and older sources for evergreen research", () => {
+    const sources = extractWebSources([
+      {
+        results: [
+          {
+            title: "Official API documentation",
+            url: "https://example.com/docs",
+            highlights: ["Stable API contract"],
+          },
+          {
+            title: "Foundational specification",
+            url: "https://example.com/spec",
+            publishedDate: "2021-03-10T09:00:00.000Z",
+            text: "Normative behavior",
+          },
+        ],
+      },
+    ]);
+
+    expect(sources).toEqual([
+      {
+        title: "Official API documentation",
+        url: "https://example.com/docs",
+        publishedDate: null,
+        excerpt: "Stable API contract",
+      },
+      {
+        title: "Foundational specification",
+        url: "https://example.com/spec",
+        publishedDate: "2021-03-10T09:00:00.000Z",
+        excerpt: "Normative behavior",
       },
     ]);
   });

@@ -1,10 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readJson } from "../fixtures/builders";
 
-const { stagehandConstructorMock, stagehandInstance } = vi.hoisted(() => {
+const {
+  consumeRateLimitMock,
+  getCurrentSessionMock,
+  parsePublicHttpUrlMock,
+  stagehandConstructorMock,
+  stagehandInstance,
+} = vi.hoisted(() => {
   const page = {
     goto: vi.fn(),
-    waitForTimeout: vi.fn(),
+    waitForLoadState: vi.fn(),
     screenshot: vi.fn(),
   };
   const instance = {
@@ -18,12 +24,33 @@ const { stagehandConstructorMock, stagehandInstance } = vi.hoisted(() => {
   };
 
   return {
+    consumeRateLimitMock: vi.fn(),
+    getCurrentSessionMock: vi.fn(),
+    parsePublicHttpUrlMock: vi.fn(async (input: string) => {
+      const url = new URL(input);
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        throw new Error("Unsupported protocol");
+      }
+      return url;
+    }),
     stagehandConstructorMock: vi.fn(function Stagehand() {
       return instance;
     }),
     stagehandInstance: instance,
   };
 });
+
+vi.mock("@/features/auth/server/session", () => ({
+  getCurrentSession: getCurrentSessionMock,
+}));
+
+vi.mock("@/features/security/server/rate-limit", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+}));
+
+vi.mock("@/features/security/server/public-url", () => ({
+  parsePublicHttpUrl: parsePublicHttpUrlMock,
+}));
 
 vi.mock("@browserbasehq/stagehand", () => ({
   Stagehand: stagehandConstructorMock,
@@ -46,7 +73,35 @@ describe("/api/scrape-screenshot", () => {
     vi.clearAllMocks();
     process.env.BROWSERBASE_API_KEY = "bb_test";
     process.env.BROWSERBASE_PROJECT_ID = "proj_test";
+    getCurrentSessionMock.mockResolvedValue({ user: { id: "user_1" } });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5 });
     stagehandInstance.page.screenshot.mockResolvedValue(Buffer.from("png"));
+    stagehandInstance.page.waitForLoadState.mockResolvedValue(undefined);
+  });
+
+  it("requires authentication before starting a browser session", async () => {
+    getCurrentSessionMock.mockResolvedValueOnce(null);
+
+    const response = await POST(request({ url: "https://example.com" }));
+
+    expect(response.status).toBe(401);
+    await expect(readJson(response)).resolves.toEqual({
+      error: "Unauthorized",
+    });
+    expect(stagehandConstructorMock).not.toHaveBeenCalled();
+  });
+
+  it("rate limits browser sessions before provider initialization", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({
+      allowed: false,
+      retryAfterSeconds: 30,
+    });
+
+    const response = await POST(request({ url: "https://example.com" }));
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("30");
+    expect(stagehandConstructorMock).not.toHaveBeenCalled();
   });
 
   afterEach(() => {
@@ -57,7 +112,9 @@ describe("/api/scrape-screenshot", () => {
   it("rejects missing URLs and unsupported protocols", async () => {
     let response = await POST(request({}));
     expect(response.status).toBe(400);
-    await expect(readJson(response)).resolves.toEqual({ error: "URL is required" });
+    await expect(readJson(response)).resolves.toEqual({
+      error: "A valid URL is required",
+    });
 
     response = await POST(request({ url: "ftp://example.com" }));
     expect(response.status).toBe(400);
@@ -95,9 +152,13 @@ describe("/api/scrape-screenshot", () => {
     expect(stagehandInstance.page.goto).toHaveBeenCalledWith(
       "https://example.com/path",
       {
-        waitUntil: "networkidle",
+        waitUntil: "domcontentloaded",
         timeoutMs: 30000,
       },
+    );
+    expect(stagehandInstance.page.waitForLoadState).toHaveBeenCalledWith(
+      "networkidle",
+      5000,
     );
     expect(stagehandInstance.close).toHaveBeenCalled();
   });
@@ -118,5 +179,6 @@ describe("/api/scrape-screenshot", () => {
     );
     response = await POST(request({ url: "https://slow.test" }));
     expect(response.status).toBe(408);
+    expect(stagehandInstance.close).toHaveBeenCalledTimes(2);
   });
 });

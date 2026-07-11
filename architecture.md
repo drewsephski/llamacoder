@@ -1,96 +1,99 @@
-# Architecture Evolution
+# Squid Agent architecture
 
-## Current Setup (Version 1)
+Squid Agent is a Next.js App Router application with feature-owned business
+logic. Route and page modules are delivery adapters: they parse input,
+authenticate, delegate to a feature, and map the result to HTTP or UI.
 
-_Message-based code generation with single-file output_
+## Ownership map
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant AI as AI
+```text
+app/
+  (main)/                         route composition and compatibility facades
+  api/                            parse, authenticate, delegate, respond
 
-    U->>AI: Send message
-    AI->>U: Generate code (single file)
-    U->>AI: Send message with code (versioned)
-    AI->>U: Extract code from all messages containing code strings and process
+features/
+  auth/                           session and ownership primitives
+  billing/                        checkout contracts, hooks, and UI
+  generation/                     agent, completion, repair, and telemetry logic
+  marketing/                      public-site components and content
+  projects/                       project contracts, queries, actions, and UI
+  security/                       rate limiting and outbound URL policy
+  shared/                         typed HTTP and error primitives
+  user/                           user-facing query contracts and hooks
+
+components/ui/                    product-agnostic UI primitives
+
+lib/
+  billing/                        credit grants, holds, pricing, fulfillment
+  generated-files.ts              canonical generated-file parser/normalizer
+  openrouter.ts                   provider construction and policy mapping
+  prisma.ts                       lazy Prisma client access
 ```
 
-- Workflow: User request -> AI creates entire app.tsx -> Extract single code file from AI response
-- User interactions via messages
-- Code stored/extracted from message history
-- Versioning through message chains
+## Dependency rules
 
-## Version 2: Vercel AI SDK with OpenRouter Provider
+- `app/**` may import from `features/**`, `components/**`, and `lib/**`.
+- `features/**` must not import business logic from `app/**`.
+- Feature server modules may depend on `lib/**` infrastructure but must own
+  their feature policy and authorization decisions.
+- `components/ui/**` remains product-agnostic and must not depend on features.
+- Compatibility entrypoints such as `app/(main)/actions.ts` only re-export
+  feature-owned actions; they do not contain business logic.
+- External data is `unknown` until a Zod schema or canonical parser validates it.
+- Prisma JSON is parsed through the owning feature contract or
+  `lib/generated-files.ts`; callers do not cast JSON into application types.
 
-_Vercel AI SDK with OpenRouter provider for unified model access_
+## Runtime flows
 
-```mermaid
-sequenceDiagram
-    participant U as User/Browser
-    participant V as Vercel AI SDK
-    participant OR as OpenRouter Provider
-    participant M as AI Models
+### Create and generate
 
-    U->>V: Send request (create chat / stream completion)
-    V->>OR: Initialize provider with custom config
-    OR->>M: Route to specific models (DeepSeek, Gemini, Qwen)
-    M->>OR: Return model responses
-    OR->>V: Process responses (generateText / streamText)
-    V->>U: Return formatted response
+1. The homepage builder validates input and calls `/api/create-chat`.
+2. The route authenticates, rate-limits, checks eligibility, and creates the
+   chat plus initial messages.
+3. The workspace calls the completion route with the persisted message ID.
+4. Generation reserves a credit hold, applies model/research policy, records
+   request telemetry, validates output, persists a version, and captures or
+   releases the hold.
+
+### Project mutations
+
+Client component → feature server action → session/ownership check → Prisma
+transaction → targeted cache/path invalidation → recoverable UI result.
+
+### Billing
+
+Checkout route → authenticated and rate-limited Stripe session → webhook or
+return reconciliation → idempotent credit grant → grant-backed credit balance.
+
+## Data and state
+
+- Server components own initial read-heavy data where practical.
+- TanStack Query owns mutable client-visible server state.
+- Query keys and Zod response schemas live with their feature.
+- Local React state is reserved for interaction state.
+- High-frequency visual values use refs and CSS variables, not root state.
+
+## Operational safeguards
+
+- `pnpm build` is side-effect free with respect to the database.
+- Deployments apply checked-in migrations explicitly with `pnpm db:deploy`.
+- Expensive provider operations use persistent per-user rate-limit buckets.
+- Remote screenshot URLs reject loopback, private, link-local, and resolved
+  private addresses before a Browserbase session starts.
+- AI provider requests and credit holds record structured telemetry.
+
+## Verification
+
+Run, in order:
+
+```bash
+pnpm validate:schema
+pnpm typecheck
+pnpm lint
+pnpm test:unit
+pnpm test:e2e
+pnpm build
 ```
 
-- Workflow: User request -> Vercel AI SDK with OpenRouter provider -> Model routing -> Response processing
-- Uses @openrouter/ai-sdk-provider with createOpenRouter()
-- generateText() for non-streaming requests (chat creation, title generation, screenshot analysis)
-- streamText() for streaming completions with toTextStreamResponse()
-- Model-level configuration (maxTokens, temperature)
-- Provider options for OpenRouter-specific features (reasoning, custom headers)
-- Helicone integration via custom headers for analytics
-- Support for multimodal content (images in messages)
-
-## Version 3: Multi-File Project Support
-
-_Client-side multi-file storage and editing_
-
-```mermaid
-sequenceDiagram
-    participant U as User/Browser
-    participant AI as AI
-
-    U->>AI: Send message
-    AI->>U: Generate multiple files in browser storage
-    U->>AI: Send message with file context
-    AI->>U: Regenerate smaller files as needed
-```
-
-- Workflow: User request -> AI creates multiple files -> Store in browser storage -> Regenerate smaller files as needed
-- Migrate away from storing code in messages
-- Project-based approach with client-side file storage
-- Faster editing due to smaller, targeted file regeneration
-
-## Version 4: Autonomous AI Agent
-
-_Fully autonomous development with comprehensive tool access_
-
-```mermaid
-sequenceDiagram
-    participant U as User/Browser
-    participant A as AI Agent
-    participant T as Tools
-    participant FS as File System
-    participant WS as Web Services
-
-    U->>A: Send request with project context
-    A->>T: Execute complex operations autonomously
-    T->>FS: Modify multiple files, create directories
-    T->>WS: Web searches, API calls, install dependencies
-    FS->>A: Return file system state
-    WS->>A: Return external data
-    A->>U: Present completed project with reasoning
-```
-
-- Workflow: User request -> AI agent autonomously executes complex operations -> Full file system manipulation -> External integrations -> Deliver complete solution
-- Fully autonomous AI agent with comprehensive tool access
-- Complete project lifecycle management
-- Advanced integrations: web APIs, package management, deployment
-- Reasoning and planning across entire development workflow
+Use `pnpm db:deploy` only in a deployment environment targeting the intended
+database. Never add database mutation back to the normal build command.

@@ -11,10 +11,10 @@ export type ResearchWindow = {
   endDate: string;
 };
 
-export type RecentWebSource = {
+export type WebSource = {
   title: string;
   url: string;
-  publishedDate: string;
+  publishedDate: string | null;
   excerpt: string;
 };
 
@@ -80,18 +80,19 @@ function getExcerpt(result: Record<string, unknown>) {
   );
 }
 
-export function extractRecentWebSources(
+export function extractWebSources(
   outputs: unknown[],
-  window: ResearchWindow,
   options: {
+    publicationWindow?: ResearchWindow;
     maxSources?: number;
     maxExcerptCharacters?: number;
   } = {},
-): RecentWebSource[] {
+): WebSource[] {
+  const publicationWindow = options.publicationWindow;
   const maxSources = options.maxSources ?? DEFAULT_MAX_SOURCES;
   const maxExcerptCharacters =
     options.maxExcerptCharacters ?? DEFAULT_MAX_EXCERPT_CHARACTERS;
-  const sources = new Map<string, RecentWebSource>();
+  const sources = new Map<string, WebSource>();
 
   for (const output of outputs) {
     if (!output || typeof output !== "object") continue;
@@ -105,21 +106,32 @@ export function extractRecentWebSources(
       const candidate = result as Record<string, unknown>;
       const url = getString(candidate.url);
       const publishedDate = getString(candidate.publishedDate);
-      if (!url || !publishedDate || sources.has(url)) continue;
+      if (!url || sources.has(url)) continue;
 
-      const publishedAt = new Date(publishedDate);
-      if (
-        Number.isNaN(publishedAt.getTime()) ||
-        publishedAt < window.start ||
-        publishedAt > window.end
-      ) {
-        continue;
+      let normalizedPublishedDate: string | null = null;
+      if (publishedDate) {
+        const publishedAt = new Date(publishedDate);
+        if (!Number.isNaN(publishedAt.getTime())) {
+          normalizedPublishedDate = publishedAt.toISOString();
+        }
+      }
+
+      if (publicationWindow) {
+        if (!normalizedPublishedDate) continue;
+
+        const publishedAt = new Date(normalizedPublishedDate);
+        if (
+          publishedAt < publicationWindow.start ||
+          publishedAt > publicationWindow.end
+        ) {
+          continue;
+        }
       }
 
       sources.set(url, {
         title: getString(candidate.title) ?? "Source",
         url,
-        publishedDate: publishedAt.toISOString(),
+        publishedDate: normalizedPublishedDate,
         excerpt: getExcerpt(candidate).slice(0, maxExcerptCharacters),
       });
 
@@ -130,4 +142,18 @@ export function extractRecentWebSources(
   }
 
   return Array.from(sources.values());
+}
+
+export function extractRecentWebSources(
+  outputs: unknown[],
+  window: ResearchWindow,
+  options: {
+    maxSources?: number;
+    maxExcerptCharacters?: number;
+  } = {},
+) {
+  return extractWebSources(outputs, {
+    ...options,
+    publicationWindow: window,
+  });
 }

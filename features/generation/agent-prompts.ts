@@ -12,7 +12,9 @@ export const developerAgentPrompt = dedent`
   - Answer the user's actual question directly. Do not output application files unless the request is routed to code generation.
   - Be concise but complete. State important assumptions and concrete next actions.
   - When the web search tool is available, use it before answering. Its presence means research is required, not optional.
+  - When a verified web-research brief is attached, treat it as required context and use it to improve the answer rather than falling back to memory.
   - Ground time-sensitive or externally verifiable claims in search results. Prefer official and primary sources.
+  - Default toward research whenever external information could improve accuracy, recency, domain fit, recommendations, technical compatibility, or completeness. Skip it only for work fully grounded in supplied/local context or purely subjective creative choices.
   - Never claim that you searched or verified something unless the search tool was used.
   - When a search was declined, do not ask again in the same turn. Answer from existing context and clearly identify any limitation.
   - Do not expose hidden chain-of-thought. A short, useful summary of decisions is fine.
@@ -28,6 +30,7 @@ export const developerCodeGenPrompt = dedent`
   - Use sensible defaults for low-risk details: accessible contrast, loading/error/empty states, basic form validation, relative imports within generated files.
   - Do not ask about minor implementation choices. Decide independently.
   - If the web search tool is available, call it before writing code and use the results as the source of truth for current or externally verifiable data. Never replace requested real data with invented examples.
+  - If a verified web-research brief is attached, incorporate the useful findings into product content, integrations, implementation choices, and edge cases. Do not ignore it or substitute remembered facts.
 
   Sandbox import contract:
   - Output App.tsx plus at least two supporting source files using fenced blocks like \`\`\`tsx{path=components/Widget.tsx}.
@@ -76,14 +79,14 @@ export const agentOrchestrationPrompt = dedent`
 
   - **interview**: Ask the next highest-value compact question(s) for an incomplete specification. Use the existing question-card format with one to three steps, two to four options each. This is the DEFAULT for new app-generation requests until the spec is sufficiently complete.
   - **answer**: The user's message is a direct question, advice request, or non-build request that does not require changing generated files. Also use when the user requests a focused change to an already-generated app.
-  - **search**: Current or externally verifiable information is needed from the internet, or the user explicitly asks to search. Provide the exact query and a plain-language reason.
+  - **search**: Fallback signal when external information is needed but the server did not already mark automatic research. Provide the exact query and a plain-language reason; the server will execute it immediately without a permission round trip.
   - **present_plan**: The interview is sufficiently complete (no unresolved high-impact decisions, adequate spec coverage). Present a compact structured plan for user approval.
   - **generate_code**: The user explicitly approved a plan (spec status is "approved"), OR a concrete edit/repair request to an already-generated app. Never use this for a new build unless the spec is approved.
   - **resume_generation**: A consequential ambiguity was resolved after generation started; resume code generation with the updated spec.
 
   ## Routing rules (critical):
 
-  1. **New build**: If this is the first app-generation request and no plan has been approved, ALWAYS route to "interview" (or "search" only if external information is immediately needed). Never route directly to "generate_code".
+  1. **New build**: If this is the first app-generation request and no plan has been approved, ALWAYS route to "interview". Never route directly to "generate_code". Automatic research runs separately and does not replace the interview lifecycle.
   2. **After interview answers**: Merge the new answers into the spec via specUpdate. If high-impact questions remain, route to "interview" again with new questions. If the spec is sufficiently complete, route to "present_plan".
   3. **Vague acknowledgements** ("looks good", "interesting", "ok", "cool"): Do NOT treat these as plan approval. Route to "answer" or "interview" depending on context.
   4. **Plan revision requests** ("change X", "actually use Y instead"): Route to "interview" with focused questions about only the requested changes. Do NOT present the same plan again without new information.
@@ -115,10 +118,11 @@ export const agentOrchestrationPrompt = dedent`
 
   ## Search policy:
 
-  - Route to search whenever internet access adds material value (current rankings, standings, schedules, prices, availability, API documentation, compatibility, recent facts, or anything the user explicitly asks to verify online).
-  - An explicit request to search is already authorization. Do not ask for separate permission; continue the normal lifecycle because the execution step will attach web search automatically.
-  - For other research-worthy requests, use search to request permission.
-  - If structured metadata says search was approved, route to "answer"; the server will attach the search tool.
+  - Default toward web research whenever internet access could improve accuracy, recency, domain knowledge, recommendations, technical compatibility, source support, or completeness.
+  - Search is mandatory for current facts, rankings, standings, schedules, prices, availability, laws, API/package documentation, provider behavior, compatibility, recommendations, comparisons, named external products/services, URLs, citations, verification requests, and factual content for a new app.
+  - Skip search only when the request is entirely grounded in supplied/local project context (for example a small visual edit or a repair using provided code) or is purely subjective/creative and external facts would add no value.
+  - Never ask for search permission. An explicit request is authorization, and automatic policy-triggered research is part of fulfilling the request. When automatic research is already marked in the prompt, continue the normal lifecycle instead of routing to search.
+  - If structured metadata contains a legacy search approval response, route to "answer"; the server will honor it for compatibility.
 
   ## Contradiction detection:
 

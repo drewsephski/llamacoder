@@ -1,21 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Stagehand } from "@browserbasehq/stagehand";
+import { getCurrentSession } from "@/features/auth/server/session";
+import { scrapeScreenshotRequestSchema } from "@/features/generation/contracts";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { parsePublicHttpUrl } from "@/features/security/server/public-url";
 
 export async function POST(request: NextRequest) {
-  try {
-    const { url } = await request.json();
+  let stagehand: Stagehand | undefined;
 
-    if (!url || typeof url !== "string") {
-      return NextResponse.json({ error: "URL is required" }, { status: 400 });
+  try {
+    const session = await getCurrentSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Validate URL format
+    const rateLimit = await consumeRateLimit({
+      userId: session.user.id,
+      operation: "screenshot",
+      limit: 6,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many screenshot requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
+    const parsedRequest = scrapeScreenshotRequestSchema.safeParse(
+      await request.json().catch(() => null),
+    );
+    if (!parsedRequest.success) {
+      return NextResponse.json(
+        { error: "A valid URL is required" },
+        { status: 400 },
+      );
+    }
+    const { url } = parsedRequest.data;
+
     let validatedUrl: URL;
     try {
-      validatedUrl = new URL(url);
-      if (!["http:", "https:"].includes(validatedUrl.protocol)) {
-        throw new Error("Invalid protocol");
-      }
+      validatedUrl = await parsePublicHttpUrl(url);
     } catch {
       return NextResponse.json(
         {
@@ -53,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Stagehand
-    const stagehand = new Stagehand({
+    stagehand = new Stagehand({
       apiKey,
       projectId,
       env: "BROWSERBASE",
@@ -67,12 +95,10 @@ export async function POST(request: NextRequest) {
 
     // Navigate to the URL
     await page.goto(validatedUrl.toString(), {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeoutMs: 30000,
     });
-
-    // Wait a bit for any lazy-loaded content
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState("networkidle", 5000).catch(() => undefined);
 
     // Take screenshot
     const screenshotBuffer = await page.screenshot({
@@ -84,19 +110,17 @@ export async function POST(request: NextRequest) {
     const base64Screenshot = Buffer.from(screenshotBuffer).toString("base64");
     const dataUrl = `data:image/png;base64,${base64Screenshot}`;
 
-    // Close the browser
-    await stagehand.close();
-
     return NextResponse.json({
       success: true,
       screenshotData: dataUrl,
       url: validatedUrl.toString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Screenshot scraping error:", error);
+    const message = error instanceof Error ? error.message : "";
 
     // Handle specific error cases
-    if (error.message?.includes("net::ERR_NAME_NOT_RESOLVED")) {
+    if (message.includes("net::ERR_NAME_NOT_RESOLVED")) {
       return NextResponse.json(
         {
           error:
@@ -106,7 +130,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (error.message?.includes("net::ERR_CONNECTION_TIMED_OUT")) {
+    if (message.includes("net::ERR_CONNECTION_TIMED_OUT")) {
       return NextResponse.json(
         {
           error:
@@ -116,7 +140,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (error.message?.includes("Navigation timeout")) {
+    if (message.includes("Navigation timeout")) {
       return NextResponse.json(
         {
           error:
@@ -127,8 +151,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error.message || "Failed to capture screenshot" },
+      { error: message || "Failed to capture screenshot" },
       { status: 500 },
     );
+  } finally {
+    if (stagehand) {
+      await Promise.resolve(stagehand.close()).catch((closeError: unknown) => {
+        console.warn("Failed to close screenshot browser session:", closeError);
+      });
+    }
   }
 }

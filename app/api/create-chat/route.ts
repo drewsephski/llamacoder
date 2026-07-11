@@ -23,6 +23,7 @@ import {
   MAX_SCREENSHOT_SIZE_MB,
 } from "@/lib/constants";
 import { z } from "zod";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
 
 const IMAGE_DATA_URL_PATTERN = new RegExp(
   `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
@@ -104,6 +105,25 @@ export async function POST(request: NextRequest) {
           message: "Please sign in to create a project",
         },
         { status: 401 },
+      );
+    }
+
+    const rateLimit = await consumeRateLimit({
+      userId: session.user.id,
+      operation: "create_project",
+      limit: 6,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          message: "Too many project requests. Please try again shortly.",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
       );
     }
 

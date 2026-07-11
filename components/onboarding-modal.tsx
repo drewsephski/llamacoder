@@ -73,6 +73,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             <div className="space-y-2">
               {EXAMPLE_BRIEFS.map((brief, index) => (
                 <button
+                  type="button"
                   key={index}
                   onClick={() => handleBriefClick(brief)}
                   className="flex w-full items-start gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-accent hover:bg-accent/20"
@@ -95,6 +96,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           {/* Tips */}
           <div>
             <button
+              type="button"
               onClick={() => setShowTips(!showTips)}
               className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
               aria-expanded={showTips}

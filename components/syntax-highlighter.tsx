@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import Editor from "@monaco-editor/react";
+import Editor, { type OnMount } from "@monaco-editor/react";
 import { getMonacoLanguage } from "@/lib/utils";
 import {
   Tree,
@@ -22,7 +22,7 @@ export default function SyntaxHighlighter({
   isStreaming?: boolean;
 }) {
   const [activeFile, setActiveFile] = useState(0);
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
   const activePathIndex = useMemo(
     () => (activePath ? files.findIndex((f) => f.path === activePath) : -1),

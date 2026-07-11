@@ -238,6 +238,7 @@ function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
 
         <div className="mt-8 flex justify-between gap-4">
           <button
+            type="button"
             onClick={async () => {
               if (!sandpack.error) return;
 
@@ -253,6 +254,7 @@ function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
             {didCopy ? <CheckIcon size={18} /> : <CopyIcon size={18} />}
           </button>
           <button
+            type="button"
             onClick={() => {
               if (!sandpack.error) return;
               onRequestFix(sandpack.error.message);

@@ -81,6 +81,7 @@ export function UpgradeBanner({
         className={`relative mb-6 overflow-hidden rounded-xl border ${v.surface} p-3.5 shadow-sm shadow-black/[0.02] backdrop-blur-sm`}
       >
         <button
+          type="button"
           onClick={() => setIsVisible(false)}
           className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Dismiss"

@@ -67,6 +67,81 @@ const SyntaxHighlighter = dynamic(
   },
 );
 
+function parseCodeFenceTag(tag: string) {
+  const langMatch = tag.match(/^([A-Za-z0-9]+)/);
+  const language = langMatch ? langMatch[1] : "text";
+  const pathMatch = tag.match(/(?:\{\s*)?path\s*=\s*([^}\s]+)(?:\s*\})?/);
+  const filenameMatch = tag.match(
+    /(?:\{\s*)?filename\s*=\s*([^}\s]+)(?:\s*\})?/,
+  );
+  const path = pathMatch
+    ? pathMatch[1]
+    : filenameMatch
+      ? filenameMatch[1]
+      : `file.${getExtensionForLanguage(language)}`;
+
+  return { language, path };
+}
+
+function extractLatestStreamBlock(
+  input: string,
+): { code: string; language: string; path: string } | undefined {
+  if (!input) return undefined;
+  const lines = input.split("\n");
+  const codeFenceRegex = /^```([^\n]*)$/;
+
+  let openTag: string | null = null;
+  let codeBuffer: string[] = [];
+  let latestComplete:
+    | { code: string; language: string; path: string }
+    | undefined;
+
+  for (const line of lines) {
+    const match = line.match(codeFenceRegex);
+    if (match && !openTag) {
+      openTag = match[1] || "";
+      codeBuffer = [];
+    } else if (match && openTag) {
+      const { language, path } = parseCodeFenceTag(openTag);
+      latestComplete = { code: codeBuffer.join("\n"), language, path };
+      openTag = null;
+      codeBuffer = [];
+    } else if (openTag) {
+      codeBuffer.push(line);
+    }
+  }
+
+  const candidate = openTag
+    ? {
+        code: codeBuffer.join("\n"),
+        ...parseCodeFenceTag(openTag),
+      }
+    : latestComplete;
+  if (!candidate) return undefined;
+
+  const normalized = normalizeGeneratedFiles([candidate])[0];
+  return normalized
+    ? {
+        code: normalized.code,
+        language: normalized.language,
+        path: normalized.path,
+      }
+    : undefined;
+}
+
+function mergeFiles(base: GeneratedFile[], overlay: GeneratedFile[]) {
+  const filesByPath = new Map<string, GeneratedFile>();
+  base.forEach((file) => filesByPath.set(file.path, file));
+  overlay.forEach((file) => filesByPath.set(file.path, file));
+  const baseStats = readGeneratedFilesStats(base);
+  const overlayStats = readGeneratedFilesStats(overlay);
+
+  return attachGeneratedFilesStats(Array.from(filesByPath.values()), {
+    protectedPathsBlocked:
+      baseStats.protectedPathsBlocked + overlayStats.protectedPathsBlocked,
+  });
+}
+
 export default function CodeViewer({
   chat,
   streamText,
@@ -112,78 +187,6 @@ export default function CodeViewer({
     [streamText],
   );
 
-  // Extract the latest (possibly partial) code fence from the stream text
-  function extractLatestStreamBlock(
-    input: string,
-  ): { code: string; language: string; path: string } | undefined {
-    if (!input) return undefined;
-    const lines = input.split("\n");
-    const codeFenceRegex = /^```([^\n]*)$/;
-
-    let openTag: string | null = null;
-    let codeBuffer: string[] = [];
-    let latestComplete:
-      | { code: string; language: string; path: string }
-      | undefined;
-
-    for (const line of lines) {
-      const match = line.match(codeFenceRegex);
-      if (match && !openTag) {
-        // Opening a fence
-        openTag = match[1] || "";
-        codeBuffer = [];
-      } else if (match && openTag) {
-        // Closing the fence
-        const { language, path } = parseTag(openTag);
-        latestComplete = { code: codeBuffer.join("\n"), language, path };
-        openTag = null;
-        codeBuffer = [];
-      } else if (openTag) {
-        codeBuffer.push(line);
-      }
-    }
-
-    // If an open fence remains at end, return it as partial; else return latest complete
-    if (openTag) {
-      const { language, path } = parseTag(openTag);
-      const normalized = normalizeGeneratedFiles([
-        { code: codeBuffer.join("\n"), language, path },
-      ])[0];
-      return normalized
-        ? {
-            code: normalized.code,
-            language: normalized.language,
-            path: normalized.path,
-          }
-        : undefined;
-    }
-    if (!latestComplete) return undefined;
-    const normalized = normalizeGeneratedFiles([latestComplete])[0];
-    return normalized
-      ? {
-          code: normalized.code,
-          language: normalized.language,
-          path: normalized.path,
-        }
-      : undefined;
-  }
-
-  function parseTag(tag: string) {
-    const raw = tag || "";
-    const langMatch = raw.match(/^([A-Za-z0-9]+)/);
-    const language = langMatch ? langMatch[1] : "text";
-    const pathMatch = raw.match(/(?:\{\s*)?path\s*=\s*([^}\s]+)(?:\s*\})?/);
-    const filenameMatch = raw.match(
-      /(?:\{\s*)?filename\s*=\s*([^}\s]+)(?:\s*\})?/,
-    );
-    const path = pathMatch
-      ? pathMatch[1]
-      : filenameMatch
-        ? filenameMatch[1]
-        : `file.${getExtensionForLanguage(language)}`;
-    return { language, path };
-  }
-
   const latestStreamBlock = useMemo(
     () => extractLatestStreamBlock(streamText),
     [streamText],
@@ -206,29 +209,11 @@ export default function CodeViewer({
     );
   }, [latestStreamBlock, streamAllFiles]);
 
-  // Utility to merge base files with overlay files (overlay wins on conflicts)
-  function mergeFiles(base: GeneratedFile[], overlay: GeneratedFile[]) {
-    const map = new Map<string, GeneratedFile>();
-    base.forEach((f) => map.set(f.path, f));
-    overlay.forEach((f) => map.set(f.path, f));
-    const merged = Array.from(map.values());
-    const baseStats = readGeneratedFilesStats(base);
-    const overlayStats = readGeneratedFilesStats(overlay);
-
-    return attachGeneratedFilesStats(merged, {
-      protectedPathsBlocked:
-        baseStats.protectedPathsBlocked + overlayStats.protectedPathsBlocked,
-    });
-  }
-
-  // Helper to get files from a message (JSON field or extract from content)
-  const getFilesFromMessage = getMessageGeneratedFiles;
-
   // Since each message now contains cumulative files, simplify the logic
   const assistantMessages = useMemo(
     () =>
       chat.messages.filter(
-        (m) => m.role === "assistant" && getFilesFromMessage(m).length > 0,
+        (m) => m.role === "assistant" && getMessageGeneratedFiles(m).length > 0,
       ),
     [chat.messages],
   );
@@ -242,12 +227,12 @@ export default function CodeViewer({
         ? (() => {
             const lastMessage = assistantMessages.at(-1);
             const baseFiles = lastMessage
-              ? getFilesFromMessage(lastMessage)
+              ? getMessageGeneratedFiles(lastMessage)
               : [];
             return mergeFiles(baseFiles, mergedStreamFiles);
           })()
         : message
-          ? getFilesFromMessage(message)
+          ? getMessageGeneratedFiles(message)
           : [],
     [assistantMessages, mergedStreamFiles, message, streamText],
   );
@@ -319,7 +304,7 @@ export default function CodeViewer({
     () =>
       assistantMessages.some((m) => m.id === message?.id)
         ? assistantMessages
-        : message && getFilesFromMessage(message).length > 0
+        : message && getMessageGeneratedFiles(message).length > 0
           ? [...assistantMessages, message]
           : assistantMessages,
     [assistantMessages, message],
@@ -570,6 +555,7 @@ export default function CodeViewer({
           )}
           <div className="inline-flex items-center rounded-xl border border-border/60 bg-muted/30 p-1">
             <button
+              type="button"
               onClick={() => onTabChange("code")}
               disabled={disabledControls}
               className={`h-8 w-20 rounded-lg text-xs font-semibold transition-all duration-200 ${
@@ -581,6 +567,7 @@ export default function CodeViewer({
               Code
             </button>
             <button
+              type="button"
               onClick={() => onTabChange("preview")}
               disabled={disabledControls}
               className={`h-8 w-20 rounded-lg text-xs font-semibold transition-all duration-200 ${

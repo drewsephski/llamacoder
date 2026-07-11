@@ -11,6 +11,8 @@ import {
 import { getPrisma } from "@/lib/prisma";
 import { normalizeTier } from "@/lib/billing";
 import { syncSubscriptionFromStripe } from "@/lib/billing/stripe-fulfillment";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { recordOperationalEvent } from "@/lib/observability";
 
 type SubscriptionTier = keyof typeof STRIPE_PRICE_IDS;
 
@@ -167,6 +169,21 @@ export async function POST(request: NextRequest) {
       return errorResponse(
         "You must be signed in to subscribe",
         401,
+        request,
+        expectsJson,
+      );
+    }
+
+    const rateLimit = await consumeRateLimit({
+      userId: session.user.id,
+      operation: "checkout",
+      limit: 10,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!rateLimit.allowed) {
+      return errorResponse(
+        "Too many checkout requests. Please try again shortly.",
+        429,
         request,
         expectsJson,
       );
@@ -330,7 +347,13 @@ export async function POST(request: NextRequest) {
 
     return successResponse(checkoutSession.url, expectsJson);
   } catch (error: unknown) {
-    console.error("Error creating checkout session:", error);
+    recordOperationalEvent({
+      name: "checkout_session_failed",
+      level: "error",
+      operation: "subscription_checkout",
+      status: "error",
+      error,
+    });
     const message =
       error instanceof Error
         ? error.message

@@ -422,7 +422,9 @@ function AssistantMessage({
   const fileSegments = segments.filter((s) => s.type === "file");
 
   // Generate app title for multiple files
-  const generateAppTitle = (files: typeof allFiles) => {
+  const generateAppTitle = (
+    files: ReadonlyArray<{ path: string; code: string }>,
+  ) => {
     // Look for App.tsx or main component
     const mainFile = files.find(
       (f) => f.path === "App.tsx" || f.path.endsWith("App.tsx"),
@@ -454,12 +456,10 @@ function AssistantMessage({
   const appTitle = generateAppTitle(
     allFiles.length > 0
       ? allFiles
-      : (fileSegments.map((f) => ({
+      : fileSegments.map((f) => ({
           code: f.code,
-          language: f.language,
           path: f.path,
-          fullMatch: "",
-        })) as any),
+        })),
   );
 
   const displayFileCount = fileSegments.length;

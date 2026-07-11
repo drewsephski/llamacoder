@@ -163,6 +163,7 @@ export default function HoverBrandLogo() {
           const isDimmed = hoveredId !== null && !isActive;
           return (
             <button
+              type="button"
               key={id}
               aria-label={name}
               className={[

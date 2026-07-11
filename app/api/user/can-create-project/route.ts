@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       modelCost: eligibility.modelCost,
       shortfall: Math.max(0, eligibility.modelCost - eligibility.credits),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error checking project creation eligibility:", error);
     return NextResponse.json(
       { error: "Failed to check eligibility" },

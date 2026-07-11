@@ -52,6 +52,7 @@ import {
 } from "@/lib/billing";
 import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
+import { getErrorMessage } from "@/features/shared/errors";
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/png",
@@ -504,8 +505,8 @@ export default function Home() {
         .catch((error) => {
           console.warn("Screenshot S3 upload failed:", error);
         });
-    } catch (error: any) {
-      toast.error(error.message || "Unable to read image file.");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Unable to read image file."));
       setScreenshotLoading(false);
       event.target.value = "";
     }
@@ -529,11 +530,13 @@ export default function Home() {
       setScreenshotUrl(urlInput);
       setUrlInput("");
       toast.success("Website captured successfully!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("URL scraping error:", error);
       toast.error(
-        error.message ||
+        getErrorMessage(
+          error,
           "Failed to capture website. Please check the URL and try again.",
+        ),
       );
     } finally {
       setIsScrapingUrl(false);
@@ -1292,8 +1295,11 @@ export default function Home() {
                       setStreamPromise(streamPromise);
                       router.push(`/chats/${chatId}`);
                     });
-                  } catch (error: any) {
-                    const message = error.message || "Failed to create project";
+                  } catch (error: unknown) {
+                    const message = getErrorMessage(
+                      error,
+                      "Failed to create project",
+                    );
                     if (message.includes("free projects")) {
                       showProjectLimitPricing();
                       return;

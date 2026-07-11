@@ -6,12 +6,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { getSafeCallbackUrl } from "@/lib/safe-redirect";
 
 function SignInForm() {
   const { data: session, isPending } = useSession();
   const searchParams = useSearchParams();
   const callbackUrlRef = useRef(
-    searchParams.get("callbackUrl") || "/dashboard",
+    getSafeCallbackUrl(searchParams.get("callbackUrl")),
   );
 
   const [email, setEmail] = useState("");

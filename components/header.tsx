@@ -54,6 +54,7 @@ function Header({ onHelpClick }: HeaderProps) {
             alt="Squid Agent"
             width={36}
             height={36}
+            loading="eager"
             className="ease-[cubic-bezier(0.34,1.56,0.64,1)] relative z-10 h-9 object-contain transition-transform duration-500 group-hover:-rotate-1 group-hover:scale-[1.05]"
           />
         </div>

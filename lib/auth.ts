@@ -86,22 +86,11 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: async (data, request) => {
-      console.log(
-        "[sendResetPassword] Starting email send to:",
-        data.user.email,
-      );
-      console.log("[sendResetPassword] Token:", data.token);
-      console.log(
-        "[sendResetPassword] RESEND_API_KEY exists:",
-        !!process.env.RESEND_API_KEY,
-      );
-
+    sendResetPassword: async (data) => {
       const resetUrl = `${getBaseUrl()}/reset-password?token=${data.token}`;
-      console.log("[sendResetPassword] Reset URL:", resetUrl);
 
       try {
-        const result = await resend.emails.send({
+        await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ||
             "Squid Agent <onboarding@resend.dev>",
@@ -127,7 +116,6 @@ export const auth = betterAuth({
             </div>
           `,
         });
-        console.log("[sendResetPassword] Email sent successfully:", result);
       } catch (error) {
         console.error("[sendResetPassword] Failed to send email:", error);
         throw error;

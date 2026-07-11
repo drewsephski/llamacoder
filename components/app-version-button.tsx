@@ -23,6 +23,7 @@ export function AppVersionButton({
   return (
     <div className="my-4">
       <button
+        type="button"
         disabled={disabled}
         className={`inline-flex w-full items-center gap-2 rounded-lg border-4 border-border p-1.5 ${
           generating

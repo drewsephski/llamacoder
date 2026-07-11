@@ -11,6 +11,7 @@ const {
   getSessionMock,
   notFoundMock,
   prismaMock,
+  revalidatePathMock,
   releaseCreditHoldMock,
   saveMessageFollowUpPromptsMock,
   txMock,
@@ -22,6 +23,7 @@ const {
   getModelCreditCostMock: vi.fn(() => 1),
   getSessionMock: vi.fn(),
   releaseCreditHoldMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -54,6 +56,10 @@ vi.mock("next/headers", () => ({
 
 vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -128,7 +134,7 @@ describe("server actions", () => {
     );
 
     await expect(createMessage("chat_1", "hello", "user")).rejects.toThrow(
-      "You can only add messages to your own projects",
+      "You do not have access to this project",
     );
   });
 

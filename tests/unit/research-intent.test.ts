@@ -15,6 +15,8 @@ describe("detectResearchIntent", () => {
     expect(detectResearchIntent([{ content }])).toMatchObject({
       required: true,
       explicitlyRequested: true,
+      freshness: expect.any(String),
+      reason: "explicit",
       query: content,
     });
   });
@@ -23,16 +25,42 @@ describe("detectResearchIntent", () => {
     "Build an app with the current UFC rankings",
     "Show the actual UFC rankings and records",
     "Create a dashboard for live scores today",
-  ])("requires research for volatile factual data: %s", (content) => {
-    expect(detectResearchIntent([{ content }]).required).toBe(true);
+  ])("requires recent research for volatile factual data: %s", (content) => {
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      required: true,
+      freshness: "recent",
+    });
   });
 
-  it("does not search for ordinary product requests", () => {
+  it.each([
+    ["Follow Vercel AI SDK tool-calling best practices", "technical-reference"],
+    ["Compare Stripe Checkout versus Elements for this app", "recommendation"],
+    ["Verify this claim and cite the sources", "verification"],
+    ["What is the OAuth authorization code flow?", "external-facts"],
+    ["Build a polished habit tracker app", "new-build"],
+  ] as const)(
+    "uses evergreen research when external context can improve the output: %s",
+    (content, reason) => {
+      expect(detectResearchIntent([{ content }])).toMatchObject({
+        required: true,
+        freshness: "evergreen",
+        reason,
+      });
+    },
+  );
+
+  it.each([
+    "Make the primary button blue",
+    "Fix the TypeError using the code already in this chat",
+    "Use a warmer, more playful visual style",
+  ])("skips search for fully local or subjective work: %s", (content) => {
     expect(
-      detectResearchIntent([{ content: "Build a polished habit tracker" }]),
+      detectResearchIntent([{ content }]),
     ).toEqual({
       required: false,
       explicitlyRequested: false,
+      freshness: "evergreen",
+      reason: null,
       query: null,
     });
   });

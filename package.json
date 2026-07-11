@@ -8,7 +8,8 @@
   "scripts": {
     "postinstall": "fumadocs-mdx && prisma generate",
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
+    "build": "prisma generate && next build",
+    "db:deploy": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint . && tsc --noEmit --noUnusedLocals",
     "typecheck": "tsc --noEmit",

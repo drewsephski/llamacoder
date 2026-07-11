@@ -31,6 +31,7 @@ import {
   saveMessageFollowUpPrompts,
 } from "@/lib/follow-up-prompts";
 import { recoverStaleGenerationLocks } from "@/lib/generation-recovery";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
 
 class CreditConsumptionError extends Error {
   constructor(
@@ -76,6 +77,25 @@ export async function POST(request: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = await consumeRateLimit({
+      userId: session.user.id,
+      operation: "generate_code",
+      limit: 6,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          message: "Too many generation requests. Please try again shortly.",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
     }
 
     const prisma = getPrisma();
@@ -207,15 +227,17 @@ export async function POST(request: NextRequest) {
 
     // Generate code based on the plan
     const codeResponse = await generateCode(chat.plan);
-    const usage = (codeResponse as {
-      usage?: {
-        totalTokens?: unknown;
-        inputTokens?: unknown;
-        promptTokens?: unknown;
-        outputTokens?: unknown;
-        completionTokens?: unknown;
-      };
-    }).usage;
+    const usage = (
+      codeResponse as {
+        usage?: {
+          totalTokens?: unknown;
+          inputTokens?: unknown;
+          promptTokens?: unknown;
+          outputTokens?: unknown;
+          completionTokens?: unknown;
+        };
+      }
+    ).usage;
     let tokensUsed =
       typeof usage?.totalTokens === "number" ? usage.totalTokens : undefined;
     let inputTokens =

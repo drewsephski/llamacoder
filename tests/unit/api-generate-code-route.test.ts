@@ -4,6 +4,7 @@ import { buildChat, readJson } from "../fixtures/builders";
 
 const {
   consumeCreditsForGenerationMock,
+  consumeRateLimitMock,
   checkCreditAvailabilityMock,
   releaseCreditHoldMock,
   reserveCreditHoldMock,
@@ -15,6 +16,7 @@ const {
   txMock,
 } = vi.hoisted(() => ({
   consumeCreditsForGenerationMock: vi.fn(),
+  consumeRateLimitMock: vi.fn(),
   checkCreditAvailabilityMock: vi.fn(),
   releaseCreditHoldMock: vi.fn(),
   reserveCreditHoldMock: vi.fn(),
@@ -71,6 +73,10 @@ vi.mock("@/lib/openrouter", () => ({
   getOpenRouterUsageMetadata: vi.fn(() => null),
 }));
 
+vi.mock("@/features/security/server/rate-limit", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+}));
+
 vi.mock("@/lib/follow-up-prompts", () => ({
   generateFollowUpPrompts: generateFollowUpPromptsMock,
   saveMessageFollowUpPrompts: saveMessageFollowUpPromptsMock,
@@ -116,6 +122,7 @@ const invalidImportGeneratedApp = [
 describe("/api/generate-code", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5 });
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback(txMock),
     );

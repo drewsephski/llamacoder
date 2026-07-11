@@ -3,7 +3,7 @@
 import {
   createAgentAssistantMessage,
   createAgentUserMessage,
-} from "@/app/(main)/actions";
+} from "@/features/generation/server/agent-actions";
 import {
   createFreeRepairAssistantMessage,
   createMessage,

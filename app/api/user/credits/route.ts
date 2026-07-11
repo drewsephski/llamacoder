@@ -27,7 +27,7 @@ export async function GET() {
       hasPurchasedCredits: user.hasPurchasedCredits,
       subscriptionEndsAt: user.subscriptionEndsAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching credits:", error);
     return NextResponse.json(
       { error: "Failed to fetch credits" },

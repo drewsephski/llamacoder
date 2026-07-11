@@ -20,6 +20,10 @@ export const generationStatusSchema = z.object({
 
 export const agentActionDataSchema = agentActionSchema;
 
+export const scrapeScreenshotRequestSchema = z.object({
+  url: z.string().url(),
+});
+
 export const scrapeScreenshotResponseSchema = z.object({
   success: z.boolean(),
   screenshotData: z.string(),

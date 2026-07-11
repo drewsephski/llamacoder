@@ -7,6 +7,9 @@ import {
   getOrCreateStripeCustomerId,
 } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { getErrorMessage } from "@/features/shared/errors";
+import { recordOperationalEvent } from "@/lib/observability";
 
 type CreditPack = keyof typeof CREDIT_PACKS;
 
@@ -84,7 +87,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session) {
-      console.error("[Credits Checkout] No session found");
       return errorResponse(
         "You must be signed in to purchase credits",
         401,
@@ -93,20 +95,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
-      "[Credits Checkout] Available packs:",
-      Object.keys(CREDIT_PACKS),
-    );
-    console.log("[Credits Checkout] Pack requested:", pack);
+    const rateLimit = await consumeRateLimit({
+      userId: session.user.id,
+      operation: "checkout",
+      limit: 10,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!rateLimit.allowed) {
+      return errorResponse(
+        "Too many checkout requests. Please try again shortly.",
+        429,
+        request,
+        expectsJson,
+      );
+    }
 
     // Validate the pack type
     if (!pack || !isCreditPack(pack)) {
-      console.error(
-        "[Credits Checkout] Invalid pack:",
-        pack,
-        "Available:",
-        Object.keys(CREDIT_PACKS),
-      );
       return errorResponse("Invalid credit pack", 400, request, expectsJson);
     }
 
@@ -164,10 +169,16 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ url: checkoutSession.url });
-  } catch (error: any) {
-    console.error("Error creating credits checkout session:", error);
+  } catch (error: unknown) {
+    recordOperationalEvent({
+      name: "checkout_session_failed",
+      level: "error",
+      operation: "credits_checkout",
+      status: "error",
+      error,
+    });
     return errorResponse(
-      error.message || "Failed to create checkout session",
+      getErrorMessage(error, "Failed to create checkout session"),
       500,
       request,
       expectsJson,

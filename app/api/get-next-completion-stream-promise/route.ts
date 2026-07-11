@@ -65,8 +65,9 @@ import {
 } from "@/features/generation/research-intent";
 import {
   createResearchWindow,
-  extractRecentWebSources,
+  extractWebSources,
 } from "@/features/generation/research-policy";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
 
 type CompletionMessage = {
   role: "system" | "user" | "assistant";
@@ -281,6 +282,19 @@ export async function POST(req: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
+    const rateLimit = await consumeRateLimit({
+      userId: session.user.id,
+      operation: "completion",
+      limit: 12,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return new Response("Too many requests. Please try again shortly.", {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      });
+    }
+
     const message = await prisma.message.findUnique({
       where: { id: messageId },
       include: {
@@ -359,7 +373,9 @@ export async function POST(req: Request) {
       agentMetadata?.kind === "agent_search_approval_response";
     const researchIntent = detectResearchIntent(
       shouldCarryResearchThroughWorkflow
-        ? rawMessages.filter((candidate) => candidate.role === "user").slice(-8)
+        ? rawMessages
+            .filter((candidate) => candidate.role === "user")
+            .slice(-24)
         : [{ content: message.content }],
     );
 
@@ -506,7 +522,7 @@ export async function POST(req: Request) {
                 (candidate) => getStoredGeneratedFiles(candidate).length > 0,
               );
               const automaticResearchContext = researchIntent.required
-                ? `\n\nAutomatic web research is required for this request (${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. The execution step will run web search before answering or generating code.`
+                ? `\n\nAutomatic web research is required for this request because it is ${researchIntent.reason} research (${researchIntent.freshness} mode; query: ${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. The execution step will run web search before answering or generating code.`
                 : "";
 
               const orchestrationResult = await generateText({
@@ -718,16 +734,10 @@ export async function POST(req: Request) {
             return;
           }
 
+          let routedResearchQuery: string | null = null;
           if (agentAction.action === "search") {
-            writeStatus({
-              phase: "clarifying",
-              label: "Waiting for search permission",
-            });
-            writer.write({
-              type: "data-agent-action",
-              data: agentAction,
-            });
-            return;
+            routedResearchQuery = agentAction.request.query;
+            agentAction = { action: "answer" };
           }
 
           writer.write({
@@ -745,10 +755,14 @@ export async function POST(req: Request) {
           const researchRequired =
             !isFreeRepairRequest &&
             (searchApproved ||
-              (searchApproval?.approved !== false && researchIntent.required));
+              (searchApproval?.approved !== false &&
+                (researchIntent.required || routedResearchQuery !== null)));
           const researchQuery = searchApproved
             ? searchApproval.query
-            : researchIntent.query;
+            : (routedResearchQuery ?? researchIntent.query);
+          const researchFreshness = researchIntent.required
+            ? researchIntent.freshness
+            : "evergreen";
 
           if (isCodeGeneration && !isFreeRepairRequest && planMode) {
             const lastUserMessageIndex = guardedMessages.findLastIndex(
@@ -801,7 +815,8 @@ export async function POST(req: Request) {
             writeStatus({ phase: "searching", label: "Searching the web" });
 
             const researchModel = WEB_RESEARCH_MODEL;
-            const researchWindow = createResearchWindow();
+            const researchWindow =
+              researchFreshness === "recent" ? createResearchWindow() : null;
             const researchTelemetry = createRequestTelemetry({
               userId: session.user.id,
               chatId: message.chatId,
@@ -828,15 +843,25 @@ export async function POST(req: Request) {
                     tags: ["feature:web-search", "request:research"],
                   },
                 },
-                system: `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
-                prompt: `${query}\n\nRequired publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`,
+                system:
+                  researchWindow === null
+                    ? "Research the request before answering or generating software. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact. Return a concise factual brief with source support. Do not write application code."
+                    : `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
+                prompt:
+                  researchWindow === null
+                    ? `${query}\n\nFind the most authoritative sources that can materially improve the response. Include stable documentation or background sources even when they are undated.`
+                    : `${query}\n\nRequired publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`,
                 tools: {
                   web_search: gateway.tools.exaSearch({
                     type: "auto",
                     numResults: 8,
                     userLocation: "US",
-                    startPublishedDate: researchWindow.startIso,
-                    endPublishedDate: researchWindow.endIso,
+                    ...(researchWindow
+                      ? {
+                          startPublishedDate: researchWindow.startIso,
+                          endPublishedDate: researchWindow.endIso,
+                        }
+                      : {}),
                     contents: {
                       text: {
                         maxCharacters: 8_000,
@@ -857,39 +882,44 @@ export async function POST(req: Request) {
               });
               researchTelemetry.markFirstByte();
 
-              const recentSources = extractRecentWebSources(
+              const webSources = extractWebSources(
                 researchResult.toolResults.map(({ output }) => output),
-                researchWindow,
+                researchWindow ? { publicationWindow: researchWindow } : {},
               );
-              if (recentSources.length === 0) {
+              if (webSources.length === 0) {
                 throw new Error(
-                  `Web search returned no dated sources published from ${researchWindow.startDate} through ${researchWindow.endDate}`,
+                  researchWindow
+                    ? `Web search returned no dated sources published from ${researchWindow.startDate} through ${researchWindow.endDate}`
+                    : "Web search returned no usable sources",
                 );
               }
 
-              recentSources.forEach((source, index) => {
+              webSources.forEach((source, index) => {
                 writer.write({
                   type: "source-url",
                   sourceId: `research-${messageId}-${index + 1}`,
                   url: source.url,
-                  title:
-                    `${source.title} (${source.publishedDate.slice(0, 10)})`.slice(
-                      0,
-                      300,
-                    ),
+                  title: (source.publishedDate
+                    ? `${source.title} (${source.publishedDate.slice(0, 10)})`
+                    : source.title
+                  ).slice(0, 300),
                 });
               });
 
-              const sourceEvidence = recentSources.map(
+              const sourceEvidence = webSources.map(
                 (source, index) =>
-                  `[Source ${index + 1}] ${source.title}\nPublished: ${source.publishedDate.slice(0, 10)}\nURL: ${source.url}\nExcerpt:\n${source.excerpt || "No excerpt was returned."}`,
+                  `[Source ${index + 1}] ${source.title}\nPublished: ${source.publishedDate?.slice(0, 10) ?? "Not provided"}\nURL: ${source.url}\nExcerpt:\n${source.excerpt || "No excerpt was returned."}`,
               );
               const researchBrief = [
                 "=== VERIFIED WEB RESEARCH ===",
-                `Strict publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`,
+                researchWindow
+                  ? `Strict publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`
+                  : "Research mode: authoritative sources without an artificial publication-date cutoff.",
                 sourceEvidence.join("\n\n"),
                 "=== END VERIFIED WEB RESEARCH ===",
-                "Use only this dated research as factual source material. Preserve its publication dates and source URLs in the generated app where attribution is useful. Do not revive facts from older conversation messages or label archived data as current.",
+                researchWindow
+                  ? "Use only this dated research as factual source material. Preserve its publication dates and source URLs in the generated app where attribution is useful. Do not revive facts from older conversation messages or label archived data as current."
+                  : "Use this research to improve factual accuracy, domain fit, and implementation decisions. Prefer primary sources, preserve source URLs where attribution is useful, and do not claim undated material is current.",
               ].join("\n\n");
               const lastUserMessageIndex = guardedMessages.findLastIndex(
                 (candidate) => candidate.role === "user",

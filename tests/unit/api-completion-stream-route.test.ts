@@ -9,6 +9,7 @@ import { buildMessage } from "../fixtures/builders";
 const {
   createOpenRouterModelMock,
   createRequestTelemetryMock,
+  consumeRateLimitMock,
   gatewayModelMock,
   generateTextMock,
   getModelCreditHoldCostMock,
@@ -22,6 +23,7 @@ const {
 } = vi.hoisted(() => ({
   createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   createRequestTelemetryMock: vi.fn(),
+  consumeRateLimitMock: vi.fn(),
   gatewayModelMock: vi.fn(() => "gateway-model"),
   generateTextMock: vi.fn(),
   getModelCreditHoldCostMock: vi.fn((model: string) =>
@@ -72,6 +74,10 @@ vi.mock("@/lib/prisma", () => ({
 
 vi.mock("@/features/generation/server/request-telemetry", () => ({
   createRequestTelemetry: createRequestTelemetryMock,
+}));
+
+vi.mock("@/features/security/server/rate-limit", () => ({
+  consumeRateLimit: consumeRateLimitMock,
 }));
 
 vi.mock("@/lib/billing", async (importOriginal) => {
@@ -178,6 +184,7 @@ async function collectUIChunks(response: Response) {
 describe("/api/get-next-completion-stream-promise", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 11 });
     getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
     reserveCreditHoldMock.mockResolvedValue({
       success: true,
@@ -214,6 +221,21 @@ describe("/api/get-next-completion-stream-promise", () => {
 
     expect(response.status).toBe(401);
     await expect(response.text()).resolves.toBe("Unauthorized");
+  });
+
+  it("rate limits completion requests before loading messages", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({
+      allowed: false,
+      retryAfterSeconds: 12,
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_1", model: "model_1" }),
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("12");
+    expect(prismaMock.message.findUnique).not.toHaveBeenCalled();
   });
 
   it("rejects requests for chats the session does not own", async () => {
@@ -511,6 +533,78 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(call.messages.at(-1).content).toContain("Published: 2026-06-30");
     expect(call.messages.at(-1).content).toContain(
       "https://www.ufc.com/rankings",
+    );
+  });
+
+  it("uses undated authoritative sources for evergreen technical research", async () => {
+    const content =
+      "Build an app using Vercel AI SDK tool-calling best practices";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_evergreen_search",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      text: "Verified AI SDK guidance",
+      sources: [],
+      toolResults: [
+        {
+          toolName: "web_search",
+          output: {
+            id: "search_evergreen",
+            results: [
+              {
+                url: "https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling",
+                title: "AI SDK Tool Calling",
+                highlights: ["Use provider tools through the tools option."],
+              },
+            ],
+          },
+        },
+      ],
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "research_response_evergreen" },
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_evergreen_search", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "source-url",
+          url: "https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling",
+          title: "AI SDK Tool Calling",
+        }),
+      ]),
+    );
+    expect(exaSearchMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        startPublishedDate: expect.anything(),
+        endPublishedDate: expect.anything(),
+      }),
+    );
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+      "authoritative sources without an artificial publication-date cutoff",
+    );
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+      "Use provider tools through the tools option.",
     );
   });
 

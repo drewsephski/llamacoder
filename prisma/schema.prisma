@@ -295,6 +295,20 @@ model AiRequestLog {
   @@map("AIRequestLog")
 }
 
+model ApiRateLimitBucket {
+  id          String   @id
+  userId      String
+  operation   String
+  count       Int      @default(1)
+  windowStart DateTime
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, operation, windowStart])
+  @@index([expiresAt])
+}
+
 model Session {
   id        String   @id
   expiresAt DateTime
