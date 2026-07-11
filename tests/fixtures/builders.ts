@@ -36,6 +36,7 @@ export function buildChat(overrides: Record<string, unknown> = {}) {
     llamaCoderVersion: "v2",
     shadcn: true,
     plan: "Build the app with App.tsx and components.",
+    appSpec: null,
     hasCode: false,
     generationStatus: "idle",
     generationStartedAt: null,

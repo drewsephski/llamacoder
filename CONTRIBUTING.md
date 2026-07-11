@@ -1,25 +1,41 @@
-# Contributing Guide
+# Contributing
 
-Thank you for your interest in contributing to this project! We accept contributions via bug reports, feature requests and pull requests. We also have a roadmap outlined below.
+Squid Agent uses Node 20.19 or newer and pnpm. Do not use npm, Yarn, or Bun in this repository.
 
-For simple fixes or small items on the roadmap below, feel free to submit a pull request. For anything more complex, please open an issue first to discuss the changes you want to make.
+## Local setup
 
-## Running the repo
+1. Install the Node version declared in `package.json`.
+2. Run `corepack enable` and `pnpm install`.
+3. Copy the documented variables from `.env.example` into `.env`.
+4. Run `pnpm dev`.
 
-To run the repo locally, simply `npm install` to install dependencies and then `npm run dev` to run the app.
+The application uses Next.js App Router, React, strict TypeScript, Prisma/Postgres, OpenRouter, TanStack Query, Tailwind, and Sandpack.
 
-## Roadmap
+## Architecture
 
-- [ ] Add self-correcting to the app so it can fix its own errors
-- [ ] Compressing prompt: Use small model like llama 3.1 70B to retain what happened in the past, good memory management is key
-- [ ] Add evals with Braintrust to be able to measure how good the system is over time and when making new changes
-- [ ] Add more good examples to the shadcn-examples.ts file (single components that span a whole app and use shadcn)
-- [ ] Add dynamic OG images to the specific generations & include the prompt + a screenshot in the image
-- [ ] Show a "featured apps" section on /gallery (or have some at the bottom of the homepage as templates). Have a /id/${prompt} dynamic route that can display a bunch of nice example apps in the sandbox ready to go
-- [ ] Try finetuning a smaller model on good prompts from deepseek-v2 or o1/Claude
-- [ ] Add dark mode to the site overall, nice design change
-- [ ] Support more languages starting with Python (like streamlit) and see if I can run them on CSB SDK
+- `app/**` owns routes, metadata, request validation, authorization entry points, and composition.
+- `features/**` owns product contracts, components, client hooks, server queries, and server actions.
+- `components/ui/**` contains generic primitives; it must not import product features.
+- `lib/**` contains infrastructure and shared generated-code, billing, provider, and storage logic.
 
-## License
+New product behavior belongs in a feature module. Route files should remain small, and feature or shared modules must not import business logic from `app/**`.
 
-By contributing, you agree that your contributions will be licensed under the project's license.
+## Implementation checklist
+
+- Validate API, URL, FormData, storage, and Prisma JSON inputs at the boundary.
+- Authenticate and authorize every server action and route; never treat an opaque ID as authorization.
+- Preserve server/client boundaries and avoid broad client-only pages.
+- Represent loading, empty, error, and retry states.
+- Give icon-only controls accessible names and every button an explicit `type`.
+- Avoid updating large component trees for every streamed token; batch transient updates and isolate expensive derived UI.
+- Add observable behavior tests for changed flows.
+
+## Verification
+
+Run the quick quality gate before opening a pull request:
+
+```bash
+pnpm ship:quick
+```
+
+Run `pnpm test:e2e` for user-visible flows. Use `pnpm exec next build` for a safe production compile when needed; the repository's `pnpm build` script also performs `prisma db push` and should only be run when that database mutation is intended.

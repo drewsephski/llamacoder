@@ -61,9 +61,31 @@ describe("OpenRouter helpers", () => {
     getModelWithFallbacksMock.mockReturnValue(["unknown/model"]);
     const openrouter = vi.fn();
 
-    expect(() => createOpenRouterModel(openrouter as never, "unknown/model"))
-      .toThrow("UNPRICED_MODEL:unknown/model");
+    expect(() =>
+      createOpenRouterModel(openrouter as never, "unknown/model"),
+    ).toThrow("UNPRICED_MODEL:unknown/model");
     expect(openrouter).not.toHaveBeenCalled();
+  });
+
+  it("can omit the provider price ceiling for server-tool requests", () => {
+    getModelWithFallbacksMock.mockReturnValue([SAFE_GPT_MODEL]);
+    const openrouter = vi.fn();
+
+    createOpenRouterModel(
+      openrouter as never,
+      SAFE_GPT_MODEL,
+      { maxTokens: 200 },
+      { enforceMaxPrice: false },
+    );
+
+    expect(openrouter).toHaveBeenCalledWith(SAFE_GPT_MODEL, {
+      maxTokens: 200,
+      models: undefined,
+      provider: {
+        sort: "price",
+        max_price: undefined,
+      },
+    });
   });
 
   it("uses normalized routes for removed mandatory-reasoning models", () => {
@@ -112,7 +134,7 @@ describe("OpenRouter helpers", () => {
     });
   });
 
-  it("uses low visible reasoning for high-quality optional models", () => {
+  it("uses the model default visible reasoning for Plan mode", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
     expect(
@@ -121,10 +143,28 @@ describe("OpenRouter helpers", () => {
       enabled: true,
       visible: true,
       mandatory: false,
-      effort: "low",
+      effort: "medium",
       providerOptions: {
         openrouter: {
-          reasoning: { effort: "low", exclude: false },
+          reasoning: { effort: "medium", exclude: false },
+        },
+      },
+    });
+  });
+
+  it("explicitly disables Gemini reasoning outside Plan mode", () => {
+    getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
+
+    expect(
+      getOpenRouterReasoningSelection("google/gemini-3-flash-preview", "low"),
+    ).toEqual({
+      enabled: false,
+      visible: false,
+      mandatory: false,
+      effort: "none",
+      providerOptions: {
+        openrouter: {
+          reasoning: { enabled: false },
         },
       },
     });

@@ -19,7 +19,6 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  use,
   useState,
   useRef,
   useTransition,
@@ -29,13 +28,12 @@ import {
   useCallback,
 } from "react";
 
-import { Context } from "./providers";
 import Header from "@/components/header";
 import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
-import { PricingModal } from "@/components/pricing-modal";
+import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { HelpPanel } from "@/components/help-panel";
 import { authClient } from "@/lib/auth-client";
@@ -53,6 +51,7 @@ import {
   getModelCreditRange,
 } from "@/lib/billing";
 import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
+import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/png",
@@ -258,7 +257,7 @@ function getDisplayPreviewUrl(href: string) {
 }
 
 export default function Home() {
-  const { setStreamPromise } = use(Context);
+  const { setStreamPromise } = useGenerationHandoff();
   const router = useRouter();
 
   const [prompt, setPrompt] = useState("");

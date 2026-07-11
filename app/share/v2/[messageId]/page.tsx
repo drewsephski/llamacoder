@@ -1,6 +1,5 @@
 import { getPrisma } from "@/lib/prisma";
-import { normalizeGeneratedFiles } from "@/lib/generated-files";
-import { extractAllCodeBlocks } from "@/lib/utils";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -61,11 +60,7 @@ export default async function SharePage({
     notFound();
   }
 
-  const files = normalizeGeneratedFiles(
-    ((message.files as any[]) || []).length > 0
-      ? (message.files as any[])
-      : extractAllCodeBlocks(message.content),
-  );
+  const files = getMessageGeneratedFiles(message);
   if (files.length === 0) {
     notFound();
   }

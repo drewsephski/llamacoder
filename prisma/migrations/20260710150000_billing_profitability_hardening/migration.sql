@@ -33,12 +33,12 @@ ADD COLUMN "upstreamInferenceCostUsd" DOUBLE PRECISION;
 CREATE INDEX "AIRequestLog_creditHoldId_idx"
 ON "AIRequestLog"("creditHoldId");
 
-UPDATE "CreditGrant" AS grant
+UPDATE "CreditGrant" AS credit_grant
 SET "expiresAt" = subscription."currentPeriodEnd"
 FROM "Subscription" AS subscription
-WHERE grant."userId" = subscription."userId"
-  AND grant.type = 'subscription'
-  AND grant."expiresAt" IS NULL;
+WHERE credit_grant."userId" = subscription."userId"
+  AND credit_grant.type = 'subscription'
+  AND credit_grant."expiresAt" IS NULL;
 
 UPDATE "CreditGrant"
 SET

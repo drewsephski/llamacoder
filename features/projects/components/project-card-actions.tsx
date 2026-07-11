@@ -35,6 +35,8 @@ export function ProjectCardActions({
     <>
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
+          type="button"
+          aria-label={`Duplicate ${projectTitle}`}
           onClick={handleDuplicate}
           disabled={isDuplicating}
           className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
@@ -47,6 +49,8 @@ export function ProjectCardActions({
           )}
         </button>
         <button
+          type="button"
+          aria-label={`Delete ${projectTitle}`}
           onClick={() => setIsDeleteModalOpen(true)}
           className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           title="Delete"

@@ -4,25 +4,28 @@ import ArrowRightIcon from "@/components/icons/arrow-right";
 import Spinner from "@/components/spinner";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { createMessage } from "@/app/(main)/actions";
+import { createMessage } from "@/features/generation/server/actions";
 import { MODELS } from "@/lib/constants";
 import { toast } from "sonner";
-import { PricingModal } from "@/components/pricing-modal";
-import { UpgradeBanner } from "@/components/upgrade-banner";
-import { useUserCredits, useUserSession } from "@/lib/queries";
+import { PricingModal } from "@/features/billing/components/pricing-modal";
+import { UpgradeBanner } from "@/features/billing/components/upgrade-banner";
+import { useUserCredits } from "@/features/user/client/queries";
+import { useSession } from "@/lib/auth-client";
 import { Textarea } from "@/components/ui/textarea";
 import {
   fetchCompletionStream,
   type CompletionStream,
 } from "@/features/generation/client/completion-stream";
 import { GenerationLoader } from "@/components/generation-loader";
+import type { ProjectMessage } from "@/features/projects/contracts";
+import { getErrorMessage } from "@/features/shared/errors";
 
 interface ChatBoxProps {
   chat: {
     id: string;
     title: string;
     model: string;
-    messages: any[];
+    messages: ProjectMessage[];
   };
   onNewStreamPromiseAction: (streamPromise: Promise<CompletionStream>) => void;
   isStreaming: boolean;
@@ -43,7 +46,7 @@ export default function ChatBox({
   const didFocusOnce = useRef(false);
 
   const { data: creditsData } = useUserCredits();
-  const { data: session } = useUserSession();
+  const { data: session } = useSession();
   const credits = creditsData?.credits ?? 0;
   const hasActiveSubscription = creditsData?.hasActiveSubscription ?? false;
   const isAuthenticated = !!session;
@@ -95,8 +98,8 @@ export default function ChatBox({
           router.refresh();
           setPrompt("");
         });
-      } catch (error: any) {
-        toast.error(error.message || "Failed to send message");
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, "Failed to send message"));
       }
     });
   };
@@ -231,6 +234,7 @@ export default function ChatBox({
               {/* Textarea */}
               <Textarea
                 ref={textareaRef}
+                aria-label="Message Squid Agent"
                 placeholder={
                   isStreaming
                     ? "Generating response…"
@@ -282,6 +286,7 @@ export default function ChatBox({
                 {/* Right: submit */}
                 <button
                   type="submit"
+                  aria-label="Send message"
                   disabled={disabled || prompt.length === 0}
                   className="send-btn bg-primary text-primary-foreground"
                 >
@@ -332,7 +337,7 @@ export default function ChatBox({
   );
 }
 
-function getLatestFollowUpPrompts(messages: any[]) {
+function getLatestFollowUpPrompts(messages: ProjectMessage[]) {
   const latestAssistantMessage = messages
     .filter((message) => message.role === "assistant")
     .at(-1);

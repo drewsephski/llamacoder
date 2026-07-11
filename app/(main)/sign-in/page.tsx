@@ -3,6 +3,7 @@
 import { authClient, useSession } from "@/lib/auth-client";
 import { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -88,9 +89,11 @@ function SignInForm() {
             href="/"
             className="mb-8 inline-flex items-center justify-center transition-transform hover:scale-105"
           >
-            <img
+            <Image
               src="/squidagent-logo.svg"
               alt="Squid Agent"
+              width={64}
+              height={64}
               className="h-16 w-auto"
             />
           </Link>

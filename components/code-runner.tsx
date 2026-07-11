@@ -6,6 +6,7 @@ export default function CodeRunner({
   code,
   files,
   onRequestFix,
+  onPreviewHealthChange,
   onPreviewSelection,
   previewSelectionMode,
   previewTestNonce,
@@ -15,6 +16,10 @@ export default function CodeRunner({
   code?: string;
   files?: Array<{ path: string; content: string }>;
   onRequestFix?: (e: string) => void;
+  onPreviewHealthChange?: (health: {
+    status: "working" | "error";
+    error?: string;
+  }) => void;
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
   previewSelectionMode?: boolean;
   previewTestNonce?: number;
@@ -26,6 +31,7 @@ export default function CodeRunner({
     <CodeRunnerReact
       files={actualFiles}
       onRequestFix={onRequestFix}
+      onPreviewHealthChange={onPreviewHealthChange}
       onPreviewSelection={onPreviewSelection}
       previewSelectionMode={previewSelectionMode}
       previewTestNonce={previewTestNonce}

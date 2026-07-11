@@ -228,6 +228,44 @@ describe("/api/create-chat", () => {
     });
   });
 
+  it("preserves Plan mode for Gemini 3 Flash Preview", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+
+    const response = await POST(
+      request({
+        prompt: "Build a timer",
+        model: "google/gemini-3-flash-preview",
+        quality: "high",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.chat.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ quality: "high" }),
+      }),
+    );
+  });
+
+  it("normalizes Plan mode off for non-reasoning models", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+
+    const response = await POST(
+      request({
+        prompt: "Build a timer",
+        model: "openai/gpt-4.1",
+        quality: "high",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.chat.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ quality: "low" }),
+      }),
+    );
+  });
+
   it("does not block chat creation on screenshot analysis", async () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
 

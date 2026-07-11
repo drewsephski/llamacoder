@@ -1,18 +1,11 @@
 "use client";
 
-import { createContext, ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NoiseTexture } from "@/components/ui/noise-texture";
-import type { CompletionStream } from "@/features/generation/client/completion-stream";
-
-export const Context = createContext<{
-  streamPromise?: Promise<CompletionStream>;
-  setStreamPromise: (v: Promise<CompletionStream> | undefined) => void;
-}>({
-  setStreamPromise: () => {},
-});
+import { GenerationHandoffProvider } from "@/features/generation/client/generation-handoff-context";
 
 // Create QueryClient outside component to avoid recreating on render
 const queryClient = new QueryClient({
@@ -27,18 +20,15 @@ const queryClient = new QueryClient({
 });
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const [streamPromise, setStreamPromise] =
-    useState<Promise<CompletionStream>>();
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <div className="relative min-h-full">
-          <NoiseTexture />
-          <Context value={{ streamPromise, setStreamPromise }}>
+        <GenerationHandoffProvider>
+          <div className="relative min-h-full">
+            <NoiseTexture />
             {children}
-          </Context>
-        </div>
+          </div>
+        </GenerationHandoffProvider>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, X, Loader2, FileText, Edit2 } from "lucide-react";
 import { Textarea } from "./ui/textarea";
+import { getErrorMessage } from "@/features/shared/errors";
 
 interface PlanReviewProps {
   plan: string;
@@ -12,7 +13,12 @@ interface PlanReviewProps {
   onReject: () => void;
 }
 
-export function PlanReview({ plan, chatId, onApprove, onReject }: PlanReviewProps) {
+export function PlanReview({
+  plan,
+  chatId,
+  onApprove,
+  onReject,
+}: PlanReviewProps) {
   const [editedPlan, setEditedPlan] = useState(plan);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -21,7 +27,7 @@ export function PlanReview({ plan, chatId, onApprove, onReject }: PlanReviewProp
   const handleApprove = async () => {
     setIsGenerating(true);
     setError(null);
-    
+
     try {
       const response = await fetch("/api/generate-code", {
         method: "POST",
@@ -35,8 +41,8 @@ export function PlanReview({ plan, chatId, onApprove, onReject }: PlanReviewProp
       }
 
       onApprove();
-    } catch (err: any) {
-      setError(err.message || "Failed to generate code");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to generate code"));
     } finally {
       setIsGenerating(false);
     }
@@ -50,7 +56,7 @@ export function PlanReview({ plan, chatId, onApprove, onReject }: PlanReviewProp
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -80,7 +86,7 @@ export function PlanReview({ plan, chatId, onApprove, onReject }: PlanReviewProp
         />
       ) : (
         <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="whitespace-pre-wrap text-sm font-mono text-foreground">
+          <pre className="whitespace-pre-wrap font-mono text-sm text-foreground">
             {editedPlan}
           </pre>
         </div>

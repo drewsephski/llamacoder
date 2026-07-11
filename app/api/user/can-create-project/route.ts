@@ -37,6 +37,19 @@ export async function GET(request: NextRequest) {
       modelId: selectedModel,
     });
 
+    if (
+      !eligibility.success &&
+      eligibility.error === "ELIGIBILITY_CHECK_FAILED"
+    ) {
+      return NextResponse.json(
+        {
+          error: eligibility.error,
+          message: "Unable to verify your credit balance. Please try again.",
+        },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json({
       canCreate: eligibility.success,
       error: eligibility.success ? undefined : eligibility.error,

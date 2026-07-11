@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 import { auth } from "@/lib/auth";
 import { buildExportBundle, getExportFilename } from "@/lib/export-bundle";
-import { normalizeGeneratedFiles } from "@/lib/generated-files";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getPrisma } from "@/lib/prisma";
-import { extractAllCodeBlocks } from "@/lib/utils";
 import { headers } from "next/headers";
 
 type RouteContext = {
@@ -20,11 +19,7 @@ async function getExportableMessage(messageId: string) {
 
   if (!message) return null;
 
-  const files = normalizeGeneratedFiles(
-    Array.isArray(message.files) && message.files.length > 0
-      ? (message.files as any[])
-      : extractAllCodeBlocks(message.content),
-  );
+  const files = getMessageGeneratedFiles(message);
 
   if (files.length === 0) return null;
 

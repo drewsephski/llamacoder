@@ -27,6 +27,11 @@ export type ModelReasoningCapability =
   | {
       supported: true;
       mandatory: boolean;
+      /**
+       * Product-level override for models where reasoning exists but the
+       * Plan-mode toggle is not a meaningful user-facing choice.
+       */
+      planModeAvailable?: boolean;
       supportedEfforts?: readonly ReasoningEffort[];
       defaultEffort?: ReasoningEffort;
     };
@@ -172,6 +177,16 @@ export function getModelReasoningCapability(
 
 export function isActiveModelId(model: string): boolean {
   return MODELS.some((option) => option.value === model);
+}
+
+export function isPlanModeAvailable(model: string): boolean {
+  const capability = getModelReasoningCapability(model);
+
+  return (
+    capability.supported &&
+    !capability.mandatory &&
+    capability.planModeAvailable !== false
+  );
 }
 
 export const SUGGESTED_PROMPTS = [

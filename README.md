@@ -1,30 +1,39 @@
-<a href="https://www.squidagent.app">
-  <img alt="Squid Agent" src="./public/og-image.png">
-  <h1 align="center">Squid Agent</h1>
-</a>
+# Squid Agent
 
-<p align="center">
-  An open source Claude Artifacts – generate small apps with one prompt. Powered by Llama 3 on Together.ai.
-</p>
+Squid Agent turns prompts, screenshots, and website references into exportable React applications. Generated source stays inspectable and portable, credit costs are visible, quality checks are surfaced, and project versions remain reversible.
 
-## Tech stack
+## Stack
 
-- [Llama 3.1 405B](https://ai.meta.com/blog/meta-llama-3-1/) from Meta for the LLM
-- [Together AI](https://togetherai.link/?utm_source=squidagent&utm_medium=referral&utm_campaign=example-app) for LLM inference
-- [Sandpack](https://sandpack.codesandbox.io/) for the code sandbox
-- Next.js app router with Tailwind
-- Helicone for observability
-- Plausible for website analytics
+- Next.js App Router and React
+- strict TypeScript, Zod, Tailwind CSS, and shadcn/ui
+- Prisma with Postgres/Neon
+- OpenRouter through the Vercel AI SDK
+- TanStack Query for mutable client-visible server state
+- Sandpack for generated-app previews
+- Vitest and Playwright
 
-## Cloning & running
+## Run locally
 
-1. Clone the repo: `git clone https://github.com/Nutlope/squid-agent`
-2. Create a `.env` file and add your API keys:
-- **[Together AI API key](https://dub.sh/together-ai/?utm_source=example-app\&utm_medium=squidagent\&utm_campaign=squidagent-app-signup)**: `TOGETHER_API_KEY=<your_together_ai_api_key>`
-   - **[CSB API key](https://codesandbox.io/signin)**: `CSB_API_KEY=<your_csb_api_key>`
-   - **Database URL**: Use [Neon](https://neon.tech) to set up your PostgreSQL database and add the Prisma connection string: `DATABASE_URL=<your_database_url>`
-3. Run `npm install` and `npm run dev` to install dependencies and run locally
+Use Node 20.19 or newer and pnpm:
 
-## Contributing
+```bash
+corepack enable
+pnpm install
+pnpm dev
+```
 
-For contributing to the repo, please see the [contributing guide](./CONTRIBUTING.md)
+Create `.env` from `.env.example` before starting. Provider, database, authentication, billing, storage, and email features require their corresponding variables.
+
+## Quality gates
+
+```bash
+pnpm validate:schema
+pnpm typecheck
+pnpm lint
+pnpm test:unit
+pnpm test:e2e
+```
+
+For a safe production compilation, use `pnpm exec next build`. The `pnpm build` script intentionally generates Prisma and pushes the schema before building, so do not run it against an unintended database.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for architecture and contribution conventions.

@@ -9,6 +9,7 @@ import type {
   ProjectWorkspace,
 } from "@/features/projects/contracts";
 import { getPrisma } from "@/lib/prisma";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 
 const loadProjectWorkspace = cache(
   async (id: string, userId: string): Promise<ProjectWorkspace | null> => {
@@ -57,13 +58,17 @@ const loadProjectWorkspace = cache(
     const assistantMessagesCountBefore =
       firstLoadedAssistantPosition === null
         ? 0
-        : await prisma.message.count({
-            where: {
-              chatId: id,
-              role: "assistant",
-              position: { lt: firstLoadedAssistantPosition },
-            },
-          });
+        : (
+            await prisma.message.findMany({
+              where: {
+                chatId: id,
+                role: "assistant",
+                position: { lt: firstLoadedAssistantPosition },
+              },
+              select: { content: true, files: true },
+            })
+          ).filter((message) => getMessageGeneratedFiles(message).length > 0)
+            .length;
 
     return {
       ...chat,

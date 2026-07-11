@@ -18,7 +18,7 @@ export function createPrismaMock() {
       "findUnique",
       "update",
       "updateMany",
-    ]),
+    ]) as Record<string, ReturnType<typeof vi.fn>> & { first: undefined },
     message: createDelegateMock(["create", "findMany", "findUnique", "update"]),
     creditHistory: createDelegateMock(["create"]),
     creditGrant: createDelegateMock(["create", "findMany", "update", "updateMany"]),

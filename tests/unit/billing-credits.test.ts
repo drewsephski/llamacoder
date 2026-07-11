@@ -11,7 +11,13 @@ const prismaMock = vi.hoisted(() => {
     $transaction: vi.fn(),
     user: delegate(["findUnique", "update", "updateMany"]),
     creditGrant: delegate(["create", "findMany", "update", "updateMany"]),
-    creditHold: delegate(["create", "findMany", "findUnique", "update", "updateMany"]),
+    creditHold: delegate([
+      "create",
+      "findMany",
+      "findUnique",
+      "update",
+      "updateMany",
+    ]),
   };
 });
 
@@ -201,6 +207,24 @@ describe("billing credit engine", () => {
     });
   });
 
+  it("does not misreport eligibility system failures as zero credits", async () => {
+    const client = {
+      chat: { count: vi.fn().mockRejectedValue(new Error("schema drift")) },
+      user: { findUnique: vi.fn() },
+    };
+
+    await expect(
+      checkProjectCreationEligibility({
+        client: client as never,
+        userId: "user_1",
+        modelId: FREE_MODEL,
+      }),
+    ).resolves.toMatchObject({
+      success: false,
+      error: "ELIGIBILITY_CHECK_FAILED",
+    });
+  });
+
   it("allows active subscribers to access paid models only when credits are available", async () => {
     const client = {
       chat: { count: vi.fn().mockResolvedValue(10) },
@@ -345,9 +369,7 @@ describe("billing credit engine", () => {
       modelId: "openai/gpt-4.1",
       amountHeld: 15,
       status: "active",
-      allocations: [
-        { grantId: "grant_1", amount: 15, unitRevenueUsd: 0.02 },
-      ],
+      allocations: [{ grantId: "grant_1", amount: 15, unitRevenueUsd: 0.02 }],
       providerCostUsd: 0.12,
       upstreamInferenceCostUsd: 0.1,
       inputTokens: 2_000,

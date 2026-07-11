@@ -24,6 +24,7 @@ export default defineConfig({
         "app/**/*.{ts,tsx}",
         "lib/**/*.{ts,tsx}",
         "components/**/*.tsx",
+        "features/**/*.{ts,tsx}",
       ],
       exclude: [
         "app/**/layout.tsx",

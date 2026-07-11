@@ -26,6 +26,7 @@ model Chat {
   llamaCoderVersion   String    @default("v2")
   shadcn              Boolean
   plan                String?
+  appSpec             Json?
   hasCode             Boolean   @default(false)
   generationStatus    String    @default("idle")
   generationStartedAt DateTime?

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Neon } from "@/logos/neon";
@@ -8,6 +10,7 @@ import { PostgreSQL } from "@/logos/postgresql";
 import { Prisma } from "@/logos/prisma";
 import { Tailwind } from "@/logos/tailwind";
 import { TypeScript } from "@/logos/typescript";
+import Image from "next/image";
 
 const BrandLogo = ({
   src,
@@ -17,7 +20,9 @@ const BrandLogo = ({
   src: string;
   alt: string;
   className?: string;
-}) => <img src={src} alt={alt} className={className} />;
+}) => (
+  <Image src={src} alt={alt} width={24} height={24} className={className} />
+);
 
 const brands = [
   {

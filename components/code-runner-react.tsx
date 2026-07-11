@@ -16,6 +16,7 @@ const PREVIEW_PARENT_SOURCE = "squid-preview-parent";
 export default function ReactCodeRunner({
   files,
   onRequestFix,
+  onPreviewHealthChange,
   onPreviewSelection,
   previewSelectionMode = false,
   previewTestNonce = 0,
@@ -23,6 +24,10 @@ export default function ReactCodeRunner({
 }: {
   files: Array<{ path: string; content: string }>;
   onRequestFix?: (e: string) => void;
+  onPreviewHealthChange?: (health: {
+    status: "working" | "error";
+    error?: string;
+  }) => void;
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
   previewSelectionMode?: boolean;
   previewTestNonce?: number;
@@ -44,6 +49,9 @@ export default function ReactCodeRunner({
         className="h-full w-full"
       />
       {onRequestFix && <ErrorMessage onRequestFix={onRequestFix} />}
+      {onPreviewHealthChange && (
+        <PreviewHealthReporter onChange={onPreviewHealthChange} />
+      )}
       {(onPreviewSelection || onPreviewTestReport) && (
         <PreviewInspector
           selectionMode={previewSelectionMode}
@@ -54,6 +62,38 @@ export default function ReactCodeRunner({
       )}
     </SandpackProvider>
   );
+}
+
+function PreviewHealthReporter({
+  onChange,
+}: {
+  onChange: (health: { status: "working" | "error"; error?: string }) => void;
+}) {
+  const { sandpack } = useSandpack();
+
+  useEffect(() => {
+    if (
+      sandpack.status !== "done" &&
+      sandpack.status !== "timeout" &&
+      !sandpack.error
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const error =
+        sandpack.error?.message ??
+        (sandpack.status === "timeout"
+          ? "The preview timed out while compiling."
+          : undefined);
+
+      onChange(error ? { status: "error", error } : { status: "working" });
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [onChange, sandpack.error, sandpack.status]);
+
+  return null;
 }
 
 function PreviewInspector({
@@ -139,7 +179,9 @@ function PreviewInspector({
     }
 
     const clickableElements = Array.from(
-      doc.querySelectorAll("button, a, input, select, textarea, [role='button']"),
+      doc.querySelectorAll(
+        "button, a, input, select, textarea, [role='button']",
+      ),
     );
     const unnamedClickableCount = clickableElements.filter((element) => {
       const label =
@@ -215,7 +257,7 @@ function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
               if (!sandpack.error) return;
               onRequestFix(sandpack.error.message);
             }}
-            className="rounded bg-background px-2.5 py-1.5 text-sm font-medium text-foreground border border-border hover:bg-muted"
+            className="rounded border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             Try to fix
           </button>

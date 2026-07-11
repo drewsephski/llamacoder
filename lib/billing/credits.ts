@@ -58,7 +58,8 @@ export type ProjectCreationEligibility =
         | "PROJECT_LIMIT_REACHED"
         | "INSUFFICIENT_CREDITS"
         | "FORBIDDEN_MODEL"
-        | "USER_NOT_FOUND";
+        | "USER_NOT_FOUND"
+        | "ELIGIBILITY_CHECK_FAILED";
       projectCount: number;
       projectLimit: number | null;
       projectsRemaining: number | null;
@@ -292,8 +293,7 @@ function parseCreditAllocations(value: Prisma.JsonValue): CreditAllocation[] {
           grantId: item.grantId,
           amount: item.amount,
           unitRevenueUsd:
-            "unitRevenueUsd" in item &&
-            typeof item.unitRevenueUsd === "number"
+            "unitRevenueUsd" in item && typeof item.unitRevenueUsd === "number"
               ? item.unitRevenueUsd
               : 0,
         },
@@ -556,7 +556,7 @@ export async function checkProjectCreationEligibility({
     );
     return {
       success: false,
-      error: "INSUFFICIENT_CREDITS",
+      error: "ELIGIBILITY_CHECK_FAILED",
       projectCount: 0,
       projectLimit: null,
       projectsRemaining: null,
@@ -711,9 +711,7 @@ export async function reserveCreditHold({
   amount?: number;
   reason?: string;
   phase?: string;
-}): Promise<
-  CreditHoldResult
-> {
+}): Promise<CreditHoldResult> {
   const prisma = getPrisma();
 
   try {

@@ -15,7 +15,13 @@ type RequestTelemetryOptions = {
   messageId: string;
   modelId: string;
   creditHoldId?: string;
-  requestKind?: "generation" | "free_repair" | "screenshot" | "title";
+  requestKind?:
+    | "generation"
+    | "free_repair"
+    | "screenshot"
+    | "title"
+    | "orchestration"
+    | "search";
   quality: GenerationQuality;
   reasoning: OpenRouterReasoningSelection;
 };
@@ -125,8 +131,7 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
           provider: resolvedProvider,
           providerRequestId,
           providerCostUsd: openRouterUsage?.providerCostUsd,
-          upstreamInferenceCostUsd:
-            openRouterUsage?.upstreamInferenceCostUsd,
+          upstreamInferenceCostUsd: openRouterUsage?.upstreamInferenceCostUsd,
           finishReason,
           status,
           errorMessage: errorMessage?.slice(0, 2000),

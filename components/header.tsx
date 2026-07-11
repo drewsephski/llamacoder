@@ -6,10 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import { MenuIcon, XIcon, Zap, HelpCircle } from "lucide-react";
-import { PricingModal } from "@/components/pricing-modal";
+import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { Button } from "@/components/ui/button";
-import { useUserCredits, useUserSession } from "@/lib/queries";
-import { authClient } from "@/lib/auth-client";
+import { useUserCredits } from "@/features/user/client/queries";
+import { authClient, useSession } from "@/lib/auth-client";
 
 interface HeaderProps {
   onHelpClick?: () => void;
@@ -23,7 +23,7 @@ function Header({ onHelpClick }: HeaderProps) {
   const [pricingInitialTab, setPricingInitialTab] =
     useState<PricingTab>("plans");
 
-  const { data: session, isLoading: sessionLoading } = useUserSession();
+  const { data: session, isPending: sessionLoading } = useSession();
   const { data: creditsData, isLoading: creditsLoading } = useUserCredits();
 
   const credits = creditsData?.credits ?? null;

@@ -1,13 +1,17 @@
 "use client";
 
 import {
+  createAgentAssistantMessage,
+  createAgentUserMessage,
+} from "@/app/(main)/actions";
+import {
   createFreeRepairAssistantMessage,
   createMessage,
   createPreviewRepairMessage,
   releaseReservedCreditHold,
   restoreVersionAsCheckpoint,
-  saveProject,
-} from "@/app/(main)/actions";
+} from "@/features/generation/server/actions";
+import { saveProject } from "@/features/projects/server/actions";
 import LogoSmall from "@/components/icons/logo-small";
 import {
   parseReplySegments,
@@ -17,16 +21,23 @@ import {
 import {
   normalizeGeneratedFiles,
   validateGeneratedFiles,
+  type GeneratedFile,
 } from "@/lib/generated-files";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memo, startTransition, use, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ChatBox from "./chat-box";
 import ChatLog from "./chat-log";
 import CodeViewer from "./code-viewer";
 import CodeViewerLayout from "./code-viewer-layout";
 import type { Chat, Message } from "./page";
-import { Context } from "../../providers";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import { authClient } from "@/lib/auth-client";
 import { SignInModal } from "@/components/sign-in-modal";
@@ -41,6 +52,22 @@ import {
   type GenerationStatus,
 } from "@/features/generation/contracts";
 import type { UIMessageChunk } from "ai";
+import {
+  agentActionSchema,
+  formatClarificationAnswers,
+  sourceUrlSchema,
+  type AgentAction,
+  type ClarificationAnswers,
+  type ClarificationRequest,
+  type Plan,
+  type SearchRequest,
+  type SourceUrl,
+} from "@/features/generation/agent-contracts";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
+import { getErrorMessage } from "@/features/shared/errors";
+import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
+
+const MAX_AUTOMATIC_PREVIEW_REPAIRS = 3;
 
 const HeaderChat = memo(({ chat }: { chat: Chat }) => {
   return (
@@ -64,17 +91,24 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const {
     streamPromise: initialStreamPromise,
     setStreamPromise: setContextStreamPromise,
-  } = use(Context);
+  } = useGenerationHandoff();
   const [streamPromise, setStreamPromise] = useState<
     Promise<CompletionStream> | undefined
   >(initialStreamPromise);
   const [streamText, setStreamText] = useState("");
   const [reasoningText, setReasoningText] = useState("");
+  const [streamSources, setStreamSources] = useState<SourceUrl[]>([]);
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus>(
     DEFAULT_GENERATION_STATUS,
   );
   const [isShowingCodeViewer, setIsShowingCodeViewer] = useState(
-    chat.messages.some((m: Message) => m.role === "assistant"),
+    chat.messages.some(
+      (message: Message) =>
+        message.role === "assistant" &&
+        (Array.isArray(message.files)
+          ? message.files.length > 0
+          : Boolean(extractFirstCodeBlock(message.content))),
+    ),
   );
   const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
   const router = useRouter();
@@ -84,12 +118,18 @@ export default function PageClient({ chat }: { chat: Chat }) {
   );
   const freeRepairRequestIdRef = useRef<string | null>(null);
   const freeRepairSourceMessageIdRef = useRef<string | null>(null);
+  const automaticRepairAttemptsRef = useRef(0);
+  const handledPreviewErrorRef = useRef<string | null>(null);
+  const [previewRecovery, setPreviewRecovery] = useState<{
+    error: string;
+    attempts: number;
+  } | null>(null);
   const [activeMessage, setActiveMessage] = useState(
     chat.messages
       .filter(
         (m: Message) =>
           m.role === "assistant" &&
-          (((m.files as any[]) || []).length > 0 ||
+          (getMessageGeneratedFiles(m).length > 0 ||
             extractFirstCodeBlock(m.content)),
       )
       .at(-1),
@@ -127,12 +167,13 @@ export default function PageClient({ chat }: { chat: Chat }) {
     try {
       await saveProject(chat.id);
       setIsSaved(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Save error:", error);
-      if (error.message && error.message.includes("signed in")) {
+      const message = getErrorMessage(error, "Failed to save project");
+      if (message.includes("signed in")) {
         setShowSignInModal(true);
       } else {
-        toast.error(error.message || "Failed to save project");
+        toast.error(message);
       }
     } finally {
       setIsSaving(false);
@@ -155,6 +196,26 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
   useEffect(() => {
     let reader: ReadableStreamDefaultReader<UIMessageChunk> | null = null;
+    let renderFrame: number | null = null;
+    let pendingText = "";
+    let pendingReasoning = "";
+    let pendingSources: SourceUrl[] = [];
+
+    const cancelRenderFrame = () => {
+      if (renderFrame !== null) {
+        window.cancelAnimationFrame(renderFrame);
+        renderFrame = null;
+      }
+    };
+    const scheduleStreamRender = () => {
+      if (renderFrame !== null) return;
+      renderFrame = window.requestAnimationFrame(() => {
+        renderFrame = null;
+        setStreamText(pendingText);
+        setReasoningText(pendingReasoning);
+        setStreamSources(pendingSources);
+      });
+    };
 
     async function f() {
       if (
@@ -173,10 +234,15 @@ export default function PageClient({ chat }: { chat: Chat }) {
       let didPushToPreview = false;
       let fullText = "";
       let fullReasoning = "";
+      let completedAgentAction: AgentAction | null = null;
+      let hasEnteredReasoningPhase = false;
+      let hasEnteredWritingPhase = false;
+      const sourceMap = new Map<string, SourceUrl>();
       let creditHoldId: string | undefined;
 
       try {
         setReasoningText("");
+        setStreamSources([]);
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         const stream = await streamPromise;
         creditHoldId = stream.creditHoldId;
@@ -200,13 +266,46 @@ export default function PageClient({ chat }: { chat: Chat }) {
             continue;
           }
 
+          if (event.type === "data-agent-action") {
+            const parsedAction = agentActionSchema.safeParse(event.data);
+            if (parsedAction.success) {
+              completedAgentAction = parsedAction.data;
+            }
+            continue;
+          }
+
+          if (event.type === "source-url") {
+            const parsedSource = sourceUrlSchema.safeParse(event);
+            if (parsedSource.success) {
+              sourceMap.set(parsedSource.data.sourceId, parsedSource.data);
+              pendingSources = Array.from(sourceMap.values());
+              scheduleStreamRender();
+            }
+            continue;
+          }
+
+          if (
+            event.type === "tool-input-start" ||
+            event.type === "tool-input-available"
+          ) {
+            setGenerationStatus({
+              phase: "searching",
+              label: "Searching the web",
+            });
+            continue;
+          }
+
           if (event.type === "reasoning-delta") {
             fullReasoning += event.delta;
-            setReasoningText(fullReasoning);
-            setGenerationStatus({
-              phase: "reasoning",
-              label: "Working through the design",
-            });
+            pendingReasoning = fullReasoning;
+            scheduleStreamRender();
+            if (!hasEnteredReasoningPhase) {
+              hasEnteredReasoningPhase = true;
+              setGenerationStatus({
+                phase: "reasoning",
+                label: "Working through the design",
+              });
+            }
             continue;
           }
 
@@ -219,11 +318,16 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
 
           fullText += event.delta;
-          setStreamText(fullText);
-          setGenerationStatus({
-            phase: "writing-code",
-            label: "Writing your app",
-          });
+          pendingText = fullText;
+          scheduleStreamRender();
+          if (!hasEnteredWritingPhase) {
+            hasEnteredWritingPhase = true;
+            setGenerationStatus(
+              completedAgentAction?.action === "answer"
+                ? { phase: "writing-code", label: "Writing an answer" }
+                : { phase: "writing-code", label: "Writing your app" },
+            );
+          }
 
           if (
             !didPushToCode &&
@@ -245,18 +349,13 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
         }
 
-        if (!fullText.trim()) {
+        if (!fullText.trim() && !completedAgentAction) {
           throw new Error(
             "The model returned an empty response. Please retry.",
           );
         }
 
-        const getFilesFromMessage = (msg: Message) =>
-          normalizeGeneratedFiles(
-            ((msg.files as any[]) || []).length > 0
-              ? (msg.files as any[])
-              : extractAllCodeBlocks(msg.content),
-          );
+        const getFilesFromMessage = getMessageGeneratedFiles;
 
         // Get all previous assistant messages with files
         const previousAssistantMessages = chat.messages.filter(
@@ -279,6 +378,17 @@ export default function PageClient({ chat }: { chat: Chat }) {
               getFilesFromMessage(msg),
             );
 
+        const isStructuredInteraction =
+          completedAgentAction?.action === "clarify" ||
+          completedAgentAction?.action === "interview" ||
+          completedAgentAction?.action === "present_plan" ||
+          completedAgentAction?.action === "search";
+        if (completedAgentAction?.action === "answer" && !fullText.trim()) {
+          throw new Error(
+            "The assistant returned an empty answer. Please retry.",
+          );
+        }
+
         // Extract files from current AI response
         const currentFiles = normalizeGeneratedFiles(
           extractAllCodeBlocks(fullText),
@@ -286,10 +396,17 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
         // Merge files (current overrides previous for same paths)
         const fileMap = new Map();
-        previousFiles.forEach((file: any) => fileMap.set(file.path, file));
-        currentFiles.forEach((file: any) => fileMap.set(file.path, file));
+        previousFiles.forEach((file: GeneratedFile) =>
+          fileMap.set(file.path, file),
+        );
+        currentFiles.forEach((file: GeneratedFile) =>
+          fileMap.set(file.path, file),
+        );
         const allFiles = normalizeGeneratedFiles(Array.from(fileMap.values()));
-        const diagnostics = validateGeneratedFiles(allFiles);
+        const diagnostics =
+          completedAgentAction?.action === "answer" || isStructuredInteraction
+            ? []
+            : validateGeneratedFiles(allFiles);
 
         if (diagnostics.length > 0) {
           console.warn(
@@ -299,55 +416,117 @@ export default function PageClient({ chat }: { chat: Chat }) {
         }
 
         const repairMessageId = freeRepairRequestIdRef.current;
-        const message = repairMessageId
-          ? await createFreeRepairAssistantMessage(
-              chat.id,
-              repairMessageId,
-              fullText,
-              allFiles,
-            )
-          : await createMessage(
-              chat.id,
-              fullText, // Store original AI response content (only changed files)
-              "assistant",
-              allFiles, // Store cumulative files
-              { creditHoldId },
-            );
+        let message: Message;
+        let shouldOpenPreview = false;
+
+        if (completedAgentAction?.action === "clarify") {
+          message = (await createAgentAssistantMessage(
+            chat.id,
+            `Before I build, ${completedAgentAction.request.title.toLowerCase()}`,
+            {
+              kind: "agent_clarification_request",
+              request: completedAgentAction.request,
+            },
+            { creditHoldId, chargeCredits: false },
+          )) as Message;
+        } else if (completedAgentAction?.action === "interview") {
+          message = (await createAgentAssistantMessage(
+            chat.id,
+            completedAgentAction.request.title,
+            {
+              kind: "agent_interview_request",
+              request: completedAgentAction.request,
+            },
+            { creditHoldId, chargeCredits: false },
+          )) as Message;
+        } else if (completedAgentAction?.action === "present_plan") {
+          const plan = completedAgentAction.plan;
+          message = (await createAgentAssistantMessage(
+            chat.id,
+            plan.title,
+            {
+              kind: "agent_plan_request",
+              request: plan,
+            },
+            { creditHoldId, chargeCredits: false },
+          )) as Message;
+        } else if (completedAgentAction?.action === "search") {
+          message = (await createAgentAssistantMessage(
+            chat.id,
+            `I can search the internet for “${completedAgentAction.request.query}”.`,
+            {
+              kind: "agent_search_approval_request",
+              request: completedAgentAction.request,
+            },
+            { creditHoldId, chargeCredits: false },
+          )) as Message;
+        } else if (completedAgentAction?.action === "answer") {
+          message = (await createAgentAssistantMessage(
+            chat.id,
+            fullText,
+            {
+              kind: "agent_response",
+              sources: Array.from(sourceMap.values()),
+            },
+            { creditHoldId, chargeCredits: true },
+          )) as Message;
+        } else if (repairMessageId) {
+          message = (await createFreeRepairAssistantMessage(
+            chat.id,
+            repairMessageId,
+            fullText,
+            allFiles,
+          )) as Message;
+          shouldOpenPreview = true;
+        } else {
+          message = (await createMessage(
+            chat.id,
+            fullText, // Store original AI response content (only changed files)
+            "assistant",
+            allFiles, // Store cumulative files
+            { creditHoldId },
+          )) as Message;
+          shouldOpenPreview = true;
+        }
 
         startTransition(() => {
+          cancelRenderFrame();
           freeRepairRequestIdRef.current = null;
           freeRepairSourceMessageIdRef.current = null;
           setStreamText("");
           setReasoningText("");
+          setStreamSources([]);
           setGenerationStatus(DEFAULT_GENERATION_STATUS);
           setStreamPromise(undefined);
-          setActiveMessage(message);
-          // When streaming finishes, switch to preview mode and keep the viewer open
-          setIsShowingCodeViewer(true);
-          setActiveTab("preview");
+          if (shouldOpenPreview) {
+            setActiveMessage(message);
+            setIsShowingCodeViewer(true);
+            setActiveTab("preview");
+          }
           router.refresh();
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Stream reading error:", error);
         if (creditHoldId) {
           await releaseReservedCreditHold(creditHoldId);
         }
         setStreamPromise(undefined);
         setReasoningText("");
+        setStreamSources([]);
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         freeRepairRequestIdRef.current = null;
         freeRepairSourceMessageIdRef.current = null;
 
         // Set error state for UI
         setStreamError({
-          message: error.message || "Connection lost",
+          message: getErrorMessage(error, "Connection lost"),
           partialText: fullText,
           canRetry: true,
         });
 
         if (!fullText) {
           setStreamError({
-            message: error.message || "Connection lost",
+            message: getErrorMessage(error, "Connection lost"),
             partialText: "",
             canRetry: true,
           });
@@ -365,11 +544,211 @@ export default function PageClient({ chat }: { chat: Chat }) {
     f();
 
     return () => {
+      cancelRenderFrame();
       // Do not cancel here. React dev effect replay can run cleanup while the
       // stream should continue, and canceling makes the next reader race the
       // still-locked stream.
     };
   }, [chat.id, chat.messages, router, streamPromise, setContextStreamPromise]);
+
+  const continueAgentConversation = useCallback(
+    async (
+      content: string,
+      metadata:
+        | {
+            kind: "agent_clarification_response";
+            requestId: string;
+            answers: ClarificationAnswers;
+            summary: Array<{ label: string; value: string }>;
+          }
+        | {
+            kind: "agent_interview_response";
+            requestId: string;
+            answers: ClarificationAnswers;
+            summary: Array<{ label: string; value: string }>;
+          }
+        | {
+            kind: "agent_search_approval_response";
+            requestId: string;
+            query: string;
+            approved: boolean;
+          }
+        | {
+            kind: "agent_plan_approval";
+            requestId: string;
+            approved: boolean;
+          },
+    ) => {
+      if (streamPromise) return;
+
+      try {
+        const message = await createAgentUserMessage(
+          chat.id,
+          content,
+          metadata,
+        );
+        setStreamPromise(
+          fetchCompletionStream({
+            messageId: message.id,
+            model: chat.model,
+          }),
+        );
+        router.refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to continue the conversation",
+        );
+      }
+    },
+    [chat.id, chat.model, router, streamPromise],
+  );
+
+  const handleClarificationComplete = useCallback(
+    async (request: ClarificationRequest, answers: ClarificationAnswers) => {
+      const summary = formatClarificationAnswers(request, answers);
+      const content = [
+        "Here are my choices:",
+        ...summary.map((item) => `- ${item.label}: ${item.value}`),
+      ].join("\n");
+
+      await continueAgentConversation(content, {
+        kind: "agent_clarification_response",
+        requestId: request.id,
+        answers,
+        summary,
+      });
+    },
+    [continueAgentConversation],
+  );
+
+  const handleInterviewComplete = useCallback(
+    async (request: ClarificationRequest, answers: ClarificationAnswers) => {
+      const summary = formatClarificationAnswers(request, answers);
+      const content = [
+        "Here are my choices:",
+        ...summary.map((item) => `- ${item.label}: ${item.value}`),
+      ].join("\n");
+
+      await continueAgentConversation(content, {
+        kind: "agent_interview_response",
+        requestId: request.id,
+        answers,
+        summary,
+      });
+    },
+    [continueAgentConversation],
+  );
+
+  const handlePlanApprove = useCallback(
+    async (plan: Plan) => {
+      const content = `I approve the plan "${plan.title}". Please build it now.`;
+      await continueAgentConversation(content, {
+        kind: "agent_plan_approval",
+        requestId: plan.id,
+        approved: true,
+      });
+    },
+    [continueAgentConversation],
+  );
+
+  const handlePlanRevision = useCallback(async (plan: Plan) => {
+    // For revisions, we route through the chatBox (user types a revision note).
+    // Provide a hint to the chat input so the user can describe what to change.
+    toast.info("Type the changes you'd like in the chat below.");
+  }, []);
+
+  const handleSearchApproval = useCallback(
+    async (request: SearchRequest, approved: boolean) => {
+      await continueAgentConversation(
+        approved
+          ? `Approved internet search: ${request.query}`
+          : `Declined internet search: ${request.query}`,
+        {
+          kind: "agent_search_approval_response",
+          requestId: request.id,
+          query: request.query,
+          approved,
+        },
+      );
+    },
+    [continueAgentConversation],
+  );
+
+  const requestPreviewRepair = useCallback(
+    async (error: string, automatic: boolean) => {
+      if (!activeMessage || streamPromise) return;
+
+      const errorKey = `${activeMessage.id}:${error}`;
+      if (automatic && handledPreviewErrorRef.current === errorKey) return;
+
+      if (
+        automatic &&
+        automaticRepairAttemptsRef.current >= MAX_AUTOMATIC_PREVIEW_REPAIRS
+      ) {
+        setPreviewRecovery({
+          error,
+          attempts: automaticRepairAttemptsRef.current,
+        });
+        return;
+      }
+
+      if (automatic) {
+        handledPreviewErrorRef.current = errorKey;
+        automaticRepairAttemptsRef.current += 1;
+        toast.info(
+          `Repairing preview (${automaticRepairAttemptsRef.current}/${MAX_AUTOMATIC_PREVIEW_REPAIRS})`,
+        );
+      }
+      setPreviewRecovery(null);
+
+      try {
+        const repairMessage = await createPreviewRepairMessage(chat.id, error, {
+          sourceMessageId: activeMessage.id,
+        });
+        freeRepairRequestIdRef.current = repairMessage.id;
+        freeRepairSourceMessageIdRef.current = activeMessage.id;
+        setStreamPromise(
+          fetchCompletionStream({
+            messageId: repairMessage.id,
+            model: chat.model,
+          }),
+        );
+        router.refresh();
+      } catch (repairError) {
+        if (automatic) {
+          automaticRepairAttemptsRef.current = Math.max(
+            0,
+            automaticRepairAttemptsRef.current - 1,
+          );
+          handledPreviewErrorRef.current = null;
+        }
+        toast.error(
+          repairError instanceof Error
+            ? repairError.message
+            : "Unable to repair the preview",
+        );
+      }
+    },
+    [activeMessage, chat.id, chat.model, router, streamPromise],
+  );
+
+  const handlePreviewHealth = useCallback(
+    (health: { status: "working" | "error"; error?: string }) => {
+      if (health.status === "working") {
+        automaticRepairAttemptsRef.current = 0;
+        handledPreviewErrorRef.current = null;
+        setPreviewRecovery(null);
+        return;
+      }
+
+      if (health.error) {
+        void requestPreviewRepair(health.error, true);
+      }
+    },
+    [requestPreviewRepair],
+  );
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
@@ -384,10 +763,22 @@ export default function PageClient({ chat }: { chat: Chat }) {
             streamText={streamText}
             reasoningText={reasoningText}
             generationStatus={generationStatus}
+            streamSources={streamSources}
             isStreaming={!!streamPromise}
             activeMessage={activeMessage}
             streamError={streamError}
             onRetryAction={handleRetry}
+            onClarificationCompleteAction={handleClarificationComplete}
+            onInterviewCompleteAction={handleInterviewComplete}
+            onSearchApprovalAction={handleSearchApproval}
+            onPlanApproveAction={handlePlanApprove}
+            onPlanRevisionAction={handlePlanRevision}
+            previewRecovery={previewRecovery}
+            onPreviewRecoveryAction={() => {
+              if (previewRecovery) {
+                void requestPreviewRepair(previewRecovery.error, false);
+              }
+            }}
             onMessageClickAction={(message) => {
               if (message !== activeMessage) {
                 setActiveMessage(message);
@@ -430,24 +821,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
               isCheckingSession={isCheckingSession}
               onSave={handleSave}
               onRequestFix={(error: string) => {
-                startTransition(async () => {
-                  const message = await createPreviewRepairMessage(
-                    chat.id,
-                    error,
-                    { sourceMessageId: activeMessage?.id },
-                  );
-                  freeRepairRequestIdRef.current = message.id;
-                  freeRepairSourceMessageIdRef.current =
-                    activeMessage?.id || null;
-
-                  const streamPromise = fetchCompletionStream({
-                    messageId: message.id,
-                    model: chat.model,
-                  });
-                  setStreamPromise(streamPromise);
-                  router.refresh();
-                });
+                void requestPreviewRepair(error, false);
               }}
+              onPreviewHealthChange={handlePreviewHealth}
               onRequestTargetedEdit={(prompt: string) => {
                 startTransition(async () => {
                   try {
@@ -462,11 +838,15 @@ export default function PageClient({ chat }: { chat: Chat }) {
                     });
                     setStreamPromise(streamPromise);
                     router.refresh();
-                  } catch (error: any) {
+                  } catch (error: unknown) {
+                    const message = getErrorMessage(
+                      error,
+                      "Failed to start selected edit",
+                    );
                     toast.error(
-                      error.message === "INSUFFICIENT_CREDITS"
+                      message === "INSUFFICIENT_CREDITS"
                         ? "You need more credits to edit this project."
-                        : error.message || "Failed to start selected edit",
+                        : message,
                     );
                   }
                 });

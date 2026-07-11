@@ -4,7 +4,7 @@ import { getMainCodingPrompt } from "@/lib/prompts";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { FREE_MODEL, MODELS } from "@/lib/constants";
+import { FREE_MODEL, MODELS, isPlanModeAvailable } from "@/lib/constants";
 import {
   checkProjectCreationEligibility,
   getModelCreditHoldCost,
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt, model, quality } = parsed.data;
+    const { prompt, model, quality: requestedQuality } = parsed.data;
     const selectedModel = MODELS.find((m) => m.value === model);
 
     if (!selectedModel) {
@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    const quality = isPlanModeAvailable(model) ? requestedQuality : "low";
 
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -112,6 +113,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (!eligibility.success) {
+      if (eligibility.error === "ELIGIBILITY_CHECK_FAILED") {
+        return NextResponse.json(
+          {
+            error: eligibility.error,
+            message: "Unable to verify your credit balance. Please try again.",
+          },
+          { status: 500 },
+        );
+      }
+
       if (eligibility.error === "PROJECT_LIMIT_REACHED") {
         return NextResponse.json(
           {

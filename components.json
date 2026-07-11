@@ -15,6 +15,7 @@
     "utils": "@/lib/utils"
   },
   "registries": {
-    "@magicui": "https://magicui.design/r/{name}"
+    "@magicui": "https://magicui.design/r/{name}",
+    "@tool-ui": "https://www.tool-ui.com/r/{name}.json"
   }
 }

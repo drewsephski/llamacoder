@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Coins } from "lucide-react";
-import { PricingModal } from "@/components/pricing-modal";
+import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { Button } from "@/components/ui/button";
 
 interface DashboardCreditsButtonProps {

@@ -19,6 +19,9 @@ type OpenRouterProviderOptions = {
       | { effort: ReasoningEffort; exclude?: boolean };
   };
 };
+type OpenRouterRoutingOptions = {
+  enforceMaxPrice?: boolean;
+};
 
 export type GenerationQuality = "high" | "low";
 
@@ -78,6 +81,7 @@ export function createOpenRouterModel(
   openrouter: OpenRouterClient,
   model: string,
   settings: OpenRouterModelSettings = {},
+  routing: OpenRouterRoutingOptions = {},
 ) {
   const { primary, fallbacks } = getOpenRouterModelRoute(model);
   if (!hasModelPricing(primary)) {
@@ -86,6 +90,7 @@ export function createOpenRouterModel(
 
   const tokenPricing = getModelTokenPricing(primary);
   const configuredProvider = settings.provider;
+  const enforceMaxPrice = routing.enforceMaxPrice !== false;
 
   return openrouter(primary, {
     ...settings,
@@ -93,11 +98,15 @@ export function createOpenRouterModel(
     provider: {
       sort: "price",
       ...configuredProvider,
-      max_price: {
-        prompt: tokenPricing.inputPricePerMillion,
-        completion: tokenPricing.outputPricePerMillion,
-        ...configuredProvider?.max_price,
-      },
+      ...(enforceMaxPrice
+        ? {
+            max_price: {
+              prompt: tokenPricing.inputPricePerMillion,
+              completion: tokenPricing.outputPricePerMillion,
+              ...configuredProvider?.max_price,
+            },
+          }
+        : { max_price: undefined }),
     },
   });
 }
@@ -176,9 +185,10 @@ export function getOpenRouterReasoningSelection(
     };
   }
 
-  const selectedEffort = capability.supportedEfforts?.includes("low")
-    ? "low"
-    : capability.defaultEffort || capability.supportedEfforts?.[0];
+  const selectedEffort =
+    capability.mandatory && capability.supportedEfforts?.includes("low")
+      ? "low"
+      : capability.defaultEffort || capability.supportedEfforts?.[0];
 
   return {
     enabled: true,

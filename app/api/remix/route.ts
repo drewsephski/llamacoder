@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import {
-  formatGeneratedFilesMarkdown,
-  normalizeGeneratedFiles,
-} from "@/lib/generated-files";
+import { formatGeneratedFilesMarkdown } from "@/lib/generated-files";
 import { getPrisma } from "@/lib/prisma";
 import { getMainCodingPrompt } from "@/lib/prompts";
-import { extractAllCodeBlocks } from "@/lib/utils";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { checkProjectCreationEligibility, getModelCreditHoldCost } from "@/lib/billing";
+import {
+  checkProjectCreationEligibility,
+  getModelCreditHoldCost,
+} from "@/lib/billing";
 
 const remixSchema = z.object({
   messageId: z.string().min(1),
@@ -49,15 +49,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const files = normalizeGeneratedFiles(
-    Array.isArray(sourceMessage.files) && sourceMessage.files.length > 0
-      ? (sourceMessage.files as any[])
-      : extractAllCodeBlocks(sourceMessage.content),
-  );
+  const files = getMessageGeneratedFiles(sourceMessage);
 
   if (files.length === 0) {
     return NextResponse.json(
-      { error: "NO_FILES", message: "This app has no generated files to remix" },
+      {
+        error: "NO_FILES",
+        message: "This app has no generated files to remix",
+      },
       { status: 400 },
     );
   }
@@ -68,6 +67,16 @@ export async function POST(request: NextRequest) {
   });
 
   if (!eligibility.success) {
+    if (eligibility.error === "ELIGIBILITY_CHECK_FAILED") {
+      return NextResponse.json(
+        {
+          error: eligibility.error,
+          message: "Unable to verify your credit balance. Please try again.",
+        },
+        { status: 500 },
+      );
+    }
+
     if (eligibility.error === "PROJECT_LIMIT_REACHED") {
       return NextResponse.json(
         {

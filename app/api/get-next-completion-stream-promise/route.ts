@@ -3,7 +3,9 @@ import { z } from "zod";
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
+  gateway,
   generateText,
+  Output,
   streamText,
 } from "ai";
 import { auth } from "@/lib/auth";
@@ -26,6 +28,7 @@ import {
 import {
   formatGeneratedFilesMarkdown,
   normalizeGeneratedFiles,
+  parseStoredGeneratedFiles,
   type GeneratedFile,
 } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
@@ -39,6 +42,31 @@ import {
 import { DEFAULT_ESTIMATED_INPUT_TOKENS } from "@/lib/billing/config";
 import type { GenerationStatus } from "@/features/generation/contracts";
 import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
+import {
+  agentActionSchema,
+  parseAgentMessageMetadata,
+  type AgentAction,
+} from "@/features/generation/agent-contracts";
+import {
+  agentOrchestrationPrompt,
+  buildCodeGenSpecBlock,
+  buildSpecContextLine,
+  developerAgentPrompt,
+} from "@/features/generation/agent-prompts";
+import {
+  createEmptyAppSpec,
+  mergeSpecUpdate,
+  parseAppSpec,
+  type AppSpec,
+} from "@/features/generation/app-spec";
+import {
+  detectResearchIntent,
+  shouldAnswerWithoutCode,
+} from "@/features/generation/research-intent";
+import {
+  createResearchWindow,
+  extractRecentWebSources,
+} from "@/features/generation/research-policy";
 
 type CompletionMessage = {
   role: "system" | "user" | "assistant";
@@ -46,6 +74,22 @@ type CompletionMessage = {
   files?: unknown;
   id?: string;
 };
+
+const WEB_RESEARCH_MODEL = "openai/gpt-5-nano";
+
+function isGeneratedAppRequestMetadata(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const kind = (value as { kind?: unknown }).kind;
+  return (
+    kind === "preview_repair_request" ||
+    kind === "preview_repair" ||
+    kind === "app_edit_request" ||
+    kind === "targeted_element_edit"
+  );
+}
 
 function optimizeMessagesForTokens(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
@@ -116,9 +160,10 @@ function clampMessagesToBillingBudget(
 }
 
 function getStoredGeneratedFiles(message: CompletionMessage) {
+  const storedFiles = parseStoredGeneratedFiles(message.files);
   return normalizeGeneratedFiles(
-    Array.isArray(message.files) && message.files.length > 0
-      ? (message.files as any[])
+    storedFiles.length > 0
+      ? storedFiles
       : extractAllCodeBlocks(message.content),
   );
 }
@@ -245,6 +290,7 @@ export async function POST(req: Request) {
             model: true,
             quality: true,
             userId: true,
+            appSpec: true,
           },
         },
       },
@@ -263,6 +309,7 @@ export async function POST(req: Request) {
     }
     const chatModel = message.chat.model;
     const quality = message.chat.quality === "high" ? "high" : "low";
+    const planMode = quality === "high";
     const messageMetadata = message.files as
       | { kind?: string; chargeCredits?: boolean; sourceMessageId?: string }
       | null
@@ -270,6 +317,9 @@ export async function POST(req: Request) {
     const isFreeRepairRequest =
       messageMetadata?.kind === "preview_repair_request" &&
       messageMetadata.chargeCredits === false;
+    const appSpec: AppSpec =
+      parseAppSpec(message.chat.appSpec) ?? createEmptyAppSpec();
+    const agentMetadata = parseAgentMessageMetadata(message.files);
     const executionModel = isFreeRepairRequest ? FREE_MODEL : chatModel;
     const executionQuality = isFreeRepairRequest ? "low" : quality;
     const holdAmount = isFreeRepairRequest
@@ -304,6 +354,14 @@ export async function POST(req: Request) {
     });
 
     const rawMessages = messagesRes as CompletionMessage[];
+    const shouldCarryResearchThroughWorkflow =
+      agentMetadata?.kind === "agent_plan_approval" ||
+      agentMetadata?.kind === "agent_search_approval_response";
+    const researchIntent = detectResearchIntent(
+      shouldCarryResearchThroughWorkflow
+        ? rawMessages.filter((candidate) => candidate.role === "user").slice(-8)
+        : [{ content: message.content }],
+    );
 
     let messages = z
       .array(
@@ -350,19 +408,14 @@ export async function POST(req: Request) {
         role: m.role,
         content: m.content,
       }));
-      const lastUserMessageIndex = guardedMessages.findLastIndex(
-        (m) => m.role === "user",
-      );
-
-      if (lastUserMessageIndex !== -1) {
-        guardedMessages[lastUserMessageIndex] = {
-          ...guardedMessages[lastUserMessageIndex],
-          content:
-            guardedMessages[lastUserMessageIndex].content +
-            GENERATION_COMPLETENESS_GUARD,
-        };
-      }
     }
+
+    let systemInstruction = guardedMessages.find(
+      (candidate) => candidate.role === "system",
+    )?.content;
+    guardedMessages = guardedMessages.filter(
+      (candidate) => candidate.role !== "system",
+    );
 
     const openrouter = createAppOpenRouter({
       sessionId: message.chatId,
@@ -396,10 +449,471 @@ export async function POST(req: Request) {
         try {
           writeStatus({
             phase: "preparing",
-            label: "Preparing your project",
+            label: "Understanding your request",
           });
 
-          if (screenshotData && !isFreeRepairRequest) {
+          // Final spec state (persisted after orchestration decision)
+          let finalSpec = appSpec;
+          const latestUserContent =
+            rawMessages.findLast((candidate) => candidate.role === "user")
+              ?.content ?? message.content;
+
+          let agentAction: AgentAction;
+
+          if (
+            agentMetadata?.kind === "agent_plan_approval" &&
+            agentMetadata.approved === true
+          ) {
+            finalSpec = { ...finalSpec, status: "approved" };
+            await prisma.chat.update({
+              where: { id: message.chatId },
+              data: { appSpec: JSON.parse(JSON.stringify(finalSpec)) },
+            });
+            agentAction = { action: "generate_code" };
+          } else if (
+            isFreeRepairRequest ||
+            isGeneratedAppRequestMetadata(message.files)
+          ) {
+            agentAction = { action: "generate_code" };
+          } else if (agentMetadata?.kind === "agent_search_approval_response") {
+            agentAction = { action: "answer" };
+          } else if (shouldAnswerWithoutCode(latestUserContent)) {
+            agentAction = { action: "answer" };
+          } else if (!planMode) {
+            // Plan mode off: old behavior — generate code immediately,
+            // no interview, clarification, or plan.
+            agentAction = { action: "generate_code" };
+          } else {
+            const orchestrationModel = FREE_MODEL;
+            const orchestrationReasoning = getOpenRouterReasoningSelection(
+              orchestrationModel,
+              "low",
+            );
+            const orchestrationTelemetry = createRequestTelemetry({
+              userId: session.user.id,
+              chatId: message.chatId,
+              messageId,
+              modelId: orchestrationModel,
+              creditHoldId: holdId,
+              requestKind: "orchestration",
+              quality: "low",
+              reasoning: orchestrationReasoning,
+            });
+
+            try {
+              const specContext = buildSpecContextLine(finalSpec);
+              const conversationHasCode = rawMessages.some(
+                (candidate) => getStoredGeneratedFiles(candidate).length > 0,
+              );
+              const automaticResearchContext = researchIntent.required
+                ? `\n\nAutomatic web research is required for this request (${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. The execution step will run web search before answering or generating code.`
+                : "";
+
+              const orchestrationResult = await generateText({
+                model: createOpenRouterModel(openrouter, orchestrationModel, {
+                  maxTokens: 1_200,
+                  usage: { include: true },
+                }),
+                providerOptions: orchestrationReasoning.providerOptions,
+                output: Output.object({ schema: agentActionSchema }),
+                system: agentOrchestrationPrompt,
+                prompt: `=== PERSISTENT APP SPEC ===\n${specContext}\n=== END SPEC ===\n\nRecent conversation:\n${rawMessages
+                  .filter((candidate) => candidate.role !== "system")
+                  .slice(-8)
+                  .map(
+                    (candidate) =>
+                      `${candidate.role.toUpperCase()}: ${candidate.content}`,
+                  )
+                  .join(
+                    "\n\n",
+                  )}\n\nLatest structured metadata:\n${JSON.stringify(
+                  agentMetadata,
+                )}\n\nConversation has generated code: ${conversationHasCode}.${automaticResearchContext}`,
+              });
+
+              const routedAction = orchestrationResult.output;
+              orchestrationTelemetry.markFirstByte();
+
+              // Merge the spec upgrade returned by the model
+              finalSpec = mergeSpecUpdate(finalSpec, routedAction.specUpdate);
+
+              // Normalize interview ↔ clarify (both use the same question-card format)
+              if (routedAction.action === "interview") {
+                finalSpec = {
+                  ...finalSpec,
+                  status: "interviewing",
+                  askedQuestionIds: Array.from(
+                    new Set([
+                      ...finalSpec.askedQuestionIds,
+                      ...(routedAction.specUpdate?.askedQuestionIds ?? []),
+                    ]),
+                  ),
+                };
+                agentAction = {
+                  action: "interview",
+                  request: {
+                    ...routedAction.request,
+                    id: `interview-${messageId}`,
+                  },
+                };
+              } else if (routedAction.action === "clarify") {
+                finalSpec = {
+                  ...finalSpec,
+                  status: "needs_clarification",
+                };
+                agentAction = {
+                  action: "clarify",
+                  request: {
+                    ...routedAction.request,
+                    id: `clarify-${messageId}`,
+                  },
+                };
+              } else if (routedAction.action === "present_plan") {
+                finalSpec = { ...finalSpec, status: "awaiting_approval" };
+                agentAction = {
+                  action: "present_plan",
+                  plan: {
+                    ...routedAction.plan,
+                    id: `plan-${messageId}`,
+                  },
+                };
+              } else if (routedAction.action === "resume_generation") {
+                finalSpec = { ...finalSpec, status: "generating" };
+                agentAction = routedAction;
+              } else if (routedAction.action === "search") {
+                agentAction = {
+                  action: "search",
+                  request: {
+                    ...routedAction.request,
+                    id: `search-${messageId}`,
+                  },
+                };
+              } else {
+                agentAction = routedAction;
+              }
+
+              // Guard: protect against premature code generation for new builds
+              if (
+                agentAction.action === "generate_code" &&
+                !conversationHasCode &&
+                finalSpec.status !== "approved"
+              ) {
+                // Downgrade to either plan or interview
+                if (
+                  finalSpec.unresolvedDecisions.every(
+                    (d) => d.impact !== "high",
+                  )
+                ) {
+                  finalSpec = { ...finalSpec, status: "ready_for_plan" };
+                  // We do not have the plan content; ask model again to plan by routing to interview with a plan-prompt
+                  // Simpler: route to a default interview round asking the user to confirm going to plan
+                  agentAction = {
+                    action: "interview",
+                    request: {
+                      id: `interview-${messageId}`,
+                      title: "Ready to plan your app",
+                      steps: [
+                        {
+                          id: "confirm-plan",
+                          title: "I have enough info to draft a plan. Ready?",
+                          options: [
+                            {
+                              id: "yes",
+                              label: "Yes, show me the plan",
+                              description:
+                                "Draft a compact plan for approval before generating code.",
+                            },
+                            {
+                              id: "more",
+                              label: "Ask more questions",
+                              description:
+                                "Continue the interview to refine the spec.",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  };
+                } else {
+                  agentAction = {
+                    action: "interview",
+                    request: {
+                      id: `interview-${messageId}`,
+                      title: "A few more choices will improve the result",
+                      steps: finalSpec.unresolvedDecisions
+                        .filter((d) => d.impact === "high")
+                        .slice(0, 3)
+                        .map((d) => ({
+                          id: d.id,
+                          title: d.topic,
+                          description: d.question,
+                          options: [
+                            {
+                              id: `${d.id}-yes`,
+                              label: "Yes",
+                              description: "Include this requirement",
+                            },
+                            {
+                              id: `${d.id}-no`,
+                              label: "No",
+                              description: "Exclude this requirement",
+                            },
+                          ],
+                        })),
+                    },
+                  };
+                }
+              }
+
+              // Persist any spec updates
+              await prisma.chat.update({
+                where: { id: message.chatId },
+                data: { appSpec: JSON.parse(JSON.stringify(finalSpec)) },
+              });
+
+              await orchestrationTelemetry.record({
+                status: "completed",
+                usage: orchestrationResult.usage,
+                finishReason: orchestrationResult.finishReason,
+                providerMetadata: orchestrationResult.providerMetadata,
+                providerRequestId: orchestrationResult.response?.id,
+              });
+            } catch (error) {
+              await orchestrationTelemetry.record({ status: "error", error });
+              console.warn(
+                "Agent routing failed; preserving code-generation behavior:",
+                getAIErrorMessage(error),
+              );
+              agentAction = { action: "generate_code" };
+            }
+          }
+
+          if (
+            agentAction.action === "interview" ||
+            agentAction.action === "clarify"
+          ) {
+            writeStatus({
+              phase: "interviewing",
+              label:
+                agentAction.action === "interview"
+                  ? "A few choices will refine your app"
+                  : "A few choices will improve the result",
+            });
+            writer.write({
+              type: "data-agent-action",
+              data: agentAction,
+            });
+            return;
+          }
+
+          if (agentAction.action === "present_plan") {
+            writeStatus({
+              phase: "plan-review",
+              label: "Review the plan and approve to start building",
+            });
+            writer.write({
+              type: "data-agent-action",
+              data: agentAction,
+            });
+            return;
+          }
+
+          if (agentAction.action === "search") {
+            writeStatus({
+              phase: "clarifying",
+              label: "Waiting for search permission",
+            });
+            writer.write({
+              type: "data-agent-action",
+              data: agentAction,
+            });
+            return;
+          }
+
+          writer.write({
+            type: "data-agent-action",
+            data: agentAction,
+            transient: true,
+          });
+
+          const isCodeGeneration = agentAction.action === "generate_code";
+          const searchApproval =
+            agentMetadata?.kind === "agent_search_approval_response"
+              ? agentMetadata
+              : null;
+          const searchApproved = searchApproval?.approved === true;
+          const researchRequired =
+            !isFreeRepairRequest &&
+            (searchApproved ||
+              (searchApproval?.approved !== false && researchIntent.required));
+          const researchQuery = searchApproved
+            ? searchApproval.query
+            : researchIntent.query;
+
+          if (isCodeGeneration && !isFreeRepairRequest && planMode) {
+            const lastUserMessageIndex = guardedMessages.findLastIndex(
+              (candidate) => candidate.role === "user",
+            );
+            if (lastUserMessageIndex !== -1) {
+              const specBlock = buildCodeGenSpecBlock(finalSpec);
+              guardedMessages[lastUserMessageIndex] = {
+                ...guardedMessages[lastUserMessageIndex],
+                content:
+                  guardedMessages[lastUserMessageIndex].content +
+                  specBlock +
+                  GENERATION_COMPLETENESS_GUARD,
+              };
+            }
+          } else if (!isCodeGeneration) {
+            systemInstruction = developerAgentPrompt;
+            if (researchRequired) {
+              guardedMessages.push({
+                role: "user",
+                content: `Web research is required for this request. Search for: ${researchQuery}. Use the results before answering the underlying request with current, source-grounded information.`,
+              });
+            } else if (searchApproval?.approved === false) {
+              guardedMessages.push({
+                role: "user",
+                content:
+                  "Internet search was declined. Answer using only the existing conversation and clearly note any current facts you cannot verify.",
+              });
+            }
+          }
+
+          if (isCodeGeneration && researchRequired) {
+            const lastUserMessageIndex = guardedMessages.findLastIndex(
+              (candidate) => candidate.role === "user",
+            );
+            if (lastUserMessageIndex !== -1) {
+              guardedMessages[lastUserMessageIndex] = {
+                ...guardedMessages[lastUserMessageIndex],
+                content: `${guardedMessages[lastUserMessageIndex].content}\n\nWeb research is required before generating code. The server will attach a verified research brief for: ${researchQuery}. Use that brief as the source of truth for factual app content. Do not invent or substitute placeholder data.`,
+              };
+            }
+          }
+
+          if (researchRequired) {
+            const query = researchQuery?.trim();
+            if (!query) {
+              throw new Error("A web research query could not be determined");
+            }
+
+            writeStatus({ phase: "searching", label: "Searching the web" });
+
+            const researchModel = WEB_RESEARCH_MODEL;
+            const researchWindow = createResearchWindow();
+            const researchTelemetry = createRequestTelemetry({
+              userId: session.user.id,
+              chatId: message.chatId,
+              messageId,
+              modelId: researchModel,
+              creditHoldId: holdId,
+              requestKind: "search",
+              quality: "low",
+              reasoning: {
+                enabled: false,
+                visible: false,
+                mandatory: false,
+                effort: "none",
+              },
+            });
+
+            try {
+              const researchResult = await generateText({
+                model: gateway(researchModel),
+                maxOutputTokens: 4_000,
+                providerOptions: {
+                  gateway: {
+                    user: session.user.id,
+                    tags: ["feature:web-search", "request:research"],
+                  },
+                },
+                system: `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
+                prompt: `${query}\n\nRequired publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`,
+                tools: {
+                  web_search: gateway.tools.exaSearch({
+                    type: "auto",
+                    numResults: 8,
+                    userLocation: "US",
+                    startPublishedDate: researchWindow.startIso,
+                    endPublishedDate: researchWindow.endIso,
+                    contents: {
+                      text: {
+                        maxCharacters: 8_000,
+                        includeHtmlTags: false,
+                        verbosity: "standard",
+                      },
+                      highlights: {
+                        query,
+                        maxCharacters: 3_000,
+                      },
+                      maxAgeHours: 1,
+                      livecrawlTimeout: 10_000,
+                    },
+                  }),
+                },
+                toolChoice: "required",
+                maxRetries: 1,
+              });
+              researchTelemetry.markFirstByte();
+
+              const recentSources = extractRecentWebSources(
+                researchResult.toolResults.map(({ output }) => output),
+                researchWindow,
+              );
+              if (recentSources.length === 0) {
+                throw new Error(
+                  `Web search returned no dated sources published from ${researchWindow.startDate} through ${researchWindow.endDate}`,
+                );
+              }
+
+              recentSources.forEach((source, index) => {
+                writer.write({
+                  type: "source-url",
+                  sourceId: `research-${messageId}-${index + 1}`,
+                  url: source.url,
+                  title:
+                    `${source.title} (${source.publishedDate.slice(0, 10)})`.slice(
+                      0,
+                      300,
+                    ),
+                });
+              });
+
+              const sourceEvidence = recentSources.map(
+                (source, index) =>
+                  `[Source ${index + 1}] ${source.title}\nPublished: ${source.publishedDate.slice(0, 10)}\nURL: ${source.url}\nExcerpt:\n${source.excerpt || "No excerpt was returned."}`,
+              );
+              const researchBrief = [
+                "=== VERIFIED WEB RESEARCH ===",
+                `Strict publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`,
+                sourceEvidence.join("\n\n"),
+                "=== END VERIFIED WEB RESEARCH ===",
+                "Use only this dated research as factual source material. Preserve its publication dates and source URLs in the generated app where attribution is useful. Do not revive facts from older conversation messages or label archived data as current.",
+              ].join("\n\n");
+              const lastUserMessageIndex = guardedMessages.findLastIndex(
+                (candidate) => candidate.role === "user",
+              );
+              if (lastUserMessageIndex !== -1) {
+                guardedMessages[lastUserMessageIndex] = {
+                  ...guardedMessages[lastUserMessageIndex],
+                  content: `${guardedMessages[lastUserMessageIndex].content}\n\n${researchBrief}`,
+                };
+              }
+              await researchTelemetry.record({
+                status: "completed",
+                usage: researchResult.usage,
+                finishReason: researchResult.finishReason,
+                providerMetadata: researchResult.providerMetadata,
+                providerRequestId: researchResult.response?.id,
+              });
+            } catch (error) {
+              await researchTelemetry.record({ status: "error", error });
+              throw error;
+            }
+          }
+
+          if (screenshotData && isCodeGeneration && !isFreeRepairRequest) {
             writeStatus({
               phase: "analyzing-reference",
               label: "Analyzing your reference image",
@@ -483,17 +997,22 @@ export async function POST(req: Request) {
           writeStatus(
             reasoning.visible
               ? { phase: "reasoning", label: "Working through the design" }
-              : { phase: "writing-code", label: "Writing your app" },
+              : isCodeGeneration
+                ? { phase: "writing-code", label: "Writing your app" }
+                : { phase: "writing-code", label: "Preparing an answer" },
           );
 
           const result = streamText({
             model: createOpenRouterModel(openrouter, executionModel, {
               maxTokens: isFreeRepairRequest
                 ? 4_000
-                : GENERATED_CODE_MAX_TOKENS,
+                : isCodeGeneration
+                  ? GENERATED_CODE_MAX_TOKENS
+                  : 4_000,
               usage: { include: true },
             }),
             providerOptions: reasoning.providerOptions,
+            system: systemInstruction,
             messages: clampMessagesToBillingBudget(guardedMessages),
             temperature: 0.4,
             onChunk({ chunk }) {
@@ -535,6 +1054,7 @@ export async function POST(req: Request) {
           const observedStream = result
             .toUIMessageStream({
               sendReasoning: true,
+              sendSources: true,
               onError: getAIErrorMessage,
             })
             .pipeThrough(

@@ -1,9 +1,14 @@
 import { z } from "zod";
+import { agentActionSchema } from "@/features/generation/agent-contracts";
 
 export const generationPhaseSchema = z.enum([
   "preparing",
+  "interviewing",
+  "plan-review",
   "analyzing-reference",
   "reasoning",
+  "clarifying",
+  "searching",
   "writing-code",
   "finalizing",
 ]);
@@ -12,6 +17,8 @@ export const generationStatusSchema = z.object({
   phase: generationPhaseSchema,
   label: z.string(),
 });
+
+export const agentActionDataSchema = agentActionSchema;
 
 export const scrapeScreenshotResponseSchema = z.object({
   success: z.boolean(),

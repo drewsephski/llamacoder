@@ -32,3 +32,23 @@ test("documentation search returns a matching guide", async ({ page }) => {
   await result.click();
   await expect(page).toHaveURL(/\/docs\/examples\/booking-portal$/);
 });
+
+test("documentation menu is usable on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/docs/examples");
+
+  await page.getByRole("button", { name: "Open documentation menu" }).click();
+  const navigation = page.getByRole("navigation", {
+    name: "Documentation",
+    exact: true,
+  });
+
+  await expect(navigation).toBeVisible();
+  await expect(
+    navigation.getByRole("link", { name: "Example apps", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Example apps", exact: true }),
+  ).toBeVisible();
+});

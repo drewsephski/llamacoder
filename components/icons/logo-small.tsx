@@ -1,3 +1,13 @@
+import Image from "next/image";
+
 export default function LogoSmall() {
-  return <img src="/squidagent-logo.svg" alt="Squid Agent" className="h-8 w-auto" />;
+  return (
+    <Image
+      src="/squidagent-logo.svg"
+      alt="Squid Agent"
+      width={32}
+      height={32}
+      className="h-8 w-auto"
+    />
+  );
 }

@@ -26,6 +26,15 @@ import {
 import { Streamdown } from "streamdown";
 
 import { Shimmer } from "./shimmer";
+import {
+  CodeBlock,
+  CodeBlockActions,
+  CodeBlockCopyButton,
+  CodeBlockFilename,
+  CodeBlockHeader,
+  CodeBlockTitle,
+} from "./code-block";
+import { parseReasoningTrace } from "@/features/generation/reasoning-trace";
 
 interface ReasoningContextValue {
   isStreaming: boolean;
@@ -206,6 +215,40 @@ export type ReasoningContentProps = ComponentProps<
 
 const streamdownPlugins = { cjk, code, math, mermaid };
 
+const ReasoningTrace = memo(({ content }: { content: string }) => {
+  const segments = useMemo(() => parseReasoningTrace(content), [content]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      {segments.map((segment, index) =>
+        segment.type === "text" ? (
+          <Streamdown key={`text-${index}`} plugins={streamdownPlugins}>
+            {segment.content}
+          </Streamdown>
+        ) : (
+          <CodeBlock
+            className="bg-muted/30 shadow-sm"
+            code={segment.code}
+            key={`code-${index}`}
+            language={segment.language}
+          >
+            <CodeBlockHeader>
+              <CodeBlockTitle>
+                <CodeBlockFilename>{segment.language}</CodeBlockFilename>
+              </CodeBlockTitle>
+              <CodeBlockActions>
+                <CodeBlockCopyButton aria-label="Copy reasoning code" />
+              </CodeBlockActions>
+            </CodeBlockHeader>
+          </CodeBlock>
+        ),
+      )}
+    </div>
+  );
+});
+
+ReasoningTrace.displayName = "ReasoningTrace";
+
 export const ReasoningContent = memo(
   ({ className, children, ...props }: ReasoningContentProps) => (
     <CollapsibleContent
@@ -216,7 +259,7 @@ export const ReasoningContent = memo(
       )}
       {...props}
     >
-      <Streamdown plugins={streamdownPlugins}>{children}</Streamdown>
+      <ReasoningTrace content={children} />
     </CollapsibleContent>
   ),
 );

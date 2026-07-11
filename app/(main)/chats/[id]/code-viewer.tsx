@@ -48,13 +48,14 @@ import {
   formatPreviewElementSelection,
   type PreviewElementSelection,
 } from "@/lib/targeted-preview-edit";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { Chat, Message } from "./page";
 import { Share } from "./share";
 import { StickToBottom } from "use-stick-to-bottom";
 import JSZip from "jszip";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -75,6 +76,7 @@ export default function CodeViewer({
   onTabChange,
   onClose,
   onRequestFix,
+  onPreviewHealthChange,
   onRequestTargetedEdit,
   onRestore,
   isSaved,
@@ -86,10 +88,14 @@ export default function CodeViewer({
   streamText: string;
   message?: Message;
   onMessageChange: (v: Message) => void;
-  activeTab: string;
+  activeTab: "code" | "preview";
   onTabChange: (v: "code" | "preview") => void;
   onClose: () => void;
   onRequestFix: (e: string) => void;
+  onPreviewHealthChange?: (health: {
+    status: "working" | "error";
+    error?: string;
+  }) => void;
   onRequestTargetedEdit: (prompt: string) => void;
   onRestore: (
     message: Message | undefined,
@@ -101,8 +107,9 @@ export default function CodeViewer({
   isCheckingSession: boolean;
   onSave: () => void;
 }) {
-  const streamAllFiles = normalizeGeneratedFiles(
-    extractAllCodeBlocks(streamText),
+  const streamAllFiles = useMemo(
+    () => normalizeGeneratedFiles(extractAllCodeBlocks(streamText)),
+    [streamText],
   );
 
   // Extract the latest (possibly partial) code fence from the stream text
@@ -177,34 +184,27 @@ export default function CodeViewer({
     return { language, path };
   }
 
-  const latestStreamBlock = extractLatestStreamBlock(streamText);
+  const latestStreamBlock = useMemo(
+    () => extractLatestStreamBlock(streamText),
+    [streamText],
+  );
 
   // Merge stream files with latest partial if necessary
-  let mergedStreamFiles = [...streamAllFiles];
-  if (latestStreamBlock) {
-    const existingIdx = mergedStreamFiles.findIndex(
-      (f) => f.path === latestStreamBlock.path,
-    );
-    if (existingIdx !== -1) {
-      mergedStreamFiles[existingIdx] = {
-        code: latestStreamBlock.code,
-        language: latestStreamBlock.language,
-        path: latestStreamBlock.path,
-        fullMatch: "",
-      };
-    } else {
-      mergedStreamFiles.push({
-        code: latestStreamBlock.code,
-        language: latestStreamBlock.language,
-        path: latestStreamBlock.path,
-        fullMatch: "",
-      });
+  const mergedStreamFiles = useMemo(() => {
+    const merged = [...streamAllFiles];
+    if (latestStreamBlock) {
+      const existingIndex = merged.findIndex(
+        (file) => file.path === latestStreamBlock.path,
+      );
+      const streamedFile = { ...latestStreamBlock, fullMatch: "" };
+      if (existingIndex === -1) merged.push(streamedFile);
+      else merged[existingIndex] = streamedFile;
     }
-  }
-  attachGeneratedFilesStats(
-    mergedStreamFiles,
-    readGeneratedFilesStats(streamAllFiles),
-  );
+    return attachGeneratedFilesStats(
+      merged,
+      readGeneratedFilesStats(streamAllFiles),
+    );
+  }, [latestStreamBlock, streamAllFiles]);
 
   // Utility to merge base files with overlay files (overlay wins on conflicts)
   function mergeFiles(base: GeneratedFile[], overlay: GeneratedFile[]) {
@@ -222,32 +222,35 @@ export default function CodeViewer({
   }
 
   // Helper to get files from a message (JSON field or extract from content)
-  const getFilesFromMessage = (msg: Message) => {
-    // extractAllCodeBlocks is needed for legacy 1 file apps
-    return normalizeGeneratedFiles(
-      ((msg.files as any[]) || []).length > 0
-        ? (msg.files as any[])
-        : extractAllCodeBlocks(msg.content),
-    );
-  };
+  const getFilesFromMessage = getMessageGeneratedFiles;
 
   // Since each message now contains cumulative files, simplify the logic
-  const assistantMessages = chat.messages.filter(
-    (m) => m.role === "assistant" && getFilesFromMessage(m).length > 0,
+  const assistantMessages = useMemo(
+    () =>
+      chat.messages.filter(
+        (m) => m.role === "assistant" && getFilesFromMessage(m).length > 0,
+      ),
+    [chat.messages],
   );
 
   // Effective files:
   // - While streaming: use the last message's cumulative files overlaid with streamed partials
   // - When displaying a message: use that message's cumulative files directly
-  const files = streamText
-    ? (() => {
-        const lastMessage = assistantMessages.at(-1);
-        const baseFiles = lastMessage ? getFilesFromMessage(lastMessage) : [];
-        return mergeFiles(baseFiles, mergedStreamFiles);
-      })()
-    : message
-      ? getFilesFromMessage(message)
-      : [];
+  const files = useMemo(
+    () =>
+      streamText
+        ? (() => {
+            const lastMessage = assistantMessages.at(-1);
+            const baseFiles = lastMessage
+              ? getFilesFromMessage(lastMessage)
+              : [];
+            return mergeFiles(baseFiles, mergedStreamFiles);
+          })()
+        : message
+          ? getFilesFromMessage(message)
+          : [],
+    [assistantMessages, mergedStreamFiles, message, streamText],
+  );
 
   // Prefer the latest streamed file while streaming; otherwise, App.tsx or first tsx
   const mainFile =
@@ -293,7 +296,7 @@ export default function CodeViewer({
   };
 
   const appTitle = generateAppTitle(files);
-  const exportBundle = buildExportBundle(files);
+  const exportBundle = useMemo(() => buildExportBundle(files), [files]);
   const qualityReport = exportBundle.qualityReport;
   const qualityWarningCount =
     qualityReport.diagnostics.length +
@@ -312,19 +315,34 @@ export default function CodeViewer({
   );
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
-  const allAssistantMessages = assistantMessages.some(
-    (m) => m.id === message?.id,
-  )
-    ? assistantMessages
-    : message && getFilesFromMessage(message).length > 0
-      ? [...assistantMessages, message]
-      : assistantMessages;
-  const reversedAllAssistantMessages = allAssistantMessages.slice().reverse();
+  const allAssistantMessages = useMemo(
+    () =>
+      assistantMessages.some((m) => m.id === message?.id)
+        ? assistantMessages
+        : message && getFilesFromMessage(message).length > 0
+          ? [...assistantMessages, message]
+          : assistantMessages,
+    [assistantMessages, message],
+  );
+  const reversedAllAssistantMessages = useMemo(
+    () => allAssistantMessages.slice().reverse(),
+    [allAssistantMessages],
+  );
+  const assistantMessageIndex = useMemo(
+    () =>
+      new Map(
+        allAssistantMessages.map((assistantMessage, index) => [
+          assistantMessage.id,
+          index,
+        ]),
+      ),
+    [allAssistantMessages],
+  );
   const currentVersionIndex =
     streamAllFiles.length > 0
       ? allAssistantMessages.length
       : message && allAssistantMessages.some((m) => m.id === message.id)
-        ? allAssistantMessages.map((m) => m.id).indexOf(message.id)
+        ? (assistantMessageIndex.get(message.id) ?? -1)
         : allAssistantMessages.length - 1;
   const currentVersion =
     (chat.assistantMessagesCountBefore || 0) + currentVersionIndex;
@@ -607,6 +625,7 @@ export default function CodeViewer({
               <div className="flex min-h-0 flex-1 items-center justify-center">
                 <CodeRunner
                   onRequestFix={onRequestFix}
+                  onPreviewHealthChange={onPreviewHealthChange}
                   onPreviewSelection={(selection) => {
                     setPreviewSelection(selection);
                     setPreviewSelectionMode(false);
@@ -668,7 +687,9 @@ export default function CodeViewer({
             <input
               type="text"
               value={previewEditInstruction}
-              onChange={(event) => setPreviewEditInstruction(event.target.value)}
+              onChange={(event) =>
+                setPreviewEditInstruction(event.target.value)
+              }
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
@@ -818,8 +839,8 @@ export default function CodeViewer({
                   {isVerifyingExport ? "Verifying export" : "Download ZIP"}
                 </span>
                 <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-                  Saves the complete source bundle with package scripts,
-                  quality report, and deploy config files.
+                  Saves the complete source bundle with package scripts, quality
+                  report, and deploy config files.
                 </span>
               </span>
             </button>

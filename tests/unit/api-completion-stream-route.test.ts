@@ -3,11 +3,13 @@ import {
   uiMessageChunkSchema,
   type UIMessageChunk,
 } from "ai";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildMessage } from "../fixtures/builders";
 
 const {
+  createOpenRouterModelMock,
   createRequestTelemetryMock,
+  gatewayModelMock,
   generateTextMock,
   getModelCreditHoldCostMock,
   getSessionMock,
@@ -16,8 +18,11 @@ const {
   reserveCreditHoldMock,
   streamTextMock,
   telemetryMock,
+  exaSearchMock,
 } = vi.hoisted(() => ({
+  createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   createRequestTelemetryMock: vi.fn(),
+  gatewayModelMock: vi.fn(() => "gateway-model"),
   generateTextMock: vi.fn(),
   getModelCreditHoldCostMock: vi.fn((model: string) =>
     model === "google/gemini-3-flash-preview" ? 6 : 10,
@@ -26,6 +31,7 @@ const {
   releaseCreditHoldMock: vi.fn(),
   reserveCreditHoldMock: vi.fn(),
   streamTextMock: vi.fn(),
+  exaSearchMock: vi.fn(() => ({ type: "provider-tool" })),
   telemetryMock: {
     markFirstByte: vi.fn(),
     markChunk: vi.fn(),
@@ -52,6 +58,9 @@ vi.mock("ai", async (importOriginal) => {
   const actual = await importOriginal<typeof import("ai")>();
   return {
     ...actual,
+    gateway: Object.assign(gatewayModelMock, {
+      tools: { exaSearch: exaSearchMock },
+    }),
     generateText: generateTextMock,
     streamText: streamTextMock,
   };
@@ -79,7 +88,7 @@ vi.mock("@/lib/openrouter", () => ({
   GENERATED_CODE_MAX_TOKENS: 16000,
   VISION_ANALYSIS_MODEL: "google/gemini-3-flash-preview",
   createAppOpenRouter: vi.fn(() => vi.fn()),
-  createOpenRouterModel: vi.fn(() => "openrouter-model"),
+  createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
   getAIErrorStatus: () => 502,
@@ -180,6 +189,10 @@ describe("/api/get-next-completion-stream-promise", () => {
     createRequestTelemetryMock.mockReturnValue(telemetryMock);
     telemetryMock.record.mockResolvedValue(undefined);
     prismaMock.message.update.mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("rejects invalid requests and missing messages", async () => {
@@ -310,7 +323,8 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
 
     const call = streamTextMock.mock.calls[0][0];
-    expect(call.messages).toHaveLength(10);
+    expect(call.system).toBe("system");
+    expect(call.messages).toHaveLength(9);
     expect(call.messages.at(-1)).toMatchObject({
       role: "user",
       content: expect.stringContaining("Generation completeness requirements:"),
@@ -373,6 +387,130 @@ describe("/api/get-next-completion-stream-promise", () => {
     });
     expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
       "A kanban board with three columns.",
+    );
+  });
+
+  it("runs a bounded web research preflight before code generation", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-11T12:00:00.000Z"));
+    const content =
+      "Build a UFC rankings app and use web search to get the actual rankings";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_search",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      text: "Verified current UFC rankings",
+      sources: [],
+      toolResults: [
+        {
+          toolName: "web_search",
+          output: {
+            id: "search_1",
+            results: [
+              {
+                url: "https://www.ufc.com/rankings",
+                title: "UFC Rankings",
+                publishedDate: "2026-06-30T10:00:00.000Z",
+                highlights: ["Official current rankings"],
+              },
+            ],
+          },
+        },
+      ],
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "research_response_1" },
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_search", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-generation-status",
+          data: expect.objectContaining({ phase: "searching" }),
+        }),
+        expect.objectContaining({
+          type: "source-url",
+          sourceId: "research-msg_search-1",
+          url: "https://www.ufc.com/rankings",
+          title: "UFC Rankings (2026-06-30)",
+        }),
+      ]),
+    );
+    const call = streamTextMock.mock.calls[0][0];
+    const researchCall = generateTextMock.mock.calls[0][0];
+    expect(researchCall.tools).toEqual({
+      web_search: { type: "provider-tool" },
+    });
+    expect(exaSearchMock).toHaveBeenCalledWith({
+      type: "auto",
+      numResults: 8,
+      userLocation: "US",
+      startPublishedDate: "2026-01-11T12:00:00.000Z",
+      endPublishedDate: "2026-07-11T12:00:00.000Z",
+      contents: {
+        text: {
+          maxCharacters: 8_000,
+          includeHtmlTags: false,
+          verbosity: "standard",
+        },
+        highlights: {
+          query: content,
+          maxCharacters: 3_000,
+        },
+        maxAgeHours: 1,
+        livecrawlTimeout: 10_000,
+      },
+    });
+    expect(researchCall.toolChoice).toBe("required");
+    expect(researchCall.maxOutputTokens).toBe(4_000);
+    expect(researchCall.providerOptions).toEqual({
+      gateway: {
+        user: "user_1",
+        tags: ["feature:web-search", "request:research"],
+      },
+    });
+    expect(call.tools).toBeUndefined();
+    expect(call.toolChoice).toBeUndefined();
+    expect(call.system).toBe("system");
+    expect(
+      call.messages.every(
+        (candidate: { role: string }) => candidate.role !== "system",
+      ),
+    ).toBe(true);
+    expect(gatewayModelMock).toHaveBeenCalledWith("openai/gpt-5-nano");
+    expect(call.messages.at(-1).content).toContain(
+      "Web research is required before generating code",
+    );
+    expect(call.messages.at(-1).content).toContain(
+      "Do not invent or substitute placeholder data",
+    );
+    expect(call.messages.at(-1).content).toContain("Official current rankings");
+    expect(call.messages.at(-1).content).toContain(
+      "Strict publication window: 2026-01-11 through 2026-07-11",
+    );
+    expect(call.messages.at(-1).content).toContain("Published: 2026-06-30");
+    expect(call.messages.at(-1).content).toContain(
+      "https://www.ufc.com/rankings",
     );
   });
 
@@ -440,11 +578,12 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(reserveCreditHoldMock).not.toHaveBeenCalled();
     expect(generateTextMock).not.toHaveBeenCalled();
     const call = streamTextMock.mock.calls[0][0];
-    expect(call.messages).toHaveLength(2);
-    expect(call.messages[1].content).toContain(
+    expect(call.system).toContain("system prompt");
+    expect(call.messages).toHaveLength(1);
+    expect(call.messages[0].content).toContain(
       "Return only complete files that changed",
     );
-    expect(call.messages[1].content).not.toContain(
+    expect(call.messages[0].content).not.toContain(
       "Generation completeness requirements:",
     );
   });

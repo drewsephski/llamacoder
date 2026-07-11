@@ -7,8 +7,7 @@ import {
   extractAllCodeBlocks,
   toTitleCase,
 } from "@/lib/utils";
-import { Fragment } from "react";
-import { Streamdown } from "streamdown";
+import { Fragment, useMemo } from "react";
 import { StickToBottom } from "use-stick-to-bottom";
 import { AppVersionButton } from "@/components/app-version-button";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,24 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import type { GenerationStatus } from "@/features/generation/contracts";
+import { MessageResponse } from "@/components/ai-elements/message";
+import {
+  parseAgentMessageMetadata,
+  type AgentMessageMetadata,
+  type ClarificationAnswers,
+  type ClarificationRequest,
+  type SearchRequest,
+  type SourceUrl,
+} from "@/features/generation/agent-contracts";
+import {
+  ClarificationRequestCard,
+  InterviewRequestCard,
+  MessageSources,
+  PlanRequestCard,
+  SearchApprovalCard,
+} from "./agent-interactions";
+import type { Plan } from "@/features/generation/agent-contracts";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 
 export default function ChatLog({
   chat,
@@ -27,16 +44,25 @@ export default function ChatLog({
   streamText,
   reasoningText,
   generationStatus,
+  streamSources,
   isStreaming,
   onMessageClickAction,
   streamError,
   onRetryAction,
+  onClarificationCompleteAction,
+  onInterviewCompleteAction,
+  onSearchApprovalAction,
+  onPlanApproveAction,
+  onPlanRevisionAction,
+  previewRecovery,
+  onPreviewRecoveryAction,
 }: {
   chat: Chat;
   activeMessage?: Message;
   streamText: string;
   reasoningText: string;
   generationStatus: GenerationStatus;
+  streamSources: SourceUrl[];
   isStreaming: boolean;
   onMessageClickAction: (v: Message) => void;
   streamError?: {
@@ -46,14 +72,47 @@ export default function ChatLog({
     failedMessageId?: string;
   } | null;
   onRetryAction?: () => void;
+  onClarificationCompleteAction: (
+    request: ClarificationRequest,
+    answers: ClarificationAnswers,
+  ) => void | Promise<void>;
+  onInterviewCompleteAction?: (
+    request: ClarificationRequest,
+    answers: ClarificationAnswers,
+  ) => void | Promise<void>;
+  onSearchApprovalAction: (
+    request: SearchRequest,
+    approved: boolean,
+  ) => void | Promise<void>;
+  onPlanApproveAction?: (plan: Plan) => void | Promise<void>;
+  onPlanRevisionAction?: (plan: Plan) => void | Promise<void>;
+  previewRecovery?: { error: string; attempts: number } | null;
+  onPreviewRecoveryAction?: () => void;
 }) {
   const assistantMessages = chat.messages.filter(
     (m) =>
       m.role === "assistant" &&
-      (((m.files as any[]) || []).length > 0 ||
+      (getMessageGeneratedFiles(m).length > 0 ||
         extractFirstCodeBlock(m.content) ||
         extractAllCodeBlocks(m.content).length > 0),
   );
+  const assistantMessageIndex = useMemo(
+    () =>
+      new Map(assistantMessages.map((message, index) => [message.id, index])),
+    [assistantMessages],
+  );
+  const interactionResponses = new Map<string, AgentMessageMetadata>();
+  for (const message of chat.messages) {
+    const metadata = parseAgentMessageMetadata(message.files);
+    if (
+      metadata?.kind === "agent_clarification_response" ||
+      metadata?.kind === "agent_interview_response" ||
+      metadata?.kind === "agent_search_approval_response" ||
+      metadata?.kind === "agent_plan_approval"
+    ) {
+      interactionResponses.set(metadata.requestId, metadata);
+    }
+  }
 
   return (
     <StickToBottom
@@ -81,25 +140,37 @@ export default function ChatLog({
         {chat.messages.slice(2).map((message) => (
           <Fragment key={message.id}>
             {message.role === "user" ? (
-              <UserMessage content={message.content} />
+              <UserMessage content={message.content} message={message} />
             ) : (
               <AssistantMessage
                 content={message.content}
                 version={
                   (chat.assistantMessagesCountBefore || 0) +
-                  assistantMessages.map((m) => m.id).indexOf(message.id) +
+                  (assistantMessageIndex.get(message.id) ?? -1) +
                   1
                 }
                 message={message}
                 previousMessage={(() => {
-                  const idx = assistantMessages
-                    .map((m) => m.id)
-                    .indexOf(message.id);
+                  const idx = assistantMessageIndex.get(message.id) ?? -1;
                   return idx > 0 ? assistantMessages[idx - 1] : undefined;
                 })()}
                 isActive={!isStreaming && activeMessage?.id === message.id}
                 onMessageClickAction={onMessageClickAction}
                 isStreaming={isStreaming}
+                interactionResponse={(() => {
+                  const metadata = parseAgentMessageMetadata(message.files);
+                  return metadata?.kind === "agent_clarification_request" ||
+                    metadata?.kind === "agent_interview_request" ||
+                    metadata?.kind === "agent_search_approval_request" ||
+                    metadata?.kind === "agent_plan_request"
+                    ? interactionResponses.get(metadata.request.id)
+                    : undefined;
+                })()}
+                onClarificationCompleteAction={onClarificationCompleteAction}
+                onInterviewCompleteAction={onInterviewCompleteAction}
+                onSearchApprovalAction={onSearchApprovalAction}
+                onPlanApproveAction={onPlanApproveAction}
+                onPlanRevisionAction={onPlanRevisionAction}
               />
             )}
           </Fragment>
@@ -137,8 +208,43 @@ export default function ChatLog({
                 isActive={true}
                 previousMessage={assistantMessages.at(-1)}
                 isStreaming={true}
+                sources={streamSources}
+                onClarificationCompleteAction={onClarificationCompleteAction}
+                onInterviewCompleteAction={onInterviewCompleteAction}
+                onSearchApprovalAction={onSearchApprovalAction}
+                onPlanApproveAction={onPlanApproveAction}
+                onPlanRevisionAction={onPlanRevisionAction}
               />
             )}
+          </div>
+        )}
+
+        {previewRecovery && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-50/60 p-4 dark:bg-amber-950/20">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-foreground">
+                  Preview still needs attention
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Squid tried {previewRecovery.attempts} automatic repairs. You
+                  can request another targeted repair or inspect the error in
+                  the preview.
+                </p>
+                {onPreviewRecoveryAction && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={onPreviewRecoveryAction}
+                  >
+                    Try another repair
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -178,7 +284,23 @@ export default function ChatLog({
   );
 }
 
-function UserMessage({ content }: { content: string }) {
+function UserMessage({
+  content,
+  message,
+}: {
+  content: string;
+  message?: Message;
+}) {
+  const metadata = parseAgentMessageMetadata(message?.files);
+  if (
+    metadata?.kind === "agent_clarification_response" ||
+    metadata?.kind === "agent_search_approval_response" ||
+    metadata?.kind === "agent_interview_response" ||
+    metadata?.kind === "agent_plan_approval"
+  ) {
+    return null;
+  }
+
   return (
     <div className="relative inline-flex max-w-[92%] items-end gap-3 self-end sm:max-w-[75%] md:max-w-[65%]">
       <div className="whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm bg-primary px-5 py-3 text-[15px] leading-relaxed text-primary-foreground shadow-sm">
@@ -196,6 +318,13 @@ function AssistantMessage({
   onMessageClickAction = () => {},
   previousMessage,
   isStreaming = false,
+  interactionResponse,
+  sources,
+  onClarificationCompleteAction,
+  onInterviewCompleteAction,
+  onSearchApprovalAction,
+  onPlanApproveAction,
+  onPlanRevisionAction,
 }: {
   content: string;
   version: number;
@@ -204,11 +333,90 @@ function AssistantMessage({
   onMessageClickAction?: (v: Message) => void;
   previousMessage?: Message;
   isStreaming?: boolean;
+  interactionResponse?: AgentMessageMetadata;
+  sources?: SourceUrl[];
+  onClarificationCompleteAction: (
+    request: ClarificationRequest,
+    answers: ClarificationAnswers,
+  ) => void | Promise<void>;
+  onInterviewCompleteAction?: (
+    request: ClarificationRequest,
+    answers: ClarificationAnswers,
+  ) => void | Promise<void>;
+  onSearchApprovalAction: (
+    request: SearchRequest,
+    approved: boolean,
+  ) => void | Promise<void>;
+  onPlanApproveAction?: (plan: Plan) => void | Promise<void>;
+  onPlanRevisionAction?: (plan: Plan) => void | Promise<void>;
 }) {
-  const allFiles = normalizeGeneratedFiles(
-    ((message?.files as any[]) || []).length > 0
-      ? (message?.files as any[])
-      : extractAllCodeBlocks(content),
+  const metadata = parseAgentMessageMetadata(message?.files);
+
+  if (metadata?.kind === "agent_clarification_request") {
+    return (
+      <ClarificationRequestCard
+        content={content}
+        request={metadata.request}
+        response={
+          interactionResponse?.kind === "agent_clarification_response"
+            ? interactionResponse
+            : undefined
+        }
+        onComplete={onClarificationCompleteAction}
+      />
+    );
+  }
+
+  if (metadata?.kind === "agent_interview_request") {
+    return (
+      <InterviewRequestCard
+        content={content}
+        request={metadata.request}
+        response={
+          interactionResponse?.kind === "agent_interview_response"
+            ? interactionResponse
+            : undefined
+        }
+        onComplete={onInterviewCompleteAction ?? onClarificationCompleteAction}
+      />
+    );
+  }
+
+  if (metadata?.kind === "agent_plan_request") {
+    const approvalMetadata =
+      interactionResponse?.kind === "agent_plan_approval"
+        ? interactionResponse.approved
+          ? { approved: true as const }
+          : { approved: false as const }
+        : undefined;
+    return (
+      <PlanRequestCard
+        request={metadata.request}
+        response={approvalMetadata}
+        onApprove={() => onPlanApproveAction?.(metadata.request)}
+        onRevision={() => onPlanRevisionAction?.(metadata.request)}
+      />
+    );
+  }
+
+  if (metadata?.kind === "agent_search_approval_request") {
+    const searchResponse =
+      interactionResponse?.kind === "agent_search_approval_response"
+        ? interactionResponse
+        : undefined;
+    return (
+      <SearchApprovalCard
+        request={metadata.request}
+        response={searchResponse}
+        onRespond={onSearchApprovalAction}
+      />
+    );
+  }
+
+  const allFiles = (
+    message
+      ? getMessageGeneratedFiles(message)
+      : normalizeGeneratedFiles(extractAllCodeBlocks(content))
   ).map((file) => ({ ...file, fullMatch: file.fullMatch || "" }));
   const segments = parseReplySegments(content);
   const fileSegments = segments.filter((s) => s.type === "file");
@@ -255,6 +463,8 @@ function AssistantMessage({
   );
 
   const displayFileCount = fileSegments.length;
+  const messageSources =
+    sources ?? (metadata?.kind === "agent_response" ? metadata.sources : []);
 
   if (displayFileCount > 0) {
     // Handle single-file replies with interleaved text and one file
@@ -267,9 +477,9 @@ function AssistantMessage({
                 key={i}
                 className="prose max-w-none dark:prose-invert prose-p:text-[15px] prose-p:leading-relaxed"
               >
-                <Streamdown className="break-words text-foreground">
+                <MessageResponse className="break-words text-foreground">
                   {seg.content}
-                </Streamdown>
+                </MessageResponse>
               </div>
             );
           }
@@ -320,9 +530,12 @@ function AssistantMessage({
   } else {
     // No code blocks, just show text
     return (
-      <Streamdown className="prose break-words text-foreground dark:prose-invert">
-        {content}
-      </Streamdown>
+      <div className="flex flex-col gap-3">
+        <MessageResponse className="prose break-words text-foreground dark:prose-invert">
+          {content}
+        </MessageResponse>
+        <MessageSources sources={messageSources} />
+      </div>
     );
   }
 }
