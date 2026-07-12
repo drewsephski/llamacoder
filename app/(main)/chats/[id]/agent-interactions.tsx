@@ -28,6 +28,7 @@ import type {
   SearchRequest,
   SourceUrl,
 } from "@/features/generation/agent-contracts";
+import { getDeliveryContractLabel } from "@/features/generation/app-spec";
 
 export function ClarificationRequestCard({
   content,
@@ -208,6 +209,11 @@ export function InterviewRequestCard({
 
   return (
     <div className="flex flex-col gap-3">
+      <DeliveryScopeSummary
+        deliveryContract={request.deliveryContract}
+        confirmed={request.confirmedDecisions}
+        remaining={request.remainingDecisions}
+      />
       <MessageResponse className="prose dark:prose-invert">
         {content}
       </MessageResponse>
@@ -234,6 +240,12 @@ export function PlanRequestCard({
 }) {
   return (
     <div className="rounded-xl border border-border/70 bg-card/95 p-5 shadow-sm">
+      <DeliveryScopeSummary
+        deliveryContract={request.deliveryContract}
+        confirmed={request.confirmedDecisions}
+        remaining={request.remainingDecisions}
+        className="mb-4"
+      />
       <div className="mb-4 flex items-start gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <svg
@@ -320,6 +332,32 @@ export function PlanRequestCard({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function DeliveryScopeSummary({
+  deliveryContract,
+  confirmed,
+  remaining,
+  className = "",
+}: {
+  deliveryContract: Plan["deliveryContract"];
+  confirmed: number;
+  remaining: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/25 px-3 py-2 text-xs ${className}`}
+    >
+      <span className="font-semibold text-foreground">
+        {getDeliveryContractLabel(deliveryContract)}
+      </span>
+      <span className="text-muted-foreground">
+        {confirmed} decision{confirmed === 1 ? "" : "s"} confirmed · {remaining}{" "}
+        remaining
+      </span>
     </div>
   );
 }

@@ -1,0 +1,125 @@
+{
+  "files": [
+    {
+      "file": "5c285b27cdda1fe8-s.p.a62025f2.woff2",
+      "family": "DM Sans 9pt",
+      "rawFamily": "DM Sans 9pt",
+      "subfamily": "Regular",
+      "postscript": "DMSans9pt-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "Aeonik-Bold.ttf",
+      "family": "Aeonik",
+      "rawFamily": "Aeonik",
+      "subfamily": "Bold",
+      "postscript": "Aeonik-Bold",
+      "weight": 700,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "Aeonik-Medium.ttf",
+      "family": "Aeonik",
+      "rawFamily": "Aeonik Medium",
+      "subfamily": "Regular",
+      "postscript": "Aeonik-Medium",
+      "weight": 500,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "Aeonik-Regular.ttf",
+      "family": "Aeonik",
+      "rawFamily": "Aeonik",
+      "subfamily": "Regular",
+      "postscript": "Aeonik-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "AeonikMono-Regular.otf",
+      "family": "Aeonik Mono",
+      "rawFamily": "Aeonik Mono",
+      "subfamily": "Regular",
+      "postscript": "AeonikMono-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "c3cb240f9c892514-s.d8e4bce2.woff2",
+      "family": "DM Sans 9pt",
+      "rawFamily": "DM Sans 9pt",
+      "subfamily": "Regular",
+      "postscript": "DMSans9pt-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    }
+  ],
+  "families": [
+    {
+      "family": "Aeonik",
+      "weights": [
+        400,
+        500,
+        700
+      ],
+      "variable": false,
+      "fileCount": 3,
+      "files": [
+        "Aeonik-Bold.ttf",
+        "Aeonik-Medium.ttf",
+        "Aeonik-Regular.ttf"
+      ]
+    },
+    {
+      "family": "Aeonik Mono",
+      "weights": [
+        400
+      ],
+      "variable": false,
+      "fileCount": 1,
+      "files": [
+        "AeonikMono-Regular.otf"
+      ]
+    },
+    {
+      "family": "DM Sans 9pt",
+      "weights": [
+        400
+      ],
+      "variable": true,
+      "fileCount": 2,
+      "files": [
+        "5c285b27cdda1fe8-s.p.a62025f2.woff2",
+        "c3cb240f9c892514-s.d8e4bce2.woff2"
+      ]
+    }
+  ],
+  "unidentified": [],
+  "meta": {
+    "generatedAt": "2026-07-12T14:44:29.224Z",
+    "tool": "fontkit"
+  }
+}

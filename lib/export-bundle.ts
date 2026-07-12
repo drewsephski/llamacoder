@@ -7,10 +7,8 @@ import {
   dependencies as sandpackDependencies,
   shadcnFiles,
 } from "@/lib/sandpack-config";
-import {
-  generateIntelligentFilename,
-  toTitleCase,
-} from "@/lib/utils";
+import { generateIntelligentFilename, toTitleCase } from "@/lib/utils";
+import { analyzeGeneratedApiIntegration } from "@/lib/generated-api";
 
 export type ExportBundleFile = {
   path: string;
@@ -71,9 +69,7 @@ export function getExportAppTitle(files: GeneratedFile[]) {
   );
 
   if (appFile) {
-    const appMatch = appFile.code.match(
-      /function\s+(\w+App|\w+Component|\w+)/,
-    );
+    const appMatch = appFile.code.match(/function\s+(\w+App|\w+Component|\w+)/);
 
     if (appMatch) {
       return toTitleCase(appMatch[1].replace(/(App|Component)$/, ""));
@@ -176,6 +172,7 @@ function assembleExportFiles({
   qualityReport: GeneratedFilesQualityReport;
 }) {
   const bundleFiles = new Map<string, string>();
+  const apiIntegration = analyzeGeneratedApiIntegration(files);
 
   for (const file of files) {
     bundleFiles.set(file.path, file.code);
@@ -214,7 +211,15 @@ function assembleExportFiles({
 
   bundleFiles.set("index.html", buildIndexHtml(appTitle));
   bundleFiles.set("package.json", buildPackageJson(packageName, files));
-  bundleFiles.set("README.md", buildReadme(appTitle));
+  bundleFiles.set("README.md", buildReadme(appTitle, apiIntegration));
+  bundleFiles.set(
+    ".env.example",
+    buildEnvExample(apiIntegration.environmentVariables),
+  );
+  bundleFiles.set(
+    "squid-integrations.json",
+    JSON.stringify(apiIntegration, null, 2),
+  );
   bundleFiles.set(
     "squid-quality-report.json",
     JSON.stringify(qualityReport, null, 2),
@@ -225,7 +230,11 @@ function assembleExportFiles({
   bundleFiles.set("postcss.config.js", buildPostcssConfig());
   bundleFiles.set(
     "vercel.json",
-    JSON.stringify({ rewrites: [{ source: "/(.*)", destination: "/" }] }, null, 2),
+    JSON.stringify(
+      { rewrites: [{ source: "/(.*)", destination: "/" }] },
+      null,
+      2,
+    ),
   );
   bundleFiles.set("netlify.toml", buildNetlifyConfig());
   bundleFiles.set("wrangler.toml", buildWranglerConfig(packageName));
@@ -328,6 +337,23 @@ function verifyExportBundle({
           ? "Generated-file validation passed."
           : `${qualityReport.diagnostics.length} diagnostics and ${qualityReport.accessibilityWarnings.length} accessibility warnings found.`,
     },
+    {
+      name: "API integration",
+      status:
+        qualityReport.apiIntegration.status === "blocked"
+          ? "failed"
+          : qualityReport.apiIntegration.status === "setup_required"
+            ? "warning"
+            : "passed",
+      message:
+        qualityReport.apiIntegration.status === "verified"
+          ? "API integration verified by static safety checks."
+          : qualityReport.apiIntegration.status === "setup_required"
+            ? "API setup is required; see README.md and .env.example."
+            : qualityReport.apiIntegration.status === "blocked"
+              ? "Unsafe or incomplete client API code was detected."
+              : "No client API integration detected.",
+    },
   ];
   const hasFailed = checks.some((check) => check.status === "failed");
   const hasWarning = checks.some((check) => check.status === "warning");
@@ -385,7 +411,39 @@ function buildPackageJson(packageName: string, files: GeneratedFile[]) {
   );
 }
 
-function buildReadme(appTitle: string) {
+function buildReadme(
+  appTitle: string,
+  apiIntegration: ReturnType<typeof analyzeGeneratedApiIntegration>,
+) {
+  const apiSetup =
+    apiIntegration.status === "not_detected"
+      ? ["No browser API integration was detected in the generated source."]
+      : [
+          apiIntegration.status === "setup_required"
+            ? "API setup required."
+            : apiIntegration.status === "blocked"
+              ? "API integration blocked by Squid's static safety checks."
+              : "API integration verified by Squid's static safety checks.",
+          ...(apiIntegration.endpoints.length
+            ? [
+                "",
+                "Detected API endpoints / attribution:",
+                ...apiIntegration.endpoints.map((endpoint) => `- ${endpoint}`),
+              ]
+            : []),
+          ...(apiIntegration.environmentVariables.length
+            ? [
+                "",
+                "Copy `.env.example` to `.env.local` and fill only publishable browser values:",
+                ...apiIntegration.environmentVariables.map(
+                  (variable) => `- \`${variable}\``,
+                ),
+              ]
+            : []),
+          "",
+          "Review `integrations.ts` (when generated) and `squid-integrations.json` for provider setup. Confirm the provider's official CORS, attribution, rate-limit, and credential rules before production deployment.",
+        ];
+
   return [
     `# ${appTitle}`,
     "",
@@ -398,14 +456,30 @@ function buildReadme(appTitle: string) {
     "pnpm dev",
     "```",
     "",
+    "## API integrations",
+    "",
+    ...apiSetup,
+    "",
     "## Included artifacts",
     "",
     "- `squid-manifest.json`: generated file manifest and export metadata.",
     "- `squid-quality-report.json`: import, file, and accessibility diagnostics.",
     "- `squid-verification-report.json`: export readiness checks.",
+    "- `squid-integrations.json`: detected endpoints, environment variables, and API safety status.",
+    "- `.env.example`: publishable browser configuration template. Never put server secrets in VITE_* variables.",
     "- `vercel.json`, `netlify.toml`, and `wrangler.toml`: starter deploy config.",
     "",
     "The verification report is a smoke check, not a substitute for a full production review.",
+  ].join("\n");
+}
+
+function buildEnvExample(environmentVariables: string[]) {
+  return [
+    "# Browser-visible values only. Never place secrets, private keys, or privileged tokens here.",
+    ...(environmentVariables.length
+      ? environmentVariables.map((variable) => `${variable}=`)
+      : ["# No publishable API configuration detected."]),
+    "",
   ].join("\n");
 }
 

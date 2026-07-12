@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #1f2be0;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          height: 2px;
+          z-index: 20;
+          background: #1f2be0;
+        }
+        .hairline.top { top: 58px; }
+        .hairline.bottom { top: 852px; }
+
+        .chrome {
+          position: absolute;
+          top: 79px;
+          z-index: 21;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .chrome.left { left: 77px; }
+        .chrome.right { right: 77px; }
+
+        .camera-outer,
+        .camera-inner {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .section-label {
+          position: absolute;
+          top: 125px;
+          left: 77px;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .provider-rail {
+          position: absolute;
+          top: 154px;
+          left: 77px;
+          width: 596px;
+          height: 58px;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.18);
+          display: flex;
+          align-items: center;
+          gap: 17px;
+          font-family: "DM Mono";
+          font-size: 16px;
+          line-height: 1;
+          letter-spacing: 0.06em;
+          white-space: nowrap;
+        }
+        .rail-prompt {
+          width: 24px;
+          font-size: 22px;
+        }
+        .rail-copy {
+          min-width: 510px;
+        }
+        .rail-cursor {
+          display: inline-block;
+          width: 11px;
+          margin-left: 5px;
+          color: #1f2be0;
+        }
+
+        .spec-card {
+          position: absolute;
+          left: 77px;
+          top: 245px;
+          width: 500px;
+          height: 484px;
+          box-sizing: border-box;
+          border: 4px solid #1f2be0;
+          background: #f0ebde;
+          transform-origin: 0 0;
+          will-change: transform;
+        }
+        .spec-tab {
+          height: 54px;
+          padding: 0 20px;
+          background: #1f2be0;
+          color: #f0ebde;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-family: "Hanken Grotesk";
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+        .spec-title {
+          padding: 31px 28px 25px;
+          font-family: "Newsreader";
+          font-size: 77px;
+          line-height: 0.88;
+          font-weight: 400;
+          letter-spacing: -0.008em;
+        }
+        .spec-title span { display: block; }
+        .spec-grid {
+          margin: 0 28px;
+          border-top: 2px solid #1f2be0;
+        }
+        .spec-row {
+          min-height: 43px;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.18);
+          display: grid;
+          grid-template-columns: 126px 1fr;
+          align-items: center;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+        .spec-row span:first-child { opacity: 0.52; }
+
+        .stream-svg {
+          position: absolute;
+          left: 565px;
+          top: 252px;
+          width: 305px;
+          height: 420px;
+          overflow: visible;
+        }
+        .stream-path,
+        .stream-branch {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 4;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+        }
+        .stream-branch { stroke-width: 2; }
+
+        .stream-tag {
+          position: absolute;
+          left: 615px;
+          top: 405px;
+          width: 154px;
+          padding: 9px 10px;
+          box-sizing: border-box;
+          background: #f0ebde;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 2px solid #1f2be0;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1.25;
+          letter-spacing: 0.06em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        .file-tree {
+          position: absolute;
+          left: 836px;
+          top: 174px;
+          width: 1006px;
+          height: 600px;
+        }
+        .tree-heading {
+          height: 58px;
+          border-bottom: 2px solid #1f2be0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+        .tree-heading span:last-child {
+          font-family: "DM Mono";
+          font-size: 14px;
+          font-weight: 400;
+          letter-spacing: 0.06em;
+        }
+        .file-list {
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 83px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px 18px;
+        }
+        .file-card {
+          position: relative;
+          height: 122px;
+          box-sizing: border-box;
+          padding: 19px 20px 16px 58px;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          transform-origin: 0 50%;
+          will-change: transform;
+        }
+        .file-index {
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 38px;
+          border-right: 1px solid rgba(31, 43, 224, 0.18);
+          display: grid;
+          place-items: center;
+          font-family: "DM Mono";
+          font-size: 13px;
+          writing-mode: vertical-rl;
+          letter-spacing: 0.08em;
+        }
+        .file-name {
+          font-family: "Newsreader";
+          font-size: 38px;
+          line-height: 1;
+          font-weight: 400;
+          letter-spacing: -0.006em;
+          white-space: nowrap;
+        }
+        .file-meta {
+          margin-top: 14px;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          opacity: 0.55;
+        }
+
+        .checkpoint-bracket {
+          position: absolute;
+          left: 817px;
+          top: 147px;
+          width: 1045px;
+          height: 651px;
+          box-sizing: border-box;
+          border-top: 4px solid #1f2be0;
+          border-right: 4px solid #1f2be0;
+          border-bottom: 4px solid #1f2be0;
+          pointer-events: none;
+          transform-origin: 100% 50%;
+          will-change: transform;
+        }
+        .checkpoint-bracket::before,
+        .checkpoint-bracket::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          width: 56px;
+          height: 4px;
+          background: #1f2be0;
+        }
+        .checkpoint-bracket::before { top: -4px; }
+        .checkpoint-bracket::after { bottom: -4px; }
+        .checkpoint-label {
+          position: absolute;
+          right: 16px;
+          top: -34px;
+          padding-left: 12px;
+          background: #f0ebde;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+        }
+
+        .edit-request {
+          position: absolute;
+          left: 603px;
+          top: 681px;
+          width: 196px;
+          height: 82px;
+          box-sizing: border-box;
+          border: 3px solid #1f2be0;
+          background: #1f2be0;
+          color: #f0ebde;
+          display: grid;
+          place-items: center;
+          text-align: center;
+          font-family: "Hanken Grotesk";
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1.3;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          transform-origin: 100% 50%;
+          will-change: transform;
+        }
+        .edit-request span { display: block; }
+        .edit-arrow {
+          position: absolute;
+          left: 799px;
+          top: 720px;
+          width: 36px;
+          height: 3px;
+          background: #1f2be0;
+          transform-origin: 0 50%;
+          will-change: transform;
+        }
+        .edit-arrow::after {
+          content: "";
+          position: absolute;
+          right: -1px;
+          top: -6px;
+          width: 12px;
+          height: 12px;
+          box-sizing: border-box;
+          border-top: 3px solid #1f2be0;
+          border-right: 3px solid #1f2be0;
+          rotate: 45deg;
+        }
+
+        .delta-marker {
+          position: absolute;
+          right: -13px;
+          top: -13px;
+          width: 42px;
+          height: 42px;
+          border: 3px solid #1f2be0;
+          background: #1f2be0;
+          color: #f0ebde;
+          display: grid;
+          place-items: center;
+          font-family: "DM Mono";
+          font-size: 19px;
+          line-height: 1;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .zoom-target {
+          position: absolute;
+          left: 1339px;
+          top: 372px;
+          width: 503px;
+          height: 260px;
+          pointer-events: none;
+        }
+
+        .pulse-rule {
+          position: absolute;
+          left: 835px;
+          top: 785px;
+          width: 1007px;
+          height: 2px;
+          background: #1f2be0;
+          transform-origin: 0 50%;
+          will-change: transform;
+        }
+      </style>
+
+      <div data-hf-id="hf-puor" id="root" data-composition-id="06-generation-engine" data-start="0" data-duration="9.016" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-51i5" class="clip ground" data-start="0" data-duration="9.016" data-track-index="0"></div>
+        <div data-hf-id="hf-a48z" class="clip stage" data-start="0" data-duration="9.016" data-track-index="1">
+          <div data-hf-id="hf-vgdz" class="hairline top"></div>
+          <div data-hf-id="hf-kzjn" class="hairline bottom"></div>
+          <div data-hf-id="hf-6xay" class="chrome left">generation engine / structured output</div>
+          <div data-hf-id="hf-ph7a" class="chrome right">06</div>
+
+          <div data-hf-id="hf-yj39" class="camera-outer" id="f06-generation-engine-camera-outer">
+            <div data-hf-id="hf-k2ax" class="camera-inner" id="f06-generation-engine-camera-inner">
+              <div data-hf-id="hf-d4mm" class="section-label">Approved intent becomes source</div>
+
+              <div data-hf-id="hf-4z00" class="provider-rail">
+                <span data-hf-id="hf-cghq" class="rail-prompt">&gt;</span>
+                <span data-hf-id="hf-3fjm" class="rail-copy" id="f06-generation-engine-rail-copy"></span>
+                <span data-hf-id="hf-kwqd" class="rail-cursor" id="f06-generation-engine-rail-cursor">_</span>
+              </div>
+
+              <article data-hf-id="hf-giuj" class="spec-card" id="f06-generation-engine-spec">
+                <div data-hf-id="hf-hwkb" class="spec-tab"><span data-hf-id="hf-obvo">approved app spec</span><span data-hf-id="hf-ls52">✓</span></div>
+                <div data-hf-id="hf-q94k" class="spec-title"><span data-hf-id="hf-49vk">APP</span><span data-hf-id="hf-yds2">SPEC</span></div>
+                <div data-hf-id="hf-h3ti" class="spec-grid">
+                  <div data-hf-id="hf-r9gi" class="spec-row"><span data-hf-id="hf-lkbx">shell</span><span data-hf-id="hf-d8dr">responsive</span></div>
+                  <div data-hf-id="hf-w6me" class="spec-row"><span data-hf-id="hf-6evl">data</span><span data-hf-id="hf-iet3">typed</span></div>
+                  <div data-hf-id="hf-wkxf" class="spec-row"><span data-hf-id="hf-twgw">actions</span><span data-hf-id="hf-9vox">validated</span></div>
+                  <div data-hf-id="hf-wz8g" class="spec-row"><span data-hf-id="hf-un5a">integrations</span><span data-hf-id="hf-gasb">governed</span></div>
+                </div>
+              </article>
+
+              <svg data-hf-id="hf-fgki" class="stream-svg" viewBox="0 0 305 420" aria-hidden="true">
+                <path data-hf-id="hf-uh89" class="stream-path" d="M 8 210 H 170" />
+                <path data-hf-id="hf-hfbt" class="stream-branch" d="M 170 210 V 40 H 300" />
+                <path data-hf-id="hf-93h2" class="stream-branch" d="M 170 210 V 124 H 300" />
+                <path data-hf-id="hf-omr3" class="stream-branch" d="M 170 210 H 300" />
+                <path data-hf-id="hf-pdvy" class="stream-branch" d="M 170 210 V 296 H 300" />
+                <path data-hf-id="hf-47oi" class="stream-branch" d="M 170 210 V 380 H 300" />
+              </svg>
+              <div data-hf-id="hf-25fj" class="stream-tag">stream / source</div>
+
+              <section data-hf-id="hf-6913" class="file-tree">
+                <div data-hf-id="hf-x74x" class="tree-heading"><span data-hf-id="hf-7wdh">multi-file tree</span><span data-hf-id="hf-egss">react + typescript</span></div>
+                <div data-hf-id="hf-oiuv" class="file-list">
+                  <div data-hf-id="hf-9cwr" class="file-card file-stable">
+                    <span data-hf-id="hf-e2qz" class="file-index">01</span>
+                    <div data-hf-id="hf-uxd0" class="file-name">App.tsx</div>
+                    <div data-hf-id="hf-t8qz" class="file-meta">entry / shell</div>
+                  </div>
+                  <div data-hf-id="hf-eorf" class="file-card file-stable">
+                    <span data-hf-id="hf-dofy" class="file-index">02</span>
+                    <div data-hf-id="hf-cs5r" class="file-name">components/</div>
+                    <div data-hf-id="hf-gdpx" class="file-meta">ui / composed</div>
+                  </div>
+                  <div data-hf-id="hf-eage" class="file-card file-stable">
+                    <span data-hf-id="hf-da4x" class="file-index">03</span>
+                    <div data-hf-id="hf-o5j7" class="file-name">hooks/</div>
+                    <div data-hf-id="hf-afqp" class="file-meta">state / reusable</div>
+                  </div>
+                  <div data-hf-id="hf-mfem" class="file-card file-changed">
+                    <span data-hf-id="hf-cvtw" class="file-index">04</span>
+                    <div data-hf-id="hf-jnjb" class="file-name">services/</div>
+                    <div data-hf-id="hf-0sd3" class="file-meta">boundary / typed</div>
+                    <span data-hf-id="hf-05mr" class="delta-marker">M</span>
+                  </div>
+                  <div data-hf-id="hf-dw5d" class="file-card file-stable">
+                    <span data-hf-id="hf-chiv" class="file-index">05</span>
+                    <div data-hf-id="hf-itwq" class="file-name">types.ts</div>
+                    <div data-hf-id="hf-hj8v" class="file-meta">contracts / shared</div>
+                  </div>
+                  <div data-hf-id="hf-ijj6" class="file-card file-changed">
+                    <span data-hf-id="hf-c37u" class="file-index">06</span>
+                    <div data-hf-id="hf-7h8w" class="file-name">integrations.ts</div>
+                    <div data-hf-id="hf-ou72" class="file-meta">provider / governed</div>
+                    <span data-hf-id="hf-teyr" class="delta-marker">M</span>
+                  </div>
+                </div>
+              </section>
+
+              <div data-hf-id="hf-dtvx" class="checkpoint-bracket">
+                <span data-hf-id="hf-uwp3" class="checkpoint-label">source checkpoint</span>
+              </div>
+              <div data-hf-id="hf-fmw4" class="edit-request"><span data-hf-id="hf-r7hs">edit request</span><span data-hf-id="hf-zaf7">scoped delta</span></div>
+              <div data-hf-id="hf-v08g" class="edit-arrow"></div>
+              <div data-hf-id="hf-mvc6" class="pulse-rule"></div>
+              <div data-hf-id="hf-hwdl" class="zoom-target" id="f06-generation-engine-zoom-target"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const spec = document.getElementById("f06-generation-engine-spec");
+        const railCopy = document.getElementById("f06-generation-engine-rail-copy");
+        const railCursor = document.getElementById("f06-generation-engine-rail-cursor");
+        const cameraOuter = document.getElementById("f06-generation-engine-camera-outer");
+        const cameraInner = document.getElementById("f06-generation-engine-camera-inner");
+        const zoomTarget = document.getElementById("f06-generation-engine-zoom-target");
+        const fileCards = Array.from(document.querySelectorAll(".file-card"));
+        const stableFiles = Array.from(document.querySelectorAll(".file-stable"));
+        const changedFiles = Array.from(document.querySelectorAll(".file-changed"));
+        const deltaMarkers = Array.from(document.querySelectorAll(".delta-marker"));
+        const streamPaths = Array.from(document.querySelectorAll(".stream-path, .stream-branch"));
+
+        streamPaths.forEach((path) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = String(length);
+          path.style.strokeDashoffset = String(length);
+        });
+
+        const railStates = [
+          { t: 0, text: "" },
+          { t: 0.22, text: "ROUTE /" },
+          { t: 0.54, text: "ROUTE / PROVIDER:AUTO" },
+          { t: 1.02, text: "ROUTE / PROVIDER:AUTO  MODEL:" },
+          { t: 1.46, text: "ROUTE / PROVIDER:AUTO  MODEL:QUALIFIED" },
+          { t: 1.82, text: "ROUTE / PROVIDER:AUTO  MODEL:QUALIFIED  ✓" },
+        ];
+
+        function railTextAt(time) {
+          for (let i = railStates.length - 1; i >= 0; i -= 1) {
+            if (time >= railStates[i].t) return railStates[i].text;
+          }
+          return "";
+        }
+
+        const railDriver = { t: 0 };
+        tl.to(
+          railDriver,
+          {
+            t: 2.08,
+            duration: 2.08,
+            ease: "none",
+            onUpdate: () => {
+              railCopy.textContent = railTextAt(railDriver.t);
+              railCursor.style.opacity = Math.sin(railDriver.t * Math.PI * 5) > 0 ? "1" : "0";
+            },
+          },
+          0,
+        );
+
+        tl.fromTo(
+          spec,
+          { scale: 0.86, opacity: 0, y: 20 },
+          { scale: 1, opacity: 1, y: 0, duration: 0.62, ease: "power3.out" },
+          0.06,
+        );
+        tl.fromTo(
+          ".section-label",
+          { opacity: 0, x: -30 },
+          { opacity: 1, x: 0, duration: 0.46, ease: "power3.out" },
+          0.18,
+        );
+        tl.fromTo(
+          ".provider-rail",
+          { opacity: 0, scaleX: 0.65 },
+          { opacity: 1, scaleX: 1, duration: 0.54, ease: "power3.out" },
+          0.28,
+        );
+
+        streamPaths.forEach((path, index) => {
+          tl.to(
+            path,
+            {
+              strokeDashoffset: 0,
+              duration: index === 0 ? 0.76 : 0.62,
+              ease: "power2.out",
+            },
+            index === 0 ? 2.08 : 2.52 + (index - 1) * 0.31,
+          );
+        });
+        tl.fromTo(
+          ".stream-tag",
+          { opacity: 0, scaleX: 0.35 },
+          { opacity: 1, scaleX: 1, duration: 0.42, ease: "power3.out" },
+          2.32,
+        );
+        tl.fromTo(
+          ".tree-heading",
+          { opacity: 0, x: 36 },
+          { opacity: 1, x: 0, duration: 0.52, ease: "power3.out" },
+          2.45,
+        );
+
+        fileCards.forEach((card, index) => {
+          tl.fromTo(
+            card,
+            { scale: 0, opacity: 0, y: 22 },
+            { scale: 1, opacity: 1, y: 0, duration: 0.58, ease: "power3.out" },
+            2.78 + index * 0.42,
+          );
+        });
+
+        tl.fromTo(
+          ".checkpoint-bracket",
+          { scaleX: 0.08, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.58, ease: "power3.out" },
+          5.39,
+        );
+        tl.fromTo(
+          ".edit-request",
+          { scale: 0, opacity: 0, x: -30 },
+          { scale: 1, opacity: 1, x: 0, duration: 0.52, ease: "power3.out" },
+          5.72,
+        );
+        tl.fromTo(
+          ".edit-arrow",
+          { scaleX: 0, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.34, ease: "power3.out" },
+          6.02,
+        );
+        tl.to(stableFiles, { opacity: 0.18, duration: 0.56, ease: "power2.out" }, 6.2);
+        tl.to(changedFiles, { backgroundColor: "#1f2be0", color: "#f0ebde", duration: 0.38, ease: "power2.out" }, 6.28);
+        tl.to(changedFiles, { scale: 1.025, duration: 0.16, ease: "power2.out" }, 6.42);
+        tl.to(changedFiles, { scale: 1, duration: 0.22, ease: "power3.out" }, 6.58);
+        tl.fromTo(
+          ".pulse-rule",
+          { scaleX: 0, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.66, ease: "power3.out" },
+          6.42,
+        );
+
+        deltaMarkers.forEach((marker, index) => {
+          tl.fromTo(
+            marker,
+            { scale: 0, opacity: 0, y: 16 },
+            { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+            7.19 + index * 0.18,
+          );
+        });
+
+        const targetRect = zoomTarget.getBoundingClientRect();
+        const targetOffsetX = targetRect.left + targetRect.width / 2 - 960;
+        const targetOffsetY = targetRect.top + targetRect.height / 2 - 448;
+        const maxScale = Math.min((0.88 * 1920) / targetRect.width, (0.88 * 896) / targetRect.height);
+        const zoomScale = Math.min(1.12, maxScale);
+
+        tl.to(
+          cameraOuter,
+          { scale: zoomScale, duration: 0.82, ease: "power3.inOut" },
+          7.48,
+        );
+        tl.to(
+          cameraInner,
+          { x: -targetOffsetX, y: -targetOffsetY, duration: 0.82, ease: "power3.inOut" },
+          7.48,
+        );
+
+        window.__timelines["06-generation-engine"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

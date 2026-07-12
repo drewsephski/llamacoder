@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Quality becomes visible</title>
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #1f2be0;
+          container-type: size;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          z-index: 20;
+          height: 2px;
+          background: #1f2be0;
+        }
+
+        .hairline.top { top: 58px; }
+        .hairline.bottom { top: 860px; }
+
+        .chrome,
+        .topbar-tag,
+        .file-path,
+        .scan-label,
+        .blocked-title,
+        .blocked-item,
+        .row-index,
+        .row-delta,
+        .metric-label,
+        .metric-value,
+        .report-tag {
+          font-family: "DM Mono";
+          font-weight: 400;
+          text-transform: uppercase;
+          letter-spacing: 0.07em;
+        }
+
+        .chrome {
+          position: absolute;
+          top: 80px;
+          z-index: 21;
+          font-size: 14px;
+          line-height: 1;
+        }
+
+        .chrome.left { left: 77px; }
+        .chrome.right { right: 77px; }
+
+        .topbar {
+          position: absolute;
+          top: 114px;
+          left: 77px;
+          right: 77px;
+          height: 76px;
+          border-bottom: 3px solid #1f2be0;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          z-index: 8;
+        }
+
+        .topbar-title {
+          font-family: "Newsreader";
+          font-size: 64px;
+          line-height: 0.92;
+          font-weight: 400;
+          letter-spacing: -0.006em;
+          white-space: nowrap;
+        }
+
+        .topbar-tag {
+          padding-top: 14px;
+          font-size: 15px;
+          line-height: 1;
+        }
+
+        .input-zone {
+          position: absolute;
+          left: 77px;
+          top: 223px;
+          width: 430px;
+          height: 555px;
+          border-right: 2px solid #1f2be0;
+          overflow: hidden;
+        }
+
+        .file-stack {
+          position: absolute;
+          left: 8px;
+          top: 22px;
+          width: 326px;
+          height: 300px;
+        }
+
+        .file-card {
+          position: absolute;
+          width: 286px;
+          height: 68px;
+          box-sizing: border-box;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          display: grid;
+          grid-template-columns: 52px 1fr;
+          align-items: center;
+        }
+
+        .file-card:nth-child(1) { left: 0; top: 0; }
+        .file-card:nth-child(2) { left: 14px; top: 74px; }
+        .file-card:nth-child(3) { left: 28px; top: 148px; }
+        .file-card:nth-child(4) { left: 42px; top: 222px; }
+
+        .file-glyph {
+          height: 100%;
+          border-right: 1px solid rgba(31, 43, 224, 0.24);
+          display: grid;
+          place-items: center;
+          font-family: "Newsreader";
+          font-size: 29px;
+          line-height: 1;
+        }
+
+        .file-path {
+          padding-left: 16px;
+          font-size: 14px;
+          line-height: 1.15;
+        }
+
+        .normalize-rail {
+          position: absolute;
+          top: 0;
+          left: 334px;
+          width: 70px;
+          height: 338px;
+          border-left: 1px solid rgba(31, 43, 224, 0.3);
+          border-right: 1px solid rgba(31, 43, 224, 0.3);
+          overflow: hidden;
+        }
+
+        .scanline {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 8px;
+          height: 338px;
+          background: #1f2be0;
+          opacity: 0.82;
+        }
+
+        .scan-label {
+          position: absolute;
+          left: 25px;
+          top: 22px;
+          font-size: 13px;
+          writing-mode: vertical-rl;
+          letter-spacing: 0.16em;
+        }
+
+        .blocked-rail {
+          position: absolute;
+          left: 8px;
+          top: 369px;
+          width: 386px;
+          height: 164px;
+          box-sizing: border-box;
+          border-top: 3px solid #1f2be0;
+          background: rgba(240, 235, 222, 0.8);
+        }
+
+        .blocked-title {
+          padding: 12px 0 10px;
+          font-size: 13px;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.22);
+        }
+
+        .blocked-item {
+          height: 43px;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.18);
+          display: grid;
+          grid-template-columns: 33px 1fr 70px;
+          align-items: center;
+          font-size: 12px;
+          opacity: 0.52;
+        }
+
+        .blocked-mark {
+          font-family: "Newsreader";
+          font-size: 25px;
+        }
+
+        .ledger {
+          position: absolute;
+          left: 550px;
+          right: 77px;
+          top: 223px;
+          height: 555px;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 2px solid #1f2be0;
+        }
+
+        .ledger-row {
+          position: relative;
+          height: 79px;
+          box-sizing: border-box;
+          display: grid;
+          grid-template-columns: 78px 1fr 182px;
+          align-items: center;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.24);
+          background: rgba(240, 235, 222, 0.78);
+          overflow: hidden;
+        }
+
+        .ledger-row:last-of-type { border-bottom: 0; }
+
+        .row-index {
+          font-size: 15px;
+          opacity: 0.5;
+        }
+
+        .row-name {
+          font-family: "Newsreader";
+          font-size: 38px;
+          line-height: 1;
+          font-weight: 400;
+          letter-spacing: -0.004em;
+        }
+
+        .row-delta {
+          height: 100%;
+          border-left: 1px solid rgba(31, 43, 224, 0.3);
+          display: grid;
+          place-items: center;
+          font-size: 14px;
+          background: rgba(31, 43, 224, 0.06);
+        }
+
+        .row-sweep {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 18px;
+          height: 100%;
+          background: #1f2be0;
+          opacity: 0.16;
+        }
+
+        .metrics {
+          position: absolute;
+          left: 550px;
+          right: 77px;
+          top: 716px;
+          height: 62px;
+          display: grid;
+          grid-template-columns: 1fr 1fr 202px;
+          border-top: 3px solid #1f2be0;
+          background: #f0ebde;
+          z-index: 7;
+        }
+
+        .metric {
+          display: grid;
+          grid-template-columns: 1fr 76px;
+          align-items: center;
+          border-right: 1px solid rgba(31, 43, 224, 0.28);
+          padding: 0 18px;
+          box-sizing: border-box;
+        }
+
+        .metric-label { font-size: 13px; }
+        .metric-value {
+          font-size: 27px;
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .report-tag {
+          display: grid;
+          place-items: center;
+          background: #1f2be0;
+          color: #f0ebde;
+          font-size: 14px;
+        }
+
+        .report-bracket {
+          position: absolute;
+          left: 526px;
+          top: 205px;
+          width: 1317px;
+          height: 592px;
+          pointer-events: none;
+          z-index: 12;
+        }
+
+        .bracket-path,
+        .connector-path {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+        }
+
+        .bracket-path { stroke-width: 4; }
+        .connector-path {
+          stroke-width: 1.5;
+          opacity: 0.42;
+        }
+
+        .qr {
+          position: absolute;
+          right: 91px;
+          top: 789px;
+          width: 54px;
+          height: 54px;
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          grid-template-rows: repeat(6, 1fr);
+          gap: 2px;
+          padding: 3px;
+          box-sizing: border-box;
+          background: #f0ebde;
+          z-index: 22;
+        }
+
+        .qr i { background: rgba(31, 43, 224, 0.1); }
+        .qr i.on { background: #1f2be0; }
+      </style>
+
+      <div data-hf-id="hf-aw30" id="root" data-composition-id="07-quality-visible" data-start="0" data-duration="10.871" data-track-index="0" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-jy16" class="clip ground" data-start="0" data-duration="10.871" data-track-index="2"></div>
+
+        <div data-hf-id="hf-3grc" class="clip stage" data-start="0" data-duration="10.871" data-track-index="1">
+          <div data-hf-id="hf-vgdz" class="hairline top"></div>
+          <div data-hf-id="hf-kzjn" class="hairline bottom"></div>
+          <div data-hf-id="hf-waf6" class="chrome left">QC / GENERATED OUTPUT</div>
+          <div data-hf-id="hf-wo33" class="chrome right">FRAME 07 / REPORT</div>
+
+          <header data-hf-id="hf-6f4s" class="topbar">
+            <div data-hf-id="hf-r63n" class="topbar-title" id="f07-topbar-title">DIAGNOSTIC / LEDGER</div>
+            <div data-hf-id="hf-v5sv" class="topbar-tag" id="f07-topbar-tag">NORMALIZE → INSPECT → REPORT</div>
+          </header>
+
+          <section data-hf-id="hf-lj6x" class="input-zone" aria-label="Generated files entering normalization">
+            <div data-hf-id="hf-frn8" class="file-stack" id="f07-file-stack">
+              <div data-hf-id="hf-orjd" class="file-card">
+                <span data-hf-id="hf-tork" class="file-glyph">{ }</span><span data-hf-id="hf-gtst" class="file-path">APP / PAGE.TSX</span>
+              </div>
+              <div data-hf-id="hf-5jkt" class="file-card">
+                <span data-hf-id="hf-lbbs" class="file-glyph">{ }</span><span data-hf-id="hf-tr02" class="file-path">COMPONENTS / UI</span>
+              </div>
+              <div data-hf-id="hf-6qhw" class="file-card">
+                <span data-hf-id="hf-k4ep" class="file-glyph">{ }</span><span data-hf-id="hf-zs4i" class="file-path">LIB / DATA.TS</span>
+              </div>
+              <div data-hf-id="hf-6c6v" class="file-card">
+                <span data-hf-id="hf-kipq" class="file-glyph">{ }</span><span data-hf-id="hf-xm6x" class="file-path">STYLES / GLOBAL</span>
+              </div>
+            </div>
+
+            <div data-hf-id="hf-ixsy" class="normalize-rail">
+              <div data-hf-id="hf-niks" class="scanline" id="f07-scanline"></div>
+              <div data-hf-id="hf-7zfh" class="scan-label">NORMALIZE</div>
+            </div>
+
+            <div data-hf-id="hf-zny0" class="blocked-rail" id="f07-blocked-rail">
+              <div data-hf-id="hf-t50w" class="blocked-title">PROTECTED / BLOCKED RAIL</div>
+              <div data-hf-id="hf-w8qg" class="blocked-item">
+                <span data-hf-id="hf-f71k" class="blocked-mark">×</span><span data-hf-id="hf-4eji">LOCKED PATH</span><span data-hf-id="hf-enwa">PEELED</span>
+              </div>
+              <div data-hf-id="hf-b30w" class="blocked-item">
+                <span data-hf-id="hf-6s0w" class="blocked-mark">×</span><span data-hf-id="hf-kfyx">ROOT CONFIG</span><span data-hf-id="hf-ldsu">PEELED</span>
+              </div>
+            </div>
+          </section>
+
+          <section data-hf-id="hf-rubm" class="ledger" aria-label="Generated code diagnostic ledger">
+            <div data-hf-id="hf-5at2" class="ledger-row" id="f07-row-1">
+              <span data-hf-id="hf-mnvb" class="row-index">01</span><span data-hf-id="hf-xesz" class="row-name">PATHS</span><span data-hf-id="hf-p0qy" class="row-delta" id="f07-delta-1">—</span><i data-hf-id="hf-yygb" class="row-sweep"></i>
+            </div>
+            <div data-hf-id="hf-z539" class="ledger-row" id="f07-row-2">
+              <span data-hf-id="hf-m9ka" class="row-index">02</span><span data-hf-id="hf-gypl" class="row-name">IMPORTS</span><span data-hf-id="hf-0oef" class="row-delta" id="f07-delta-2">—</span><i data-hf-id="hf-6t3f" class="row-sweep"></i>
+            </div>
+            <div data-hf-id="hf-ydfg" class="ledger-row" id="f07-row-3">
+              <span data-hf-id="hf-lv99" class="row-index">03</span><span data-hf-id="hf-cqlg" class="row-name">EXPORTS</span><span data-hf-id="hf-ppi4" class="row-delta" id="f07-delta-3">—</span><i data-hf-id="hf-6ese" class="row-sweep"></i>
+            </div>
+            <div data-hf-id="hf-luwz" class="ledger-row" id="f07-row-4">
+              <span data-hf-id="hf-oneg" class="row-index">04</span><span data-hf-id="hf-0tb7" class="row-name">ACCESSIBILITY</span><span data-hf-id="hf-jqox" class="row-delta" id="f07-delta-4">—</span><i data-hf-id="hf-60hd" class="row-sweep"></i>
+            </div>
+            <div data-hf-id="hf-hwsy" class="ledger-row" id="f07-row-5">
+              <span data-hf-id="hf-o93f" class="row-index">05</span><span data-hf-id="hf-5gpo" class="row-name">API METADATA</span><span data-hf-id="hf-w6fy" class="row-delta" id="f07-delta-5">—</span><i data-hf-id="hf-5m6c" class="row-sweep"></i>
+            </div>
+            <div data-hf-id="hf-dyox" class="ledger-row" id="f07-row-6">
+              <span data-hf-id="hf-nuse" class="row-index">06</span><span data-hf-id="hf-ngr1" class="row-name">COMPLETENESS</span><span data-hf-id="hf-edcr" class="row-delta" id="f07-delta-6">—</span><i data-hf-id="hf-57vb" class="row-sweep"></i>
+            </div>
+          </section>
+
+          <div data-hf-id="hf-rxy6" class="metrics" id="f07-metrics">
+            <div data-hf-id="hf-dq4c" class="metric">
+              <span data-hf-id="hf-6iw2" class="metric-label">GENERATED FILES</span><span data-hf-id="hf-l974" class="metric-value" id="f07-files-count">00</span>
+            </div>
+            <div data-hf-id="hf-q6lw" class="metric">
+              <span data-hf-id="hf-x2i2" class="metric-label">RESOLVED IMPORTS</span><span data-hf-id="hf-evdr" class="metric-value" id="f07-imports-count">00</span>
+            </div>
+            <div data-hf-id="hf-gl9d" class="report-tag">REPORT / READY</div>
+          </div>
+
+          <svg data-hf-id="hf-4oea" class="report-bracket" viewBox="0 0 1317 592" aria-hidden="true">
+            <path data-hf-id="hf-1xrr" id="f07-bracket" class="bracket-path" d="M26 2 H2 V590 H26 M1291 2 H1315 V590 H1291" />
+            <path data-hf-id="hf-ujdq" id="f07-connector-1" class="connector-path" d="M22 58 H92" />
+            <path data-hf-id="hf-5k43" id="f07-connector-2" class="connector-path" d="M22 137 H92" />
+            <path data-hf-id="hf-spt6" id="f07-connector-3" class="connector-path" d="M22 216 H92" />
+            <path data-hf-id="hf-qctk" id="f07-connector-4" class="connector-path" d="M22 295 H92" />
+            <path data-hf-id="hf-6qaz" id="f07-connector-5" class="connector-path" d="M22 374 H92" />
+            <path data-hf-id="hf-6wgq" id="f07-connector-6" class="connector-path" d="M22 453 H92" />
+          </svg>
+
+          <div data-hf-id="hf-9kok" class="qr" aria-hidden="true">
+            <i data-hf-id="hf-l5u7" class="on"></i><i data-hf-id="hf-j2zz" class="on"></i><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-iooy" class="on"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-iadx" class="on"></i>
+            <i data-hf-id="hf-l2j4" class="on"></i><i data-hf-id="hf-y7e5"></i><i data-hf-id="hf-ko83" class="on"></i><i data-hf-id="hf-ylp6"></i><i data-hf-id="hf-k9x2" class="on"></i><i data-hf-id="hf-jvm1" class="on"></i>
+            <i data-hf-id="hf-0l8b"></i><i data-hf-id="hf-gaus" class="on"></i><i data-hf-id="hf-fwjr" class="on"></i><i data-hf-id="hf-0zjc"></i><i data-hf-id="hf-zsm9"></i><i data-hf-id="hf-mi31" class="on"></i>
+            <i data-hf-id="hf-mwe2" class="on"></i><i data-hf-id="hf-06xa"></i><i data-hf-id="hf-26gf"></i><i data-hf-id="hf-nap3" class="on"></i><i data-hf-id="hf-np04" class="on"></i><i data-hf-id="hf-2krg"></i>
+            <i data-hf-id="hf-oz7w"></i><i data-hf-id="hf-o3b5" class="on"></i><i data-hf-id="hf-okwv"></i><i data-hf-id="hf-ohm6" class="on"></i><i data-hf-id="hf-o6lu"></i><i data-hf-id="hf-ovx7" class="on"></i>
+            <i data-hf-id="hf-pa88" class="on"></i><i data-hf-id="hf-poj9" class="on"></i><i data-hf-id="hf-jqbp"></i><i data-hf-id="hf-qkg0"></i><i data-hf-id="hf-q2ua" class="on"></i><i data-hf-id="hf-h2d2" class="on"></i>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const topbarTitle = document.getElementById("f07-topbar-title");
+        const topbarTag = document.getElementById("f07-topbar-tag");
+        const deltas = Array.from({ length: 6 }, (_, index) =>
+          document.getElementById(`f07-delta-${index + 1}`),
+        );
+
+        tl.fromTo(
+          ".topbar",
+          { opacity: 0, y: -22 },
+          { opacity: 1, y: 0, duration: 0.46, ease: "power3.out" },
+          0.04,
+        );
+        tl.fromTo(
+          "#f07-file-stack",
+          { opacity: 0, x: -140 },
+          { opacity: 1, x: 0, duration: 0.7, ease: "power3.out" },
+          0.12,
+        );
+        tl.fromTo(
+          ".file-card",
+          { opacity: 0, x: -28, scale: 0.96 },
+          { opacity: 1, x: 0, scale: 1, duration: 0.42, ease: "power2.out", stagger: 0.065 },
+          0.22,
+        );
+        tl.fromTo(
+          "#f07-scanline",
+          { x: 0, opacity: 0.2 },
+          { x: 62, opacity: 0.82, duration: 1.18, ease: "power1.inOut" },
+          0.34,
+        );
+        tl.fromTo(
+          "#f07-blocked-rail",
+          { opacity: 0, x: 46 },
+          { opacity: 0.68, x: 0, duration: 0.55, ease: "power3.out" },
+          1.02,
+        );
+
+        const rowStarts = [1.82, 2.58, 3.34, 4.1, 4.86, 5.62];
+        rowStarts.forEach((start, index) => {
+          const row = document.getElementById(`f07-row-${index + 1}`);
+          const sweep = row.querySelector(".row-sweep");
+          tl.fromTo(
+            row,
+            { opacity: 0, x: 54, scale: 0.985 },
+            { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: "power3.out" },
+            start,
+          );
+          tl.fromTo(
+            sweep,
+            { opacity: 0.32, x: 0 },
+            { opacity: 0, x: 1140, duration: 0.64, ease: "power2.out" },
+            start + 0.04,
+          );
+        });
+
+        const discreteState = { t: 0 };
+        const deltaTimes = [2.24, 3.0, 3.76, 4.52, 5.28, 6.04];
+        tl.to(
+          discreteState,
+          {
+            t: 10.371,
+            duration: 10.371,
+            ease: "none",
+            onUpdate: () => {
+              deltas.forEach((delta, index) => {
+                delta.textContent = discreteState.t >= deltaTimes[index] ? "PASS / +" : "—";
+              });
+              if (discreteState.t >= 8) {
+                topbarTitle.textContent = "QUALITY: VISIBLE";
+                topbarTag.textContent = "DENSE REPORT / INSPECTABLE";
+              } else {
+                topbarTitle.textContent = "DIAGNOSTIC / LEDGER";
+                topbarTag.textContent = "NORMALIZE → INSPECT → REPORT";
+              }
+            },
+          },
+          0,
+        );
+
+        tl.fromTo(
+          ".connector-path",
+          { strokeDasharray: 72, strokeDashoffset: 72, opacity: 0 },
+          { strokeDashoffset: 0, opacity: 0.42, duration: 0.52, ease: "power2.out", stagger: 0.075 },
+          6.62,
+        );
+        tl.fromTo(
+          "#f07-bracket",
+          { strokeDasharray: 2400, strokeDashoffset: 2400, opacity: 0.18 },
+          { strokeDashoffset: 0, opacity: 1, duration: 1.05, ease: "power2.inOut" },
+          6.74,
+        );
+        tl.fromTo(
+          "#f07-metrics",
+          { opacity: 0, y: 28 },
+          { opacity: 1, y: 0, duration: 0.46, ease: "power3.out" },
+          6.8,
+        );
+
+        const filesCounter = document.getElementById("f07-files-count");
+        const importsCounter = document.getElementById("f07-imports-count");
+        const countState = { files: 0, imports: 0 };
+        tl.to(
+          countState,
+          {
+            files: 6,
+            imports: 6,
+            duration: 1.12,
+            ease: "power3.out",
+            onUpdate: () => {
+              filesCounter.textContent = String(Math.round(countState.files)).padStart(2, "0");
+              importsCounter.textContent = String(Math.round(countState.imports)).padStart(2, "0");
+            },
+          },
+          6.76,
+        );
+        tl.fromTo(
+          [filesCounter, importsCounter],
+          { scale: 0.74, opacity: 0.35 },
+          { scale: 1, opacity: 1, duration: 1.12, ease: "power3.out" },
+          6.76,
+        );
+
+        tl.fromTo(
+          ".qr",
+          { opacity: 0, scale: 0.72 },
+          { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" },
+          7.56,
+        );
+        tl.to(
+          ".topbar-title",
+          { scale: 1.2, filter: "blur(10px)", duration: 0.2, ease: "power3.in" },
+          7.8,
+        );
+        tl.to(
+          ".topbar-title",
+          { opacity: 0.15, duration: 0.2, ease: "none" },
+          7.8,
+        );
+        tl.to(
+          ".topbar-tag",
+          { opacity: 0.15, duration: 0.2, ease: "none" },
+          7.8,
+        );
+        tl.fromTo(
+          ".topbar-title",
+          { scale: 0.75, filter: "blur(10px)", opacity: 0.15 },
+          { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.5, ease: "expo.out" },
+          8,
+        );
+        tl.fromTo(
+          ".topbar-tag",
+          { opacity: 0.15 },
+          { opacity: 1, duration: 0.42, ease: "expo.out" },
+          8,
+        );
+
+        window.__timelines["07-quality-visible"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

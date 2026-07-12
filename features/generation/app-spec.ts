@@ -11,6 +11,22 @@ export const appSpecStatusSchema = z.enum([
 
 export type AppSpecStatus = z.infer<typeof appSpecStatusSchema>;
 
+export const deliveryContractSchema = z.enum([
+  "browser_frontend",
+  "frontend_with_backend_blueprint",
+  "connected_full_stack",
+]);
+
+export type DeliveryContract = z.infer<typeof deliveryContractSchema>;
+
+export function getDeliveryContractLabel(contract: DeliveryContract) {
+  if (contract === "frontend_with_backend_blueprint") {
+    return "Frontend + portable backend blueprint";
+  }
+  if (contract === "connected_full_stack") return "Connected full-stack app";
+  return "React frontend";
+}
+
 export const unresolvedDecisionSchema = z.object({
   id: z.string().min(1),
   topic: z.string().min(1),
@@ -38,9 +54,16 @@ export const dataEntitySchema = z.object({
 export type DataEntity = z.infer<typeof dataEntitySchema>;
 
 export const integrationSchema = z.object({
+  providerId: z.string().min(1).optional(),
   name: z.string().min(1),
   purpose: z.string().min(1),
   required: z.boolean().default(false),
+  docsUrl: z.string().url().optional(),
+  baseUrl: z.string().url().optional(),
+  auth: z.enum(["none", "publishable_key", "secret", "oauth"]).default("none"),
+  requiredSecrets: z.array(z.string()).default([]),
+  corsCompatible: z.boolean().optional(),
+  runtime: z.enum(["browser", "server"]).default("browser"),
 });
 
 export type Integration = z.infer<typeof integrationSchema>;
@@ -48,6 +71,7 @@ export type Integration = z.infer<typeof integrationSchema>;
 export const appSpecSchema = z.object({
   version: z.number().int().default(1),
   status: appSpecStatusSchema.default("interviewing"),
+  deliveryContract: deliveryContractSchema.default("browser_frontend"),
 
   overview: z
     .object({
@@ -170,6 +194,9 @@ export function serializeSpecForPrompt(
   const parts: string[] = [];
 
   parts.push(`[Workflow status: ${spec.status}]`);
+  parts.push(
+    `Delivery contract: ${getDeliveryContractLabel(spec.deliveryContract)}`,
+  );
 
   if (spec.overview.name) parts.push(`App: ${spec.overview.name}`);
   if (spec.overview.purpose) parts.push(`Purpose: ${spec.overview.purpose}`);
@@ -221,7 +248,10 @@ export function serializeSpecForPrompt(
   if (spec.integrations.length) {
     parts.push(
       `Integrations: ${spec.integrations
-        .map((i) => `${i.name}${i.required ? " (required)" : ""}: ${i.purpose}`)
+        .map(
+          (i) =>
+            `${i.name}${i.providerId ? ` [${i.providerId}]` : ""}${i.required ? " (required)" : ""}: ${i.purpose}; auth=${i.auth}; runtime=${i.runtime}; CORS=${i.corsCompatible ?? "unverified"}${i.docsUrl ? `; docs=${i.docsUrl}` : ""}${i.baseUrl ? `; base=${i.baseUrl}` : ""}${i.requiredSecrets.length ? `; secrets=${i.requiredSecrets.join(",")}` : ""}`,
+        )
         .join("; ")}`,
     );
   }
@@ -277,6 +307,16 @@ export function serializeSpecForPrompt(
 
   if (spec.confidence !== undefined) {
     parts.push(`Confidence: ${spec.confidence}%`);
+  }
+
+  if (spec.deliveryContract === "frontend_with_backend_blueprint") {
+    parts.push(
+      "Runtime boundary: implement a functional browser frontend and export portable backend requirements as a blueprint. Do not simulate managed auth, persistence, server functions, or deployment as if Squid provisioned them.",
+    );
+  } else if (spec.deliveryContract === "browser_frontend") {
+    parts.push(
+      "Runtime boundary: deliver a browser-based React frontend. Do not promise managed auth, persistence, server functions, or deployment.",
+    );
   }
 
   return parts.join("\n");

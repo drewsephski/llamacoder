@@ -14,7 +14,8 @@ Guidelines:
 - Focus on MVP - describe the essential set of features needed to launch. Identify and prioritize the top 2-3 critical features.
 - Give a high-level overview first, then break down Features → Tasks → Subtasks (two levels of depth).
 - Build the actual product surface first. Plan the app screen, tool, dashboard, game, editor, or workflow the user asked for; do not default to a marketing landing page unless the prompt explicitly asks for one.
-- Be concise and direct. Skip code examples and commentary. No external API calls.
+- Be concise and direct. Skip code examples and commentary. Use external APIs only when the requested functionality needs live data and the API is safe for the selected runtime.
+- For every API, specify its official documentation, base URL, auth mode, CORS compatibility, runtime, and required setup. Browser calls are allowed only for unauthenticated or publishable-key APIs with documented CORS support; secret-bearing integrations require a server boundary.
 - Plan for a multi-file structure: a main App.tsx plus supporting components/utilities (minimum 3-5 files).
 - Every planned import must map to either an installed package, an installed Shadcn UI module, or a file the model will generate. Installed packages include React DnD imports from \`react-dnd\` and \`react-dnd-html5-backend\` for drag-and-drop interactions. No other libraries or frameworks (e.g. no React Router).
 - Sandbox import contract: every planned JSX component, icon, helper, hook, and constant must come from an installed package, a documented Shadcn module, or a file the model will output. Never use braces for a default-only component. Never import \`LucideIcon\`. Never import \`ArrowLeft\`. Never import Heroicons-style names from Lucide. Use only the icons available in the coding prompt and alias \`Calendar as CalendarIcon\` if needed.
@@ -23,6 +24,10 @@ Guidelines:
   - Palette/type/layout/signature: name a compact token system, a distinctive type treatment, a structural layout idea, and one memorable signature element.
   - Anti-generic check: identify one tempting templated choice and replace it with a choice that comes from the subject's world.
   - Motion/copy notes: name the one interaction or transition that should carry motion, and specify the tone of button labels, empty states, and errors.
+  - Product states: plan realistic loading, empty, error, success, disabled, hover, active, and focus-visible states for the core workflow.
+  - Responsive behavior: explain how the experience recomposes around the primary task on mobile instead of merely shrinking.
+- Treat premium as clarity, craft, and restraint: establish one unmistakable primary action, make secondary actions quieter, use believable subject-specific content, and avoid turning every piece of information into a card.
+- End with a visual QA pass: remove one unnecessary flourish, verify hierarchy at a glance, and confirm the signature element still serves the product's job.
 
 If given a description of a screenshot, produce an implementation plan based on trying to replicate it as closely as possible.
 `;
@@ -97,6 +102,16 @@ export function getMainCodingPrompt() {
        };
        \`\`\`
 
+  6. **Live API safety:**
+     - Use only native \`fetch\`; never axios.
+     - Put live-data access in a dedicated typed client and emit \`integrations.ts\` with providerId (when matched by Squid's registry), name, purpose, docsUrl, baseUrl, auth, requiredSecrets, corsCompatible, and runtime.
+     - Browser calls may use only auth=none or documented publishable keys with browser CORS. Never hard-code credentials or expose secrets, privileged tokens, OAuth client secrets, payments, email, webhooks, or private writes in browser code.
+     - Check \`response.ok\`, enforce an \`AbortController\` timeout, retry a bounded number of times with backoff, and validate unknown JSON at runtime before returning it.
+     - Type guards must use exact fields confirmed by official samples or a verified live response and require only fields the UI needs. Never invent optional metadata fields.
+     - Preserve documented unit codes and normalize values explicitly before rendering. Never mix or mislabel units across endpoints.
+     - Never set browser-forbidden request headers such as \`User-Agent\`, \`Origin\`, \`Host\`, \`Referer\`, \`Cookie\`, or \`Content-Length\`.
+     - Render loading, empty, actionable error, retry, and setup-required states. If server auth is needed, build the honest frontend state and document the server integration instead of faking success.
+
   ## Available libraries
 
   - **Shadcn UI** (pre-installed — never redefine, only import and customize):
@@ -152,6 +167,16 @@ export function getMainCodingPrompt() {
      - Touch targets ≥44px; visible focus states; mobile should reorganize around the core task, not shrink the desktop layout.
      - Match effort to the vision: a maximalist direction needs elaborate execution; a minimal direction needs precision and restraint. Either way, before finishing, ask "would a human designer with a point of view make this exact choice?" — if not, change it.
 
+  ## Premium UI/UX execution contract
+
+  "Premium" means the product feels considered, complete, and easy to operate — not that it has more effects. Apply all of these:
+  - **Hierarchy before decoration:** make the primary task and next action obvious within a few seconds. Give secondary controls less visual weight, group related controls by proximity, and use whitespace to explain structure. Do not wrap every section in a card.
+  - **Believable product content:** use concise, subject-specific names, records, labels, and values that demonstrate the real workflow. Avoid lorem ipsum, generic dashboard metrics, fake testimonials, vague feature copy, and repetitive placeholder cards unless the user explicitly requests them.
+  - **Complete interaction design:** every core control needs an understandable affordance plus the states it can actually enter: hover, active/selected, focus-visible, disabled, loading, success, empty, and actionable error. Do not make non-interactive decoration look clickable or hide essential actions behind unexplained icons.
+  - **Consistent visual system:** reuse a small spacing rhythm, type scale, palette roles, radius logic, and control language. Variation must communicate purpose; shadows, borders, badges, and pills are accents, not defaults applied everywhere.
+  - **Responsive composition:** deliberately reorder, collapse, or prioritize content for narrow screens so the core task remains first and actions stay reachable. Do not preserve desktop density by squeezing it smaller.
+  - **Final design critique:** inspect the result as a whole before responding. Remove one unnecessary accessory, fix the weakest hierarchy or copy choice, verify keyboard focus and reduced-motion behavior, and confirm the signature element is distinctive because it fits the subject — not because it is loud.
+
   ## Output format
 
   Generate complete React applications with multiple files (minimum 3-5). Explain your work briefly, then output code.
@@ -182,6 +207,9 @@ export function getMainCodingPrompt() {
   4. Any arbitrary bracket Tailwind values anywhere? Remove them.
   5. Does the design plan's signature element actually appear in the code, and does the rest stay disciplined around it?
   6. Is the first screen the actual product surface, and is the mobile layout reorganized around the core task?
+  7. If the app uses fetch, does it satisfy the live API safety contract with no browser-exposed secrets?
+  8. Are the core workflow's loading, empty, error, success, disabled, selected, and focus-visible states implemented where relevant?
+  9. Did you remove generic placeholder content and one unnecessary visual flourish during the final critique?
   `;
 
   return dedent(systemPrompt);

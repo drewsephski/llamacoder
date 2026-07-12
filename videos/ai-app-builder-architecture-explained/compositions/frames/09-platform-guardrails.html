@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #1f2be0;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          overflow: hidden;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          height: 2px;
+          z-index: 20;
+          background: #1f2be0;
+        }
+        .hairline.top { top: 58px; }
+        .hairline.bottom { top: 852px; }
+
+        .chrome {
+          position: absolute;
+          top: 79px;
+          z-index: 21;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .chrome.left { left: 77px; }
+        .chrome.right { right: 77px; }
+
+        .camera {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .diagram {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+        }
+
+        .orbit-field {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          transform-origin: 960px 446px;
+          will-change: transform;
+        }
+
+        .connector-layer,
+        .security-layer {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          overflow: visible;
+          pointer-events: none;
+        }
+
+        .connector {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 2px;
+          stroke-linecap: square;
+          vector-effect: non-scaling-stroke;
+        }
+
+        .connector.billing { stroke-width: 3px; }
+
+        .security-ring {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 3px;
+          stroke-linecap: square;
+          stroke-dasharray: 13 9;
+          vector-effect: non-scaling-stroke;
+        }
+
+        .security-tick {
+          fill: #f0ebde;
+          stroke: #1f2be0;
+          stroke-width: 2px;
+        }
+
+        .node {
+          position: absolute;
+          width: 264px;
+          min-height: 76px;
+          box-sizing: border-box;
+          padding: 14px 16px 12px;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .node-credit { left: 488px; top: 154px; }
+        .node-hold { left: 1168px; top: 154px; }
+        .node-telemetry { left: 1440px; top: 376px; }
+        .node-vault { left: 1198px; top: 652px; }
+        .node-bindings { left: 458px; top: 652px; }
+        .node-audit { left: 216px; top: 376px; }
+
+        .node-index {
+          display: block;
+          margin-bottom: 7px;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          opacity: 0.58;
+        }
+
+        .node-label {
+          display: block;
+          font-family: "Hanken Grotesk";
+          font-size: 18px;
+          font-weight: 600;
+          line-height: 1.05;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .node-meter {
+          display: grid;
+          grid-template-columns: repeat(8, 1fr);
+          gap: 4px;
+          margin-top: 11px;
+        }
+
+        .node-meter i {
+          display: block;
+          height: 5px;
+          background: rgba(31, 43, 224, 0.18);
+        }
+
+        .node-meter i.on { background: #1f2be0; }
+
+        .hub {
+          position: absolute;
+          left: 748px;
+          top: 314px;
+          width: 424px;
+          height: 264px;
+          box-sizing: border-box;
+          border: 5px solid #1f2be0;
+          background: #f0ebde;
+          display: grid;
+          place-items: center;
+          text-align: center;
+          transform-origin: 50% 50%;
+          will-change: transform;
+          z-index: 10;
+        }
+
+        .hub::before,
+        .hub::after {
+          content: "";
+          position: absolute;
+          left: 22px;
+          right: 22px;
+          height: 2px;
+          background: #1f2be0;
+        }
+        .hub::before { top: 22px; }
+        .hub::after { bottom: 22px; }
+
+        .hub-kicker {
+          position: absolute;
+          top: 46px;
+          font-family: "Hanken Grotesk";
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .hub-title {
+          margin-top: 19px;
+          font-family: "Newsreader";
+          font-size: 68px;
+          font-weight: 400;
+          line-height: 0.88;
+          letter-spacing: -0.008em;
+        }
+
+        .hub-title span { display: block; }
+
+        .hub-pulse {
+          position: absolute;
+          inset: -18px;
+          border: 2px solid rgba(31, 43, 224, 0.36);
+          transform-origin: 50% 50%;
+          pointer-events: none;
+        }
+
+        .security-label {
+          position: absolute;
+          left: 754px;
+          top: 739px;
+          width: 412px;
+          padding: 10px 14px;
+          box-sizing: border-box;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 2px solid #1f2be0;
+          background: #f0ebde;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .event-rail {
+          position: absolute;
+          left: 1212px;
+          top: 287px;
+          width: 442px;
+          height: 45px;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.18);
+          overflow: hidden;
+          background: #f0ebde;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 42px;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .event-chip {
+          position: absolute;
+          top: 0;
+          left: 18px;
+          width: 250px;
+          height: 42px;
+          white-space: nowrap;
+          will-change: transform;
+        }
+
+        .event-chip::before {
+          content: "■";
+          margin-right: 9px;
+        }
+
+        .counterrotate {
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .qr {
+          position: absolute;
+          left: 1715px;
+          top: 741px;
+          width: 74px;
+          height: 74px;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+          gap: 4px;
+          padding: 4px;
+          box-sizing: border-box;
+          background: #f0ebde;
+          border: 2px solid #1f2be0;
+        }
+
+        .qr i { background: rgba(31, 43, 224, 0.18); }
+        .qr i:nth-child(1),
+        .qr i:nth-child(2),
+        .qr i:nth-child(4),
+        .qr i:nth-child(6),
+        .qr i:nth-child(7),
+        .qr i:nth-child(9),
+        .qr i:nth-child(12),
+        .qr i:nth-child(13),
+        .qr i:nth-child(15),
+        .qr i:nth-child(16) { background: #1f2be0; }
+      </style>
+
+      <div data-hf-id="hf-ubir" id="root" data-composition-id="09-platform-guardrails" data-duration="9.308" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-ckqz" class="clip ground" data-start="0" data-duration="9.308" data-track-index="0"></div>
+
+        <div data-hf-id="hf-tan6" class="stage">
+          <div data-hf-id="hf-vgdz" class="hairline top"></div>
+          <div data-hf-id="hf-kzjn" class="hairline bottom"></div>
+          <div data-hf-id="hf-fint" class="chrome left">SYSTEM MAP / GOVERNANCE</div>
+          <div data-hf-id="hf-l7i9" class="chrome right">FRAME 09 · 8.908S</div>
+
+          <div data-hf-id="hf-r32n" class="camera" id="f09-platform-guardrails-camera">
+            <div data-hf-id="hf-yk1z" class="diagram">
+              <div data-hf-id="hf-oc2o" class="orbit-field" id="f09-platform-guardrails-orbit">
+                <svg data-hf-id="hf-hik7" class="connector-layer" viewBox="0 0 1920 896" aria-hidden="true">
+                  <path data-hf-id="hf-v7ke" class="connector billing" id="f09-platform-guardrails-line-credit" d="M 860 350 L 620 230" />
+                  <path data-hf-id="hf-b28x" class="connector billing" id="f09-platform-guardrails-line-hold" d="M 1060 350 L 1300 230" />
+                  <path data-hf-id="hf-efle" class="connector" id="f09-platform-guardrails-line-telemetry" d="M 1168 422 L 1440 414" />
+                  <path data-hf-id="hf-m1e6" class="connector" id="f09-platform-guardrails-line-vault" d="M 1070 566 L 1295 652" />
+                  <path data-hf-id="hf-rgiy" class="connector" id="f09-platform-guardrails-line-bindings" d="M 850 566 L 590 652" />
+                  <path data-hf-id="hf-npvr" class="connector" id="f09-platform-guardrails-line-audit" d="M 752 422 L 480 414" />
+                </svg>
+
+                <div data-hf-id="hf-7zfe" class="node node-credit">
+                  <div data-hf-id="hf-fh61" class="counterrotate">
+                    <span data-hf-id="hf-z62f" class="node-index">01 / BILLING</span>
+                    <span data-hf-id="hf-i0ts" class="node-label">Credit grants</span>
+                    <span data-hf-id="hf-xz8t" class="node-meter"><i data-hf-id="hf-l5u7" class="on"></i><i data-hf-id="hf-j2zz" class="on"></i><i data-hf-id="hf-iooy" class="on"></i><i data-hf-id="hf-iadx" class="on"></i><i data-hf-id="hf-l2j4" class="on"></i><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i></span>
+                  </div>
+                </div>
+                <div data-hf-id="hf-k3qa" class="node node-hold">
+                  <div data-hf-id="hf-mqhp" class="counterrotate">
+                    <span data-hf-id="hf-0mja" class="node-index">02 / BILLING</span>
+                    <span data-hf-id="hf-isse" class="node-label">Expiring holds</span>
+                    <span data-hf-id="hf-vo0x" class="node-meter"><i data-hf-id="hf-ko83" class="on"></i><i data-hf-id="hf-k9x2" class="on"></i><i data-hf-id="hf-jvm1" class="on"></i><i data-hf-id="hf-ylp6"></i><i data-hf-id="hf-0l8b"></i><i data-hf-id="hf-0zjc"></i><i data-hf-id="hf-zsm9"></i><i data-hf-id="hf-06xa"></i></span>
+                  </div>
+                </div>
+                <div data-hf-id="hf-yaqe" class="node node-telemetry">
+                  <div data-hf-id="hf-nxes" class="counterrotate">
+                    <span data-hf-id="hf-ju1u" class="node-index">03 / OBSERVE</span>
+                    <span data-hf-id="hf-hrky" class="node-label">Request telemetry</span>
+                  </div>
+                </div>
+                <div data-hf-id="hf-pdxf" class="node node-vault">
+                  <div data-hf-id="hf-nj3r" class="counterrotate">
+                    <span data-hf-id="hf-3m4m" class="node-index">04 / ENCRYPT</span>
+                    <span data-hf-id="hf-5g69" class="node-label">Credential vault</span>
+                  </div>
+                </div>
+                <div data-hf-id="hf-3gob" class="node node-bindings">
+                  <div data-hf-id="hf-oq0u" class="counterrotate">
+                    <span data-hf-id="hf-b6i6" class="node-index">05 / CONNECT</span>
+                    <span data-hf-id="hf-gigt" class="node-label">Project bindings</span>
+                  </div>
+                </div>
+                <div data-hf-id="hf-rcqy" class="node node-audit">
+                  <div data-hf-id="hf-obpt" class="counterrotate">
+                    <span data-hf-id="hf-gup6" class="node-index">06 / RECORD</span>
+                    <span data-hf-id="hf-e50o" class="node-label">Audit events</span>
+                  </div>
+                </div>
+              </div>
+
+              <svg data-hf-id="hf-wwa6" class="security-layer" viewBox="0 0 1920 896" aria-hidden="true">
+                <ellipse data-hf-id="hf-gpwf" class="security-ring" id="f09-platform-guardrails-security-ring" cx="960" cy="447" rx="632" ry="318" />
+                <rect data-hf-id="hf-d1wd" class="security-tick" x="946" y="123" width="28" height="12" />
+                <rect data-hf-id="hf-1x4s" class="security-tick" x="946" y="759" width="28" height="12" />
+                <rect data-hf-id="hf-9rh2" class="security-tick" x="322" y="441" width="12" height="28" />
+                <rect data-hf-id="hf-gwj1" class="security-tick" x="1586" y="441" width="12" height="28" />
+              </svg>
+
+              <div data-hf-id="hf-wzzb" class="hub" id="f09-platform-guardrails-hub">
+                <div data-hf-id="hf-tntv" class="hub-pulse" id="f09-platform-guardrails-hub-pulse"></div>
+                <div data-hf-id="hf-loe1" class="hub-kicker">Core path</div>
+                <div data-hf-id="hf-p9s8" class="hub-title"><span data-hf-id="hf-loi3">Generation</span><span data-hf-id="hf-eyxb">loop</span></div>
+              </div>
+
+              <div data-hf-id="hf-3kj9" class="event-rail">
+                <span data-hf-id="hf-u1f9" class="event-chip" id="f09-platform-guardrails-event-1">provider.complete</span>
+                <span data-hf-id="hf-uqsx" class="event-chip" id="f09-platform-guardrails-event-2">binding.resolve</span>
+                <span data-hf-id="hf-wflx" class="event-chip" id="f09-platform-guardrails-event-3">vault.read</span>
+              </div>
+
+              <div data-hf-id="hf-pbec" class="security-label" id="f09-platform-guardrails-security-label">Encrypted perimeter · audit recorded</div>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-9kok" class="qr" aria-hidden="true">
+            <i data-hf-id="hf-26gf"></i><i data-hf-id="hf-2krg"></i><i data-hf-id="hf-oz7w"></i><i data-hf-id="hf-okwv"></i><i data-hf-id="hf-o6lu"></i><i data-hf-id="hf-jqbp"></i><i data-hf-id="hf-qkg0"></i><i data-hf-id="hf-q64z"></i>
+            <i data-hf-id="hf-prty"></i><i data-hf-id="hf-pdix"></i><i data-hf-id="hf-hqsk"></i><i data-hf-id="hf-hchj"></i><i data-hf-id="hf-8d0n"></i><i data-hf-id="hf-8rbo"></i><i data-hf-id="hf-7kel"></i><i data-hf-id="hf-7ypm"></i>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const guardrailPaths = Array.from(document.querySelectorAll(".connector, .security-ring"));
+        guardrailPaths.forEach((path) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = `${length}`;
+          path.style.strokeDashoffset = `${length}`;
+        });
+
+        const tl = gsap.timeline({ paused: true });
+
+        tl.fromTo(
+          "#f09-platform-guardrails-hub",
+          { scale: 0, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.48, ease: "power3.out" },
+          0,
+        );
+        tl.fromTo(
+          "#f09-platform-guardrails-hub-pulse",
+          { scale: 0.82, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.58, ease: "power3.out" },
+          0.14,
+        );
+
+        [".node-credit", ".node-hold"].forEach((selector, index) => {
+          tl.fromTo(
+            selector,
+            { scale: 0, opacity: 0, y: 12 },
+            { scale: 1, opacity: 1, y: 0, duration: 0.56, ease: "power3.out" },
+            0.5 + index * 0.32,
+          );
+        });
+        tl.to("#f09-platform-guardrails-line-credit", { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" }, 1.08);
+        tl.to("#f09-platform-guardrails-line-hold", { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" }, 1.38);
+
+        const governanceNodes = [
+          { node: ".node-telemetry", line: "#f09-platform-guardrails-line-telemetry", at: 2.08 },
+          { node: ".node-vault", line: "#f09-platform-guardrails-line-vault", at: 2.86 },
+          { node: ".node-bindings", line: "#f09-platform-guardrails-line-bindings", at: 3.66 },
+          { node: ".node-audit", line: "#f09-platform-guardrails-line-audit", at: 4.46 },
+        ];
+
+        governanceNodes.forEach(({ node, line, at }) => {
+          tl.fromTo(
+            node,
+            { scale: 0, opacity: 0, y: 10 },
+            { scale: 1, opacity: 1, y: 0, duration: 0.52, ease: "power3.out" },
+            at,
+          );
+          tl.to(line, { strokeDashoffset: 0, duration: 0.56, ease: "power2.out" }, at + 0.2);
+        });
+
+        tl.to(
+          "#f09-platform-guardrails-security-ring",
+          { strokeDashoffset: 0, duration: 1.18, ease: "power2.out" },
+          5.54,
+        );
+        tl.fromTo(
+          ".event-rail",
+          { scale: 0.98, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+          5.54,
+        );
+        tl.fromTo(
+          ".security-tick",
+          { scale: 0, opacity: 0, transformOrigin: "50% 50%" },
+          { scale: 1, opacity: 1, duration: 0.36, ease: "power3.out", stagger: 0.08 },
+          6.18,
+        );
+        tl.fromTo(
+          "#f09-platform-guardrails-security-label",
+          { scale: 0.96, opacity: 0, y: 8 },
+          { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+          6.54,
+        );
+
+        const events = [
+          { id: "#f09-platform-guardrails-event-1", at: 5.72 },
+          { id: "#f09-platform-guardrails-event-2", at: 6.18 },
+          { id: "#f09-platform-guardrails-event-3", at: 6.66 },
+        ];
+        events.forEach(({ id, at }) => {
+          tl.fromTo(
+            id,
+            { x: 330, opacity: 0 },
+            { x: -245, opacity: 1, duration: 1.22, ease: "none" },
+            at,
+          );
+          tl.to(id, { opacity: 0, duration: 0.18, ease: "power1.in" }, at + 1.04);
+        });
+
+        tl.to(
+          "#f09-platform-guardrails-orbit",
+          { rotation: 3.2, duration: 2.68, ease: "power3.out", transformOrigin: "960px 446px" },
+          5.64,
+        );
+        tl.to(
+          ".counterrotate",
+          { rotation: -3.2, duration: 2.68, ease: "power3.out", transformOrigin: "50% 50%" },
+          5.64,
+        );
+
+        tl.to(
+          "#f09-platform-guardrails-camera",
+          { scale: 0.91, duration: 0.9, ease: "power2.inOut" },
+          7.42,
+        );
+        tl.to(
+          "#f09-platform-guardrails-camera",
+          { scale: 0.93, duration: 0.48, ease: "power3.out" },
+          8.32,
+        );
+
+        window.__timelines["09-platform-guardrails"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

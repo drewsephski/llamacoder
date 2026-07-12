@@ -1,0 +1,383 @@
+{
+  "typography": [
+    {
+      "role": "heading",
+      "fontFamily": "Instrument Serif",
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "48px",
+      "letterSpacing": "normal",
+      "color": "#0A0A0A",
+      "sampleText": "Research. Plan. Build. Own."
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "DM Sans",
+      "fontSize": "24px",
+      "fontWeight": "600",
+      "lineHeight": "30px",
+      "letterSpacing": "normal",
+      "color": "#0A0A0A",
+      "sampleText": "Start with an idea, screenshot, or website."
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "DM Sans",
+      "fontSize": "20px",
+      "fontWeight": "600",
+      "lineHeight": "28px",
+      "letterSpacing": "-0.5px",
+      "color": "#0A0A0A",
+      "sampleText": "Phoenix Design Lab"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "DM Sans",
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "lineHeight": "28px",
+      "letterSpacing": "-0.45px",
+      "color": "#0A0A0A",
+      "sampleText": "PortfolioOS"
+    },
+    {
+      "role": "display",
+      "fontFamily": "Instrument Serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "-0.4px",
+      "color": "#0A0A0A",
+      "sampleText": "Turn ideasinto apps"
+    },
+    {
+      "role": "body",
+      "fontFamily": "DM Sans",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "#737373",
+      "sampleText": "Research current docs and APIs. Plan the product. Generate R"
+    },
+    {
+      "role": "link",
+      "fontFamily": "DM Sans",
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "lineHeight": "16px",
+      "letterSpacing": "normal",
+      "color": "#0A0A0A",
+      "sampleText": "Sign In"
+    },
+    {
+      "role": "label",
+      "fontFamily": "DM Sans",
+      "fontSize": "11.5px",
+      "fontWeight": "500",
+      "lineHeight": "17.25px",
+      "letterSpacing": "normal",
+      "color": "#0A0A0A",
+      "sampleText": "DeepSeek V4 Flash"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      12,
+      16,
+      20,
+      24,
+      32,
+      48
+    ],
+    "baseUnit": 8
+  },
+  "radius": [
+    "8px",
+    "10px",
+    "12px",
+    "14px",
+    "99px"
+  ],
+  "shadows": [
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 18px 48px -34px",
+      "count": 6
+    },
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 16px 42px -34px",
+      "count": 6
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Pricing",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "0px 16px",
+      "borderRadius": "12px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "height": "32px"
+    },
+    {
+      "label": "Toggle theme",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#2563EB",
+      "padding": "4px",
+      "borderRadius": "9999px",
+      "border": "0px solid rgb(228, 228, 231)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "28px"
+    },
+    {
+      "label": "DeepSeek V4 Flash",
+      "background": "#F5F5F5",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "4px 8px 4px 7px",
+      "borderRadius": "9px",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "27.25px"
+    },
+    {
+      "label": "PlanPlan mode",
+      "background": "#F5F5F5",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#737373",
+      "padding": "7px 9px",
+      "borderRadius": "8px",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "boxShadow": "none",
+      "fontSize": "12.5px",
+      "fontWeight": "500",
+      "height": "34.75px"
+    },
+    {
+      "label": "Build",
+      "background": "#326DF5",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#FFFFFF",
+      "padding": "0px 24px",
+      "borderRadius": "12px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "height": "40px"
+    },
+    {
+      "label": "Kanban Board",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "blur(8px)",
+      "color": "#737373",
+      "padding": "5px 12px",
+      "borderRadius": "99px",
+      "border": "1px solid rgba(229, 229, 229, 0.5)",
+      "boxShadow": "none",
+      "fontSize": "12.5px",
+      "fontWeight": "400",
+      "height": "30.75px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "0px",
+      "borderRadius": "20px",
+      "border": "0px solid rgb(228, 228, 231)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "136px"
+    },
+    {
+      "label": "card",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "blur(20px) saturate(1.8)",
+      "color": "#0A0A0A",
+      "padding": "0px 0px 44px",
+      "borderRadius": "20px",
+      "border": "1px solid rgba(59, 130, 246, 0.45)",
+      "boxShadow": "rgba(59, 130, 246, 0.06) 0px 0px 0px 3px, rgba(0, 0, 0, 0.08) 0px 8px 32px 0px, rgba(59, 130, 246, 0.06) 0px 2px 8px 0px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "136px"
+    },
+    {
+      "label": "card",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "blur(8px)",
+      "color": "#0A0A0A",
+      "padding": "24px",
+      "borderRadius": "24px",
+      "border": "1px solid rgba(229, 229, 229, 0.7)",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 18px 48px -34px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "249px"
+    },
+    {
+      "label": "card",
+      "background": "transparent",
+      "backgroundImage": "radial-gradient(90% 70% at 82% 8%, rgba(59, 130, 246, 0.1), rgba(0, 0, 0, 0) 62%), linear-gradient(rgba(245, 245, 245, 0.35), rgb(255, 255, 255))",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "56px 36px",
+      "borderRadius": "28px",
+      "border": "1px solid rgba(229, 229, 229, 0.6)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "1014.94px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "transparent",
+    "backgroundImage": "",
+    "backdropFilter": "",
+    "color": "#0A0A0A",
+    "padding": "24px 16px",
+    "borderRadius": "0px",
+    "border": "0px solid rgb(228, 228, 231)",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "84px"
+  },
+  "chips": [
+    {
+      "label": "Research, plan, and buil",
+      "background": "#0CA8FF",
+      "color": "#0095FF",
+      "padding": "2px 8px",
+      "borderRadius": "99px",
+      "border": "1px solid rgba(12, 168, 255, 0.2)",
+      "boxShadow": "none",
+      "fontSize": "11.5px",
+      "fontWeight": "500",
+      "height": "23.25px"
+    },
+    {
+      "label": "Kanban Board",
+      "background": "#FFFFFF",
+      "color": "#737373",
+      "padding": "5px 12px",
+      "borderRadius": "99px",
+      "border": "1px solid rgba(229, 229, 229, 0.5)",
+      "boxShadow": "none",
+      "fontSize": "12.5px",
+      "fontWeight": "400",
+      "height": "30.75px"
+    },
+    {
+      "label": "BUILT WITH SQUID",
+      "background": "#FFFFFF",
+      "color": "#737373",
+      "padding": "4px 10px 4px 8px",
+      "borderRadius": "99px",
+      "border": "1px solid rgba(229, 229, 229, 0.6)",
+      "boxShadow": "none",
+      "fontSize": "10.5px",
+      "fontWeight": "500",
+      "height": "25.75px"
+    },
+    {
+      "label": "Guest",
+      "background": "#0CA8FF",
+      "color": "#0095FF",
+      "padding": "2px 8px",
+      "borderRadius": "9999px",
+      "border": "1px solid rgba(12, 168, 255, 0.2)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "height": "21px"
+    }
+  ],
+  "statCells": [],
+  "tabs": [],
+  "backgrounds": [
+    {
+      "value": "radial-gradient(44% 32% at 74% 28%, rgba(59, 130, 246, 0.13), rgba(59, 130, 246, 0.055) 34%, rgba(0, 0, 0, 0) 66%), radial-gradient(38% 28% at 58% 18%, rgba(99, 102, 241, 0.07), rgba(0, 0, 0, 0) 64%), radial-gradient(46% 36% at 22% 42%, rgba(14, 165, 233, 0.043), rgba(0, 0, 0, 0) 68%)",
+      "area": 1169208
+    },
+    {
+      "value": "radial-gradient(90% 70% at 82% 8%, rgba(59, 130, 246, 0.1), rgba(0, 0, 0, 0) 62%), linear-gradient(rgba(245, 245, 245, 0.35), rgb(255, 255, 255))",
+      "area": 1169208
+    },
+    {
+      "value": "linear-gradient(rgba(229, 229, 229, 0.35) 1px, rgba(0, 0, 0, 0) 1px), linear-gradient(90deg, rgba(229, 229, 229, 0.35) 1px, rgba(0, 0, 0, 0) 1px)",
+      "area": 1169208
+    },
+    {
+      "value": "linear-gradient(135deg, rgba(0, 0, 0, 0) 0%, rgba(59, 130, 246, 0.15) 50%, rgba(0, 0, 0, 0) 100%)",
+      "area": 91392
+    },
+    {
+      "value": "linear-gradient(45deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0) 100%)",
+      "area": 64730
+    },
+    {
+      "value": "linear-gradient(45deg, rgba(0, 0, 0, 0.34) 0%, rgba(0, 0, 0, 0) 100%)",
+      "area": 35404
+    }
+  ],
+  "glass": [
+    {
+      "backdropFilter": "blur(8px)",
+      "background": "rgba(255, 255, 255, 0.8)",
+      "border": "1px solid rgba(229, 229, 229, 0.7)",
+      "borderRadius": "24px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 18px 48px -34px",
+      "area": 722304
+    },
+    {
+      "backdropFilter": "blur(8px)",
+      "background": "rgba(255, 255, 255, 0.8)",
+      "border": "1px solid rgba(229, 229, 229, 0.7)",
+      "borderRadius": "22px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 16px 42px -34px",
+      "area": 525200
+    },
+    {
+      "backdropFilter": "blur(20px) saturate(1.8)",
+      "background": "rgba(255, 255, 255, 0.85)",
+      "border": "1px solid rgba(59, 130, 246, 0.45)",
+      "borderRadius": "20px",
+      "boxShadow": "rgba(59, 130, 246, 0.06) 0px 0px 0px 3px, rgba(0, 0, 0, 0.08) 0px 8px 32px 0px, rgba(59, 130, 246, 0.06) 0px 2px 8px 0px",
+      "area": 91392
+    }
+  ]
+}

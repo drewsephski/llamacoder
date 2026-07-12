@@ -12,6 +12,12 @@ describe("prompt design guidance", () => {
       "Spend visual boldness in one justified signature element",
     );
     expect(prompt).toContain("mobile should reorganize around the core task");
+    expect(prompt).toContain("Premium UI/UX execution contract");
+    expect(prompt).toContain("Hierarchy before decoration");
+    expect(prompt).toContain("Believable product content");
+    expect(prompt).toContain("Complete interaction design");
+    expect(prompt).toContain("Responsive composition");
+    expect(prompt).toContain("Final design critique");
     expect(prompt).toContain("Sandbox import contract:");
     expect(prompt).toContain("Never use braces for a default-only component");
     expect(prompt).toContain("Lucide React only supports these named exports");
@@ -31,6 +37,12 @@ describe("prompt design guidance", () => {
     expect(softwareArchitectPrompt).toContain("Subject/audience/job");
     expect(softwareArchitectPrompt).toContain("Palette/type/layout/signature");
     expect(softwareArchitectPrompt).toContain("Anti-generic check");
+    expect(softwareArchitectPrompt).toContain("Product states");
+    expect(softwareArchitectPrompt).toContain("Responsive behavior");
+    expect(softwareArchitectPrompt).toContain(
+      "Treat premium as clarity, craft, and restraint",
+    );
+    expect(softwareArchitectPrompt).toContain("visual QA pass");
     expect(softwareArchitectPrompt).toContain(
       "Build the actual product surface first",
     );

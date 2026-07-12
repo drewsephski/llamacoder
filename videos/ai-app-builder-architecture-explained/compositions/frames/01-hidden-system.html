@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>The hidden system</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+        }
+
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-style: normal;
+        }
+
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #1f2be0;
+          container-type: size;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 2cqw 2cqw;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 4cqw;
+          right: 4cqw;
+          height: 2px;
+          background: #1f2be0;
+        }
+
+        .hairline-top {
+          top: 3cqw;
+        }
+
+        .hairline-bottom {
+          top: 43.9cqw;
+        }
+
+        .glitch {
+          position: absolute;
+          top: 5.2cqw;
+          right: 4cqw;
+          width: 16cqw;
+          height: 35cqw;
+          opacity: 0.26;
+        }
+
+        .glitch-step {
+          position: absolute;
+          right: 0;
+          height: 4cqw;
+          background-color: #f0ebde;
+          background-image: repeating-linear-gradient(
+            90deg,
+            #1f2be0 0 2px,
+            transparent 2px 8px
+          );
+        }
+
+        .glitch-step:nth-child(1) { top: 0; width: 11cqw; }
+        .glitch-step:nth-child(2) { top: 4cqw; width: 15cqw; }
+        .glitch-step:nth-child(3) { top: 8cqw; width: 9cqw; }
+        .glitch-step:nth-child(4) { top: 12cqw; width: 16cqw; }
+        .glitch-step:nth-child(5) { top: 16cqw; width: 12cqw; }
+        .glitch-step:nth-child(6) { top: 20cqw; width: 14cqw; }
+        .glitch-step:nth-child(7) { top: 24cqw; width: 8cqw; }
+        .glitch-step:nth-child(8) { top: 28cqw; width: 13cqw; }
+
+        .chrome {
+          position: absolute;
+          left: 4cqw;
+          right: 4cqw;
+          top: 4.05cqw;
+          display: flex;
+          justify-content: space-between;
+          font-family: "DM Mono";
+          font-size: 13px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        .zoom-outer,
+        .zoom-inner {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          will-change: transform;
+        }
+
+        .zoom-outer {
+          transform-origin: 50% 50%;
+        }
+
+        .prompt-box {
+          position: absolute;
+          left: 250px;
+          top: 310px;
+          width: 610px;
+          height: 138px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          padding: 0 42px;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          will-change: transform, opacity;
+        }
+
+        .prompt-kicker {
+          position: absolute;
+          left: 0;
+          top: -37px;
+          font-family: "Hanken Grotesk";
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .prompt-text-wrap {
+          display: inline-flex;
+          align-items: baseline;
+          min-width: 510px;
+          white-space: nowrap;
+          font-family: "DM Mono";
+          font-size: 31px;
+          letter-spacing: 0.05em;
+        }
+
+        .prompt-cursor {
+          display: inline-block;
+          width: 18px;
+          margin-left: 8px;
+        }
+
+        .hero-wrap {
+          position: absolute;
+          left: 128px;
+          top: 185px;
+          width: 1664px;
+          height: 365px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          will-change: transform, opacity, filter;
+          filter: url(#frame01-streak-filter);
+        }
+
+        .hero {
+          font-family: "Newsreader";
+          font-size: 165px;
+          font-weight: 400;
+          line-height: 0.9;
+          letter-spacing: -0.008em;
+          white-space: nowrap;
+        }
+
+        .process-map {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 1920px;
+          height: 860px;
+          overflow: visible;
+        }
+
+        .process-map path {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 3;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+        }
+
+        .stage-labels {
+          position: absolute;
+          left: 170px;
+          top: 728px;
+          width: 1575px;
+          display: grid;
+          grid-template-columns: repeat(10, 1fr);
+          font-family: "DM Mono";
+          font-size: 14px;
+          letter-spacing: 0.06em;
+        }
+
+        .stage-label {
+          display: block;
+          width: 100%;
+          text-align: center;
+          opacity: 0;
+        }
+
+        .system-label {
+          position: absolute;
+          left: 170px;
+          top: 790px;
+          font-family: "Hanken Grotesk";
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          opacity: 0;
+        }
+      </style>
+
+      <div data-hf-id="hf-2yhp" id="root" data-composition-id="01-hidden-system" data-width="1920" data-height="1080" data-duration="6.408">
+        <div data-hf-id="hf-tc33" class="clip ground" data-start="0" data-duration="6.408" data-track-index="0">
+          <div data-hf-id="hf-yk1m" class="hairline hairline-top"></div>
+          <div data-hf-id="hf-xl60" class="hairline hairline-bottom"></div>
+          <div data-hf-id="hf-e23e" class="glitch" aria-hidden="true">
+            <div data-hf-id="hf-r3nq" class="glitch-step"></div>
+            <div data-hf-id="hf-yudm" class="glitch-step"></div>
+            <div data-hf-id="hf-z8on" class="glitch-step"></div>
+            <div data-hf-id="hf-zmzo" class="glitch-step"></div>
+            <div data-hf-id="hf-01ap" class="glitch-step"></div>
+            <div data-hf-id="hf-0flq" class="glitch-step"></div>
+            <div data-hf-id="hf-0twr" class="glitch-step"></div>
+            <div data-hf-id="hf-187s" class="glitch-step"></div>
+          </div>
+          <div data-hf-id="hf-6ex2" class="chrome"><span data-hf-id="hf-gvhg">System map / 001</span><span data-hf-id="hf-krse">Interface ≠ engine</span></div>
+        </div>
+
+        <div data-hf-id="hf-ptzl" class="clip stage" data-start="0" data-duration="6.408" data-track-index="1">
+          <svg data-hf-id="hf-p3r6" width="0" height="0" aria-hidden="true" style="position: absolute">
+            <defs data-hf-id="hf-mh0t">
+              <filter data-hf-id="hf-xyoi" id="frame01-streak-filter" x="-50%" y="-50%" width="200%" height="200%">
+                <fegaussianblur data-hf-id="hf-9ta8" id="frame01-streak-blur" in="SourceGraphic" stdDeviation="24 0" />
+              </filter>
+            </defs>
+          </svg>
+
+          <div data-hf-id="hf-vbe1" class="zoom-outer" id="frame01-zoom-outer">
+            <div data-hf-id="hf-jjfl" class="zoom-inner" id="frame01-zoom-inner">
+              <div data-hf-id="hf-499p" class="prompt-box" id="frame01-prompt-box">
+                <span data-hf-id="hf-n83k" class="prompt-kicker">Visible interface</span>
+                <span data-hf-id="hf-wfj2" class="prompt-text-wrap">
+                  <span data-hf-id="hf-pt0l" id="frame01-prompt-text"></span><span data-hf-id="hf-le01" class="prompt-cursor" id="frame01-prompt-cursor">_</span>
+                </span>
+              </div>
+
+              <div data-hf-id="hf-6ne9" class="hero-wrap" id="frame01-hero-wrap">
+                <div data-hf-id="hf-p08w" class="hero">GOVERNED PIPELINE</div>
+              </div>
+
+              <svg data-hf-id="hf-bnmm" class="process-map" viewBox="0 0 1920 860" aria-label="Ten-stage governed process">
+                <path data-hf-id="hf-l14f" id="frame01-process-rail" d="M 170 684 H 1745" />
+                <path data-hf-id="hf-vm1c" class="frame01-stage-tick" d="M 170 652 V 716" />
+                <path data-hf-id="hf-167u" class="frame01-stage-tick" d="M 345 652 V 716" />
+                <path data-hf-id="hf-3c23" class="frame01-stage-tick" d="M 520 652 V 716" />
+                <path data-hf-id="hf-305g" class="frame01-stage-tick" d="M 695 652 V 716" />
+                <path data-hf-id="hf-lvin" class="frame01-stage-tick" d="M 870 644 V 724" />
+                <path data-hf-id="hf-kwce" class="frame01-stage-tick" d="M 1045 644 V 724" />
+                <path data-hf-id="hf-7rnl" class="frame01-stage-tick" d="M 1220 652 V 716" />
+                <path data-hf-id="hf-5idg" class="frame01-stage-tick" d="M 1395 652 V 716" />
+                <path data-hf-id="hf-t9ch" class="frame01-stage-tick" d="M 1570 652 V 716" />
+                <path data-hf-id="hf-wd7v" class="frame01-stage-tick" d="M 1745 652 V 716" />
+              </svg>
+
+              <div data-hf-id="hf-86fj" class="stage-labels" aria-hidden="true">
+                <span data-hf-id="hf-lmej" class="stage-label">01</span><span data-hf-id="hf-l83i" class="stage-label">02</span>
+                <span data-hf-id="hf-ktsh" class="stage-label">03</span><span data-hf-id="hf-kfhg" class="stage-label">04</span>
+                <span data-hf-id="hf-k16f" class="stage-label">05</span><span data-hf-id="hf-jmve" class="stage-label">06</span>
+                <span data-hf-id="hf-j8kd" class="stage-label">07</span><span data-hf-id="hf-p75s" class="stage-label">08</span>
+                <span data-hf-id="hf-osur" class="stage-label">09</span><span data-hf-id="hf-3v6p" class="stage-label">10</span>
+              </div>
+              <div data-hf-id="hf-nb65" class="system-label">Ten governed stages / one continuous system</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const frame01Timeline = gsap.timeline({ paused: true });
+        const frame01PromptText = document.getElementById("frame01-prompt-text");
+        const frame01PromptCursor = document.getElementById("frame01-prompt-cursor");
+        const frame01Phrase = "PROMPT → PREVIEW";
+        const frame01Typing = { value: 0 };
+        const frame01Blink = { phase: 0 };
+
+        frame01Timeline.fromTo(
+          "#frame01-prompt-box",
+          { opacity: 0, y: 28 },
+          { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+          0.08,
+        );
+
+        frame01Timeline.to(
+          frame01Typing,
+          {
+            value: frame01Phrase.length,
+            duration: 1.36,
+            ease: "power1.inOut",
+            onUpdate: () => {
+              frame01PromptText.textContent = frame01Phrase.substring(0, Math.floor(frame01Typing.value));
+            },
+          },
+          0.22,
+        );
+
+        frame01Timeline.to(
+          frame01Blink,
+          {
+            phase: Math.PI * 8,
+            duration: 1.8,
+            ease: "none",
+            onUpdate: () => {
+              frame01PromptCursor.style.opacity = Math.sin(frame01Blink.phase) >= 0 ? "1" : "0";
+            },
+          },
+          0,
+        );
+
+        const frame01BlurNode = document.getElementById("frame01-streak-blur");
+        const frame01Blur = { value: 24 };
+        const frame01WriteBlur = () => {
+          frame01BlurNode.setAttribute("stdDeviation", `${frame01Blur.value} 0`);
+        };
+        frame01WriteBlur();
+
+        frame01Timeline.fromTo(
+          "#frame01-hero-wrap",
+          { x: 1880, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.58, ease: "power4.out" },
+          1.8,
+        );
+        frame01Timeline.to(
+          frame01Blur,
+          {
+            value: 0,
+            duration: 0.58,
+            ease: "power4.out",
+            onUpdate: frame01WriteBlur,
+          },
+          1.8,
+        );
+        frame01Timeline.fromTo(
+          "#frame01-prompt-box",
+          { x: 0 },
+          { x: -700, duration: 0.62, ease: "power2.out" },
+          1.82,
+        );
+
+        const frame01TickPaths = Array.from(document.querySelectorAll(".frame01-stage-tick"));
+        frame01TickPaths.forEach((path, index) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = `${length}`;
+          path.style.strokeDashoffset = `${length}`;
+          frame01Timeline.to(
+            path,
+            { strokeDashoffset: 0, duration: 0.36, ease: "power2.out" },
+            2.34 + index * 0.18,
+          );
+        });
+
+        frame01Timeline.fromTo(
+          ".stage-label",
+          { opacity: 0, y: 12 },
+          { opacity: 1, y: 0, duration: 0.28, stagger: 0.18, ease: "power2.out" },
+          2.48,
+        );
+
+        const frame01Rail = document.getElementById("frame01-process-rail");
+        const frame01RailLength = frame01Rail.getTotalLength();
+        frame01Rail.style.strokeDasharray = `${frame01RailLength}`;
+        frame01Rail.style.strokeDashoffset = `${frame01RailLength}`;
+        frame01Timeline.to(
+          frame01Rail,
+          { strokeDashoffset: 0, duration: 0.78, ease: "power2.out" },
+          4.4,
+        );
+        frame01Timeline.fromTo(
+          ".system-label",
+          { opacity: 0, x: 36 },
+          { opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+          4.72,
+        );
+
+        frame01Timeline.to(
+          "#frame01-zoom-outer",
+          { scale: 1.1, duration: 0.52, ease: "power3.inOut" },
+          5.2,
+        );
+        frame01Timeline.to(
+          "#frame01-zoom-inner",
+          { x: 0, y: -58, duration: 0.52, ease: "power3.inOut" },
+          5.2,
+        );
+
+        window.__timelines["01-hidden-system"] = frame01Timeline;
+      </script>
+    </template>
+  </body>
+</html>

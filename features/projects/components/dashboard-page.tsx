@@ -19,6 +19,8 @@ import {
   Crown,
   FileText,
   Code2,
+  ImagePlus,
+  Blocks,
 } from "lucide-react";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import Footer from "@/components/footer";
@@ -295,9 +297,9 @@ export async function DashboardPage({
         {/* Upgrade Banner - show limit-reached when free user hits limit */}
         {!hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT ? (
           <UpgradeBanner variant="limit-reached" messageCount={totalProjects} />
-        ) : (
+        ) : hasProjects ? (
           <UpgradeBanner variant="dashboard" messageCount={totalProjects} />
-        )}
+        ) : null}
 
         {/* Projects Section */}
         <div className="mb-8">
@@ -326,28 +328,64 @@ export async function DashboardPage({
                   <Layers className="h-7 w-7 text-muted-foreground" />
                 </div>
                 <h2 className="mb-2 text-xl font-semibold">
-                  Ready to build something amazing?
+                  Choose how to start
                 </h2>
                 <p className="mb-6 max-w-sm text-balance text-muted-foreground">
-                  Create your first app with AI.
+                  Begin with a proven brief, a visual reference, or a project
+                  you can remix.
                 </p>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button asChild>
-                    <Link href="/">
-                      <Sparkles className="h-4 w-4" />
-                      Create your first project
+                <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
+                  <Button
+                    asChild
+                    className="h-auto justify-start gap-3 p-4 text-left"
+                  >
+                    <Link href="/?starter=kanban-board">
+                      <Blocks className="h-5 w-5 shrink-0" />
+                      <span>
+                        <span className="block">Start from a template</span>
+                        <span className="mt-0.5 block text-xs font-normal opacity-75">
+                          Prefill a complete brief
+                        </span>
+                      </span>
                     </Link>
                   </Button>
-                  <Button variant="outline" asChild>
-                    <Link href="/?upgrade=true">
-                      <Crown className="h-4 w-4" />
-                      View Premium Plans
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="h-auto justify-start gap-3 p-4 text-left"
+                  >
+                    <Link href="/?import=screenshot">
+                      <ImagePlus className="h-5 w-5 shrink-0" />
+                      <span>
+                        <span className="block">Import a screenshot</span>
+                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                          Recreate a visual reference
+                        </span>
+                      </span>
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="h-auto justify-start gap-3 p-4 text-left"
+                  >
+                    <Link href="/#built-with-squid">
+                      <Sparkles className="h-5 w-5 shrink-0" />
+                      <span>
+                        <span className="block">Remix an example</span>
+                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                          Explore public projects
+                        </span>
+                      </span>
                     </Link>
                   </Button>
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Free plan includes 5 starter credits for the free AI model
-                </p>
+                <Link
+                  href="/?upgrade=true"
+                  className="mt-5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  Compare plans and pricing
+                </Link>
               </div>
             </div>
           ) : (

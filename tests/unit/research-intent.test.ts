@@ -36,10 +36,9 @@ describe("detectResearchIntent", () => {
     ["Follow Vercel AI SDK tool-calling best practices", "technical-reference"],
     ["Compare Stripe Checkout versus Elements for this app", "recommendation"],
     ["Verify this claim and cite the sources", "verification"],
-    ["What is the OAuth authorization code flow?", "external-facts"],
-    ["Build a polished habit tracker app", "new-build"],
+    ["Summarize https://ai-sdk.dev/docs", "technical-reference"],
   ] as const)(
-    "uses evergreen research when external context can improve the output: %s",
+    "uses evergreen research when external verification is necessary: %s",
     (content, reason) => {
       expect(detectResearchIntent([{ content }])).toMatchObject({
         required: true,
@@ -50,13 +49,15 @@ describe("detectResearchIntent", () => {
   );
 
   it.each([
+    "Build a polished habit tracker app",
+    "What is the OAuth authorization code flow?",
+    "Explain React server components",
+    "Design the best layout for this dashboard",
     "Make the primary button blue",
     "Fix the TypeError using the code already in this chat",
     "Use a warmer, more playful visual style",
   ])("skips search for fully local or subjective work: %s", (content) => {
-    expect(
-      detectResearchIntent([{ content }]),
-    ).toEqual({
+    expect(detectResearchIntent([{ content }])).toEqual({
       required: false,
       explicitlyRequested: false,
       freshness: "evergreen",

@@ -1,0 +1,31 @@
+{"id":"bgm_001","type":"bgm","path":"assets/bgm/track.loop.mp3","source":"existing","description":"track.loop","duration":84.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"bgm_002","type":"bgm","path":"assets/bgm/track.mp3","source":"existing","description":"track","duration":5,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_001","type":"sfx","path":"assets/sfx/diagnostic-scan.mp3","source":"existing","description":"diagnostic scan","duration":5.7,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_002","type":"sfx","path":"assets/sfx/error-blip.mp3","source":"existing","description":"error blip","duration":1.4,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_003","type":"sfx","path":"assets/sfx/file-creation-ticks.mp3","source":"existing","description":"file creation ticks","duration":0.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_004","type":"sfx","path":"assets/sfx/final-lockup-impact.mp3","source":"existing","description":"final lockup impact","duration":5.4,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_005","type":"sfx","path":"assets/sfx/five-node-clicks.mp3","source":"existing","description":"five node clicks","duration":0.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_006","type":"sfx","path":"assets/sfx/five-restrained-relay-clicks.mp3","source":"existing","description":"five restrained relay clicks","duration":1.6,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_007","type":"sfx","path":"assets/sfx/four-output-ticks.mp3","source":"existing","description":"four output ticks","duration":7.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_008","type":"sfx","path":"assets/sfx/hub-pulse.mp3","source":"existing","description":"hub pulse","duration":4.4,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_009","type":"sfx","path":"assets/sfx/one-approval-latch.mp3","source":"existing","description":"one approval latch","duration":1,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_010","type":"sfx","path":"assets/sfx/paper-scan-whoosh.mp3","source":"existing","description":"paper scan whoosh","duration":1.2,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_011","type":"sfx","path":"assets/sfx/repair-loop-whoosh.mp3","source":"existing","description":"repair loop whoosh","duration":1.3,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_012","type":"sfx","path":"assets/sfx/search-sweep.mp3","source":"existing","description":"search sweep","duration":1.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_013","type":"sfx","path":"assets/sfx/selection-click.mp3","source":"existing","description":"selection click","duration":0.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_014","type":"sfx","path":"assets/sfx/six-light-routing-clicks.mp3","source":"existing","description":"six light routing clicks","duration":0.2,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_015","type":"sfx","path":"assets/sfx/six-ticks.mp3","source":"existing","description":"six ticks","duration":7,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_016","type":"sfx","path":"assets/sfx/soft-mechanical-impact.mp3","source":"existing","description":"soft mechanical impact","duration":0.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_017","type":"sfx","path":"assets/sfx/stream-pulse.mp3","source":"existing","description":"stream pulse","duration":4.4,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_018","type":"sfx","path":"assets/sfx/three-classification-ticks.mp3","source":"existing","description":"three classification ticks","duration":7.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"sfx_019","type":"sfx","path":"assets/sfx/three-precise-ticks.mp3","source":"existing","description":"three precise ticks","duration":7,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_001","type":"voice","path":"assets/voice/01.wav","source":"existing","description":"01","duration":6,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_002","type":"voice","path":"assets/voice/02.wav","source":"existing","description":"02","duration":8.8,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_003","type":"voice","path":"assets/voice/03.wav","source":"existing","description":"03","duration":9.1,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_004","type":"voice","path":"assets/voice/04.wav","source":"existing","description":"04","duration":8.3,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_005","type":"voice","path":"assets/voice/05.wav","source":"existing","description":"05","duration":8.3,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_006","type":"voice","path":"assets/voice/06.wav","source":"existing","description":"06","duration":8.5,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_007","type":"voice","path":"assets/voice/07.wav","source":"existing","description":"07","duration":10.4,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_008","type":"voice","path":"assets/voice/08.wav","source":"existing","description":"08","duration":8,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_009","type":"voice","path":"assets/voice/09.wav","source":"existing","description":"09","duration":8.9,"provenance":{"provider":"local","adopted":true}}
+{"id":"voice_010","type":"voice","path":"assets/voice/10.wav","source":"existing","description":"10","duration":8.4,"provenance":{"provider":"local","adopted":true}}

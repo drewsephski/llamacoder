@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { usePlausible } from "next-plausible";
 import {
   useState,
   useRef,
@@ -34,7 +35,6 @@ import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
-import { OnboardingModal } from "@/components/onboarding-modal";
 import { HelpPanel } from "@/components/help-panel";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -284,6 +284,7 @@ function getDisplayPreviewUrl(href: string) {
 export default function Home() {
   const { setStreamPromise } = useGenerationHandoff();
   const router = useRouter();
+  const plausible = usePlausible();
 
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(FREE_MODEL);
@@ -311,10 +312,11 @@ export default function Home() {
   const [isHoveringRing, setIsHoveringRing] = useState(false);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const [showPricingModal, setShowPricingModal] = useState(false);
-  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
   const ringRef = useRef<HTMLDivElement>(null);
+  const promptStartedAtRef = useRef<number | null>(null);
+  const activationParamsHandledRef = useRef(false);
 
   const { data: session } = useUserSession();
   const { data: creditsData } = useUserCredits();
@@ -346,11 +348,48 @@ export default function Home() {
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
-    const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
-    if (!hasSeenOnboarding) {
-      setShowOnboardingModal(true);
-    }
   }, []);
+
+  useEffect(() => {
+    if (activationParamsHandledRef.current) return;
+    activationParamsHandledRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const starter = params.get("starter");
+    const importScreenshot = params.get("import") === "screenshot";
+    const suggested = SUGGESTED_PROMPTS.find(
+      (item) => item.title.toLowerCase().replace(/\s+/g, "-") === starter,
+    );
+
+    if (suggested) {
+      setPrompt(suggested.description);
+      promptStartedAtRef.current ??= Date.now();
+      plausible("Activation Starter Selected", {
+        props: { source: "dashboard", starter: suggested.title },
+      });
+    }
+    if (importScreenshot) {
+      window.requestAnimationFrame(() => fileInputRef.current?.click());
+      plausible("Screenshot Import Opened", { props: { source: "dashboard" } });
+    }
+  }, [plausible]);
+
+  const setStarterPrompt = useCallback(
+    (value: string, title: string) => {
+      setPrompt(value);
+      promptStartedAtRef.current ??= Date.now();
+      plausible("Activation Starter Selected", {
+        props: { source: "homepage", starter: title },
+      });
+      window.requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+        if (textareaRef.current) {
+          const end = textareaRef.current.value.length;
+          textareaRef.current.setSelectionRange(end, end);
+        }
+      });
+    },
+    [plausible],
+  );
 
   useEffect(() => {
     const animate = () => {
@@ -1311,6 +1350,17 @@ export default function Home() {
                         screenshotData,
                       });
 
+                    plausible("Project Created", {
+                      props: {
+                        source: "homepage",
+                        planMode: quality === "high",
+                        hasScreenshot: Boolean(screenshotData || screenshotUrl),
+                        timeToFirstPromptMs: promptStartedAtRef.current
+                          ? Date.now() - promptStartedAtRef.current
+                          : 0,
+                      },
+                    });
+
                     const streamPromise = fetchCompletionStream({
                       messageId: lastMessageId,
                       model,
@@ -1384,7 +1434,18 @@ export default function Home() {
                       name="prompt"
                       className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
                       value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
+                      onChange={(e) => {
+                        if (
+                          e.target.value &&
+                          promptStartedAtRef.current === null
+                        ) {
+                          promptStartedAtRef.current = Date.now();
+                          plausible("Prompt Started", {
+                            props: { source: "homepage", method: "typing" },
+                          });
+                        }
+                        setPrompt(e.target.value);
+                      }}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey) {
                           event.preventDefault();
@@ -1662,16 +1723,7 @@ export default function Home() {
                       key={v.title}
                       type="button"
                       onClick={() => {
-                        setPrompt(v.description);
-                        setTimeout(() => {
-                          textareaRef.current?.focus();
-                          if (textareaRef.current) {
-                            textareaRef.current.selectionStart =
-                              textareaRef.current.value.length;
-                            textareaRef.current.selectionEnd =
-                              textareaRef.current.value.length;
-                          }
-                        }, 0);
+                        setStarterPrompt(v.description, v.title);
                       }}
                       className="pill-chip"
                     >
@@ -1679,6 +1731,9 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
+                <p className="mt-2 text-center text-xs leading-5 text-muted-foreground/70">
+                  Describe the users, primary workflow, and visual direction.
+                </p>
 
                 {/* URL section */}
                 <div className="mb-6 mt-6 sm:mb-14 sm:mt-8">
@@ -1750,13 +1805,6 @@ export default function Home() {
           remainingCredits={userCredits}
           isAuthenticated={isAuthenticated}
           currentTier={currentTier}
-        />
-        <OnboardingModal
-          isOpen={showOnboardingModal}
-          onClose={() => {
-            setShowOnboardingModal(false);
-            localStorage.setItem("hasSeenOnboarding", "true");
-          }}
         />
         <HelpPanel
           isOpen={showHelpPanel}

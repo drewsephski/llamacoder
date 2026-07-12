@@ -20,6 +20,7 @@ const {
   streamTextMock,
   telemetryMock,
   exaSearchMock,
+  getConnectedIntegrationPromptContextMock,
 } = vi.hoisted(() => ({
   createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   createRequestTelemetryMock: vi.fn(),
@@ -34,12 +35,16 @@ const {
   reserveCreditHoldMock: vi.fn(),
   streamTextMock: vi.fn(),
   exaSearchMock: vi.fn(() => ({ type: "provider-tool" })),
+  getConnectedIntegrationPromptContextMock: vi.fn(async () => ""),
   telemetryMock: {
     markFirstByte: vi.fn(),
     markChunk: vi.fn(),
     record: vi.fn(),
   },
   prismaMock: {
+    chat: {
+      update: vi.fn(),
+    },
     message: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -78,6 +83,11 @@ vi.mock("@/features/generation/server/request-telemetry", () => ({
 
 vi.mock("@/features/security/server/rate-limit", () => ({
   consumeRateLimit: consumeRateLimitMock,
+}));
+
+vi.mock("@/features/integrations/server/service", () => ({
+  getConnectedIntegrationPromptContext:
+    getConnectedIntegrationPromptContextMock,
 }));
 
 vi.mock("@/lib/billing", async (importOriginal) => {
@@ -196,6 +206,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     createRequestTelemetryMock.mockReturnValue(telemetryMock);
     telemetryMock.record.mockResolvedValue(undefined);
     prismaMock.message.update.mockResolvedValue({});
+    prismaMock.chat.update.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -534,6 +545,63 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(call.messages.at(-1).content).toContain(
       "https://www.ufc.com/rankings",
     );
+  });
+
+  it("asks for approval instead of automatically running model-suggested research", async () => {
+    const content = "Build a polished habit tracker app";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_optional_search",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        action: "search",
+        request: {
+          id: "model-search",
+          query: "habit tracker behavior change research",
+          reason: "Research could improve the product design.",
+        },
+      },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_response_1" },
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_optional_search", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: expect.objectContaining({
+            action: "search",
+            request: expect.objectContaining({
+              id: "search-msg_optional_search",
+              query: "habit tracker behavior change research",
+            }),
+          }),
+        }),
+      ]),
+    );
+    expect(generateTextMock).toHaveBeenCalledTimes(1);
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(streamTextMock).not.toHaveBeenCalled();
   });
 
   it("uses undated authoritative sources for evergreen technical research", async () => {

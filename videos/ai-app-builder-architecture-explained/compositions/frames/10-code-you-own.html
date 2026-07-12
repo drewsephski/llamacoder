@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #1f2be0;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          overflow: hidden;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          height: 2px;
+          z-index: 30;
+          background: #1f2be0;
+        }
+        .hairline.top { top: 58px; }
+        .hairline.bottom { top: 852px; }
+
+        .chrome {
+          position: absolute;
+          top: 79px;
+          z-index: 31;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .chrome.left { left: 77px; }
+        .chrome.right { right: 77px; }
+
+        .glitch {
+          position: absolute;
+          left: 77px;
+          top: 132px;
+          width: 226px;
+          height: 636px;
+          opacity: 0.3;
+          background:
+            repeating-linear-gradient(90deg, #1f2be0 0 3px, transparent 3px 11px),
+            #f0ebde;
+          clip-path: polygon(
+            0 0, 58% 0, 58% 8%, 82% 8%, 82% 18%, 44% 18%, 44% 29%,
+            100% 29%, 100% 42%, 66% 42%, 66% 56%, 88% 56%, 88% 69%,
+            36% 69%, 36% 82%, 72% 82%, 72% 92%, 50% 92%, 50% 100%, 0 100%
+          );
+          transform-origin: 50% 50%;
+          will-change: opacity;
+        }
+
+        .qr {
+          position: absolute;
+          right: 92px;
+          top: 742px;
+          width: 74px;
+          height: 74px;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+          gap: 4px;
+          padding: 4px;
+          box-sizing: border-box;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+        }
+        .qr i { background: rgba(31, 43, 224, 0.18); }
+        .qr i:nth-child(1),
+        .qr i:nth-child(2),
+        .qr i:nth-child(4),
+        .qr i:nth-child(6),
+        .qr i:nth-child(7),
+        .qr i:nth-child(9),
+        .qr i:nth-child(12),
+        .qr i:nth-child(13),
+        .qr i:nth-child(15),
+        .qr i:nth-child(16) { background: #1f2be0; }
+
+        .formation {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .rail-svg {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          overflow: visible;
+        }
+
+        .draw-path {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 3px;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+          vector-effect: non-scaling-stroke;
+        }
+
+        .bundle-mark {
+          position: absolute;
+          left: 722px;
+          top: 184px;
+          width: 476px;
+          height: 300px;
+        }
+
+        .bundle-title {
+          position: absolute;
+          left: 720px;
+          top: 492px;
+          width: 480px;
+          padding-top: 16px;
+          border-top: 2px solid #1f2be0;
+          box-sizing: border-box;
+          font-family: "Hanken Grotesk";
+          font-size: 18px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.18em;
+          text-align: center;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .bundle-subtitle {
+          position: absolute;
+          left: 720px;
+          top: 540px;
+          width: 480px;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .verb {
+          position: absolute;
+          min-width: 176px;
+          padding: 11px 15px 10px;
+          box-sizing: border-box;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.18);
+          background: #f0ebde;
+          font-family: "DM Mono";
+          font-size: 16px;
+          line-height: 1;
+          letter-spacing: 0.1em;
+          text-align: center;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+        .verb-share { left: 290px; top: 210px; }
+        .verb-remix { right: 290px; top: 210px; }
+        .verb-inspect { left: 244px; top: 506px; }
+        .verb-export { right: 244px; top: 506px; }
+
+        .destination-rail {
+          position: absolute;
+          left: 480px;
+          top: 658px;
+          width: 960px;
+          height: 92px;
+          border-top: 2px solid #1f2be0;
+        }
+
+        .destination-kicker {
+          position: absolute;
+          top: -27px;
+          left: 0;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .destination-tag {
+          position: absolute;
+          top: 18px;
+          width: 246px;
+          padding: 13px 12px 12px;
+          box-sizing: border-box;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          font-family: "Hanken Grotesk";
+          font-size: 18px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.16em;
+          text-align: center;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+        .destination-tag::before {
+          content: "■";
+          margin-right: 12px;
+          font-family: "DM Mono";
+          font-size: 12px;
+        }
+        .destination-vercel { left: 0; }
+        .destination-netlify { left: 357px; }
+        .destination-workers { right: 0; }
+
+        .lockup {
+          position: absolute;
+          left: 346px;
+          top: 283px;
+          width: 1460px;
+          height: 286px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.12em;
+          white-space: nowrap;
+          font-family: "Newsreader";
+          font-size: 155px;
+          font-weight: 400;
+          line-height: 0.9;
+          letter-spacing: -0.008em;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .lockup-letter {
+          display: inline-block;
+          min-width: 0.34em;
+          text-align: center;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .lockup-space { width: 0.2em; }
+
+        .lockup-rule {
+          position: absolute;
+          left: 520px;
+          top: 588px;
+          width: 1080px;
+          height: 2px;
+          background: #1f2be0;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .lockup-meta {
+          position: absolute;
+          left: 660px;
+          top: 615px;
+          width: 800px;
+          display: flex;
+          justify-content: space-between;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+      </style>
+
+      <div data-hf-id="hf-s13t" id="root" data-composition-id="10-code-you-own" data-duration="8.411" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-ll2j" class="clip ground" data-start="0" data-duration="8.411" data-track-index="0"></div>
+
+        <div data-hf-id="hf-tan6" class="stage">
+          <div data-hf-id="hf-vgdz" class="hairline top"></div>
+          <div data-hf-id="hf-kzjn" class="hairline bottom"></div>
+          <div data-hf-id="hf-n0ay" class="chrome left">SOURCE / PORTABILITY</div>
+          <div data-hf-id="hf-0vdc" class="chrome right">FRAME 10 · 8.411S</div>
+          <div data-hf-id="hf-494a" class="glitch" id="f10-code-you-own-glitch" aria-hidden="true"></div>
+
+          <div data-hf-id="hf-3vh5" class="formation" id="f10-code-you-own-formation">
+            <svg data-hf-id="hf-bhlj" class="rail-svg" viewBox="0 0 1920 896" aria-hidden="true">
+              <path data-hf-id="hf-rj4e" class="draw-path" id="f10-code-you-own-rail-share" d="M 780 292 L 610 292 L 610 228 L 466 228" />
+              <path data-hf-id="hf-ktc3" class="draw-path" id="f10-code-you-own-rail-remix" d="M 1140 292 L 1310 292 L 1310 228 L 1454 228" />
+              <path data-hf-id="hf-fui5" class="draw-path" id="f10-code-you-own-rail-inspect" d="M 780 400 L 568 400 L 568 524 L 420 524" />
+              <path data-hf-id="hf-j040" class="draw-path" id="f10-code-you-own-rail-export" d="M 1140 400 L 1352 400 L 1352 524 L 1500 524" />
+            </svg>
+
+            <svg data-hf-id="hf-7z24" class="bundle-mark" viewBox="0 0 476 300" aria-label="Verified source bundle">
+              <path data-hf-id="hf-mtro" class="draw-path" id="f10-code-you-own-bundle-top" d="M 52 72 L 174 72 L 202 40 L 424 40" />
+              <path data-hf-id="hf-k78a" class="draw-path" id="f10-code-you-own-bundle-box" d="M 424 40 L 424 244 L 52 244 L 52 72" />
+              <path data-hf-id="hf-nv2f" class="draw-path" id="f10-code-you-own-bundle-file-a" d="M 112 112 L 290 112" />
+              <path data-hf-id="hf-xvm5" class="draw-path" id="f10-code-you-own-bundle-file-b" d="M 112 150 L 332 150" />
+              <path data-hf-id="hf-wqki" class="draw-path" id="f10-code-you-own-bundle-file-c" d="M 112 188 L 248 188" />
+              <path data-hf-id="hf-gp9e" class="draw-path" id="f10-code-you-own-bundle-check" d="M 314 190 L 340 216 L 394 154" />
+            </svg>
+
+            <div data-hf-id="hf-eb0i" class="bundle-title" id="f10-code-you-own-bundle-title">Verified source bundle</div>
+            <div data-hf-id="hf-zdye" class="bundle-subtitle" id="f10-code-you-own-bundle-subtitle">Vite + Tailwind</div>
+
+            <div data-hf-id="hf-uekf" class="verb verb-share" id="f10-code-you-own-share">Share</div>
+            <div data-hf-id="hf-fut9" class="verb verb-remix" id="f10-code-you-own-remix">Remix</div>
+            <div data-hf-id="hf-jqxc" class="verb verb-inspect" id="f10-code-you-own-inspect">Inspect</div>
+            <div data-hf-id="hf-op58" class="verb verb-export" id="f10-code-you-own-export">Export</div>
+
+            <div data-hf-id="hf-08of" class="destination-rail" id="f10-code-you-own-destinations">
+              <div data-hf-id="hf-w1k4" class="destination-kicker">Deploy targets / verified export</div>
+              <div data-hf-id="hf-pnh2" class="destination-tag destination-vercel" id="f10-code-you-own-vercel">Vercel</div>
+              <div data-hf-id="hf-q9je" class="destination-tag destination-netlify" id="f10-code-you-own-netlify">Netlify</div>
+              <div data-hf-id="hf-33ag" class="destination-tag destination-workers" id="f10-code-you-own-workers">Workers</div>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-mqbt" class="lockup" id="f10-code-you-own-lockup" aria-label="You own the code">
+            <span data-hf-id="hf-kxn7" class="lockup-letter">Y</span><span data-hf-id="hf-84xh" class="lockup-letter">O</span><span data-hf-id="hf-c3zr" class="lockup-letter">U</span>
+            <span data-hf-id="hf-s4a2" class="lockup-space"></span>
+            <span data-hf-id="hf-n295" class="lockup-letter">O</span><span data-hf-id="hf-bbdp" class="lockup-letter">W</span><span data-hf-id="hf-8j8i" class="lockup-letter">N</span>
+            <span data-hf-id="hf-bwj2" class="lockup-space"></span>
+            <span data-hf-id="hf-cias" class="lockup-letter">T</span><span data-hf-id="hf-ax2o" class="lockup-letter">H</span><span data-hf-id="hf-5r3b" class="lockup-letter">E</span>
+            <span data-hf-id="hf-cau3" class="lockup-space"></span>
+            <span data-hf-id="hf-6jpd" class="lockup-letter">C</span><span data-hf-id="hf-o968" class="lockup-letter">O</span><span data-hf-id="hf-65ec" class="lockup-letter">D</span><span data-hf-id="hf-ynt3" class="lockup-letter">E</span>
+          </div>
+          <div data-hf-id="hf-updd" class="lockup-rule" id="f10-code-you-own-lockup-rule"></div>
+          <div data-hf-id="hf-j4m9" class="lockup-meta" id="f10-code-you-own-lockup-meta">
+            <span data-hf-id="hf-rv9s">Inspectable source</span>
+            <span data-hf-id="hf-1w9e">Portable by default</span>
+          </div>
+
+          <div data-hf-id="hf-9kok" class="qr" aria-hidden="true">
+            <i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i><i data-hf-id="hf-ylp6"></i><i data-hf-id="hf-0l8b"></i><i data-hf-id="hf-0zjc"></i><i data-hf-id="hf-zsm9"></i><i data-hf-id="hf-06xa"></i>
+            <i data-hf-id="hf-26gf"></i><i data-hf-id="hf-2krg"></i><i data-hf-id="hf-oz7w"></i><i data-hf-id="hf-okwv"></i><i data-hf-id="hf-o6lu"></i><i data-hf-id="hf-jqbp"></i><i data-hf-id="hf-qkg0"></i><i data-hf-id="hf-q64z"></i>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const frameRoot = document.querySelector('[data-composition-id="10-code-you-own"]');
+        const drawPaths = Array.from(frameRoot.querySelectorAll(".draw-path"));
+        drawPaths.forEach((path) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = `${length}`;
+          path.style.strokeDashoffset = `${length}`;
+        });
+
+        const tl = gsap.timeline({ paused: true });
+
+        const bundleSegments = [
+          "#f10-code-you-own-bundle-top",
+          "#f10-code-you-own-bundle-box",
+          "#f10-code-you-own-bundle-file-a",
+          "#f10-code-you-own-bundle-file-b",
+          "#f10-code-you-own-bundle-file-c",
+          "#f10-code-you-own-bundle-check",
+        ];
+        bundleSegments.forEach((selector, index) => {
+          tl.to(
+            selector,
+            {
+              strokeDashoffset: 0,
+              duration: index < 2 ? 0.56 : 0.34,
+              ease: "power2.out",
+            },
+            index * 0.16,
+          );
+        });
+        tl.fromTo(
+          "#f10-code-you-own-bundle-title",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+          0.3,
+        );
+
+        const outputs = [
+          { rail: "#f10-code-you-own-rail-share", tag: "#f10-code-you-own-share", x: -22, at: 0.58 },
+          { rail: "#f10-code-you-own-rail-remix", tag: "#f10-code-you-own-remix", x: 22, at: 1.02 },
+          { rail: "#f10-code-you-own-rail-inspect", tag: "#f10-code-you-own-inspect", x: -22, at: 1.46 },
+          { rail: "#f10-code-you-own-rail-export", tag: "#f10-code-you-own-export", x: 22, at: 1.9 },
+        ];
+        outputs.forEach(({ rail, tag, x, at }) => {
+          tl.to(rail, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, at);
+          tl.fromTo(
+            tag,
+            { opacity: 0, x, scale: 0.96 },
+            { opacity: 1, x: 0, scale: 1, duration: 0.42, ease: "power3.out" },
+            at + 0.18,
+          );
+        });
+
+        tl.fromTo(
+          "#f10-code-you-own-bundle-subtitle",
+          { opacity: 0, y: 12 },
+          { opacity: 1, y: 0, duration: 0.52, ease: "power3.out" },
+          2.52,
+        );
+        tl.fromTo(
+          "#f10-code-you-own-destinations",
+          { opacity: 0, scaleX: 0.18, transformOrigin: "50% 0%" },
+          { opacity: 1, scaleX: 1, duration: 0.62, ease: "power3.out" },
+          2.82,
+        );
+
+        [
+          { selector: "#f10-code-you-own-vercel", at: 3.24 },
+          { selector: "#f10-code-you-own-netlify", at: 4.02 },
+          { selector: "#f10-code-you-own-workers", at: 4.8 },
+        ].forEach(({ selector, at }) => {
+          tl.fromTo(
+            selector,
+            { opacity: 0, x: 54, scale: 0.97 },
+            { opacity: 1, x: 0, scale: 1, duration: 0.56, ease: "power4.out" },
+            at,
+          );
+        });
+
+        tl.to(
+          "#f10-code-you-own-formation",
+          { x: -230, opacity: 0, duration: 0.34, ease: "power4.in" },
+          5.79,
+        );
+
+        tl.fromTo(
+          "#f10-code-you-own-lockup",
+          { x: 230, opacity: 0 },
+          { x: 72, opacity: 1, duration: 0.34, ease: "power4.out" },
+          5.99,
+        );
+
+        const lockupLetters = Array.from(frameRoot.querySelectorAll(".lockup-letter"));
+        lockupLetters.forEach((letter, index) => {
+          tl.fromTo(
+            letter,
+            { x: 34, y: 10, opacity: 0 },
+            { x: 0, y: 0, opacity: 1, duration: 0.36, ease: "power4.out" },
+            6.02 + index * 0.07,
+          );
+        });
+        tl.fromTo(
+          "#f10-code-you-own-lockup-rule",
+          { opacity: 0, scaleX: 0.08 },
+          { opacity: 1, scaleX: 1, duration: 0.56, ease: "power3.out" },
+          6.58,
+        );
+        tl.fromTo(
+          "#f10-code-you-own-lockup-meta",
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+          6.98,
+        );
+
+        tl.to(
+          "#f10-code-you-own-lockup",
+          { x: 0, duration: 0.54, ease: "power3.out" },
+          7.48,
+        );
+        tl.to(
+          "#f10-code-you-own-glitch",
+          { opacity: 0.62, duration: 0.54, ease: "power3.out" },
+          7.48,
+        );
+
+        window.__timelines["10-code-you-own"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

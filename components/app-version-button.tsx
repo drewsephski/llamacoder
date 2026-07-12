@@ -6,6 +6,7 @@ export function AppVersionButton({
   filename,
   fileCount,
   appTitle,
+  changeSummary,
   generating,
   disabled,
   onClick,
@@ -15,6 +16,7 @@ export function AppVersionButton({
   filename?: { name: string; extension: string };
   fileCount?: number;
   appTitle?: string;
+  changeSummary?: string | null;
   generating?: boolean;
   disabled: boolean;
   onClick?: () => void;
@@ -55,8 +57,7 @@ export function AppVersionButton({
           ) : fileCount ? (
             <>
               <div className="text-sm font-medium leading-none">
-                Version {version}
-                {appTitle ? ` - ${appTitle}` : ""}
+                v{version} — {changeSummary || appTitle || "Generated app"}
               </div>
               <div className="text-xs leading-none text-muted-foreground">
                 {fileCount} file{fileCount !== 1 ? "s" : ""} edited

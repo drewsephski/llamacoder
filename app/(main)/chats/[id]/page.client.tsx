@@ -66,6 +66,8 @@ import {
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getErrorMessage } from "@/features/shared/errors";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
+import { Lightbulb, X } from "lucide-react";
+import { usePlausible } from "next-plausible";
 
 const MAX_AUTOMATIC_PREVIEW_REPAIRS = 3;
 
@@ -88,6 +90,7 @@ const HeaderChat = memo(({ chat }: { chat: Chat }) => {
 HeaderChat.displayName = "HeaderChat";
 
 export default function PageClient({ chat }: { chat: Chat }) {
+  const plausible = usePlausible();
   const {
     streamPromise: initialStreamPromise,
     setStreamPromise: setContextStreamPromise,
@@ -146,6 +149,28 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const [isSaved, setIsSaved] = useState(!!chat.userId);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [showFirstBuildHelp, setShowFirstBuildHelp] = useState(false);
+  const generationStartedAtRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (streamPromise && generationStartedAtRef.current === null) {
+      generationStartedAtRef.current = Date.now();
+    }
+  }, [streamPromise]);
+
+  useEffect(() => {
+    const hasSuccessfulBuild = chat.messages.some(
+      (candidate) =>
+        candidate.role === "assistant" &&
+        getMessageGeneratedFiles(candidate).length > 0,
+    );
+    if (
+      hasSuccessfulBuild &&
+      localStorage.getItem("squid:first-build-help-dismissed") !== "true"
+    ) {
+      setShowFirstBuildHelp(true);
+    }
+  }, [chat.messages]);
 
   useEffect(() => {
     setIsCheckingSession(true);
@@ -503,10 +528,29 @@ export default function PageClient({ chat }: { chat: Chat }) {
             setIsShowingCodeViewer(true);
             setActiveTab("preview");
           }
+          if (shouldOpenPreview) {
+            plausible("First Build Completed", {
+              props: {
+                timeToFirstPreviewMs: generationStartedAtRef.current
+                  ? Date.now() - generationStartedAtRef.current
+                  : 0,
+                automaticRepair: Boolean(repairMessageId),
+              },
+            });
+            generationStartedAtRef.current = null;
+          }
           router.refresh();
         });
       } catch (error: unknown) {
         console.error("Stream reading error:", error);
+        plausible("Build Failed", {
+          props: {
+            elapsedMs: generationStartedAtRef.current
+              ? Date.now() - generationStartedAtRef.current
+              : 0,
+          },
+        });
+        generationStartedAtRef.current = null;
         if (creditHoldId) {
           await releaseReservedCreditHold(creditHoldId);
         }
@@ -549,7 +593,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
       // stream should continue, and canceling makes the next reader race the
       // still-locked stream.
     };
-  }, [chat.id, chat.messages, router, streamPromise, setContextStreamPromise]);
+  }, [
+    chat.id,
+    chat.messages,
+    plausible,
+    router,
+    streamPromise,
+    setContextStreamPromise,
+  ]);
 
   const continueAgentConversation = useCallback(
     async (
@@ -789,6 +840,36 @@ export default function PageClient({ chat }: { chat: Chat }) {
               }
             }}
           />
+
+          {showFirstBuildHelp && (
+            <div className="mx-3 mb-2 flex items-start gap-3 rounded-xl border border-blue-500/25 bg-blue-500/5 p-3 text-sm">
+              <Lightbulb className="mt-0.5 size-4 shrink-0 text-blue-500" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-foreground">
+                  Your first build is ready
+                </p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Open the Quality report to inspect static checks, select an
+                  element for a targeted edit, or export the source when you are
+                  ready to ship.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Dismiss first build help"
+                onClick={() => {
+                  localStorage.setItem(
+                    "squid:first-build-help-dismissed",
+                    "true",
+                  );
+                  setShowFirstBuildHelp(false);
+                }}
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          )}
 
           <ChatBox
             chat={chat}

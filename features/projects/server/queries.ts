@@ -40,10 +40,21 @@ const loadProjectWorkspace = cache(
       prisma,
       id,
     );
+    const messageIds = allMessages.map((message) => message.id);
+    const [receiptsByMessageId, exportStatusByMessageId] = await Promise.all([
+      getGenerationReceiptsByMessageId(prisma, messageIds),
+      getExportStatusesByMessageId(prisma, messageIds),
+    ]);
     const messages: ProjectMessage[] = allMessages.map((message) => ({
       ...message,
       followUpPrompts:
         followUpPromptsByMessageId.get(message.id) ?? message.followUpPrompts,
+      generationReceipt: receiptsByMessageId.has(message.id)
+        ? {
+            ...receiptsByMessageId.get(message.id)!,
+            exportVerification: exportStatusByMessageId.get(message.id) ?? null,
+          }
+        : null,
     }));
 
     const firstLoadedAssistantPosition = messages.reduce<number | null>(
@@ -78,6 +89,79 @@ const loadProjectWorkspace = cache(
     };
   },
 );
+
+async function getGenerationReceiptsByMessageId(
+  prisma: PrismaClient,
+  messageIds: string[],
+) {
+  if (messageIds.length === 0) return new Map();
+
+  try {
+    const rows = await prisma.generationLog.findMany({
+      where: { messageId: { in: messageIds } },
+      orderBy: { createdAt: "desc" },
+      select: {
+        messageId: true,
+        estimatedCredits: true,
+        actualCredits: true,
+        creditsUsed: true,
+        refundedCredits: true,
+        phase: true,
+        status: true,
+      },
+    });
+
+    const receipts = new Map<
+      string,
+      {
+        estimatedCredits: number | null;
+        actualCredits: number;
+        refundedCredits: number;
+        phase: string | null;
+        status: string;
+      }
+    >();
+    for (const row of rows) {
+      if (!row.messageId || receipts.has(row.messageId)) continue;
+      receipts.set(row.messageId, {
+        estimatedCredits: row.estimatedCredits,
+        actualCredits: row.actualCredits ?? row.creditsUsed,
+        refundedCredits: row.refundedCredits,
+        phase: row.phase,
+        status: row.status,
+      });
+    }
+    return receipts;
+  } catch (error) {
+    console.warn("Failed to load generation receipts:", error);
+    return new Map();
+  }
+}
+
+async function getExportStatusesByMessageId(
+  prisma: PrismaClient,
+  messageIds: string[],
+) {
+  if (messageIds.length === 0) return new Map<string, string>();
+
+  const rows = await prisma.exportArtifact.findMany({
+    where: { messageId: { in: messageIds } },
+    orderBy: { createdAt: "desc" },
+    select: { messageId: true, status: true },
+  });
+  const statuses = new Map<string, "verified" | "warning" | "failed">();
+  for (const row of rows) {
+    if (statuses.has(row.messageId)) continue;
+    if (
+      row.status === "verified" ||
+      row.status === "warning" ||
+      row.status === "failed"
+    ) {
+      statuses.set(row.messageId, row.status);
+    }
+  }
+  return statuses;
+}
 
 export async function getAuthorizedProjectWorkspace(
   id: string,

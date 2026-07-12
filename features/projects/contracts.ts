@@ -71,9 +71,19 @@ export const requestModeMetadataSchema = z.object({
 
 export type RequestModeMetadata = z.infer<typeof requestModeMetadataSchema>;
 
+export type GenerationReceipt = {
+  estimatedCredits: number | null;
+  actualCredits: number;
+  refundedCredits: number;
+  phase: string | null;
+  status: string;
+  exportVerification: "verified" | "warning" | "failed" | null;
+};
+
 export type ProjectMessage = Omit<Message, "files" | "followUpPrompts"> & {
   files: Prisma.JsonValue | null;
   followUpPrompts: Prisma.JsonValue | null;
+  generationReceipt?: GenerationReceipt | null;
 };
 
 export type ProjectWorkspace = Chat & {
