@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #1f2be0;
+        }
+
+        .f08-ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .f08-stage {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          overflow: hidden;
+        }
+
+        .f08-hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          height: 2px;
+          z-index: 30;
+          background: #1f2be0;
+        }
+        .f08-hairline-top { top: 58px; }
+        .f08-hairline-bottom { top: 852px; }
+
+        .f08-chrome {
+          position: absolute;
+          top: 80px;
+          z-index: 31;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .f08-chrome-left { left: 77px; }
+        .f08-chrome-right { right: 77px; }
+
+        .f08-camera-outer,
+        .f08-camera-inner {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          transform-origin: 50% 48%;
+          will-change: transform;
+        }
+
+        .f08-kicker {
+          position: absolute;
+          left: 77px;
+          top: 126px;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .f08-source-card {
+          position: absolute;
+          left: 96px;
+          top: 198px;
+          width: 492px;
+          height: 478px;
+          box-sizing: border-box;
+          border: 3px solid #1f2be0;
+          background: #f0ebde;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .f08-card-topbar {
+          height: 62px;
+          padding: 0 22px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #1f2be0;
+          color: #f0ebde;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .f08-card-version {
+          font-family: "DM Mono";
+          font-size: 14px;
+          font-weight: 400;
+          letter-spacing: 0.06em;
+        }
+
+        .f08-file-stack {
+          position: relative;
+          height: 354px;
+          margin: 31px 25px;
+        }
+
+        .f08-file,
+        .f08-patch-file {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 82px;
+          box-sizing: border-box;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          padding: 14px 18px;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+        .f08-file:nth-child(1) { top: 0; }
+        .f08-file:nth-child(2) { top: 92px; }
+        .f08-file:nth-child(3) { top: 184px; }
+        .f08-file:nth-child(4) { top: 276px; }
+
+        .f08-file-index,
+        .f08-file-state {
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+        .f08-file-index { opacity: 0.52; }
+        .f08-file-state { float: right; }
+
+        .f08-file-name {
+          margin-top: 9px;
+          font-family: "Newsreader";
+          font-size: 27px;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: -0.005em;
+        }
+
+        .f08-preview {
+          position: absolute;
+          left: 735px;
+          top: 168px;
+          width: 1078px;
+          height: 558px;
+          box-sizing: border-box;
+          border: 4px solid #1f2be0;
+          background: #f0ebde;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .f08-preview-bar {
+          height: 60px;
+          padding: 0 22px;
+          box-sizing: border-box;
+          border-bottom: 2px solid #1f2be0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .f08-status-wrap {
+          position: relative;
+          width: 182px;
+          height: 36px;
+        }
+
+        .f08-status {
+          opacity: 0;
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+        .f08-status-running {
+          z-index: 2;
+          background: #1f2be0;
+          color: #f0ebde;
+        }
+
+        .f08-preview-canvas {
+          position: absolute;
+          left: 35px;
+          right: 35px;
+          top: 94px;
+          bottom: 34px;
+          border: 1px solid rgba(31, 43, 224, 0.18);
+          display: grid;
+          grid-template-columns: 1.18fr 0.82fr;
+          gap: 28px;
+          padding: 32px;
+          box-sizing: border-box;
+        }
+
+        .f08-hero-component {
+          position: relative;
+          border: 3px solid #1f2be0;
+          padding: 31px;
+          box-sizing: border-box;
+          background: #f0ebde;
+        }
+
+        .f08-component-label {
+          font-family: "Hanken Grotesk";
+          font-size: 15px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .f08-hero-word {
+          margin-top: 34px;
+          max-width: 500px;
+          font-family: "Newsreader";
+          font-size: 81px;
+          font-weight: 400;
+          line-height: 0.88;
+          letter-spacing: -0.008em;
+        }
+        .f08-hero-word span { display: block; }
+
+        .f08-error-line {
+          position: absolute;
+          left: 31px;
+          right: 31px;
+          bottom: 28px;
+          height: 52px;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 2px solid #1f2be0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .f08-side-components {
+          display: grid;
+          grid-template-rows: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .f08-mini-component {
+          position: relative;
+          border: 2px solid #1f2be0;
+          background: #f0ebde;
+          padding: 23px;
+          box-sizing: border-box;
+        }
+
+        .f08-mini-lines {
+          margin-top: 21px;
+          display: grid;
+          gap: 10px;
+        }
+        .f08-mini-line {
+          height: 8px;
+          background: rgba(31, 43, 224, 0.18);
+        }
+        .f08-mini-line:nth-child(2) { width: 78%; }
+        .f08-mini-line:nth-child(3) { width: 54%; }
+
+        .f08-repair-button {
+          position: absolute;
+          right: 34px;
+          bottom: 31px;
+          width: 188px;
+          height: 56px;
+          border: 3px solid #1f2be0;
+          background: #1f2be0;
+          color: #f0ebde;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .f08-loop-svg {
+          position: absolute;
+          left: 420px;
+          top: 318px;
+          width: 560px;
+          height: 354px;
+          overflow: visible;
+          pointer-events: none;
+        }
+        .f08-loop-path {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 5;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+        }
+
+        .f08-loop-label {
+          position: absolute;
+          left: 599px;
+          top: 724px;
+          padding: 8px 12px;
+          border-top: 2px solid #1f2be0;
+          border-bottom: 2px solid #1f2be0;
+          background: #f0ebde;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .f08-patch-stack {
+          position: absolute;
+          left: 121px;
+          top: 383px;
+          width: 442px;
+          height: 176px;
+          pointer-events: none;
+        }
+
+        .f08-patch-file {
+          z-index: 5;
+          height: 82px;
+          background: #1f2be0;
+          color: #f0ebde;
+        }
+        .f08-patch-file:first-child { top: 0; }
+        .f08-patch-file:last-child { top: 92px; }
+
+        .f08-diff {
+          margin-top: 9px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.04em;
+        }
+
+        .f08-cursor {
+          position: absolute;
+          left: 0;
+          top: 0;
+          z-index: 50;
+          width: 34px;
+          height: 46px;
+          transform-origin: 6px 6px;
+          will-change: transform, opacity;
+        }
+
+        .f08-cursor svg {
+          display: block;
+          width: 34px;
+          height: 46px;
+          overflow: visible;
+        }
+
+        .f08-click-ring {
+          position: absolute;
+          left: -13px;
+          top: -13px;
+          width: 42px;
+          height: 42px;
+          box-sizing: border-box;
+          border: 3px solid #1f2be0;
+          opacity: 0;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .f08-selection {
+          position: absolute;
+          left: 32px;
+          top: 32px;
+          width: 594px;
+          height: 360px;
+          box-sizing: border-box;
+          border: 5px solid #1f2be0;
+          pointer-events: none;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .f08-handle {
+          position: absolute;
+          width: 13px;
+          height: 13px;
+          background: #1f2be0;
+        }
+        .f08-handle:nth-child(1) { left: -9px; top: -9px; }
+        .f08-handle:nth-child(2) { right: -9px; top: -9px; }
+        .f08-handle:nth-child(3) { left: -9px; bottom: -9px; }
+        .f08-handle:nth-child(4) { right: -9px; bottom: -9px; }
+
+        .f08-focused-lockup {
+          position: absolute;
+          left: 786px;
+          top: 696px;
+          width: 792px;
+          height: 120px;
+          padding-left: 26px;
+          border-left: 5px solid #1f2be0;
+          box-sizing: border-box;
+          transform-origin: 0 50%;
+          will-change: transform, opacity;
+        }
+
+        .f08-focused-title {
+          font-family: "Newsreader";
+          font-size: 66px;
+          font-weight: 400;
+          line-height: 0.9;
+          letter-spacing: -0.008em;
+        }
+
+        .f08-focused-sub {
+          margin-top: 14px;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+      </style>
+
+      <div data-hf-id="hf-5w0m" id="root" data-composition-id="08-repair-loop" data-start="0" data-duration="8.493" data-track-index="0" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-gbu8" class="clip f08-ground" data-start="0" data-duration="8.493" data-track-index="2"></div>
+
+        <div data-hf-id="hf-wye7" class="f08-stage">
+          <div data-hf-id="hf-v7p4" class="f08-hairline f08-hairline-top"></div>
+          <div data-hf-id="hf-om0a" class="f08-hairline f08-hairline-bottom"></div>
+          <div data-hf-id="hf-n3is" class="f08-chrome f08-chrome-left">repair protocol / source-aware</div>
+          <div data-hf-id="hf-8oib" class="f08-chrome f08-chrome-right">08 / 10</div>
+
+          <div data-hf-id="hf-y8md" id="f08-repair-loop-camera-outer" class="f08-camera-outer">
+            <div data-hf-id="hf-dgh1" id="f08-repair-loop-camera-inner" class="f08-camera-inner">
+              <div data-hf-id="hf-dvwy" class="f08-kicker">checkpoint repair / scoped change</div>
+
+              <section data-hf-id="hf-yv4m" id="f08-repair-loop-source" class="f08-source-card">
+                <div data-hf-id="hf-e9d6" class="f08-card-topbar">
+                  <span data-hf-id="hf-lqy0">source version</span>
+                  <span data-hf-id="hf-tbd7" class="f08-card-version">v / selected</span>
+                </div>
+                <div data-hf-id="hf-2k46" class="f08-file-stack">
+                  <div data-hf-id="hf-rwjt" class="f08-file f08-unaffected">
+                    <span data-hf-id="hf-yeq8" class="f08-file-index">01</span><span data-hf-id="hf-bddn" class="f08-file-state">held</span>
+                    <div data-hf-id="hf-0787" class="f08-file-name">App.tsx</div>
+                  </div>
+                  <div data-hf-id="hf-pdxg" class="f08-file f08-affected">
+                    <span data-hf-id="hf-x7t5" class="f08-file-index">02</span><span data-hf-id="hf-gqgo" class="f08-file-state">affected</span>
+                    <div data-hf-id="hf-clpq" class="f08-file-name">Hero.tsx</div>
+                  </div>
+                  <div data-hf-id="hf-icjg" class="f08-file f08-affected">
+                    <span data-hf-id="hf-xm46" class="f08-file-index">03</span><span data-hf-id="hf-z6j4" class="f08-file-state">affected</span>
+                    <div data-hf-id="hf-0pxb" class="f08-file-name">theme.ts</div>
+                  </div>
+                  <div data-hf-id="hf-vq0t" class="f08-file f08-unaffected">
+                    <span data-hf-id="hf-wf73" class="f08-file-index">04</span><span data-hf-id="hf-d3jv" class="f08-file-state">held</span>
+                    <div data-hf-id="hf-wzox" class="f08-file-name">Footer.tsx</div>
+                  </div>
+                </div>
+              </section>
+
+              <section data-hf-id="hf-wc4p" id="f08-repair-loop-preview" class="f08-preview">
+                <div data-hf-id="hf-3nfh" class="f08-preview-bar">
+                  <span data-hf-id="hf-6jxg">sandbox preview</span>
+                  <div data-hf-id="hf-jwja" class="f08-status-wrap">
+                    <div data-hf-id="hf-lojy" id="f08-repair-loop-error-status" class="f08-status">error / component</div>
+                    <div data-hf-id="hf-37qp" id="f08-repair-loop-running-status" class="f08-status f08-status-running">running</div>
+                  </div>
+                </div>
+
+                <div data-hf-id="hf-egji" class="f08-preview-canvas">
+                  <article data-hf-id="hf-y18o" id="f08-repair-loop-hero-component" class="f08-hero-component">
+                    <div data-hf-id="hf-lk66" class="f08-component-label">selected component / hero</div>
+                    <div data-hf-id="hf-x6z0" class="f08-hero-word"><span data-hf-id="hf-sodb">Build</span><span data-hf-id="hf-12kg">forward.</span></div>
+                    <div data-hf-id="hf-68dh" id="f08-repair-loop-error-line" class="f08-error-line">
+                      <span data-hf-id="hf-nhj1">render boundary</span><span data-hf-id="hf-tbt3">unresolved token</span>
+                    </div>
+                    <div data-hf-id="hf-0d2p" id="f08-repair-loop-selection" class="f08-selection">
+                      <i data-hf-id="hf-n0nh" class="f08-handle"></i><i data-hf-id="hf-5r9d" class="f08-handle"></i>
+                      <i data-hf-id="hf-6y6g" class="f08-handle"></i><i data-hf-id="hf-6jvf" class="f08-handle"></i>
+                    </div>
+                  </article>
+
+                  <div data-hf-id="hf-dtwv" class="f08-side-components">
+                    <article data-hf-id="hf-ss7c" class="f08-mini-component f08-unrelated-component">
+                      <div data-hf-id="hf-5smj" class="f08-component-label">navigation / unchanged</div>
+                      <div data-hf-id="hf-18rw" class="f08-mini-lines">
+                        <i data-hf-id="hf-v8w1" class="f08-mini-line"></i><i data-hf-id="hf-v4d1" class="f08-mini-line"></i><i data-hf-id="hf-wba4" class="f08-mini-line"></i>
+                      </div>
+                    </article>
+                    <article data-hf-id="hf-4egw" class="f08-mini-component f08-unrelated-component">
+                      <div data-hf-id="hf-hmgy" class="f08-component-label">footer / unchanged</div>
+                      <div data-hf-id="hf-guo4" class="f08-mini-lines">
+                        <i data-hf-id="hf-vwz3" class="f08-mini-line"></i><i data-hf-id="hf-x3w6" class="f08-mini-line"></i><i data-hf-id="hf-wpl5" class="f08-mini-line"></i>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+
+                <div data-hf-id="hf-stdg" id="f08-repair-loop-repair-button" class="f08-repair-button">repair</div>
+              </section>
+
+              <svg data-hf-id="hf-djto" class="f08-loop-svg" viewBox="0 0 560 354" aria-hidden="true">
+                <path data-hf-id="hf-s757" id="f08-repair-loop-loop-path" class="f08-loop-path" d="M530 316 C420 356 162 342 105 244 C63 172 101 77 12 55" />
+                <path data-hf-id="hf-49vx" class="f08-loop-path" d="M12 55 L52 48 M12 55 L28 91" />
+              </svg>
+              <div data-hf-id="hf-ihz7" class="f08-loop-label">exact checkpoint / two files</div>
+
+              <div data-hf-id="hf-gs67" id="f08-repair-loop-patch-stack" class="f08-patch-stack">
+                <div data-hf-id="hf-agie" class="f08-patch-file">
+                  <span data-hf-id="hf-ip9e" class="f08-file-index">02 / patch</span>
+                  <div data-hf-id="hf-xe5i" class="f08-diff"><span data-hf-id="hf-2dg4">Hero.tsx</span><span data-hf-id="hf-xs7x">− token / + value</span></div>
+                </div>
+                <div data-hf-id="hf-hn22" class="f08-patch-file">
+                  <span data-hf-id="hf-6795" class="f08-file-index">03 / patch</span>
+                  <div data-hf-id="hf-lqp6" class="f08-diff"><span data-hf-id="hf-2ngl">theme.ts</span><span data-hf-id="hf-6gww">− alias / + token</span></div>
+                </div>
+              </div>
+
+              <div data-hf-id="hf-u93p" id="f08-repair-loop-cursor" class="f08-cursor">
+                <svg data-hf-id="hf-pdah" viewBox="0 0 34 46" aria-hidden="true">
+                  <path data-hf-id="hf-ti4v" d="M3 2 L29 25 L18 27 L24 41 L16 44 L10 30 L3 37 Z" fill="#F0EBDE" stroke="#1F2BE0" stroke-width="4" stroke-linejoin="miter" />
+                </svg>
+                <div data-hf-id="hf-9h6l" id="f08-repair-loop-click-ring" class="f08-click-ring"></div>
+              </div>
+
+              <div data-hf-id="hf-r08m" id="f08-repair-loop-focused" class="f08-focused-lockup">
+                <div data-hf-id="hf-rxyw" class="f08-focused-title">Focused edit</div>
+                <div data-hf-id="hf-733a" class="f08-focused-sub">preserve the rest</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const root = document.getElementById("root");
+        const tl = gsap.timeline({ paused: true });
+        const cameraOuter = root.querySelector("#f08-repair-loop-camera-outer");
+        const cameraInner = root.querySelector("#f08-repair-loop-camera-inner");
+        const source = root.querySelector("#f08-repair-loop-source");
+        const preview = root.querySelector("#f08-repair-loop-preview");
+        const cursor = root.querySelector("#f08-repair-loop-cursor");
+        const loopPath = root.querySelector("#f08-repair-loop-loop-path");
+        const loopPaths = Array.from(root.querySelectorAll(".f08-loop-path"));
+        const affectedFiles = Array.from(root.querySelectorAll(".f08-affected"));
+        const unaffectedFiles = Array.from(root.querySelectorAll(".f08-unaffected"));
+        const unrelatedComponents = Array.from(root.querySelectorAll(".f08-unrelated-component"));
+        const patchFiles = Array.from(root.querySelectorAll(".f08-patch-file"));
+
+        loopPaths.forEach((path) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = String(length);
+          path.style.strokeDashoffset = String(length);
+        });
+
+        tl.fromTo(
+          source,
+          { opacity: 0, scale: 0.9, x: -34 },
+          { opacity: 1, scale: 1, x: 0, duration: 0.66, ease: "power3.out" },
+          0.05,
+        );
+        tl.fromTo(
+          preview,
+          { opacity: 0, scale: 0.93, x: 46 },
+          { opacity: 1, scale: 1, x: 0, duration: 0.76, ease: "power3.out" },
+          0.1,
+        );
+        tl.fromTo(
+          ".f08-kicker",
+          { opacity: 0, x: -24 },
+          { opacity: 1, x: 0, duration: 0.46, ease: "power3.out" },
+          0.22,
+        );
+        tl.fromTo(
+          "#f08-repair-loop-error-line",
+          { opacity: 0, scaleX: 0.12 },
+          { opacity: 1, scaleX: 1, duration: 0.48, ease: "power3.out" },
+          0.72,
+        );
+        tl.fromTo(
+          "#f08-repair-loop-error-status",
+          { opacity: 0, scale: 0.72 },
+          { opacity: 1, scale: 1, duration: 0.42, ease: "back.out(1.5)" },
+          0.92,
+        );
+        tl.fromTo(
+          cursor,
+          { opacity: 0, x: 1736, y: 794, scale: 0.8 },
+          { opacity: 1, x: 1688, y: 678, scale: 1, duration: 0.72, ease: "power3.out" },
+          1.02,
+        );
+
+        tl.to("#f08-repair-loop-repair-button", { scale: 0.91, duration: 0.12, ease: "power2.in" }, 1.78);
+        tl.to("#f08-repair-loop-repair-button", { scale: 1, duration: 0.24, ease: "power3.out" }, 1.9);
+        tl.fromTo(
+          "#f08-repair-loop-click-ring",
+          { opacity: 0.72, scale: 0.3 },
+          { opacity: 0, scale: 1.8, duration: 0.44, ease: "power2.out" },
+          1.78,
+        );
+
+        loopPaths.forEach((path, index) => {
+          tl.to(
+            path,
+            { strokeDashoffset: 0, duration: index === 0 ? 1.18 : 0.3, ease: "power2.inOut" },
+            index === 0 ? 1.88 : 2.9 + index * 0.08,
+          );
+        });
+        tl.fromTo(
+          ".f08-loop-label",
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+          2.46,
+        );
+
+        tl.to(cursor, { x: 1180, y: 760, duration: 0.48, ease: "power3.in" }, 1.98);
+        tl.to(cursor, { x: 652, y: 652, duration: 0.55, ease: "power2.inOut" }, 2.46);
+        tl.to(cursor, { x: 430, y: 405, duration: 0.5, ease: "power3.out" }, 3.01);
+
+        tl.to(cameraOuter, { scale: 1.075, duration: 1.22, ease: "power2.inOut" }, 2.04);
+        tl.to(cameraInner, { x: 128, y: 18, duration: 1.22, ease: "power2.inOut" }, 2.04);
+
+        affectedFiles.forEach((file, index) => {
+          tl.to(
+            file,
+            { x: 26, scale: 1.035, duration: 0.42, ease: "power3.out" },
+            3.35 + index * 0.18,
+          );
+        });
+        tl.to(unaffectedFiles, { opacity: 0.28, duration: 0.46, ease: "power2.out" }, 3.47);
+        tl.fromTo(
+          "#f08-repair-loop-patch-stack",
+          { opacity: 0, x: -38 },
+          { opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+          4.44,
+        );
+
+        affectedFiles.forEach((file, index) => {
+          tl.to(
+            file,
+            { scale: 0.72, opacity: 0, duration: 0.38, ease: "power2.in" },
+            4.56 + index * 0.08,
+          );
+        });
+        patchFiles.forEach((file, index) => {
+          tl.fromTo(
+            file,
+            { scale: 0.72, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.58, ease: "back.out(1.5)" },
+            4.78 + index * 0.1,
+          );
+        });
+
+        tl.to("#f08-repair-loop-error-status", { scale: 0.72, opacity: 0, duration: 0.38, ease: "power2.in" }, 5.24);
+        tl.fromTo(
+          "#f08-repair-loop-running-status",
+          { scale: 0.72, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.58, ease: "back.out(1.5)" },
+          5.47,
+        );
+        tl.to("#f08-repair-loop-error-line", { opacity: 0, scaleX: 0.2, duration: 0.38, ease: "power2.in" }, 5.28);
+        tl.to(unrelatedComponents, { opacity: 0.42, duration: 0.28, ease: "power2.out" }, 5.4);
+        tl.to(unrelatedComponents, { opacity: 1, duration: 0.58, ease: "power3.out" }, 5.68);
+        tl.to(unaffectedFiles, { opacity: 1, duration: 0.5, ease: "power3.out" }, 5.62);
+
+        tl.to(cameraOuter, { scale: 1, duration: 0.78, ease: "power3.inOut" }, 5.62);
+        tl.to(cameraInner, { x: 0, y: 0, duration: 0.78, ease: "power3.inOut" }, 5.62);
+        tl.to(cursor, { x: 1098, y: 430, duration: 0.74, ease: "power3.inOut" }, 5.74);
+
+        tl.fromTo(
+          "#f08-repair-loop-click-ring",
+          { opacity: 0.72, scale: 0.3 },
+          { opacity: 0, scale: 1.8, duration: 0.42, ease: "power2.out" },
+          6.39,
+        );
+        tl.fromTo(
+          "#f08-repair-loop-selection",
+          { opacity: 0, scale: 0.96 },
+          { opacity: 1, scale: 1, duration: 0.42, ease: "power3.out" },
+          6.42,
+        );
+        tl.fromTo(
+          "#f08-repair-loop-focused",
+          { opacity: 0, scaleX: 0.72, x: 38 },
+          { opacity: 1, scaleX: 1, x: 0, duration: 0.7, ease: "power3.out" },
+          6.72,
+        );
+
+        window.__timelines["08-repair-loop"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

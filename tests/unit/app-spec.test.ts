@@ -15,6 +15,7 @@ describe("createEmptyAppSpec", () => {
     const spec = createEmptyAppSpec();
     expect(spec.status).toBe("interviewing");
     expect(spec.version).toBe(1);
+    expect(spec.deliveryContract).toBe("browser_frontend");
     expect(spec.features.mustHave).toEqual([]);
     expect(spec.unresolvedDecisions).toEqual([]);
   });
@@ -26,7 +27,11 @@ describe("parseAppSpec", () => {
       version: 1,
       status: "approved",
       overview: { name: "Calculator" },
-      features: { mustHave: ["arithmetic"], niceToHave: ["history"], excluded: [] },
+      features: {
+        mustHave: ["arithmetic"],
+        niceToHave: ["history"],
+        excluded: [],
+      },
     } as unknown as Parameters<typeof appSpecSchema.parse>[0];
     const result = parseAppSpec(input);
     expect(result).not.toBeNull();
@@ -87,8 +92,18 @@ describe("serializeSpecForPrompt", () => {
       overview: { name: "Calculator", purpose: "Do math" },
       features: { mustHave: ["add", "subtract"] },
       unresolvedDecisions: [
-        { id: "auth", topic: "Authentication", question: "Need auth?", impact: "high" },
-        { id: "color", topic: "Color scheme", question: "Dark or light?", impact: "low" },
+        {
+          id: "auth",
+          topic: "Authentication",
+          question: "Need auth?",
+          impact: "high",
+        },
+        {
+          id: "color",
+          topic: "Color scheme",
+          question: "Dark or light?",
+          impact: "low",
+        },
       ],
       askedQuestionIds: ["q1"],
     });
@@ -106,12 +121,32 @@ describe("serializeSpecForPrompt", () => {
     const spec: AppSpec = appSpecSchema.parse({
       status: "interviewing",
       unresolvedDecisions: [
-        { id: "auth", topic: "Authentication", question: "Need auth?", impact: "high" },
-        { id: "color", topic: "Color scheme", question: "Dark or light?", impact: "low" },
+        {
+          id: "auth",
+          topic: "Authentication",
+          question: "Need auth?",
+          impact: "high",
+        },
+        {
+          id: "color",
+          topic: "Color scheme",
+          question: "Dark or light?",
+          impact: "low",
+        },
       ],
     });
     const text = serializeSpecForPrompt(spec, "full");
     expect(text).toContain("Other unresolved: [low] Color scheme");
+  });
+
+  it("makes backend blueprint scope and runtime limits explicit", () => {
+    const spec = appSpecSchema.parse({
+      deliveryContract: "frontend_with_backend_blueprint",
+      architecture: { authentication: "email login", persistence: "Postgres" },
+    });
+    const text = serializeSpecForPrompt(spec, "full");
+    expect(text).toContain("Frontend + portable backend blueprint");
+    expect(text).toContain("Do not simulate managed auth");
   });
 });
 

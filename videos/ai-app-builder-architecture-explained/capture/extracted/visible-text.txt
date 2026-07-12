@@ -1,0 +1,101 @@
+[span] Squid
+[span] Guest
+[button] Pricing
+[a] Sign In
+[a] Sign Up
+[span] Toggle theme
+[span] Research, plan, and build with AI
+[span] Turn ideas
+[span] into apps
+[p] Research current docs and APIs. Plan the product.
+[span] Generate React code you can keep.
+[span] DeepSeek V4 Flash
+[option] DeepSeek V4 Flash
+[option] Gemini 2.5 Flash Lite
+[option] Gemini 3 Flash Preview
+[option] GPT-4.1
+[option] Grok 4.5
+[option] DeepSeek V4 Pro
+[option] GLM 5.2
+[option] Claude Opus 4.8
+[option] Claude Sonnet 5
+[span] Plan mode
+[p] Supported formats
+[p] PNG, JPEG, WebP
+[p] Upload a screenshot to recreate it in code
+[button] Build
+[button] Kanban Board
+[button] Landing Page
+[button] Habit Tracker
+[button] Expense Tracker
+[button] Calculator
+[p] Describe the users, primary workflow, and visual direction.
+[div] or clone a site
+[p] Beyond one-shot generation
+[h2] Research. Plan. Build. Own.
+[p] Squid Agent brings current web knowledge and a deliberate planning workflow into the same pipeline that generates, checks, and exports your React application.
+[p] Input
+[h2] Start with an idea, screenshot, or website.
+[p] Describe a product in plain language, upload a visual reference, or point Squid Agent at an existing site. It carries that context through the build instead of reducing your request to a one-shot mockup.
+[p] Research
+[h2] Build with current docs, APIs, and facts.
+[p] When a request depends on external knowledge, Squid Agent can search the live web before it writes code. It researches up-to-date documentation, API references, packages, integrations, and time-sensitive data so the build is grounded in current sources rather than stale model memory.
+[p] Plan mode
+[h2] Work through the plan before the build.
+[p] Turn on Plan mode for a guided planning pipeline. Squid Agent asks a compact set of high-impact questions, confirms consequential decisions, assembles a structured specification, and gives you an explicit plan to approve before code generation begins.
+[p] Quality
+[h2] See whether the generated app holds together.
+[p] Squid Agent checks generated files for broken imports, incompatible exports, protected-path changes, missing dependencies, and baseline accessibility issues. The result is a visible quality signal you can inspect before you iterate or export.
+[p] Ownership
+[h2] Leave with code you can keep.
+[p] Generated projects are real code artifacts, not disposable previews. Export the React source, complete file structure, run instructions, project metadata, and quality information, then continue in your own development workflow without platform lock-in.
+[p] Credits
+[h2] Know the model and cost before you run.
+[p] Choose the model that fits the work and see its expected credit cost before generation starts. Squid Agent keeps successful usage visible so you can understand what a build cost without decoding token math or discovering spend after the fact.
+[div] BUILT WITH SQUID
+[h2] Real projects shipped from prompts.
+[p] A showcase of sites and tools built with Squid. Each window links to a public preview users can remix, copy, or download.
+[span] https://phoenixdev.agency/demo
+[p] Design agency
+[h3] Phoenix Design Lab
+[p] A cinematic agency landing page with a red editorial art direction and bold one-screen positioning.
+[span] View project
+[span] https://portfolios.chat
+[p] AI portfolio builder
+[h3] PortfolioOS
+[p] An AI-native professional identity site where portfolios answer questions in real time.
+[span] https://slotflow.fit
+[p] Event coordination
+[h3] Slotflow
+[p] A scheduling surface for coordinating group availability without spreadsheet back-and-forth.
+[p] FAQ
+[h2] Know what happens before you build.
+[p] Learn how research, planning, code generation, ownership, and credits work before you commit a project.
+[h3] What is Squid Agent?
+[p] Squid Agent is an AI app builder that can research the live web, plan a product with you, and generate React applications from prompts, screenshots, and website references. It keeps the resulting source code, quality checks, credit use, and project history visible.
+[h3] Who is Squid Agent for?
+[p] Squid Agent is built for founders, builders, designers, and product teams who want to prototype full React apps quickly while keeping the generated code inspectable, editable, and portable.
+[h3] Can I export the code from Squid Agent?
+[p] Yes. Squid Agent is designed around code ownership. Generated projects can be downloaded with source files, project metadata, run instructions, and quality information so teams can continue work outside the product.
+[h3] Can Squid Agent research current documentation and APIs?
+[p] Yes. Squid Agent can search the web for up-to-date documentation, API references, package guidance, and other external facts before it answers or generates code. Research is triggered automatically when a request depends on current information, and you can request web search explicitly.
+[h3] What does Plan mode do?
+[p] Plan mode runs a guided planning workflow before code generation. Squid Agent asks a compact set of consequential questions, turns the answers into a structured project specification, presents the plan for review, and starts building only after you approve it.
+[h3] How does Squid Agent handle AI credits?
+[p] Squid Agent shows model cost before generation and records successful usage after work is saved. The product is designed to make credit spend visible instead of hiding cost inside retries or unclear repair loops.
+[p] Built with
+[p] modern technologies
+[span] MacBook Air
+[span] Squid Agent
+[p] Turn ideas into exportable React apps with transparent credits.
+[a] Dashboard
+[a] Create account
+[a] Squid vs Lovable
+[a] Squid vs Bolt.new
+[a] Squid vs v0 by Vercel
+[a] Why AI app builders burn credits
+[a] How to evaluate AI-generated React code
+[a] Screenshot-to-React is table stakes
+[a] How to export an AI-generated React app
+[a] From screenshot to production React
+[a] Screenshot-to-React benchmark

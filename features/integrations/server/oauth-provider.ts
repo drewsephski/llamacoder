@@ -1,0 +1,178 @@
+import "server-only";
+
+import { z } from "zod";
+
+import { domain } from "@/lib/domain";
+
+export type OAuthProviderId = "github" | "vercel";
+
+type OAuthProviderConfig = {
+  providerId: OAuthProviderId;
+  clientId: string;
+  clientSecret: string;
+  callbackUrl: string;
+  slug?: string;
+};
+
+function requiredValue(name: string) {
+  return process.env[name]?.trim() || null;
+}
+
+export function getOAuthProviderConfig(
+  providerId: OAuthProviderId,
+): OAuthProviderConfig | null {
+  if (providerId === "github") {
+    const clientId = requiredValue("GITHUB_OAUTH_CLIENT_ID");
+    const clientSecret = requiredValue("GITHUB_OAUTH_CLIENT_SECRET");
+    if (!clientId || !clientSecret) return null;
+    return {
+      providerId,
+      clientId,
+      clientSecret,
+      callbackUrl: `${domain}/api/integrations/oauth/github/callback`,
+    };
+  }
+
+  const clientId = requiredValue("VERCEL_INTEGRATION_CLIENT_ID");
+  const clientSecret = requiredValue("VERCEL_INTEGRATION_CLIENT_SECRET");
+  const slug = requiredValue("VERCEL_INTEGRATION_SLUG");
+  if (!clientId || !clientSecret || !slug) return null;
+  return {
+    providerId,
+    clientId,
+    clientSecret,
+    slug,
+    callbackUrl: `${domain}/api/integrations/oauth/vercel/callback`,
+  };
+}
+
+export function isOAuthProviderId(value: string): value is OAuthProviderId {
+  return value === "github" || value === "vercel";
+}
+
+export function buildOAuthAuthorizationUrl({
+  config,
+  state,
+  codeChallenge,
+}: {
+  config: OAuthProviderConfig;
+  state: string;
+  codeChallenge?: string;
+}) {
+  if (config.providerId === "github") {
+    const url = new URL("https://github.com/login/oauth/authorize");
+    url.searchParams.set("client_id", config.clientId);
+    url.searchParams.set("redirect_uri", config.callbackUrl);
+    url.searchParams.set("scope", "read:user repo");
+    url.searchParams.set("state", state);
+    url.searchParams.set("prompt", "select_account");
+    if (codeChallenge) {
+      url.searchParams.set("code_challenge", codeChallenge);
+      url.searchParams.set("code_challenge_method", "S256");
+    }
+    return url;
+  }
+
+  const url = new URL(
+    `https://vercel.com/integrations/${encodeURIComponent(config.slug!)}/new`,
+  );
+  url.searchParams.set("state", state);
+  return url;
+}
+
+const githubTokenSchema = z.object({
+  access_token: z.string().min(1),
+  token_type: z.string().optional(),
+  scope: z.string().default(""),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
+});
+
+const vercelTokenSchema = z.object({
+  access_token: z.string().min(1),
+  token_type: z.string().optional(),
+  team_id: z.string().nullable().optional(),
+  user_id: z.string().optional(),
+});
+
+export async function exchangeOAuthCode({
+  config,
+  code,
+  codeVerifier,
+  fetchImpl = fetch,
+}: {
+  config: OAuthProviderConfig;
+  code: string;
+  codeVerifier?: string;
+  fetchImpl?: typeof fetch;
+}) {
+  if (config.providerId === "github") {
+    const response = await fetchImpl(
+      "https://github.com/login/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: config.clientId,
+          client_secret: config.clientSecret,
+          code,
+          redirect_uri: config.callbackUrl,
+          code_verifier: codeVerifier,
+        }),
+        cache: "no-store",
+      },
+    );
+    const body: unknown = await response.json().catch(() => null);
+    if (!response.ok) throw new Error("GitHub token exchange failed.");
+    const parsed = githubTokenSchema.safeParse(body);
+    if (!parsed.success || parsed.data.error) {
+      throw new Error(
+        parsed.success && parsed.data.error_description
+          ? parsed.data.error_description
+          : "GitHub token exchange returned an invalid response.",
+      );
+    }
+    return {
+      accessToken: parsed.data.access_token,
+      scopes: parsed.data.scope.split(",").filter(Boolean),
+      metadata: {},
+    };
+  }
+
+  const body = new URLSearchParams({
+    client_id: config.clientId,
+    client_secret: config.clientSecret,
+    code,
+    redirect_uri: config.callbackUrl,
+  });
+  const response = await fetchImpl(
+    "https://api.vercel.com/v2/oauth/access_token",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      cache: "no-store",
+    },
+  );
+  const responseBody: unknown = await response.json().catch(() => null);
+  if (!response.ok) throw new Error("Vercel token exchange failed.");
+  const parsed = vercelTokenSchema.parse(responseBody);
+  return {
+    accessToken: parsed.access_token,
+    scopes: [],
+    metadata: {
+      teamId: parsed.team_id ?? null,
+      vercelUserId: parsed.user_id ?? null,
+    },
+  };
+}
+
+export function oauthProviderAvailability() {
+  return {
+    github: getOAuthProviderConfig("github") !== null,
+    vercel: getOAuthProviderConfig("vercel") !== null,
+  } as const;
+}

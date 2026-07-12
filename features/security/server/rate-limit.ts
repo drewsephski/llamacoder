@@ -7,6 +7,7 @@ export type RateLimitOperation =
   | "completion"
   | "create_project"
   | "generate_code"
+  | "integration"
   | "screenshot";
 
 type RateLimitOptions = {

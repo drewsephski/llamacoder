@@ -3,8 +3,6 @@
 import CloseIcon from "@/components/icons/close-icon";
 import RefreshIcon from "@/components/icons/refresh";
 import {
-  AlertTriangle,
-  CheckCircle2,
   DownloadIcon,
   ExternalLink,
   FlaskConical,
@@ -45,7 +43,6 @@ import {
 import { buildExportBundle, getExportFilename } from "@/lib/export-bundle";
 import {
   buildTargetedPreviewEditPrompt,
-  formatPreviewElementSelection,
   type PreviewElementSelection,
 } from "@/lib/targeted-preview-edit";
 import { useState, useEffect, useMemo } from "react";
@@ -56,6 +53,9 @@ import JSZip from "jszip";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
+import { QualityReportPanel } from "@/components/quality-report-panel";
+import { SelectedElementEditTray } from "@/components/selected-element-edit-tray";
+import { ProjectIntegrationsPanel } from "@/features/integrations/components/project-integrations-panel";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -289,7 +289,7 @@ export default function CodeViewer({
   const [isVerifyingExport, setIsVerifyingExport] = useState(false);
   const [verifiedExportStatus, setVerifiedExportStatus] = useState<
     "verified" | "warning" | "failed" | null
-  >(null);
+  >(message?.generationReceipt?.exportVerification ?? null);
   const [previewSelectionMode, setPreviewSelectionMode] = useState(false);
   const [previewSelection, setPreviewSelection] =
     useState<PreviewElementSelection | null>(null);
@@ -299,6 +299,12 @@ export default function CodeViewer({
     null,
   );
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setVerifiedExportStatus(
+      message?.generationReceipt?.exportVerification ?? null,
+    );
+  }, [message?.generationReceipt?.exportVerification, message?.id]);
 
   const allAssistantMessages = useMemo(
     () =>
@@ -334,10 +340,6 @@ export default function CodeViewer({
 
   const [refresh, setRefresh] = useState(0);
   const disabledControls = !!streamText || files.length === 0;
-  const canSubmitTargetedEdit =
-    !disabledControls &&
-    !!previewSelection &&
-    previewEditInstruction.trim().length > 0;
   const selectValue = disabledControls
     ? undefined
     : (allAssistantMessages.length - 1 - currentVersionIndex).toString();
@@ -403,7 +405,6 @@ export default function CodeViewer({
     toast.success("Files downloaded!", {
       description: `${files.length} source files plus export metadata downloaded as ${filename}`,
     });
-    setIsExportDialogOpen(false);
   };
 
   const handleTargetedEdit = () => {
@@ -481,6 +482,11 @@ export default function CodeViewer({
                           (allAssistantMessages.length - 1 - i) +
                           1}
                       </span>
+                      {msg.changeSummary && (
+                        <span className="max-w-48 truncate text-xs text-muted-foreground">
+                          {msg.changeSummary}
+                        </span>
+                      )}
                       <span className="text-xs text-white">
                         {timeAgo(msg.createdAt)}
                       </span>
@@ -507,26 +513,12 @@ export default function CodeViewer({
             </Button>
           )}
           {!disabledControls && (
-            <div
-              className={`hidden items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium md:inline-flex ${
-                qualityReport.status === "passed"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-              }`}
-              title={
-                qualityReport.status === "passed"
-                  ? "Generated imports resolved with no basic warnings."
-                  : `${qualityWarningCount} quality warning${qualityWarningCount === 1 ? "" : "s"} found.`
-              }
-            >
-              {qualityReport.status === "passed" ? (
-                <CheckCircle2 className="size-3.5" />
-              ) : (
-                <AlertTriangle className="size-3.5" />
-              )}
-              Quality {qualityReport.status === "passed" ? "passed" : "review"}
-            </div>
+            <QualityReportPanel
+              report={qualityReport}
+              exportStatus={verifiedExportStatus}
+            />
           )}
+          {chat.userId && <ProjectIntegrationsPanel projectId={chat.id} />}
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm">
@@ -636,6 +628,21 @@ export default function CodeViewer({
         )}
       </div>
 
+      {previewSelection && (
+        <SelectedElementEditTray
+          selection={previewSelection}
+          instruction={previewEditInstruction}
+          disabled={disabledControls}
+          onInstructionChange={setPreviewEditInstruction}
+          onApply={handleTargetedEdit}
+          onCancel={() => {
+            setPreviewSelection(null);
+            setPreviewSelectionMode(false);
+            setPreviewEditInstruction("");
+          }}
+        />
+      )}
+
       <div className="flex items-center justify-between border-t border-border px-4 py-4">
         <div className="inline-flex min-w-0 items-center gap-2.5 text-sm">
           <Share
@@ -669,35 +676,6 @@ export default function CodeViewer({
           >
             <MousePointer2 className="size-3" />
             Select
-          </Button>
-          {previewSelection && (
-            <input
-              type="text"
-              value={previewEditInstruction}
-              onChange={(event) =>
-                setPreviewEditInstruction(event.target.value)
-              }
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleTargetedEdit();
-                }
-              }}
-              placeholder="Describe edit..."
-              aria-label="Describe the selected element edit"
-              title={formatPreviewElementSelection(previewSelection)}
-              disabled={disabledControls}
-              className="hidden h-9 w-56 rounded-md border border-border bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary md:block"
-            />
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleTargetedEdit}
-            disabled={!canSubmitTargetedEdit}
-            className="hidden md:inline-flex"
-          >
-            Edit selected
           </Button>
           <Button
             variant="outline"
@@ -765,72 +743,127 @@ export default function CodeViewer({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-3">
-            <button
-              type="button"
-              onClick={() => openDeployProvider("vercel")}
-              disabled={disabledControls || isVerifyingExport}
-              className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-blue-500/50 hover:bg-blue-500/5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
-                <Vercel className="size-4" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  Deploy to Vercel
-                  <ExternalLink className="size-3.5 text-muted-foreground transition-colors group-hover:text-blue-500" />
+          <div className="grid gap-4">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                1 · Verify and download
+              </p>
+              <button
+                type="button"
+                onClick={handleDownloadFiles}
+                disabled={disabledControls || isVerifyingExport}
+                className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  {isVerifyingExport ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <DownloadIcon className="size-4" />
+                  )}
                 </span>
-                <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-                  Opens Vercel import. Use the downloaded repo; it includes
-                  `vercel.json` for SPA routing.
+                <span className="min-w-0 flex-1">
+                  <span className="text-sm font-semibold text-foreground">
+                    {isVerifyingExport
+                      ? "Verifying export"
+                      : "Verify & download ZIP"}
+                  </span>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                    Saves source, package scripts, quality report, and deploy
+                    configs.
+                  </span>
                 </span>
-              </span>
-            </button>
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => openDeployProvider("netlify")}
-              disabled={disabledControls || isVerifyingExport}
-              className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
-                <SiNetlify className="size-4" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  Deploy to Netlify
-                  <ExternalLink className="size-3.5 text-muted-foreground transition-colors group-hover:text-emerald-500" />
-                </span>
-                <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-                  Opens Netlify import. Use the downloaded repo; it includes
-                  `netlify.toml` with the build and redirect settings.
-                </span>
-              </span>
-            </button>
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                2 · Import the repository
+              </p>
+              {!verifiedExportStatus && (
+                <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">
+                  Verify and download the bundle before opening a provider.
+                </p>
+              )}
+              {verifiedExportStatus === "failed" && (
+                <p className="mb-2 text-xs text-red-700 dark:text-red-300">
+                  Export verification failed. Resolve the reported issues before
+                  deploying.
+                </p>
+              )}
+              {verifiedExportStatus === "warning" && (
+                <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">
+                  Verification completed with warnings. Review the quality
+                  report before deploying.
+                </p>
+              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => openDeployProvider("vercel")}
+                  disabled={
+                    disabledControls ||
+                    isVerifyingExport ||
+                    !verifiedExportStatus ||
+                    verifiedExportStatus === "failed"
+                  }
+                  className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-blue-500/50 hover:bg-blue-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
+                    <Vercel className="size-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      Deploy to Vercel
+                      <ExternalLink className="size-3.5 text-muted-foreground transition-colors group-hover:text-blue-500" />
+                    </span>
+                    <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                      Opens Vercel import. Use the downloaded repo; it includes
+                      `vercel.json` for SPA routing.
+                    </span>
+                  </span>
+                </button>
 
-            <button
-              type="button"
-              onClick={handleDownloadFiles}
-              disabled={disabledControls || isVerifyingExport}
-              className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                {isVerifyingExport ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <DownloadIcon className="size-4" />
-                )}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="text-sm font-semibold text-foreground">
-                  {isVerifyingExport ? "Verifying export" : "Download ZIP"}
-                </span>
-                <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-                  Saves the complete source bundle with package scripts, quality
-                  report, and deploy config files.
-                </span>
-              </span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() => openDeployProvider("netlify")}
+                  disabled={
+                    disabledControls ||
+                    isVerifyingExport ||
+                    !verifiedExportStatus ||
+                    verifiedExportStatus === "failed"
+                  }
+                  className="group flex w-full items-start gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
+                    <SiNetlify className="size-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      Deploy to Netlify
+                      <ExternalLink className="size-3.5 text-muted-foreground transition-colors group-hover:text-emerald-500" />
+                    </span>
+                    <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                      Opens Netlify import. Use the downloaded repo; it includes
+                      `netlify.toml` with the build and redirect settings.
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border/70 bg-muted/25 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                3 · Confirm build settings and deploy
+              </p>
+              <p className="mt-2 text-sm text-foreground">
+                Build command:{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5">
+                  pnpm build
+                </code>
+                {" · "}Output directory:{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5">dist</code>
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Idea to app</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/fonts/DM_Sans_400.woff2") format("woff2");
+          font-weight: 100 900;
+          font-style: normal;
+          font-display: block;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #0a0a0a;
+          container-type: size;
+          font-family: "DM Sans", sans-serif;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 76% 34%, rgba(50, 109, 245, 0.17), transparent 34%),
+            #ffffff;
+        }
+
+        .ground-grid {
+          position: absolute;
+          inset: 0;
+          opacity: 0.48;
+          background-image:
+            linear-gradient(rgba(50, 109, 245, 0.075) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(50, 109, 245, 0.075) 1px, transparent 1px);
+          background-size: 48px 48px;
+          mask-image: linear-gradient(90deg, transparent 2%, #000 35%, #000 100%);
+        }
+
+        .diagonal-panel {
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 44cqw;
+          height: 83cqh;
+          background: rgba(50, 109, 245, 0.08);
+          clip-path: polygon(29% 0, 100% 0, 100% 100%, 0 100%);
+        }
+
+        .dot-field {
+          position: absolute;
+          top: 92px;
+          right: 100px;
+          display: grid;
+          grid-template-columns: repeat(3, 8px);
+          gap: 18px;
+          opacity: 0.7;
+        }
+
+        .dot-field span {
+          display: block;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #326df5;
+        }
+
+        .content {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        .accent-line {
+          position: absolute;
+          top: 100px;
+          left: 96px;
+          width: 60px;
+          height: 4px;
+          border-radius: 2px;
+          background: #326df5;
+        }
+
+        .eyebrow {
+          position: absolute;
+          top: 124px;
+          left: 96px;
+          color: #326df5;
+          font-size: 18px;
+          font-weight: 700;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .idea-stage {
+          position: absolute;
+          top: 188px;
+          left: 96px;
+          width: 1040px;
+          height: 360px;
+          transform-origin: 50% 52%;
+          will-change: transform, opacity, filter;
+          z-index: 5;
+        }
+
+        .typed-line {
+          display: flex;
+          align-items: baseline;
+          width: 1010px;
+          min-height: 150px;
+          white-space: pre;
+          color: #0a0a0a;
+          font-size: 72px;
+          font-weight: 700;
+          line-height: 1.06;
+          letter-spacing: -0.045em;
+        }
+
+        .typed-copy {
+          display: inline-block;
+          min-width: 900px;
+          white-space: pre;
+        }
+
+        .caret,
+        .wait-caret {
+          display: inline-block;
+          border-radius: 3px;
+          background: #326df5;
+        }
+
+        .caret {
+          width: 12px;
+          height: 70px;
+          margin-left: 8px;
+          vertical-align: -10px;
+        }
+
+        .notebook {
+          position: absolute;
+          top: 184px;
+          left: 2px;
+          width: 820px;
+          height: 120px;
+          overflow: hidden;
+          border: 2px solid rgba(50, 109, 245, 0.24);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.78);
+        }
+
+        .notebook::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: linear-gradient(rgba(50, 109, 245, 0.1) 1px, transparent 1px);
+          background-size: 100% 30px;
+        }
+
+        .notebook-margin {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 72px;
+          width: 2px;
+          background: rgba(50, 109, 245, 0.24);
+          z-index: 1;
+        }
+
+        .notebook-rule {
+          position: absolute;
+          left: 104px;
+          right: 34px;
+          bottom: 38px;
+          height: 3px;
+          border-radius: 2px;
+          background: #326df5;
+          opacity: 0.55;
+          z-index: 1;
+        }
+
+        .wait-stage {
+          position: absolute;
+          top: 266px;
+          right: 96px;
+          width: 530px;
+          height: 150px;
+          z-index: 7;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity, filter;
+        }
+
+        .wait-label {
+          display: flex;
+          align-items: baseline;
+          min-width: 520px;
+          color: #0a0a0a;
+          font-size: 58px;
+          font-weight: 700;
+          line-height: 1;
+          letter-spacing: -0.04em;
+          white-space: pre;
+        }
+
+        .wait-copy {
+          display: inline-block;
+          min-width: 438px;
+        }
+
+        .wait-caret {
+          width: 10px;
+          height: 56px;
+          margin-left: 8px;
+          vertical-align: -8px;
+        }
+
+        .marker-sweep {
+          position: absolute;
+          top: 10px;
+          left: -18px;
+          width: 490px;
+          height: 92px;
+          overflow: visible;
+          pointer-events: none;
+        }
+
+        .marker-sweep path {
+          fill: none;
+          stroke: #326df5;
+          stroke-width: 18;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          opacity: 0.94;
+        }
+
+        .prompt-ghost {
+          position: absolute;
+          top: 520px;
+          left: 186px;
+          width: 600px;
+          height: 116px;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          padding: 24px 28px;
+          border: 2px solid rgba(50, 109, 245, 0.22);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.76);
+          color: #0a0a0a;
+          z-index: 4;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity, filter;
+        }
+
+        .prompt-mark {
+          display: grid;
+          place-items: center;
+          flex: 0 0 46px;
+          width: 46px;
+          height: 46px;
+          border-radius: 50%;
+          background: #326df5;
+          color: #ffffff;
+          font-size: 18px;
+          font-weight: 700;
+        }
+
+        .prompt-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .prompt-copy strong {
+          color: #0a0a0a;
+          font-size: 22px;
+          font-weight: 700;
+        }
+
+        .prompt-copy span {
+          color: #326df5;
+          font-size: 18px;
+          font-weight: 700;
+        }
+
+        .product-window {
+          position: absolute;
+          top: 104px;
+          left: 620px;
+          width: 1192px;
+          height: 704px;
+          overflow: hidden;
+          border: 2px solid rgba(50, 109, 245, 0.28);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.94);
+          transform-origin: 50% 50%;
+          will-change: transform, opacity, filter;
+          z-index: 6;
+        }
+
+        .glass-edge {
+          position: absolute;
+          inset: 5px;
+          border: 1px solid rgba(255, 255, 255, 0.92);
+          border-radius: 10px;
+          pointer-events: none;
+          z-index: 12;
+        }
+
+        .window-bar {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 74px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 28px;
+          border-bottom: 2px solid rgba(50, 109, 245, 0.18);
+          background: rgba(50, 109, 245, 0.055);
+          z-index: 8;
+        }
+
+        .window-brand {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          color: #0a0a0a;
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+        }
+
+        .window-mark {
+          display: grid;
+          place-items: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: #326df5;
+          color: #ffffff;
+          font-size: 16px;
+          font-weight: 700;
+        }
+
+        .window-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .window-status {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 10px 16px;
+          border: 1.5px solid rgba(5, 150, 105, 0.28);
+          border-radius: 100px;
+          background: rgba(5, 150, 105, 0.07);
+          color: #046c4e;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.07em;
+        }
+
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #059669;
+        }
+
+        .window-control {
+          width: 36px;
+          height: 36px;
+          border: 1.5px solid rgba(50, 109, 245, 0.22);
+          border-radius: 50%;
+          background: rgba(50, 109, 245, 0.06);
+        }
+
+        .app-surface {
+          position: absolute;
+          top: 74px;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          display: grid;
+          grid-template-columns: 205px 1fr;
+          background:
+            linear-gradient(rgba(50, 109, 245, 0.055) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(50, 109, 245, 0.055) 1px, transparent 1px),
+            #ffffff;
+          background-size: 32px 32px;
+        }
+
+        .app-sidebar {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          padding: 30px 20px;
+          border-right: 2px solid rgba(50, 109, 245, 0.15);
+          background: rgba(255, 255, 255, 0.78);
+        }
+
+        .studio-brand {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          margin: 0 8px 36px;
+          color: #0a0a0a;
+          font-size: 17px;
+          font-weight: 700;
+        }
+
+        .studio-glyph {
+          display: grid;
+          place-items: center;
+          width: 34px;
+          height: 34px;
+          border-radius: 10px;
+          background: #326df5;
+          color: #ffffff;
+        }
+
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          height: 50px;
+          padding: 0 14px;
+          border-radius: 12px;
+          color: #565e72;
+          font-size: 16px;
+          font-weight: 700;
+        }
+
+        .nav-item.active {
+          background: rgba(50, 109, 245, 0.1);
+          color: #174fc9;
+        }
+
+        .nav-icon {
+          display: grid;
+          place-items: center;
+          width: 26px;
+          height: 26px;
+          border: 1.5px solid currentColor;
+          border-radius: 8px;
+          font-size: 12px;
+        }
+
+        .sidebar-foot {
+          margin-top: auto;
+          padding: 18px;
+          border: 1.5px solid rgba(50, 109, 245, 0.2);
+          border-radius: 12px;
+          background: rgba(50, 109, 245, 0.06);
+          color: #174fc9;
+          font-size: 14px;
+          font-weight: 700;
+          line-height: 1.35;
+        }
+
+        .app-main {
+          position: relative;
+          padding: 34px 38px 32px;
+          overflow: hidden;
+        }
+
+        .app-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+        }
+
+        .app-heading-copy span {
+          display: block;
+          margin-bottom: 6px;
+          color: #326df5;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .app-heading-copy h2 {
+          margin: 0;
+          color: #0a0a0a;
+          font-size: 38px;
+          font-weight: 700;
+          line-height: 1.05;
+          letter-spacing: -0.035em;
+        }
+
+        .app-cta {
+          padding: 15px 22px;
+          border-radius: 100px;
+          background: #326df5;
+          color: #ffffff;
+          font-size: 16px;
+          font-weight: 700;
+        }
+
+        .app-layout {
+          display: grid;
+          grid-template-columns: 1.35fr 0.88fr;
+          gap: 20px;
+        }
+
+        .app-card {
+          border: 1.5px solid rgba(50, 109, 245, 0.22);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.84);
+        }
+
+        .hero-card {
+          position: relative;
+          min-height: 392px;
+          overflow: hidden;
+          padding: 30px;
+          background:
+            radial-gradient(circle at 84% 18%, rgba(50, 109, 245, 0.24), transparent 30%),
+            rgba(50, 109, 245, 0.075);
+        }
+
+        .hero-kicker {
+          color: #174fc9;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .hero-card h3 {
+          max-width: 430px;
+          margin: 15px 0 30px;
+          color: #0a0a0a;
+          font-size: 40px;
+          font-weight: 700;
+          line-height: 1.08;
+          letter-spacing: -0.035em;
+        }
+
+        .schedule-list {
+          display: grid;
+          gap: 12px;
+        }
+
+        .schedule-row {
+          display: grid;
+          grid-template-columns: 12px 1fr auto;
+          align-items: center;
+          gap: 13px;
+          min-height: 54px;
+          padding: 10px 14px;
+          border: 1.5px solid rgba(50, 109, 245, 0.18);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.86);
+          color: #0a0a0a;
+          font-size: 16px;
+          font-weight: 700;
+        }
+
+        .schedule-row em {
+          color: #174fc9;
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 700;
+        }
+
+        .row-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #326df5;
+        }
+
+        .app-stack {
+          display: grid;
+          gap: 18px;
+        }
+
+        .mini-card {
+          min-height: 186px;
+          padding: 24px;
+        }
+
+        .mini-label {
+          color: #174fc9;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+        }
+
+        .mini-card h4 {
+          margin: 12px 0 22px;
+          color: #0a0a0a;
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -0.025em;
+        }
+
+        .progress-line {
+          width: 100%;
+          height: 10px;
+          overflow: hidden;
+          border-radius: 6px;
+          background: rgba(50, 109, 245, 0.1);
+        }
+
+        .progress-line span {
+          display: block;
+          width: 72%;
+          height: 100%;
+          border-radius: 6px;
+          background: #326df5;
+        }
+
+        .chip-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 9px;
+        }
+
+        .app-chip {
+          padding: 9px 12px;
+          border-radius: 100px;
+          background: rgba(50, 109, 245, 0.09);
+          color: #174fc9;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .specular {
+          position: absolute;
+          top: -120px;
+          left: -480px;
+          width: 280px;
+          height: 980px;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+          clip-path: polygon(34% 0, 100% 0, 66% 100%, 0 100%);
+          opacity: 0.72;
+          pointer-events: none;
+          z-index: 11;
+          will-change: transform, opacity;
+        }
+
+        .product-label {
+          position: absolute;
+          right: 28px;
+          bottom: 24px;
+          padding: 11px 18px;
+          border-radius: 100px;
+          background: #326df5;
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          z-index: 10;
+        }
+
+        .progress-track {
+          position: absolute;
+          left: 96px;
+          right: 96px;
+          top: 866px;
+          height: 3px;
+          overflow: hidden;
+          background: rgba(50, 109, 245, 0.1);
+        }
+
+        .progress-fill {
+          display: block;
+          width: 12.5%;
+          height: 100%;
+          background: #326df5;
+          transform-origin: left center;
+        }
+      </style>
+
+      <div data-hf-id="hf-266v" id="root" data-composition-id="01-idea-to-app" data-duration="4.971" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-hjl4" class="clip ground" data-start="0" data-duration="4.971" data-track-index="0">
+          <div data-hf-id="hf-i9dp" class="ground-grid" aria-hidden="true"></div>
+          <div data-hf-id="hf-ur9v" class="diagonal-panel" id="f01-idea-to-app-diagonal"></div>
+          <div data-hf-id="hf-64wp" class="dot-field" aria-hidden="true">
+            <span data-hf-id="hf-uckh"></span><span data-hf-id="hf-l73p"></span><span data-hf-id="hf-me0s"></span>
+            <span data-hf-id="hf-lzpr"></span><span data-hf-id="hf-n6mu"></span><span data-hf-id="hf-msbt"></span>
+            <span data-hf-id="hf-nz8w"></span><span data-hf-id="hf-nkxv"></span><span data-hf-id="hf-ieyi"></span>
+          </div>
+        </div>
+
+        <div data-hf-id="hf-gu8n" class="clip content" data-start="0" data-duration="4.971" data-track-index="1">
+          <div data-hf-id="hf-tnkh" class="accent-line" id="f01-idea-to-app-accent"></div>
+          <div data-hf-id="hf-sux1" class="eyebrow" id="f01-idea-to-app-eyebrow">From thought to product</div>
+
+          <div data-hf-id="hf-lo06" class="idea-stage" id="f01-idea-to-app-idea-stage">
+            <div data-hf-id="hf-lhtn" class="typed-line">
+              <span data-hf-id="hf-jy3n" class="typed-copy" id="f01-idea-to-app-typed-copy"></span><span data-hf-id="hf-0wg5" class="caret" id="f01-idea-to-app-main-caret"></span>
+            </div>
+            <div data-hf-id="hf-8bsu" class="notebook" id="f01-idea-to-app-notebook">
+              <span data-hf-id="hf-aj8p" class="notebook-margin"></span>
+              <span data-hf-id="hf-98oh" class="notebook-rule"></span>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-8302" class="wait-stage" id="f01-idea-to-app-wait-stage">
+            <div data-hf-id="hf-q09y" class="wait-label">
+              <span data-hf-id="hf-ird5" class="wait-copy" id="f01-idea-to-app-wait-copy"></span><span data-hf-id="hf-k7rz" class="wait-caret" id="f01-idea-to-app-wait-caret"></span>
+            </div>
+            <svg data-hf-id="hf-jymw" class="marker-sweep" viewBox="0 0 490 92" preserveAspectRatio="none" aria-hidden="true">
+              <path data-hf-id="hf-0wqk" id="f01-idea-to-app-marker" d="M18 57 C112 33, 230 70, 472 39" />
+            </svg>
+          </div>
+
+          <div data-hf-id="hf-fwxo" class="prompt-ghost" id="f01-idea-to-app-prompt">
+            <div data-hf-id="hf-fwtx" class="prompt-mark">S</div>
+            <div data-hf-id="hf-61vc" class="prompt-copy">
+              <strong data-hf-id="hf-066r">Build a polished booking app</strong>
+              <span data-hf-id="hf-7rhb">Squid is shaping your idea</span>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-0jf6" class="product-window" id="f01-idea-to-app-product-window">
+            <div data-hf-id="hf-atdv" class="glass-edge" aria-hidden="true"></div>
+            <div data-hf-id="hf-85t8" class="window-bar">
+              <div data-hf-id="hf-9xo4" class="window-brand"><span data-hf-id="hf-je2y" class="window-mark">S</span><span data-hf-id="hf-5qd8">Squid Agent</span></div>
+              <div data-hf-id="hf-7qjm" class="window-actions">
+                <div data-hf-id="hf-btrr" class="window-status"><span data-hf-id="hf-i0ip" class="status-dot"></span><span data-hf-id="hf-2h87">APP READY</span></div>
+                <div data-hf-id="hf-ddtp" class="window-control" aria-hidden="true"></div>
+              </div>
+            </div>
+
+            <div data-hf-id="hf-r4mz" class="app-surface">
+              <aside data-hf-id="hf-dqqw" class="app-sidebar app-reveal">
+                <div data-hf-id="hf-0jva" class="studio-brand"><span data-hf-id="hf-dyt6" class="studio-glyph">L</span><span data-hf-id="hf-m6ja">Luma Studio</span></div>
+                <div data-hf-id="hf-lav9" class="nav-item active"><span data-hf-id="hf-4627" class="nav-icon">◇</span><span data-hf-id="hf-h76u">Overview</span></div>
+                <div data-hf-id="hf-5avh" class="nav-item"><span data-hf-id="hf-2ku3" class="nav-icon">○</span><span data-hf-id="hf-v3p1">Bookings</span></div>
+                <div data-hf-id="hf-m2rl" class="nav-item"><span data-hf-id="hf-b621" class="nav-icon">□</span><span data-hf-id="hf-zr2z">Clients</span></div>
+                <div data-hf-id="hf-itzf" class="sidebar-foot">Everything in one calm workspace.</div>
+              </aside>
+
+              <main data-hf-id="hf-ws89" class="app-main">
+                <div data-hf-id="hf-9d0p" class="app-heading app-reveal">
+                  <div data-hf-id="hf-cbs6" class="app-heading-copy">
+                    <span data-hf-id="hf-ud02">Studio overview</span>
+                    <h2 data-hf-id="hf-t82h">Your day, beautifully organized.</h2>
+                  </div>
+                  <div data-hf-id="hf-s84t" class="app-cta">New booking</div>
+                </div>
+
+                <div data-hf-id="hf-wys4" class="app-layout">
+                  <section data-hf-id="hf-cjww" class="app-card hero-card app-reveal">
+                    <div data-hf-id="hf-smg8" class="hero-kicker">Next up</div>
+                    <h3 data-hf-id="hf-yywo">Welcome every client with confidence.</h3>
+                    <div data-hf-id="hf-3n4w" class="schedule-list">
+                      <div data-hf-id="hf-g4ys" class="schedule-row"><span data-hf-id="hf-zspx" class="row-dot"></span><span data-hf-id="hf-6ew8">Brand discovery</span><em data-hf-id="hf-lcaw">Confirmed</em></div>
+                      <div data-hf-id="hf-m7ks" class="schedule-row"><span data-hf-id="hf-nud5" class="row-dot"></span><span data-hf-id="hf-sxlq">Portrait session</span><em data-hf-id="hf-sdki">Prepared</em></div>
+                      <div data-hf-id="hf-l0np" class="schedule-row"><span data-hf-id="hf-p1a8" class="row-dot"></span><span data-hf-id="hf-munq">Client review</span><em data-hf-id="hf-lthi">Ready</em></div>
+                    </div>
+                  </section>
+
+                  <div data-hf-id="hf-1of2" class="app-stack">
+                    <section data-hf-id="hf-ve79" class="app-card mini-card app-reveal">
+                      <div data-hf-id="hf-alq7" class="mini-label">Project flow</div>
+                      <h4 data-hf-id="hf-hq8m">Moving forward</h4>
+                      <div data-hf-id="hf-r9h4" class="progress-line"><span data-hf-id="hf-i0nh"></span></div>
+                    </section>
+                    <section data-hf-id="hf-njeh" class="app-card mini-card app-reveal">
+                      <div data-hf-id="hf-ecq8" class="mini-label">Client care</div>
+                      <h4 data-hf-id="hf-z53j">Thoughtful by default</h4>
+                      <div data-hf-id="hf-r8y1" class="chip-row"><span data-hf-id="hf-8t6i" class="app-chip">Follow-up</span><span data-hf-id="hf-0gbp" class="app-chip">Gallery</span><span data-hf-id="hf-3wyq" class="app-chip">Notes</span></div>
+                    </section>
+                  </div>
+                </div>
+              </main>
+            </div>
+
+            <div data-hf-id="hf-neun" class="specular" id="f01-idea-to-app-specular" aria-hidden="true"></div>
+            <div data-hf-id="hf-3hav" class="product-label app-reveal">WORKING APP</div>
+          </div>
+
+          <div data-hf-id="hf-lxwj" class="progress-track"><span data-hf-id="hf-fgw9" class="progress-fill" id="f01-idea-to-app-progress"></span></div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const DURATION = 4.571;
+        const ideaSequence = [
+          { t: 0.00, text: "", color: "#326df5" },
+          { t: 0.16, text: "WHAT", color: "#0a0a0a" },
+          { t: 0.34, text: "WHAT IF", color: "#0a0a0a" },
+          { t: 0.58, text: "WHAT IF YOUR", color: "#326df5" },
+          { t: 0.88, text: "WHAT IF YOUR APP", color: "#326df5" },
+          { t: 1.22, text: "WHAT IF YOUR APP IDEA", color: "#326df5" },
+          { t: 1.54, text: "WHAT IF YOUR APP IDEA…", color: "#326df5" }
+        ];
+        const waitSequence = [
+          { t: 0.00, text: "" },
+          { t: 1.86, text: "WAIT" },
+          { t: 2.14, text: "WAIT MONTHS" }
+        ];
+
+        function entryAt(sequence, time) {
+          for (let index = sequence.length - 1; index >= 0; index -= 1) {
+            if (time >= sequence[index].t) return sequence[index];
+          }
+          return sequence[0];
+        }
+
+        const ideaText = document.getElementById("f01-idea-to-app-typed-copy");
+        const waitText = document.getElementById("f01-idea-to-app-wait-copy");
+        const mainCaret = document.getElementById("f01-idea-to-app-main-caret");
+        const waitCaret = document.getElementById("f01-idea-to-app-wait-caret");
+        const textDriver = { t: 0 };
+        const blinkDriver = { p: 0 };
+        const tl = gsap.timeline({ paused: true });
+
+        tl.fromTo(
+          "#f01-idea-to-app-diagonal",
+          { x: 120, opacity: 0.45 },
+          { x: 0, opacity: 1, duration: 1.1, ease: "expo.out" },
+          0.1
+        );
+        tl.fromTo(
+          ".dot-field span",
+          { opacity: 0, scale: 0.2 },
+          { opacity: 1, scale: 1, duration: 0.36, stagger: 0.035, ease: "power4.out" },
+          0.14
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-idea-stage",
+          { opacity: 0.72, y: 18 },
+          { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" },
+          0.12
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-accent",
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.5, ease: "power3.out", transformOrigin: "left center" },
+          0.12
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-eyebrow",
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.42, ease: "power4.out" },
+          0.22
+        );
+
+        tl.to(
+          textDriver,
+          {
+            t: DURATION,
+            duration: DURATION,
+            ease: "none",
+            onUpdate: () => {
+              const ideaEntry = entryAt(ideaSequence, textDriver.t);
+              const waitEntry = entryAt(waitSequence, textDriver.t);
+              ideaText.textContent = ideaEntry.text;
+              waitText.textContent = waitEntry.text;
+              mainCaret.style.background = ideaEntry.color;
+            }
+          },
+          0
+        );
+        tl.to(
+          blinkDriver,
+          {
+            p: Math.PI * 2 * 6,
+            duration: DURATION,
+            ease: "none",
+            onUpdate: () => {
+              const blinkOn = Math.sin(blinkDriver.p) > -0.2;
+              mainCaret.style.opacity = textDriver.t < 3.28 && blinkOn ? "1" : "0";
+              waitCaret.style.opacity = textDriver.t >= 1.86 && textDriver.t < 2.82 && blinkOn ? "1" : "0";
+            }
+          },
+          0
+        );
+
+        tl.fromTo(
+          "#f01-idea-to-app-wait-stage",
+          { opacity: 0, x: 48 },
+          { opacity: 1, x: 0, duration: 0.5, ease: "expo.out" },
+          1.78
+        );
+        tl.to(
+          "#f01-idea-to-app-idea-stage",
+          { x: 244, y: 116, scale: 0.64, duration: 0.72, ease: "power3.inOut" },
+          1.72
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-prompt",
+          { opacity: 0, y: 28, scale: 0.96, filter: "blur(10px)" },
+          { opacity: 0.78, y: 0, scale: 1, filter: "blur(0px)", duration: 0.78, ease: "expo.out" },
+          2.02
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-product-window",
+          { opacity: 0, scale: 0.84, filter: "blur(18px)" },
+          { opacity: 0.24, scale: 0.9, filter: "blur(5px)", duration: 0.78, ease: "power3.out" },
+          2.1
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-marker",
+          { strokeDasharray: 520, strokeDashoffset: 520 },
+          { strokeDashoffset: 0, duration: 0.52, ease: "power2.out" },
+          2.48
+        );
+
+        tl.to(
+          ["#f01-idea-to-app-idea-stage", "#f01-idea-to-app-wait-stage", "#f01-idea-to-app-prompt"],
+          { scale: 0.68, opacity: 0, filter: "blur(10px)", duration: 0.36, ease: "power2.in" },
+          3.22
+        );
+        tl.to(
+          "#f01-idea-to-app-product-window",
+          { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.68, ease: "expo.out" },
+          3.35
+        );
+        tl.fromTo(
+          ".app-reveal",
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.48, stagger: 0.075, ease: "power4.out" },
+          3.52
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-specular",
+          { x: 0, opacity: 0 },
+          { x: 1760, opacity: 0.72, duration: 0.72, ease: "power2.inOut" },
+          3.58
+        );
+        tl.fromTo(
+          "#f01-idea-to-app-progress",
+          { scaleX: 0.18 },
+          { scaleX: 1, duration: 1.02, ease: "power3.out", transformOrigin: "left center" },
+          3.48
+        );
+
+        window.__timelines["01-idea-to-app"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

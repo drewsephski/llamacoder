@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #1f2be0;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+          overflow: hidden;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          height: 2px;
+          background: #1f2be0;
+          z-index: 12;
+        }
+        .hairline.top { top: 58px; }
+        .hairline.bottom { top: 852px; }
+
+        .chrome {
+          position: absolute;
+          top: 80px;
+          z-index: 12;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .chrome.left { left: 77px; }
+        .chrome.right { right: 77px; }
+
+        .decision-map {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 896px;
+        }
+
+        .trace-base,
+        .trace-active,
+        .input-trace {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+        }
+        .trace-base {
+          stroke-width: 2px;
+          opacity: 0.14;
+        }
+        .trace-active,
+        .input-trace {
+          stroke-width: 4px;
+        }
+
+        .input-token {
+          position: absolute;
+          left: 112px;
+          top: 394px;
+          width: 214px;
+          height: 76px;
+          border: 3px solid #1f2be0;
+          background: #f0ebde;
+          display: grid;
+          place-items: center;
+          font-family: "Hanken Grotesk";
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          will-change: transform, opacity;
+        }
+
+        .router {
+          position: absolute;
+          left: 780px;
+          top: 338px;
+          width: 360px;
+          height: 190px;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+        .router-shape {
+          position: absolute;
+          inset: 0;
+          width: 360px;
+          height: 190px;
+        }
+        .router-diamond {
+          fill: #f0ebde;
+          stroke: #1f2be0;
+          stroke-width: 5px;
+        }
+        .router-core {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-content: center;
+          text-align: center;
+        }
+        .router-index {
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          opacity: 0.62;
+        }
+        .router-title {
+          margin-top: 10px;
+          font-family: "Newsreader";
+          font-size: 47px;
+          font-weight: 400;
+          line-height: 0.9;
+          letter-spacing: -0.008em;
+        }
+
+        .route-node {
+          position: absolute;
+          width: 252px;
+          height: 88px;
+          border: 3px solid #1f2be0;
+          background: #f0ebde;
+          display: grid;
+          grid-template-columns: 52px 1fr;
+          align-items: center;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+        .route-node .ordinal {
+          height: 48px;
+          border-right: 2px solid rgba(31, 43, 224, 0.28);
+          display: grid;
+          place-items: center;
+          font-family: "DM Mono";
+          font-size: 13px;
+          letter-spacing: 0.06em;
+        }
+        .route-node .label {
+          padding-left: 18px;
+          font-family: "Newsreader";
+          font-size: 33px;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: -0.005em;
+          text-transform: uppercase;
+        }
+        .node-interview { left: 430px; top: 182px; }
+        .node-clarify { left: 812px; top: 136px; }
+        .node-plan { left: 1238px; top: 182px; }
+        .node-search { left: 1430px; top: 386px; }
+        .node-answer { left: 1114px; top: 686px; }
+        .node-generate { left: 1450px; top: 674px; }
+
+        .approval-latch {
+          position: absolute;
+          left: 1194px;
+          top: 560px;
+          width: 300px;
+          height: 82px;
+          z-index: 8;
+          border-top: 4px solid #1f2be0;
+          border-bottom: 4px solid #1f2be0;
+          background: #f0ebde;
+          display: grid;
+          grid-template-columns: 1fr 124px;
+          align-items: center;
+          will-change: transform, opacity;
+        }
+        .approval-latch::before,
+        .approval-latch::after {
+          content: "";
+          position: absolute;
+          top: -16px;
+          width: 4px;
+          height: 110px;
+          background: #1f2be0;
+        }
+        .approval-latch::before { left: 0; }
+        .approval-latch::after { right: 0; }
+        .latch-label {
+          padding-left: 20px;
+          font-family: "Hanken Grotesk";
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+        }
+        .latch-slot {
+          width: 110px;
+          height: 54px;
+          border: 2px dashed rgba(31, 43, 224, 0.38);
+        }
+
+        .approved-token {
+          position: absolute;
+          left: 1360px;
+          top: 574px;
+          width: 110px;
+          height: 54px;
+          z-index: 10;
+          background: #1f2be0;
+          color: #f0ebde;
+          display: grid;
+          place-items: center;
+          font-family: "DM Mono";
+          font-size: 12px;
+          line-height: 1;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .route-status {
+          position: absolute;
+          left: 77px;
+          top: 806px;
+          font-family: "Hanken Grotesk";
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          opacity: 0.62;
+        }
+      </style>
+
+      <div data-hf-id="hf-d3xk" id="root" data-composition-id="04-intent-router" data-duration="8.781" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-6ekd" class="ground clip" data-start="0" data-duration="8.781" data-track-index="0"></div>
+        <div data-hf-id="hf-tan6" class="stage">
+          <div data-hf-id="hf-vgdz" class="hairline top"></div>
+          <div data-hf-id="hf-kzjn" class="hairline bottom"></div>
+          <div data-hf-id="hf-qv5u" class="chrome left">Decision layer / turn 04</div>
+          <div data-hf-id="hf-qj8o" class="chrome right">Intent map</div>
+
+          <svg data-hf-id="hf-rqqh" class="decision-map" viewBox="0 0 1920 896" aria-hidden="true">
+            <path data-hf-id="hf-sc77" class="input-trace draw-path" id="f04-intent-router-input" d="M326 432 H780" />
+
+            <path data-hf-id="hf-29bu" class="trace-base" d="M848 362 Q760 286 682 226" />
+            <path data-hf-id="hf-7bw8" class="trace-base" d="M936 338 Q928 270 938 224" />
+            <path data-hf-id="hf-8uqx" class="trace-base" d="M1072 362 Q1168 286 1238 226" />
+            <path data-hf-id="hf-wwdk" class="trace-base" d="M1140 432 H1430" />
+            <path data-hf-id="hf-bz06" class="trace-base" d="M1036 504 Q1100 602 1240 686" />
+            <path data-hf-id="hf-9459" class="trace-base" d="M1080 492 Q1260 570 1450 718" />
+
+            <path data-hf-id="hf-cn1v" class="trace-active draw-path route-path" id="f04-intent-router-path-interview" d="M848 362 Q760 286 682 226" />
+            <path data-hf-id="hf-p49i" class="trace-active draw-path route-path" id="f04-intent-router-path-clarify" d="M936 338 Q928 270 938 224" />
+            <path data-hf-id="hf-eynq" class="trace-active draw-path route-path" id="f04-intent-router-path-plan" d="M1072 362 Q1168 286 1238 226" />
+            <path data-hf-id="hf-kwaw" class="trace-active draw-path route-path" id="f04-intent-router-path-search" d="M1140 432 H1430" />
+            <path data-hf-id="hf-3o4o" class="trace-active draw-path route-path" id="f04-intent-router-path-answer" d="M1036 504 Q1100 602 1240 686" />
+            <path data-hf-id="hf-ddqb" class="trace-active draw-path route-path generate-path" id="f04-intent-router-path-generate-in" d="M1080 492 Q1190 540 1268 590" />
+            <path data-hf-id="hf-4q1y" class="trace-active draw-path route-path generate-path" id="f04-intent-router-path-generate-out" d="M1412 631 Q1430 678 1450 718" />
+          </svg>
+
+          <div data-hf-id="hf-7adi" class="input-token">User turn</div>
+
+          <div data-hf-id="hf-zy3n" class="router" id="f04-intent-router-hero">
+            <svg data-hf-id="hf-vsn3" class="router-shape" viewBox="0 0 360 190" aria-hidden="true">
+              <polygon data-hf-id="hf-ml72" class="router-diamond" points="180,3 357,95 180,187 3,95" />
+            </svg>
+            <div data-hf-id="hf-42p1" class="router-core">
+              <div data-hf-id="hf-7qdc" class="router-index">Classify first</div>
+              <div data-hf-id="hf-18r9" class="router-title">Intent router</div>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-jxmq" class="route-node node-interview" data-route="interview">
+            <span data-hf-id="hf-9z1j" class="ordinal">01</span><span data-hf-id="hf-tkn0" class="label">Interview</span>
+          </div>
+          <div data-hf-id="hf-b86w" class="route-node node-clarify" data-route="clarify">
+            <span data-hf-id="hf-9kqi" class="ordinal">02</span><span data-hf-id="hf-exx5" class="label">Clarify</span>
+          </div>
+          <div data-hf-id="hf-t1aq" class="route-node node-plan" data-route="plan">
+            <span data-hf-id="hf-96fh" class="ordinal">03</span><span data-hf-id="hf-4ghm" class="label">Plan</span>
+          </div>
+          <div data-hf-id="hf-5c9i" class="route-node node-search" data-route="search">
+            <span data-hf-id="hf-byko" class="ordinal">04</span><span data-hf-id="hf-2iqp" class="label">Search</span>
+          </div>
+          <div data-hf-id="hf-6u8a" class="route-node node-answer" data-route="answer">
+            <span data-hf-id="hf-bk9n" class="ordinal">05</span><span data-hf-id="hf-56vr" class="label">Answer</span>
+          </div>
+          <div data-hf-id="hf-2qmq" class="route-node node-generate" data-route="generate">
+            <span data-hf-id="hf-b5ym" class="ordinal">06</span><span data-hf-id="hf-txka" class="label">Generate</span>
+          </div>
+
+          <div data-hf-id="hf-ioik" class="approval-latch">
+            <span data-hf-id="hf-0x0u" class="latch-label">Plan approval</span>
+            <span data-hf-id="hf-scku" class="latch-slot"></span>
+          </div>
+          <div data-hf-id="hf-lgti" class="approved-token">Approved</div>
+          <div data-hf-id="hf-j88v" class="route-status">One route per turn</div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const frameRoot = document.querySelector('[data-composition-id="04-intent-router"]');
+        const tl = gsap.timeline({ paused: true });
+        const hero = document.getElementById("f04-intent-router-hero");
+        const inputPath = document.getElementById("f04-intent-router-input");
+        const generateInPath = document.getElementById("f04-intent-router-path-generate-in");
+        const generateOutPath = document.getElementById("f04-intent-router-path-generate-out");
+        const routePaths = Array.from(frameRoot.querySelectorAll(".route-path"));
+        const routeNodes = Array.from(frameRoot.querySelectorAll(".route-node"));
+        const latch = frameRoot.querySelector(".approval-latch");
+        const approved = frameRoot.querySelector(".approved-token");
+
+        [inputPath, ...routePaths].forEach((path) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = String(length);
+          path.style.strokeDashoffset = String(length);
+        });
+
+        tl.fromTo(
+          hero,
+          { scale: 0, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.58, ease: "power3.out" },
+          0.04,
+        );
+        tl.fromTo(
+          ".input-token",
+          { x: -230, opacity: 0.3 },
+          { x: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+          0.18,
+        );
+        tl.to(inputPath, { strokeDashoffset: 0, duration: 0.82, ease: "power2.out" }, 0.44);
+
+        const routeCues = [1.65, 2.25, 2.85, 3.45, 4.05, 4.65];
+        routeNodes.forEach((node, index) => {
+          const path = routePaths[index];
+          tl.fromTo(
+            node,
+            { scale: 0.92, opacity: 0.16, y: 16 },
+            { scale: 1, opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+            routeCues[index],
+          );
+          tl.to(
+            path,
+            { strokeDashoffset: 0, duration: 0.52, ease: "power2.out" },
+            routeCues[index] + 0.08,
+          );
+        });
+
+        tl.fromTo(
+          latch,
+          { x: 250, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.56, ease: "power4.out" },
+          5.46,
+        );
+        tl.to(
+          generateInPath,
+          { strokeWidth: 7, duration: 0.28, ease: "power2.out" },
+          5.3,
+        );
+        tl.fromTo(
+          approved,
+          { y: -92, scale: 0.72, opacity: 0 },
+          { y: 0, scale: 1, opacity: 1, duration: 0.48, ease: "power3.out" },
+          7.02,
+        );
+        tl.to(
+          generateOutPath,
+          { strokeDashoffset: 0, duration: 0.56, ease: "power2.out" },
+          7.34,
+        );
+        tl.to(latch, { scaleX: 1.035, duration: 0.18, ease: "power2.out" }, 7.08);
+        tl.to(latch, { scaleX: 1, duration: 0.24, ease: "power2.out" }, 7.26);
+
+        window.__timelines["04-intent-router"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

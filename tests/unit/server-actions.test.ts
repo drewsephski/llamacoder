@@ -211,10 +211,12 @@ describe("server actions", () => {
       userId: "user_1",
       modelId: FREE_MODEL,
       chatId: "chat_1",
+      messageId: "assistant_1",
       description: `AI generation - ${FREE_MODEL}`,
       phase: "follow_up",
       status: "completed",
       generatedText: "done",
+      creditHoldId: undefined,
     });
   });
 

@@ -64,10 +64,15 @@ import {
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
 import {
+  buildLiveApiGenerationContract,
+  detectLiveApiIntent,
+} from "@/features/generation/live-api";
+import {
   createResearchWindow,
   extractWebSources,
 } from "@/features/generation/research-policy";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { getConnectedIntegrationPromptContext } from "@/features/integrations/server/service";
 
 type CompletionMessage = {
   role: "system" | "user" | "assistant";
@@ -378,6 +383,15 @@ export async function POST(req: Request) {
             .slice(-24)
         : [{ content: message.content }],
     );
+    const liveApiIntent = shouldCarryResearchThroughWorkflow
+      ? (rawMessages
+          .filter((candidate) => candidate.role === "user")
+          .slice()
+          .reverse()
+          .map((candidate) => detectLiveApiIntent(candidate.content))
+          .find((intent) => intent.required) ??
+        detectLiveApiIntent(message.content))
+      : detectLiveApiIntent(message.content);
 
     let messages = z
       .array(
@@ -473,6 +487,11 @@ export async function POST(req: Request) {
           const latestUserContent =
             rawMessages.findLast((candidate) => candidate.role === "user")
               ?.content ?? message.content;
+          const connectedIntegrationContext =
+            await getConnectedIntegrationPromptContext({
+              projectId: message.chatId,
+              userId: session.user.id,
+            });
 
           let agentAction: AgentAction;
 
@@ -533,7 +552,7 @@ export async function POST(req: Request) {
                 providerOptions: orchestrationReasoning.providerOptions,
                 output: Output.object({ schema: agentActionSchema }),
                 system: agentOrchestrationPrompt,
-                prompt: `=== PERSISTENT APP SPEC ===\n${specContext}\n=== END SPEC ===\n\nRecent conversation:\n${rawMessages
+                prompt: `=== PERSISTENT APP SPEC ===\n${specContext}\n=== END SPEC ===${connectedIntegrationContext ? `\n\n${connectedIntegrationContext}` : ""}\n\nRecent conversation:\n${rawMessages
                   .filter((candidate) => candidate.role !== "system")
                   .slice(-8)
                   .map(
@@ -570,6 +589,13 @@ export async function POST(req: Request) {
                   request: {
                     ...routedAction.request,
                     id: `interview-${messageId}`,
+                    deliveryContract: finalSpec.deliveryContract,
+                    confirmedDecisions: Math.max(
+                      0,
+                      finalSpec.askedQuestionIds.length -
+                        finalSpec.unresolvedDecisions.length,
+                    ),
+                    remainingDecisions: finalSpec.unresolvedDecisions.length,
                   },
                 };
               } else if (routedAction.action === "clarify") {
@@ -582,6 +608,13 @@ export async function POST(req: Request) {
                   request: {
                     ...routedAction.request,
                     id: `clarify-${messageId}`,
+                    deliveryContract: finalSpec.deliveryContract,
+                    confirmedDecisions: Math.max(
+                      0,
+                      finalSpec.askedQuestionIds.length -
+                        finalSpec.unresolvedDecisions.length,
+                    ),
+                    remainingDecisions: finalSpec.unresolvedDecisions.length,
                   },
                 };
               } else if (routedAction.action === "present_plan") {
@@ -591,6 +624,13 @@ export async function POST(req: Request) {
                   plan: {
                     ...routedAction.plan,
                     id: `plan-${messageId}`,
+                    deliveryContract: finalSpec.deliveryContract,
+                    confirmedDecisions: Math.max(
+                      0,
+                      finalSpec.askedQuestionIds.length -
+                        finalSpec.unresolvedDecisions.length,
+                    ),
+                    remainingDecisions: finalSpec.unresolvedDecisions.length,
                   },
                 };
               } else if (routedAction.action === "resume_generation") {
@@ -628,6 +668,9 @@ export async function POST(req: Request) {
                     request: {
                       id: `interview-${messageId}`,
                       title: "Ready to plan your app",
+                      deliveryContract: finalSpec.deliveryContract,
+                      confirmedDecisions: finalSpec.askedQuestionIds.length,
+                      remainingDecisions: finalSpec.unresolvedDecisions.length,
                       steps: [
                         {
                           id: "confirm-plan",
@@ -656,6 +699,13 @@ export async function POST(req: Request) {
                     request: {
                       id: `interview-${messageId}`,
                       title: "A few more choices will improve the result",
+                      deliveryContract: finalSpec.deliveryContract,
+                      confirmedDecisions: Math.max(
+                        0,
+                        finalSpec.askedQuestionIds.length -
+                          finalSpec.unresolvedDecisions.length,
+                      ),
+                      remainingDecisions: finalSpec.unresolvedDecisions.length,
                       steps: finalSpec.unresolvedDecisions
                         .filter((d) => d.impact === "high")
                         .slice(0, 3)
@@ -734,10 +784,16 @@ export async function POST(req: Request) {
             return;
           }
 
-          let routedResearchQuery: string | null = null;
           if (agentAction.action === "search") {
-            routedResearchQuery = agentAction.request.query;
-            agentAction = { action: "answer" };
+            writeStatus({
+              phase: "preparing",
+              label: "Search approval needed",
+            });
+            writer.write({
+              type: "data-agent-action",
+              data: agentAction,
+            });
+            return;
           }
 
           writer.write({
@@ -747,6 +803,31 @@ export async function POST(req: Request) {
           });
 
           const isCodeGeneration = agentAction.action === "generate_code";
+          const effectiveLiveApiIntent = finalSpec.integrations.length
+            ? {
+                required: true,
+                kind: finalSpec.integrations.some(
+                  (integration) =>
+                    integration.runtime === "server" ||
+                    integration.auth === "secret" ||
+                    integration.auth === "oauth",
+                )
+                  ? ("server_required" as const)
+                  : ("public_candidate" as const),
+                reason:
+                  "The approved specification includes an external integration.",
+              }
+            : liveApiIntent;
+          const integrationPolicyContext = [
+            latestUserContent,
+            ...finalSpec.integrations.flatMap((integration) => [
+              integration.providerId ?? "",
+              integration.name,
+              integration.baseUrl ?? "",
+            ]),
+          ]
+            .filter(Boolean)
+            .join("\n");
           const searchApproval =
             agentMetadata?.kind === "agent_search_approval_response"
               ? agentMetadata
@@ -756,10 +837,12 @@ export async function POST(req: Request) {
             !isFreeRepairRequest &&
             (searchApproved ||
               (searchApproval?.approved !== false &&
-                (researchIntent.required || routedResearchQuery !== null)));
+                (researchIntent.required ||
+                  (isCodeGeneration && effectiveLiveApiIntent.required))));
           const researchQuery = searchApproved
             ? searchApproval.query
-            : (routedResearchQuery ?? researchIntent.query);
+            : (researchIntent.query ??
+              (integrationPolicyContext.trim().slice(0, 500) || null));
           const researchFreshness = researchIntent.required
             ? researchIntent.freshness
             : "evergreen";
@@ -775,7 +858,32 @@ export async function POST(req: Request) {
                 content:
                   guardedMessages[lastUserMessageIndex].content +
                   specBlock +
-                  GENERATION_COMPLETENESS_GUARD,
+                  (connectedIntegrationContext
+                    ? `\n\n${connectedIntegrationContext}`
+                    : "") +
+                  GENERATION_COMPLETENESS_GUARD +
+                  buildLiveApiGenerationContract(
+                    effectiveLiveApiIntent,
+                    integrationPolicyContext,
+                  ),
+              };
+            }
+          } else if (isCodeGeneration && !isFreeRepairRequest) {
+            const lastUserMessageIndex = guardedMessages.findLastIndex(
+              (candidate) => candidate.role === "user",
+            );
+            if (lastUserMessageIndex !== -1) {
+              guardedMessages[lastUserMessageIndex] = {
+                ...guardedMessages[lastUserMessageIndex],
+                content:
+                  guardedMessages[lastUserMessageIndex].content +
+                  (connectedIntegrationContext
+                    ? `\n\n${connectedIntegrationContext}`
+                    : "") +
+                  buildLiveApiGenerationContract(
+                    effectiveLiveApiIntent,
+                    integrationPolicyContext,
+                  ),
               };
             }
           } else if (!isCodeGeneration) {
@@ -845,7 +953,7 @@ export async function POST(req: Request) {
                 },
                 system:
                   researchWindow === null
-                    ? "Research the request before answering or generating software. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact. Return a concise factual brief with source support. Do not write application code."
+                    ? `Research the request before answering or generating software. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set." : ""} Return a concise factual brief with source support. Do not write application code.`
                     : `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
                 prompt:
                   researchWindow === null

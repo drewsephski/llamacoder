@@ -1,4 +1,8 @@
 import { getExtensionForLanguage, getLanguageOfFile } from "@/lib/utils";
+import {
+  analyzeGeneratedApiIntegration,
+  type GeneratedApiIntegrationReport,
+} from "@/lib/generated-api";
 
 export type RawGeneratedFile = {
   path: string;
@@ -29,6 +33,7 @@ export type GeneratedFilesQualityReport = {
   protectedPathsBlocked: number;
   accessibilityWarnings: GeneratedFileDiagnostic[];
   diagnostics: GeneratedFileDiagnostic[];
+  apiIntegration: GeneratedApiIntegrationReport;
   status: "passed" | "warning";
 };
 
@@ -269,6 +274,8 @@ export function validateGeneratedFiles(files: GeneratedFile[]) {
     }
   }
 
+  diagnostics.push(...analyzeGeneratedApiIntegration(files).issues);
+
   return diagnostics;
 }
 
@@ -286,6 +293,7 @@ export function buildGeneratedFilesQualityReport(
     /\.(tsx|ts|jsx|js)$/i.test(file.path),
   ).length;
   const warningCount = diagnostics.length + accessibilityWarnings.length;
+  const apiIntegration = analyzeGeneratedApiIntegration(files);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -296,6 +304,7 @@ export function buildGeneratedFilesQualityReport(
     protectedPathsBlocked,
     accessibilityWarnings,
     diagnostics,
+    apiIntegration,
     status: warningCount === 0 ? "passed" : "warning",
   };
 }
@@ -341,6 +350,7 @@ Requirements:
 - Do not import custom hooks/utilities unless you also output their files.
 - If you call \`cn(...)\`, import it with \`import { cn } from "@/lib/utils"\`.
 - Use \`import { motion } from "framer-motion"\` for Framer Motion.
+- If the app uses fetch, check response.ok, use AbortController timeout, bounded retry, and runtime response validation. Never hard-code API credentials or secret-bearing authorization headers.
 
 Original response:
 ${originalResponse}`;

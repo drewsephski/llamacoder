@@ -17,7 +17,7 @@ describe("export bundle", () => {
       },
       {
         path: "components/Card.tsx",
-        code: "export function Card() { return <section aria-label=\"Demo\" />; }",
+        code: 'export function Card() { return <section aria-label="Demo" />; }',
       },
       {
         path: "components/Header.tsx",
@@ -50,6 +50,8 @@ describe("export bundle", () => {
         "squid-manifest.json",
         "squid-quality-report.json",
         "squid-verification-report.json",
+        "squid-integrations.json",
+        ".env.example",
         "vercel.json",
         "netlify.toml",
         "wrangler.toml",
@@ -74,5 +76,37 @@ describe("export bundle", () => {
     expect(tailwindConfig).toContain("popover: {");
     expect(tailwindConfig).toContain("destructive: {");
     expect(bundle.verificationReport.status).toBe("verified");
+  });
+
+  it("exports API setup notes and publishable environment placeholders", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { load } from "./api"; export default function App() { return <button onClick={load}>Load</button>; }',
+      },
+      {
+        path: "api.ts",
+        code: [
+          "const key = import.meta.env.VITE_MAPS_PUBLISHABLE_KEY;",
+          "function isPlace(value: unknown): value is { name: string } { return typeof value === 'object' && value !== null && 'name' in value; }",
+          "export async function load(retry = 0): Promise<unknown> {",
+          " const controller = new AbortController();",
+          " const timeout = setTimeout(() => controller.abort(), 5000);",
+          " try { const response = await fetch(`https://api.example.com/places?key=${key}`, { signal: controller.signal }); if (!response.ok) throw new Error('bad'); const data: unknown = await response.json(); if (!isPlace(data)) throw new Error('invalid'); return data; }",
+          " catch (error) { if (retry < 2) return load(retry + 1); throw error; } finally { clearTimeout(timeout); }",
+          "}",
+        ].join("\n"),
+      },
+      { path: "types.ts", code: "export type Place = { name: string };" },
+    ]);
+    const bundle = buildExportBundle(files);
+
+    expect(bundle.qualityReport.apiIntegration.status).toBe("setup_required");
+    expect(
+      bundle.files.find((file) => file.path === ".env.example")?.content,
+    ).toContain("VITE_MAPS_PUBLISHABLE_KEY=");
+    expect(
+      bundle.files.find((file) => file.path === "README.md")?.content,
+    ).toContain("API setup required");
   });
 });

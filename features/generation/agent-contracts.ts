@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import { QuestionFlowStepDefinitionSchema } from "@/components/tool-ui/question-flow/schema";
-import { appSpecSchema } from "@/features/generation/app-spec";
+import {
+  appSpecSchema,
+  deliveryContractSchema,
+} from "@/features/generation/app-spec";
 
 export const agentIntentSchema = z.enum([
   "answer",
@@ -23,6 +26,9 @@ export const clarificationRequestSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(120),
   steps: z.array(QuestionFlowStepDefinitionSchema).min(1).max(3),
+  deliveryContract: deliveryContractSchema.default("browser_frontend"),
+  confirmedDecisions: z.number().int().min(0).default(0),
+  remainingDecisions: z.number().int().min(0).default(0),
 });
 
 export const planSectionSchema = z.object({
@@ -39,6 +45,9 @@ export const planSchema = z.object({
   title: z.string().min(1).max(200),
   overview: z.string().min(1).max(500),
   sections: z.array(planSectionSchema).min(1),
+  deliveryContract: deliveryContractSchema.default("browser_frontend"),
+  confirmedDecisions: z.number().int().min(0).default(0),
+  remainingDecisions: z.number().int().min(0).default(0),
 });
 
 export type Plan = z.infer<typeof planSchema>;

@@ -37,6 +37,7 @@ import {
 } from "./agent-interactions";
 import type { Plan } from "@/features/generation/agent-contracts";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
+import { GenerationReceipt } from "@/components/generation-receipt";
 
 export default function ChatLog({
   chat,
@@ -520,11 +521,18 @@ function AssistantMessage({
           version={version}
           fileCount={displayFileCount}
           appTitle={appTitle}
+          changeSummary={message?.changeSummary}
           generating={false}
           disabled={!message || isStreaming}
           onClick={message ? () => onMessageClickAction(message) : undefined}
           isActive={isActive}
         />
+        {message && (
+          <GenerationReceipt
+            message={message}
+            previousMessage={previousMessage}
+          />
+        )}
       </div>
     );
   } else {

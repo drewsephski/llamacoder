@@ -52,6 +52,57 @@ function findSourceAssistantMessage(
     : null;
 }
 
+function getCheckpointMetadata(messages: Message[]) {
+  const latestUserMessage = messages
+    .filter((message) => message.role === "user")
+    .sort((a, b) => b.position - a.position)[0];
+  const metadata = latestUserMessage?.files as
+    | RequestModeMetadata
+    | null
+    | undefined;
+  const hasPreviousVersion = messages.some(
+    (message) =>
+      message.role === "assistant" &&
+      getAssistantMessageFiles(message).length > 0,
+  );
+
+  if (metadata?.kind === "targeted_element_edit") {
+    const target =
+      metadata.selection?.ariaLabel ||
+      metadata.selection?.text ||
+      metadata.selection?.tagName;
+    return {
+      versionKind: "targeted_edit",
+      changeSummary: `Changed selected ${String(target || "element")
+        .trim()
+        .slice(0, 48)}`,
+    };
+  }
+  if (
+    metadata?.kind === "preview_repair" ||
+    metadata?.kind === "preview_repair_request"
+  ) {
+    return { versionKind: "repair", changeSummary: "Repaired preview" };
+  }
+
+  const request = latestUserMessage?.content
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(
+      /^(please\s+)?(build|create|make|update|change|add)\s+(me\s+)?/i,
+      "",
+    )
+    .slice(0, 64);
+  return {
+    versionKind: hasPreviousVersion ? "edit" : "generation",
+    changeSummary: request
+      ? `${hasPreviousVersion ? "Updated" : "Built"} ${request}`
+      : hasPreviousVersion
+        ? "Updated app"
+        : "Initial build",
+  };
+}
+
 async function createChargeableEditRequestMessage({
   chatId,
   text,
@@ -186,6 +237,7 @@ export async function createMessage(
         : null,
     position: maxPosition + 1,
     chatId,
+    ...(role === "assistant" ? getCheckpointMetadata(chat.messages) : {}),
   };
 
   if (role === "assistant") {
@@ -424,6 +476,8 @@ export async function createFreeRepairAssistantMessage(
           : null,
         position: maxPosition + 1,
         chatId,
+        versionKind: "repair",
+        changeSummary: "Repaired preview",
       },
     });
 
@@ -522,6 +576,8 @@ export async function restoreVersionAsCheckpoint({
       files: JSON.parse(JSON.stringify(restoredFiles)),
       position: maxPosition + 1,
       chatId,
+      versionKind: "restore",
+      changeSummary: `Restored v${oldVersion}`,
     },
   });
 

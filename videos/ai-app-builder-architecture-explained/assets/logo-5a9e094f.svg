@@ -1,0 +1,63 @@
+<svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Modern vibrant blue SaaS gradients matching the app's exact theme -->
+    <linearGradient id="grad-main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0062FF" />
+      <stop offset="50%" stop-color="#0095FF" />
+      <stop offset="100%" stop-color="#0CA8FF" />
+    </linearGradient>
+    <linearGradient id="grad-left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="grad-right" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0CA8FF" />
+      <stop offset="100%" stop-color="#0062FF" />
+    </linearGradient>
+    <linearGradient id="grad-spark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BAE6FD" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#0062FF" flood-opacity="0.3" />
+    </filter>
+    
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="30" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="spark-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow Background -->
+  <circle cx="200" cy="200" r="110" fill="url(#grad-main)" opacity="0.15" filter="url(#glow)" />
+
+  <!-- Background Fins -->
+  <path d="M 200 50 C 140 60, 70 110, 90 160 C 100 185, 130 185, 150 160 Z" fill="url(#grad-left)" />
+  <path d="M 200 50 C 260 60, 330 110, 310 160 C 300 185, 270 185, 250 160 Z" fill="url(#grad-right)" />
+
+  <!-- Outer Tentacles -->
+  <path d="M 155 200 C 110 260, 160 320, 120 370" stroke="url(#grad-left)" stroke-width="24" stroke-linecap="round" fill="none" />
+  <path d="M 245 200 C 290 260, 240 320, 280 370" stroke="url(#grad-right)" stroke-width="24" stroke-linecap="round" fill="none" />
+
+  <!-- Inner Tentacles -->
+  <path d="M 185 220 C 185 280, 140 320, 170 380" stroke="url(#grad-main)" stroke-width="24" stroke-linecap="round" fill="none" />
+  <path d="M 215 220 C 215 280, 260 320, 230 380" stroke="url(#grad-main)" stroke-width="24" stroke-linecap="round" fill="none" />
+
+  <!-- Main Mantle (Body) -->
+  <path d="M 200 60 C 230 100, 260 140, 260 180 A 60 60 0 0 1 140 180 C 140 140, 170 100, 200 60 Z" fill="url(#grad-main)" filter="url(#shadow)" />
+
+  <!-- Tech Spark / Star at the tip -->
+  <path d="M 200 5 L 206 28 L 229 34 L 206 40 L 200 63 L 194 40 L 171 34 L 194 28 Z" fill="url(#grad-spark)" filter="url(#spark-glow)" />
+
+  <!-- Agent Eyes (< >) -->
+  <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.15))">
+    <path d="M 185 155 L 165 170 L 185 185" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <path d="M 215 155 L 235 170 L 215 185" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </g>
+</svg>

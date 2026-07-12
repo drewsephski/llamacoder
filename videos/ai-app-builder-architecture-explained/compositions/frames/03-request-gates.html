@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #1f2be0;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          height: 2px;
+          background: #1f2be0;
+          z-index: 9;
+        }
+        .hairline.top { top: 58px; }
+        .hairline.bottom { top: 852px; }
+
+        .chrome {
+          position: absolute;
+          top: 78px;
+          z-index: 10;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .chrome.left { left: 77px; }
+        .chrome.right { right: 77px; }
+
+        .view-label {
+          position: absolute;
+          top: 124px;
+          left: 77px;
+          z-index: 10;
+          font-family: "Hanken Grotesk";
+          font-size: 16px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .viewport-mark {
+          position: absolute;
+          top: 142px;
+          left: 517px;
+          width: 6px;
+          height: 586px;
+          z-index: 2;
+          opacity: 0.18;
+          background: repeating-linear-gradient(
+            to bottom,
+            #1f2be0 0 10px,
+            transparent 10px 22px
+          );
+        }
+
+        .world {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 7000px;
+          height: 896px;
+          transform-origin: 0 0;
+          will-change: transform;
+        }
+
+        .rail-svg {
+          position: absolute;
+          inset: 0;
+          width: 7000px;
+          height: 896px;
+          overflow: visible;
+        }
+        .rail-path {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 4;
+          stroke-linecap: square;
+        }
+        .reject-path {
+          fill: none;
+          stroke: rgba(31, 43, 224, 0.3);
+          stroke-width: 2;
+          stroke-dasharray: 8 10;
+        }
+
+        .station {
+          position: absolute;
+          top: 262px;
+          width: 240px;
+          height: 310px;
+          margin-left: -120px;
+          text-align: center;
+        }
+        .station-kicker {
+          height: 24px;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.08em;
+          opacity: 0.58;
+        }
+        .station-label {
+          min-height: 68px;
+          margin-top: 10px;
+          font-family: "Newsreader";
+          font-size: 40px;
+          line-height: 0.94;
+          font-weight: 400;
+          letter-spacing: -0.008em;
+        }
+        .gate {
+          position: relative;
+          width: 150px;
+          height: 132px;
+          margin: 18px auto 0;
+          border-left: 3px solid #1f2be0;
+          border-right: 3px solid #1f2be0;
+        }
+        .gate::before {
+          content: "";
+          position: absolute;
+          left: -14px;
+          right: -14px;
+          top: 0;
+          height: 3px;
+          background: #1f2be0;
+        }
+        .gate-node {
+          position: absolute;
+          left: 50%;
+          top: 101px;
+          width: 28px;
+          height: 28px;
+          margin-left: -14px;
+          border: 3px solid #1f2be0;
+          background: #f0ebde;
+        }
+        .gate-bar {
+          position: absolute;
+          left: 50%;
+          top: 54px;
+          width: 112px;
+          height: 12px;
+          margin-left: -56px;
+          background: #1f2be0;
+          transform-origin: 50% 50%;
+        }
+
+        .request-token {
+          position: absolute;
+          top: 500px;
+          left: 430px;
+          width: 180px;
+          height: 104px;
+          margin-left: -90px;
+          margin-top: -52px;
+          z-index: 8;
+          border: 4px solid #1f2be0;
+          background: #f0ebde;
+          display: grid;
+          place-items: center;
+          will-change: transform;
+        }
+        .token-type {
+          font-family: "Hanken Grotesk";
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          opacity: 0.72;
+        }
+        .token-name {
+          margin-top: -20px;
+          font-family: "Newsreader";
+          font-size: 52px;
+          line-height: 0.9;
+          font-weight: 400;
+          letter-spacing: -0.008em;
+        }
+
+        .reject-tag {
+          position: absolute;
+          top: 722px;
+          width: 220px;
+          margin-left: -110px;
+          font-family: "DM Mono";
+          font-size: 13px;
+          letter-spacing: 0.06em;
+          text-align: center;
+          text-transform: uppercase;
+          opacity: 0.42;
+        }
+
+        .proceed {
+          position: absolute;
+          left: 6430px;
+          top: 350px;
+          width: 420px;
+          font-family: "Newsreader";
+          font-size: 104px;
+          line-height: 0.9;
+          letter-spacing: -0.008em;
+          font-weight: 400;
+        }
+        .proceed-meta {
+          display: block;
+          margin-bottom: 18px;
+          font-family: "Hanken Grotesk";
+          font-size: 15px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .arrow-head {
+          position: absolute;
+          left: 6636px;
+          top: 480px;
+          width: 0;
+          height: 0;
+          border-top: 20px solid transparent;
+          border-bottom: 20px solid transparent;
+          border-left: 34px solid #1f2be0;
+          transform-origin: 0 50%;
+        }
+
+        .qr {
+          position: absolute;
+          right: 80px;
+          top: 112px;
+          z-index: 10;
+          width: 84px;
+          height: 84px;
+          padding: 7px;
+          background: #f0ebde;
+          border: 2px solid #1f2be0;
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 3px;
+        }
+        .qr i { background: rgba(31, 43, 224, 0.1); }
+        .qr i.on { background: #1f2be0; }
+      </style>
+
+      <div data-hf-id="hf-0gh7" id="root" data-composition-id="03-request-gates" data-start="0" data-duration="9.643" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-259x" class="clip ground" data-start="0" data-duration="9.643" data-track-index="0"></div>
+        <div data-hf-id="hf-htcb" class="clip stage" data-start="0" data-duration="9.643" data-track-index="1">
+          <div data-hf-id="hf-vgdz" class="hairline top"></div>
+          <div data-hf-id="hf-kzjn" class="hairline bottom"></div>
+          <div data-hf-id="hf-so9y" class="chrome left">qualification rail / deterministic checks</div>
+          <div data-hf-id="hf-nho5" class="chrome right">03</div>
+          <div data-hf-id="hf-w9kl" class="view-label">Request gateway</div>
+          <div data-hf-id="hf-nq1k" class="viewport-mark"></div>
+
+          <div data-hf-id="hf-6i7n" class="world" id="f03-request-gates-world">
+            <svg data-hf-id="hf-z3y2" class="rail-svg" viewBox="0 0 7000 896" aria-hidden="true">
+              <path data-hf-id="hf-jdot" class="rail-path draw-path" d="M 150 500 H 1180" />
+              <path data-hf-id="hf-mg0a" class="rail-path draw-path" d="M 1180 500 H 2300" />
+              <path data-hf-id="hf-7br1" class="rail-path draw-path" d="M 2300 500 H 3420" />
+              <path data-hf-id="hf-vl7l" class="rail-path draw-path" d="M 3420 500 H 4540" />
+              <path data-hf-id="hf-f43h" class="rail-path draw-path" d="M 4540 500 H 5660" />
+              <path data-hf-id="hf-tr73" class="rail-path draw-path" d="M 5660 500 H 6650" />
+              <path data-hf-id="hf-fzyn" class="reject-path reject-draw" d="M 430 514 V 690 H 350" />
+              <path data-hf-id="hf-27id" class="reject-path reject-draw" d="M 1550 514 V 690 H 1470" />
+              <path data-hf-id="hf-gxgf" class="reject-path reject-draw" d="M 2670 514 V 690 H 2590" />
+              <path data-hf-id="hf-ywfu" class="reject-path reject-draw" d="M 3790 514 V 690 H 3710" />
+              <path data-hf-id="hf-8anv" class="reject-path reject-draw" d="M 4910 514 V 690 H 4830" />
+            </svg>
+
+            <div data-hf-id="hf-ni6q" class="station" style="left: 430px">
+              <div data-hf-id="hf-lz4m" class="station-kicker">INPUT / 01</div>
+              <div data-hf-id="hf-vs2s" class="station-label station-label-1">ZOD<br data-hf-id="hf-x5px">VALIDATION</div>
+              <div data-hf-id="hf-ld91" class="gate"><div data-hf-id="hf-dntg" class="gate-bar gate-bar-1"></div><div data-hf-id="hf-udzq" class="gate-node"></div></div>
+            </div>
+            <div data-hf-id="hf-hh5g" class="station" style="left: 1550px">
+              <div data-hf-id="hf-inc1" class="station-kicker">IDENTITY / 02</div>
+              <div data-hf-id="hf-cf37" class="station-label station-label-2">SESSION</div>
+              <div data-hf-id="hf-5mkp" class="gate"><div data-hf-id="hf-mbpb" class="gate-bar gate-bar-2"></div><div data-hf-id="hf-s7ju" class="gate-node"></div></div>
+            </div>
+            <div data-hf-id="hf-35g0" class="station" style="left: 2670px">
+              <div data-hf-id="hf-vn2o" class="station-kicker">CAPACITY / 03</div>
+              <div data-hf-id="hf-8ny5" class="station-label station-label-3">RATE LIMIT</div>
+              <div data-hf-id="hf-6ths" class="gate"><div data-hf-id="hf-idla" class="gate-bar gate-bar-3"></div><div data-hf-id="hf-sluv" class="gate-node"></div></div>
+            </div>
+            <div data-hf-id="hf-sgv0" class="station" style="left: 3790px">
+              <div data-hf-id="hf-nl2b" class="station-kicker">POLICY / 04</div>
+              <div data-hf-id="hf-vtge" class="station-label station-label-4">MODEL<br data-hf-id="hf-rsrt">ACCESS</div>
+              <div data-hf-id="hf-6f6r" class="gate"><div data-hf-id="hf-r1h5" class="gate-bar gate-bar-4"></div><div data-hf-id="hf-t05w" class="gate-node"></div></div>
+            </div>
+            <div data-hf-id="hf-k3tj" class="station" style="left: 4910px">
+              <div data-hf-id="hf-le6r" class="station-kicker">ACCOUNT / 05</div>
+              <div data-hf-id="hf-6hkb" class="station-label station-label-5">ELIGIBILITY</div>
+              <div data-hf-id="hf-4fnm" class="gate"><div data-hf-id="hf-q9tc" class="gate-bar gate-bar-5"></div><div data-hf-id="hf-tegx" class="gate-node"></div></div>
+            </div>
+            <div data-hf-id="hf-m2de" class="station" style="left: 6030px">
+              <div data-hf-id="hf-yhiu" class="station-kicker">BILLING / 06</div>
+              <div data-hf-id="hf-f1dd" class="station-label station-label-6">CREDIT HOLD</div>
+              <div data-hf-id="hf-41cl" class="gate"><div data-hf-id="hf-15az" class="gate-bar gate-bar-6"></div><div data-hf-id="hf-tsry" class="gate-node"></div></div>
+            </div>
+
+            <div data-hf-id="hf-3xzd" class="request-token" id="f03-request-gates-token">
+              <div data-hf-id="hf-nsl5" class="token-type">request</div>
+              <div data-hf-id="hf-if4v" class="token-name">JSON</div>
+            </div>
+
+            <div data-hf-id="hf-qgvq" class="reject-tag" style="left: 430px">schema reject</div>
+            <div data-hf-id="hf-d2es" class="reject-tag" style="left: 1550px">unauthorized</div>
+            <div data-hf-id="hf-6bhy" class="reject-tag" style="left: 2670px">retry later</div>
+            <div data-hf-id="hf-a3oi" class="reject-tag" style="left: 3790px">model denied</div>
+            <div data-hf-id="hf-qj1z" class="reject-tag" style="left: 4910px">not eligible</div>
+
+            <div data-hf-id="hf-93ui" class="arrow-head"></div>
+            <div data-hf-id="hf-4v48" class="proceed">
+              <span data-hf-id="hf-z50k" class="proceed-meta">all checks clear</span>
+              proceed
+            </div>
+          </div>
+
+          <div data-hf-id="hf-9kok" class="qr" aria-hidden="true">
+            <i data-hf-id="hf-l5u7" class="on"></i><i data-hf-id="hf-j2zz" class="on"></i><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-iooy" class="on"></i><i data-hf-id="hf-iadx" class="on"></i>
+            <i data-hf-id="hf-l2j4" class="on"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-ko83" class="on"></i><i data-hf-id="hf-y7e5"></i><i data-hf-id="hf-k9x2" class="on"></i>
+            <i data-hf-id="hf-ylp6"></i><i data-hf-id="hf-jvm1" class="on"></i><i data-hf-id="hf-gaus" class="on"></i><i data-hf-id="hf-0l8b"></i><i data-hf-id="hf-0zjc"></i>
+            <i data-hf-id="hf-fwjr" class="on"></i><i data-hf-id="hf-zsm9"></i><i data-hf-id="hf-06xa"></i><i data-hf-id="hf-mi31" class="on"></i><i data-hf-id="hf-mwe2" class="on"></i>
+            <i data-hf-id="hf-nap3" class="on"></i><i data-hf-id="hf-np04" class="on"></i><i data-hf-id="hf-26gf"></i><i data-hf-id="hf-o3b5" class="on"></i><i data-hf-id="hf-2krg"></i>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const world = document.getElementById("f03-request-gates-world");
+        const token = document.getElementById("f03-request-gates-token");
+        const railPaths = Array.from(document.querySelectorAll(".draw-path"));
+        const rejectPaths = Array.from(document.querySelectorAll(".reject-draw"));
+        const labels = Array.from(document.querySelectorAll(".station-label"));
+        const gateBars = Array.from(document.querySelectorAll(".gate-bar"));
+        const rejectTags = Array.from(document.querySelectorAll(".reject-tag"));
+
+        railPaths.forEach((path) => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = String(length);
+          path.style.strokeDashoffset = String(length);
+        });
+        rejectPaths.forEach((path) => {
+          const length = path.getTotalLength();
+          path.dataset.pathLength = String(length);
+          path.style.strokeDasharray = String(length);
+          path.style.strokeDashoffset = String(length);
+        });
+
+        tl.set(world, { x: 90 }, 0);
+        tl.set(labels, { opacity: 0, y: 22 }, 0);
+        tl.set(gateBars, { scaleX: 0.25, scaleY: 1.7, opacity: 0.28 }, 0);
+        tl.set(rejectTags, { opacity: 0, y: -8 }, 0);
+        tl.set(".proceed", { opacity: 0, x: 70 }, 0);
+        tl.set(".arrow-head", { opacity: 0, scale: 0.45 }, 0);
+
+        tl.fromTo(
+          token,
+          { x: -310, opacity: 0.35, scale: 0.82 },
+          { x: 0, opacity: 1, scale: 1, duration: 0.92, ease: "power3.out" },
+          0.08,
+        );
+        tl.to(railPaths[0], { strokeDashoffset: 0, duration: 0.78, ease: "power2.out" }, 0.02);
+        tl.to(labels[0], { opacity: 1, y: 0, duration: 0.52, ease: "power3.out" }, 0.28);
+        tl.to(gateBars[0], { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.34, ease: "power4.out" }, 1.08);
+        tl.to(rejectPaths[0], { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 1.26);
+        tl.to(rejectTags[0], { opacity: 0.42, y: 0, duration: 0.36, ease: "power2.out" }, 1.48);
+
+        function panTo(stationX, tokenX, start, duration) {
+          tl.to(world, { x: 520 - stationX, duration, ease: "power3.inOut" }, start);
+          tl.to(token, { x: tokenX, duration, ease: "power3.inOut" }, start);
+        }
+
+        panTo(1550, 1120, 1.8, 0.86);
+        tl.to(railPaths[1], { strokeDashoffset: 0, duration: 0.66, ease: "power2.out" }, 1.78);
+        tl.to(labels[1], { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" }, 2.32);
+        tl.to(gateBars[1], { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.3, ease: "power4.out" }, 2.63);
+        tl.to(rejectPaths[1], { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" }, 2.78);
+        tl.to(rejectTags[1], { opacity: 0.42, y: 0, duration: 0.34, ease: "power2.out" }, 2.98);
+
+        panTo(2670, 2240, 3.14, 0.86);
+        tl.to(railPaths[2], { strokeDashoffset: 0, duration: 0.66, ease: "power2.out" }, 3.1);
+        tl.to(labels[2], { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" }, 3.66);
+        tl.to(gateBars[2], { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.3, ease: "power4.out" }, 3.96);
+        tl.to(rejectPaths[2], { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" }, 4.1);
+        tl.to(rejectTags[2], { opacity: 0.42, y: 0, duration: 0.34, ease: "power2.out" }, 4.3);
+
+        panTo(3790, 3360, 4.8, 0.86);
+        tl.to(railPaths[3], { strokeDashoffset: 0, duration: 0.66, ease: "power2.out" }, 4.76);
+        tl.to(labels[3], { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" }, 5.32);
+        tl.to(gateBars[3], { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.3, ease: "power4.out" }, 5.62);
+        tl.to(token, { backgroundColor: "#5560e5", color: "#f0ebde", duration: 0.32, ease: "power2.out" }, 5.62);
+        tl.to(rejectPaths[3], { strokeDashoffset: 0, duration: 0.48, ease: "power2.out" }, 5.76);
+        tl.to(rejectTags[3], { opacity: 0.42, y: 0, duration: 0.34, ease: "power2.out" }, 5.94);
+
+        panTo(4910, 4480, 5.92, 0.96);
+        tl.to(railPaths[4], { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 5.88);
+        tl.to(labels[4], { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" }, 6.54);
+        tl.to(gateBars[4], { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.3, ease: "power4.out" }, 6.84);
+        tl.to(token, { backgroundColor: "#1f2be0", color: "#f0ebde", duration: 0.3, ease: "power2.out" }, 6.84);
+        tl.to(rejectPaths[4], { strokeDashoffset: 0, duration: 0.46, ease: "power2.out" }, 6.98);
+        tl.to(rejectTags[4], { opacity: 0.42, y: 0, duration: 0.32, ease: "power2.out" }, 7.14);
+
+        panTo(6030, 5600, 7.4, 0.84);
+        tl.to(railPaths[5], { strokeDashoffset: 0, duration: 1.18, ease: "power2.out" }, 7.36);
+        tl.to(labels[5], { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 7.94);
+        tl.to(gateBars[5], { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.28, ease: "power4.out" }, 8.2);
+        tl.to(".arrow-head", { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" }, 8.38);
+        tl.to(".proceed", { opacity: 1, x: 0, duration: 0.46, ease: "power4.out" }, 8.5);
+
+        window.__timelines["03-request-gates"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

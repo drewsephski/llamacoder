@@ -1,0 +1,70 @@
+{
+  "lines": [
+    {
+      "id": "01",
+      "sfx": [
+        "pencil tick",
+        "soft interface whoosh"
+      ]
+    },
+    {
+      "id": "02",
+      "sfx": [
+        "cursor arrival",
+        "three soft input clicks",
+        "result chime"
+      ]
+    },
+    {
+      "id": "03",
+      "sfx": [
+        "search sweep",
+        "three question ticks",
+        "approval click"
+      ]
+    },
+    {
+      "id": "04",
+      "sfx": [
+        "build pulse",
+        "three page reveals",
+        "file creation ticks"
+      ]
+    },
+    {
+      "id": "05",
+      "sfx": [
+        "diagnostic sweep",
+        "three restrained check ticks",
+        "verified chime"
+      ]
+    },
+    {
+      "id": "06",
+      "sfx": [
+        "selection click",
+        "typing ticks",
+        "focused update whoosh"
+      ]
+    },
+    {
+      "id": "07",
+      "sfx": [
+        "three output clicks",
+        "bundle unfold",
+        "ownership resolve"
+      ]
+    },
+    {
+      "id": "08",
+      "sfx": [
+        "soft logo resolve",
+        "cursor approach",
+        "final click"
+      ]
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  }
+}

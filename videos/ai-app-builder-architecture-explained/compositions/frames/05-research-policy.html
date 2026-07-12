@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Research and integration policy</title>
+  </head>
+  <body>
+    <template>
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <style>
+        @font-face {
+          font-family: "Newsreader";
+          src: url("assets/fonts/Newsreader_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "Hanken Grotesk";
+          src: url("assets/fonts/Hanken_Grotesk_600.ttf") format("truetype");
+          font-weight: 600;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400;
+          font-style: normal;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #1f2be0;
+          container-type: size;
+        }
+
+        .ground {
+          position: absolute;
+          inset: 0;
+          background-color: #f0ebde;
+          background-image:
+            linear-gradient(rgba(31, 43, 224, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(31, 43, 224, 0.1) 1px, transparent 1px);
+          background-size: 38.4px 38.4px;
+        }
+
+        .stage {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          perspective: 1500px;
+        }
+
+        .hairline {
+          position: absolute;
+          left: 77px;
+          right: 77px;
+          height: 2px;
+          background: #1f2be0;
+        }
+
+        .hairline.top { top: 58px; }
+        .hairline.bottom { top: 860px; }
+
+        .topbar {
+          position: absolute;
+          top: 82px;
+          left: 130px;
+          right: 130px;
+          height: 48px;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          border-bottom: 2px solid #1f2be0;
+        }
+
+        .topbar-title {
+          font-family: "Newsreader";
+          font-size: 42px;
+          line-height: 0.9;
+          font-weight: 400;
+          letter-spacing: -0.005em;
+        }
+
+        .topbar-tag,
+        .chrome,
+        .source-index,
+        .stamp,
+        .lane-index,
+        .lane-status,
+        .item-code {
+          font-family: "DM Mono";
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .topbar-tag {
+          padding-top: 7px;
+          font-size: 15px;
+        }
+
+        .research-ledger {
+          position: absolute;
+          top: 154px;
+          left: 130px;
+          right: 130px;
+          height: 158px;
+          display: grid;
+          grid-template-columns: 470px 1fr;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.32);
+        }
+
+        .beam-console {
+          position: relative;
+          border-right: 2px solid #1f2be0;
+          overflow: hidden;
+        }
+
+        .search-label {
+          position: absolute;
+          top: 20px;
+          left: 0;
+          font-family: "Hanken Grotesk";
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .beam-track {
+          position: absolute;
+          left: 0;
+          right: 38px;
+          top: 75px;
+          height: 46px;
+          border-top: 1px solid rgba(31, 43, 224, 0.4);
+          border-bottom: 1px solid rgba(31, 43, 224, 0.4);
+        }
+
+        .beam {
+          position: absolute;
+          top: -1px;
+          left: 0;
+          width: 74px;
+          height: 46px;
+          background: repeating-linear-gradient(90deg, #1f2be0 0 3px, transparent 3px 9px);
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .source-list {
+          padding: 10px 0 0 46px;
+          display: grid;
+          grid-template-rows: repeat(3, 42px);
+        }
+
+        .source-row {
+          display: grid;
+          grid-template-columns: 72px 1fr 220px;
+          align-items: center;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.18);
+        }
+
+        .source-index {
+          font-size: 14px;
+        }
+
+        .source-name {
+          font-family: "Hanken Grotesk";
+          font-size: 21px;
+          line-height: 1;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .stamp {
+          min-width: 190px;
+          font-size: 15px;
+          white-space: nowrap;
+          text-align: left;
+        }
+
+        .policy-grid {
+          position: absolute;
+          top: 352px;
+          left: 130px;
+          width: 1656px;
+          height: 462px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 18px;
+          transform-style: preserve-3d;
+        }
+
+        .lane {
+          position: relative;
+          height: 462px;
+          border-top: 3px solid #1f2be0;
+          border-bottom: 2px solid #1f2be0;
+          background: rgba(240, 235, 222, 0.76);
+          transform-style: preserve-3d;
+          will-change: transform, opacity;
+        }
+
+        .lane.safe { transform-origin: 100% 50%; }
+        .lane.setup { transform-origin: 0% 50%; }
+        .lane.blocked { transform-origin: 50% 50%; }
+
+        .lane-heading {
+          height: 118px;
+          padding: 21px 24px 0;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.32);
+        }
+
+        .lane-index {
+          display: block;
+          margin-bottom: 12px;
+          font-size: 14px;
+        }
+
+        .flip-label {
+          position: relative;
+          display: flex;
+          min-height: 44px;
+          font-family: "Hanken Grotesk";
+          font-size: 29px;
+          line-height: 1;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          white-space: nowrap;
+        }
+
+        .flip-ghost {
+          position: absolute;
+          inset: 0 auto auto 0;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .flip-live {
+          position: relative;
+          display: inline-flex;
+        }
+
+        .flip-char {
+          display: inline-block;
+          transform-origin: bottom;
+          transform-style: preserve-3d;
+          will-change: transform, opacity;
+        }
+
+        .lane-status {
+          display: inline-block;
+          margin-top: 9px;
+          font-size: 13px;
+        }
+
+        .lane-body {
+          padding: 28px 24px 0;
+          display: grid;
+          gap: 19px;
+        }
+
+        .policy-item {
+          min-height: 70px;
+          display: grid;
+          grid-template-columns: 58px 1fr;
+          align-items: center;
+          gap: 18px;
+          border-bottom: 1px solid rgba(31, 43, 224, 0.18);
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .symbol {
+          width: 52px;
+          height: 52px;
+          display: grid;
+          place-items: center;
+          border: 2px solid #1f2be0;
+        }
+
+        .symbol svg {
+          width: 34px;
+          height: 34px;
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 2.2;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+        }
+
+        .item-copy strong {
+          display: block;
+          margin-bottom: 5px;
+          font-family: "Newsreader";
+          font-size: 28px;
+          line-height: 1;
+          font-weight: 400;
+          letter-spacing: -0.005em;
+        }
+
+        .item-code {
+          display: block;
+          font-size: 13px;
+        }
+
+        .boundary-svg {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: visible;
+          pointer-events: none;
+        }
+
+        .boundary-path {
+          fill: none;
+          stroke: #1f2be0;
+          stroke-width: 8;
+          stroke-linecap: square;
+          stroke-linejoin: miter;
+        }
+
+        .boundary-tag {
+          position: absolute;
+          top: 822px;
+          left: 694px;
+          padding: 6px 12px 5px;
+          background: #1f2be0;
+          color: #f0ebde;
+          font-family: "DM Mono";
+          font-size: 14px;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+        }
+
+        .chrome {
+          position: absolute;
+          top: 835px;
+          font-size: 14px;
+        }
+
+        .chrome.left { left: 130px; }
+        .chrome.right { right: 130px; }
+      </style>
+
+      <div data-hf-id="hf-2ixs" id="root" data-composition-id="05-research-policy" data-start="0" data-duration="8.807" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-64w6" class="clip ground" data-start="0" data-duration="8.807" data-track-index="0"></div>
+
+        <div data-hf-id="hf-9qm8" class="clip stage" data-start="0" data-duration="8.807" data-track-index="1">
+          <div data-hf-id="hf-vgdz" class="hairline top"></div>
+          <div data-hf-id="hf-kzjn" class="hairline bottom"></div>
+
+          <header data-hf-id="hf-ntm2" class="topbar" id="f05-topbar">
+            <div data-hf-id="hf-o8pr" class="topbar-title">Research / integration policy</div>
+            <div data-hf-id="hf-j68q" class="topbar-tag">POLICY MATRIX · 05</div>
+          </header>
+
+          <section data-hf-id="hf-eycx" class="research-ledger" aria-label="Fresh source verification ledger">
+            <div data-hf-id="hf-k2at" class="beam-console">
+              <div data-hf-id="hf-du8o" class="search-label">Search beam</div>
+              <div data-hf-id="hf-s8vr" class="beam-track">
+                <div data-hf-id="hf-63xa" class="beam" id="f05-beam"></div>
+              </div>
+            </div>
+            <div data-hf-id="hf-7ip4" class="source-list">
+              <div data-hf-id="hf-yqbw" class="source-row">
+                <span data-hf-id="hf-hzg4" class="source-index">SRC 01</span>
+                <span data-hf-id="hf-et2k" class="source-name">Official source</span>
+                <span data-hf-id="hf-v14q" class="stamp" id="f05-stamp-1">PENDING</span>
+              </div>
+              <div data-hf-id="hf-cnvo" class="source-row">
+                <span data-hf-id="hf-gsj1" class="source-index">SRC 02</span>
+                <span data-hf-id="hf-gfcg" class="source-name">Current record</span>
+                <span data-hf-id="hf-3t17" class="stamp" id="f05-stamp-2">PENDING</span>
+              </div>
+              <div data-hf-id="hf-bgyl" class="source-row">
+                <span data-hf-id="hf-h6u2" class="source-index">SRC 03</span>
+                <span data-hf-id="hf-umw7" class="source-name">Cross-check</span>
+                <span data-hf-id="hf-qqvk" class="stamp" id="f05-stamp-3">PENDING</span>
+              </div>
+            </div>
+          </section>
+
+          <main data-hf-id="hf-acn6" class="policy-grid" aria-label="Three-lane integration policy matrix">
+            <section data-hf-id="hf-dxu0" class="lane safe" id="f05-safe">
+              <div data-hf-id="hf-b9dr" class="lane-heading">
+                <span data-hf-id="hf-rmu2" class="lane-index">01 / OPEN</span>
+                <div data-hf-id="hf-jlqw" class="flip-label" id="f05-safe-label" data-target="BROWSER SAFE"></div>
+                <span data-hf-id="hf-iz9q" class="lane-status">NO CREDENTIAL</span>
+              </div>
+              <div data-hf-id="hf-ib0n" class="lane-body">
+                <div data-hf-id="hf-8m34" class="policy-item" id="f05-public-api">
+                  <div data-hf-id="hf-nne1" class="symbol" aria-hidden="true">
+                    <svg data-hf-id="hf-zms7" viewBox="0 0 36 36"><path data-hf-id="hf-iuis" d="M4 18h28M18 4c5 5 7 10 7 14s-2 9-7 14M18 4c-5 5-7 10-7 14s2 9 7 14M5 10h26M5 26h26" /></svg>
+                  </div>
+                  <div data-hf-id="hf-su41" class="item-copy"><strong data-hf-id="hf-xzdf">Public API</strong><span data-hf-id="hf-vkjh" class="item-code">CLIENT-SAFE FETCH</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section data-hf-id="hf-f52y" class="lane setup" id="f05-setup">
+              <div data-hf-id="hf-eren" class="lane-heading">
+                <span data-hf-id="hf-wg6w" class="lane-index">02 / HINGE</span>
+                <div data-hf-id="hf-7bub" class="flip-label" id="f05-setup-label" data-target="SETUP REQUIRED"></div>
+                <span data-hf-id="hf-mai5" class="lane-status">SERVER BOUNDARY</span>
+              </div>
+              <div data-hf-id="hf-im3r" class="lane-body">
+                <div data-hf-id="hf-a3xe" class="policy-item" id="f05-secret-key">
+                  <div data-hf-id="hf-qskd" class="symbol" aria-hidden="true">
+                    <svg data-hf-id="hf-3rbr" viewBox="0 0 36 36"><path data-hf-id="hf-m7z3" d="M21 15a7 7 0 1 0-4 6l4 4h4v4h4v-4h3v-4H21" /><path data-hf-id="hf-rwr5" d="M10 15h.1" /></svg>
+                  </div>
+                  <div data-hf-id="hf-jqed" class="item-copy"><strong data-hf-id="hf-l3cl">Secret key</strong><span data-hf-id="hf-6imj" class="item-code">SERVER-ONLY CREDENTIAL</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section data-hf-id="hf-r8a4" class="lane blocked" id="f05-blocked">
+              <div data-hf-id="hf-ed3m" class="lane-heading">
+                <span data-hf-id="hf-54p4" class="lane-index">03 / STOP</span>
+                <div data-hf-id="hf-7g8o" class="flip-label" id="f05-blocked-label" data-target="BLOCKED"></div>
+                <span data-hf-id="hf-y1yg" class="lane-status">NO DIRECT ACTION</span>
+              </div>
+              <div data-hf-id="hf-i7sq" class="lane-body">
+                <div data-hf-id="hf-ffh5" class="policy-item" id="f05-side-effect">
+                  <div data-hf-id="hf-rzhg" class="symbol" aria-hidden="true">
+                    <svg data-hf-id="hf-3d0q" viewBox="0 0 36 36"><path data-hf-id="hf-7389" d="M5 28h26V8H5zM10 13h11M10 18h8M23 13l5 5-5 5" /></svg>
+                  </div>
+                  <div data-hf-id="hf-kxbg" class="item-copy"><strong data-hf-id="hf-j0mm">Side effect</strong><span data-hf-id="hf-gtr2" class="item-code">EXTERNAL WRITE</span></div>
+                </div>
+              </div>
+            </section>
+          </main>
+
+          <svg data-hf-id="hf-7qk3" class="boundary-svg" viewBox="0 0 1920 1080" aria-hidden="true">
+            <path data-hf-id="hf-lo0m" class="boundary-path" id="f05-boundary" d="M678 342 H1797 V821 H678 Z" />
+          </svg>
+          <div data-hf-id="hf-md1y" class="boundary-tag" id="f05-boundary-tag">PROTECTED EXECUTION</div>
+
+          <div data-hf-id="hf-u590" class="chrome left">EVIDENCE → POLICY → EXECUTION</div>
+          <div data-hf-id="hf-9s3n" class="chrome right">FRAME 05 / 08</div>
+        </div>
+      </div>
+
+      <script>
+        (() => {
+          window.__timelines = window.__timelines || {};
+
+          const root = document.getElementById("root");
+          const q = (selector) => root.querySelector(selector);
+          const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*";
+
+          function pseudoGlyph(seed) {
+            const h = ((seed * 9301 + 49297) % 233280) / 233280;
+            return GLYPHS[Math.floor(h * GLYPHS.length)];
+          }
+
+          function buildFlipLabel(selector) {
+            const wrap = q(selector);
+            const target = wrap.dataset.target;
+            const ghost = document.createElement("span");
+            ghost.className = "flip-ghost";
+            ghost.textContent = target;
+            const live = document.createElement("span");
+            live.className = "flip-live";
+            const chars = [];
+            for (const ch of target) {
+              const span = document.createElement("span");
+              span.className = "flip-char";
+              span.dataset.target = ch;
+              span.textContent = ch === " " ? "\u00a0" : ch;
+              live.appendChild(span);
+              chars.push(span);
+            }
+            wrap.appendChild(ghost);
+            wrap.appendChild(live);
+            return chars;
+          }
+
+          const safeChars = buildFlipLabel("#f05-safe-label");
+          const setupChars = buildFlipLabel("#f05-setup-label");
+          const blockedChars = buildFlipLabel("#f05-blocked-label");
+
+          const boundary = q("#f05-boundary");
+          const boundaryLength = boundary.getTotalLength();
+          boundary.style.strokeDasharray = `${boundaryLength}`;
+          boundary.style.strokeDashoffset = `${boundaryLength}`;
+
+          const tl = gsap.timeline({ paused: true });
+
+          tl.fromTo(
+            "#f05-topbar",
+            { y: -24, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.48, ease: "power3.out" },
+            0.02,
+          );
+
+          tl.fromTo(
+            "#f05-beam",
+            { x: -70, scaleX: 0.35, opacity: 0 },
+            { x: 330, scaleX: 1, opacity: 1, duration: 1.6, ease: "power2.inOut" },
+            0.12,
+          );
+
+          const stampSequence = [
+            { t: 0, values: ["PENDING", "PENDING", "PENDING"] },
+            { t: 0.54, values: ["CHECKING…", "PENDING", "PENDING"] },
+            { t: 0.92, values: ["VERIFIED · TODAY", "CHECKING…", "PENDING"] },
+            { t: 1.34, values: ["VERIFIED · TODAY", "CURRENT · TODAY", "CHECKING…"] },
+            { t: 1.76, values: ["VERIFIED · TODAY", "CURRENT · TODAY", "FRESH · CONFIRMED"] },
+          ];
+          const stampDriver = { t: 0 };
+          tl.to(
+            stampDriver,
+            {
+              t: 2.02,
+              duration: 2.02,
+              ease: "none",
+              onUpdate: () => {
+                let state = stampSequence[0];
+                for (let i = stampSequence.length - 1; i >= 0; i -= 1) {
+                  if (stampDriver.t >= stampSequence[i].t) {
+                    state = stampSequence[i];
+                    break;
+                  }
+                }
+                q("#f05-stamp-1").textContent = state.values[0];
+                q("#f05-stamp-2").textContent = state.values[1];
+                q("#f05-stamp-3").textContent = state.values[2];
+              },
+            },
+            0,
+          );
+
+          tl.fromTo(
+            "#f05-safe",
+            { x: -520, rotateY: 68, scale: 0.88, opacity: 0 },
+            { x: 0, rotateY: 0, scale: 1, opacity: 1, duration: 0.92, ease: "power3.out" },
+            2.03,
+          );
+          tl.fromTo(
+            "#f05-setup",
+            { x: 520, rotateY: -68, scale: 0.88, opacity: 0 },
+            { x: 0, rotateY: 0, scale: 1, opacity: 1, duration: 0.92, ease: "power3.out" },
+            2.22,
+          );
+
+          function addHackerFlip(chars, start) {
+            chars.forEach((el, i) => {
+              const state = { p: 0 };
+              tl.to(
+                state,
+                {
+                  p: 1,
+                  duration: 0.55,
+                  ease: "power3.out",
+                  onUpdate: () => {
+                    const progress = state.p;
+                    const target = el.dataset.target;
+                    if (target === " ") {
+                      el.textContent = "\u00a0";
+                    } else if (progress < 0.6) {
+                      el.textContent = pseudoGlyph(i * 1000 + Math.floor(progress * 20));
+                    } else {
+                      el.textContent = target;
+                    }
+                    el.style.transform = `rotateX(${90 - progress * 90}deg)`;
+                    el.style.opacity = Math.min(1, progress * 2);
+                  },
+                },
+                start + i * 0.036,
+              );
+            });
+          }
+
+          addHackerFlip(safeChars, 2.48);
+          addHackerFlip(setupChars, 2.7);
+
+          tl.fromTo(
+            "#f05-blocked",
+            { scale: 0, opacity: 0, y: 16 },
+            { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+            5.08,
+          );
+          addHackerFlip(blockedChars, 5.2);
+
+          ["#f05-public-api", "#f05-secret-key", "#f05-side-effect"].forEach((selector, i) => {
+            tl.fromTo(
+              selector,
+              { scale: 0, opacity: 0, y: 18 },
+              { scale: 1, opacity: 1, y: 0, duration: 0.56, ease: "power3.out" },
+              5.48 + i * 0.34,
+            );
+          });
+
+          tl.to(
+            "#f05-boundary",
+            { strokeDashoffset: 0, duration: 0.92, ease: "power2.out" },
+            6.92,
+          );
+          tl.fromTo(
+            "#f05-boundary-tag",
+            { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+            7.62,
+          );
+
+          window.__timelines["05-research-policy"] = tl;
+        })();
+      </script>
+    </template>
+  </body>
+</html>

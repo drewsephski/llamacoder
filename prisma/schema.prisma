@@ -18,25 +18,26 @@ model GeneratedApp {
 }
 
 model Chat {
-  id                  String    @id @default(nanoid(16))
+  id                  String               @id @default(nanoid(16))
   model               String
   quality             String
   prompt              String
   title               String
-  llamaCoderVersion   String    @default("v2")
+  llamaCoderVersion   String               @default("v2")
   shadcn              Boolean
   plan                String?
   appSpec             Json?
-  hasCode             Boolean   @default(false)
-  generationStatus    String    @default("idle")
+  hasCode             Boolean              @default(false)
+  generationStatus    String               @default("idle")
   generationStartedAt DateTime?
   sourceMessageId     String?
   sourceChatId        String?
   referrerUserId      String?
-  createdAt           DateTime  @default(now())
+  createdAt           DateTime             @default(now())
   userId              String?
-  user                User?     @relation(fields: [userId], references: [id])
+  user                User?                @relation(fields: [userId], references: [id])
   messages            Message[]
+  projectIntegrations ProjectIntegration[]
 
   @@index([createdAt])
   @@index([userId])
@@ -54,6 +55,8 @@ model Message {
   followUpPrompts Json?
   chatId          String
   position        Int
+  changeSummary   String?
+  versionKind     String?
   createdAt       DateTime @default(now())
   chat            Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
@@ -100,22 +103,101 @@ model ShareEvent {
 }
 
 model User {
-  id            String          @id
-  name          String?
-  email         String          @unique
-  emailVerified Boolean         @default(false)
-  image         String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  credits       Int             @default(0)
-  chats         Chat[]
-  creditHistory CreditHistory[]
-  creditGrants  CreditGrant[]
-  subscription  Subscription?
-  accounts      Account[]
-  sessions      Session[]
+  id                     String                  @id
+  name                   String?
+  email                  String                  @unique
+  emailVerified          Boolean                 @default(false)
+  image                  String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  credits                Int                     @default(0)
+  chats                  Chat[]
+  creditHistory          CreditHistory[]
+  creditGrants           CreditGrant[]
+  subscription           Subscription?
+  accounts               Account[]
+  sessions               Session[]
+  integrationConnections IntegrationConnection[]
+  integrationAuditEvents IntegrationAuditEvent[]
 
   @@map("user")
+}
+
+model IntegrationConnection {
+  id                String                  @id @default(nanoid(16))
+  userId            String
+  providerId        String
+  displayName       String
+  authType          String
+  status            String
+  scopes            String[]                @default([])
+  metadata          Json?
+  lastHealthStatus  String?
+  lastHealthMessage String?
+  lastHealthCheckAt DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentials       IntegrationCredential[]
+  projectBindings   ProjectIntegration[]
+  auditEvents       IntegrationAuditEvent[]
+
+  @@index([userId, providerId])
+  @@index([userId, status])
+}
+
+model IntegrationCredential {
+  id           String                @id @default(nanoid(16))
+  connectionId String
+  kind         String
+  ciphertext   String
+  iv           String
+  authTag      String
+  keyVersion   Int                   @default(1)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  connection   IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, kind])
+  @@index([connectionId])
+}
+
+model ProjectIntegration {
+  id           String                  @id @default(nanoid(16))
+  chatId       String
+  connectionId String
+  providerId   String
+  environment  String
+  status       String
+  config       Json?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  chat         Chat                    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  connection   IntegrationConnection   @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  auditEvents  IntegrationAuditEvent[]
+
+  @@unique([chatId, providerId, environment])
+  @@index([chatId, environment])
+  @@index([connectionId])
+}
+
+model IntegrationAuditEvent {
+  id                   String                 @id @default(nanoid(16))
+  userId               String
+  providerId           String
+  action               String
+  environment          String?
+  connectionId         String?
+  projectIntegrationId String?
+  metadata             Json?
+  createdAt            DateTime               @default(now())
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection           IntegrationConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  projectIntegration   ProjectIntegration?    @relation(fields: [projectIntegrationId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([connectionId, createdAt])
+  @@index([projectIntegrationId, createdAt])
 }
 
 model Subscription {

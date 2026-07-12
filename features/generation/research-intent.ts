@@ -12,8 +12,7 @@ export type ResearchReason =
   | "verification"
   | "technical-reference"
   | "recommendation"
-  | "external-facts"
-  | "new-build";
+  | "external-facts";
 
 const EXPLICIT_RESEARCH_PATTERNS = [
   /\b(?:web|internet|online)\s+(?:search|research)\b/i,
@@ -29,6 +28,8 @@ const TIME_SENSITIVE_PATTERNS = [
   /\b(?:actual|real|official)\s+(?:UFC\s+)?(?:rankings?|standings?|scores?|results?|schedule|roster|lineup|stats?|records?|prices?|pricing|odds|data)\b/i,
   /\b(?:stock|share|crypto|bitcoin|ethereum)\s+(?:price|quote|rate)\b/i,
   /\b(?:exchange|interest|mortgage)\s+rates?\b/i,
+  /\b(?:weather|forecast|breaking news|election results)\b/i,
+  /\b(?:laws?|regulations?|president|prime minister|CEO)\b.{0,60}\b(?:current|currently|latest|today|now|in office|effective)\b/i,
 ];
 
 const TEMPORAL_CUE_PATTERNS = [
@@ -37,38 +38,27 @@ const TEMPORAL_CUE_PATTERNS = [
 
 const VERIFICATION_PATTERNS = [
   /\b(?:verify|fact[- ]check|confirm|validate|double[- ]check|source|citation|cite|evidence)\b/i,
-  /\b(?:official|real|actual|accurate|factual|source[- ]grounded)\b/i,
+  /\b(?:source[- ]grounded|with sources|according to official)\b/i,
 ];
 
 const TECHNICAL_REFERENCE_PATTERNS = [
   /\b(?:API|SDK|framework|library|package|dependency|provider|platform|service|model)\b.{0,80}\b(?:docs?|documentation|version|support|compatib(?:le|ility)|integration|migration|upgrade|deprecat(?:ed|ion)|best practices?)\b/i,
-  /\b(?:docs?|documentation|release notes?|changelog|GitHub|npm|pnpm|Vercel|OpenAI|Anthropic|Supabase|Stripe|Next\.?js|React|Tailwind|shadcn)\b/i,
+  /\b(?:docs?|documentation|release notes?|changelog)\b.{0,80}\b(?:API|SDK|framework|library|package|dependency|provider|platform|service|model|GitHub|npm|pnpm|Vercel|OpenAI|Anthropic|Supabase|Stripe|Next\.?js|React|Tailwind|shadcn)\b/i,
   /\b(?:install|configure|integrate|connect|deploy|authenticate|authorize)\b.{0,80}\b(?:API|SDK|package|provider|platform|service|library|framework)\b/i,
 ];
 
 const RECOMMENDATION_PATTERNS = [
-  /\b(?:recommend(?:ation|ed)?|best(?!\s+practices?\b)|top|leading|popular|alternatives?|compare|comparison|versus|vs\.?|pros? and cons?|tradeoffs?|which should|what should)\b/i,
-  /\b(?:buy|book|visit|travel|restaurant|hotel|pricing|availability)\b/i,
+  /\b(?:recommend(?:ation|ed)?|alternatives?|compare|comparison|versus|vs\.?|pros? and cons?|tradeoffs?|which should|what should)\b/i,
 ];
 
-const EXTERNAL_FACT_PATTERNS = [
+const EXTERNAL_REFERENCE_PATTERNS = [
   /https?:\/\/|\bwww\.|\b[a-z0-9-]+\.(?:com|org|net|io|dev|ai)\b/i,
-  /\b(?:news|weather|forecast|sports?|rankings?|standings?|scores?|schedule|roster|stats?|prices?|pricing|rates?|odds|laws?|regulations?|policy|elections?|president|CEO|company|market|research|paper|study|statistics|dataset|release)\b/i,
 ];
 
-const GENERAL_INFORMATION_PATTERNS = [
-  /^\s*(?:what|why|when|where|who|which|how)\b/i,
-  /\b(?:explain|summarize|research|analyze|review|tell me about)\b/i,
-];
-
-const LOCAL_CONTEXT_PATTERNS = [
-  /\b(?:this|the)\s+(?:app|component|code|file|implementation|function|page|button|layout|error|bug)\b/i,
-  /\b(?:provided|attached|local|existing)\s+(?:code|files?|context|implementation|app|project)\b/i,
-  /\b(?:TypeError|ReferenceError|SyntaxError|stack trace)\b/i,
-];
-
-const NEW_BUILD_PATTERNS = [
-  /\b(?:build|create|design|make|generate)\b.{0,100}\b(?:app|application|site|website|dashboard|product|tool|experience|landing page)\b/i,
+const EXTERNAL_RECOMMENDATION_SUBJECT_PATTERNS = [
+  /\b(?:API|SDK|framework|library|package|dependency|provider|platform|service|model|vendor|tool|database|hosting|payment|auth)\b/i,
+  /\b(?:buy|book|visit|travel|restaurant|hotel|pricing|availability)\b/i,
+  /\b(?:GitHub|npm|pnpm|Vercel|OpenAI|Anthropic|Supabase|Stripe|Next\.?js|React|Tailwind|shadcn)\b/i,
 ];
 
 const EXPLICIT_READ_ONLY_PATTERNS = [
@@ -103,7 +93,7 @@ function classifyResearch(content: string): {
   const timeSensitive =
     matchesAny(content, TIME_SENSITIVE_PATTERNS) ||
     (matchesAny(content, TEMPORAL_CUE_PATTERNS) &&
-      (matchesAny(content, EXTERNAL_FACT_PATTERNS) ||
+      (matchesAny(content, EXTERNAL_REFERENCE_PATTERNS) ||
         matchesAny(content, TECHNICAL_REFERENCE_PATTERNS)));
 
   if (explicitlyRequested) {
@@ -121,32 +111,34 @@ function classifyResearch(content: string): {
     };
   }
 
-  const evergreenClassifiers: Array<{
-    reason: ResearchReason;
-    patterns: RegExp[];
-  }> = [
-    { reason: "verification", patterns: VERIFICATION_PATTERNS },
-    { reason: "recommendation", patterns: RECOMMENDATION_PATTERNS },
-    { reason: "technical-reference", patterns: TECHNICAL_REFERENCE_PATTERNS },
-    { reason: "external-facts", patterns: EXTERNAL_FACT_PATTERNS },
-    { reason: "new-build", patterns: NEW_BUILD_PATTERNS },
-  ];
-
-  const match = evergreenClassifiers.find(({ patterns }) =>
-    matchesAny(content, patterns),
-  );
-  if (match) {
+  if (matchesAny(content, VERIFICATION_PATTERNS)) {
     return {
-      reason: match.reason,
+      reason: "verification",
+      freshness: "evergreen",
+      explicitlyRequested: false,
+    };
+  }
+
+  if (matchesAny(content, TECHNICAL_REFERENCE_PATTERNS)) {
+    return {
+      reason: "technical-reference",
       freshness: "evergreen",
       explicitlyRequested: false,
     };
   }
 
   if (
-    matchesAny(content, GENERAL_INFORMATION_PATTERNS) &&
-    !matchesAny(content, LOCAL_CONTEXT_PATTERNS)
+    matchesAny(content, RECOMMENDATION_PATTERNS) &&
+    matchesAny(content, EXTERNAL_RECOMMENDATION_SUBJECT_PATTERNS)
   ) {
+    return {
+      reason: "recommendation",
+      freshness: "evergreen",
+      explicitlyRequested: false,
+    };
+  }
+
+  if (matchesAny(content, EXTERNAL_REFERENCE_PATTERNS)) {
     return {
       reason: "external-facts",
       freshness: "evergreen",
@@ -159,9 +151,8 @@ function classifyResearch(content: string): {
 
 /**
  * Detects requests where generating without fresh external facts would be
- * less accurate, current, or useful. The policy intentionally defaults toward
- * research for externally verifiable questions and new products, while local
- * edits and purely creative instructions continue without search.
+ * incorrect or stale. Search is intentionally conservative: ordinary builds,
+ * local edits, and stable questions continue without a separate research call.
  */
 export function detectResearchIntent(
   messages: Array<{ content: string }>,

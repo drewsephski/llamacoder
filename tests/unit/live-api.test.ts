@@ -1,0 +1,72 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  buildLiveApiGenerationContract,
+  detectLiveApiIntent,
+} from "@/features/generation/live-api";
+
+describe("live API intent", () => {
+  it.each([
+    "Show current UFC rankings",
+    "Build a weather forecast app",
+    "Load products from https://example.com/products.json",
+  ])("detects safe live-data candidates: %s", (content) => {
+    expect(detectLiveApiIntent(content)).toMatchObject({
+      required: true,
+      kind: "public_candidate",
+    });
+  });
+
+  it.each([
+    "Send this contact form by email",
+    "Save user projects to a database",
+    "Add Stripe checkout and webhooks",
+  ])("routes secret or side-effect integrations to a server: %s", (content) => {
+    const intent = detectLiveApiIntent(content);
+    expect(intent).toMatchObject({ required: true, kind: "server_required" });
+    expect(buildLiveApiGenerationContract(intent)).toContain(
+      "server-side integration",
+    );
+  });
+
+  it.each(["Build a calculator", "Make a portfolio", "Design a landing page"])(
+    "does not invent an API requirement: %s",
+    (content) => {
+      expect(detectLiveApiIntent(content)).toEqual({
+        required: false,
+        kind: "none",
+        reason: null,
+      });
+    },
+  );
+
+  it("requires unit-safe live API generation", () => {
+    const contract = buildLiveApiGenerationContract(
+      detectLiveApiIntent("Build a live weather dashboard"),
+    );
+    expect(contract).toContain("normalize values explicitly");
+    expect(contract).toContain("Celsius/Fahrenheit");
+  });
+
+  it("adds reviewed provider policy to the generation contract", () => {
+    const contract = buildLiveApiGenerationContract(
+      detectLiveApiIntent("Build a weather dashboard"),
+      "Build a weather dashboard with Open-Meteo",
+    );
+
+    expect(contract).toContain("SQUID INTEGRATION REGISTRY");
+    expect(contract).toContain("open-meteo");
+    expect(contract).toContain("commercialUse=restricted");
+  });
+
+  it("prevents automatically generating a blocked provider", () => {
+    const contract = buildLiveApiGenerationContract(
+      detectLiveApiIntent("Use a maps API"),
+      "Use https://nominatim.openstreetmap.org for place search",
+    );
+
+    expect(contract).toContain("nominatim-public");
+    expect(contract).toContain("policy=blocked");
+    expect(contract).toContain("do not generate the integration");
+  });
+});
