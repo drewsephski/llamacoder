@@ -1,0 +1,6 @@
+interface:
+  display_name: "Llamacoder"
+  short_description: "Repo-specific patterns and workflows for llamacoder"
+  default_prompt: "Use the llamacoder repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true
