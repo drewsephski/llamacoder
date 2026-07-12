@@ -4,7 +4,6 @@
 import Fieldset from "@/components/fieldset";
 import ArrowRightIcon from "@/components/icons/arrow-right";
 import Spinner from "@/components/spinner";
-import bgImg from "@/public/halo.png";
 import * as Select from "@radix-ui/react-select";
 import assert from "assert";
 import {
@@ -1235,7 +1234,7 @@ export default function Home() {
         >
           <div className="relative max-h-[953px] w-full">
             <Image
-              src={bgImg}
+              src="/halo.png"
               alt="Blue halo background behind the Squid Agent app builder"
               className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
                 isHoveringRing
