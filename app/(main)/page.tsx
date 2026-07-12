@@ -1236,6 +1236,8 @@ export default function Home() {
             <Image
               src="/halo.png"
               alt="Blue halo background behind the Squid Agent app builder"
+              width={2392}
+              height={1992}
               className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
                 isHoveringRing
                   ? "scale-[1.01] opacity-70 dark:opacity-15"
