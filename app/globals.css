@@ -142,6 +142,16 @@
   }
 }
 
+.pricing-modal-content {
+  max-height: calc(100vh - 3rem);
+}
+
+@media (max-width: 639px) {
+  .pricing-modal-content {
+    max-height: 64vh;
+  }
+}
+
 ::-webkit-scrollbar {
   background: transparent;
   width: 10px;
@@ -293,11 +303,7 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
         hsl(var(--primary) / 0.06) 0%,
         transparent 55%
       ),
-      linear-gradient(
-        180deg,
-        hsl(var(--card)) 0%,
-        hsl(var(--card) / 0.92) 100%
-      );
+      linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.92) 100%);
     box-shadow:
       0 1px 2px 0 hsl(var(--foreground) / 0.04),
       0 4px 16px -6px hsl(var(--foreground) / 0.08),
@@ -312,11 +318,7 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
         hsl(var(--primary) / 0.08) 0%,
         transparent 55%
       ),
-      linear-gradient(
-        180deg,
-        hsl(222 47% 8%) 0%,
-        hsl(222 40% 6%) 100%
-      );
+      linear-gradient(180deg, hsl(222 47% 8%) 0%, hsl(222 40% 6%) 100%);
     box-shadow:
       0 1px 2px 0 hsl(0 0% 0% / 0.2),
       0 4px 16px -6px hsl(0 0% 0% / 0.3),
@@ -336,11 +338,7 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
         hsl(152 60% 45% / 0.05) 0%,
         transparent 55%
       ),
-      linear-gradient(
-        180deg,
-        hsl(var(--card)) 0%,
-        hsl(var(--card) / 0.92) 100%
-      );
+      linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.92) 100%);
     box-shadow:
       0 1px 2px 0 hsl(var(--foreground) / 0.04),
       0 4px 16px -6px hsl(var(--foreground) / 0.08);
@@ -354,11 +352,7 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
         hsl(152 60% 45% / 0.06) 0%,
         transparent 55%
       ),
-      linear-gradient(
-        180deg,
-        hsl(152 30% 7%) 0%,
-        hsl(152 20% 5%) 100%
-      );
+      linear-gradient(180deg, hsl(152 30% 7%) 0%, hsl(152 20% 5%) 100%);
     box-shadow:
       0 1px 2px 0 hsl(0 0% 0% / 0.2),
       0 4px 16px -6px hsl(0 0% 0% / 0.25),
@@ -426,21 +420,27 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
     background-color: hsl(var(--primary) / 0.1);
   }
 
-  /* Model badge colors - professional palette */
+  /* Model provider badges */
   .model-gpt {
-    @apply border-amber-500/30 bg-amber-500/10 text-amber-500;
+    @apply border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400;
   }
   .model-claude {
-    @apply border-yellow-500/30 bg-yellow-500/10 text-yellow-500;
+    @apply border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400;
   }
   .model-gemini {
-    @apply border-blue-500/20 bg-blue-500/10 text-blue-400;
+    @apply border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400;
   }
   .model-deepseek {
-    @apply border-purple-500/20 bg-purple-500/10 text-purple-400;
+    @apply border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-400;
+  }
+  .model-grok {
+    @apply border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400;
+  }
+  .model-glm {
+    @apply border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-400;
   }
   .model-llama {
-    @apply border-pink-500/20 bg-pink-500/10 text-pink-400;
+    @apply border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400;
   }
   .model-default {
     @apply border-border bg-muted text-muted-foreground;

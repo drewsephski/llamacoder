@@ -11,7 +11,6 @@ import {
   Sparkles,
   Edit3,
   ArrowRight,
-  FolderOpen,
   Layers,
   Coins,
   Check,
@@ -27,24 +26,15 @@ import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { MODELS } from "@/lib/constants";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { getDashboardData } from "@/features/projects/server/dashboard-query";
+import { getModelBadgeClass } from "@/features/projects/model-badge";
 import { z } from "zod";
 
 const renameProjectFormSchema = z.object({
   chatId: z.string().min(1),
   newTitle: z.string().trim().min(1).max(80),
 });
-
-// Professional model badge styles - no emojis
-function getModelBadgeClass(model: string): string {
-  const m = model.toLowerCase();
-  if (m.includes("gpt")) return "model-gpt";
-  if (m.includes("claude")) return "model-claude";
-  if (m.includes("gemini")) return "model-gemini";
-  if (m.includes("deepseek")) return "model-deepseek";
-  if (m.includes("llama")) return "model-llama";
-  return "model-default";
-}
 
 function getModelLabel(model: string): string {
   return MODELS.find((m) => m.value === model)?.label ?? "AI";
@@ -106,61 +96,8 @@ export async function DashboardPage({
     await renameProject(chatId, newTitle);
   }
 
-  // Unauthenticated state
   if (!session) {
-    return (
-      <div className="min-h-screen bg-background">
-        <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="flex h-16 items-center justify-between">
-              <Link href="/" className="flex items-center">
-                <Image
-                  src="/squidagent-logo.svg"
-                  alt="Squid Agent"
-                  width={32}
-                  height={32}
-                  className="h-8 w-auto"
-                />
-              </Link>
-              <div className="flex items-center gap-3">
-                <AnimatedThemeToggleButton variant="horizontal" />
-                <Link
-                  href="/sign-in"
-                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Sign In
-                </Link>
-                <Button asChild>
-                  <Link href="/sign-up">Get Started</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </nav>
-
-        <div className="flex flex-col items-center justify-center px-6 py-32">
-          <div className="w-full max-w-sm">
-            <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-              <FolderOpen className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h1 className="mb-2 text-2xl font-semibold tracking-tight">
-              Sign in to continue
-            </h1>
-            <p className="mb-8 text-muted-foreground">
-              Access your projects and continue building with AI
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button asChild className="w-full">
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/">Try Demo</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    redirect("/sign-in?callbackUrl=/dashboard");
   }
 
   const userName = session.user.name?.split(" ")[0] || "there";

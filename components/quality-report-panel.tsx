@@ -13,15 +13,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { GeneratedFilesQualityReport } from "@/lib/generated-files";
+import type { RuntimeVerificationReport } from "@/features/generation/runtime-verification";
 
 type ExportStatus = "verified" | "warning" | "failed" | null;
 
 export function QualityReportPanel({
   report,
   exportStatus,
+  runtimeVerification,
 }: {
   report: GeneratedFilesQualityReport;
   exportStatus: ExportStatus;
+  runtimeVerification?: RuntimeVerificationReport | null;
 }) {
   const [open, setOpen] = useState(false);
   const plausible = usePlausible();
@@ -65,7 +68,7 @@ export function QualityReportPanel({
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className={`hidden h-8 gap-1.5 px-2.5 text-xs md:inline-flex ${
+        className={`inline-flex h-8 gap-1.5 px-2.5 text-xs ${
           report.status === "passed"
             ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300"
             : "border-amber-500/30 bg-amber-500/10 text-amber-800 hover:bg-amber-500/15 dark:text-amber-300"
@@ -77,7 +80,9 @@ export function QualityReportPanel({
         ) : (
           <AlertTriangle className="size-3.5" />
         )}
-        Quality {report.status === "passed" ? "passed" : "review"}
+        <span className="hidden sm:inline">
+          Quality {report.status === "passed" ? "passed" : "review"}
+        </span>
       </Button>
 
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
@@ -218,6 +223,42 @@ export function QualityReportPanel({
               real persistence, cross-browser behavior, and production
               deployment still require environment-specific verification.
             </p>
+          </section>
+
+          <section
+            className="rounded-lg border border-border/70 p-3"
+            aria-label="Runtime verification"
+          >
+            <h3 className="text-sm font-semibold">Runtime verification</h3>
+            {runtimeVerification ? (
+              <div className="mt-2 grid gap-1 text-sm text-muted-foreground">
+                <p>
+                  Status:{" "}
+                  <span className="font-medium text-foreground">
+                    {runtimeVerification.status}
+                  </span>{" "}
+                  at {runtimeVerification.viewport.width}×
+                  {runtimeVerification.viewport.height}
+                </p>
+                <p>
+                  {runtimeVerification.clickableElements} interactive controls ·{" "}
+                  {runtimeVerification.unnamedClickableElements} without an
+                  accessible name
+                </p>
+                <p>
+                  {runtimeVerification.horizontalOverflow
+                    ? "Horizontal overflow detected"
+                    : "No horizontal overflow detected"}
+                  {runtimeVerification.runtimeError
+                    ? ` · ${runtimeVerification.runtimeError}`
+                    : " · no preview runtime error"}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Not run for this version. Open the preview and choose Test.
+              </p>
+            )}
           </section>
 
           <section

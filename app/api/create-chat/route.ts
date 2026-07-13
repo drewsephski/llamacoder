@@ -24,6 +24,9 @@ import {
 } from "@/lib/constants";
 import { z } from "zod";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { getIntegrationProvider } from "@/features/integrations/registry";
+import type { IntegrationProvider } from "@/features/integrations/registry";
+import { MAX_PROJECT_API_SELECTIONS } from "@/features/projects/contracts";
 
 const IMAGE_DATA_URL_PATTERN = new RegExp(
   `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
@@ -34,6 +37,10 @@ const createChatSchema = z.object({
   prompt: z.string().trim().min(1, "Prompt is required"),
   model: z.string().min(1, "Model is required"),
   quality: z.enum(["high", "low"]),
+  providerIds: z
+    .array(z.string().trim().min(1).max(80))
+    .max(MAX_PROJECT_API_SELECTIONS)
+    .optional(),
   screenshotUrl: z.string().optional(),
   screenshotData: z
     .string()
@@ -83,7 +90,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt, model, quality: requestedQuality } = parsed.data;
+    const {
+      prompt,
+      model,
+      quality: requestedQuality,
+      providerIds = [],
+    } = parsed.data;
     const selectedModel = MODELS.find((m) => m.value === model);
 
     if (!selectedModel) {
@@ -92,6 +104,25 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    const selectedProviders = Array.from(new Set(providerIds)).map(
+      (providerId) => getIntegrationProvider(providerId),
+    );
+    if (
+      selectedProviders.some(
+        (provider) => !provider || provider.policyStatus === "blocked",
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error: "INVALID_INTEGRATION_PROVIDER",
+          message: "One or more selected APIs are unavailable.",
+        },
+        { status: 400 },
+      );
+    }
+    const availableSelectedProviders = selectedProviders.filter(
+      (provider): provider is IntegrationProvider => provider !== null,
+    );
     const quality = isPlanModeAvailable(model) ? requestedQuality : "low";
 
     const session = await auth.api.getSession({
@@ -200,6 +231,40 @@ export async function POST(request: NextRequest) {
               ],
             },
           },
+          ...(availableSelectedProviders.length
+            ? {
+                projectIntegrations: {
+                  create: availableSelectedProviders.map((selectedProvider) => {
+                    const status =
+                      selectedProvider.auth === "none"
+                        ? "configured"
+                        : "authorization_required";
+                    return {
+                      providerId: selectedProvider.id,
+                      environment: "development",
+                      status,
+                      connection: {
+                        create: {
+                          userId: session.user.id,
+                          providerId: selectedProvider.id,
+                          displayName: selectedProvider.name,
+                          authType: selectedProvider.auth,
+                          status,
+                        },
+                      },
+                      auditEvents: {
+                        create: {
+                          userId: session.user.id,
+                          providerId: selectedProvider.id,
+                          action: "selected_during_project_creation",
+                          environment: "development",
+                        },
+                      },
+                    };
+                  }),
+                },
+              }
+            : {}),
         },
         select: {
           id: true,

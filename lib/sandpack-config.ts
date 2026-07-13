@@ -267,6 +267,58 @@ export function SquidPreviewInspector() {
       window.parent?.postMessage({ source: PREVIEW_SOURCE, type: "ready" }, "*");
     }
 
+    function runRuntimeTest(requestId: number) {
+      const clickableElements = Array.from(
+        document.querySelectorAll(
+          "button, a, input, select, textarea, [role='button']",
+        ),
+      );
+      const unnamedClickableElements = clickableElements.filter((element) => {
+        const labelledBy = element.getAttribute("aria-labelledby");
+        const labelledByText = labelledBy
+          ? labelledBy
+              .split(/\\s+/)
+              .map((id) => document.getElementById(id)?.textContent || "")
+              .join(" ")
+          : "";
+        const label =
+          element.getAttribute("aria-label") ||
+          labelledByText ||
+          element.getAttribute("title") ||
+          element.getAttribute("placeholder") ||
+          element.textContent;
+
+        return !label?.replace(/\\s+/g, " ").trim();
+      }).length;
+      const horizontalOverflow =
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth + 8;
+
+      window.parent?.postMessage(
+        {
+          source: PREVIEW_SOURCE,
+          type: "runtime-test-report",
+          requestId,
+          report: {
+            status:
+              unnamedClickableElements > 0 || horizontalOverflow
+                ? "review"
+                : "passed",
+            viewport: {
+              width: Math.max(1, document.documentElement.clientWidth),
+              height: Math.max(1, document.documentElement.clientHeight),
+            },
+            clickableElements: clickableElements.length,
+            unnamedClickableElements,
+            horizontalOverflow,
+            runtimeError: null,
+            checkedAt: new Date().toISOString(),
+          },
+        },
+        "*",
+      );
+    }
+
     function onMessage(event: MessageEvent) {
       const message = event.data;
       if (!message || message.source !== PARENT_SOURCE) return;
@@ -277,6 +329,10 @@ export function SquidPreviewInspector() {
 
       if (message.type === "ping") {
         postReady();
+      }
+
+      if (message.type === "run-runtime-test") {
+        runRuntimeTest(Number(message.requestId) || 0);
       }
     }
 

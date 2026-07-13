@@ -20,7 +20,7 @@ const loadProjectWorkspace = cache(
 
     if (!chat) return null;
 
-    const [totalMessages, initialMessages, recentMessages] = await Promise.all([
+    const [totalMessages, initialMessages, recentMessages, activeRun] = await Promise.all([
       prisma.message.count({ where: { chatId: id } }),
       prisma.message.findMany({
         where: { chatId: id, position: { in: [0, 1] } },
@@ -30,6 +30,22 @@ const loadProjectWorkspace = cache(
         where: { chatId: id, position: { gte: 2 } },
         orderBy: { position: "desc" },
         take: 100,
+      }),
+      prisma.generationRun.findFirst({
+        where: {
+          chatId: id,
+          status: { in: ["running", "recoverable"] },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          messageId: true,
+          status: true,
+          phase: true,
+          label: true,
+          partialText: true,
+          createdAt: true,
+        },
       }),
     ]);
 
@@ -86,6 +102,18 @@ const loadProjectWorkspace = cache(
       messages,
       totalMessages,
       assistantMessagesCountBefore,
+      activeGenerationRun: activeRun
+        ? {
+            id: activeRun.id,
+            messageId: activeRun.messageId,
+            status:
+              activeRun.status === "running" ? "running" : "recoverable",
+            phase: activeRun.phase,
+            label: activeRun.label,
+            partialTextLength: activeRun.partialText.length,
+            createdAt: activeRun.createdAt,
+          }
+        : null,
     };
   },
 );

@@ -89,7 +89,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       providerId: providerParam,
       environment: environment.data,
     });
-    const pkce = providerParam === "github" ? createPkcePair() : null;
+    const pkce =
+      providerParam === "github" && config.mode === "oauth_app"
+        ? createPkcePair()
+        : null;
     const response = NextResponse.redirect(
       buildOAuthAuthorizationUrl({
         config,

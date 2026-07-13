@@ -6,8 +6,9 @@ import { domain } from "@/lib/domain";
 
 export type OAuthProviderId = "github" | "vercel";
 
-type OAuthProviderConfig = {
+export type OAuthProviderConfig = {
   providerId: OAuthProviderId;
+  mode: "oauth_app" | "github_app" | "vercel_integration";
   clientId: string;
   clientSecret: string;
   callbackUrl: string;
@@ -22,11 +23,25 @@ export function getOAuthProviderConfig(
   providerId: OAuthProviderId,
 ): OAuthProviderConfig | null {
   if (providerId === "github") {
+    const appId = requiredValue("GITHUB_APP_ID");
+    const slug = requiredValue("GITHUB_APP_SLUG");
+    const privateKey = requiredValue("GITHUB_APP_PRIVATE_KEY");
+    if (appId && slug && privateKey) {
+      return {
+        providerId,
+        mode: "github_app",
+        clientId: appId,
+        clientSecret: privateKey,
+        slug,
+        callbackUrl: `${domain}/api/integrations/oauth/github/callback`,
+      };
+    }
     const clientId = requiredValue("GITHUB_OAUTH_CLIENT_ID");
     const clientSecret = requiredValue("GITHUB_OAUTH_CLIENT_SECRET");
     if (!clientId || !clientSecret) return null;
     return {
       providerId,
+      mode: "oauth_app",
       clientId,
       clientSecret,
       callbackUrl: `${domain}/api/integrations/oauth/github/callback`,
@@ -39,6 +54,7 @@ export function getOAuthProviderConfig(
   if (!clientId || !clientSecret || !slug) return null;
   return {
     providerId,
+    mode: "vercel_integration",
     clientId,
     clientSecret,
     slug,
@@ -60,6 +76,13 @@ export function buildOAuthAuthorizationUrl({
   codeChallenge?: string;
 }) {
   if (config.providerId === "github") {
+    if (config.mode === "github_app") {
+      const url = new URL(
+        `https://github.com/apps/${encodeURIComponent(config.slug!)}/installations/new`,
+      );
+      url.searchParams.set("state", state);
+      return url;
+    }
     const url = new URL("https://github.com/login/oauth/authorize");
     url.searchParams.set("client_id", config.clientId);
     url.searchParams.set("redirect_uri", config.callbackUrl);
@@ -107,6 +130,9 @@ export async function exchangeOAuthCode({
   fetchImpl?: typeof fetch;
 }) {
   if (config.providerId === "github") {
+    if (config.mode === "github_app") {
+      throw new Error("GitHub App installations do not exchange OAuth codes.");
+    }
     const response = await fetchImpl(
       "https://github.com/login/oauth/access_token",
       {

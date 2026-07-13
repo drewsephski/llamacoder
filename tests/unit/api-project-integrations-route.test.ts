@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   consumeRateLimit: vi.fn(),
   getIntegrationWorkspace: vi.fn(),
   createProjectIntegration: vi.fn(),
+  testProjectIntegration: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
@@ -28,6 +29,7 @@ vi.mock("@/features/integrations/server/service", () => {
     IntegrationServiceError,
     getIntegrationWorkspace: mocks.getIntegrationWorkspace,
     createProjectIntegration: mocks.createProjectIntegration,
+    testProjectIntegration: mocks.testProjectIntegration,
   };
 });
 
@@ -102,5 +104,36 @@ describe("project integrations route", () => {
     );
     expect(limitedResponse.status).toBe(429);
     expect(limitedResponse.headers.get("Retry-After")).toBe("12");
+  });
+
+  it("runs a live contract check when a no-key API is selected", async () => {
+    mocks.getSession.mockResolvedValue({ user: { id: "user_1" } });
+    mocks.createProjectIntegration.mockResolvedValue({ id: "binding_1" });
+    mocks.testProjectIntegration.mockResolvedValue({
+      id: "binding_1",
+      status: "ready",
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/projects/project_1/integrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: "frankfurter",
+          environment: "development",
+        }),
+      }) as never,
+      context,
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.testProjectIntegration).toHaveBeenCalledWith({
+      projectId: "project_1",
+      bindingId: "binding_1",
+      userId: "user_1",
+    });
+    await expect(response.json()).resolves.toMatchObject({
+      integration: { status: "ready" },
+    });
   });
 });

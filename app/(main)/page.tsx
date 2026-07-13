@@ -52,6 +52,7 @@ import {
 import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 import { getErrorMessage } from "@/features/shared/errors";
+import { ApiSelectionDialog } from "@/features/integrations/components/api-selection-dialog";
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/png",
@@ -288,6 +289,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(FREE_MODEL);
   const [quality, setQuality] = useState("low");
+  const [selectedProviderIds, setSelectedProviderIds] = useState<string[]>([]);
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
     undefined,
   );
@@ -1083,10 +1085,10 @@ export default function Home() {
 
           .build-btn {
             min-height: 42px;
-            min-width: 104px;
+            min-width: 88px;
           }
 
-          .model-trigger-label { max-width: 76px; }
+          .model-trigger-label { max-width: 60px; }
         }
 
         /* ---------- Built with Squid showcase ---------- */
@@ -1349,6 +1351,7 @@ export default function Home() {
                         quality,
                         screenshotUrl,
                         screenshotData,
+                        providerIds: selectedProviderIds,
                       });
 
                     plausible("Project Created", {
@@ -1628,6 +1631,13 @@ export default function Home() {
 
                         <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
+                        <ApiSelectionDialog
+                          selectedProviderIds={selectedProviderIds}
+                          onSelectionChange={setSelectedProviderIds}
+                        />
+
+                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
                         {/* Plan mode */}
                         <input type="hidden" name="quality" value={quality} />
                         <button
@@ -1643,7 +1653,6 @@ export default function Home() {
                           className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
                         >
                           <Sparkles className="size-3" aria-hidden="true" />
-                          <span className="sm:hidden">Plan</span>
                           <span className="hidden sm:inline">Plan mode</span>
                         </button>
 

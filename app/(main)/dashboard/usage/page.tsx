@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { normalizeTier, type TierKey } from "@/lib/billing";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowLeft, Coins, FileText, ReceiptText } from "lucide-react";
@@ -26,24 +27,7 @@ export default async function UsagePage() {
   });
 
   if (!session) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-6">
-        <div className="w-full max-w-sm">
-          <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-            <ReceiptText className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Sign in to view usage
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            The usage ledger is tied to your account credits and projects.
-          </p>
-          <Button asChild className="mt-6 w-full">
-            <Link href="/sign-in?callbackUrl=/dashboard/usage">Sign In</Link>
-          </Button>
-        </div>
-      </main>
-    );
+    redirect("/sign-in?callbackUrl=/dashboard/usage");
   }
 
   const prisma = getPrisma();

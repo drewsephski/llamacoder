@@ -2,10 +2,12 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { createProjectIntegrationSchema } from "@/features/integrations/contracts";
+import { getIntegrationProvider } from "@/features/integrations/registry";
 import { integrationErrorResponse } from "@/features/integrations/server/http";
 import {
   createProjectIntegration,
   getIntegrationWorkspace,
+  testProjectIntegration,
 } from "@/features/integrations/server/service";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { auth } from "@/lib/auth";
@@ -76,11 +78,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   try {
     const { projectId } = await context.params;
-    const integration = await createProjectIntegration({
+    let integration = await createProjectIntegration({
       projectId,
       userId,
       ...parsed.data,
     });
+    const provider = getIntegrationProvider(parsed.data.providerId);
+    if (provider?.auth === "none") {
+      integration = await testProjectIntegration({
+        projectId,
+        bindingId: integration.id,
+        userId,
+      });
+    }
     return NextResponse.json({ integration }, { status: 201 });
   } catch (error) {
     return integrationErrorResponse(error);

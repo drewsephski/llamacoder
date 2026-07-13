@@ -6,10 +6,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   ExternalLink,
+  GitBranch,
   KeyRound,
   Loader2,
   Plug,
   RefreshCw,
+  Rocket,
   ShieldCheck,
   Trash2,
 } from "lucide-react";
@@ -26,6 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ProviderCatalog } from "@/features/integrations/components/provider-catalog";
 import {
   Select,
   SelectContent,
@@ -35,6 +38,8 @@ import {
 } from "@/components/ui/select";
 import {
   integrationMutationResponseSchema,
+  integrationActionResponseSchema,
+  integrationResourcesResponseSchema,
   integrationWorkspaceSchema,
   type IntegrationEnvironment,
   type ProjectIntegrationView,
@@ -83,7 +88,172 @@ function statusPresentation(status: ProjectIntegrationView["status"]) {
   };
 }
 
-export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
+function ProviderActions({
+  projectId,
+  messageId,
+  integration,
+}: {
+  projectId: string;
+  messageId: string;
+  integration: ProjectIntegrationView;
+}) {
+  const queryClient = useQueryClient();
+  const [resourceId, setResourceId] = useState("");
+  const resourcesQuery = useQuery({
+    queryKey: ["integration-resources", projectId, integration.id],
+    queryFn: () =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/resources`,
+        integrationResourcesResponseSchema,
+      ),
+  });
+  const resources = resourcesQuery.data?.resources ?? [];
+  const selectedResource =
+    resourceId ||
+    (typeof integration.config?.repository === "string"
+      ? integration.config.repository
+      : typeof integration.config?.projectId === "string"
+        ? integration.config.projectId
+        : "");
+  const actionMutation = useMutation({
+    mutationFn: () =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/actions`,
+        integrationActionResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            integration.providerId === "github"
+              ? {
+                  action: "github_publish",
+                  messageId,
+                  repository: selectedResource,
+                  branch: "squid/generated",
+                }
+              : {
+                  action: "vercel_deploy",
+                  messageId,
+                  ...(selectedResource ? { projectId: selectedResource } : {}),
+                  target:
+                    integration.environment === "production"
+                      ? "production"
+                      : "preview",
+                },
+          ),
+        },
+      ),
+    onSuccess: async ({ operation }) => {
+      await queryClient.invalidateQueries({
+        queryKey: integrationQueryKey(projectId),
+      });
+      toast.success(
+        integration.providerId === "github"
+          ? "Published to GitHub"
+          : "Deployment started",
+        operation.url ? { description: operation.url } : undefined,
+      );
+    },
+    onError: (error) =>
+      toast.error("Provider action failed", {
+        description: error instanceof Error ? error.message : undefined,
+      }),
+  });
+  const canRun =
+    !actionMutation.isPending &&
+    !resourcesQuery.isLoading &&
+    (integration.providerId === "vercel" || Boolean(selectedResource));
+
+  return (
+    <div className="mt-3 grid gap-2 border-t border-border/60 pt-3 sm:grid-cols-[1fr_auto]">
+      <Select value={selectedResource} onValueChange={setResourceId}>
+        <SelectTrigger className="h-9">
+          <SelectValue
+            placeholder={
+              resourcesQuery.isLoading
+                ? "Loading targets..."
+                : integration.providerId === "github"
+                  ? "Choose repository"
+                  : "New Vercel project"
+            }
+          />
+        </SelectTrigger>
+        <SelectContent>
+          {resources.map((resource) => (
+            <SelectItem key={resource.id} value={resource.id}>
+              {resource.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        type="button"
+        size="sm"
+        disabled={!canRun}
+        onClick={() => actionMutation.mutate()}
+      >
+        {actionMutation.isPending ? (
+          <Loader2 className="animate-spin" />
+        ) : integration.providerId === "github" ? (
+          <GitBranch />
+        ) : (
+          <Rocket />
+        )}
+        {integration.providerId === "github"
+          ? "Publish version"
+          : integration.environment === "production"
+            ? "Deploy production"
+            : "Deploy preview"}
+      </Button>
+      {resourcesQuery.isError && (
+        <p className="text-xs text-destructive sm:col-span-2">
+          Could not load provider targets. Test or reconnect the integration.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function OperationStatusRefresher({
+  projectId,
+  bindingId,
+  operationId,
+}: {
+  projectId: string;
+  bindingId: string;
+  operationId: string;
+}) {
+  const queryClient = useQueryClient();
+  const refreshQuery = useQuery({
+    queryKey: ["integration-operation", operationId],
+    queryFn: () =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${bindingId}/actions?operationId=${encodeURIComponent(operationId)}`,
+        integrationActionResponseSchema,
+      ),
+    refetchInterval: (query) =>
+      query.state.data?.operation.status === "running" ? 3_000 : false,
+  });
+  const refreshedStatus = refreshQuery.data?.operation.status;
+  useEffect(() => {
+    if (refreshedStatus && refreshedStatus !== "running") {
+      void queryClient.invalidateQueries({
+        queryKey: integrationQueryKey(projectId),
+      });
+    }
+  }, [projectId, queryClient, refreshedStatus]);
+  return null;
+}
+
+export function ProjectIntegrationsPanel({
+  projectId,
+  messageId,
+  triggerPlacement = "toolbar",
+}: {
+  projectId: string;
+  messageId?: string;
+  triggerPlacement?: "toolbar" | "composer";
+}) {
   const [open, setOpen] = useState(false);
   const [environment, setEnvironment] =
     useState<IntegrationEnvironment>("development");
@@ -152,7 +322,6 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
     () =>
       workspace?.providers.filter(
         (provider) =>
-          provider.policyStatus !== "blocked" &&
           !workspace.integrations.some(
             (integration) =>
               integration.providerId === provider.id &&
@@ -266,8 +435,12 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
   }
 
   const requiresCredential = selectedProvider?.credentialKind != null;
+  const canAuthorizeWithOAuth =
+    selectedProvider?.auth === "oauth" &&
+    (!editingBindingId || selectedBinding?.status === "authorization_required");
   const canSave =
     !!selectedProvider &&
+    selectedProvider.policyStatus !== "blocked" &&
     !saveMutation.isPending &&
     (!requiresCredential ||
       !!credential.trim() ||
@@ -286,18 +459,35 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm" className="gap-1.5">
-          <Plug className="size-3.5" />
-          <span className="hidden lg:inline">Integrations</span>
-        </Button>
+        {triggerPlacement === "composer" ? (
+          <button
+            type="button"
+            className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Choose APIs for this app"
+          >
+            <Plug className="size-3.5" /> APIs
+          </button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            aria-label="Project integrations"
+          >
+            <Plug className="size-3.5" />
+            <span className="hidden lg:inline">Integrations</span>
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plug className="size-5 text-primary" /> Project integrations
           </DialogTitle>
           <DialogDescription>
-            Connect services by environment. Credentials are encrypted and are
+            Choose the APIs this app should use. Squid gives the AI their
+            reviewed implementation rules; credentials stay encrypted and are
             never included in generated source or exports.
           </DialogDescription>
         </DialogHeader>
@@ -472,12 +662,68 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
                               </div>
                             )}
                           </div>
+                          {messageId &&
+                            integration.status === "ready" &&
+                            (integration.providerId === "github" ||
+                              integration.providerId === "vercel") && (
+                              <ProviderActions
+                                projectId={projectId}
+                                messageId={messageId}
+                                integration={integration}
+                              />
+                            )}
                         </div>
                       );
                     })}
                   </div>
                 )}
               </section>
+
+              {workspace?.recentOperations.length ? (
+                <section aria-labelledby="recent-provider-operations">
+                  <h3
+                    id="recent-provider-operations"
+                    className="text-sm font-semibold"
+                  >
+                    Recent publishes and deployments
+                  </h3>
+                  <div className="mt-2 grid gap-2">
+                    {workspace.recentOperations.slice(0, 5).map((operation) => (
+                      <div
+                        key={operation.id}
+                        className="flex items-center justify-between gap-3 rounded-md border border-border/70 px-3 py-2 text-xs"
+                      >
+                        {operation.status === "running" && (
+                          <OperationStatusRefresher
+                            projectId={projectId}
+                            bindingId={operation.projectIntegrationId}
+                            operationId={operation.id}
+                          />
+                        )}
+                        <span>
+                          {operation.kind === "github_publish"
+                            ? "GitHub publish"
+                            : "Vercel deployment"}{" "}
+                          · {operation.status}
+                          {operation.commitSha
+                            ? ` · ${operation.commitSha.slice(0, 7)}`
+                            : ""}
+                        </span>
+                        {operation.url && (
+                          <a
+                            href={operation.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                          >
+                            Open <ExternalLink className="size-3" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
 
               <section
                 aria-labelledby="configure-integration"
@@ -491,11 +737,11 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
                     >
                       {editingBindingId
                         ? "Update connection"
-                        : "Add integration"}
+                        : "Choose APIs for this app"}
                     </h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Only reviewed providers are available. Blocked providers
-                      cannot be connected.
+                      Your choices become project context for planning, code
+                      generation, and runtime checks.
                     </p>
                   </div>
                   {editingBindingId && (
@@ -510,45 +756,43 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
                   )}
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <label className="grid gap-1.5 text-xs font-medium">
-                    Provider
-                    <Select
-                      value={providerId}
-                      onValueChange={setProviderId}
-                      disabled={!!editingBindingId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a provider" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableProviders.map((provider) => (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            {provider.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </label>
-                  <label className="grid gap-1.5 text-xs font-medium">
-                    Connection name
+                {!editingBindingId && (
+                  <ProviderCatalog
+                    providers={availableProviders}
+                    selectedProviderId={providerId}
+                    onSelect={(nextProviderId) => {
+                      setProviderId(nextProviderId);
+                      setDisplayName("");
+                      setCredential("");
+                    }}
+                  />
+                )}
+
+                {selectedProvider && selectedProvider.setup !== "instant" && (
+                  <label className="mt-4 grid gap-1.5 text-xs font-medium sm:max-w-sm">
+                    Connection name <span className="sr-only">(optional)</span>
                     <Input
                       value={displayName}
                       onChange={(event) => setDisplayName(event.target.value)}
-                      placeholder={
-                        selectedProvider?.name ?? "Production account"
-                      }
+                      placeholder={selectedProvider.name}
                       autoComplete="off"
                     />
+                    <span className="font-normal text-muted-foreground">
+                      Optional label to distinguish accounts or environments.
+                    </span>
                   </label>
-                </div>
+                )}
 
                 {selectedProvider && (
-                  <div className="mt-3 rounded-md bg-muted/40 p-3">
+                  <div className="mt-3 rounded-md border border-border/60 bg-muted/30 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-xs font-medium">
-                        {selectedProvider.runtime} runtime ·{" "}
-                        {selectedProvider.auth}
+                        {selectedProvider.setup === "instant"
+                          ? "No key needed"
+                          : selectedProvider.setup === "oauth"
+                            ? "Account authorization"
+                            : "API key required"}{" "}
+                        · {selectedProvider.runtime} runtime
                       </p>
                       <a
                         href={selectedProvider.docsUrl}
@@ -559,8 +803,30 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
                         Official docs <ExternalLink className="size-3" />
                       </a>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      {selectedProvider.guidance}
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
                       {selectedProvider.capabilities.join(" · ")}
+                    </p>
+                    {selectedProvider.exampleEndpoint && (
+                      <p className="mt-2 break-all font-mono text-[11px] text-muted-foreground">
+                        {selectedProvider.exampleEndpoint}
+                      </p>
+                    )}
+                    {(selectedProvider.attribution ||
+                      selectedProvider.limits) && (
+                      <div className="mt-3 grid gap-1 border-t border-border/60 pt-2 text-[11px] leading-5 text-muted-foreground">
+                        {selectedProvider.attribution && (
+                          <p>Attribution: {selectedProvider.attribution}</p>
+                        )}
+                        {selectedProvider.limits && (
+                          <p>Usage: {selectedProvider.limits}</p>
+                        )}
+                      </div>
+                    )}
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      Reviewed {selectedProvider.verifiedAt}
                     </p>
                   </div>
                 )}
@@ -590,7 +856,7 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
                   </label>
                 )}
 
-                {selectedProvider?.auth === "oauth" && !editingBindingId && (
+                {canAuthorizeWithOAuth && (
                   <div className="mt-3 rounded-md border border-blue-500/20 bg-blue-500/5 p-3">
                     <p className="text-xs font-semibold">
                       One-click authorization
@@ -617,18 +883,29 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
                   </div>
                 )}
 
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    type="button"
-                    disabled={!canSave}
-                    onClick={() => saveMutation.mutate()}
-                  >
-                    {saveMutation.isPending && (
-                      <Loader2 className="animate-spin" />
-                    )}
-                    {editingBindingId ? "Save changes" : "Add integration"}
-                  </Button>
-                </div>
+                {(!canAuthorizeWithOAuth ||
+                  !selectedProvider?.oauthAvailable ||
+                  !!credential.trim() ||
+                  !!editingBindingId) && (
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      type="button"
+                      disabled={!canSave}
+                      onClick={() => saveMutation.mutate()}
+                    >
+                      {saveMutation.isPending && (
+                        <Loader2 className="animate-spin" />
+                      )}
+                      {editingBindingId
+                        ? "Save changes"
+                        : selectedProvider?.setup === "instant"
+                          ? "Use in this app"
+                          : selectedProvider?.setup === "api_key"
+                            ? "Add API"
+                            : "Save connection"}
+                    </Button>
+                  </div>
+                )}
               </section>
             </>
           )}

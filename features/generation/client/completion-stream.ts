@@ -9,6 +9,7 @@ import {
 export type CompletionStream = {
   events: ReadableStream<UIMessageChunk>;
   creditHoldId?: string;
+  generationRunId?: string;
 };
 
 export async function fetchCompletionStream({
@@ -56,5 +57,44 @@ export async function fetchCompletionStream({
   return {
     events,
     creditHoldId: response.headers.get("x-credit-hold-id") || undefined,
+    generationRunId:
+      response.headers.get("x-generation-run-id") || undefined,
   };
+}
+
+export async function recoverCompletionStream(runId: string): Promise<CompletionStream> {
+  const response = await fetch(`/api/generation-runs/${runId}`);
+  const run = await response.json().catch(() => null);
+  if (!response.ok || !run?.partialText) {
+    throw new Error(run?.message || "No recoverable generation output was found");
+  }
+
+  const events = new ReadableStream<UIMessageChunk>({
+    start(controller) {
+      controller.enqueue({
+        type: "text-delta",
+        id: `recovered-${runId}`,
+        delta: run.partialText,
+      });
+      controller.close();
+    },
+  });
+
+  return {
+    events,
+    creditHoldId: run.creditHoldId || undefined,
+    generationRunId: run.id,
+  };
+}
+
+export async function updateGenerationRun(
+  runId: string,
+  body: { action: "cancel" } | { action: "complete"; assistantMessageId: string },
+) {
+  const response = await fetch(`/api/generation-runs/${runId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error("Unable to update the generation run");
 }

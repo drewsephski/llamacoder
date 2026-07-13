@@ -19,6 +19,8 @@ import {
 import { GenerationLoader } from "@/components/generation-loader";
 import type { ProjectMessage } from "@/features/projects/contracts";
 import { getErrorMessage } from "@/features/shared/errors";
+import { Square } from "lucide-react";
+import { ProjectIntegrationsPanel } from "@/features/integrations/components/project-integrations-panel";
 
 interface ChatBoxProps {
   chat: {
@@ -29,12 +31,14 @@ interface ChatBoxProps {
   };
   onNewStreamPromiseAction: (streamPromise: Promise<CompletionStream>) => void;
   isStreaming: boolean;
+  onStopAction: () => void | Promise<void>;
 }
 
 export default function ChatBox({
   chat,
   onNewStreamPromiseAction,
   isStreaming,
+  onStopAction,
 }: ChatBoxProps) {
   const [, startTransition] = useTransition();
   const router = useRouter();
@@ -274,6 +278,13 @@ export default function ChatBox({
                     <span className="truncate">{modelLabel}</span>
                   </div>
 
+                  {isAuthenticated && (
+                    <ProjectIntegrationsPanel
+                      projectId={chat.id}
+                      triggerPlacement="composer"
+                    />
+                  )}
+
                   {isStreaming && (
                     <div className="streaming-indicator ml-1">
                       <div className="streaming-dot" />
@@ -307,6 +318,15 @@ export default function ChatBox({
                         : "Generating response"
                     }
                   />
+                  {isStreaming && (
+                    <button
+                      type="button"
+                      onClick={() => void onStopAction()}
+                      className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm hover:bg-muted"
+                    >
+                      <Square className="size-3 fill-current" /> Stop
+                    </button>
+                  )}
                 </div>
               )}
             </div>

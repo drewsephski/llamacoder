@@ -1,7 +1,10 @@
 import { createUIMessageStreamResponse, type UIMessageChunk } from "ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
+import {
+  fetchCompletionStream,
+  recoverCompletionStream,
+} from "@/features/generation/client/completion-stream";
 
 describe("fetchCompletionStream", () => {
   afterEach(() => {
@@ -28,7 +31,10 @@ describe("fetchCompletionStream", () => {
           controller.close();
         },
       }),
-      headers: { "x-credit-hold-id": "hold_1" },
+      headers: {
+        "x-credit-hold-id": "hold_1",
+        "x-generation-run-id": "run_1",
+      },
     });
     const fetchMock = vi.fn().mockResolvedValue(response);
     vi.stubGlobal("fetch", fetchMock);
@@ -47,6 +53,7 @@ describe("fetchCompletionStream", () => {
     }
 
     expect(completion.creditHoldId).toBe("hold_1");
+    expect(completion.generationRunId).toBe("run_1");
     expect(received).toEqual(events);
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/get-next-completion-stream-promise",
@@ -60,5 +67,29 @@ describe("fetchCompletionStream", () => {
         }),
       }),
     );
+  });
+
+  it("replays persisted output without another model request", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({
+          id: "run_1",
+          partialText: "```tsx{path=App.tsx}\nexport default function App(){}\n```",
+          creditHoldId: "hold_1",
+        }),
+      ),
+    );
+
+    const completion = await recoverCompletionStream("run_1");
+    const reader = completion.events.getReader();
+    const first = await reader.read();
+
+    expect(first.value).toMatchObject({
+      type: "text-delta",
+      delta: expect.stringContaining("App.tsx"),
+    });
+    expect(completion.creditHoldId).toBe("hold_1");
+    expect(completion.generationRunId).toBe("run_1");
   });
 });

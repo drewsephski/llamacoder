@@ -9,6 +9,7 @@ import { CheckIcon, CopyIcon, MousePointer2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getSandpackConfig } from "@/lib/sandpack-config";
 import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
+import type { RuntimeVerificationReport } from "@/features/generation/runtime-verification";
 
 const PREVIEW_INSPECTOR_SOURCE = "squid-preview-inspector";
 const PREVIEW_PARENT_SOURCE = "squid-preview-parent";
@@ -31,7 +32,9 @@ export default function ReactCodeRunner({
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
   previewSelectionMode?: boolean;
   previewTestNonce?: number;
-  onPreviewTestReport?: (report: string) => void;
+  onPreviewTestReport?: (
+    report: Omit<RuntimeVerificationReport, "messageId">,
+  ) => void;
 }) {
   const filesKey = files.map((f) => f.path + f.content).join("");
   return (
@@ -105,7 +108,9 @@ function PreviewInspector({
   selectionMode: boolean;
   testNonce: number;
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
-  onPreviewTestReport?: (report: string) => void;
+  onPreviewTestReport?: (
+    report: Omit<RuntimeVerificationReport, "messageId">,
+  ) => void;
 }) {
   const { sandpack } = useSandpack();
 
@@ -170,41 +175,68 @@ function PreviewInspector({
     if (!testNonce || !onPreviewTestReport) return;
 
     const iframe = getPreviewIframe();
-    const doc = iframe?.contentDocument;
     const runtimeError = sandpack.error?.message;
+    let settled = false;
 
-    if (!doc) {
-      onPreviewTestReport("Preview unavailable");
+    const finish = (report: Omit<RuntimeVerificationReport, "messageId">) => {
+      if (settled) return;
+      settled = true;
+      onPreviewTestReport(report);
+    };
+
+    if (runtimeError) {
+      finish({
+        status: "failed",
+        viewport: { width: 1, height: 1 },
+        clickableElements: 0,
+        unnamedClickableElements: 0,
+        horizontalOverflow: false,
+        runtimeError,
+        checkedAt: new Date().toISOString(),
+      });
       return;
     }
 
-    const clickableElements = Array.from(
-      doc.querySelectorAll(
-        "button, a, input, select, textarea, [role='button']",
-      ),
-    );
-    const unnamedClickableCount = clickableElements.filter((element) => {
-      const label =
-        element.getAttribute("aria-label") ||
-        element.getAttribute("title") ||
-        element.textContent;
+    const onMessage = (event: MessageEvent) => {
+      const message = event.data;
+      if (
+        !message ||
+        message.source !== PREVIEW_INSPECTOR_SOURCE ||
+        message.type !== "runtime-test-report" ||
+        message.requestId !== testNonce
+      ) {
+        return;
+      }
 
-      return !label?.replace(/\s+/g, " ").trim();
-    }).length;
-    const hasHorizontalOverflow =
-      doc.documentElement.scrollWidth > doc.documentElement.clientWidth + 8;
-    const status =
-      runtimeError || unnamedClickableCount > 0 || hasHorizontalOverflow
-        ? "Review"
-        : "Passed";
+      finish(message.report);
+    };
 
-    onPreviewTestReport(
-      `${status}: ${clickableElements.length} clickable elements, ${
-        unnamedClickableCount || "no"
-      } unnamed, ${runtimeError ? "runtime error" : "no runtime error"}, ${
-        hasHorizontalOverflow ? "mobile overflow risk" : "no overflow detected"
-      }`,
+    window.addEventListener("message", onMessage);
+    iframe?.contentWindow?.postMessage(
+      {
+        source: PREVIEW_PARENT_SOURCE,
+        type: "run-runtime-test",
+        requestId: testNonce,
+      },
+      "*",
     );
+
+    const unavailableTimer = window.setTimeout(() => {
+      finish({
+        status: "failed",
+        viewport: { width: 1, height: 1 },
+        clickableElements: 0,
+        unnamedClickableElements: 0,
+        horizontalOverflow: false,
+        runtimeError: "Preview did not respond to the runtime test",
+        checkedAt: new Date().toISOString(),
+      });
+    }, 2500);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.clearTimeout(unavailableTimer);
+    };
   }, [testNonce, onPreviewTestReport, sandpack.error]);
 
   if (!selectionMode) return null;

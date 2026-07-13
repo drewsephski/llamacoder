@@ -35,7 +35,17 @@ const {
   reserveCreditHoldMock: vi.fn(),
   streamTextMock: vi.fn(),
   exaSearchMock: vi.fn(() => ({ type: "provider-tool" })),
-  getConnectedIntegrationPromptContextMock: vi.fn(async () => ""),
+  getConnectedIntegrationPromptContextMock: vi.fn<
+    () => Promise<{
+      prompt: string;
+      providerIds: string[];
+      requiresServerRuntime: boolean;
+    }>
+  >(async () => ({
+    prompt: "",
+    providerIds: [],
+    requiresServerRuntime: false,
+  })),
   telemetryMock: {
     markFirstByte: vi.fn(),
     markChunk: vi.fn(),
@@ -49,6 +59,10 @@ const {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       update: vi.fn(),
+    },
+    generationRun: {
+      create: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }));
@@ -207,6 +221,8 @@ describe("/api/get-next-completion-stream-promise", () => {
     telemetryMock.record.mockResolvedValue(undefined);
     prismaMock.message.update.mockResolvedValue({});
     prismaMock.chat.update.mockResolvedValue({});
+    prismaMock.generationRun.create.mockResolvedValue({ id: "run_1" });
+    prismaMock.generationRun.updateMany.mockResolvedValue({ count: 1 });
   });
 
   afterEach(() => {
@@ -544,6 +560,76 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(call.messages.at(-1).content).toContain("Published: 2026-06-30");
     expect(call.messages.at(-1).content).toContain(
       "https://www.ufc.com/rankings",
+    );
+  });
+
+  it("treats an API selected in the integrations panel as generation context", async () => {
+    const content = "Build it with the choices I made";
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nFrankfurter [frankfurter] uses https://api.frankfurter.dev/v2/rates and returns rate records.\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["frankfurter"],
+      requiresServerRuntime: false,
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_selected_api",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      text: "Verified Frankfurter v2 documentation",
+      sources: [],
+      toolResults: [
+        {
+          toolName: "web_search",
+          output: {
+            id: "search_selected_api",
+            results: [
+              {
+                url: "https://frankfurter.dev/",
+                title: "Frankfurter API",
+                highlights: ["The public API uses the v2 rates endpoint."],
+              },
+            ],
+          },
+        },
+      ],
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "research_selected_api" },
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_selected_api", model: "model_1" }),
+    );
+    await collectUIChunks(response);
+
+    expect(generateTextMock.mock.calls[0][0].prompt).toContain("frankfurter");
+    const generationPrompt =
+      streamTextMock.mock.calls[0][0].messages.at(-1).content;
+    expect(generationPrompt).toContain("SELECTED API IMPLEMENTATION GUIDANCE");
+    expect(generationPrompt).toContain("LIVE API APP CONTRACT");
+    expect(streamTextMock.mock.calls[0][0].system).toContain(
+      "Selected API enforcement is a server policy",
+    );
+    expect(streamTextMock.mock.calls[0][0].system).toContain(
+      "SELECTED API IMPLEMENTATION GUIDANCE",
+    );
+    expect(generationPrompt).toContain(
+      "The public API uses the v2 rates endpoint.",
     );
   });
 

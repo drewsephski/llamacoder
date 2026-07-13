@@ -1,5 +1,26 @@
 import { expect, test } from "@playwright/test";
 
+test("an invalid session cookie redirects dashboard access to sign-in", async ({
+  context,
+  page,
+}) => {
+  await context.addCookies([
+    {
+      name: "better-auth.session_token",
+      value: "expired-session",
+      domain: "localhost",
+      path: "/",
+    },
+  ]);
+
+  await page.goto("/dashboard");
+
+  await expect(page).toHaveURL(/\/sign-in\?callbackUrl=(?:%2F|\/)dashboard$/);
+  await expect(
+    page.getByRole("heading", { name: "Sign in", exact: true }),
+  ).toBeVisible();
+});
+
 test("sign-in normalizes an external callback before submitting", async ({
   page,
 }) => {

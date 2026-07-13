@@ -45,7 +45,7 @@ import {
   buildTargetedPreviewEditPrompt,
   type PreviewElementSelection,
 } from "@/lib/targeted-preview-edit";
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import type { Chat, Message } from "./page";
 import { Share } from "./share";
 import { StickToBottom } from "use-stick-to-bottom";
@@ -56,6 +56,11 @@ import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { QualityReportPanel } from "@/components/quality-report-panel";
 import { SelectedElementEditTray } from "@/components/selected-element-edit-tray";
 import { ProjectIntegrationsPanel } from "@/features/integrations/components/project-integrations-panel";
+import { VersionDiffDialog } from "@/components/version-diff-dialog";
+import {
+  runtimeVerificationReportSchema,
+  type RuntimeVerificationReport,
+} from "@/features/generation/runtime-verification";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -154,6 +159,7 @@ export default function CodeViewer({
   onPreviewHealthChange,
   onRequestTargetedEdit,
   onRestore,
+  onRestoreFiles,
   isSaved,
   isSaving,
   isCheckingSession,
@@ -177,6 +183,10 @@ export default function CodeViewer({
     oldVersion: number,
     newVersion: number,
   ) => void;
+  onRestoreFiles: (
+    sourceMessageId: string,
+    paths: string[],
+  ) => void | Promise<void>;
   isSaved: boolean;
   isSaving: boolean;
   isCheckingSession: boolean;
@@ -295,9 +305,8 @@ export default function CodeViewer({
     useState<PreviewElementSelection | null>(null);
   const [previewEditInstruction, setPreviewEditInstruction] = useState("");
   const [previewTestNonce, setPreviewTestNonce] = useState(0);
-  const [previewTestReport, setPreviewTestReport] = useState<string | null>(
-    null,
-  );
+  const [previewTestReport, setPreviewTestReport] =
+    useState<RuntimeVerificationReport | null>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -305,6 +314,66 @@ export default function CodeViewer({
       message?.generationReceipt?.exportVerification ?? null,
     );
   }, [message?.generationReceipt?.exportVerification, message?.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setPreviewTestReport(null);
+    if (!message?.id) return () => controller.abort();
+
+    void fetch(
+      `/api/projects/${chat.id}/runtime-verifications?messageId=${encodeURIComponent(message.id)}`,
+      { signal: controller.signal },
+    )
+      .then(async (response) => {
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          verifications?: Array<{ report?: unknown }>;
+        };
+        const parsed = runtimeVerificationReportSchema.safeParse(
+          payload.verifications?.[0]?.report,
+        );
+        if (parsed.success) setPreviewTestReport(parsed.data);
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, [chat.id, message?.id]);
+
+  const handlePreviewTestReport = useCallback(
+    async (report: Omit<RuntimeVerificationReport, "messageId">) => {
+      if (!message?.id) return;
+
+      const completeReport = { ...report, messageId: message.id };
+      setPreviewTestReport(completeReport);
+
+      try {
+        const response = await fetch(
+          `/api/projects/${chat.id}/runtime-verifications`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(completeReport),
+          },
+        );
+
+        if (!response.ok) {
+          toast.error("Runtime result could not be saved");
+          return;
+        }
+
+        toast.success(
+          report.status === "passed"
+            ? "Runtime verification passed"
+            : report.status === "review"
+              ? "Runtime verification needs review"
+              : "Runtime verification failed",
+        );
+      } catch {
+        toast.error("Runtime result could not be saved");
+      }
+    },
+    [chat.id, message?.id],
+  );
 
   const allAssistantMessages = useMemo(
     () =>
@@ -337,6 +406,15 @@ export default function CodeViewer({
         : allAssistantMessages.length - 1;
   const currentVersion =
     (chat.assistantMessagesCountBefore || 0) + currentVersionIndex;
+  const previousVersionMessage =
+    currentVersionIndex > 0
+      ? allAssistantMessages[currentVersionIndex - 1]
+      : undefined;
+  const latestVersionMessage = allAssistantMessages.at(-1);
+  const diffBaseMessage =
+    currentVersionIndex < allAssistantMessages.length - 1
+      ? latestVersionMessage
+      : previousVersionMessage;
 
   const [refresh, setRefresh] = useState(0);
   const disabledControls = !!streamText || files.length === 0;
@@ -450,8 +528,8 @@ export default function CodeViewer({
 
   return (
     <>
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
-        <div className="inline-flex items-center gap-4">
+      <div className="flex min-h-16 shrink-0 flex-col gap-2 border-b border-border px-3 py-2 md:h-16 md:flex-row md:items-center md:justify-between md:px-4 md:py-0">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto md:gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -512,15 +590,35 @@ export default function CodeViewer({
               Restore
             </Button>
           )}
+          {!disabledControls && message && (
+            <VersionDiffDialog
+              projectId={chat.id}
+              messageId={message.id}
+              before={
+                diffBaseMessage ? getMessageGeneratedFiles(diffBaseMessage) : []
+              }
+              after={getMessageGeneratedFiles(message)}
+              initialLabel={message.versionLabel}
+              initialBookmarked={message.isBookmarked}
+              canRestore={currentVersionIndex < allAssistantMessages.length - 1}
+              onRestoreFiles={(paths) => onRestoreFiles(message.id, paths)}
+            />
+          )}
           {!disabledControls && (
             <QualityReportPanel
               report={qualityReport}
               exportStatus={verifiedExportStatus}
+              runtimeVerification={previewTestReport}
             />
           )}
-          {chat.userId && <ProjectIntegrationsPanel projectId={chat.id} />}
+          {chat.userId && (
+            <ProjectIntegrationsPanel
+              projectId={chat.id}
+              messageId={message?.id}
+            />
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
           <Button asChild variant="outline" size="sm">
             <Link href="/dashboard">Dashboard</Link>
           </Button>
@@ -614,10 +712,7 @@ export default function CodeViewer({
                   }}
                   previewSelectionMode={previewSelectionMode}
                   previewTestNonce={previewTestNonce}
-                  onPreviewTestReport={(report) => {
-                    setPreviewTestReport(report);
-                    toast.success("Preview test complete");
-                  }}
+                  onPreviewTestReport={handlePreviewTestReport}
                   language={language}
                   files={files.map((f) => ({ path: f.path, content: f.code }))}
                   key={refresh}
@@ -643,8 +738,8 @@ export default function CodeViewer({
         />
       )}
 
-      <div className="flex items-center justify-between border-t border-border px-4 py-4">
-        <div className="inline-flex min-w-0 items-center gap-2.5 text-sm">
+      <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-3 md:px-4 md:py-4">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto text-sm md:gap-2.5">
           <Share
             message={
               disabledControls
@@ -685,10 +780,10 @@ export default function CodeViewer({
               setPreviewTestNonce((value) => value + 1);
             }}
             disabled={disabledControls}
-            className="hidden md:inline-flex"
+            aria-label="Test preview"
           >
             <FlaskConical className="size-3" />
-            Test
+            <span className="hidden sm:inline">Test</span>
           </Button>
           <Button
             variant="outline"
@@ -719,16 +814,17 @@ export default function CodeViewer({
               <span className="truncate">
                 {verifiedExportStatus
                   ? `Verified by Squid: ${verifiedExportStatus}`
-                  : previewTestReport ||
-                    `${qualityReport.filesGenerated} files, ${qualityReport.importsResolved} imports resolved${
-                      qualityWarningCount > 0
-                        ? `, ${qualityWarningCount} warnings`
-                        : ", no warnings"
-                    }`}
+                  : previewTestReport
+                    ? `Runtime ${previewTestReport.status}: ${previewTestReport.clickableElements} controls, ${previewTestReport.unnamedClickableElements} unnamed${previewTestReport.horizontalOverflow ? ", overflow detected" : ""}`
+                    : `${qualityReport.filesGenerated} files, ${qualityReport.importsResolved} imports resolved${
+                        qualityWarningCount > 0
+                          ? `, ${qualityWarningCount} warnings`
+                          : ", no warnings"
+                      }`}
               </span>
             </div>
           )}
-          <span className="md:hidden">{chat.model}</span>
+          <span className="hidden sm:inline md:hidden">{chat.model}</span>
         </div>
       </div>
 

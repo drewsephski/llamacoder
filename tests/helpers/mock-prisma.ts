@@ -19,7 +19,7 @@ export function createPrismaMock() {
       "update",
       "updateMany",
     ]) as Record<string, ReturnType<typeof vi.fn>> & { first: undefined },
-    message: createDelegateMock(["create", "findMany", "findUnique", "update"]),
+    message: createDelegateMock(["create", "findFirst", "findMany", "findUnique", "update"]),
     creditHistory: createDelegateMock(["create"]),
     creditGrant: createDelegateMock(["create", "findMany", "update", "updateMany"]),
     creditHold: createDelegateMock([
@@ -30,6 +30,8 @@ export function createPrismaMock() {
       "updateMany",
     ]),
     generationLog: createDelegateMock(["create"]),
+    generationRun: createDelegateMock(["create", "findFirst", "findMany", "update", "updateMany"]),
+    runtimeVerification: createDelegateMock(["create", "findMany"]),
     anonymousUsage: createDelegateMock(["create", "findFirst", "update"]),
     stripeWebhookEvent: createDelegateMock(["findUnique", "upsert"]),
     subscription: createDelegateMock(["create", "findFirst", "update", "updateMany", "upsert"]),
@@ -51,5 +53,6 @@ export function createPrismaTransactionMock() {
       "updateMany",
     ]),
     generationLog: createDelegateMock(["create"]),
+    generationRun: createDelegateMock(["create", "update", "updateMany"]),
   };
 }

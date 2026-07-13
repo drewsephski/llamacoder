@@ -84,22 +84,31 @@ export async function GET(request: NextRequest, context: RouteContext) {
         providerParam,
       );
     }
-    const code = request.nextUrl.searchParams.get("code");
-    if (!code) throw new Error("OAuth authorization code is missing.");
     const config = getOAuthProviderConfig(providerParam);
     if (!config) throw new Error("OAuth provider is not configured.");
+    const installationId = request.nextUrl.searchParams.get("installation_id");
+    const isGitHubAppInstallation =
+      providerParam === "github" &&
+      config.mode === "github_app" &&
+      Boolean(installationId);
+    const code = request.nextUrl.searchParams.get("code");
+    if (!code && !isGitHubAppInstallation) {
+      throw new Error("OAuth authorization code is missing.");
+    }
     const codeVerifier = request.cookies.get(
       oauthCookieName(providerParam, "verifier"),
     )?.value;
-    if (providerParam === "github" && !codeVerifier) {
+    if (
+      providerParam === "github" &&
+      config.mode === "oauth_app" &&
+      !codeVerifier
+    ) {
       throw new Error("GitHub PKCE verifier is missing.");
     }
 
-    const token = await exchangeOAuthCode({
-      config,
-      code,
-      codeVerifier,
-    });
+    const token = isGitHubAppInstallation
+      ? { accessToken: undefined, scopes: [], metadata: {} }
+      : await exchangeOAuthCode({ config, code: code!, codeVerifier });
     const tokenMetadata = token.metadata as Record<
       string,
       string | null | undefined
@@ -115,7 +124,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
               request.nextUrl.searchParams.get("configurationId") ?? null,
             vercelUserId: tokenMetadata.vercelUserId ?? null,
           }
-        : {};
+        : isGitHubAppInstallation
+          ? { installationId: installationId! }
+          : {};
     const binding = await completeOAuthProjectIntegration({
       projectId: state.projectId,
       userId: state.userId,
@@ -125,11 +136,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       scopes: token.scopes,
       metadata: callbackMetadata,
     });
-    const tested = await testProjectIntegration({
-      projectId: state.projectId,
-      bindingId: binding.id,
-      userId: state.userId,
-    });
+    const tested = isGitHubAppInstallation
+      ? binding
+      : await testProjectIntegration({
+          projectId: state.projectId,
+          bindingId: binding.id,
+          userId: state.userId,
+        });
     return clearOAuthCookies(
       NextResponse.redirect(
         projectRedirect(

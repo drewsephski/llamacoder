@@ -15,6 +15,9 @@ const originalEnv = {
   stateSecret: process.env.INTEGRATION_OAUTH_STATE_SECRET,
   githubId: process.env.GITHUB_OAUTH_CLIENT_ID,
   githubSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
+  githubAppId: process.env.GITHUB_APP_ID,
+  githubAppSlug: process.env.GITHUB_APP_SLUG,
+  githubAppKey: process.env.GITHUB_APP_PRIVATE_KEY,
   vercelId: process.env.VERCEL_INTEGRATION_CLIENT_ID,
   vercelSecret: process.env.VERCEL_INTEGRATION_CLIENT_SECRET,
   vercelSlug: process.env.VERCEL_INTEGRATION_SLUG,
@@ -27,6 +30,9 @@ describe("integration OAuth", () => {
     );
     process.env.GITHUB_OAUTH_CLIENT_ID = "github-client";
     process.env.GITHUB_OAUTH_CLIENT_SECRET = "github-secret";
+    delete process.env.GITHUB_APP_ID;
+    delete process.env.GITHUB_APP_SLUG;
+    delete process.env.GITHUB_APP_PRIVATE_KEY;
     process.env.VERCEL_INTEGRATION_CLIENT_ID = "vercel-client";
     process.env.VERCEL_INTEGRATION_CLIENT_SECRET = "vercel-secret";
     process.env.VERCEL_INTEGRATION_SLUG = "squid-agent";
@@ -37,6 +43,9 @@ describe("integration OAuth", () => {
       ["INTEGRATION_OAUTH_STATE_SECRET", originalEnv.stateSecret],
       ["GITHUB_OAUTH_CLIENT_ID", originalEnv.githubId],
       ["GITHUB_OAUTH_CLIENT_SECRET", originalEnv.githubSecret],
+      ["GITHUB_APP_ID", originalEnv.githubAppId],
+      ["GITHUB_APP_SLUG", originalEnv.githubAppSlug],
+      ["GITHUB_APP_PRIVATE_KEY", originalEnv.githubAppKey],
       ["VERCEL_INTEGRATION_CLIENT_ID", originalEnv.vercelId],
       ["VERCEL_INTEGRATION_CLIENT_SECRET", originalEnv.vercelSecret],
       ["VERCEL_INTEGRATION_SLUG", originalEnv.vercelSlug],
@@ -84,6 +93,20 @@ describe("integration OAuth", () => {
     expect(url.searchParams.get("state")).toBe("signed-state");
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");
     expect(url.searchParams.get("scope")).toContain("repo");
+  });
+
+  it("prefers repository-scoped GitHub App installation authorization", () => {
+    process.env.GITHUB_APP_ID = "12345";
+    process.env.GITHUB_APP_SLUG = "squid-agent";
+    process.env.GITHUB_APP_PRIVATE_KEY = "configured-private-key";
+    const config = getOAuthProviderConfig("github")!;
+    const url = buildOAuthAuthorizationUrl({
+      config,
+      state: "signed-state",
+    });
+    expect(config.mode).toBe("github_app");
+    expect(url.pathname).toBe("/apps/squid-agent/installations/new");
+    expect(url.searchParams.get("state")).toBe("signed-state");
   });
 
   it("exchanges a GitHub code without exposing the result to the browser", async () => {

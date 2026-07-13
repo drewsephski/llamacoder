@@ -1,5 +1,6 @@
 import CodeRunnerReact from "./code-runner-react";
 import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
+import type { RuntimeVerificationReport } from "@/features/generation/runtime-verification";
 
 export default function CodeRunner({
   language,
@@ -23,7 +24,7 @@ export default function CodeRunner({
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
   previewSelectionMode?: boolean;
   previewTestNonce?: number;
-  onPreviewTestReport?: (report: string) => void;
+  onPreviewTestReport?: (report: Omit<RuntimeVerificationReport, "messageId">) => void;
 }) {
   const actualFiles =
     files || (code ? [{ path: "App.tsx", content: code }] : []);

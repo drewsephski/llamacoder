@@ -18,26 +18,29 @@ model GeneratedApp {
 }
 
 model Chat {
-  id                  String               @id @default(nanoid(16))
-  model               String
-  quality             String
-  prompt              String
-  title               String
-  llamaCoderVersion   String               @default("v2")
-  shadcn              Boolean
-  plan                String?
-  appSpec             Json?
-  hasCode             Boolean              @default(false)
-  generationStatus    String               @default("idle")
-  generationStartedAt DateTime?
-  sourceMessageId     String?
-  sourceChatId        String?
-  referrerUserId      String?
-  createdAt           DateTime             @default(now())
-  userId              String?
-  user                User?                @relation(fields: [userId], references: [id])
-  messages            Message[]
-  projectIntegrations ProjectIntegration[]
+  id                    String                 @id @default(nanoid(16))
+  model                 String
+  quality               String
+  prompt                String
+  title                 String
+  llamaCoderVersion     String                 @default("v2")
+  shadcn                Boolean
+  plan                  String?
+  appSpec               Json?
+  hasCode               Boolean                @default(false)
+  generationStatus      String                 @default("idle")
+  generationStartedAt   DateTime?
+  sourceMessageId       String?
+  sourceChatId          String?
+  referrerUserId        String?
+  createdAt             DateTime               @default(now())
+  userId                String?
+  user                  User?                  @relation(fields: [userId], references: [id])
+  messages              Message[]
+  projectIntegrations   ProjectIntegration[]
+  integrationOperations IntegrationOperation[]
+  generationRuns        GenerationRun[]
+  runtimeVerifications  RuntimeVerification[]
 
   @@index([createdAt])
   @@index([userId])
@@ -48,17 +51,21 @@ model Chat {
 }
 
 model Message {
-  id              String   @id @default(nanoid(16))
-  role            String
-  content         String
-  files           Json?
-  followUpPrompts Json?
-  chatId          String
-  position        Int
-  changeSummary   String?
-  versionKind     String?
-  createdAt       DateTime @default(now())
-  chat            Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  id                   String                @id @default(nanoid(16))
+  role                 String
+  content              String
+  files                Json?
+  followUpPrompts      Json?
+  chatId               String
+  position             Int
+  changeSummary        String?
+  versionKind          String?
+  versionLabel         String?
+  isBookmarked         Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  chat                 Chat                  @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  generationRuns       GenerationRun[]
+  runtimeVerifications RuntimeVerification[]
 
   @@index([chatId])
   @@index([chatId, createdAt])
@@ -119,8 +126,52 @@ model User {
   sessions               Session[]
   integrationConnections IntegrationConnection[]
   integrationAuditEvents IntegrationAuditEvent[]
+  integrationOperations  IntegrationOperation[]
+  generationRuns         GenerationRun[]
+  runtimeVerifications   RuntimeVerification[]
 
   @@map("user")
+}
+
+model GenerationRun {
+  id                 String    @id @default(nanoid(16))
+  userId             String
+  chatId             String
+  messageId          String
+  assistantMessageId String?
+  status             String    @default("running")
+  phase              String    @default("preparing")
+  label              String    @default("Preparing your project")
+  partialText        String    @default("")
+  creditHoldId       String?
+  errorMessage       String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  completedAt        DateTime?
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat               Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  message            Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
+  @@index([userId, status])
+  @@index([messageId, createdAt])
+}
+
+model RuntimeVerification {
+  id        String   @id @default(nanoid(16))
+  userId    String
+  chatId    String
+  messageId String
+  status    String
+  report    Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId, createdAt])
+  @@index([chatId, createdAt])
+  @@index([userId, createdAt])
 }
 
 model IntegrationConnection {
@@ -141,6 +192,7 @@ model IntegrationConnection {
   credentials       IntegrationCredential[]
   projectBindings   ProjectIntegration[]
   auditEvents       IntegrationAuditEvent[]
+  operations        IntegrationOperation[]
 
   @@index([userId, providerId])
   @@index([userId, status])
@@ -175,10 +227,52 @@ model ProjectIntegration {
   chat         Chat                    @relation(fields: [chatId], references: [id], onDelete: Cascade)
   connection   IntegrationConnection   @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   auditEvents  IntegrationAuditEvent[]
+  operations   IntegrationOperation[]
 
   @@unique([chatId, providerId, environment])
   @@index([chatId, environment])
   @@index([connectionId])
+}
+
+model IntegrationOperation {
+  id                   String                @id @default(nanoid(16))
+  userId               String
+  chatId               String
+  connectionId         String
+  projectIntegrationId String
+  providerId           String
+  kind                 String
+  status               String
+  externalId           String?
+  url                  String?
+  commitSha            String?
+  errorMessage         String?
+  metadata             Json?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  completedAt          DateTime?
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat                 Chat                  @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  projectIntegration   ProjectIntegration    @relation(fields: [projectIntegrationId], references: [id], onDelete: Cascade)
+  connection           IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
+  @@index([projectIntegrationId, createdAt])
+  @@index([connectionId, createdAt])
+  @@index([userId, createdAt])
+  @@index([providerId, status])
+}
+
+model IntegrationWebhookDelivery {
+  id          String   @id @default(nanoid(16))
+  providerId  String
+  deliveryId  String
+  event       String
+  payloadHash String
+  createdAt   DateTime @default(now())
+
+  @@unique([providerId, deliveryId])
+  @@index([providerId, createdAt])
 }
 
 model IntegrationAuditEvent {

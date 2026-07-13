@@ -9,8 +9,12 @@ import type {
   ProjectIntegrationView,
 } from "@/features/integrations/contracts";
 import {
+  buildIntegrationProviderSummaries,
+  getIntegrationCredentialKind,
+} from "@/features/integrations/catalog";
+import {
+  buildIntegrationProviderGuidance,
   getIntegrationProvider,
-  integrationRegistry,
   type IntegrationProvider,
 } from "@/features/integrations/registry";
 import {
@@ -19,6 +23,7 @@ import {
   fingerprintCredential,
 } from "@/features/integrations/server/credential-vault";
 import { oauthProviderAvailability } from "@/features/integrations/server/oauth-provider";
+import { requestProviderHealth } from "@/features/integrations/server/provider-health";
 import { getPrisma } from "@/lib/prisma";
 
 type CredentialInput = {
@@ -43,20 +48,12 @@ export class IntegrationServiceError extends Error {
   }
 }
 
-function getCredentialKind(provider: IntegrationProvider) {
-  if (provider.auth === "secret" || provider.auth === "publishable_key") {
-    return "api_key" as const;
-  }
-  if (provider.auth === "oauth") return "access_token" as const;
-  return null;
-}
-
 function getInitialStatus(
   provider: IntegrationProvider,
   credential: CredentialInput | undefined,
 ) {
   if (provider.policyStatus === "blocked") return "blocked" as const;
-  if (provider.auth === "none") return "ready" as const;
+  if (provider.auth === "none") return "configured" as const;
   return credential
     ? ("configured" as const)
     : ("authorization_required" as const);
@@ -91,6 +88,10 @@ function serializeBinding(
     status: binding.status as ProjectIntegrationView["status"],
     createdAt: binding.createdAt.toISOString(),
     updatedAt: binding.updatedAt.toISOString(),
+    config:
+      binding.config && typeof binding.config === "object"
+        ? (binding.config as Record<string, unknown>)
+        : null,
     connection: {
       id: binding.connection.id,
       displayName: binding.connection.displayName,
@@ -107,22 +108,9 @@ function serializeBinding(
 }
 
 function providerSummaries() {
-  const oauthAvailability = oauthProviderAvailability();
-  return integrationRegistry.map((provider) => ({
-    id: provider.id,
-    name: provider.name,
-    capabilities: [...provider.capabilities],
-    auth: provider.auth,
-    runtime: provider.runtime,
-    policyStatus: provider.policyStatus,
-    commercialUse: provider.commercialUse,
-    docsUrl: provider.docsUrl,
-    credentialKind: getCredentialKind(provider),
-    oauthAvailable:
-      provider.id === "github" || provider.id === "vercel"
-        ? oauthAvailability[provider.id]
-        : false,
-  }));
+  return buildIntegrationProviderSummaries({
+    oauthAvailability: oauthProviderAvailability(),
+  });
 }
 
 export async function assertIntegrationProjectAccess({
@@ -158,19 +146,40 @@ export async function getConnectedIntegrationPromptContext({
     },
     orderBy: [{ environment: "asc" }, { providerId: "asc" }],
   });
-  if (bindings.length === 0) return "";
+  if (bindings.length === 0) {
+    return { prompt: "", providerIds: [], requiresServerRuntime: false };
+  }
 
-  return [
+  const providerIds = Array.from(
+    new Set(bindings.map((binding) => binding.providerId)),
+  );
+  const providers = providerIds
+    .map(getIntegrationProvider)
+    .filter((provider): provider is IntegrationProvider => provider !== null);
+  const prompt = [
     "=== CONNECTED PROJECT INTEGRATIONS ===",
-    "These project-scoped connections are stored in Squid's encrypted server vault. Never request, reveal, or emit their credentials.",
+    "The user explicitly selected these project-scoped APIs. Every selected provider is mandatory in the plan and generated app. Do not omit or substitute one, even when the latest user message does not mention it again.",
+    "Connections are stored in Squid's encrypted server vault; never request, reveal, or emit their credentials.",
     ...bindings.map((binding) => {
       const provider = getIntegrationProvider(binding.providerId);
       return `- ${provider?.name ?? binding.providerId} [${binding.providerId}]: environment=${binding.environment}; status=${binding.status}; auth=${binding.connection.authType}; health=${binding.connection.lastHealthStatus ?? "not_checked"}; connection=${binding.connection.displayName}.`;
     }),
-    "Treat a ready connection as satisfying credential setup during planning. A configured or needs_attention connection still requires a successful health check.",
+    "Treat a ready connection as satisfying credential setup during planning. A configured or needs_attention connection still requires a successful health check and an honest setup-required UI, but it must not be dropped from the implementation.",
     "Generated browser code must still never contain credentials. Reference the providerId in integrations.ts and keep secret-bearing operations behind a server adapter.",
     "=== END CONNECTED PROJECT INTEGRATIONS ===",
+    buildIntegrationProviderGuidance(providerIds),
   ].join("\n");
+
+  return {
+    prompt,
+    providerIds,
+    requiresServerRuntime: providers.some(
+      (provider) =>
+        provider.runtime === "server" ||
+        provider.auth === "secret" ||
+        provider.auth === "oauth",
+    ),
+  };
 }
 
 export async function completeOAuthProjectIntegration({
@@ -186,7 +195,7 @@ export async function completeOAuthProjectIntegration({
   userId: string;
   providerId: "github" | "vercel";
   environment: IntegrationEnvironment;
-  accessToken: string;
+  accessToken?: string;
   scopes: string[];
   metadata: Record<string, string | null>;
 }) {
@@ -213,18 +222,21 @@ export async function completeOAuthProjectIntegration({
       include: { connection: true },
     });
     const connectionId = existing?.connectionId ?? randomUUID();
-    const encrypted = encryptIntegrationCredential({
-      value: accessToken,
-      userId,
-      connectionId,
-      kind: "access_token",
-    });
+    const encrypted = accessToken
+      ? encryptIntegrationCredential({
+          value: accessToken,
+          userId,
+          connectionId,
+          kind: "access_token",
+        })
+      : null;
+    const connectionStatus = accessToken ? "configured" : "ready";
 
     const connection = existing
       ? await tx.integrationConnection.update({
           where: { id: connectionId },
           data: {
-            status: "configured",
+            status: connectionStatus,
             scopes,
             metadata: metadata as Prisma.InputJsonValue,
             lastHealthStatus: null,
@@ -239,26 +251,28 @@ export async function completeOAuthProjectIntegration({
             providerId,
             displayName: provider.name,
             authType: "oauth",
-            status: "configured",
+            status: connectionStatus,
             scopes,
             metadata: metadata as Prisma.InputJsonValue,
           },
         });
-    await tx.integrationCredential.upsert({
-      where: {
-        connectionId_kind: { connectionId, kind: "access_token" },
-      },
-      create: {
-        connectionId,
-        kind: "access_token",
-        ...encrypted,
-      },
-      update: encrypted,
-    });
+    if (encrypted) {
+      await tx.integrationCredential.upsert({
+        where: {
+          connectionId_kind: { connectionId, kind: "access_token" },
+        },
+        create: {
+          connectionId,
+          kind: "access_token",
+          ...encrypted,
+        },
+        update: encrypted,
+      });
+    }
     const binding = existing
       ? await tx.projectIntegration.update({
           where: { id: existing.id },
-          data: { status: "configured" },
+          data: { status: connectionStatus },
         })
       : await tx.projectIntegration.create({
           data: {
@@ -266,7 +280,7 @@ export async function completeOAuthProjectIntegration({
             connectionId: connection.id,
             providerId,
             environment,
-            status: "configured",
+            status: connectionStatus,
           },
         });
     await tx.integrationAuditEvent.create({
@@ -307,10 +321,28 @@ export async function getIntegrationWorkspace({
     },
     orderBy: [{ environment: "asc" }, { createdAt: "asc" }],
   });
+  const recentOperations = await prisma.integrationOperation.findMany({
+    where: { chatId: projectId, userId },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
 
   return {
     providers: providerSummaries(),
     integrations: bindings.map(serializeBinding),
+    recentOperations: recentOperations.map((operation) => ({
+      id: operation.id,
+      projectIntegrationId: operation.projectIntegrationId,
+      providerId: operation.providerId,
+      kind: operation.kind,
+      status: operation.status,
+      externalId: operation.externalId,
+      url: operation.url,
+      commitSha: operation.commitSha,
+      errorMessage: operation.errorMessage,
+      createdAt: operation.createdAt.toISOString(),
+      completedAt: operation.completedAt?.toISOString() ?? null,
+    })),
   };
 }
 
@@ -321,6 +353,7 @@ export async function createProjectIntegration({
   environment,
   displayName,
   credential,
+  config,
 }: {
   projectId: string;
   userId: string;
@@ -328,6 +361,7 @@ export async function createProjectIntegration({
   environment: IntegrationEnvironment;
   displayName?: string;
   credential?: CredentialInput;
+  config?: Record<string, unknown>;
 }) {
   const provider = getIntegrationProvider(providerId);
   if (!provider) {
@@ -345,7 +379,7 @@ export async function createProjectIntegration({
     );
   }
 
-  const expectedCredentialKind = getCredentialKind(provider);
+  const expectedCredentialKind = getIntegrationCredentialKind(provider);
   if (credential && credential.kind !== expectedCredentialKind) {
     throw new IntegrationServiceError(
       "INVALID_CREDENTIAL_KIND",
@@ -410,6 +444,7 @@ export async function createProjectIntegration({
         providerId,
         environment,
         status,
+        config: config ? (config as Prisma.InputJsonValue) : undefined,
       },
     });
     await tx.integrationAuditEvent.create({
@@ -442,12 +477,14 @@ export async function updateProjectIntegration({
   userId,
   displayName,
   credential,
+  config,
 }: {
   projectId: string;
   bindingId: string;
   userId: string;
   displayName?: string;
   credential?: CredentialInput;
+  config?: Record<string, unknown>;
 }) {
   const prisma = getPrisma();
   return prisma.$transaction(async (tx) => {
@@ -472,7 +509,7 @@ export async function updateProjectIntegration({
         409,
       );
     }
-    const expectedCredentialKind = getCredentialKind(provider);
+    const expectedCredentialKind = getIntegrationCredentialKind(provider);
     if (credential && credential.kind !== expectedCredentialKind) {
       throw new IntegrationServiceError(
         "INVALID_CREDENTIAL_KIND",
@@ -517,7 +554,10 @@ export async function updateProjectIntegration({
     });
     await tx.projectIntegration.update({
       where: { id: binding.id },
-      data: { status },
+      data: {
+        status,
+        config: config ? (config as Prisma.InputJsonValue) : undefined,
+      },
     });
     await tx.integrationAuditEvent.create({
       data: {
@@ -541,91 +581,6 @@ export async function updateProjectIntegration({
     });
     return serializeBinding(updated);
   });
-}
-
-async function requestProviderHealth({
-  provider,
-  credential,
-  fetchImpl,
-}: {
-  provider: IntegrationProvider;
-  credential: string | null;
-  fetchImpl: typeof fetch;
-}) {
-  if (provider.auth === "none") {
-    return { ok: true, message: "No credential is required." };
-  }
-  if (!credential) {
-    return { ok: false, message: "A credential is required before testing." };
-  }
-
-  const checks: Record<
-    string,
-    { url: string; headers: Record<string, string> }
-  > = {
-    stripe: {
-      url: "https://api.stripe.com/v1/account",
-      headers: { Authorization: `Bearer ${credential}` },
-    },
-    resend: {
-      url: "https://api.resend.com/domains?limit=1",
-      headers: { Authorization: `Bearer ${credential}` },
-    },
-    coingecko: {
-      url: "https://api.coingecko.com/api/v3/ping",
-      headers: { "x-cg-demo-api-key": credential },
-    },
-    github: {
-      url: "https://api.github.com/user",
-      headers: {
-        Authorization: `Bearer ${credential}`,
-        Accept: "application/vnd.github+json",
-      },
-    },
-    vercel: {
-      url: "https://api.vercel.com/v2/user",
-      headers: { Authorization: `Bearer ${credential}` },
-    },
-    supabase: {
-      url: "https://api.supabase.com/v1/projects",
-      headers: { Authorization: `Bearer ${credential}` },
-    },
-  };
-  const check = checks[provider.id];
-  if (!check) {
-    return {
-      ok: true,
-      message:
-        "Credential decrypted successfully; no live health adapter is available yet.",
-    };
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8_000);
-  try {
-    const response = await fetchImpl(check.url, {
-      method: "GET",
-      headers: check.headers,
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    return response.ok
-      ? { ok: true, message: "Provider accepted the configured credential." }
-      : {
-          ok: false,
-          message: `Provider rejected the health check with HTTP ${response.status}.`,
-        };
-  } catch (error) {
-    return {
-      ok: false,
-      message:
-        error instanceof Error && error.name === "AbortError"
-          ? "Provider health check timed out."
-          : "Provider health check could not be completed.",
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 export async function testProjectIntegration({
@@ -673,6 +628,7 @@ export async function testProjectIntegration({
   const result = await requestProviderHealth({
     provider,
     credential,
+    metadata: binding.connection.metadata,
     fetchImpl,
   });
   const now = new Date();

@@ -13,10 +13,16 @@ const imageDataUrlPattern = new RegExp(
   "i",
 );
 
+export const MAX_PROJECT_API_SELECTIONS = 8;
+
 export const createProjectRequestSchema = z.object({
   prompt: z.string().trim().min(1, "Prompt is required"),
   model: z.string().min(1, "Model is required"),
   quality: z.enum(["high", "low"]),
+  providerIds: z
+    .array(z.string().trim().min(1).max(80))
+    .max(MAX_PROJECT_API_SELECTIONS)
+    .optional(),
   screenshotUrl: z.string().optional(),
   screenshotData: z
     .string()
@@ -86,10 +92,29 @@ export type ProjectMessage = Omit<Message, "files" | "followUpPrompts"> & {
   generationReceipt?: GenerationReceipt | null;
 };
 
+export const generationRunStatusSchema = z.enum([
+  "running",
+  "recoverable",
+  "completed",
+  "failed",
+  "cancelled",
+]);
+
+export type ActiveGenerationRun = {
+  id: string;
+  messageId: string;
+  status: z.infer<typeof generationRunStatusSchema>;
+  phase: string;
+  label: string;
+  partialTextLength: number;
+  createdAt: Date;
+};
+
 export type ProjectWorkspace = Chat & {
   messages: ProjectMessage[];
   totalMessages: number;
   assistantMessagesCountBefore: number;
+  activeGenerationRun: ActiveGenerationRun | null;
 };
 
 export function parseRequestModeMetadata(

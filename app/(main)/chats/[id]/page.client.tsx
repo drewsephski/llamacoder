@@ -9,6 +9,7 @@ import {
   createMessage,
   createPreviewRepairMessage,
   releaseReservedCreditHold,
+  restoreSelectedFilesAsCheckpoint,
   restoreVersionAsCheckpoint,
 } from "@/features/generation/server/actions";
 import { saveProject } from "@/features/projects/server/actions";
@@ -44,6 +45,8 @@ import { SignInModal } from "@/components/sign-in-modal";
 import { toast } from "sonner";
 import {
   fetchCompletionStream,
+  recoverCompletionStream,
+  updateGenerationRun,
   type CompletionStream,
 } from "@/features/generation/client/completion-stream";
 import {
@@ -66,7 +69,7 @@ import {
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getErrorMessage } from "@/features/shared/errors";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
-import { Lightbulb, X } from "lucide-react";
+import { Lightbulb, RotateCcw, X } from "lucide-react";
 import { usePlausible } from "next-plausible";
 
 const MAX_AUTOMATIC_PREVIEW_REPAIRS = 3;
@@ -119,6 +122,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const handledStreamPromiseRef = useRef<Promise<CompletionStream> | null>(
     null,
   );
+  const streamReaderRef = useRef<ReadableStreamDefaultReader<UIMessageChunk> | null>(null);
+  const [generationRunId, setGenerationRunId] = useState<string | null>(null);
+  const [recoverableRun, setRecoverableRun] = useState(chat.activeGenerationRun);
   const freeRepairRequestIdRef = useRef<string | null>(null);
   const freeRepairSourceMessageIdRef = useRef<string | null>(null);
   const automaticRepairAttemptsRef = useRef(0);
@@ -219,6 +225,24 @@ export default function PageClient({ chat }: { chat: Chat }) {
     // We just clear the error state here
   };
 
+  const handleStopGeneration = useCallback(async () => {
+    const runId = generationRunId;
+    await streamReaderRef.current?.cancel("Cancelled by user").catch(() => undefined);
+    if (runId) await updateGenerationRun(runId, { action: "cancel" }).catch(() => undefined);
+    setStreamPromise(undefined);
+    setGenerationRunId(null);
+    setGenerationStatus(DEFAULT_GENERATION_STATUS);
+    setStreamText("");
+    toast.info("Generation stopped. Reserved credits were released.");
+  }, [generationRunId]);
+
+  const handleRecoverGeneration = useCallback(() => {
+    if (!recoverableRun) return;
+    setStreamError(null);
+    setStreamPromise(recoverCompletionStream(recoverableRun.id));
+    setRecoverableRun(null);
+  }, [recoverableRun]);
+
   useEffect(() => {
     let reader: ReadableStreamDefaultReader<UIMessageChunk> | null = null;
     let renderFrame: number | null = null;
@@ -271,6 +295,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         const stream = await streamPromise;
         creditHoldId = stream.creditHoldId;
+        setGenerationRunId(stream.generationRunId ?? null);
 
         if (stream.events.locked) {
           console.warn("Skipping duplicate stream reader for locked stream");
@@ -278,6 +303,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         }
 
         reader = stream.events.getReader();
+        streamReaderRef.current = reader;
 
         while (true) {
           const { done, value: event } = await reader.read();
@@ -514,6 +540,13 @@ export default function PageClient({ chat }: { chat: Chat }) {
           shouldOpenPreview = true;
         }
 
+        if (stream.generationRunId) {
+          await updateGenerationRun(stream.generationRunId, {
+            action: "complete",
+            assistantMessageId: message.id,
+          });
+        }
+
         startTransition(() => {
           cancelRenderFrame();
           freeRepairRequestIdRef.current = null;
@@ -523,6 +556,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           setStreamSources([]);
           setGenerationStatus(DEFAULT_GENERATION_STATUS);
           setStreamPromise(undefined);
+          setGenerationRunId(null);
           if (shouldOpenPreview) {
             setActiveMessage(message);
             setIsShowingCodeViewer(true);
@@ -551,7 +585,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           },
         });
         generationStartedAtRef.current = null;
-        if (creditHoldId) {
+        if (creditHoldId && !fullText) {
           await releaseReservedCreditHold(creditHoldId);
         }
         setStreamPromise(undefined);
@@ -581,6 +615,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         } catch {
           // Ignore release errors from already-closed readers.
         }
+        streamReaderRef.current = null;
         isHandlingStreamRef.current = false;
       }
     }
@@ -841,6 +876,35 @@ export default function PageClient({ chat }: { chat: Chat }) {
             }}
           />
 
+          {recoverableRun && !streamPromise && (
+            <div className="mx-3 mb-2 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
+              <RotateCcw className="mt-0.5 size-4 shrink-0 text-amber-600" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">Recover interrupted generation</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {recoverableRun.partialTextLength > 0
+                    ? `${recoverableRun.partialTextLength.toLocaleString()} characters are safely stored and ready to save.`
+                    : "This build was interrupted before the final checkpoint was saved."}
+                </p>
+                <button
+                  type="button"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground"
+                  onClick={handleRecoverGeneration}
+                >
+                  <RotateCcw className="size-3" /> Resume and save
+                </button>
+              </div>
+              <button
+                type="button"
+                aria-label="Dismiss recovery"
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                onClick={() => setRecoverableRun(null)}
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          )}
+
           {showFirstBuildHelp && (
             <div className="mx-3 mb-2 flex items-start gap-3 rounded-xl border border-blue-500/25 bg-blue-500/5 p-3 text-sm">
               <Lightbulb className="mt-0.5 size-4 shrink-0 text-blue-500" />
@@ -875,6 +939,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
             chat={chat}
             onNewStreamPromiseAction={setStreamPromise}
             isStreaming={!!streamPromise}
+            onStopAction={handleStopGeneration}
           />
         </div>
 
@@ -948,6 +1013,15 @@ export default function PageClient({ chat }: { chat: Chat }) {
                   setActiveMessage(newMessage);
                   router.refresh();
                 });
+              }}
+              onRestoreFiles={async (sourceMessageId, paths) => {
+                const newMessage = await restoreSelectedFilesAsCheckpoint({
+                  chatId: chat.id,
+                  sourceMessageId,
+                  paths,
+                });
+                setActiveMessage(newMessage);
+                router.refresh();
               }}
             />
           )}

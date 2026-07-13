@@ -254,6 +254,61 @@ describe("/api/create-chat", () => {
     );
   });
 
+  it("persists APIs selected from the homepage composer with the project", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+
+    const response = await POST(
+      request({
+        prompt: "Build a currency and weather dashboard",
+        model: FREE_MODEL,
+        quality: "low",
+        providerIds: ["frankfurter", "weather-gov", "frankfurter"],
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.chat.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          projectIntegrations: {
+            create: expect.arrayContaining([
+              expect.objectContaining({
+                providerId: "frankfurter",
+                environment: "development",
+                status: "configured",
+              }),
+              expect.objectContaining({
+                providerId: "weather-gov",
+                environment: "development",
+                status: "configured",
+              }),
+            ]),
+          },
+        }),
+      }),
+    );
+    const createInput = prismaMock.chat.create.mock.calls[0][0];
+    expect(createInput.data.projectIntegrations.create).toHaveLength(2);
+  });
+
+  it("rejects unavailable API selections", async () => {
+    const response = await POST(
+      request({
+        prompt: "Build a geocoder",
+        model: FREE_MODEL,
+        quality: "low",
+        providerIds: ["nominatim-public"],
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(readJson(response)).resolves.toEqual({
+      error: "INVALID_INTEGRATION_PROVIDER",
+      message: "One or more selected APIs are unavailable.",
+    });
+    expect(prismaMock.chat.create).not.toHaveBeenCalled();
+  });
+
   it("normalizes Plan mode off for non-reasoning models", async () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
 

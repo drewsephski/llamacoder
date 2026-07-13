@@ -52,6 +52,8 @@ function message(overrides: Partial<ProjectMessage> = {}): ProjectMessage {
     createdAt: new Date("2026-07-11T00:00:00.000Z"),
     changeSummary: "Built dashboard",
     versionKind: "generation",
+    versionLabel: null,
+    isBookmarked: false,
     generationReceipt: {
       estimatedCredits: 3,
       actualCredits: 2,

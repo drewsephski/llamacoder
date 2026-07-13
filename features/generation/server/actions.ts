@@ -590,3 +590,66 @@ export async function restoreVersionAsCheckpoint({
 
   return newMessage;
 }
+
+export async function restoreSelectedFilesAsCheckpoint({
+  chatId,
+  sourceMessageId,
+  paths,
+}: {
+  chatId: string;
+  sourceMessageId: string;
+  paths: string[];
+}) {
+  const session = await getCurrentSession();
+  if (!session) throw new Error("You must be signed in to restore files");
+
+  const prisma = getPrisma();
+  const chat = await findOwnedProjectWithMessages(chatId, session.user.id);
+  if (!chat) notFound();
+
+  const source = chat.messages.find((message) => message.id === sourceMessageId);
+  const latest = chat.messages
+    .filter(
+      (message) =>
+        message.role === "assistant" && getMessageGeneratedFiles(message).length > 0,
+    )
+    .sort((a, b) => b.position - a.position)[0];
+  if (!source || source.role !== "assistant" || !latest) {
+    throw new Error("A source and current version are required");
+  }
+
+  const requestedPaths = new Set(paths.map((path) => path.trim()).filter(Boolean));
+  if (requestedPaths.size === 0 || requestedPaths.size > 50) {
+    throw new Error("Select between 1 and 50 files to restore");
+  }
+  const sourceFiles = new Map(
+    getMessageGeneratedFiles(source).map((file) => [file.path, file]),
+  );
+  const restoredFiles = new Map(
+    getMessageGeneratedFiles(latest).map((file) => [file.path, file]),
+  );
+  for (const path of requestedPaths) {
+    const sourceFile = sourceFiles.get(path);
+    if (sourceFile) restoredFiles.set(path, sourceFile);
+    else restoredFiles.delete(path);
+  }
+
+  const files = normalizeGeneratedFiles(Array.from(restoredFiles.values()));
+  const maxPosition = Math.max(...chat.messages.map((message) => message.position));
+  const selectedPaths = Array.from(requestedPaths);
+  const explanation = `Restored ${selectedPaths.length} file${selectedPaths.length === 1 ? "" : "s"} from an earlier checkpoint without changing other current files.`;
+  const content = `${explanation}\n\n${formatGeneratedFilesMarkdown(files)}`;
+  const newMessage = await prisma.message.create({
+    data: {
+      role: "assistant",
+      content,
+      files: JSON.parse(JSON.stringify(files)),
+      position: maxPosition + 1,
+      chatId,
+      versionKind: "selective_restore",
+      changeSummary: `Restored ${selectedPaths.join(", ").slice(0, 64)}`,
+    },
+  });
+  await prisma.chat.update({ where: { id: chatId }, data: { hasCode: true } });
+  return newMessage;
+}
