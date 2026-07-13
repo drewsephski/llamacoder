@@ -40,7 +40,10 @@ import {
   MAX_SCREENSHOT_SIZE_MB,
 } from "@/lib/constants";
 import { DEFAULT_ESTIMATED_INPUT_TOKENS } from "@/lib/billing/config";
-import type { GenerationStatus } from "@/features/generation/contracts";
+import type {
+  GenerationStatus,
+  ResearchActivity,
+} from "@/features/generation/contracts";
 import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
 import {
   agentActionSchema,
@@ -497,6 +500,13 @@ export async function POST(req: Request) {
           void prisma.generationRun.updateMany({
             where: { id: generationRun.id, status: "running" },
             data: { phase: status.phase, label: status.label },
+          });
+        };
+        const writeResearchActivity = (activity: ResearchActivity) => {
+          writer.write({
+            type: "data-research-activity",
+            data: activity,
+            transient: true,
           });
         };
 
@@ -976,6 +986,12 @@ export async function POST(req: Request) {
             }
 
             writeStatus({ phase: "searching", label: "Searching the web" });
+            writeResearchActivity({
+              phase: "searching",
+              query,
+              label: "Searching the web",
+              sourceCount: 0,
+            });
 
             const researchModel = WEB_RESEARCH_MODEL;
             const researchWindow =
@@ -1067,6 +1083,12 @@ export async function POST(req: Request) {
                     : source.title
                   ).slice(0, 300),
                 });
+              });
+              writeResearchActivity({
+                phase: "complete",
+                query,
+                label: `Reviewed ${webSources.length} ${webSources.length === 1 ? "source" : "sources"}`,
+                sourceCount: webSources.length,
               });
 
               const sourceEvidence = webSources.map(

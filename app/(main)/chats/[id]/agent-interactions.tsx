@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Search } from "lucide-react";
+import { Check, LoaderCircle, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,7 @@ import type {
   SourceUrl,
 } from "@/features/generation/agent-contracts";
 import { getDeliveryContractLabel } from "@/features/generation/app-spec";
+import type { ResearchActivity } from "@/features/generation/contracts";
 
 export function ClarificationRequestCard({
   content,
@@ -150,11 +151,17 @@ export function SearchApprovalCard({
   );
 }
 
-export function MessageSources({ sources }: { sources: SourceUrl[] }) {
+export function MessageSources({
+  sources,
+  defaultOpen = false,
+}: {
+  sources: SourceUrl[];
+  defaultOpen?: boolean;
+}) {
   if (sources.length === 0) return null;
 
   return (
-    <Sources className="mb-0 text-muted-foreground">
+    <Sources className="mb-0 text-muted-foreground" defaultOpen={defaultOpen}>
       <SourcesTrigger count={sources.length}>
         <span className="text-xs font-medium">
           {sources.length} {sources.length === 1 ? "source" : "sources"}
@@ -177,6 +184,48 @@ export function MessageSources({ sources }: { sources: SourceUrl[] }) {
         })}
       </SourcesContent>
     </Sources>
+  );
+}
+
+export function ResearchActivityCard({
+  activity,
+  sources,
+}: {
+  activity: ResearchActivity;
+  sources: SourceUrl[];
+}) {
+  const isSearching = activity.phase === "searching";
+
+  return (
+    <div
+      className="rounded-xl border border-blue-500/20 bg-blue-50/40 p-4 dark:bg-blue-950/15"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+          {isSearching ? (
+            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Check className="size-4" aria-hidden="true" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-foreground">
+            {activity.label}
+          </p>
+          <p className="mt-1 break-words font-mono text-xs leading-5 text-muted-foreground">
+            {activity.query}
+          </p>
+          <div className="mt-3">
+            <MessageSources
+              sources={sources}
+              defaultOpen={!isSearching && sources.length > 0}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

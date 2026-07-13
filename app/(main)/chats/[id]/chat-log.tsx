@@ -18,7 +18,10 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
-import type { GenerationStatus } from "@/features/generation/contracts";
+import type {
+  GenerationStatus,
+  ResearchActivity,
+} from "@/features/generation/contracts";
 import { MessageResponse } from "@/components/ai-elements/message";
 import {
   parseAgentMessageMetadata,
@@ -33,6 +36,7 @@ import {
   InterviewRequestCard,
   MessageSources,
   PlanRequestCard,
+  ResearchActivityCard,
   SearchApprovalCard,
 } from "./agent-interactions";
 import type { Plan } from "@/features/generation/agent-contracts";
@@ -45,6 +49,7 @@ export default function ChatLog({
   streamText,
   reasoningText,
   generationStatus,
+  researchActivity,
   streamSources,
   isStreaming,
   onMessageClickAction,
@@ -63,6 +68,7 @@ export default function ChatLog({
   streamText: string;
   reasoningText: string;
   generationStatus: GenerationStatus;
+  researchActivity: ResearchActivity | null;
   streamSources: SourceUrl[];
   isStreaming: boolean;
   onMessageClickAction: (v: Message) => void;
@@ -179,6 +185,13 @@ export default function ChatLog({
 
         {isStreaming && (
           <div className="flex flex-col gap-4">
+            {researchActivity && (
+              <ResearchActivityCard
+                activity={researchActivity}
+                sources={streamSources}
+              />
+            )}
+
             {reasoningText ? (
               <Reasoning
                 className="w-full"
@@ -187,7 +200,8 @@ export default function ChatLog({
                 <ReasoningTrigger />
                 <ReasoningContent>{reasoningText}</ReasoningContent>
               </Reasoning>
-            ) : (
+            ) : researchActivity &&
+              generationStatus.phase === "searching" ? null : (
               <div
                 className="flex items-center gap-2 text-sm text-muted-foreground"
                 role="status"

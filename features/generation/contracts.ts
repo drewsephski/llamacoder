@@ -18,6 +18,13 @@ export const generationStatusSchema = z.object({
   label: z.string(),
 });
 
+export const researchActivitySchema = z.object({
+  phase: z.enum(["searching", "complete"]),
+  query: z.string().min(2).max(500),
+  label: z.string().min(1).max(120),
+  sourceCount: z.number().int().min(0).max(20),
+});
+
 export const agentActionDataSchema = agentActionSchema;
 
 export const scrapeScreenshotRequestSchema = z.object({
@@ -32,6 +39,7 @@ export const scrapeScreenshotResponseSchema = z.object({
 
 export type GenerationPhase = z.infer<typeof generationPhaseSchema>;
 export type GenerationStatus = z.infer<typeof generationStatusSchema>;
+export type ResearchActivity = z.infer<typeof researchActivitySchema>;
 
 export const DEFAULT_GENERATION_STATUS: GenerationStatus = {
   phase: "preparing",

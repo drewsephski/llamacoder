@@ -52,7 +52,9 @@ import {
 import {
   DEFAULT_GENERATION_STATUS,
   generationStatusSchema,
+  researchActivitySchema,
   type GenerationStatus,
+  type ResearchActivity,
 } from "@/features/generation/contracts";
 import type { UIMessageChunk } from "ai";
 import {
@@ -104,6 +106,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const [streamText, setStreamText] = useState("");
   const [reasoningText, setReasoningText] = useState("");
   const [streamSources, setStreamSources] = useState<SourceUrl[]>([]);
+  const [researchActivity, setResearchActivity] =
+    useState<ResearchActivity | null>(null);
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus>(
     DEFAULT_GENERATION_STATUS,
   );
@@ -122,9 +126,12 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const handledStreamPromiseRef = useRef<Promise<CompletionStream> | null>(
     null,
   );
-  const streamReaderRef = useRef<ReadableStreamDefaultReader<UIMessageChunk> | null>(null);
+  const streamReaderRef =
+    useRef<ReadableStreamDefaultReader<UIMessageChunk> | null>(null);
   const [generationRunId, setGenerationRunId] = useState<string | null>(null);
-  const [recoverableRun, setRecoverableRun] = useState(chat.activeGenerationRun);
+  const [recoverableRun, setRecoverableRun] = useState(
+    chat.activeGenerationRun,
+  );
   const freeRepairRequestIdRef = useRef<string | null>(null);
   const freeRepairSourceMessageIdRef = useRef<string | null>(null);
   const automaticRepairAttemptsRef = useRef(0);
@@ -227,12 +234,20 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
   const handleStopGeneration = useCallback(async () => {
     const runId = generationRunId;
-    await streamReaderRef.current?.cancel("Cancelled by user").catch(() => undefined);
-    if (runId) await updateGenerationRun(runId, { action: "cancel" }).catch(() => undefined);
+    await streamReaderRef.current
+      ?.cancel("Cancelled by user")
+      .catch(() => undefined);
+    if (runId)
+      await updateGenerationRun(runId, { action: "cancel" }).catch(
+        () => undefined,
+      );
     setStreamPromise(undefined);
     setGenerationRunId(null);
     setGenerationStatus(DEFAULT_GENERATION_STATUS);
     setStreamText("");
+    setReasoningText("");
+    setStreamSources([]);
+    setResearchActivity(null);
     toast.info("Generation stopped. Reserved credits were released.");
   }, [generationRunId]);
 
@@ -292,6 +307,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
       try {
         setReasoningText("");
         setStreamSources([]);
+        setResearchActivity(null);
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         const stream = await streamPromise;
         creditHoldId = stream.creditHoldId;
@@ -321,6 +337,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
             const parsedAction = agentActionSchema.safeParse(event.data);
             if (parsedAction.success) {
               completedAgentAction = parsedAction.data;
+            }
+            continue;
+          }
+
+          if (event.type === "data-research-activity") {
+            const parsedActivity = researchActivitySchema.safeParse(event.data);
+            if (parsedActivity.success) {
+              setResearchActivity(parsedActivity.data);
             }
             continue;
           }
@@ -554,6 +578,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           setStreamText("");
           setReasoningText("");
           setStreamSources([]);
+          setResearchActivity(null);
           setGenerationStatus(DEFAULT_GENERATION_STATUS);
           setStreamPromise(undefined);
           setGenerationRunId(null);
@@ -591,6 +616,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         setStreamPromise(undefined);
         setReasoningText("");
         setStreamSources([]);
+        setResearchActivity(null);
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         freeRepairRequestIdRef.current = null;
         freeRepairSourceMessageIdRef.current = null;
@@ -849,6 +875,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
             streamText={streamText}
             reasoningText={reasoningText}
             generationStatus={generationStatus}
+            researchActivity={researchActivity}
             streamSources={streamSources}
             isStreaming={!!streamPromise}
             activeMessage={activeMessage}

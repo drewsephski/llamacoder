@@ -498,10 +498,28 @@ describe("/api/get-next-completion-stream-promise", () => {
           data: expect.objectContaining({ phase: "searching" }),
         }),
         expect.objectContaining({
+          type: "data-research-activity",
+          data: {
+            phase: "searching",
+            query: content,
+            label: "Searching the web",
+            sourceCount: 0,
+          },
+        }),
+        expect.objectContaining({
           type: "source-url",
           sourceId: "research-msg_search-1",
           url: "https://www.ufc.com/rankings",
           title: "UFC Rankings (2026-06-30)",
+        }),
+        expect.objectContaining({
+          type: "data-research-activity",
+          data: {
+            phase: "complete",
+            query: content,
+            label: "Reviewed 1 source",
+            sourceCount: 1,
+          },
         }),
       ]),
     );
