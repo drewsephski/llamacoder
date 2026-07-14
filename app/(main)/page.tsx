@@ -1741,10 +1741,6 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-                <p className="mt-2 text-center text-xs leading-5 text-muted-foreground/70">
-                  Describe the users, primary workflow, and visual direction.
-                </p>
-
                 {/* URL section */}
                 <div className="mb-6 mt-6 sm:mb-14 sm:mt-8">
                   <div className="or-divider mb-5">or clone a site</div>
