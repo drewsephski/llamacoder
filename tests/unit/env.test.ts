@@ -22,7 +22,13 @@ function validEnvironment(): NodeJS.ProcessEnv {
 
 describe("production environment validation", () => {
   it("accepts the minimum launch configuration", () => {
-    expect(validateProductionEnvironment(validEnvironment())).toEqual({
+    const environment = validEnvironment();
+    delete environment.RESEND_FROM_EMAIL;
+    delete environment.TURNSTILE_SECRET_KEY;
+    delete environment.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    delete environment.OPERATIONAL_ALERT_WEBHOOK_URL;
+
+    expect(validateProductionEnvironment(environment)).toEqual({
       valid: true,
       errors: [],
     });
@@ -38,5 +44,18 @@ describe("production environment validation", () => {
     if (result.valid) return;
     expect(result.errors.join("\n")).toContain("OPENROUTER_API_KEY");
     expect(result.errors.join("\n")).toContain("Configure all or none of");
+  });
+
+  it("rejects a partial Turnstile configuration", () => {
+    const environment = validEnvironment();
+    delete environment.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+    const result = validateProductionEnvironment(environment);
+
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.errors.join("\n")).toContain(
+      "Configure all or none of: TURNSTILE_SECRET_KEY, NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+    );
   });
 });

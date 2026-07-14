@@ -12,10 +12,10 @@ const productionEnvironmentSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
   OPENROUTER_API_KEY: z.string().min(1),
   RESEND_API_KEY: z.string().min(1),
-  RESEND_FROM_EMAIL: z.string().min(3),
-  TURNSTILE_SECRET_KEY: z.string().min(1),
-  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1),
-  OPERATIONAL_ALERT_WEBHOOK_URL: z.string().url(),
+  RESEND_FROM_EMAIL: z.string().min(3).optional(),
+  TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
+  OPERATIONAL_ALERT_WEBHOOK_URL: optionalUrl,
   SYNTHETIC_MONITOR_SECRET: z.string().min(32),
   CRON_SECRET: z.string().min(32),
   GENERATION_KILL_SWITCH: z.enum(["0", "1"]).optional(),
@@ -60,6 +60,7 @@ export function validateProductionEnvironment(
 
   const conditionalGroups = [
     ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+    ["TURNSTILE_SECRET_KEY", "NEXT_PUBLIC_TURNSTILE_SITE_KEY"],
     [
       "S3_UPLOAD_REGION",
       "S3_UPLOAD_BUCKET",
