@@ -1,0 +1,4 @@
+# BEGIN GENIE MCP FALLBACK
+mcp_servers.genie.command = "/Users/drewsepeczi/.genie/bin/genie"
+mcp_servers.genie.args = ["mcp"]
+# END GENIE MCP FALLBACK

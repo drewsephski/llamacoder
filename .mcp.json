@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "genie": {
+      "command": "/Users/drewsepeczi/.genie/bin/genie",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}
