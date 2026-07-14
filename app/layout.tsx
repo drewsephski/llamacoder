@@ -10,9 +10,9 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const title = "Squid Agent - AI App Builder for Exportable React Code You Own";
+const title = "Squid Agent - Research, Build, Verify, and Ship React Apps";
 const description =
-  "Research current docs and APIs, plan your product, and generate exportable React apps with transparent credits, quality checks, and no platform lock-in.";
+  "Research the live web, approve a plan, build and verify React apps, restore versions, connect APIs, deploy to Vercel, and export code you own.";
 const url = "https://squidagent.app/";
 const ogimage = "https://squidagent.app/og-image.png";
 const sitename = "Squid Agent";

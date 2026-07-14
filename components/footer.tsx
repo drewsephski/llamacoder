@@ -67,7 +67,7 @@ const Footer = memo(({ showPageLinks = false }: FooterProps) => {
               </span>
             </div>
             <p className="max-w-xs text-sm leading-6 text-muted-foreground/70">
-              Turn ideas into exportable React apps with transparent credits.
+              Research, build, verify, and ship React apps with code you own.
             </p>
             <SocialLinks />
           </div>

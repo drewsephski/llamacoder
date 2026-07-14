@@ -115,7 +115,7 @@ const homepageFaq = [
   {
     question: "What is Squid Agent?",
     answer:
-      "Squid Agent is an AI app builder that can research the live web, plan a product with you, and generate React applications from prompts, screenshots, and website references. It keeps the resulting source code, quality checks, credit use, and project history visible.",
+      "Squid Agent is an AI app builder that takes a project from research and planning through generation, iteration, verification, and shipping. It keeps the sources, decisions, React code, quality results, versions, integrations, and credit use visible throughout the process.",
   },
   {
     question: "Who is Squid Agent for?",
@@ -123,63 +123,113 @@ const homepageFaq = [
       "Squid Agent is built for founders, builders, designers, and product teams who want to prototype full React apps quickly while keeping the generated code inspectable, editable, and portable.",
   },
   {
-    question: "Can I export the code from Squid Agent?",
-    answer:
-      "Yes. Squid Agent is designed around code ownership. Generated projects can be downloaded with source files, project metadata, run instructions, and quality information so teams can continue work outside the product.",
-  },
-  {
     question: "Can Squid Agent research current documentation and APIs?",
     answer:
-      "Yes. Squid Agent can search the web for up-to-date documentation, API references, package guidance, and other external facts before it answers or generates code. Research is triggered automatically when a request depends on current information, and you can request web search explicitly.",
+      "Yes. Squid Agent can search the live web for current documentation, API references, package guidance, recommendations, and time-sensitive facts. You can see when research is happening and inspect the supporting sources instead of relying on hidden or stale model knowledge.",
   },
   {
     question: "What does Plan mode do?",
     answer:
-      "Plan mode runs a guided planning workflow before code generation. Squid Agent asks a compact set of consequential questions, turns the answers into a structured project specification, presents the plan for review, and starts building only after you approve it.",
+      "Plan mode asks a compact set of consequential questions, turns your answers into a structured product specification, and presents the plan for review. You can revise it, resolve open decisions, and explicitly approve it before code generation starts.",
+  },
+  {
+    question: "Can I keep editing after the first generation?",
+    answer:
+      "Yes. Continue in chat to make source-aware changes, or select an element in the live preview and describe the exact edit. Squid Agent works from the current project files so a focused change does not have to replace the entire application.",
+  },
+  {
+    question: "How does Squid Agent verify and repair a build?",
+    answer:
+      "Squid Agent checks files, imports, exports, dependencies, accessibility basics, API safety, and the running preview. It shows what passed, what still needs review, and what was not tested. Recoverable preview problems can be repaired automatically without charging for the repair run.",
+  },
+  {
+    question: "Can I restore an earlier version without losing newer work?",
+    answer:
+      "Yes. Code-bearing responses become visible checkpoints with summaries and exact diffs. Restore a complete version or recover selected files only, so you can undo one direction without overwriting unrelated work you want to keep.",
+  },
+  {
+    question: "How do APIs and connected services work?",
+    answer:
+      "Choose APIs before a build, then connect supported services with project-scoped credentials, separate development and production settings, and health checks. Public browser-safe APIs can work directly; services that require secrets stay behind an explicit server and setup boundary rather than being presented as falsely complete.",
+  },
+  {
+    question: "Can Squid Agent publish or export my app?",
+    answer:
+      "Yes. Publish verified code to a GitHub repository, deploy a Vercel preview or production build, share and remix a public project, or download a verified project bundle with React source, configuration, setup instructions, and quality reports. Your code remains portable outside Squid Agent.",
   },
   {
     question: "How does Squid Agent handle AI credits?",
     answer:
-      "Squid Agent shows model cost before generation and records successful usage after work is saved. The product is designed to make credit spend visible instead of hiding cost inside retries or unclear repair loops.",
+      "Squid Agent shows the model and expected credit range before generation, then records the actual charge after successful work is saved. Failed initial generations are not charged, preview repairs are free, and receipts make charges and refunds visible.",
   },
 ] as const;
 
 const homepageNarrativeBlocks = [
   {
-    label: "Input",
+    stage: "01",
+    label: "Research + approve",
     side: "left",
-    question: "Start with an idea, screenshot, or website.",
-    body: "Describe a product in plain language, upload a visual reference, or point Squid Agent at an existing site. It carries that context through the build instead of reducing your request to a one-shot mockup.",
+    question: "Turn an uncertain idea into an approved product plan.",
+    body: "Start with a prompt, screenshot, or website. Squid Agent researches current sources when the work depends on outside knowledge, asks only the decisions that change the build, and gives you a structured plan to revise and approve.",
+    proofs: [
+      "Live web research with visible sources",
+      "Interactive questions and a persistent app specification",
+      "Explicit approval before code generation",
+    ],
   },
   {
-    label: "Research",
+    stage: "02",
+    label: "Build + iterate",
     side: "right",
-    question: "Build with current docs, APIs, and facts.",
-    body: "When a request depends on external knowledge, Squid Agent can search the live web before it writes code. It researches up-to-date documentation, API references, packages, integrations, and time-sensitive data so the build is grounded in current sources rather than stale model memory.",
+    question: "Build a real React project, then refine it in place.",
+    body: "Generate a multi-file React and TypeScript application with a live preview and inspectable source. Keep iterating through chat, or select an element in the preview and request a focused change without replacing the whole project.",
+    proofs: [
+      "Multi-file React, TypeScript, Tailwind, and shadcn code",
+      "Live preview, file tree, and source-aware follow-up edits",
+      "Selected-element edits for precise visual changes",
+    ],
   },
   {
-    label: "Plan mode",
+    stage: "03",
+    label: "Verify + recover",
     side: "left",
-    question: "Work through the plan before the build.",
-    body: "Turn on Plan mode for a guided planning pipeline. Squid Agent asks a compact set of high-impact questions, confirms consequential decisions, assembles a structured specification, and gives you an explicit plan to approve before code generation begins.",
+    question: "Know what works—and keep a safe way back.",
+    body: "Squid Agent checks the generated files and running preview, discloses what still needs review, and attempts recoverable repairs. Every code-bearing response becomes a checkpoint you can compare, label, restore, or selectively recover file by file.",
+    proofs: [
+      "Static, accessibility, API-safety, and runtime checks",
+      "Automatic preview repair with no repair charge",
+      "Exact version diffs, bookmarks, and selective restore",
+    ],
   },
   {
-    label: "Quality",
+    stage: "04",
+    label: "Connect + ship",
     side: "right",
-    question: "See whether the generated app holds together.",
-    body: "Squid Agent checks generated files for broken imports, incompatible exports, protected-path changes, missing dependencies, and baseline accessibility issues. The result is a visible quality signal you can inspect before you iterate or export.",
+    question: "Move from verified preview to code you control.",
+    body: "Connect supported services with scoped credentials and health checks. Publish to GitHub, deploy a Vercel preview or production build, share a remixable project, or leave with a verified source bundle and the instructions to run it anywhere.",
+    proofs: [
+      "Honest API setup boundaries and connection health",
+      "GitHub publishing and Vercel deployments",
+      "Portable source, configuration, and quality reports",
+    ],
+  },
+] as const;
+
+const homepageControlPromises = [
+  {
+    label: "Visible by default",
+    title: "See the evidence.",
+    body: "Inspect research sources, approved decisions, changed files, quality results, version diffs, and the receipt for each saved generation.",
   },
   {
-    label: "Ownership",
-    side: "left",
-    question: "Leave with code you can keep.",
-    body: "Generated projects are real code artifacts, not disposable previews. Export the React source, complete file structure, run instructions, project metadata, and quality information, then continue in your own development workflow without platform lock-in.",
+    label: "Predictable spend",
+    title: "Know the cost.",
+    body: "See the expected credit range before a run and the actual charge afterward. Failed initial generations are not charged, and preview repairs are free.",
   },
   {
-    label: "Credits",
-    side: "right",
-    question: "Know the model and cost before you run.",
-    body: "Choose the model that fits the work and see its expected credit cost before generation starts. Squid Agent keeps successful usage visible so you can understand what a build cost without decoding token math or discovering spend after the fact.",
+    label: "Portable by design",
+    title: "Own the handoff.",
+    body: "Publish verified code or download the complete React project with configuration, setup guidance, deployment files, and quality reports.",
   },
 ] as const;
 
@@ -207,7 +257,7 @@ const homepageStructuredData = {
       url: "https://squidagent.app/",
       image: "https://squidagent.app/og-image.png",
       description:
-        "AI app builder with live web research and a guided planning workflow for generating exportable React applications from prompts, screenshots, and website references.",
+        "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
       creator: {
         "@id": "https://squidagent.app/#organization",
       },
@@ -223,6 +273,13 @@ const homepageStructuredData = {
         "Website reference capture",
         "Live web research for current documentation and APIs",
         "Guided Plan mode with explicit approval before code generation",
+        "Source-aware follow-up and selected-element editing",
+        "Static and runtime quality verification",
+        "Automatic preview repair",
+        "Version diffs and selective file restore",
+        "Project-scoped API and service connections",
+        "GitHub publishing and Vercel deployment",
+        "Public sharing and remixing",
         "Exportable source code",
         "Transparent AI credit pricing",
         "Reversible project versions",
@@ -1096,6 +1153,134 @@ export default function Home() {
           .model-trigger-label { max-width: 60px; }
         }
 
+        /* ---------- Research-to-ship workflow ---------- */
+        .workflow-rail {
+          overflow: visible;
+          background: linear-gradient(
+            to bottom,
+            transparent,
+            hsl(var(--border)) 7%,
+            hsl(var(--border)) 93%,
+            transparent
+          );
+        }
+        .workflow-rail::before {
+          content: '';
+          position: absolute;
+          inset: 4% 50%;
+          width: 10px;
+          transform: translateX(-50%);
+          background: linear-gradient(
+            to bottom,
+            transparent,
+            rgba(59, 130, 246, 0.06) 18%,
+            rgba(59, 130, 246, 0.06) 82%,
+            transparent
+          );
+          filter: blur(7px);
+          pointer-events: none;
+        }
+        .workflow-beam {
+          --beam-energy: 0;
+          --beam-position: 0%;
+          position: absolute;
+          left: 50%;
+          top: var(--beam-position);
+          z-index: 2;
+          width: 2px;
+          height: clamp(104px, 16vh, 152px);
+          transform: translate(-50%, -50%) scaleY(calc(1 + var(--beam-energy) * 0.42));
+          transform-origin: center;
+          border-radius: 999px;
+          background: linear-gradient(
+            to bottom,
+            transparent 0%,
+            rgba(59, 130, 246, 0.28) 28%,
+            rgba(59, 130, 246, 0.88) 68%,
+            rgba(219, 234, 254, 0.98) 83%,
+            transparent 100%
+          );
+          filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.9));
+          opacity: 0;
+          pointer-events: none;
+          will-change: top, transform, opacity;
+        }
+        .workflow-beam::before {
+          content: '';
+          position: absolute;
+          inset: 8% 50%;
+          width: 16px;
+          transform: translateX(-50%);
+          border-radius: 999px;
+          background: inherit;
+          filter: blur(9px);
+          opacity: calc(0.22 + var(--beam-energy) * 0.42);
+        }
+        .workflow-beam[data-direction='up'] {
+          background: linear-gradient(
+            to top,
+            transparent 0%,
+            rgba(59, 130, 246, 0.28) 28%,
+            rgba(59, 130, 246, 0.88) 68%,
+            rgba(219, 234, 254, 0.98) 83%,
+            transparent 100%
+          );
+        }
+        .workflow-card {
+          transition:
+            translate 280ms cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 280ms ease,
+            background-color 280ms ease,
+            box-shadow 280ms ease;
+        }
+        .workflow-card-check {
+          transition:
+            background-color 240ms ease,
+            box-shadow 240ms ease,
+            color 240ms ease;
+        }
+        .workflow-node {
+          transition:
+            border-color 260ms ease,
+            box-shadow 260ms ease;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .workflow-card:hover {
+            translate: 0 -3px;
+            border-color: rgba(59, 130, 246, 0.24);
+            background-color: hsl(var(--background) / 0.92);
+            box-shadow:
+              0 24px 58px -38px rgba(0, 0, 0, 0.72),
+              0 0 0 1px rgba(59, 130, 246, 0.035),
+              0 10px 36px -28px rgba(59, 130, 246, 0.42);
+          }
+          .workflow-card:hover .workflow-card-check {
+            background-color: rgba(59, 130, 246, 0.16);
+            box-shadow: 0 0 14px rgba(59, 130, 246, 0.18);
+          }
+          .workflow-step:hover .workflow-node {
+            border-color: rgba(59, 130, 246, 0.48);
+            box-shadow:
+              0 0 0 6px hsl(var(--background)),
+              0 0 32px rgba(59, 130, 246, 0.34);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .workflow-beam {
+            display: none;
+          }
+          .workflow-card,
+          .workflow-card-check,
+          .workflow-node {
+            transition: none;
+          }
+          .workflow-card:hover {
+            translate: none;
+          }
+        }
+
         /* ---------- Built with Squid showcase ---------- */
         .showcase-panel {
           position: relative;
@@ -1270,14 +1455,14 @@ export default function Home() {
 
           <div className="mt-8 flex flex-1 flex-col items-center px-4 pb-4 sm:mt-20 sm:pb-0 lg:mt-24">
             {/* Hero text */}
-            <div className="flex flex-col items-center gap-3 sm:gap-4 lg:gap-5">
+            <div className="flex w-full flex-col items-center gap-3 sm:gap-4 lg:gap-5">
               <div className="animate-fade-up">
                 <span className="info-pill">
-                  Research, plan, and build with AI
+                  From idea to shipped React app
                 </span>
               </div>
 
-              <h1 className="animate-fade-up-1 text-center font-display tracking-tight text-foreground">
+              <h1 className="animate-fade-up-1 w-full text-center font-display tracking-tight text-foreground">
                 <span className="block text-[2.45rem] leading-[1.04] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
                   Turn ideas
                 </span>
@@ -1286,16 +1471,18 @@ export default function Home() {
                 </span>
               </h1>
 
-              <p className="animate-fade-up-2 max-w-sm text-center text-sm leading-relaxed text-muted-foreground/75 sm:text-base">
-                Research current docs and APIs. Plan the product. <br />
+              <p className="animate-fade-up-2 max-w-lg text-center text-sm leading-relaxed text-muted-foreground/75 sm:text-base">
+                Research the live web. Approve the plan. Build and verify.{" "}
+                <br />
                 <span className="text-foreground/60">
-                  Generate React code you can keep.
+                  Ship React code you own.
                 </span>
               </p>
             </div>
 
             {/* Main form */}
             <form
+              id="builder"
               className="animate-fade-up-3 relative w-full max-w-2xl pt-6 sm:pt-8 lg:pt-12"
               action={async (formData) => {
                 setIsCheckingEligibility(true);
@@ -1827,36 +2014,135 @@ export default function Home() {
 }
 
 function HomepageAnswerSection() {
+  const workflowSectionRef = useRef<HTMLElement>(null);
+  const workflowBeamRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const beam = workflowBeamRef.current;
+    const rail = beam?.parentElement;
+    if (!beam || !rail) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) return;
+
+    let animationFrame: number | null = null;
+    let lastScrollY = window.scrollY;
+    let velocity = 0;
+    let direction: "up" | "down" = "down";
+
+    const getProgress = () => {
+      const railRect = rail.getBoundingClientRect();
+      const viewportCenter = window.innerHeight / 2;
+      return Math.min(
+        Math.max(
+          (viewportCenter - railRect.top) / Math.max(railRect.height, 1),
+          0,
+        ),
+        1,
+      );
+    };
+
+    let beamProgress = getProgress();
+
+    const animateBeam = () => {
+      const railRect = rail.getBoundingClientRect();
+      const viewportCenter = window.innerHeight / 2;
+      const isCenteredOnRail =
+        railRect.top <= viewportCenter && railRect.bottom >= viewportCenter;
+
+      beamProgress = getProgress();
+      velocity *= 0.86;
+
+      const energy = Math.min(Math.abs(velocity) / 42, 1);
+      beam.style.setProperty("--beam-position", `${beamProgress * 100}%`);
+      beam.style.setProperty("--beam-energy", energy.toFixed(3));
+      beam.style.opacity = isCenteredOnRail ? `${0.58 + energy * 0.3}` : "0";
+      beam.dataset.direction = direction;
+
+      if (Math.abs(velocity) > 0.08) {
+        animationFrame = window.requestAnimationFrame(animateBeam);
+      } else {
+        animationFrame = null;
+      }
+    };
+
+    const requestBeamFrame = () => {
+      if (animationFrame === null) {
+        animationFrame = window.requestAnimationFrame(animateBeam);
+      }
+    };
+
+    const handleScroll = () => {
+      const nextScrollY = window.scrollY;
+      const delta = nextScrollY - lastScrollY;
+      lastScrollY = nextScrollY;
+      if (Math.abs(delta) > 0.5) {
+        direction = delta < 0 ? "up" : "down";
+      }
+      velocity = Math.min(Math.max(velocity + delta * 0.34, -72), 72);
+      requestBeamFrame();
+    };
+
+    const handleResize = () => {
+      beamProgress = getProgress();
+      requestBeamFrame();
+    };
+
+    beam.dataset.direction = "down";
+    beam.style.setProperty("--beam-position", `${beamProgress * 100}%`);
+    requestBeamFrame();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+      if (animationFrame !== null) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, []);
+
   return (
     <section
+      ref={workflowSectionRef}
       aria-labelledby="squid-agent-overview"
       className="relative z-10 w-full px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-6"
     >
       <div className="mx-auto w-full max-w-6xl border-y border-border/60 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
           <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
-            Beyond one-shot generation
+            One connected workflow
           </p>
           <h2
             id="squid-agent-overview"
             className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
           >
-            Research. Plan. Build. Own.
+            From uncertain idea to shipped app.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            Squid Agent brings current web knowledge and a deliberate planning
-            workflow into the same pipeline that generates, checks, and exports
-            your React application.
+            Squid Agent brings research, decisions, code, quality, recovery, and
+            deployment into one inspectable workflow. You approve the
+            consequential choices and own every artifact it produces.
           </p>
         </div>
 
         <div className="relative mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-[minmax(0,1fr)_4rem_minmax(0,1fr)] md:gap-x-6 md:gap-y-10">
-          <div className="pointer-events-none absolute left-1/2 top-3 hidden h-[calc(100%-1.5rem)] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-border to-transparent md:block" />
+          <div className="workflow-rail pointer-events-none absolute left-1/2 top-3 hidden h-[calc(100%-1.5rem)] w-px -translate-x-1/2 md:block">
+            <div
+              ref={workflowBeamRef}
+              className="workflow-beam"
+              aria-hidden="true"
+            />
+          </div>
           {homepageNarrativeBlocks.map((block) => {
             const isLeft = block.side === "left";
 
             return (
-              <div key={block.question} className="grid gap-4 md:contents">
+              <div
+                key={block.question}
+                className="workflow-step grid gap-4 md:contents"
+              >
                 {isLeft ? (
                   <HomepageNarrativeArticle
                     block={block}
@@ -1867,7 +2153,7 @@ function HomepageAnswerSection() {
                 )}
 
                 <div className="relative hidden items-center justify-center md:col-start-2 md:flex">
-                  <span className="relative z-10 flex size-5 items-center justify-center rounded-full border border-blue-500/30 bg-background shadow-[0_0_0_6px_hsl(var(--background)),0_0_28px_rgba(59,130,246,0.22)]">
+                  <span className="workflow-node relative z-10 flex size-5 items-center justify-center rounded-full border border-blue-500/30 bg-background shadow-[0_0_0_6px_hsl(var(--background)),0_0_28px_rgba(59,130,246,0.22)]">
                     <span className="size-1.5 rounded-full bg-blue-500" />
                   </span>
                 </div>
@@ -1884,6 +2170,37 @@ function HomepageAnswerSection() {
             );
           })}
         </div>
+
+        <div className="mx-auto mt-20 max-w-5xl rounded-[28px] border border-blue-500/15 bg-blue-500/[0.035] p-5 sm:p-7">
+          <div className="grid gap-6 md:grid-cols-3 md:gap-0">
+            {homepageControlPromises.map((promise, index) => (
+              <article
+                key={promise.label}
+                className={`px-1 md:px-6 ${index > 0 ? "border-t border-border/60 pt-6 md:border-l md:border-t-0 md:pt-0" : ""}`}
+              >
+                <p className="font-mono-jb text-[10px] font-medium uppercase tracking-[0.16em] text-blue-500">
+                  {promise.label}
+                </p>
+                <h3 className="mt-3 text-lg font-semibold tracking-normal text-foreground">
+                  {promise.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {promise.body}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <Link
+            href="#builder"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            Start with your idea
+            <ArrowRightIcon className="size-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -1898,20 +2215,36 @@ function HomepageNarrativeArticle({
 }) {
   return (
     <article
-      className={`relative rounded-[24px] border border-border/70 bg-background/80 p-5 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur sm:p-6 ${className}`}
+      className={`workflow-card relative rounded-[24px] border border-border/70 bg-background/80 p-5 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur sm:p-6 ${className}`}
     >
       <div className="flex items-center justify-between gap-4">
         <p className="font-mono-jb text-[10px] font-medium uppercase tracking-[0.16em] text-blue-500">
-          {block.label}
+          {block.stage} / {block.label}
         </p>
         <span className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
       </div>
-      <h2 className="mt-4 text-2xl font-semibold leading-tight tracking-normal text-foreground">
+      <h3 className="mt-4 text-2xl font-semibold leading-tight tracking-normal text-foreground">
         {block.question}
-      </h2>
+      </h3>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">
         {block.body}
       </p>
+      <ul
+        className="mt-5 grid gap-2.5"
+        aria-label={`${block.label} capabilities`}
+      >
+        {block.proofs.map((proof) => (
+          <li
+            key={proof}
+            className="flex items-start gap-2.5 text-sm leading-5 text-foreground/80"
+          >
+            <span className="workflow-card-check mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
+              <CheckIcon className="size-2.5" aria-hidden="true" />
+            </span>
+            {proof}
+          </li>
+        ))}
+      </ul>
     </article>
   );
 }
@@ -1931,11 +2264,11 @@ function HomepageFaqSection() {
             id="squid-agent-faq"
             className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
           >
-            Know what happens before you build.
+            Know what happens from prompt to production.
           </h2>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
-            Learn how research, planning, code generation, ownership, and
-            credits work before you commit a project.
+            Research, planning, iteration, quality, recovery, integrations,
+            deployment, ownership, and credits—without hidden steps.
           </p>
         </div>
 
@@ -2023,8 +2356,9 @@ function BuiltWithSquidSection() {
           </div>
           <div className="max-w-xl">
             <p className="text-sm leading-6 text-muted-foreground sm:text-base">
-              A showcase of sites and tools built with Squid. Inspect a complete
-              public workspace, then remix or download the source without risk.
+              Explore sites and tools built with Squid. Inspect a complete
+              public workspace, remix the project, or download the source and
+              continue in your own stack.
             </p>
             <Link
               href="/example"

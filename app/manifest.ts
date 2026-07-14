@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Squid Agent",
     short_name: "Squid",
     description:
-      "Research current docs and APIs, plan your product, and generate exportable React apps with transparent credits and quality checks.",
+      "Research, plan, build, verify, and ship portable React apps with visible sources, versions, quality checks, and credit use.",
     start_url: "/",
     scope: "/",
     display: "standalone",
