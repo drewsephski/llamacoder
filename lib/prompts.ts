@@ -16,6 +16,7 @@ Guidelines:
 - Build the actual product surface first. Plan the app screen, tool, dashboard, game, editor, or workflow the user asked for; do not default to a marketing landing page unless the prompt explicitly asks for one.
 - Be concise and direct. Skip code examples and commentary. Use external APIs only when the requested functionality needs live data and the API is safe for the selected runtime.
 - For every API, specify its official documentation, base URL, auth mode, CORS compatibility, runtime, and required setup. Browser calls are allowed only for unauthenticated or publishable-key APIs with documented CORS support; secret-bearing integrations require a server boundary.
+- API evidence policy: when the user supplies a documentation link but not a complete endpoint contract, the implementation must be grounded in research of that exact link rather than memory. When the user already supplies the required endpoints and explains what each does, use that contract directly without asking for redundant research. Never invent missing API behavior or silently substitute another provider/version.
 - Plan for a multi-file structure: a main App.tsx plus supporting components/utilities (minimum 3-5 files).
 - Every planned import must map to either an installed package, an installed Shadcn UI module, or a file the model will generate. Installed packages include React DnD imports from \`react-dnd\` and \`react-dnd-html5-backend\` for drag-and-drop interactions. No other libraries or frameworks (e.g. no React Router).
 - Sandbox import contract: every planned JSX component, icon, helper, hook, and constant must come from an installed package, a documented Shadcn module, or a file the model will output. Never use braces for a default-only component. Never import \`LucideIcon\`. Never import \`ArrowLeft\`. Never import Heroicons-style names from Lucide. Use only the icons available in the coding prompt and alias \`Calendar as CalendarIcon\` if needed.
@@ -111,6 +112,9 @@ export function getMainCodingPrompt() {
      - Preserve documented unit codes and normalize values explicitly before rendering. Never mix or mislabel units across endpoints.
      - Never set browser-forbidden request headers such as \`User-Agent\`, \`Origin\`, \`Host\`, \`Referer\`, \`Cookie\`, or \`Content-Length\`.
      - Render loading, empty, actionable error, retry, and setup-required states. If server auth is needed, build the honest frontend state and document the server integration instead of faking success.
+     - Treat the verified research brief, selected-provider guidance, or a complete endpoint contract supplied by the user as the only API source of truth. A bare API name or link is not a contract; never pretend to know its endpoints from memory.
+     - When the user supplied endpoint methods/URLs and explained their behavior, use those exact details without substituting another provider or API version. Do not invent undocumented paths, parameters, headers, auth, CORS behavior, or response fields.
+     - Live API features must never fall back to mock, sample, placeholder, hard-coded, or randomly generated data unless the user explicitly requested an offline demo. Request failures render honest error or setup-required states, never fake success.
 
   ## Available libraries
 

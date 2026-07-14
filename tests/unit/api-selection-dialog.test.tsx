@@ -52,4 +52,24 @@ describe("API selection dialog", () => {
 
     expect(onSelectionChange).not.toHaveBeenCalled();
   });
+
+  it("lists Octagon for MMA and fighter ranking apps", async () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <ApiSelectionDialog
+        selectedProviderIds={[]}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Choose APIs" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search APIs" }),
+      "MMA rankings",
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Octagon API/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Use 1 API" }));
+
+    expect(onSelectionChange).toHaveBeenCalledWith(["octagon"]);
+  });
 });

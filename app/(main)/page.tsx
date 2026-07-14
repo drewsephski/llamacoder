@@ -19,6 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePlausible } from "next-plausible";
+import { useMotionValue, useSpring } from "framer-motion";
 import {
   useState,
   useRef,
@@ -1156,40 +1157,67 @@ export default function Home() {
         /* ---------- Research-to-ship workflow ---------- */
         .workflow-rail {
           overflow: visible;
-          background: linear-gradient(
-            to bottom,
-            transparent,
-            hsl(var(--border)) 7%,
-            hsl(var(--border)) 93%,
-            transparent
-          );
+          background: none;
         }
-        .workflow-rail::before {
-          content: '';
+        .workflow-rail-path {
           position: absolute;
-          inset: 4% 50%;
-          width: 10px;
-          transform: translateX(-50%);
-          background: linear-gradient(
-            to bottom,
-            transparent,
-            rgba(59, 130, 246, 0.06) 18%,
-            rgba(59, 130, 246, 0.06) 82%,
-            transparent
-          );
-          filter: blur(7px);
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: visible;
           pointer-events: none;
+        }
+        .workflow-rail-line,
+        .workflow-rail-glow {
+          fill: none;
+          vector-effect: non-scaling-stroke;
+        }
+        .workflow-rail-line {
+          stroke: hsl(var(--border));
+          stroke-width: 1;
+        }
+        .workflow-rail-glow {
+          stroke: rgba(59, 130, 246, 0.08);
+          stroke-width: 10;
+          filter: blur(5px);
+        }
+        .workflow-beam-path {
+          fill: none;
+          stroke: rgba(191, 219, 254, 0.98);
+          stroke-width: 2.4;
+          stroke-linecap: round;
+          vector-effect: non-scaling-stroke;
+          filter:
+            drop-shadow(0 0 3px rgba(255, 255, 255, 0.75))
+            drop-shadow(0 0 7px rgba(96, 165, 250, 0.95))
+            drop-shadow(0 0 18px rgba(59, 130, 246, 0.48));
+          opacity: 0;
+          pointer-events: none;
+          will-change: stroke-width, opacity;
+        }
+        .workflow-beam-path-glow {
+          fill: none;
+          stroke: rgba(59, 130, 246, 0.42);
+          stroke-width: 10;
+          stroke-linecap: round;
+          vector-effect: non-scaling-stroke;
+          filter: blur(5px) drop-shadow(0 0 24px rgba(59, 130, 246, 0.42));
+          opacity: 0;
+          pointer-events: none;
+          will-change: stroke-width, opacity;
         }
         .workflow-beam {
           --beam-energy: 0;
           --beam-position: 0%;
+          --beam-offset-x: 0px;
+          --beam-angle: 0deg;
           position: absolute;
-          left: 50%;
+          left: calc(50% + var(--beam-offset-x));
           top: var(--beam-position);
           z-index: 2;
-          width: 2px;
-          height: clamp(104px, 16vh, 152px);
-          transform: translate(-50%, -50%) scaleY(calc(1 + var(--beam-energy) * 0.42));
+          width: 3px;
+          height: clamp(52px, 7vh, 78px);
+          transform: translate(-50%, -50%) rotate(var(--beam-angle)) scaleY(calc(1 + var(--beam-energy) * 0.42));
           transform-origin: center;
           border-radius: 999px;
           background: linear-gradient(
@@ -1203,18 +1231,33 @@ export default function Home() {
           filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.9));
           opacity: 0;
           pointer-events: none;
-          will-change: top, transform, opacity;
+          will-change: top, left, transform, opacity;
         }
         .workflow-beam::before {
           content: '';
           position: absolute;
           inset: 8% 50%;
-          width: 16px;
+          width: 24px;
           transform: translateX(-50%);
           border-radius: 999px;
           background: inherit;
-          filter: blur(9px);
-          opacity: calc(0.22 + var(--beam-energy) * 0.42);
+          filter: blur(11px);
+          opacity: calc(0.3 + var(--beam-energy) * 0.48);
+        }
+        .workflow-beam::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 82%;
+          width: 7px;
+          height: 7px;
+          transform: translate(-50%, -50%);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.98);
+          box-shadow:
+            0 0 5px rgba(255, 255, 255, 0.95),
+            0 0 14px rgba(147, 197, 253, 0.95),
+            0 0 30px rgba(59, 130, 246, 0.72);
         }
         .workflow-beam[data-direction='up'] {
           background: linear-gradient(
@@ -1225,6 +1268,9 @@ export default function Home() {
             rgba(219, 234, 254, 0.98) 83%,
             transparent 100%
           );
+        }
+        .workflow-beam[data-direction='up']::after {
+          top: 18%;
         }
         .workflow-card {
           transition:
@@ -1241,8 +1287,15 @@ export default function Home() {
         }
         .workflow-node {
           transition:
+            translate 260ms cubic-bezier(0.22, 1, 0.36, 1),
             border-color 260ms ease,
             box-shadow 260ms ease;
+        }
+        .workflow-node[data-zigzag-side='left'] {
+          translate: -16px 0;
+        }
+        .workflow-node[data-zigzag-side='right'] {
+          translate: 16px 0;
         }
 
         @media (hover: hover) and (pointer: fine) {
@@ -1268,7 +1321,9 @@ export default function Home() {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .workflow-beam {
+          .workflow-beam,
+          .workflow-beam-path,
+          .workflow-beam-path-glow {
             display: none;
           }
           .workflow-card,
@@ -2016,19 +2071,42 @@ export default function Home() {
 function HomepageAnswerSection() {
   const workflowSectionRef = useRef<HTMLElement>(null);
   const workflowBeamRef = useRef<HTMLDivElement>(null);
+  const workflowBeamPathRef = useRef<SVGPathElement>(null);
+  const workflowBeamGlowPathRef = useRef<SVGPathElement>(null);
+  const workflowBeamMaskRef = useRef<SVGRectElement>(null);
+  const momentumTarget = useMotionValue(0);
+  const momentumSpring = useSpring(momentumTarget, {
+    stiffness: 240,
+    damping: 26,
+    mass: 0.62,
+    restDelta: 0.04,
+    restSpeed: 0.04,
+  });
 
   useEffect(() => {
     const beam = workflowBeamRef.current;
+    const beamPath = workflowBeamPathRef.current;
+    const beamGlowPath = workflowBeamGlowPathRef.current;
+    const beamMask = workflowBeamMaskRef.current;
     const rail = beam?.parentElement;
-    if (!beam || !rail) return;
+    if (!beam || !beamPath || !beamGlowPath || !beamMask || !rail) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (reducedMotion.matches) return;
 
     let animationFrame: number | null = null;
+    let settleTimeout: number | null = null;
     let lastScrollY = window.scrollY;
     let velocity = 0;
     let direction: "up" | "down" = "down";
+    const zigzagPoints = [
+      { progress: 0, offset: 0 },
+      { progress: 0.125, offset: -16 },
+      { progress: 0.375, offset: 16 },
+      { progress: 0.625, offset: -16 },
+      { progress: 0.875, offset: 16 },
+      { progress: 1, offset: 0 },
+    ] as const;
 
     const getProgress = () => {
       const railRect = rail.getBoundingClientRect();
@@ -2042,6 +2120,34 @@ function HomepageAnswerSection() {
       );
     };
 
+    const getPathMetrics = (progress: number, railHeight: number) => {
+      const segmentIndex = zigzagPoints.findIndex(
+        (point) => point.progress >= progress,
+      );
+      const nextIndex = Math.max(segmentIndex, 1);
+      const start = zigzagPoints[nextIndex - 1];
+      const end = zigzagPoints[nextIndex] ?? zigzagPoints.at(-1)!;
+      const segmentProgress = Math.min(
+        Math.max(
+          (progress - start.progress) /
+            Math.max(end.progress - start.progress, 0.001),
+          0,
+        ),
+        1,
+      );
+      const offset =
+        start.offset + (end.offset - start.offset) * segmentProgress;
+      const angle =
+        (-Math.atan2(
+          end.offset - start.offset,
+          railHeight * Math.max(end.progress - start.progress, 0.001),
+        ) *
+          180) /
+        Math.PI;
+
+      return { offset, angle };
+    };
+
     let beamProgress = getProgress();
 
     const animateBeam = () => {
@@ -2050,14 +2156,46 @@ function HomepageAnswerSection() {
       const isCenteredOnRail =
         railRect.top <= viewportCenter && railRect.bottom >= viewportCenter;
 
-      beamProgress = getProgress();
       velocity *= 0.86;
+      const momentumOffset = momentumSpring.get();
+      beamProgress = Math.min(
+        Math.max(
+          getProgress() + momentumOffset / Math.max(railRect.height, 1),
+          0,
+        ),
+        1,
+      );
 
       const energy = Math.min(Math.abs(velocity) / 42, 1);
+      const pathMetrics = getPathMetrics(beamProgress, railRect.height);
+      const beamLength = 10 + energy * 7;
+      const beamOpacity = isCenteredOnRail ? `${0.58 + energy * 0.3}` : "0";
+      const glowOpacity = isCenteredOnRail ? `${0.3 + energy * 0.3}` : "0";
       beam.style.setProperty("--beam-position", `${beamProgress * 100}%`);
+      beam.style.setProperty(
+        "--beam-offset-x",
+        `${pathMetrics.offset.toFixed(3)}px`,
+      );
+      beam.style.setProperty(
+        "--beam-angle",
+        `${pathMetrics.angle.toFixed(3)}deg`,
+      );
       beam.style.setProperty("--beam-energy", energy.toFixed(3));
-      beam.style.opacity = isCenteredOnRail ? `${0.58 + energy * 0.3}` : "0";
+      beam.style.opacity = beamOpacity;
       beam.dataset.direction = direction;
+      beamMask.setAttribute(
+        "y",
+        `${(beamProgress * 100 - beamLength / 2).toFixed(3)}`,
+      );
+      beamMask.setAttribute("height", beamLength.toFixed(3));
+      beamMask.setAttribute(
+        "fill",
+        `url(#workflow-beam-mask-gradient-${direction})`,
+      );
+      beamPath.style.strokeWidth = `${(2.4 + energy * 1.8).toFixed(3)}px`;
+      beamPath.style.opacity = beamOpacity;
+      beamGlowPath.style.strokeWidth = `${(10 + energy * 5).toFixed(3)}px`;
+      beamGlowPath.style.opacity = glowOpacity;
 
       if (Math.abs(velocity) > 0.08) {
         animationFrame = window.requestAnimationFrame(animateBeam);
@@ -2080,6 +2218,13 @@ function HomepageAnswerSection() {
         direction = delta < 0 ? "up" : "down";
       }
       velocity = Math.min(Math.max(velocity + delta * 0.34, -72), 72);
+      momentumTarget.set(Math.min(Math.max(velocity * 0.24, -17), 17));
+      if (settleTimeout !== null) {
+        window.clearTimeout(settleTimeout);
+      }
+      settleTimeout = window.setTimeout(() => {
+        momentumTarget.set(0);
+      }, 72);
       requestBeamFrame();
     };
 
@@ -2090,6 +2235,7 @@ function HomepageAnswerSection() {
 
     beam.dataset.direction = "down";
     beam.style.setProperty("--beam-position", `${beamProgress * 100}%`);
+    const unsubscribeMomentum = momentumSpring.on("change", requestBeamFrame);
     requestBeamFrame();
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize);
@@ -2097,11 +2243,15 @@ function HomepageAnswerSection() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
+      unsubscribeMomentum();
+      if (settleTimeout !== null) {
+        window.clearTimeout(settleTimeout);
+      }
       if (animationFrame !== null) {
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, []);
+  }, [momentumSpring, momentumTarget]);
 
   return (
     <section
@@ -2128,14 +2278,85 @@ function HomepageAnswerSection() {
         </div>
 
         <div className="relative mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-[minmax(0,1fr)_4rem_minmax(0,1fr)] md:gap-x-6 md:gap-y-10">
-          <div className="workflow-rail pointer-events-none absolute left-1/2 top-3 hidden h-[calc(100%-1.5rem)] w-px -translate-x-1/2 md:block">
+          <div className="workflow-rail pointer-events-none absolute left-1/2 top-3 hidden h-[calc(100%-1.5rem)] w-12 -translate-x-1/2 md:block">
+            <svg
+              className="workflow-rail-path"
+              viewBox="0 0 48 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient
+                  id="workflow-beam-mask-gradient-down"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="0" stopColor="white" stopOpacity="0" />
+                  <stop offset="0.28" stopColor="white" stopOpacity="0.18" />
+                  <stop offset="0.72" stopColor="white" stopOpacity="1" />
+                  <stop offset="1" stopColor="white" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="workflow-beam-mask-gradient-up"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="0" stopColor="white" stopOpacity="0" />
+                  <stop offset="0.28" stopColor="white" stopOpacity="1" />
+                  <stop offset="0.72" stopColor="white" stopOpacity="0.18" />
+                  <stop offset="1" stopColor="white" stopOpacity="0" />
+                </linearGradient>
+                <mask
+                  id="workflow-beam-mask"
+                  x="-20"
+                  y="-20"
+                  width="88"
+                  height="140"
+                  maskUnits="userSpaceOnUse"
+                  maskContentUnits="userSpaceOnUse"
+                >
+                  <rect
+                    ref={workflowBeamMaskRef}
+                    x="-20"
+                    y="0"
+                    width="88"
+                    height="10"
+                    fill="url(#workflow-beam-mask-gradient-down)"
+                  />
+                </mask>
+              </defs>
+              <path
+                className="workflow-rail-glow"
+                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+              />
+              <path
+                className="workflow-rail-line"
+                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+              />
+              <path
+                ref={workflowBeamGlowPathRef}
+                className="workflow-beam-path-glow"
+                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+                mask="url(#workflow-beam-mask)"
+              />
+              <path
+                ref={workflowBeamPathRef}
+                className="workflow-beam-path"
+                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+                mask="url(#workflow-beam-mask)"
+              />
+            </svg>
             <div
               ref={workflowBeamRef}
               className="workflow-beam"
               aria-hidden="true"
             />
           </div>
-          {homepageNarrativeBlocks.map((block) => {
+          {homepageNarrativeBlocks.map((block, index) => {
             const isLeft = block.side === "left";
 
             return (
@@ -2153,7 +2374,10 @@ function HomepageAnswerSection() {
                 )}
 
                 <div className="relative hidden items-center justify-center md:col-start-2 md:flex">
-                  <span className="workflow-node relative z-10 flex size-5 items-center justify-center rounded-full border border-blue-500/30 bg-background shadow-[0_0_0_6px_hsl(var(--background)),0_0_28px_rgba(59,130,246,0.22)]">
+                  <span
+                    className="workflow-node relative z-10 flex size-5 items-center justify-center rounded-full border border-blue-500/30 bg-background shadow-[0_0_0_6px_hsl(var(--background)),0_0_28px_rgba(59,130,246,0.22)]"
+                    data-zigzag-side={index % 2 === 0 ? "left" : "right"}
+                  >
                     <span className="size-1.5 rounded-full bg-blue-500" />
                   </span>
                 </div>
@@ -2194,10 +2418,10 @@ function HomepageAnswerSection() {
 
         <div className="mt-10 flex justify-center">
           <Link
-            href="#builder"
+            href="/example"
             className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            Start with your idea
+            See a demo
             <ArrowRightIcon className="size-4" />
           </Link>
         </div>
@@ -2256,7 +2480,7 @@ function HomepageFaqSection() {
       className="relative z-10 w-full px-4 pb-16 sm:px-6 sm:pb-24"
     >
       <div className="mx-auto grid w-full max-w-6xl gap-8 border-t border-border/60 pt-12 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:pt-16">
-        <div className="mx-auto max-w-xl text-center lg:mx-0 lg:text-left">
+        <div className="mx-auto max-w-xl text-center lg:sticky lg:top-8 lg:mx-0 lg:self-start lg:text-left">
           <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
             FAQ
           </p>

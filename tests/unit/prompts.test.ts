@@ -28,6 +28,10 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain(
       "Every JSX component, icon, helper, hook, and constant",
     );
+    expect(prompt).toContain("A bare API name or link is not a contract");
+    expect(prompt).toContain(
+      "must never fall back to mock, sample, placeholder",
+    );
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -54,6 +58,12 @@ describe("prompt design guidance", () => {
     expect(softwareArchitectPrompt).toContain("Never import `ArrowLeft`");
     expect(softwareArchitectPrompt).toContain(
       "Never import Heroicons-style names from Lucide",
+    );
+    expect(softwareArchitectPrompt).toContain(
+      "when the user supplies a documentation link but not a complete endpoint contract",
+    );
+    expect(softwareArchitectPrompt).toContain(
+      "use that contract directly without asking for redundant research",
     );
   });
 });

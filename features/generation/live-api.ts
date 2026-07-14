@@ -69,8 +69,8 @@ This request needs a server-side integration. The generated runtime is browser-o
 
   return `
 
-=== LIVE API APP CONTRACT ===
-The app must use live data from an official, browser-safe API identified by the verified research brief.
+    === LIVE API APP CONTRACT ===
+    The app must use live data from the exact API contract established by the verified research brief, selected-provider guidance, or complete endpoint details supplied by the user. Those sources are authoritative; never substitute a different provider, endpoint version, or remembered contract.
 - Use native fetch through a typed client in a dedicated api/ or services/ file.
 - Direct browser calls are allowed only when auth is "none" or "publishable_key" and the official docs establish browser CORS support. Never embed a secret.
 - Handle response.ok, an AbortController timeout, bounded retry with backoff, loading, empty, and actionable error states.
@@ -80,6 +80,8 @@ The app must use live data from an official, browser-safe API identified by the 
 - Never try to set browser-forbidden request headers such as User-Agent, Origin, Host, Referer, Cookie, or Content-Length. The browser owns them.
 - Create integrations.ts exporting structured metadata for each API: name, purpose, docsUrl, baseUrl, auth, requiredSecrets, corsCompatible, and runtime.
 - For a publishable key, read a clearly named VITE_* variable. Never hard-code it. Render a setup-required state when it is absent.
-- Include visible source attribution in the app where the provider requires it.
-=== END LIVE API APP CONTRACT ===${registryGuidance}`;
+    - Include visible source attribution in the app where the provider requires it.
+    - Do not replace requested live behavior with mock, sample, placeholder, hard-coded, or randomly generated data. Unless the user explicitly requested an offline demo, a failed request must render an honest error or setup-required state rather than fake success.
+    - Never invent endpoints, query parameters, headers, response fields, auth rules, or CORS support. If the supplied or researched contract does not establish a detail needed for a safe implementation, expose that limitation honestly instead of guessing.
+    === END LIVE API APP CONTRACT ===${registryGuidance}`;
 }

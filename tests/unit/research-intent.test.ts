@@ -1,12 +1,75 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assessApiDocumentation,
   buildResearchQuery,
   detectResearchIntent,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
 
 describe("detectResearchIntent", () => {
+  it("requires research of the exact API documentation link when no contract is provided", () => {
+    const content =
+      "Build a flight tracker using the API at https://developer.example.com/api/v3/docs";
+
+    expect(assessApiDocumentation([{ content }])).toEqual({
+      hasApiContext: true,
+      hasCompleteEndpointContract: false,
+      referencedUrls: ["https://developer.example.com/api/v3/docs"],
+    });
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      required: true,
+      freshness: "evergreen",
+      reason: "technical-reference",
+      query: expect.stringContaining(
+        "https://developer.example.com/api/v3/docs",
+      ),
+    });
+  });
+
+  it("skips redundant research when the user provides endpoint URLs and their behavior", () => {
+    const content = `Build a flight tracker with this complete API contract:
+Base URL: https://api.example.com/v2
+GET https://api.example.com/v2/flights?number={number} — returns the matching flight, status, and airports.
+GET https://api.example.com/v2/airports/{code} — returns the airport name, city, and timezone.`;
+
+    expect(assessApiDocumentation([{ content }])).toMatchObject({
+      hasApiContext: true,
+      hasCompleteEndpointContract: true,
+    });
+    expect(detectResearchIntent([{ content }])).toEqual({
+      required: false,
+      explicitlyRequested: false,
+      freshness: "evergreen",
+      reason: null,
+      query: null,
+    });
+  });
+
+  it("still searches a complete endpoint contract when the user explicitly asks", () => {
+    const content = `Use web search to verify this API before building:
+Base URL: https://api.example.com/v2
+GET https://api.example.com/v2/flights — returns current flights.`;
+
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      required: true,
+      explicitlyRequested: true,
+      reason: "explicit",
+    });
+  });
+
+  it("does not mistake an arbitrary webpage for API documentation", () => {
+    const content = "Summarize https://example.com/company/about";
+
+    expect(assessApiDocumentation([{ content }])).toMatchObject({
+      hasApiContext: false,
+      hasCompleteEndpointContract: false,
+    });
+    expect(buildResearchQuery(content)).toBe(
+      "Summarize https://example.com/company/about",
+    );
+  });
+
   it.each([
     "Use web search to get the UFC rankings",
     "Retry this with web search: get the current official UFC pound-for-pound rankings",

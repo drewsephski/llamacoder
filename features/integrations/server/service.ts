@@ -159,6 +159,7 @@ export async function getConnectedIntegrationPromptContext({
   const prompt = [
     "=== CONNECTED PROJECT INTEGRATIONS ===",
     "The user explicitly selected these project-scoped APIs. Every selected provider is mandatory in the plan and generated app. Do not omit or substitute one, even when the latest user message does not mention it again.",
+    "Before planning or generating, confirm that the user's prompt gives every selected API a specific user-visible job. If it does not, propose a few concrete ways to combine the app idea with the selected APIs, recommend the strongest direction first, and ask the user to choose.",
     "Connections are stored in Squid's encrypted server vault; never request, reveal, or emit their credentials.",
     ...bindings.map((binding) => {
       const provider = getIntegrationProvider(binding.providerId);

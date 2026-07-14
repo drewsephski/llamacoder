@@ -10,6 +10,7 @@ import {
   Download,
   Eye,
   FileText,
+  Radio,
   ShieldCheck,
 } from "lucide-react";
 
@@ -38,6 +39,8 @@ export function ExampleWorkspace() {
   const warningCount =
     bundle.qualityReport.diagnostics.length +
     bundle.qualityReport.accessibilityWarnings.length;
+  const apiPolicyNotes =
+    bundle.qualityReport.apiIntegration.policyWarnings.length;
 
   const download = async () => {
     const zip = new JSZip();
@@ -46,7 +49,7 @@ export function ExampleWorkspace() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = getExportFilename("Focus Day");
+    anchor.download = getExportFilename("Waypoint");
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -60,10 +63,11 @@ export function ExampleWorkspace() {
               Squid Agent
             </Link>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-              Focus Day · public example
+              Waypoint · public example
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Inspect everything. No account or credits required.
+              Interactive board, live public APIs, and portable source. No
+              account or credits required.
             </p>
           </div>
           <div className="flex gap-2">
@@ -71,7 +75,7 @@ export function ExampleWorkspace() {
               <Download className="size-4" /> Download source
             </Button>
             <Button asChild>
-              <Link href="/?starter=focus-day">Remix in Squid</Link>
+              <Link href="/?starter=kanban-board">Remix in Squid</Link>
             </Button>
           </div>
         </div>
@@ -91,7 +95,7 @@ export function ExampleWorkspace() {
           ))}
         </div>
 
-        <section className="min-h-[620px] overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <section className="min-h-[760px] overflow-hidden rounded-2xl border bg-card shadow-sm">
           {tab === "Prompt" && (
             <div className="mx-auto max-w-3xl p-8 sm:p-12">
               <FileText className="size-6 text-primary" />
@@ -121,7 +125,7 @@ export function ExampleWorkspace() {
           )}
 
           {tab === "Preview" && (
-            <div className="h-[620px] bg-slate-950">
+            <div className="h-[760px] bg-[#eef2f7]">
               <CodeRunner
                 files={EXAMPLE_PROJECT_FILES.map((file) => ({
                   path: file.path,
@@ -155,7 +159,7 @@ export function ExampleWorkspace() {
             <div className="mx-auto max-w-3xl p-8 sm:p-12">
               <ShieldCheck className="size-8 text-emerald-500" />
               <h2 className="mt-5 text-2xl font-semibold">Quality report</h2>
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <Metric
                   label="Files generated"
                   value={bundle.qualityReport.filesGenerated}
@@ -165,13 +169,14 @@ export function ExampleWorkspace() {
                   value={bundle.qualityReport.importsResolved}
                 />
                 <Metric label="Warnings" value={warningCount} />
+                <Metric label="API policy notes" value={apiPolicyNotes} />
               </div>
               <div className="mt-8 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm">
                 <Check className="mt-0.5 size-4 text-emerald-500" />
                 <p>
-                  Static checks passed. The download includes source, package
-                  scripts, a README, manifest, quality report, and deployment
-                  configuration.
+                  Static checks passed. The download includes provider notes,
+                  resilient API fallbacks, source, package scripts, a README,
+                  quality report, and deployment configuration.
                 </p>
               </div>
             </div>
@@ -184,6 +189,10 @@ export function ExampleWorkspace() {
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Check className="size-3.5 text-emerald-500" /> Static checks passed
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Radio className="size-3.5 text-blue-500" /> Open-Meteo +
+            Frankfurter APIs
           </span>
           <span>{bundle.files.length} portable export files</span>
         </div>

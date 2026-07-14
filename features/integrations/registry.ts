@@ -113,6 +113,46 @@ const providers = [
     verifiedAt: "2026-07-13",
   },
   {
+    id: "octagon",
+    name: "Octagon API",
+    category: "data",
+    description:
+      "MMA rankings, weight divisions, fighter profiles, and career records.",
+    capabilities: [
+      "MMA rankings",
+      "fighter profiles",
+      "weight divisions",
+      "fighter records",
+    ],
+    keywords: [
+      "octagon api",
+      "mma rankings",
+      "mma fighter rankings",
+      "ufc rankings",
+      "fighter stats",
+      "fighter profiles",
+    ],
+    hosts: ["api.octagon-api.com", "octagon-api.com"],
+    docsUrl: "https://www.octagon-api.com/api-documentation",
+    baseUrl: "https://api.octagon-api.com",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "approved",
+    commercialUse: "review_required",
+    attribution:
+      "Identify Octagon API as the data source and do not imply official UFC affiliation.",
+    limits:
+      "No public rate limit or availability SLA is documented. Cache responses, bound fighter-detail fan-out, and tolerate missing or changing fighter IDs.",
+    guidance:
+      "Treat rankings and profiles as third-party MMA data rather than an official or real-time UFC feed. Confirm image and data usage rights before commercial publication.",
+    exampleEndpoint: "https://api.octagon-api.com/rankings",
+    implementationGuidance:
+      "Use /rankings for division and rank lists, /division/{divisionId} for a focused division, and /fighter/{fighterId} for details. Discover IDs from live ranking responses instead of hard-coding documentation examples. Validate rankings as arrays of {id, categoryName, champion, fighters}; fighter measurements and records are strings, and detail endpoints may return 404 when a fighter leaves the dataset.",
+    verifiedAt: "2026-07-14",
+  },
+  {
     id: "weather-gov",
     name: "National Weather Service",
     category: "data",

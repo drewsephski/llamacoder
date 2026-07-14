@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { Plan } from "@/features/generation/agent-contracts";
 import { createEmptyAppSpec } from "@/features/generation/app-spec";
 import {
+  buildSelectedApiPurposeStep,
   enforceSelectedProvidersInAppSpec,
   enforceSelectedProvidersInPlan,
+  getSelectedProvidersNeedingPurpose,
 } from "@/features/integrations/generation-contract";
+import { getIntegrationProvider } from "@/features/integrations/registry";
 
 describe("selected API generation contract", () => {
   it("makes every selected API a required app-spec integration", () => {
@@ -75,5 +78,48 @@ describe("selected API generation contract", () => {
       title: "Selected APIs (required)",
       items: [expect.stringContaining("weather-gov")],
     });
+  });
+
+  it("keeps selected APIs unresolved until they have concrete product jobs", () => {
+    const selected = enforceSelectedProvidersInAppSpec(createEmptyAppSpec(), [
+      "frankfurter",
+    ]);
+
+    expect(
+      getSelectedProvidersNeedingPurpose(selected, ["frankfurter"]),
+    ).toEqual([expect.objectContaining({ id: "frankfurter" })]);
+
+    const resolved = {
+      ...selected,
+      integrations: selected.integrations.map((integration) => ({
+        ...integration,
+        purpose:
+          "Convert each trip budget from USD into the traveler's selected currency.",
+      })),
+    };
+
+    expect(
+      getSelectedProvidersNeedingPurpose(resolved, ["frankfurter"]),
+    ).toEqual([]);
+  });
+
+  it("builds prompt-specific API ideas with the recommendation first", () => {
+    const frankfurter = getIntegrationProvider("frankfurter");
+    const weather = getIntegrationProvider("weather-gov");
+    expect(frankfurter).not.toBeNull();
+    expect(weather).not.toBeNull();
+
+    const step = buildSelectedApiPurposeStep({
+      prompt: "Build a group travel planner",
+      providers: [frankfurter!, weather!],
+    });
+
+    expect(step.title).toContain("Frankfurter + National Weather Service");
+    expect(step.options[0]).toMatchObject({
+      label: expect.stringContaining("Recommended"),
+      description: expect.stringContaining("Build a group travel planner"),
+    });
+    expect(step.options[0].description).toContain("currency conversion");
+    expect(step.options[0].description).toContain("forecasts");
   });
 });

@@ -9,7 +9,18 @@ describe("public example project", () => {
 
     expect(bundle.qualityReport.diagnostics).toEqual([]);
     expect(bundle.qualityReport.accessibilityWarnings).toEqual([]);
-    expect(bundle.verificationReport.status).toBe("verified");
+    expect(bundle.verificationReport.status).toBe("warning");
+    expect(bundle.qualityReport.apiIntegration.status).toBe("setup_required");
+    expect(
+      EXAMPLE_PROJECT_FILES.some((file) =>
+        file.code.includes("api.open-meteo.com/v1/forecast"),
+      ),
+    ).toBe(true);
+    expect(
+      EXAMPLE_PROJECT_FILES.some((file) =>
+        file.code.includes("api.frankfurter.dev/v2/rates"),
+      ),
+    ).toBe(true);
     expect(bundle.files.map((file) => file.path)).toEqual(
       expect.arrayContaining([
         "package.json",

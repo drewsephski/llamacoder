@@ -97,13 +97,14 @@ export const agentOrchestrationPrompt = dedent`
 
   ## Routing rules (critical):
 
-  1. **New build**: If this is the first app-generation request and no plan has been approved, ALWAYS route to "interview". Never route directly to "generate_code". Automatic research runs separately and does not replace the interview lifecycle.
+  1. **New build in Plan mode**: If this is the first app-generation request, Plan mode is enabled, and no plan has been approved, ALWAYS route to "interview". Never route directly to "generate_code". Automatic research runs separately and does not replace the interview lifecycle.
   2. **After interview answers**: Merge the new answers into the spec via specUpdate. If high-impact questions remain, route to "interview" again with new questions. If the spec is sufficiently complete, route to "present_plan".
   3. **Vague acknowledgements** ("looks good", "interesting", "ok", "cool"): Do NOT treat these as plan approval. Route to "answer" or "interview" depending on context.
   4. **Plan revision requests** ("change X", "actually use Y instead"): Route to "interview" with focused questions about only the requested changes. Do NOT present the same plan again without new information.
   5. **Explicit approval**: Only if structured metadata says an approval was given AND approved is true, or the user says "approve"/"I approve"/"let's build it"/"go ahead" in direct response to a plan, route to "generate_code".
   6. **Existing edit/repair**: A concrete request to change an existing generated app (metadata kind = "app_edit_request", "targeted_element_edit", "preview_repair_request") routes directly to "generate_code". Consequential product changes may trigger a focused mini-interview instead.
   7. **Search approval responses**: If structured metadata says search was approved, route to "answer" (the server will attach the search tool). If declined, route to "answer" and do not request it again.
+  8. **Direct mode with selected APIs**: When Plan mode is disabled, this orchestration pass exists only to resolve selected API intent. If every selected API already has a concrete, user-visible job, route directly to "generate_code" and include those purposes in specUpdate. If any selected API's job is unclear, route to "interview" with one compact API-purpose question. Never route to "present_plan" or require plan approval in direct mode. After the user chooses an API direction, persist the exact purposes, features, and user flow in specUpdate and route to "generate_code".
 
   ## Interview policy:
 
@@ -119,6 +120,14 @@ export const agentOrchestrationPrompt = dedent`
   - Support multiple selections where natural (selectionMode: "multi").
   - Include an "Other" or "Use your best judgment" option when appropriate.
   - One interview round contains a small coherent group of 1–3 related questions, not a large survey.
+
+  ## Selected API purpose policy (mandatory):
+
+  - Selecting an API does not explain what product behavior it should power. Before plan presentation or code generation, every selected API must have a specific user-visible job that combines the user's app prompt with that provider's actual capabilities.
+  - Judge the user's prompt semantically. “Build a travel app” with weather and currency APIs is underspecified; “show destination forecasts and convert trip budgets into the traveler's home currency” is specific enough.
+  - When underspecified, ask one compact single-select question whenever possible. Offer two to four genuinely different build directions that combine the original app idea with all selected APIs.
+  - Put the strongest idea first and label it “(Recommended)”. Its description must briefly explain why that combination is the best product direction. Do not ask a blank open-ended “what should the APIs do?” question without proposing ideas.
+  - Preserve each selected providerId and write the chosen concrete job into integrations[].purpose. Also update the corresponding must-have feature and user flow so the selection survives planning and generation.
 
   ## Plan presentation policy:
 

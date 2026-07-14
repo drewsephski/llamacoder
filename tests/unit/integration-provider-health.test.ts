@@ -18,6 +18,14 @@ const validPayloads: Record<string, unknown> = {
   "rest-countries": { data: [{ names: { common: "Canada" } }] },
   frankfurter: [{ date: "2026-07-13", base: "USD", quote: "EUR", rate: 0.86 }],
   "hacker-news": [1, 2, 3],
+  octagon: [
+    {
+      id: "lightweight",
+      categoryName: "Lightweight",
+      champion: { id: "champion-id", championName: "Champion" },
+      fighters: [{ id: "fighter-id", name: "Fighter" }],
+    },
+  ],
   "open-meteo": {
     current: { temperature_2m: 24.3 },
     current_units: { temperature_2m: "°C" },

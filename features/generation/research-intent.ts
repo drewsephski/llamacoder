@@ -14,6 +14,12 @@ export type ResearchReason =
   | "recommendation"
   | "external-facts";
 
+export type ApiDocumentationAssessment = {
+  hasApiContext: boolean;
+  hasCompleteEndpointContract: boolean;
+  referencedUrls: string[];
+};
+
 const EXPLICIT_RESEARCH_PATTERNS = [
   /\b(?:web|internet|online)\s+(?:search|research)\b/i,
   /\b(?:use|do|run)\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\b/i,
@@ -78,6 +84,65 @@ const INFORMATION_REQUEST_PATTERNS = [
 
 const MAX_RESEARCH_QUERY_CHARACTERS = 240;
 const MAX_RESEARCH_QUERY_WORDS = 32;
+
+const API_CONTEXT_PATTERN =
+  /\b(?:api|endpoint|base url|request|response|fetch|webhook|sdk|authentication|authorization)\b|https?:\/\/(?:api\.|developer\.)[^\s]+|https?:\/\/[^\s]+\/(?:api|docs?|reference|swagger|openapi)(?:[/?#]|$)/i;
+const HTTP_ENDPOINT_PATTERN =
+  /\b(?:GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(https?:\/\/[^\s,;)}\]]+|\/[A-Za-z0-9_~!$&'()*+,;=:@%./{}-]+)/i;
+const DESCRIBED_URL_ENDPOINT_PATTERN =
+  /https?:\/\/[^\s,;)}\]]+\s+(?:returns?|retrieves?|gets?|lists?|searches?|creates?|updates?|deletes?|sends?|submits?|provides?|fetches?|loads?|looks? up|converts?|calculates?|is used (?:to|for))/i;
+const ENDPOINT_PURPOSE_PATTERN =
+  /(?:\breturns?|\bretrieves?|\bgets?|\blists?|\bsearches?|\bcreates?|\bupdates?|\bdeletes?|\bsends?|\bsubmits?|\bprovides?|\bfetches?|\bloads?|\blooks? up|\bconverts?|\bcalculates?|\bused (?:to|for)|(?:\s[-–—:]\s|\s->\s)\S)/i;
+const BASE_URL_PATTERN = /\bbase\s*url\s*[:=-]\s*https?:\/\/[^\s]+/i;
+
+function extractUrls(value: string) {
+  return Array.from(
+    new Set(
+      value
+        .match(/https?:\/\/[^\s<>"'`]+/gi)
+        ?.map((url) => url.replace(/[),.;!?\]}]+$/, "")) ?? [],
+    ),
+  );
+}
+
+function hasDescribedEndpoint(value: string) {
+  if (DESCRIBED_URL_ENDPOINT_PATTERN.test(value)) return true;
+
+  return value
+    .split(/\r?\n|(?<=;)\s+/)
+    .some(
+      (line) =>
+        HTTP_ENDPOINT_PATTERN.test(line) && ENDPOINT_PURPOSE_PATTERN.test(line),
+    );
+}
+
+/**
+ * Distinguishes an API reference that needs documentation research from an
+ * implementation contract the user already supplied. A contract is complete
+ * enough to skip discovery only when it contains a resolvable base/absolute
+ * URL and at least one endpoint paired with its concrete behavior.
+ */
+export function assessApiDocumentation(
+  messages: Array<{ content: string }>,
+): ApiDocumentationAssessment {
+  const content = messages
+    .map((message) => message.content.trim())
+    .filter(Boolean)
+    .join("\n");
+  const referencedUrls = extractUrls(content);
+  const hasApiContext = API_CONTEXT_PATTERN.test(content);
+  const hasResolvableBase =
+    BASE_URL_PATTERN.test(content) ||
+    HTTP_ENDPOINT_PATTERN.test(content) ||
+    DESCRIBED_URL_ENDPOINT_PATTERN.test(content);
+
+  return {
+    hasApiContext,
+    hasCompleteEndpointContract:
+      hasApiContext && hasResolvableBase && hasDescribedEndpoint(content),
+    referencedUrls,
+  };
+}
 
 function matchesAny(value: string, patterns: RegExp[]) {
   return patterns.some((pattern) => pattern.test(value));
@@ -193,6 +258,17 @@ export function buildResearchQuery(value: string) {
   const errorQuery = extractErrorQuery(value);
   if (errorQuery) return limitQuery(errorQuery);
 
+  const apiDocumentation = assessApiDocumentation([{ content: value }]);
+  if (
+    apiDocumentation.hasApiContext &&
+    apiDocumentation.referencedUrls.length > 0 &&
+    !apiDocumentation.hasCompleteEndpointContract
+  ) {
+    return limitQuery(
+      `${apiDocumentation.referencedUrls.join(" ")} official API documentation endpoints authentication response schema`,
+    );
+  }
+
   const lookupSubject = value.match(
     /\blook\s+(.{2,180}?)\s+up\b(?:\s+before\b.*)?/i,
   )?.[1];
@@ -300,12 +376,22 @@ function classifyResearch(content: string): {
 export function detectResearchIntent(
   messages: Array<{ content: string }>,
 ): ResearchIntent {
+  const apiDocumentation = assessApiDocumentation(messages);
+
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const content = messages[index]?.content?.trim();
     if (!content) continue;
 
     const classification = classifyResearch(content);
     if (classification) {
+      const isApiReferenceOnly =
+        apiDocumentation.hasApiContext &&
+        (classification.reason === "technical-reference" ||
+          classification.reason === "external-facts");
+      if (isApiReferenceOnly && apiDocumentation.hasCompleteEndpointContract) {
+        continue;
+      }
+
       return {
         required: true,
         ...classification,

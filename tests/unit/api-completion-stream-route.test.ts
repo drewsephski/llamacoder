@@ -586,8 +586,111 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
   });
 
+  it("researches an exact API documentation link before generating code", async () => {
+    const documentationUrl = "https://developer.example.com/api/v3/docs";
+    const content = `Build a flight tracker using the API at ${documentationUrl}`;
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_api_docs",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      text: "Verified exact API documentation",
+      sources: [],
+      toolResults: [
+        {
+          toolName: "web_search",
+          output: {
+            id: "search_api_docs",
+            results: [
+              {
+                url: documentationUrl,
+                title: "Example API v3",
+                highlights: ["GET /flights returns flight status records."],
+              },
+            ],
+          },
+        },
+      ],
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "research_api_docs" },
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_api_docs", model: "model_1" }),
+    );
+    await collectUIChunks(response);
+
+    const researchCall = generateTextMock.mock.calls[0][0];
+    expect(researchCall.prompt).toContain(documentationUrl);
+    expect(researchCall.system).toContain(
+      "inspect that exact page first and treat it as the primary source",
+    );
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+      "GET /flights returns flight status records.",
+    );
+  });
+
+  it("does not research when the user supplies endpoints and their behavior", async () => {
+    const content = `Build a flight tracker with this complete API contract:
+Base URL: https://api.example.com/v2
+GET https://api.example.com/v2/flights?number={number} — returns the matching flight, status, and airports.
+GET https://api.example.com/v2/airports/{code} — returns the airport name, city, and timezone.`;
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_complete_api_contract",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_complete_api_contract", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(
+      chunks.some((chunk) => chunk.type === "data-research-activity"),
+    ).toBe(false);
+    const generationPrompt =
+      streamTextMock.mock.calls[0][0].messages.at(-1).content;
+    expect(generationPrompt).toContain(
+      "complete user-supplied API endpoint contract",
+    );
+    expect(generationPrompt).toContain("Do not run redundant API discovery");
+    expect(generationPrompt).toContain(
+      "Do not replace requested live behavior",
+    );
+  });
+
   it("treats an API selected in the integrations panel as generation context", async () => {
-    const content = "Build it with the choices I made";
+    const content =
+      "Build a travel budget app that converts trip costs from USD into EUR with current Frankfurter rates";
     getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
       prompt:
         "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nFrankfurter [frankfurter] uses https://api.frankfurter.dev/v2/rates and returns rate records.\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
@@ -610,6 +713,36 @@ describe("/api/get-next-completion-stream-promise", () => {
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        action: "generate_code",
+        specUpdate: {
+          integrations: [
+            {
+              providerId: "frankfurter",
+              name: "Frankfurter",
+              purpose:
+                "Convert trip costs from USD into EUR with current reference rates.",
+              required: true,
+              docsUrl: "https://frankfurter.dev/",
+              baseUrl: "https://api.frankfurter.dev/v2",
+              auth: "none",
+              requiredSecrets: [],
+              corsCompatible: true,
+              runtime: "browser",
+            },
+          ],
+          features: {
+            mustHave: ["Convert trip costs from USD into EUR"],
+            niceToHave: [],
+          },
+        },
+      },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_selected_api" },
+    });
     generateTextMock.mockResolvedValueOnce({
       text: "Verified Frankfurter v2 documentation",
       sources: [],
@@ -640,7 +773,13 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
     await collectUIChunks(response);
 
-    expect(generateTextMock.mock.calls[0][0].prompt).toContain("frankfurter");
+    expect(generateTextMock.mock.calls[0][0].prompt).toContain(
+      "Plan mode enabled: false",
+    );
+    expect(generateTextMock.mock.calls[0][0].system).toContain(
+      "Selected API purpose policy",
+    );
+    expect(generateTextMock.mock.calls[1][0].prompt).toContain("frankfurter");
     const generationPrompt =
       streamTextMock.mock.calls[0][0].messages.at(-1).content;
     expect(generationPrompt).toContain("SELECTED API IMPLEMENTATION GUIDANCE");
@@ -654,6 +793,74 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(generationPrompt).toContain(
       "The public API uses the v2 rates endpoint.",
     );
+  });
+
+  it("asks what selected APIs should do when a direct-mode prompt is vague", async () => {
+    const content = "Build a travel app";
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nFrankfurter [frankfurter] provides exchange rates.\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["frankfurter"],
+      requiresServerRuntime: false,
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_vague_selected_api",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    // Even if orchestration tries to generate immediately, the server keeps
+    // the build behind a concrete API-purpose decision.
+    generateTextMock.mockResolvedValueOnce({
+      output: { action: "generate_code" },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_vague_selected_api" },
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_vague_selected_api", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+    const actionChunk = chunks.find(
+      (chunk) => chunk.type === "data-agent-action",
+    );
+
+    expect(actionChunk).toMatchObject({
+      type: "data-agent-action",
+      data: {
+        action: "interview",
+        request: {
+          title: "Choose how the APIs should power your app",
+          steps: [
+            {
+              title: "What should Frankfurter do in this app?",
+              options: [
+                {
+                  label: expect.stringContaining("Recommended"),
+                  description: expect.stringContaining("Build a travel app"),
+                },
+                expect.any(Object),
+                expect.any(Object),
+              ],
+            },
+          ],
+        },
+      },
+    });
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(generateTextMock).toHaveBeenCalledTimes(1);
   });
 
   it("asks for approval instead of automatically running model-suggested research", async () => {

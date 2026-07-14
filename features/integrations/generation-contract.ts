@@ -1,5 +1,6 @@
 import type { Plan } from "@/features/generation/agent-contracts";
 import type { AppSpec, Integration } from "@/features/generation/app-spec";
+import type { QuestionFlowStepDefinition } from "@/components/tool-ui/question-flow/schema";
 import {
   getIntegrationProvider,
   type IntegrationProvider,
@@ -12,6 +13,10 @@ function getSelectedProviders(providerIds: string[]) {
   });
 }
 
+function defaultSelectedProviderPurpose(provider: IntegrationProvider) {
+  return `Power the app's ${provider.capabilities.slice(0, 2).join(" and ")} functionality.`;
+}
+
 function selectedProviderIntegration(
   provider: IntegrationProvider,
   existing?: Integration,
@@ -19,9 +24,7 @@ function selectedProviderIntegration(
   return {
     providerId: provider.id,
     name: provider.name,
-    purpose:
-      existing?.purpose ??
-      `Power the app's ${provider.capabilities.slice(0, 2).join(" and ")} functionality.`,
+    purpose: existing?.purpose ?? defaultSelectedProviderPurpose(provider),
     required: true,
     docsUrl: provider.docsUrl,
     baseUrl: provider.baseUrl,
@@ -31,6 +34,70 @@ function selectedProviderIntegration(
       ? {}
       : { corsCompatible: provider.corsCompatible }),
     runtime: provider.runtime,
+  };
+}
+
+export function getSelectedProvidersNeedingPurpose(
+  spec: AppSpec,
+  providerIds: string[],
+) {
+  const integrationsByProviderId = new Map(
+    spec.integrations.flatMap((integration) =>
+      integration.providerId ? [[integration.providerId, integration]] : [],
+    ),
+  );
+
+  return getSelectedProviders(providerIds).filter((provider) => {
+    const purpose = integrationsByProviderId.get(provider.id)?.purpose.trim();
+    return !purpose || purpose === defaultSelectedProviderPurpose(provider);
+  });
+}
+
+function summarizeAppPrompt(prompt: string) {
+  const normalized = prompt.replace(/\s+/g, " ").trim();
+  if (!normalized) return "the app you described";
+  return normalized.length <= 120
+    ? normalized
+    : `${normalized.slice(0, 117).trimEnd()}...`;
+}
+
+function providerCapabilitySummary(provider: IntegrationProvider) {
+  return `${provider.name} for ${provider.capabilities.slice(0, 2).join(" and ")}`;
+}
+
+export function buildSelectedApiPurposeStep({
+  prompt,
+  providers,
+}: {
+  prompt: string;
+  providers: IntegrationProvider[];
+}): QuestionFlowStepDefinition {
+  const appPrompt = summarizeAppPrompt(prompt);
+  const providerNames = providers.map((provider) => provider.name).join(" + ");
+  const capabilities = providers.map(providerCapabilitySummary).join("; ");
+  const idSuffix = providers.map((provider) => provider.id).join("-");
+
+  return {
+    id: `selected-api-purpose-${idSuffix}`,
+    title: `What should ${providerNames} do in this app?`,
+    description: "Choose the API-powered direction closest to what you want.",
+    options: [
+      {
+        id: "api-powered-core",
+        label: "API-powered core (Recommended)",
+        description: `Best fit: make live API functionality central to “${appPrompt}”: ${capabilities}.`,
+      },
+      {
+        id: "live-insights",
+        label: "Live insights dashboard",
+        description: `Add a dashboard to “${appPrompt}” that turns ${providerNames} data into useful status, trends, and actions.`,
+      },
+      {
+        id: "supporting-tools",
+        label: "Supporting API tools",
+        description: `Keep “${appPrompt}” as the main experience and use ${providerNames} for focused supporting tools powered by ${capabilities}.`,
+      },
+    ],
   };
 }
 

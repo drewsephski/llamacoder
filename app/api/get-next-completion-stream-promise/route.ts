@@ -63,6 +63,7 @@ import {
   type AppSpec,
 } from "@/features/generation/app-spec";
 import {
+  assessApiDocumentation,
   buildResearchQuery,
   detectResearchIntent,
   shouldAnswerWithoutCode,
@@ -80,8 +81,10 @@ import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
 import { getConnectedIntegrationPromptContext } from "@/features/integrations/server/service";
 import {
+  buildSelectedApiPurposeStep,
   enforceSelectedProvidersInAppSpec,
   enforceSelectedProvidersInPlan,
+  getSelectedProvidersNeedingPurpose,
 } from "@/features/integrations/generation-contract";
 
 type CompletionMessage = {
@@ -408,13 +411,11 @@ export async function POST(req: Request) {
     const shouldCarryResearchThroughWorkflow =
       agentMetadata?.kind === "agent_plan_approval" ||
       agentMetadata?.kind === "agent_search_approval_response";
-    const researchIntent = detectResearchIntent(
-      shouldCarryResearchThroughWorkflow
-        ? rawMessages
-            .filter((candidate) => candidate.role === "user")
-            .slice(-24)
-        : [{ content: message.content }],
-    );
+    const researchMessages = shouldCarryResearchThroughWorkflow
+      ? rawMessages.filter((candidate) => candidate.role === "user").slice(-24)
+      : [{ content: message.content }];
+    const apiDocumentation = assessApiDocumentation(researchMessages);
+    const researchIntent = detectResearchIntent(researchMessages);
     const liveApiIntent = shouldCarryResearchThroughWorkflow
       ? (rawMessages
           .filter((candidate) => candidate.role === "user")
@@ -545,6 +546,47 @@ export async function POST(req: Request) {
           );
 
           let agentAction: AgentAction;
+          const enforceSelectedApiPurpose = (action: AgentAction) => {
+            const providersNeedingPurpose = getSelectedProvidersNeedingPurpose(
+              finalSpec,
+              connectedIntegrationSelection.providerIds,
+            );
+            if (
+              providersNeedingPurpose.length === 0 ||
+              (action.action !== "generate_code" &&
+                action.action !== "resume_generation" &&
+                action.action !== "present_plan")
+            ) {
+              return action;
+            }
+
+            const purposeStep = buildSelectedApiPurposeStep({
+              prompt: latestUserContent,
+              providers: providersNeedingPurpose,
+            });
+            finalSpec = {
+              ...finalSpec,
+              status: "interviewing",
+              askedQuestionIds: Array.from(
+                new Set([...finalSpec.askedQuestionIds, purposeStep.id]),
+              ),
+            };
+            return {
+              action: "interview" as const,
+              request: {
+                id: `interview-${messageId}`,
+                title: "Choose how the APIs should power your app",
+                deliveryContract: finalSpec.deliveryContract,
+                confirmedDecisions: Math.max(
+                  0,
+                  finalSpec.askedQuestionIds.length -
+                    providersNeedingPurpose.length,
+                ),
+                remainingDecisions: providersNeedingPurpose.length,
+                steps: [purposeStep],
+              },
+            };
+          };
 
           if (
             agentMetadata?.kind === "agent_plan_approval" &&
@@ -565,9 +607,13 @@ export async function POST(req: Request) {
             agentAction = { action: "answer" };
           } else if (shouldAnswerWithoutCode(latestUserContent)) {
             agentAction = { action: "answer" };
-          } else if (!planMode) {
+          } else if (
+            !planMode &&
+            connectedIntegrationSelection.providerIds.length === 0
+          ) {
             // Plan mode off: old behavior — generate code immediately,
-            // no interview, clarification, or plan.
+            // no interview, clarification, or plan. Selected APIs are the one
+            // exception because their product role may need clarification.
             agentAction = { action: "generate_code" };
           } else {
             const orchestrationModel = FREE_MODEL;
@@ -603,7 +649,7 @@ export async function POST(req: Request) {
                 providerOptions: orchestrationReasoning.providerOptions,
                 output: Output.object({ schema: agentActionSchema }),
                 system: agentOrchestrationPrompt,
-                prompt: `=== PERSISTENT APP SPEC ===\n${specContext}\n=== END SPEC ===${connectedIntegrationContext ? `\n\n${connectedIntegrationContext}` : ""}\n\nRecent conversation:\n${rawMessages
+                prompt: `=== PERSISTENT APP SPEC ===\n${specContext}\n=== END SPEC ===${connectedIntegrationContext ? `\n\n${connectedIntegrationContext}` : ""}\n\nPlan mode enabled: ${planMode}.\n\nRecent conversation:\n${rawMessages
                   .filter((candidate) => candidate.role !== "system")
                   .slice(-8)
                   .map(
@@ -705,8 +751,11 @@ export async function POST(req: Request) {
                 agentAction = routedAction;
               }
 
+              agentAction = enforceSelectedApiPurpose(agentAction);
+
               // Guard: protect against premature code generation for new builds
               if (
+                planMode &&
                 agentAction.action === "generate_code" &&
                 !conversationHasCode &&
                 finalSpec.status !== "approved"
@@ -809,6 +858,15 @@ export async function POST(req: Request) {
               );
               agentAction = { action: "generate_code" };
             }
+          }
+
+          const purposeGuardedAction = enforceSelectedApiPurpose(agentAction);
+          if (purposeGuardedAction !== agentAction) {
+            agentAction = purposeGuardedAction;
+            await prisma.chat.update({
+              where: { id: message.chatId },
+              data: { appSpec: JSON.parse(JSON.stringify(finalSpec)) },
+            });
           }
 
           if (
@@ -914,7 +972,9 @@ export async function POST(req: Request) {
             (searchApproved ||
               (searchApproval?.approved !== false &&
                 (researchIntent.required ||
-                  (isCodeGeneration && effectiveLiveApiIntent.required))));
+                  (isCodeGeneration &&
+                    effectiveLiveApiIntent.required &&
+                    !apiDocumentation.hasCompleteEndpointContract))));
           const researchQuery = searchApproved
             ? buildResearchQuery(searchApproval.query)
             : (researchIntent.query ??
@@ -992,6 +1052,22 @@ export async function POST(req: Request) {
             }
           }
 
+          if (
+            isCodeGeneration &&
+            apiDocumentation.hasCompleteEndpointContract &&
+            !researchRequired
+          ) {
+            const lastUserMessageIndex = guardedMessages.findLastIndex(
+              (candidate) => candidate.role === "user",
+            );
+            if (lastUserMessageIndex !== -1) {
+              guardedMessages[lastUserMessageIndex] = {
+                ...guardedMessages[lastUserMessageIndex],
+                content: `${guardedMessages[lastUserMessageIndex].content}\n\nThe conversation already contains a complete user-supplied API endpoint contract. Use those exact methods, URLs, and stated behaviors as the source of truth. Do not run redundant API discovery, substitute another provider or version, invent undocumented contract details, or replace live requests with mock data.`,
+              };
+            }
+          }
+
           if (researchRequired) {
             const query = researchQuery?.trim();
             if (!query) {
@@ -1037,7 +1113,7 @@ export async function POST(req: Request) {
                 },
                 system:
                   researchWindow === null
-                    ? `Research the request before answering or generating software. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set." : ""} Return a concise factual brief with source support. Do not write application code.`
+                    ? `Research the request before answering or generating software. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. When the objective contains an exact URL, inspect that exact page first and treat it as the primary source; do not replace it with remembered knowledge, a similarly named API, or a different documentation version. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set. Never recommend mock data as a replacement for the requested live integration." : ""} Return a concise factual brief with source support. Do not write application code.`
                     : `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
                 prompt:
                   researchWindow === null

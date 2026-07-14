@@ -72,6 +72,31 @@ function createHealthCheck({
           payload.length > 0 &&
           payload.every((item) => typeof item === "number"),
       };
+    case "octagon":
+      return {
+        url: `${provider.baseUrl}/rankings`,
+        headers: {},
+        successMessage: "Octagon returned a valid MMA rankings payload.",
+        validate: (payload) =>
+          Array.isArray(payload) &&
+          payload.length > 0 &&
+          payload.every(
+            (division) =>
+              isRecord(division) &&
+              typeof division.id === "string" &&
+              typeof division.categoryName === "string" &&
+              isRecord(division.champion) &&
+              typeof division.champion.id === "string" &&
+              typeof division.champion.championName === "string" &&
+              Array.isArray(division.fighters) &&
+              division.fighters.every(
+                (fighter) =>
+                  isRecord(fighter) &&
+                  typeof fighter.id === "string" &&
+                  typeof fighter.name === "string",
+              ),
+          ),
+      };
     case "open-meteo":
       return {
         url: `${provider.baseUrl}/forecast?latitude=41.8781&longitude=-87.6298&current=temperature_2m&timezone=auto`,

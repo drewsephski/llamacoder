@@ -83,4 +83,30 @@ describe("integration registry", () => {
     expect(guidance).toContain("never hard-code a forecast office or grid");
     expect(guidance).toContain("properties.forecastHourly");
   });
+
+  it("registers Octagon as a browser-safe MMA data provider", () => {
+    expect(getIntegrationProvider("octagon")).toMatchObject({
+      name: "Octagon API",
+      auth: "none",
+      runtime: "browser",
+      corsCompatible: true,
+      commercialUse: "review_required",
+      baseUrl: "https://api.octagon-api.com",
+    });
+    expect(
+      findIntegrationProviders("Build an MMA fighter rankings app").map(
+        (provider) => provider.id,
+      ),
+    ).toContain("octagon");
+    expect(
+      findIntegrationProviderByUrl(
+        "https://api.octagon-api.com/division/flyweight",
+      )?.id,
+    ).toBe("octagon");
+
+    const guidance = buildIntegrationProviderGuidance(["octagon"]);
+    expect(guidance).toContain("/division/{divisionId}");
+    expect(guidance).toContain("fighter measurements and records are strings");
+    expect(guidance).toContain("detail endpoints may return 404");
+  });
 });
