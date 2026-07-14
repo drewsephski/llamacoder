@@ -7,7 +7,7 @@ This folder is the operational and Product Hunt launch handoff. The codebase is 
 1. Configure every required variable in `.env.example`, including Turnstile, alert delivery, `CRON_SECRET`, and the independent synthetic-monitor secret.
 2. Apply committed migrations with `pnpm db:deploy`.
 3. Deploy and confirm `GET /api/health` returns `200` and `GET /api/ready` returns `200`.
-4. Confirm the Vercel cron invokes `/api/synthetic/launch` every ten minutes and a deliberate test failure reaches the alert receiver.
+4. Confirm the Vercel cron invokes `/api/synthetic/launch` daily at 12:00 UTC and a deliberate test failure reaches the alert receiver. Run the endpoint manually with `SYNTHETIC_MONITOR_SECRET` when validating a deployment or investigating an incident.
 5. Run `pnpm ship:full` and the billable generation API contract with `RUN_LAUNCH_E2E=1 pnpm test:e2e tests/e2e/launch-flow.spec.ts` against a disposable database branch. This test seeds account verification and credits; it does not prove email delivery, Turnstile, or browser runtime verification.
 6. Run the production-like browser smoke with a real throwaway inbox: sign up, complete Turnstile and email verification, confirm the five-credit grant, generate, run the actual preview test, reload, share, and export.
 7. Exercise Stripe Checkout and both Stripe and GitHub webhook delivery from their provider dashboards.

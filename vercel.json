@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/synthetic/launch",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }

@@ -5,7 +5,7 @@
 1. Check `/api/health`; if it fails, roll back the deployment or restore the runtime immediately.
 2. Check `/api/ready`. Its response separates configuration, database, and expired-hold recovery failures.
 3. Inspect recent `OperationalIncident` rows and the corresponding structured platform logs using the incident name and timestamp.
-4. Check the ten-minute `production_synthetic_*` events to separate provider failures from application or database failures.
+4. Check the daily `production_synthetic_*` events to separate provider failures from application or database failures. Run the synthetic manually when the latest scheduled result is too old for the incident window.
 
 ## Containment
 
