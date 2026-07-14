@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildResearchQuery,
   detectResearchIntent,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
@@ -17,8 +18,45 @@ describe("detectResearchIntent", () => {
       explicitlyRequested: true,
       freshness: expect.any(String),
       reason: "explicit",
-      query: content,
+      query: buildResearchQuery(content),
     });
+  });
+
+  it("reduces preview error output to the relevant diagnostic terms", () => {
+    const content = `The code is not working. Can you fix it? Here's the error:
+
+/components/HeroSection.tsx: Star is not defined (116:17)
+  113 | </div>
+  114 | <div className="hidden sm:flex items-center gap-1">
+  115 | {[1, 2, 3, 4, 5].map((i) => (
+> 116 | <Star key={i} className="w-4 h-4" />
+      |  ^`;
+
+    expect(buildResearchQuery(content)).toBe(
+      "React TypeScript Star is not defined missing import",
+    );
+  });
+
+  it("uses only the diagnostic line for unfamiliar preview errors", () => {
+    const content = `The code is not working. Here's the error:
+
+/components/Card.tsx: Unsupported widget configuration (42:9)
+  41 | return (
+> 42 |   <Widget secret="do-not-search-source-code" />`;
+
+    expect(buildResearchQuery(content)).toBe(
+      "React TypeScript Unsupported widget configuration",
+    );
+  });
+
+  it("removes generic search instructions and bounds long queries", () => {
+    const query = buildResearchQuery(
+      `Use web search to get ${"current official lightweight rankings ".repeat(20)}`,
+    );
+
+    expect(query).toMatch(/^current official lightweight rankings/);
+    expect(query.length).toBeLessThanOrEqual(240);
+    expect(query.split(" ").length).toBeLessThanOrEqual(32);
   });
 
   it.each([
@@ -72,7 +110,7 @@ describe("detectResearchIntent", () => {
         { content: "Use web search for old rankings" },
         { content: "Now use web search for the current lightweight rankings" },
       ]).query,
-    ).toBe("Now use web search for the current lightweight rankings");
+    ).toBe("Now the current lightweight rankings");
   });
 
   it.each([

@@ -76,12 +76,155 @@ const INFORMATION_REQUEST_PATTERNS = [
   /\b(?:search|research|summarize|explain|review|analyze|look\s+(?:it|this|that|them|those)\s+up|tell me)\b/i,
 ];
 
+const MAX_RESEARCH_QUERY_CHARACTERS = 240;
+const MAX_RESEARCH_QUERY_WORDS = 32;
+
 function matchesAny(value: string, patterns: RegExp[]) {
   return patterns.some((pattern) => pattern.test(value));
 }
 
-function normalizeQuery(value: string) {
-  return value.replace(/\s+/g, " ").trim().slice(0, 500);
+function limitQuery(value: string) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  const words: string[] = [];
+
+  for (const word of normalized.split(" ")) {
+    if (words.length >= MAX_RESEARCH_QUERY_WORDS) break;
+    const candidate = [...words, word].join(" ");
+    if (candidate.length > MAX_RESEARCH_QUERY_CHARACTERS) break;
+    words.push(word);
+  }
+
+  return words.join(" ") || normalized.slice(0, MAX_RESEARCH_QUERY_CHARACTERS);
+}
+
+function getErrorTechnology(value: string) {
+  if (/\.tsx?\b/i.test(value)) {
+    return /\.tsx\b/i.test(value) ? "React TypeScript" : "TypeScript";
+  }
+  if (/\.jsx\b/i.test(value)) return "React JavaScript";
+  if (/\.m?js\b/i.test(value)) return "JavaScript";
+  if (/\bReact\b/i.test(value)) return "React";
+  return "JavaScript";
+}
+
+function extractErrorQuery(value: string) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (!normalized) return null;
+
+  const technology = getErrorTechnology(normalized);
+  const undefinedIdentifier = normalized.match(
+    /\b([A-Za-z_$][\w$]*)\s+is not defined\b/i,
+  );
+  if (undefinedIdentifier) {
+    return `${technology} ${undefinedIdentifier[1]} is not defined missing import`;
+  }
+
+  const missingName = normalized.match(
+    /\b(?:Cannot find name|Unknown identifier)\s+['"`]?([A-Za-z_$][\w$]*)/i,
+  );
+  if (missingName) {
+    return `${technology} cannot find name ${missingName[1]} missing import`;
+  }
+
+  const missingModule = normalized.match(
+    /\b(?:Module not found(?::\s*Error)?\s*:?\s*(?:Can't resolve)?|Cannot find module)\s+['"`]([^'"`]+)['"`]/i,
+  );
+  if (missingModule) {
+    return `${technology} cannot resolve module ${missingModule[1]}`;
+  }
+
+  const undefinedProperty = normalized.match(
+    /\bCannot read propert(?:y|ies) of (undefined|null)(?:\s*\(reading ['"`]([^'"`]+)['"`]\))?/i,
+  );
+  if (undefinedProperty) {
+    const property = undefinedProperty[2]
+      ? ` reading ${undefinedProperty[2]}`
+      : "";
+    return `${technology} cannot read properties of ${undefinedProperty[1]}${property}`;
+  }
+
+  const diagnostic = normalized.match(
+    /\b(?:TypeError|ReferenceError|SyntaxError|Build error|Compile error|TS\d+)\s*:\s*([^|^]{2,180})/i,
+  );
+  if (diagnostic) {
+    return `${technology} ${diagnostic[0]}`;
+  }
+
+  const errorMarkerIndex = value.search(
+    /(?:here(?:'s| is) the error|error output|stack trace)\s*:?/i,
+  );
+  if (errorMarkerIndex !== -1) {
+    const diagnosticLine = value
+      .slice(errorMarkerIndex)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(
+        (line) =>
+          line.length > 1 &&
+          !/(?:here(?:'s| is) the error|error output|stack trace)\s*:?/i.test(
+            line,
+          ) &&
+          !/^(?:>|\^|\|)|^\d+\s*\||^at\s+/i.test(line),
+      )
+      .map((line) =>
+        line
+          .replace(
+            /^(?:[./\\\w-]+\/)*[\w.-]+\.(?:tsx?|jsx?|m?js|css|json)\s*:\s*/i,
+            "",
+          )
+          .replace(/\s*\(\d+:\d+\)\s*$/, ""),
+      )
+      .find(Boolean);
+
+    if (diagnosticLine) {
+      return `${technology} ${diagnosticLine}`;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Converts a user request into a bounded search objective. Error logs receive
+ * special handling so code frames, line numbers, and source snippets never
+ * become a search query.
+ */
+export function buildResearchQuery(value: string) {
+  const errorQuery = extractErrorQuery(value);
+  if (errorQuery) return limitQuery(errorQuery);
+
+  const lookupSubject = value.match(
+    /\blook\s+(.{2,180}?)\s+up\b(?:\s+before\b.*)?/i,
+  )?.[1];
+  const withoutSearchInstructions = (lookupSubject ?? value)
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(
+      /^\s*(?:please\s+)?retry\s+this\s+with\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\s*:?\s*/i,
+      "",
+    )
+    .replace(
+      /\b(?:use|do|run)\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\b\s*(?:to|for)?\s*/gi,
+      " ",
+    )
+    .replace(
+      /\bsearch\s+(?:the\s+)?(?:web|internet|online)\b\s*(?:to|for)?\s*/gi,
+      " ",
+    )
+    .replace(
+      /\b(?:browse|research)\s+(?:the\s+)?(?:web|internet|online)\b\s*(?:to|for)?\s*/gi,
+      " ",
+    )
+    .replace(
+      /^\s*(?:please\s+)?(?:build|create|make|show|find|get|tell me about)\s+(?:an?\s+)?/i,
+      "",
+    )
+    .replace(
+      /\b(?:before|while)\s+(?:building|creating|making|updating)\s+(?:this|the app).*$/i,
+      "",
+    )
+    .replace(/\s+([,.:;!?])/g, "$1");
+
+  return limitQuery(withoutSearchInstructions || value);
 }
 
 function classifyResearch(content: string): {
@@ -166,7 +309,7 @@ export function detectResearchIntent(
       return {
         required: true,
         ...classification,
-        query: normalizeQuery(content),
+        query: buildResearchQuery(content),
       };
     }
   }

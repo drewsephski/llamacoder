@@ -190,6 +190,15 @@ describe("OpenRouter helpers", () => {
     expect(getAIErrorMessage(providerError)).toBe("quota exceeded");
     expect(getAIErrorStatus(providerError)).toBe(502);
     expect(getAIErrorStatus({ statusCode: 503 })).toBe(503);
+    expect(
+      getAIErrorMessage({
+        message: "Upstream provider rate limited",
+        code: 429,
+      }),
+    ).toBe("Upstream provider rate limited");
+    expect(
+      getAIErrorMessage({ error: { message: "Provider unavailable" } }),
+    ).toBe("Provider unavailable");
     expect(getAIErrorMessage({})).toBe(
       "The model provider returned an unexpected error.",
     );

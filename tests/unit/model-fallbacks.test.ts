@@ -22,12 +22,15 @@ describe("model fallbacks", () => {
   it("routes the legacy secondary starter to the current secondary starter", () => {
     expect(getModelWithFallbacks(SECONDARY_STARTER_MODEL)).toEqual([
       SECONDARY_STARTER_MODEL,
+      FREE_MODEL,
     ]);
     expect(getModelWithFallbacks(LEGACY_SECONDARY_STARTER_MODEL)).toEqual([
       SECONDARY_STARTER_MODEL,
+      FREE_MODEL,
     ]);
     expect(getModelWithFallbacks(LEGACY_MIMO_STARTER_MODEL)).toEqual([
       SECONDARY_STARTER_MODEL,
+      FREE_MODEL,
     ]);
   });
 

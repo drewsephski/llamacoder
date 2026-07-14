@@ -312,6 +312,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         const stream = await streamPromise;
         creditHoldId = stream.creditHoldId;
         setGenerationRunId(stream.generationRunId ?? null);
+        setRecoverableRun(null);
 
         if (stream.events.locked) {
           console.warn("Skipping duplicate stream reader for locked stream");
@@ -601,7 +602,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
           router.refresh();
         });
       } catch (error: unknown) {
-        console.error("Stream reading error:", error);
+        console.warn(
+          "Generation stream failed:",
+          getErrorMessage(error, "Connection lost"),
+        );
         plausible("Build Failed", {
           props: {
             elapsedMs: generationStartedAtRef.current
@@ -621,20 +625,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
         freeRepairRequestIdRef.current = null;
         freeRepairSourceMessageIdRef.current = null;
 
-        // Set error state for UI
         setStreamError({
           message: getErrorMessage(error, "Connection lost"),
           partialText: fullText,
           canRetry: true,
         });
-
-        if (!fullText) {
-          setStreamError({
-            message: getErrorMessage(error, "Connection lost"),
-            partialText: "",
-            canRetry: true,
-          });
-        }
       } finally {
         try {
           reader?.releaseLock();
@@ -864,9 +859,13 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      <div className="flex h-full min-h-0 overflow-hidden">
+      <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
         <div
-          className={`flex h-full w-full shrink-0 flex-col overflow-hidden ${isShowingCodeViewer ? "lg:w-[30%]" : "lg:w-full"}`}
+          className={`flex h-full min-w-0 flex-col overflow-x-hidden ${
+            isShowingCodeViewer
+              ? "w-full lg:w-[clamp(20rem,30vw,32rem)] lg:shrink-0"
+              : "w-full"
+          }`}
         >
           <HeaderChat chat={chat} />
 
@@ -903,34 +902,34 @@ export default function PageClient({ chat }: { chat: Chat }) {
             }}
           />
 
-          {recoverableRun && !streamPromise && (
-            <div className="mx-3 mb-2 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
-              <RotateCcw className="mt-0.5 size-4 shrink-0 text-amber-600" />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">Recover interrupted generation</p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {recoverableRun.partialTextLength > 0
-                    ? `${recoverableRun.partialTextLength.toLocaleString()} characters are safely stored and ready to save.`
-                    : "This build was interrupted before the final checkpoint was saved."}
-                </p>
+          {recoverableRun &&
+            recoverableRun.partialTextLength > 0 &&
+            !streamPromise && (
+              <div className="mx-3 mb-2 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
+                <RotateCcw className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">Recover interrupted generation</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {`${recoverableRun.partialTextLength.toLocaleString()} characters are safely stored and ready to save.`}
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground"
+                    onClick={handleRecoverGeneration}
+                  >
+                    <RotateCcw className="size-3" /> Resume and save
+                  </button>
+                </div>
                 <button
                   type="button"
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground"
-                  onClick={handleRecoverGeneration}
+                  aria-label="Dismiss recovery"
+                  className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                  onClick={() => setRecoverableRun(null)}
                 >
-                  <RotateCcw className="size-3" /> Resume and save
+                  <X className="size-3.5" />
                 </button>
               </div>
-              <button
-                type="button"
-                aria-label="Dismiss recovery"
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted"
-                onClick={() => setRecoverableRun(null)}
-              >
-                <X className="size-3.5" />
-              </button>
-            </div>
-          )}
+            )}
 
           {showFirstBuildHelp && (
             <div className="mx-3 mb-2 flex items-start gap-3 rounded-xl border border-blue-500/25 bg-blue-500/5 p-3 text-sm">

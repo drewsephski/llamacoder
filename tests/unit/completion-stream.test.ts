@@ -75,7 +75,8 @@ describe("fetchCompletionStream", () => {
       vi.fn().mockResolvedValue(
         Response.json({
           id: "run_1",
-          partialText: "```tsx{path=App.tsx}\nexport default function App(){}\n```",
+          partialText:
+            "```tsx{path=App.tsx}\nexport default function App(){}\n```",
           creditHoldId: "hold_1",
         }),
       ),
@@ -91,5 +92,22 @@ describe("fetchCompletionStream", () => {
     });
     expect(completion.creditHoldId).toBe("hold_1");
     expect(completion.generationRunId).toBe("run_1");
+  });
+
+  it("surfaces the persisted provider error when a run has no output", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({
+          id: "run_1",
+          partialText: "",
+          errorMessage: "Upstream provider rate limited",
+        }),
+      ),
+    );
+
+    await expect(recoverCompletionStream("run_1")).rejects.toThrow(
+      "Upstream provider rate limited",
+    );
   });
 });

@@ -123,10 +123,14 @@ export function VersionDiffDialog({
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
+        className="code-toolbar-adaptive-button"
+        aria-label="Review version changes"
+        title="Review changes"
       >
-        <FileDiff className="size-3.5" /> Review changes
+        <FileDiff className="size-3.5" />
+        <span className="code-toolbar-adaptive-label">Review changes</span>
       </Button>
-      <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-5xl">
+      <DialogContent size="workspace" className="max-h-[88vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Version review</DialogTitle>
           <DialogDescription>

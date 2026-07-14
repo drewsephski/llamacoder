@@ -5,6 +5,8 @@ import {
 } from "@/lib/constants";
 import { getModelTokenPricing, hasModelPricing } from "@/lib/billing/config";
 import { getModelWithFallbacks } from "@/lib/model-fallbacks";
+import { assertGenerationAvailable } from "@/lib/provider-controls";
+import { getErrorMessage } from "@/features/shared/errors";
 
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
 export const GENERATED_CODE_MAX_TOKENS = 16000;
@@ -83,6 +85,7 @@ export function createOpenRouterModel(
   settings: OpenRouterModelSettings = {},
   routing: OpenRouterRoutingOptions = {},
 ) {
+  assertGenerationAvailable(model);
   const { primary, fallbacks } = getOpenRouterModelRoute(model);
   if (!hasModelPricing(primary)) {
     throw new Error(`UNPRICED_MODEL:${model}`);
@@ -213,8 +216,6 @@ export function getOpenRouterProviderOptions(
 }
 
 export function getAIErrorMessage(error: unknown) {
-  if (typeof error === "string") return error;
-
   if (error instanceof Error) {
     const responseBody = "responseBody" in error ? error.responseBody : null;
     if (typeof responseBody === "string") {
@@ -228,11 +229,12 @@ export function getAIErrorMessage(error: unknown) {
         // Fall back to the error message below.
       }
     }
-
-    return error.message;
   }
 
-  return "The model provider returned an unexpected error.";
+  return getErrorMessage(
+    error,
+    "The model provider returned an unexpected error.",
+  );
 }
 
 export function getAIErrorStatus(error: unknown) {

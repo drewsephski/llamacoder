@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
 
     return successResponse(checkoutSession.url, expectsJson);
   } catch (error: unknown) {
-    recordOperationalEvent({
+    await recordOperationalEvent({
       name: "checkout_session_failed",
       level: "error",
       operation: "subscription_checkout",

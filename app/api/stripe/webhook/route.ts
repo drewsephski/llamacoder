@@ -9,6 +9,7 @@ import {
   recordProcessedStripeEvent,
   syncSubscriptionFromStripe,
 } from "@/lib/billing/stripe-fulfillment";
+import { recordOperationalEvent } from "@/lib/observability";
 
 function getStripeId(value: string | { id?: string } | null | undefined) {
   if (typeof value === "string") return value;
@@ -164,6 +165,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("[Stripe Webhook] Error processing event:", event.id, error);
+    await recordOperationalEvent({
+      name: "stripe_webhook_failed",
+      level: "error",
+      operation: event.type,
+      status: "error",
+      error,
+      metadata: { eventId: event.id },
+    });
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 },

@@ -6,6 +6,7 @@ import {
   DownloadIcon,
   ExternalLink,
   FlaskConical,
+  LayoutDashboard,
   Loader2,
   MousePointer2,
   ShieldCheck,
@@ -339,6 +340,23 @@ export default function CodeViewer({
     return () => controller.abort();
   }, [chat.id, message?.id]);
 
+  useEffect(() => {
+    if (
+      activeTab !== "preview" ||
+      !message?.id ||
+      files.length === 0 ||
+      previewTestReport
+    ) {
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => setPreviewTestNonce((value) => value + 1),
+      1_500,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [activeTab, files.length, message?.id, previewTestReport]);
+
   const handlePreviewTestReport = useCallback(
     async (report: Omit<RuntimeVerificationReport, "messageId">) => {
       if (!message?.id) return;
@@ -528,146 +546,218 @@ export default function CodeViewer({
 
   return (
     <>
-      <div className="flex min-h-16 shrink-0 flex-col gap-2 border-b border-border px-3 py-2 md:h-16 md:flex-row md:items-center md:justify-between md:px-4 md:py-0">
-        <div className="flex min-w-0 items-center gap-2 overflow-x-auto md:gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden md:flex"
-            onClick={onClose}
-          >
-            <CloseIcon className="size-5" />
-          </Button>
-          <span className="hidden md:block">{appTitle}</span>
-          {!disabledControls && (
-            <Select
-              value={selectValue}
-              onValueChange={(value) =>
-                onMessageChange(reversedAllAssistantMessages[parseInt(value)])
-              }
-              disabled={disabledControls}
-            >
-              <SelectTrigger className="h-[38px] w-16 text-sm font-semibold !outline-none !ring-0 !ring-transparent">
-                <SelectValue>{`v${currentVersion + 1}`}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {reversedAllAssistantMessages.map((msg, i) => (
-                  <SelectItem key={i} value={i.toString()}>
-                    <div className="flex flex-col">
-                      <span className="font-semibold">
-                        v
-                        {(chat.assistantMessagesCountBefore || 0) +
-                          (allAssistantMessages.length - 1 - i) +
-                          1}
-                      </span>
-                      {msg.changeSummary && (
-                        <span className="max-w-48 truncate text-xs text-muted-foreground">
-                          {msg.changeSummary}
-                        </span>
-                      )}
-                      <span className="text-xs text-white">
-                        {timeAgo(msg.createdAt)}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {currentVersionIndex < allAssistantMessages.length - 1 && message && (
+      <style>{`
+        .code-viewer-toolbar {
+          container-name: code-toolbar;
+          container-type: inline-size;
+        }
+
+        @container code-toolbar (max-width: 82rem) {
+          .code-toolbar-project-title {
+            display: none;
+          }
+        }
+
+        @container code-toolbar (max-width: 64rem) {
+          .code-toolbar-adaptive-label {
+            display: none;
+          }
+
+          .code-toolbar-adaptive-button {
+            width: 2rem;
+            padding-inline: 0;
+            gap: 0;
+          }
+        }
+
+        @container code-toolbar (max-width: 48rem) {
+          .code-toolbar-dashboard-label {
+            display: none;
+          }
+
+          .code-toolbar-dashboard-icon {
+            display: block;
+          }
+
+          .code-toolbar-dashboard-button {
+            width: 2rem;
+            padding-inline: 0;
+          }
+        }
+      `}</style>
+      <div className="code-viewer-toolbar min-h-16 shrink-0 overflow-x-auto border-b border-border px-3 py-2 md:px-4">
+        <div className="flex min-w-max items-center justify-between gap-3">
+          <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
             <Button
-              size="sm"
-              onClick={() =>
-                onRestore(
-                  message,
-                  currentVersion + 1,
-                  (chat.assistantMessagesCountBefore || 0) +
-                    allAssistantMessages.length +
-                    1,
-                )
-              }
+              variant="ghost"
+              size="icon"
+              className="hidden md:flex"
+              onClick={onClose}
+              aria-label="Close code viewer"
+              title="Close code viewer"
             >
-              Restore
+              <CloseIcon className="size-5" />
             </Button>
-          )}
-          {!disabledControls && message && (
-            <VersionDiffDialog
-              projectId={chat.id}
-              messageId={message.id}
-              before={
-                diffBaseMessage ? getMessageGeneratedFiles(diffBaseMessage) : []
-              }
-              after={getMessageGeneratedFiles(message)}
-              initialLabel={message.versionLabel}
-              initialBookmarked={message.isBookmarked}
-              canRestore={currentVersionIndex < allAssistantMessages.length - 1}
-              onRestoreFiles={(paths) => onRestoreFiles(message.id, paths)}
-            />
-          )}
-          {!disabledControls && (
-            <QualityReportPanel
-              report={qualityReport}
-              exportStatus={verifiedExportStatus}
-              runtimeVerification={previewTestReport}
-            />
-          )}
-          {chat.userId && (
-            <ProjectIntegrationsPanel
-              projectId={chat.id}
-              messageId={message?.id}
-            />
-          )}
-        </div>
-        <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard">Dashboard</Link>
-          </Button>
-          {!isSaved && (
-            <Button
-              size="sm"
-              onClick={onSave}
-              disabled={isSaving || isCheckingSession}
-              className={!chat.userId ? "bg-green-600 hover:bg-green-700" : ""}
-            >
-              {isSaving
-                ? "Saving..."
-                : isCheckingSession
-                  ? "Loading..."
-                  : !chat.userId
-                    ? "Sign Up to Save"
-                    : "Save"}
-            </Button>
-          )}
-          {isSaved && (
-            <span className="rounded-md bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-400">
-              Saved
+            <span className="code-toolbar-project-title hidden max-w-48 truncate md:block">
+              {appTitle}
             </span>
-          )}
-          <div className="inline-flex items-center rounded-xl border border-border/60 bg-muted/30 p-1">
-            <button
-              type="button"
-              onClick={() => onTabChange("code")}
-              disabled={disabledControls}
-              className={`h-8 w-20 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                activeTab === "code"
-                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
-                  : "text-muted-foreground hover:text-foreground"
-              } disabled:cursor-not-allowed disabled:opacity-50`}
+            {!disabledControls && (
+              <Select
+                value={selectValue}
+                onValueChange={(value) =>
+                  onMessageChange(reversedAllAssistantMessages[parseInt(value)])
+                }
+                disabled={disabledControls}
+              >
+                <SelectTrigger className="h-[38px] w-16 text-sm font-semibold !outline-none !ring-0 !ring-transparent">
+                  <SelectValue>{`v${currentVersion + 1}`}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {reversedAllAssistantMessages.map((msg, i) => (
+                    <SelectItem key={i} value={i.toString()}>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">
+                          v
+                          {(chat.assistantMessagesCountBefore || 0) +
+                            (allAssistantMessages.length - 1 - i) +
+                            1}
+                        </span>
+                        {msg.changeSummary && (
+                          <span className="max-w-48 truncate text-xs text-muted-foreground">
+                            {msg.changeSummary}
+                          </span>
+                        )}
+                        <span className="text-xs text-white">
+                          {timeAgo(msg.createdAt)}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {currentVersionIndex < allAssistantMessages.length - 1 &&
+              message && (
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    onRestore(
+                      message,
+                      currentVersion + 1,
+                      (chat.assistantMessagesCountBefore || 0) +
+                        allAssistantMessages.length +
+                        1,
+                    )
+                  }
+                >
+                  Restore
+                </Button>
+              )}
+            {!disabledControls && message && (
+              <VersionDiffDialog
+                projectId={chat.id}
+                messageId={message.id}
+                before={
+                  diffBaseMessage
+                    ? getMessageGeneratedFiles(diffBaseMessage)
+                    : []
+                }
+                after={getMessageGeneratedFiles(message)}
+                initialLabel={message.versionLabel}
+                initialBookmarked={message.isBookmarked}
+                canRestore={
+                  currentVersionIndex < allAssistantMessages.length - 1
+                }
+                onRestoreFiles={(paths) => onRestoreFiles(message.id, paths)}
+              />
+            )}
+            {!disabledControls && (
+              <QualityReportPanel
+                report={qualityReport}
+                exportStatus={verifiedExportStatus}
+                runtimeVerification={previewTestReport}
+              />
+            )}
+            {chat.userId && (
+              <ProjectIntegrationsPanel
+                projectId={chat.id}
+                messageId={message?.id}
+              />
+            )}
+          </div>
+          <div className="flex shrink-0 items-center justify-end gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="code-toolbar-dashboard-button px-2 sm:px-4"
             >
-              Code
-            </button>
-            <button
-              type="button"
-              onClick={() => onTabChange("preview")}
-              disabled={disabledControls}
-              className={`h-8 w-20 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                activeTab === "preview"
-                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
-                  : "text-muted-foreground hover:text-foreground"
-              } disabled:cursor-not-allowed disabled:opacity-50`}
+              <Link
+                href="/dashboard"
+                aria-label="Open dashboard"
+                title="Dashboard"
+              >
+                <LayoutDashboard className="code-toolbar-dashboard-icon hidden size-3.5" />
+                <span className="code-toolbar-dashboard-label">Dashboard</span>
+              </Link>
+            </Button>
+            {!isSaved && (
+              <Button
+                size="sm"
+                onClick={onSave}
+                disabled={isSaving || isCheckingSession}
+                className={
+                  !chat.userId ? "bg-green-600 hover:bg-green-700" : ""
+                }
+              >
+                {isSaving
+                  ? "Saving..."
+                  : isCheckingSession
+                    ? "Loading..."
+                    : !chat.userId
+                      ? "Sign Up to Save"
+                      : "Save"}
+              </Button>
+            )}
+            {isSaved && (
+              <span className="rounded-md bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-400">
+                Saved
+              </span>
+            )}
+            <div
+              className="inline-flex min-w-[10.5rem] flex-1 items-center rounded-xl border border-border/60 bg-muted/30 p-1 sm:flex-none"
+              role="tablist"
+              aria-label="Workspace view"
             >
-              Preview
-            </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "code"}
+                onClick={() => onTabChange("code")}
+                disabled={disabledControls}
+                className={`h-8 min-w-0 flex-1 rounded-lg px-3 text-xs font-semibold transition-all duration-200 sm:w-20 ${
+                  activeTab === "code"
+                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                    : "text-muted-foreground hover:text-foreground"
+                } disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                Code
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "preview"}
+                onClick={() => onTabChange("preview")}
+                disabled={disabledControls}
+                className={`h-8 min-w-0 flex-1 rounded-lg px-3 text-xs font-semibold transition-all duration-200 sm:w-20 ${
+                  activeTab === "preview"
+                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                    : "text-muted-foreground hover:text-foreground"
+                } disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                Preview
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -699,7 +789,7 @@ export default function CodeViewer({
         ) : (
           <>
             {files.length > 0 && (
-              <div className="flex min-h-0 flex-1 items-center justify-center">
+              <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
                 <CodeRunner
                   onRequestFix={onRequestFix}
                   onPreviewHealthChange={onPreviewHealthChange}
@@ -738,8 +828,8 @@ export default function CodeViewer({
         />
       )}
 
-      <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-3 md:px-4 md:py-4">
-        <div className="flex min-w-0 items-center gap-2 overflow-x-auto text-sm md:gap-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-3 md:px-4 md:py-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm md:gap-2.5">
           <Share
             message={
               disabledControls
@@ -829,7 +919,10 @@ export default function CodeViewer({
       </div>
 
       <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent
+          size="workspace"
+          className="max-h-[88vh] overflow-y-auto"
+        >
           <DialogHeader>
             <DialogTitle>Export {appTitle}</DialogTitle>
             <DialogDescription>

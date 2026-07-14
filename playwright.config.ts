@@ -20,7 +20,7 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: "pnpm dev",
+        command: "E2E_SKIP_EMAIL_DELIVERY=1 pnpm dev",
         url: baseURL,
         reuseExistingServer: true,
         timeout: 120_000,

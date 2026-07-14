@@ -13,7 +13,6 @@ const shareEventSchema = z.object({
     "view",
     "copy_prompt",
     "download_starter",
-    "gallery_featured",
     "remix_click",
     "remix_created",
     "referral_credit_granted",
@@ -22,9 +21,22 @@ const shareEventSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const parsed = shareEventSchema.safeParse(
-    await request.json().catch(() => null),
-  );
+  const rawBody = await request.json().catch(() => null);
+  if (
+    rawBody &&
+    typeof rawBody === "object" &&
+    "eventType" in rawBody &&
+    rawBody.eventType === "gallery_featured"
+  ) {
+    return NextResponse.json(
+      {
+        error: "FORBIDDEN",
+        message: "Gallery promotion is an administrative action.",
+      },
+      { status: 403 },
+    );
+  }
+  const parsed = shareEventSchema.safeParse(rawBody);
 
   if (!parsed.success) {
     return NextResponse.json(

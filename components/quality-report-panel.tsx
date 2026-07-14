@@ -68,24 +68,25 @@ export function QualityReportPanel({
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className={`inline-flex h-8 gap-1.5 px-2.5 text-xs ${
+        className={`code-toolbar-adaptive-button inline-flex h-8 gap-1.5 px-2.5 text-xs ${
           report.status === "passed"
             ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300"
             : "border-amber-500/30 bg-amber-500/10 text-amber-800 hover:bg-amber-500/15 dark:text-amber-300"
         }`}
         aria-label={`Open quality report: ${report.status}`}
+        title={`Quality ${report.status === "passed" ? "passed" : "review"}`}
       >
         {report.status === "passed" ? (
           <CheckCircle2 className="size-3.5" />
         ) : (
           <AlertTriangle className="size-3.5" />
         )}
-        <span className="hidden sm:inline">
+        <span className="code-toolbar-adaptive-label">
           Quality {report.status === "passed" ? "passed" : "review"}
         </span>
       </Button>
 
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent size="workspace" className="max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="size-5 text-primary" />

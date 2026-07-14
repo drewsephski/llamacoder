@@ -78,7 +78,7 @@ export function ApiSelectionDialog({
           )}
         </button>
       </DialogTrigger>
-      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent size="workspace" className="max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plug className="size-5 text-primary" /> Choose APIs for this app

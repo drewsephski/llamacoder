@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePlausible } from "next-plausible";
 import {
@@ -29,7 +30,7 @@ import {
 } from "react";
 
 import Header from "@/components/header";
-import { useS3Upload } from "next-s3-upload";
+import { usePresignedUpload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
@@ -429,7 +430,7 @@ export default function Home() {
     setIsHoveringRing(false);
   };
 
-  const { uploadToS3 } = useS3Upload();
+  const { uploadToS3 } = usePresignedUpload();
 
   const selectedModel = useMemo(
     () => MODELS.find((m) => m.value === model),
@@ -562,7 +563,11 @@ export default function Home() {
       setScreenshotData(dataUrl);
       setScreenshotLoading(false);
 
-      uploadToS3(file)
+      if (!isAuthenticated) return;
+
+      uploadToS3(file, {
+        endpoint: { request: { body: { filesize: file.size } } },
+      })
         .then(({ url }) => {
           setScreenshotUrl(url);
         })
@@ -2016,10 +2021,19 @@ function BuiltWithSquidSection() {
               Real projects shipped from prompts.
             </h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            A showcase of sites and tools built with Squid. Each window links to
-            a public preview users can remix, copy, or download.
-          </p>
+          <div className="max-w-xl">
+            <p className="text-sm leading-6 text-muted-foreground sm:text-base">
+              A showcase of sites and tools built with Squid. Inspect a complete
+              public workspace, then remix or download the source without risk.
+            </p>
+            <Link
+              href="/example"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-500 hover:underline"
+            >
+              Open the no-signup example workspace
+              <ArrowRightIcon className="size-4" />
+            </Link>
+          </div>
         </div>
 
         <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">

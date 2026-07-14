@@ -27,7 +27,7 @@ export function AppVersionButton({
       <button
         type="button"
         disabled={disabled}
-        className={`inline-flex w-full items-center gap-2 rounded-lg border-4 border-border p-1.5 ${
+        className={`inline-flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border-4 border-border p-1.5 ${
           generating
             ? "animate-pulse"
             : isActive !== undefined
@@ -49,26 +49,26 @@ export function AppVersionButton({
         >
           V{version}
         </div>
-        <div className="flex flex-col gap-0.5 text-left leading-none">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left leading-none">
           {generating ? (
             <div className="text-sm font-medium leading-none">
               Generating...
             </div>
           ) : fileCount ? (
             <>
-              <div className="text-sm font-medium leading-none">
+              <div className="truncate text-sm font-medium leading-none">
                 v{version} — {changeSummary || appTitle || "Generated app"}
               </div>
-              <div className="text-xs leading-none text-muted-foreground">
+              <div className="truncate text-xs leading-none text-muted-foreground">
                 {fileCount} file{fileCount !== 1 ? "s" : ""} edited
               </div>
             </>
           ) : filename ? (
             <>
-              <div className="text-sm font-medium leading-none">
+              <div className="truncate text-sm font-medium leading-none">
                 {toTitleCase(filename.name)} {version !== 1 && `v${version}`}
               </div>
-              <div className="text-xs leading-none text-muted-foreground">
+              <div className="truncate text-xs leading-none text-muted-foreground">
                 {filename.name}
                 {version !== 1 && `-v${version}`}
                 {"."}
@@ -78,7 +78,7 @@ export function AppVersionButton({
           ) : null}
         </div>
         {!generating && (
-          <div className="ml-auto">
+          <div className="ml-auto shrink-0">
             {isActive ? (
               <ArrowLeftIcon />
             ) : (

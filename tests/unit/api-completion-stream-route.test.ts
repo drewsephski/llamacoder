@@ -5,6 +5,7 @@ import {
 } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildMessage } from "../fixtures/builders";
+import { buildResearchQuery } from "@/features/generation/research-intent";
 
 const {
   createOpenRouterModelMock,
@@ -444,6 +445,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     vi.setSystemTime(new Date("2026-07-11T12:00:00.000Z"));
     const content =
       "Build a UFC rankings app and use web search to get the actual rankings";
+    const searchQuery = buildResearchQuery(content);
     prismaMock.message.findUnique.mockResolvedValueOnce(
       buildMessage({
         id: "msg_search",
@@ -501,7 +503,7 @@ describe("/api/get-next-completion-stream-promise", () => {
           type: "data-research-activity",
           data: {
             phase: "searching",
-            query: content,
+            query: searchQuery,
             label: "Searching the web",
             sourceCount: 0,
           },
@@ -516,7 +518,7 @@ describe("/api/get-next-completion-stream-promise", () => {
           type: "data-research-activity",
           data: {
             phase: "complete",
-            query: content,
+            query: searchQuery,
             label: "Reviewed 1 source",
             sourceCount: 1,
           },
@@ -541,7 +543,7 @@ describe("/api/get-next-completion-stream-promise", () => {
           verbosity: "standard",
         },
         highlights: {
-          query: content,
+          query: searchQuery,
           maxCharacters: 3_000,
         },
         maxAgeHours: 1,
@@ -550,6 +552,9 @@ describe("/api/get-next-completion-stream-promise", () => {
     });
     expect(researchCall.toolChoice).toBe("required");
     expect(researchCall.maxOutputTokens).toBe(4_000);
+    expect(researchCall.system).toContain(
+      "Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query",
+    );
     expect(researchCall.providerOptions).toEqual({
       gateway: {
         user: "user_1",
@@ -780,77 +785,80 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
   });
 
-  it("uses current files for free preview repairs without a hold or full-generation guard", async () => {
-    prismaMock.message.findUnique.mockResolvedValueOnce(
-      buildMessage({
-        id: "repair_msg_1",
-        chatId: "chat_1",
-        position: 4,
-        content: "ReferenceError: total is not defined",
-        files: {
-          kind: "preview_repair_request",
-          chargeCredits: false,
-          sourceMessageId: "assistant_1",
-        },
-        chat: {
-          id: "chat_1",
-          userId: "user_1",
-          model: "model_1",
-          quality: "low",
-        },
-      }),
-    );
-    prismaMock.message.findMany.mockResolvedValueOnce([
-      { id: "system_1", role: "system", content: "system prompt" },
-      { id: "user_1", role: "user", content: "build calculator" },
-      {
-        id: "assistant_1",
-        role: "assistant",
-        content: "created app",
-        files: [
-          {
-            path: "App.tsx",
-            language: "tsx",
-            code: "export default function App() { return <main>{total}</main>; }",
+  it.each(["preview_repair", "preview_repair_request"])(
+    "uses current files for %s repairs without a hold, search, or full-generation guard",
+    async (repairKind) => {
+      prismaMock.message.findUnique.mockResolvedValueOnce(
+        buildMessage({
+          id: "repair_msg_1",
+          chatId: "chat_1",
+          position: 4,
+          content: "ReferenceError: total is not defined",
+          files: {
+            kind: repairKind,
+            chargeCredits: false,
+            sourceMessageId: "assistant_1",
           },
-        ],
-      },
-      {
-        id: "repair_msg_1",
-        role: "user",
-        content: "ReferenceError: total is not defined",
-        files: {
-          kind: "preview_repair_request",
-          chargeCredits: false,
-          sourceMessageId: "assistant_1",
+          chat: {
+            id: "chat_1",
+            userId: "user_1",
+            model: "model_1",
+            quality: "low",
+          },
+        }),
+      );
+      prismaMock.message.findMany.mockResolvedValueOnce([
+        { id: "system_1", role: "system", content: "system prompt" },
+        { id: "user_1", role: "user", content: "build calculator" },
+        {
+          id: "assistant_1",
+          role: "assistant",
+          content: "created app",
+          files: [
+            {
+              path: "App.tsx",
+              language: "tsx",
+              code: "export default function App() { return <main>{total}</main>; }",
+            },
+          ],
         },
-      },
-    ]);
-    mockGeneration({
-      text: "```tsx{path=App.tsx}\nexport default function App() { return <main>0</main>; }\n```",
-    });
+        {
+          id: "repair_msg_1",
+          role: "user",
+          content: "ReferenceError: total is not defined",
+          files: {
+            kind: repairKind,
+            chargeCredits: false,
+            sourceMessageId: "assistant_1",
+          },
+        },
+      ]);
+      mockGeneration({
+        text: "```tsx{path=App.tsx}\nexport default function App() { return <main>0</main>; }\n```",
+      });
 
-    const response = await POST(
-      request({
-        messageId: "repair_msg_1",
-        model: "model_1",
-        screenshotData: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-      }),
-    );
-    const chunks = await collectUIChunks(response);
+      const response = await POST(
+        request({
+          messageId: "repair_msg_1",
+          model: "model_1",
+          screenshotData: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+        }),
+      );
+      const chunks = await collectUIChunks(response);
 
-    expect(response.headers.get("x-credit-hold-id")).toBeNull();
-    expect(chunks.some((chunk) => chunk.type === "text-delta")).toBe(true);
-    expect(reserveCreditHoldMock).not.toHaveBeenCalled();
-    expect(generateTextMock).not.toHaveBeenCalled();
-    const call = streamTextMock.mock.calls[0][0];
-    expect(call.system).toContain("system prompt");
-    expect(call.messages).toHaveLength(1);
-    expect(call.messages[0].content).toContain(
-      "Return only complete files that changed",
-    );
-    expect(call.messages[0].content).not.toContain(
-      "Generation completeness requirements:",
-    );
-  });
+      expect(response.headers.get("x-credit-hold-id")).toBeNull();
+      expect(chunks.some((chunk) => chunk.type === "text-delta")).toBe(true);
+      expect(reserveCreditHoldMock).not.toHaveBeenCalled();
+      expect(generateTextMock).not.toHaveBeenCalled();
+      const call = streamTextMock.mock.calls[0][0];
+      expect(call.system).toContain("system prompt");
+      expect(call.messages).toHaveLength(1);
+      expect(call.messages[0].content).toContain(
+        "Return only complete files that changed",
+      );
+      expect(call.messages[0].content).not.toContain(
+        "Generation completeness requirements:",
+      );
+    },
+  );
 });

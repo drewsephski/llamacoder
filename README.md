@@ -34,6 +34,6 @@ pnpm test:unit
 pnpm test:e2e
 ```
 
-For a safe production compilation, use `pnpm exec next build`. The `pnpm build` script intentionally generates Prisma and pushes the schema before building, so do not run it against an unintended database.
+`pnpm build` generates the Prisma client and runs the Next.js production build. Apply committed database migrations separately with `pnpm db:deploy`; the build does not mutate the database schema.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for architecture and contribution conventions.

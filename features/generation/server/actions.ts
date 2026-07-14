@@ -23,7 +23,6 @@ import {
 import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
 import type { RequestModeMetadata } from "@/features/projects/contracts";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
-import { assertFreeRepairAvailable } from "@/features/generation/free-repair-policy";
 import { findOwnedProjectWithMessages } from "@/features/projects/server/access";
 
 function getAssistantMessageFiles(message: Message) {
@@ -391,8 +390,6 @@ export async function createPreviewRepairMessage(
   if (!hasAnyGeneratedFiles || !sourceMessage || sourceFiles.length === 0) {
     throw new Error("Repairs require an existing generated version");
   }
-
-  assertFreeRepairAvailable(chat.messages, sourceMessage.id);
 
   const maxPosition =
     chat.messages.length > 0

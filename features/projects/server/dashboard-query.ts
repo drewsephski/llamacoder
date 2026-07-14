@@ -6,13 +6,25 @@ import { getCurrentSession } from "@/features/auth/server/session";
 import { getPrisma } from "@/lib/prisma";
 import { normalizeTier, type TierKey } from "@/lib/billing/config";
 import { reconcileCheckoutSessionForUser } from "@/lib/billing/stripe-fulfillment";
+import { buildGeneratedFilesQualityReport } from "@/lib/generated-files";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 
 const PROJECTS_PER_PAGE = 9;
+
+export type ProjectVerificationSummary = {
+  staticChecks: "passed" | "warnings" | "unknown";
+  runtime: "passed" | "review" | "failed" | "not_run";
+  export: "verified" | "warning" | "failed" | "not_run";
+};
+
+export type DashboardProject = Chat & {
+  verification: ProjectVerificationSummary;
+};
 
 export type DashboardData = {
   currentPage: number;
   hasActiveSubscription: boolean;
-  projects: Chat[];
+  projects: DashboardProject[];
   session: Awaited<ReturnType<typeof getCurrentSession>>;
   tier: TierKey;
   totalPages: number;
@@ -57,13 +69,21 @@ export async function getDashboardData({
     }
   }
 
-  const [totalProjects, projects, user] = await Promise.all([
+  const [totalProjects, projectRows, user] = await Promise.all([
     prisma.chat.count({ where: { userId: session.user.id } }),
     prisma.chat.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       skip: (currentPage - 1) * PROJECTS_PER_PAGE,
       take: PROJECTS_PER_PAGE,
+      include: {
+        messages: {
+          where: { role: "assistant" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { id: true, content: true, files: true },
+        },
+      },
     }),
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -73,6 +93,79 @@ export async function getDashboardData({
       },
     }),
   ]);
+
+  const latestMessageIds = projectRows.flatMap((project) =>
+    project.messages[0] ? [project.messages[0].id] : [],
+  );
+  const [runtimeVerifications, exportArtifacts] =
+    latestMessageIds.length > 0
+      ? await Promise.all([
+          prisma.runtimeVerification.findMany({
+            where: { messageId: { in: latestMessageIds } },
+            orderBy: { createdAt: "desc" },
+            select: { messageId: true, status: true },
+          }),
+          prisma.exportArtifact.findMany({
+            where: { messageId: { in: latestMessageIds } },
+            orderBy: { createdAt: "desc" },
+            select: { messageId: true, status: true },
+          }),
+        ])
+      : [[], []];
+  const latestRuntimeByMessage = new Map<string, string>();
+  for (const verification of runtimeVerifications) {
+    if (!latestRuntimeByMessage.has(verification.messageId)) {
+      latestRuntimeByMessage.set(verification.messageId, verification.status);
+    }
+  }
+  const latestExportByMessage = new Map<string, string>();
+  for (const artifact of exportArtifacts) {
+    if (!latestExportByMessage.has(artifact.messageId)) {
+      latestExportByMessage.set(artifact.messageId, artifact.status);
+    }
+  }
+
+  const projects: DashboardProject[] = projectRows.map((project) => {
+    const latestMessage = project.messages[0];
+    const files = latestMessage ? getMessageGeneratedFiles(latestMessage) : [];
+    const qualityReport =
+      files.length > 0 ? buildGeneratedFilesQualityReport(files) : null;
+    const warningCount = qualityReport
+      ? qualityReport.diagnostics.length +
+        qualityReport.accessibilityWarnings.length
+      : null;
+    const runtimeStatus = latestMessage
+      ? latestRuntimeByMessage.get(latestMessage.id)
+      : undefined;
+    const exportStatus = latestMessage
+      ? latestExportByMessage.get(latestMessage.id)
+      : undefined;
+    const { messages: _messages, ...chat } = project;
+
+    return {
+      ...chat,
+      verification: {
+        staticChecks:
+          warningCount === null
+            ? "unknown"
+            : warningCount === 0
+              ? "passed"
+              : "warnings",
+        runtime:
+          runtimeStatus === "passed" ||
+          runtimeStatus === "review" ||
+          runtimeStatus === "failed"
+            ? runtimeStatus
+            : "not_run",
+        export:
+          exportStatus === "verified" ||
+          exportStatus === "warning" ||
+          exportStatus === "failed"
+            ? exportStatus
+            : "not_run",
+      },
+    };
+  });
 
   const hasActiveSubscription = user?.subscription?.status === "active";
   return {

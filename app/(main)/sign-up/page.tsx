@@ -2,8 +2,10 @@
 
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
+import { useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -13,7 +15,33 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+  const captchaWidgetIdRef = useRef<string | null>(null);
   const router = useRouter();
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  const renderTurnstile = useCallback(() => {
+    if (
+      !turnstileSiteKey ||
+      !captchaContainerRef.current ||
+      !window.turnstile ||
+      captchaWidgetIdRef.current
+    ) {
+      return;
+    }
+
+    captchaWidgetIdRef.current = window.turnstile.render(
+      captchaContainerRef.current,
+      {
+        sitekey: turnstileSiteKey,
+        theme: "auto",
+        callback: setCaptchaToken,
+        "expired-callback": () => setCaptchaToken(""),
+        "error-callback": () => setCaptchaToken(""),
+      },
+    );
+  }, [turnstileSiteKey]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,28 +49,33 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      const { data, error } = await authClient.signUp.email({
-        email,
-        password,
-        name,
-      });
+      const { error } = await authClient.signUp.email(
+        {
+          email,
+          password,
+          name,
+          callbackURL: "/dashboard",
+        },
+        captchaToken
+          ? { headers: { "x-captcha-response": captchaToken } }
+          : undefined,
+      );
 
       if (error) {
         setError(error.message || "Sign up failed");
         return;
       }
 
-      console.log("Sign up successful:", data);
-
-      // Wait a moment for the session to be set
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      router.push("/dashboard");
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       router.refresh();
     } catch (err) {
       console.error("Sign up error:", err);
       setError("An error occurred. Please try again.");
     } finally {
+      if (captchaWidgetIdRef.current && window.turnstile) {
+        window.turnstile.reset(captchaWidgetIdRef.current);
+        setCaptchaToken("");
+      }
       setLoading(false);
     }
   };
@@ -63,6 +96,13 @@ export default function SignUpPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
+      {turnstileSiteKey && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onReady={renderTurnstile}
+        />
+      )}
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
           <Link
@@ -150,7 +190,19 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
+          {turnstileSiteKey && (
+            <div
+              ref={captchaContainerRef}
+              className="flex min-h-[65px] justify-center"
+              aria-label="Bot verification"
+            />
+          )}
+
+          <Button
+            type="submit"
+            disabled={loading || Boolean(turnstileSiteKey && !captchaToken)}
+            className="w-full"
+          >
             {loading ? "Creating account..." : "Sign up"}
           </Button>
 

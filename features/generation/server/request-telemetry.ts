@@ -6,6 +6,7 @@ import type {
 } from "@/lib/openrouter";
 import { getOpenRouterUsageMetadata } from "@/lib/openrouter";
 import { getPrisma } from "@/lib/prisma";
+import { recordOperationalEvent } from "@/lib/observability";
 
 type TelemetryStatus = "completed" | "error" | "aborted";
 
@@ -86,6 +87,7 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
     const totalTokens = openRouterUsage?.totalTokens ?? usage?.totalTokens;
     const resolvedProvider = openRouterUsage?.provider ?? provider;
     const prisma = getPrisma();
+    const durationMs = elapsed();
 
     try {
       if (options.creditHoldId && status === "completed") {
@@ -139,6 +141,29 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
           completedAt: new Date(),
         },
       });
+
+      const latencyThresholdMs = Number.parseInt(
+        process.env.GENERATION_LATENCY_ALERT_MS || "120000",
+        10,
+      );
+      if (
+        Number.isFinite(latencyThresholdMs) &&
+        durationMs >= latencyThresholdMs
+      ) {
+        await recordOperationalEvent({
+          name: "generation_latency_elevated",
+          level: "warn",
+          operation: options.requestKind ?? "generation",
+          status,
+          userId: options.userId,
+          metadata: {
+            chatId: options.chatId,
+            modelId: options.modelId,
+            durationMs,
+            thresholdMs: latencyThresholdMs,
+          },
+        });
+      }
     } catch (telemetryError) {
       console.error("Failed to record AI request telemetry:", telemetryError);
     }

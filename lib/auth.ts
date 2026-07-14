@@ -1,11 +1,11 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { captcha } from "better-auth/plugins";
 import { getPrisma } from "./prisma";
 import { Resend } from "resend";
+import { grantStarterCredits } from "@/features/auth/server/starter-credits";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-const STARTER_CREDITS = 5;
 
 const normalizeUrl = (value?: string) => {
   if (!value) {
@@ -81,16 +81,19 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      enabled: true,
+      enabled: Boolean(
+        process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+      ),
     },
   },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
     sendResetPassword: async (data) => {
       const resetUrl = `${getBaseUrl()}/reset-password?token=${data.token}`;
 
       try {
-        await resend.emails.send({
+        const result = await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ||
             "Squid Agent <onboarding@resend.dev>",
@@ -116,10 +119,48 @@ export const auth = betterAuth({
             </div>
           `,
         });
+        if (result.error) throw new Error(result.error.message);
       } catch (error) {
         console.error("[sendResetPassword] Failed to send email:", error);
         throw error;
       }
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+    expiresIn: 60 * 60,
+    sendVerificationEmail: async ({ user, url }) => {
+      if (
+        process.env.NODE_ENV !== "production" &&
+        process.env.E2E_SKIP_EMAIL_DELIVERY === "1"
+      ) {
+        return;
+      }
+      const result = await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          "Squid Agent <onboarding@resend.dev>",
+        to: user.email,
+        subject: "Verify your Squid Agent email",
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="font-size: 24px; margin-bottom: 16px;">Verify your email</h1>
+            <p style="color: #555; line-height: 1.5; margin-bottom: 24px;">
+              Verify this address to activate your account and receive five starter credits.
+            </p>
+            <a href="${url}" style="display: inline-block; background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+              Verify email
+            </a>
+            <p style="color: #777; font-size: 14px; margin-top: 24px;">This link expires in one hour.</p>
+          </div>
+        `,
+      });
+      if (result.error) throw new Error(result.error.message);
+    },
+    afterEmailVerification: async (user) => {
+      await grantStarterCredits(user.id);
     },
   },
   session: {
@@ -147,32 +188,9 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          const prisma = getPrisma();
+          if (!user.emailVerified) return;
           try {
-            await prisma.$transaction([
-              prisma.user.update({
-                where: { id: user.id },
-                data: { credits: STARTER_CREDITS },
-              }),
-              prisma.creditGrant.create({
-                data: {
-                  userId: user.id,
-                  amount: STARTER_CREDITS,
-                  remainingAmount: STARTER_CREDITS,
-                  type: "bonus",
-                  dedupeKey: `welcome:${user.id}`,
-                  description: "Welcome bonus - starter credits",
-                },
-              }),
-              prisma.creditHistory.create({
-                data: {
-                  userId: user.id,
-                  amount: STARTER_CREDITS,
-                  type: "subscription",
-                  description: "Welcome bonus - starter credits",
-                },
-              }),
-            ]);
+            await grantStarterCredits(user.id);
           } catch (error) {
             console.error(
               "[databaseHooks] Failed to set initial credits:",
@@ -184,4 +202,13 @@ export const auth = betterAuth({
       },
     },
   },
+  plugins: process.env.TURNSTILE_SECRET_KEY
+    ? [
+        captcha({
+          provider: "cloudflare-turnstile",
+          secretKey: process.env.TURNSTILE_SECRET_KEY,
+          endpoints: ["/sign-up/email"],
+        }),
+      ]
+    : [],
 });

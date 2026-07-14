@@ -8,7 +8,8 @@ export type RateLimitOperation =
   | "create_project"
   | "generate_code"
   | "integration"
-  | "screenshot";
+  | "screenshot"
+  | "upload";
 
 type RateLimitOptions = {
   userId: string;

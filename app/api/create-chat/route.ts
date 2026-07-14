@@ -27,6 +27,7 @@ import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { getIntegrationProvider } from "@/features/integrations/registry";
 import type { IntegrationProvider } from "@/features/integrations/registry";
 import { MAX_PROJECT_API_SELECTIONS } from "@/features/projects/contracts";
+import { getGenerationAvailability } from "@/lib/provider-controls";
 
 const IMAGE_DATA_URL_PATTERN = new RegExp(
   `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
@@ -136,6 +137,14 @@ export async function POST(request: NextRequest) {
           message: "Please sign in to create a project",
         },
         { status: 401 },
+      );
+    }
+
+    const availability = getGenerationAvailability(model);
+    if (!availability.available) {
+      return NextResponse.json(
+        { error: "GENERATION_DISABLED", message: availability.reason },
+        { status: 503, headers: { "Retry-After": "300" } },
       );
     }
 

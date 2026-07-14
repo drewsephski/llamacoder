@@ -19,9 +19,21 @@ export function createPrismaMock() {
       "update",
       "updateMany",
     ]) as Record<string, ReturnType<typeof vi.fn>> & { first: undefined },
-    message: createDelegateMock(["create", "findFirst", "findMany", "findUnique", "update"]),
+    message: createDelegateMock([
+      "create",
+      "findFirst",
+      "findMany",
+      "findUnique",
+      "update",
+    ]),
     creditHistory: createDelegateMock(["create"]),
-    creditGrant: createDelegateMock(["create", "findMany", "update", "updateMany"]),
+    creditGrant: createDelegateMock([
+      "create",
+      "findMany",
+      "findUnique",
+      "update",
+      "updateMany",
+    ]),
     creditHold: createDelegateMock([
       "create",
       "findMany",
@@ -30,11 +42,23 @@ export function createPrismaMock() {
       "updateMany",
     ]),
     generationLog: createDelegateMock(["create"]),
-    generationRun: createDelegateMock(["create", "findFirst", "findMany", "update", "updateMany"]),
+    generationRun: createDelegateMock([
+      "create",
+      "findFirst",
+      "findMany",
+      "update",
+      "updateMany",
+    ]),
     runtimeVerification: createDelegateMock(["create", "findMany"]),
     anonymousUsage: createDelegateMock(["create", "findFirst", "update"]),
     stripeWebhookEvent: createDelegateMock(["findUnique", "upsert"]),
-    subscription: createDelegateMock(["create", "findFirst", "update", "updateMany", "upsert"]),
+    subscription: createDelegateMock([
+      "create",
+      "findFirst",
+      "update",
+      "updateMany",
+      "upsert",
+    ]),
   };
 }
 
@@ -44,7 +68,13 @@ export function createPrismaTransactionMock() {
     chat: createDelegateMock(["create", "update", "updateMany"]),
     message: createDelegateMock(["create"]),
     creditHistory: createDelegateMock(["create"]),
-    creditGrant: createDelegateMock(["create", "findMany", "update", "updateMany"]),
+    creditGrant: createDelegateMock([
+      "create",
+      "findMany",
+      "findUnique",
+      "update",
+      "updateMany",
+    ]),
     creditHold: createDelegateMock([
       "create",
       "findMany",

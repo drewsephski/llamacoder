@@ -3,7 +3,14 @@
 import ArrowRightIcon from "@/components/icons/arrow-right";
 import Spinner from "@/components/spinner";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { createMessage } from "@/features/generation/server/actions";
 import { MODELS } from "@/lib/constants";
 import { toast } from "sonner";
@@ -19,7 +26,7 @@ import {
 import { GenerationLoader } from "@/components/generation-loader";
 import type { ProjectMessage } from "@/features/projects/contracts";
 import { getErrorMessage } from "@/features/shared/errors";
-import { Square } from "lucide-react";
+import { Maximize2, Minimize2, Square } from "lucide-react";
 import { ProjectIntegrationsPanel } from "@/features/integrations/components/project-integrations-panel";
 
 interface ChatBoxProps {
@@ -43,6 +50,7 @@ export default function ChatBox({
   const [, startTransition] = useTransition();
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isCheckingCredits, setIsCheckingCredits] = useState(false);
@@ -56,6 +64,36 @@ export default function ChatBox({
   const isAuthenticated = !!session;
   const latestFollowUpPrompts = getLatestFollowUpPrompts(chat.messages);
 
+  const resizeTextarea = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const collapsedMinHeight = 96;
+    const collapsedMaxHeight = 240;
+    const expandedHeight = Math.min(window.innerHeight * 0.46, 440);
+    const minHeight = isComposerExpanded
+      ? Math.max(collapsedMaxHeight, expandedHeight)
+      : collapsedMinHeight;
+    const maxHeight = isComposerExpanded
+      ? Math.max(collapsedMaxHeight, expandedHeight)
+      : collapsedMaxHeight;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(
+      Math.max(textarea.scrollHeight, minHeight),
+      maxHeight,
+    )}px`;
+  }, [isComposerExpanded]);
+
+  useLayoutEffect(() => {
+    resizeTextarea();
+  }, [prompt, resizeTextarea]);
+
+  useEffect(() => {
+    window.addEventListener("resize", resizeTextarea);
+    return () => window.removeEventListener("resize", resizeTextarea);
+  }, [resizeTextarea]);
+
   useEffect(() => {
     if (!textareaRef.current) return;
     if (!disabled && !didFocusOnce.current) {
@@ -67,7 +105,8 @@ export default function ChatBox({
   }, [disabled]);
 
   const handleSubmit = async () => {
-    if (disabled) return;
+    const nextPrompt = prompt.trim();
+    if (disabled || !nextPrompt) return;
 
     // Require authentication before sending messages
     if (!isAuthenticated) {
@@ -91,7 +130,7 @@ export default function ChatBox({
 
     startTransition(async () => {
       try {
-        const message = await createMessage(chat.id, prompt, "user");
+        const message = await createMessage(chat.id, nextPrompt, "user");
         const streamPromise = fetchCompletionStream({
           messageId: message.id,
           model: chat.model,
@@ -101,6 +140,7 @@ export default function ChatBox({
         startTransition(() => {
           router.refresh();
           setPrompt("");
+          setIsComposerExpanded(false);
         });
       } catch (error: unknown) {
         toast.error(getErrorMessage(error, "Failed to send message"));
@@ -143,6 +183,11 @@ export default function ChatBox({
           background: hsl(var(--card) / 0.8);
         }
 
+        .chatbox-textarea {
+          scrollbar-width: thin;
+          scrollbar-color: hsl(var(--muted-foreground) / 0.28) transparent;
+        }
+
         .send-btn {
           width: 34px;
           height: 34px;
@@ -174,6 +219,7 @@ export default function ChatBox({
 
         .model-tag {
           display: inline-flex;
+          min-width: 0;
           align-items: center;
           gap: 5px;
           padding: 3px 9px;
@@ -208,7 +254,7 @@ export default function ChatBox({
 
       `}</style>
 
-      <div className="chatbox-wrap mx-auto mb-4 flex w-full max-w-4xl shrink-0 flex-col px-4 sm:px-6">
+      <div className="chatbox-wrap mx-auto mb-4 flex w-full min-w-0 max-w-4xl shrink-0 flex-col overflow-x-hidden px-4 sm:px-6">
         {!hasActiveSubscription && (
           <UpgradeBanner
             variant={isPaidModel ? "model-locked" : "chat"}
@@ -242,16 +288,16 @@ export default function ChatBox({
                 placeholder={
                   isStreaming
                     ? "Generating response…"
-                    : "Ask a follow-up question…"
+                    : "Describe what you'd like to change…"
                 }
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 required
                 name="prompt"
-                className="min-h-[88px] resize-none border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed placeholder:text-muted-foreground/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="chatbox-textarea min-h-24 resize-none overflow-y-auto border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed placeholder:text-muted-foreground/55 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
-                    if (disabled) return;
+                    if (disabled || event.nativeEvent.isComposing) return;
                     event.preventDefault();
                     const target = event.target;
                     if (!(target instanceof HTMLTextAreaElement)) return;
@@ -261,9 +307,9 @@ export default function ChatBox({
               />
 
               {/* Footer bar */}
-              <div className="flex w-full items-center justify-between gap-2 px-3 pb-3 pt-0.5">
+              <div className="flex w-full min-w-0 items-center justify-between gap-2 border-t border-border/35 px-3 pb-3 pt-2.5">
                 {/* Left: model */}
-                <div className="flex min-w-0 items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
                   <div className="model-tag" title={chat.model}>
                     <svg
                       className="size-3 shrink-0 opacity-50"
@@ -294,17 +340,48 @@ export default function ChatBox({
                   )}
                 </div>
 
-                {/* Right: submit */}
-                <button
-                  type="submit"
-                  aria-label="Send message"
-                  disabled={disabled || prompt.length === 0}
-                  className="send-btn bg-primary text-primary-foreground"
-                >
-                  <Spinner loading={disabled}>
-                    <ArrowRightIcon className="size-[15px]" />
-                  </Spinner>
-                </button>
+                {/* Right: composer controls */}
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="hidden text-[10.5px] text-muted-foreground/65 md:inline">
+                    <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 font-sans">
+                      Enter
+                    </kbd>{" "}
+                    to send
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsComposerExpanded((expanded) => !expanded)
+                    }
+                    className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={
+                      isComposerExpanded
+                        ? "Collapse message box"
+                        : "Expand message box"
+                    }
+                    title={
+                      isComposerExpanded
+                        ? "Collapse message box"
+                        : "Expand message box"
+                    }
+                  >
+                    {isComposerExpanded ? (
+                      <Minimize2 className="size-3.5" />
+                    ) : (
+                      <Maximize2 className="size-3.5" />
+                    )}
+                  </button>
+                  <button
+                    type="submit"
+                    aria-label="Send message"
+                    disabled={disabled || prompt.trim().length === 0}
+                    className="send-btn shrink-0 bg-primary text-primary-foreground"
+                  >
+                    <Spinner loading={disabled}>
+                      <ArrowRightIcon className="size-[15px]" />
+                    </Spinner>
+                  </button>
+                </div>
               </div>
 
               {/* Loading overlay */}
@@ -331,18 +408,8 @@ export default function ChatBox({
               )}
             </div>
 
-            {/* Keyboard hint */}
-            <p className="mt-2 text-center text-[11px] text-muted-foreground/40">
-              Press{" "}
-              <kbd className="rounded bg-muted/60 px-1 py-px font-sans text-[10px]">
-                Enter
-              </kbd>{" "}
-              to send
-              {" · "}
-              <kbd className="rounded bg-muted/60 px-1 py-px font-sans text-[10px]">
-                Shift + Enter
-              </kbd>{" "}
-              for new line
+            <p className="sr-only">
+              Press Enter to send. Press Shift and Enter for a new line.
             </p>
           </fieldset>
         </form>

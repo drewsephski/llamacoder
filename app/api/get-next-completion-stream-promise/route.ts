@@ -63,6 +63,7 @@ import {
   type AppSpec,
 } from "@/features/generation/app-spec";
 import {
+  buildResearchQuery,
   detectResearchIntent,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
@@ -75,6 +76,8 @@ import {
   extractWebSources,
 } from "@/features/generation/research-policy";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { recordOperationalEvent } from "@/lib/observability";
+import { getGenerationAvailability } from "@/lib/provider-controls";
 import { getConnectedIntegrationPromptContext } from "@/features/integrations/server/service";
 import {
   enforceSelectedProvidersInAppSpec,
@@ -335,6 +338,13 @@ export async function POST(req: Request) {
       return new Response("Model mismatch", { status: 400 });
     }
     const chatModel = message.chat.model;
+    const availability = getGenerationAvailability(chatModel);
+    if (!availability.available) {
+      return new Response(availability.reason, {
+        status: 503,
+        headers: { "Retry-After": "300" },
+      });
+    }
     const quality = message.chat.quality === "high" ? "high" : "low";
     const planMode = quality === "high";
     const messageMetadata = message.files as
@@ -342,7 +352,8 @@ export async function POST(req: Request) {
       | null
       | undefined;
     const isFreeRepairRequest =
-      messageMetadata?.kind === "preview_repair_request" &&
+      (messageMetadata?.kind === "preview_repair_request" ||
+        messageMetadata?.kind === "preview_repair") &&
       messageMetadata.chargeCredits === false;
     const appSpec: AppSpec =
       parseAppSpec(message.chat.appSpec) ?? createEmptyAppSpec();
@@ -905,9 +916,11 @@ export async function POST(req: Request) {
                 (researchIntent.required ||
                   (isCodeGeneration && effectiveLiveApiIntent.required))));
           const researchQuery = searchApproved
-            ? searchApproval.query
+            ? buildResearchQuery(searchApproval.query)
             : (researchIntent.query ??
-              (integrationPolicyContext.trim().slice(0, 500) || null));
+              (integrationPolicyContext.trim()
+                ? buildResearchQuery(integrationPolicyContext)
+                : null));
           const researchFreshness = researchIntent.required
             ? researchIntent.freshness
             : "evergreen";
@@ -1024,8 +1037,8 @@ export async function POST(req: Request) {
                 },
                 system:
                   researchWindow === null
-                    ? `Research the request before answering or generating software. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set." : ""} Return a concise factual brief with source support. Do not write application code.`
-                    : `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
+                    ? `Research the request before answering or generating software. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set." : ""} Return a concise factual brief with source support. Do not write application code.`
+                    : `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
                 prompt:
                   researchWindow === null
                     ? `${query}\n\nFind the most authoritative sources that can materially improve the response. Include stable documentation or background sources even when they are undated.`
@@ -1292,6 +1305,19 @@ export async function POST(req: Request) {
                 getAIErrorMessage(error),
               );
               await telemetry.record({ status: "error", error });
+              await recordOperationalEvent({
+                name: "generation_failed",
+                level: "error",
+                userId: session.user.id,
+                operation: "completion_stream",
+                status: "error",
+                error,
+                metadata: {
+                  chatId: message.chat.id,
+                  generationRunId: generationRun.id,
+                  model: executionModel,
+                },
+              });
               await prisma.generationRun.updateMany({
                 where: { id: generationRun.id, status: "running" },
                 data: {
@@ -1353,6 +1379,14 @@ export async function POST(req: Request) {
       "Failed to start completion stream:",
       getAIErrorMessage(error),
     );
+    await recordOperationalEvent({
+      name: "generation_failed",
+      level: "error",
+      operation: "completion_stream",
+      status: "error",
+      error,
+      metadata: { generationRunId },
+    });
     return new Response(getAIErrorMessage(error), {
       status: getAIErrorStatus(error),
     });

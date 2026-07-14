@@ -32,6 +32,8 @@ import {
 } from "@/lib/follow-up-prompts";
 import { recoverStaleGenerationLocks } from "@/lib/generation-recovery";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { recordOperationalEvent } from "@/lib/observability";
+import { getGenerationAvailability } from "@/lib/provider-controls";
 
 class CreditConsumptionError extends Error {
   constructor(
@@ -126,6 +128,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Code already generated for this chat" },
         { status: 400 },
+      );
+    }
+    const availability = getGenerationAvailability(chat.model);
+    if (!availability.available) {
+      return NextResponse.json(
+        { error: "GENERATION_DISABLED", message: availability.reason },
+        { status: 503, headers: { "Retry-After": "300" } },
       );
     }
     activeChatId = chat.id;
@@ -436,6 +445,15 @@ export async function POST(request: NextRequest) {
         { status: error.code === "INSUFFICIENT_CREDITS" ? 402 : 500 },
       );
     }
+
+    await recordOperationalEvent({
+      name: "generation_failed",
+      level: "error",
+      operation: "initial_generation",
+      status: "error",
+      error,
+      metadata: { chatId: activeChatId },
+    });
 
     console.error("Error generating code:", getAIErrorMessage(error));
     return NextResponse.json(

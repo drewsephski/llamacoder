@@ -37,7 +37,13 @@ export function getModelWithFallbacks(model: string): string[] {
     model === LEGACY_SECONDARY_STARTER_MODEL ||
     model === LEGACY_MIMO_STARTER_MODEL
   ) {
-    return [SECONDARY_STARTER_MODEL];
+    return [SECONDARY_STARTER_MODEL, FALLBACK_MODELS.free];
+  }
+
+  // Keep starter generation available when Gemini returns a transient stream
+  // error. The fallback stays inside the starter lane's provider price cap.
+  if (model === SECONDARY_STARTER_MODEL) {
+    return [SECONDARY_STARTER_MODEL, FALLBACK_MODELS.free];
   }
 
   // Route saved mandatory-reasoning chats through optional/no-thinking models.

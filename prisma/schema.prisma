@@ -487,6 +487,24 @@ model ApiRateLimitBucket {
   @@index([expiresAt])
 }
 
+model OperationalIncident {
+  id           String    @id @default(nanoid(16))
+  name         String
+  level        String
+  operation    String?
+  status       String?
+  userId       String?
+  errorName    String?
+  errorMessage String?
+  metadata     Json?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([level, createdAt])
+  @@index([name, createdAt])
+  @@index([resolvedAt, createdAt])
+}
+
 model Session {
   id        String   @id
   expiresAt DateTime

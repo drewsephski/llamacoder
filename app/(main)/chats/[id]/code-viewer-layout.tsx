@@ -31,16 +31,18 @@ export default function CodeViewerLayout({
               <DrawerDescription>Description</DrawerDescription>
             </VisuallyHidden.Root>
 
-            <div className="flex h-[92dvh] flex-col overflow-y-auto">
+            <div className="flex h-[92dvh] min-w-0 flex-col overflow-hidden">
               {children}
             </div>
           </DrawerContent>
         </Drawer>
       ) : (
         <div
-          className={`${isShowing ? "w-[70%]" : "w-0"} hidden h-full overflow-hidden py-5 transition-[width] lg:flex`}
+          className={`${
+            isShowing ? "min-w-0 flex-1" : "w-0"
+          } hidden h-full overflow-hidden py-5 pl-3 transition-[width,flex-basis] lg:flex`}
         >
-          <div className="ml-3 flex h-full w-full min-w-0 flex-col rounded-l-xl shadow-lg shadow-muted-foreground/20">
+          <div className="flex h-full w-full min-w-0 flex-col rounded-l-xl shadow-lg shadow-muted-foreground/20">
             <div className="flex h-full w-full flex-col overflow-hidden rounded-l-xl shadow shadow-foreground/10">
               {children}
             </div>

@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error: unknown) {
-    recordOperationalEvent({
+    await recordOperationalEvent({
       name: "checkout_session_failed",
       level: "error",
       operation: "credits_checkout",

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { getPrisma } from "@/lib/prisma";
+import { recordOperationalEvent } from "@/lib/observability";
 
 const installationEventSchema = z.object({
   action: z.string(),
@@ -64,7 +65,18 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json({ ok: true, duplicate: true });
     }
-    throw error;
+    await recordOperationalEvent({
+      name: "github_webhook_failed",
+      level: "error",
+      operation: event,
+      status: "error",
+      error,
+      metadata: { deliveryId },
+    });
+    return NextResponse.json(
+      { error: "WEBHOOK_PROCESSING_FAILED" },
+      { status: 500 },
+    );
   }
   if (!parsed.success || event !== "installation") {
     return NextResponse.json({ ok: true, ignored: true });
@@ -76,41 +88,58 @@ export async function POST(request: Request) {
   if (!disabled && !restored)
     return NextResponse.json({ ok: true, ignored: true });
 
-  const connections = await prisma.integrationConnection.findMany({
-    where: {
-      providerId: "github",
-      metadata: { path: ["installationId"], equals: installationId },
-    },
-    include: { projectBindings: true },
-  });
-  await prisma.$transaction(async (tx) => {
-    for (const connection of connections) {
-      const status = disabled ? "needs_attention" : "ready";
-      await tx.integrationConnection.update({
-        where: { id: connection.id },
-        data: {
-          status,
-          lastHealthStatus: disabled ? "failed" : "healthy",
-          lastHealthMessage: disabled
-            ? "The GitHub App installation was removed or suspended."
-            : "The GitHub App installation is active.",
-          lastHealthCheckAt: new Date(),
-        },
-      });
-      await tx.projectIntegration.updateMany({
-        where: { connectionId: connection.id },
-        data: { status },
-      });
-      await tx.integrationAuditEvent.create({
-        data: {
-          userId: connection.userId,
-          providerId: "github",
-          action: disabled ? "installation_disabled" : "installation_restored",
-          connectionId: connection.id,
-          metadata: { installationId, deliveryId },
-        },
-      });
-    }
-  });
+  try {
+    const connections = await prisma.integrationConnection.findMany({
+      where: {
+        providerId: "github",
+        metadata: { path: ["installationId"], equals: installationId },
+      },
+      include: { projectBindings: true },
+    });
+    await prisma.$transaction(async (tx) => {
+      for (const connection of connections) {
+        const status = disabled ? "needs_attention" : "ready";
+        await tx.integrationConnection.update({
+          where: { id: connection.id },
+          data: {
+            status,
+            lastHealthStatus: disabled ? "failed" : "healthy",
+            lastHealthMessage: disabled
+              ? "The GitHub App installation was removed or suspended."
+              : "The GitHub App installation is active.",
+            lastHealthCheckAt: new Date(),
+          },
+        });
+        await tx.projectIntegration.updateMany({
+          where: { connectionId: connection.id },
+          data: { status },
+        });
+        await tx.integrationAuditEvent.create({
+          data: {
+            userId: connection.userId,
+            providerId: "github",
+            action: disabled
+              ? "installation_disabled"
+              : "installation_restored",
+            connectionId: connection.id,
+            metadata: { installationId, deliveryId },
+          },
+        });
+      }
+    });
+  } catch (error) {
+    await recordOperationalEvent({
+      name: "github_webhook_failed",
+      level: "error",
+      operation: event,
+      status: "error",
+      error,
+      metadata: { deliveryId },
+    });
+    return NextResponse.json(
+      { error: "WEBHOOK_PROCESSING_FAILED" },
+      { status: 500 },
+    );
+  }
   return NextResponse.json({ ok: true });
 }

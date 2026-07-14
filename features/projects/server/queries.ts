@@ -20,34 +20,36 @@ const loadProjectWorkspace = cache(
 
     if (!chat) return null;
 
-    const [totalMessages, initialMessages, recentMessages, activeRun] = await Promise.all([
-      prisma.message.count({ where: { chatId: id } }),
-      prisma.message.findMany({
-        where: { chatId: id, position: { in: [0, 1] } },
-        orderBy: { position: "asc" },
-      }),
-      prisma.message.findMany({
-        where: { chatId: id, position: { gte: 2 } },
-        orderBy: { position: "desc" },
-        take: 100,
-      }),
-      prisma.generationRun.findFirst({
-        where: {
-          chatId: id,
-          status: { in: ["running", "recoverable"] },
-        },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          messageId: true,
-          status: true,
-          phase: true,
-          label: true,
-          partialText: true,
-          createdAt: true,
-        },
-      }),
-    ]);
+    const [totalMessages, initialMessages, recentMessages, activeRun] =
+      await Promise.all([
+        prisma.message.count({ where: { chatId: id } }),
+        prisma.message.findMany({
+          where: { chatId: id, position: { in: [0, 1] } },
+          orderBy: { position: "asc" },
+        }),
+        prisma.message.findMany({
+          where: { chatId: id, position: { gte: 2 } },
+          orderBy: { position: "desc" },
+          take: 100,
+        }),
+        prisma.generationRun.findFirst({
+          where: {
+            chatId: id,
+            status: { in: ["running", "recoverable"] },
+            partialText: { not: "" },
+          },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            messageId: true,
+            status: true,
+            phase: true,
+            label: true,
+            partialText: true,
+            createdAt: true,
+          },
+        }),
+      ]);
 
     const allMessages = [...initialMessages, ...recentMessages].sort(
       (a, b) => a.position - b.position,
@@ -106,8 +108,7 @@ const loadProjectWorkspace = cache(
         ? {
             id: activeRun.id,
             messageId: activeRun.messageId,
-            status:
-              activeRun.status === "running" ? "running" : "recoverable",
+            status: activeRun.status === "running" ? "running" : "recoverable",
             phase: activeRun.phase,
             label: activeRun.label,
             partialTextLength: activeRun.partialText.length,

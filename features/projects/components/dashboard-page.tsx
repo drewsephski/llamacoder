@@ -18,8 +18,11 @@ import {
   Crown,
   FileText,
   Code2,
+  ShieldCheck,
+  FlaskConical,
   ImagePlus,
   Blocks,
+  TriangleAlert,
 } from "lucide-react";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import Footer from "@/components/footer";
@@ -367,7 +370,7 @@ export async function DashboardPage({
                       </Link>
 
                       {/* Meta */}
-                      <div className="mt-auto flex items-center gap-3 pt-4 text-xs text-muted-foreground">
+                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Clock className="h-3.5 w-3.5" />
                           <span>
@@ -384,9 +387,33 @@ export async function DashboardPage({
                           </div>
                         )}
                         {project.hasCode && (
-                          <div className="flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-green-600 dark:text-green-400">
+                          <div className="flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-foreground">
                             <Code2 className="h-3 w-3" />
-                            <span>Ready</span>
+                            <span>Generated</span>
+                          </div>
+                        )}
+                        {project.verification.staticChecks === "passed" && (
+                          <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-600 dark:text-blue-400">
+                            <Check className="h-3 w-3" />
+                            <span>Static checks passed</span>
+                          </div>
+                        )}
+                        {project.verification.staticChecks === "warnings" && (
+                          <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+                            <TriangleAlert className="h-3 w-3" />
+                            <span>Static warnings</span>
+                          </div>
+                        )}
+                        {project.verification.runtime === "passed" && (
+                          <div className="flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-violet-600 dark:text-violet-400">
+                            <FlaskConical className="h-3 w-3" />
+                            <span>Runtime verified</span>
+                          </div>
+                        )}
+                        {project.verification.export === "verified" && (
+                          <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-600 dark:text-emerald-400">
+                            <ShieldCheck className="h-3 w-3" />
+                            <span>Export verified</span>
                           </div>
                         )}
                       </div>

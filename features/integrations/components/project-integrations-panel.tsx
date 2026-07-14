@@ -472,15 +472,16 @@ export function ProjectIntegrationsPanel({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1.5"
+            className="code-toolbar-adaptive-button gap-1.5"
             aria-label="Project integrations"
+            title="Integrations"
           >
             <Plug className="size-3.5" />
-            <span className="hidden lg:inline">Integrations</span>
+            <span className="code-toolbar-adaptive-label">Integrations</span>
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-4xl">
+      <DialogContent size="workspace" className="max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plug className="size-5 text-primary" /> Project integrations

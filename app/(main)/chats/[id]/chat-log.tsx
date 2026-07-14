@@ -123,11 +123,11 @@ export default function ChatLog({
 
   return (
     <StickToBottom
-      className="relative grow overflow-hidden"
+      className="relative min-w-0 grow overflow-x-hidden"
       resize="smooth"
       initial="smooth"
     >
-      <StickToBottom.Content className="mx-auto flex w-full max-w-prose flex-col gap-8 py-8 pl-4 pr-2">
+      <StickToBottom.Content className="mx-auto flex w-full min-w-0 max-w-prose flex-col gap-8 overflow-x-hidden py-8 pl-4 pr-2">
         <div
           className="pointer-events-none absolute inset-0 z-10"
           style={{
@@ -317,8 +317,8 @@ function UserMessage({
   }
 
   return (
-    <div className="relative inline-flex max-w-[92%] items-end gap-3 self-end sm:max-w-[75%] md:max-w-[65%]">
-      <div className="whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm bg-primary px-5 py-3 text-[15px] leading-relaxed text-primary-foreground shadow-sm">
+    <div className="relative inline-flex min-w-0 max-w-[92%] items-end gap-3 self-end sm:max-w-[75%] md:max-w-[65%]">
+      <div className="min-w-0 whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm bg-primary px-5 py-3 text-[15px] leading-relaxed text-primary-foreground shadow-sm [overflow-wrap:anywhere]">
         {content}
       </div>
     </div>
@@ -484,15 +484,15 @@ function AssistantMessage({
   if (displayFileCount > 0) {
     // Handle single-file replies with interleaved text and one file
     return (
-      <div className="">
+      <div className="min-w-0 max-w-full overflow-x-hidden">
         {segments.map((seg, i) => {
           if (seg.type === "text") {
             return (
               <div
                 key={i}
-                className="prose max-w-none dark:prose-invert prose-p:text-[15px] prose-p:leading-relaxed"
+                className="prose min-w-0 max-w-none overflow-x-hidden dark:prose-invert prose-p:text-[15px] prose-p:leading-relaxed"
               >
-                <MessageResponse className="break-words text-foreground">
+                <MessageResponse className="min-w-0 max-w-full break-words text-foreground [overflow-wrap:anywhere] [&_pre]:max-w-full">
                   {seg.content}
                 </MessageResponse>
               </div>
@@ -502,7 +502,7 @@ function AssistantMessage({
           return (
             <div
               key={i}
-              className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-sm transition-colors hover:border-blue-400/40 hover:bg-blue-50/30 dark:hover:bg-blue-950/20"
+              className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-sm transition-colors hover:border-blue-400/40 hover:bg-blue-50/30 dark:hover:bg-blue-950/20"
             >
               <svg
                 width="14"
@@ -527,7 +527,9 @@ function AssistantMessage({
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="font-medium text-foreground">{seg.path}</span>
+              <span className="truncate font-medium text-foreground">
+                {seg.path}
+              </span>
             </div>
           );
         })}
@@ -552,8 +554,8 @@ function AssistantMessage({
   } else {
     // No code blocks, just show text
     return (
-      <div className="flex flex-col gap-3">
-        <MessageResponse className="prose break-words text-foreground dark:prose-invert">
+      <div className="flex min-w-0 max-w-full flex-col gap-3 overflow-x-hidden">
+        <MessageResponse className="prose min-w-0 max-w-full break-words text-foreground [overflow-wrap:anywhere] dark:prose-invert [&_pre]:max-w-full">
           {content}
         </MessageResponse>
         <MessageSources sources={messageSources} />
