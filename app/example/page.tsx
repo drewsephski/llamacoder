@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { ExampleWorkspace } from "./workspace";
 
 export const metadata: Metadata = {
-  title: "Public example workspace | Squid Agent",
+  title: "Interrogate a complete public build | Squid Agent",
   description:
-    "Explore Waypoint, an interactive Kanban workspace with a focus timer, live weather, currency reference data, source, quality checks, and portable export.",
+    "Use Waypoint, refresh its public APIs, then inspect the original prompt, approved plan, generated files, quality checks, and portable source export.",
 };
 
 export default function ExamplePage() {

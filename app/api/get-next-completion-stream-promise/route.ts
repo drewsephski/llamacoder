@@ -32,7 +32,7 @@ import {
   type GeneratedFile,
 } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
-import { screenshotToCodePrompt } from "@/lib/prompts";
+import { getMainCodingPrompt, screenshotToCodePrompt } from "@/lib/prompts";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
   FREE_MODEL,
@@ -1029,6 +1029,12 @@ export async function POST(req: Request) {
           });
 
           const isCodeGeneration = agentAction.action === "generate_code";
+          if (isCodeGeneration) {
+            // System prompts are persisted with chats for reproducibility, but
+            // code generation should always use the current safety and design
+            // contract so existing projects receive prompt-policy upgrades.
+            systemInstruction = getMainCodingPrompt();
+          }
           if (linkedPageContext) {
             const lastUserMessageIndex = guardedMessages.findLastIndex(
               (candidate) => candidate.role === "user",
@@ -1193,10 +1199,7 @@ export async function POST(req: Request) {
           }
 
           if (linkedPageContext) {
-            systemInstruction = [
-              systemInstruction,
-              CHAT_URL_SYSTEM_GUARD,
-            ]
+            systemInstruction = [systemInstruction, CHAT_URL_SYSTEM_GUARD]
               .filter(Boolean)
               .join("\n\n");
           }
@@ -1207,11 +1210,20 @@ export async function POST(req: Request) {
               throw new Error("A web research query could not be determined");
             }
 
-            writeStatus({ phase: "searching", label: "Searching the web" });
+            const researchLabel = researchIntent.explicitlyRequested
+              ? "Searching as requested"
+              : researchIntent.reason === "technical-reference"
+                ? "Checking official documentation"
+                : researchIntent.freshness === "recent"
+                  ? "Checking current information"
+                  : effectiveLiveApiIntent.required
+                    ? "Verifying integration details"
+                    : "Checking external sources";
+            writeStatus({ phase: "searching", label: researchLabel });
             writeResearchActivity({
               phase: "searching",
               query,
-              label: "Searching the web",
+              label: researchLabel,
               sourceCount: 0,
             });
 
@@ -1235,7 +1247,7 @@ export async function POST(req: Request) {
             });
 
             try {
-              const researchResult = await generateText({
+              const researchResult = streamText({
                 model: gateway(researchModel),
                 maxOutputTokens: 4_000,
                 providerOptions: {
@@ -1281,12 +1293,64 @@ export async function POST(req: Request) {
                 toolChoice: "required",
                 maxRetries: 1,
               });
-              researchTelemetry.markFirstByte();
+              const toolOutputs: unknown[] = [];
+              const emittedSourceUrls = new Set<string>();
+              let markedFirstResearchEvent = false;
+              const sourceOptions = researchWindow
+                ? { publicationWindow: researchWindow }
+                : {};
+              const emitNewSources = (outputs: unknown[]) => {
+                const discoveredSources = extractWebSources(
+                  outputs,
+                  sourceOptions,
+                );
+                let addedSource = false;
 
-              const webSources = extractWebSources(
-                researchResult.toolResults.map(({ output }) => output),
-                researchWindow ? { publicationWindow: researchWindow } : {},
-              );
+                discoveredSources.forEach((source, index) => {
+                  if (emittedSourceUrls.has(source.url)) return;
+                  emittedSourceUrls.add(source.url);
+                  addedSource = true;
+                  writer.write({
+                    type: "source-url",
+                    sourceId: `research-${messageId}-${index + 1}`,
+                    url: source.url,
+                    title: (source.publishedDate
+                      ? `${source.title} (${source.publishedDate.slice(0, 10)})`
+                      : source.title
+                    ).slice(0, 300),
+                  });
+                });
+
+                if (addedSource) {
+                  writeResearchActivity({
+                    phase: "searching",
+                    query,
+                    label: `Found ${emittedSourceUrls.size} ${emittedSourceUrls.size === 1 ? "source" : "sources"}`,
+                    sourceCount: emittedSourceUrls.size,
+                  });
+                }
+
+                return discoveredSources;
+              };
+
+              for await (const part of researchResult.fullStream) {
+                if (!markedFirstResearchEvent) {
+                  markedFirstResearchEvent = true;
+                  researchTelemetry.markFirstByte();
+                }
+                if (part.type === "tool-result") {
+                  toolOutputs.push(part.output);
+                  emitNewSources(toolOutputs);
+                } else if (part.type === "error") {
+                  throw part.error;
+                }
+              }
+
+              const finalToolResults = await researchResult.toolResults;
+              const webSources = emitNewSources([
+                ...toolOutputs,
+                ...finalToolResults.map(({ output }) => output),
+              ]);
               if (webSources.length === 0) {
                 throw new Error(
                   researchWindow
@@ -1295,17 +1359,6 @@ export async function POST(req: Request) {
                 );
               }
 
-              webSources.forEach((source, index) => {
-                writer.write({
-                  type: "source-url",
-                  sourceId: `research-${messageId}-${index + 1}`,
-                  url: source.url,
-                  title: (source.publishedDate
-                    ? `${source.title} (${source.publishedDate.slice(0, 10)})`
-                    : source.title
-                  ).slice(0, 300),
-                });
-              });
               writeResearchActivity({
                 phase: "complete",
                 query,
@@ -1337,12 +1390,19 @@ export async function POST(req: Request) {
                   content: `${guardedMessages[lastUserMessageIndex].content}\n\n${researchBrief}`,
                 };
               }
+              const [usage, finishReason, providerMetadata, response] =
+                await Promise.all([
+                  researchResult.usage,
+                  researchResult.finishReason,
+                  researchResult.providerMetadata,
+                  researchResult.response,
+                ]);
               await researchTelemetry.record({
                 status: "completed",
-                usage: researchResult.usage,
-                finishReason: researchResult.finishReason,
-                providerMetadata: researchResult.providerMetadata,
-                providerRequestId: researchResult.response?.id,
+                usage,
+                finishReason,
+                providerMetadata,
+                providerRequestId: response?.id,
               });
             } catch (error) {
               await researchTelemetry.record({ status: "error", error });

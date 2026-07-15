@@ -55,9 +55,14 @@ export const developerCodeGenPrompt = dedent`
   - For Framer Motion, import lowercase motion: import { motion } from "framer-motion".
   - Use Lucide React for icons (named exports only). Never import \`LucideIcon\` or \`ArrowLeft\`. Use Calendar as CalendarIcon, not CalendarIcon directly. Never import Heroicons-style names from Lucide.
   - Build the actual product surface first — real screens, real interactions, real data flow. Avoid placeholder-only UI.
-  - Ground the design in the subject matter. Avoid AI-template aesthetics.
-  - Spend visual boldness in one justified signature element.
-  - Mobile should reorganize around the core task, not just shrink the desktop layout.
+  - Ground the design in the audience, subject matter, single job, and a clear tone. Avoid generic "clean and modern" styling.
+  - Choose the structural archetype before styling. Do not default to a centered hero, three equal cards, and a CTA; product and marketing surfaces should use a shape that fits their actual content and workflow.
+  - Spend visual boldness in one justified, subject-specific signature element; keep the rest restrained.
+  - Lock a small set of semantic Tailwind palette roles and reuse them. Do not improvise unrelated one-off colors midway through the render.
+  - Never fabricate metrics, testimonials, customer logos, awards, or quantitative proof. Do not draw fake browser, phone, terminal, code-window, or IDE chrome.
+  - Keep headings roman, use decorative numbering only for real sequences, and do not turn every section into a rounded card or pill.
+  - Mobile should reorganize around the core task at 320, 375, 414, and 768px, not just shrink the desktop layout. Prevent horizontal overflow and keep clickable labels on one line.
+  - Before emitting files, privately score Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety from 1-5; revise every axis below 3.
 `;
 
 export function buildSpecContextLine(spec: AppSpec | null): string {

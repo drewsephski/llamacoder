@@ -72,8 +72,6 @@ type BuiltWithSquidProject = {
   creatorName?: string;
   imageSrc?: string;
   imageAlt?: string;
-  preview?: string;
-  gradient?: string;
 };
 
 const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
@@ -96,7 +94,6 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     category: "Design agency",
     imageSrc: "/showcase/phoenix-design-lab.webp",
     imageAlt: "Phoenix Design Lab homepage generated with Squid",
-    preview: "Phoenix Design Lab",
   },
   {
     name: "PortfolioOS",
@@ -106,8 +103,6 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     category: "AI portfolio builder",
     imageSrc: "/showcase/portfolio-os.webp",
     imageAlt: "PortfolioOS homepage generated with Squid",
-    preview: "Conversational identity",
-    gradient: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #f8fafc 100%)",
   },
   {
     name: "Slotflow",
@@ -117,8 +112,6 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     category: "Event coordination",
     imageSrc: "/showcase/slotflow.webp",
     imageAlt: "Slotflow homepage generated with Squid",
-    preview: "Effortless coordination",
-    gradient: "linear-gradient(135deg, #062f2f 0%, #14b8a6 50%, #f7fee7 100%)",
   },
 ];
 
@@ -336,18 +329,6 @@ function readFileAsDataUrl(file: File) {
     };
     reader.readAsDataURL(file);
   });
-}
-
-/** Derives a clean, display-friendly URL for the browser-chrome mockups. */
-function getDisplayPreviewUrl(href: string) {
-  try {
-    const url = new URL(href, "https://squidagent.app");
-    const pathname = url.pathname === "/" ? "" : url.pathname;
-
-    return `${url.protocol}//${url.hostname.replace(/^www\./, "")}${pathname}`;
-  } catch {
-    return href;
-  }
 }
 
 export default function Home() {
@@ -727,16 +708,6 @@ export default function Home() {
           0%, 100% { border-color: rgba(59,130,246,0.2); }
           50% { border-color: rgba(59,130,246,0.5); }
         }
-        @keyframes livePulse {
-          0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
-          70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
-          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-        }
-        @keyframes meshDrift {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-2%, 2%) scale(1.05); }
-        }
-
         .animate-fade-up { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-fade-up-1 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
         .animate-fade-up-2 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both; }
@@ -1346,139 +1317,6 @@ export default function Home() {
           }
         }
 
-        /* ---------- Built with Squid showcase ---------- */
-        .showcase-panel {
-          position: relative;
-          border-radius: 28px;
-          border: 1px solid hsl(var(--border) / 0.6);
-          background:
-            radial-gradient(ellipse 90% 70% at 82% 8%, rgba(59,130,246,0.10), transparent 62%),
-            linear-gradient(180deg, hsl(var(--muted) / 0.35), hsl(var(--background)));
-          overflow: hidden;
-        }
-        .showcase-panel::before {
-          content: '';
-          position: absolute;
-          inset: -45%;
-          background:
-            radial-gradient(ellipse 44% 32% at 74% 28%, rgba(59,130,246,0.13), rgba(59,130,246,0.055) 34%, transparent 66%),
-            radial-gradient(ellipse 38% 28% at 58% 18%, rgba(99,102,241,0.07), transparent 64%),
-            radial-gradient(ellipse 46% 36% at 22% 42%, rgba(14,165,233,0.045), transparent 68%);
-          animation: meshDrift 14s ease-in-out infinite;
-          filter: blur(22px);
-          opacity: 0.95;
-          pointer-events: none;
-        }
-        .showcase-panel::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
-          background-size: 42px 42px;
-          -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
-          mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
-          pointer-events: none;
-          opacity: 0.9;
-        }
-
-        @media (max-width: 767px) {
-          .showcase-panel {
-            background:
-              radial-gradient(ellipse 120% 58% at 50% 0%, rgba(59,130,246,0.09), transparent 68%),
-              linear-gradient(180deg, hsl(var(--muted) / 0.34), hsl(var(--background)));
-          }
-          .showcase-panel::before {
-            inset: -38%;
-            background:
-              radial-gradient(ellipse 60% 34% at 52% 16%, rgba(59,130,246,0.11), rgba(59,130,246,0.045) 38%, transparent 70%),
-              radial-gradient(ellipse 54% 32% at 78% 36%, rgba(99,102,241,0.055), transparent 72%);
-            filter: blur(26px);
-          }
-        }
-
-        .live-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 4px 10px 4px 8px;
-          border-radius: 99px;
-          border: 1px solid hsl(var(--border) / 0.6);
-          background: hsl(var(--background) / 0.8);
-          backdrop-filter: blur(6px);
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 10.5px;
-          font-weight: 500;
-          letter-spacing: 0.04em;
-          color: hsl(var(--muted-foreground));
-        }
-        .live-badge-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #22c55e;
-          animation: livePulse 2s infinite;
-        }
-
-        .browser-window {
-          position: relative;
-          border-radius: 14px;
-          overflow: hidden;
-          border: 1px solid hsl(var(--border) / 0.7);
-          background: hsl(var(--card));
-          box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-          transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease;
-        }
-        .browser-window:hover {
-          transform: translateY(-4px);
-          border-color: rgba(59,130,246,0.4);
-          box-shadow: 0 24px 48px -18px rgba(0,0,0,0.28), 0 0 0 1px rgba(59,130,246,0.12);
-        }
-        .browser-chrome {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 9px 12px;
-          background: hsl(var(--muted) / 0.55);
-          border-bottom: 1px solid hsl(var(--border) / 0.6);
-        }
-        .browser-dots {
-          display: flex;
-          gap: 5px;
-          flex-shrink: 0;
-        }
-        .browser-dots span {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: hsl(var(--muted-foreground) / 0.25);
-        }
-        .browser-url-bar {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          padding: 3px 10px;
-          border-radius: 6px;
-          background: hsl(var(--background) / 0.8);
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 10.5px;
-          color: hsl(var(--muted-foreground));
-          min-width: 0;
-        }
-        .browser-url-bar span {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .browser-url-lock {
-          width: 7px;
-          height: 7px;
-          border-radius: 2px;
-          border: 1.2px solid hsl(var(--muted-foreground) / 0.5);
-          flex-shrink: 0;
-        }
       `}</style>
 
       <div className="font-sans-dm relative flex min-h-svh w-full flex-col overflow-x-clip">
@@ -1495,7 +1333,7 @@ export default function Home() {
               alt="Blue halo background behind the Squid Agent app builder"
               width={2392}
               height={1992}
-              className={`object-cover object-top mix-blend-screen transition-all duration-700 ease-out ${
+              className={`object-cover object-top mix-blend-screen transition-[opacity,transform] duration-700 ease-out ${
                 isHoveringRing
                   ? "scale-[1.01] opacity-70 dark:opacity-15"
                   : "scale-100 opacity-55 dark:opacity-10"
@@ -1537,8 +1375,7 @@ export default function Home() {
               </h1>
 
               <p className="animate-fade-up-2 max-w-lg text-center text-sm leading-relaxed text-muted-foreground/75 sm:text-base">
-                Research the live web. Approve the plan. Build and verify.{" "}
-                <br />
+                Research the web. Approve the plan. Build and ship. <br />
                 <span className="text-foreground/60">
                   Ship React code you own.
                 </span>
@@ -1966,7 +1803,7 @@ export default function Home() {
                           <img
                             src="/image.png"
                             alt="Build"
-                            className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5 group-hover:scale-105"
+                            className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
                           />
                         </Spinner>
                       </Button>
@@ -2011,7 +1848,7 @@ export default function Home() {
                       } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
                     >
                       <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,box-shadow] duration-200 ${
                           isScrapingUrl || urlInput.trim()
                             ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
                             : "bg-muted/70 text-muted-foreground/70"
@@ -2041,7 +1878,8 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleUrlScrape}
-                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-all hover:scale-105 hover:bg-blue-600 active:scale-95"
+                          aria-label="Clone website"
+                          className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                         >
                           <ArrowRightIcon className="size-3" />
                         </button>
@@ -2564,28 +2402,15 @@ function BuiltWithSquidSection() {
     })
     .slice(0, 8);
 
-  const getProjectGradient = (project: BuiltWithSquidProject, index: number) =>
-    project.gradient ??
-    [
-      "linear-gradient(135deg, #111827 0%, #2563eb 55%, #f8fafc 100%)",
-      "linear-gradient(135deg, #0f2f2e 0%, #0d9488 52%, #f0fdfa 100%)",
-      "linear-gradient(135deg, #2f1731 0%, #db2777 55%, #fff7ed 100%)",
-      "linear-gradient(135deg, #172554 0%, #4f46e5 52%, #ecfeff 100%)",
-    ][index % 4];
-
   return (
     <section
       id="built-with-squid"
-      className="relative z-10 w-full px-4 pb-14 pt-4 sm:px-6 sm:pb-20 sm:pt-8"
+      className="relative z-10 w-full px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-8"
     >
-      <div className="showcase-panel mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 py-10 sm:px-9 sm:py-14">
-        <div className="relative grid gap-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-end">
+      <div className="mx-auto w-full max-w-6xl border-y border-border/70 py-12 sm:py-16">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:items-end">
           <div>
-            <div className="live-badge">
-              <span className="live-badge-dot" />
-              {projects.length > 0 ? "LIVE ON SQUID" : "BUILT WITH SQUID"}
-            </div>
-            <h2 className="mt-4 max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl">
+            <h2 className="max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl">
               Real projects shipped from prompts.
             </h2>
           </div>
@@ -2597,7 +2422,7 @@ function BuiltWithSquidSection() {
             </p>
             <Link
               href="/example"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-500 hover:underline"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 whitespace-nowrap text-sm font-medium text-blue-500 underline decoration-blue-500/30 underline-offset-4 transition-colors hover:decoration-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               Open the no-signup example workspace
               <ArrowRightIcon className="size-4" />
@@ -2605,38 +2430,20 @@ function BuiltWithSquidSection() {
           </div>
         </div>
 
-        <div className="relative grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visibleProjects.map((project, index) => (
-            <article
+        <div className="mt-12 grid gap-x-6 gap-y-12 lg:grid-cols-12">
+          {visibleProjects.map((project) => (
+            <figure
               key={project.href}
-              className="browser-window group flex h-full min-h-[390px] flex-col"
+              className="group min-w-0 border-t border-border/70 pt-4 lg:col-span-6"
             >
               <a
                 href={project.href}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`View ${project.name}`}
-                className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4"
               >
-                <div className="browser-chrome">
-                  <div className="browser-dots">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <div className="browser-url-bar">
-                    <span className="browser-url-lock" />
-                    <span>{getDisplayPreviewUrl(project.href)}</span>
-                  </div>
-                </div>
-                <div
-                  className="relative flex aspect-[16/10] w-full items-end overflow-hidden bg-white p-5"
-                  style={{
-                    background: project.imageSrc
-                      ? undefined
-                      : getProjectGradient(project, index),
-                  }}
-                >
+                <div className="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-xl border border-border/80 bg-muted/40">
                   {project.imageSrc ? (
                     <Image
                       src={project.imageSrc}
@@ -2645,37 +2452,36 @@ function BuiltWithSquidSection() {
                         `${project.name} project preview built with Squid`
                       }
                       fill
-                      sizes="(min-width: 1280px) 16rem, (min-width: 1024px) 22rem, (min-width: 640px) 50vw, 100vw"
+                      sizes="(min-width: 1024px) 58vw, 100vw"
                       className="object-cover object-top"
                     />
                   ) : (
-                    <>
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(180deg,transparent,rgba(0,0,0,0.25))]" />
-                      <p className="relative max-w-[13rem] text-2xl font-semibold leading-[0.95] tracking-tight text-white">
-                        {project.preview ?? project.name}
-                      </p>
-                    </>
+                    <p className="px-6 text-center text-sm text-muted-foreground">
+                      Preview unavailable
+                    </p>
                   )}
                 </div>
               </a>
 
-              <div className="flex flex-1 flex-col border-t border-border/70 p-4">
-                <p className="font-mono-jb text-[10px] uppercase tracking-[0.14em] text-blue-500/80">
-                  {project.category}
-                </p>
-                <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-                  {project.name}
-                </h3>
-                <p className="mt-2 line-clamp-3 text-sm leading-5 text-muted-foreground">
-                  {project.description}
-                </p>
-                {project.creatorName && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Shared by {project.creatorName}
+              <figcaption className="grid gap-4 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-blue-500">
+                    {project.category}
                   </p>
-                )}
+                  <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+                    {project.name}
+                  </h3>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                    {project.description}
+                  </p>
+                  {project.creatorName && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Shared by {project.creatorName}
+                    </p>
+                  )}
+                </div>
 
-                <div className="mt-auto flex items-center gap-4 pt-5 text-sm font-medium">
+                <div className="flex min-h-11 items-center gap-4 text-sm font-medium sm:justify-end">
                   <a
                     href={project.href}
                     target="_blank"
@@ -2696,8 +2502,8 @@ function BuiltWithSquidSection() {
                     </a>
                   )}
                 </div>
-              </div>
-            </article>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>
@@ -2708,12 +2514,35 @@ function BuiltWithSquidSection() {
 function LandingMacbookSection() {
   return (
     <section
-      aria-label="Animated MacBook Air"
-      className="relative z-10 w-full overflow-hidden px-4 pb-10 pt-2 sm:px-6 sm:pb-14"
+      aria-labelledby="macbook-example-heading"
+      className="relative z-10 w-full px-4 pb-16 sm:px-6 sm:pb-24"
     >
-      <div className="mx-auto flex h-[230px] w-full max-w-6xl items-center justify-center border-t border-border/60 sm:h-[270px]">
-        <div className="relative h-[220px] w-full max-w-md">
-          <Macbook className="scale-125 sm:scale-150" />
+      <div className="mx-auto grid w-full max-w-6xl gap-8 border-t border-border/70 pt-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:pt-16">
+        <div className="max-w-xl">
+          <h2
+            id="macbook-example-heading"
+            className="font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl"
+          >
+            Open the build. Inspect every layer.
+          </h2>
+          <p className="mt-5 text-base leading-7 text-muted-foreground">
+            The public workspace exposes the original prompt, approved plan,
+            interactive preview, generated files, and quality report without
+            requiring an account or credits.
+          </p>
+          <Link
+            href="/example"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            Explore the live example
+            <ArrowRightIcon className="size-4" />
+          </Link>
+        </div>
+
+        <div className="relative flex h-[260px] min-w-0 items-center justify-center sm:h-[320px]">
+          <div className="relative h-[220px] w-full max-w-md">
+            <Macbook className="scale-125 sm:scale-150" />
+          </div>
         </div>
       </div>
     </section>

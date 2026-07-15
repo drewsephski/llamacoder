@@ -40,6 +40,32 @@ describe("live API intent", () => {
     },
   );
 
+  it("does not treat product subject matter as requested webhook behavior", () => {
+    const intent = detectLiveApiIntent(
+      "Build a product landing page for Relay, a hosted webhook debugging tool that captures, inspects, replays, and shares webhook events.",
+    );
+
+    expect(intent).toEqual({
+      required: false,
+      kind: "none",
+      reason: null,
+    });
+  });
+
+  it.each([
+    ["Add a webhook receiver to this landing page", "server_required"],
+    ["Build a landing page and integrate Stripe checkout", "server_required"],
+    ["Build a landing page that shows live weather data", "public_candidate"],
+  ] as const)(
+    "still detects concrete external behavior in presentational projects: %s",
+    (content, kind) => {
+      expect(detectLiveApiIntent(content)).toMatchObject({
+        required: true,
+        kind,
+      });
+    },
+  );
+
   it("requires unit-safe live API generation", () => {
     const contract = buildLiveApiGenerationContract(
       detectLiveApiIntent("Build a live weather dashboard"),

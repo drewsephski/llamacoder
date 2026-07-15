@@ -202,6 +202,29 @@ function mockGeneration({
   return toUIMessageStream;
 }
 
+function mockResearch(outputs: unknown[], responseId = "research_response_1") {
+  const toolResults = outputs.map((output, index) => ({
+    type: "tool-result" as const,
+    toolCallId: `search_${index + 1}`,
+    toolName: "web_search",
+    input: {},
+    output,
+    providerExecuted: true,
+  }));
+  const fullStream = (async function* () {
+    for (const result of toolResults) yield result;
+  })();
+
+  streamTextMock.mockReturnValueOnce({
+    fullStream,
+    toolResults: Promise.resolve(toolResults),
+    usage: Promise.resolve(undefined),
+    finishReason: Promise.resolve("stop"),
+    providerMetadata: Promise.resolve(undefined),
+    response: Promise.resolve({ id: responseId }),
+  });
+}
+
 async function collectUIChunks(response: Response) {
   if (!response.body) throw new Error("Missing response body");
 
@@ -395,7 +418,9 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
 
     const call = streamTextMock.mock.calls[0][0];
-    expect(call.system).toBe("system");
+    expect(call.system).toContain("Premium UI/UX execution contract");
+    expect(call.system).toContain("Structural variety");
+    expect(call.system).not.toBe("system");
     expect(call.messages).toHaveLength(9);
     expect(call.messages.at(-1)).toMatchObject({
       role: "user",
@@ -484,30 +509,19 @@ describe("/api/get-next-completion-stream-promise", () => {
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
-    generateTextMock.mockResolvedValueOnce({
-      text: "Verified current UFC rankings",
-      sources: [],
-      toolResults: [
-        {
-          toolName: "web_search",
-          output: {
-            id: "search_1",
-            results: [
-              {
-                url: "https://www.ufc.com/rankings",
-                title: "UFC Rankings",
-                publishedDate: "2026-06-30T10:00:00.000Z",
-                highlights: ["Official current rankings"],
-              },
-            ],
+    mockResearch([
+      {
+        id: "search_1",
+        results: [
+          {
+            url: "https://www.ufc.com/rankings",
+            title: "UFC Rankings",
+            publishedDate: "2026-06-30T10:00:00.000Z",
+            highlights: ["Official current rankings"],
           },
-        },
-      ],
-      usage: undefined,
-      finishReason: "stop",
-      providerMetadata: undefined,
-      response: { id: "research_response_1" },
-    });
+        ],
+      },
+    ]);
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
@@ -526,7 +540,7 @@ describe("/api/get-next-completion-stream-promise", () => {
           data: {
             phase: "searching",
             query: searchQuery,
-            label: "Searching the web",
+            label: "Searching as requested",
             sourceCount: 0,
           },
         }),
@@ -539,6 +553,15 @@ describe("/api/get-next-completion-stream-promise", () => {
         expect.objectContaining({
           type: "data-research-activity",
           data: {
+            phase: "searching",
+            query: searchQuery,
+            label: "Found 1 source",
+            sourceCount: 1,
+          },
+        }),
+        expect.objectContaining({
+          type: "data-research-activity",
+          data: {
             phase: "complete",
             query: searchQuery,
             label: "Reviewed 1 source",
@@ -547,8 +570,20 @@ describe("/api/get-next-completion-stream-promise", () => {
         }),
       ]),
     );
-    const call = streamTextMock.mock.calls[0][0];
-    const researchCall = generateTextMock.mock.calls[0][0];
+    const sourceChunkIndex = chunks.findIndex(
+      (chunk) =>
+        chunk.type === "source-url" &&
+        chunk.sourceId === "research-msg_search-1",
+    );
+    const completedResearchIndex = chunks.findIndex(
+      (chunk) =>
+        chunk.type === "data-research-activity" &&
+        (chunk.data as { label?: string }).label === "Reviewed 1 source",
+    );
+    expect(sourceChunkIndex).toBeGreaterThan(-1);
+    expect(sourceChunkIndex).toBeLessThan(completedResearchIndex);
+    const researchCall = streamTextMock.mock.calls[0][0];
+    const call = streamTextMock.mock.calls[1][0];
     expect(researchCall.tools).toEqual({
       web_search: { type: "provider-tool" },
     });
@@ -585,7 +620,9 @@ describe("/api/get-next-completion-stream-promise", () => {
     });
     expect(call.tools).toBeUndefined();
     expect(call.toolChoice).toBeUndefined();
-    expect(call.system).toBe("system");
+    expect(call.system).toContain("Premium UI/UX execution contract");
+    expect(call.system).toContain("Structural variety");
+    expect(call.system).not.toBe("system");
     expect(
       call.messages.every(
         (candidate: { role: string }) => candidate.role !== "system",
@@ -608,6 +645,43 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
   });
 
+  it("does not search a complete landing-page brief just because the product mentions webhooks", async () => {
+    const content = `Build a product landing page for Relay, a hosted webhook debugging tool for small engineering teams.
+
+The first viewport should explain that Relay captures, inspects, replays, and shares webhook events. Show the real product workflow through a code-native event inspector, then cover replay, team sharing, environment separation, and a short getting-started sequence.
+
+Use a crisp technical design with white and charcoal surfaces, dense monospace details, a cyan accent, and restrained motion that demonstrates an event arriving and being replayed. Include clear documentation and start-free actions.`;
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_relay_landing_page",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_relay_landing_page", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(
+      chunks.some((chunk) => chunk.type === "data-research-activity"),
+    ).toBe(false);
+  });
+
   it("researches an exact API documentation link before generating code", async () => {
     const documentationUrl = "https://developer.example.com/api/v3/docs";
     const content = `Build a flight tracker using the API at ${documentationUrl}`;
@@ -628,29 +702,21 @@ describe("/api/get-next-completion-stream-promise", () => {
       { role: "user", content },
     ]);
     loadChatUrlContentMock.mockRejectedValueOnce(new Error("Exa unavailable"));
-    generateTextMock.mockResolvedValueOnce({
-      text: "Verified exact API documentation",
-      sources: [],
-      toolResults: [
+    mockResearch(
+      [
         {
-          toolName: "web_search",
-          output: {
-            id: "search_api_docs",
-            results: [
-              {
-                url: documentationUrl,
-                title: "Example API v3",
-                highlights: ["GET /flights returns flight status records."],
-              },
-            ],
-          },
+          id: "search_api_docs",
+          results: [
+            {
+              url: documentationUrl,
+              title: "Example API v3",
+              highlights: ["GET /flights returns flight status records."],
+            },
+          ],
         },
       ],
-      usage: undefined,
-      finishReason: "stop",
-      providerMetadata: undefined,
-      response: { id: "research_api_docs" },
-    });
+      "research_api_docs",
+    );
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
@@ -658,12 +724,12 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
     await collectUIChunks(response);
 
-    const researchCall = generateTextMock.mock.calls[0][0];
+    const researchCall = streamTextMock.mock.calls[0][0];
     expect(researchCall.prompt).toContain(documentationUrl);
     expect(researchCall.system).toContain(
       "inspect that exact page first and treat it as the primary source",
     );
-    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
       "GET /flights returns flight status records.",
     );
   });
@@ -908,29 +974,21 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       providerMetadata: undefined,
       response: { id: "orchestration_selected_api" },
     });
-    generateTextMock.mockResolvedValueOnce({
-      text: "Verified Frankfurter v2 documentation",
-      sources: [],
-      toolResults: [
+    mockResearch(
+      [
         {
-          toolName: "web_search",
-          output: {
-            id: "search_selected_api",
-            results: [
-              {
-                url: "https://frankfurter.dev/",
-                title: "Frankfurter API",
-                highlights: ["The public API uses the v2 rates endpoint."],
-              },
-            ],
-          },
+          id: "search_selected_api",
+          results: [
+            {
+              url: "https://frankfurter.dev/",
+              title: "Frankfurter API",
+              highlights: ["The public API uses the v2 rates endpoint."],
+            },
+          ],
         },
       ],
-      usage: undefined,
-      finishReason: "stop",
-      providerMetadata: undefined,
-      response: { id: "research_selected_api" },
-    });
+      "research_selected_api",
+    );
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
@@ -944,15 +1002,15 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(generateTextMock.mock.calls[0][0].system).toContain(
       "Selected API purpose policy",
     );
-    expect(generateTextMock.mock.calls[1][0].prompt).toContain("frankfurter");
+    expect(streamTextMock.mock.calls[0][0].prompt).toContain("frankfurter");
     const generationPrompt =
-      streamTextMock.mock.calls[0][0].messages.at(-1).content;
+      streamTextMock.mock.calls[1][0].messages.at(-1).content;
     expect(generationPrompt).toContain("SELECTED API IMPLEMENTATION GUIDANCE");
     expect(generationPrompt).toContain("LIVE API APP CONTRACT");
-    expect(streamTextMock.mock.calls[0][0].system).toContain(
+    expect(streamTextMock.mock.calls[1][0].system).toContain(
       "Selected API enforcement is a server policy",
     );
-    expect(streamTextMock.mock.calls[0][0].system).toContain(
+    expect(streamTextMock.mock.calls[1][0].system).toContain(
       "SELECTED API IMPLEMENTATION GUIDANCE",
     );
     expect(generationPrompt).toContain(
@@ -1104,29 +1162,21 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
-    generateTextMock.mockResolvedValueOnce({
-      text: "Verified AI SDK guidance",
-      sources: [],
-      toolResults: [
+    mockResearch(
+      [
         {
-          toolName: "web_search",
-          output: {
-            id: "search_evergreen",
-            results: [
-              {
-                url: "https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling",
-                title: "AI SDK Tool Calling",
-                highlights: ["Use provider tools through the tools option."],
-              },
-            ],
-          },
+          id: "search_evergreen",
+          results: [
+            {
+              url: "https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling",
+              title: "AI SDK Tool Calling",
+              highlights: ["Use provider tools through the tools option."],
+            },
+          ],
         },
       ],
-      usage: undefined,
-      finishReason: "stop",
-      providerMetadata: undefined,
-      response: { id: "research_response_evergreen" },
-    });
+      "research_response_evergreen",
+    );
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
@@ -1149,10 +1199,10 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
         endPublishedDate: expect.anything(),
       }),
     );
-    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
       "authoritative sources without an artificial publication-date cutoff",
     );
-    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
       "Use provider tools through the tools option.",
     );
   });
@@ -1223,7 +1273,9 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       expect(reserveCreditHoldMock).not.toHaveBeenCalled();
       expect(generateTextMock).not.toHaveBeenCalled();
       const call = streamTextMock.mock.calls[0][0];
-      expect(call.system).toContain("system prompt");
+      expect(call.system).toContain("Premium UI/UX execution contract");
+      expect(call.system).toContain("Structural variety");
+      expect(call.system).not.toContain("system prompt");
       expect(call.messages).toHaveLength(1);
       expect(call.messages[0].content).toContain(
         "Return only complete files that changed",

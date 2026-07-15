@@ -1,6 +1,12 @@
 "use client";
 
-import { Check, LoaderCircle, Search } from "lucide-react";
+import {
+  ArrowUpRight,
+  Check,
+  Globe2,
+  LoaderCircle,
+  Search,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -167,18 +173,27 @@ export function MessageSources({
           {sources.length} {sources.length === 1 ? "source" : "sources"}
         </span>
       </SourcesTrigger>
-      <SourcesContent className="max-w-full gap-1.5">
+      <SourcesContent className="w-full max-w-full gap-1.5">
         {sources.slice(0, 8).map((source) => {
           const label = source.title ?? new URL(source.url).hostname;
+          const hostname = new URL(source.url).hostname.replace(/^www\./, "");
           return (
             <Source
               key={source.sourceId}
               href={source.url}
               title={label}
-              className="max-w-sm overflow-hidden rounded-md px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="group flex max-w-md items-center gap-2 overflow-hidden rounded-lg border border-border/50 bg-background/60 px-2.5 py-2 text-xs text-muted-foreground transition-colors hover:border-blue-500/25 hover:bg-blue-500/[0.04] hover:text-foreground"
             >
-              <span className="size-1.5 shrink-0 rounded-full bg-current opacity-60" />
-              <span className="truncate">{label}</span>
+              <Globe2 className="size-3.5 shrink-0 text-blue-500/70" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium text-foreground/90">
+                  {label}
+                </span>
+                <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+                  {hostname}
+                </span>
+              </span>
+              <ArrowUpRight className="size-3.5 shrink-0 opacity-40 transition-opacity group-hover:opacity-80" />
             </Source>
           );
         })}
@@ -195,34 +210,106 @@ export function ResearchActivityCard({
   sources: SourceUrl[];
 }) {
   const isSearching = activity.phase === "searching";
+  const visibleSources = sources.slice(0, 6);
 
   return (
     <div
-      className="rounded-xl border border-blue-500/20 bg-blue-50/40 p-4 dark:bg-blue-950/15"
+      className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-[linear-gradient(135deg,hsl(var(--card))_0%,hsl(var(--card))_58%,hsl(217_91%_60%/0.07)_100%)] shadow-[0_18px_60px_-42px_hsl(217_91%_60%/0.7)]"
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-          {isSearching ? (
-            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Check className="size-4" aria-hidden="true" />
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground">
-            {activity.label}
-          </p>
-          <p className="mt-1 break-words font-mono text-xs leading-5 text-muted-foreground">
-            {activity.query}
-          </p>
-          <div className="mt-3">
-            <MessageSources
-              sources={sources}
-              defaultOpen={!isSearching && sources.length > 0}
-            />
+      <div className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-500" />
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start gap-3">
+          <span className="relative mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl border border-blue-500/15 bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            {isSearching ? (
+              <>
+                <span className="absolute inset-1 animate-pulse rounded-lg bg-blue-500/10" />
+                <LoaderCircle
+                  className="relative size-4 animate-spin"
+                  aria-hidden="true"
+                />
+              </>
+            ) : (
+              <Check className="size-4" aria-hidden="true" />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold tracking-tight text-foreground">
+                  {activity.label}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Exa web research
+                  {activity.sourceCount > 0
+                    ? ` · ${activity.sourceCount} ${activity.sourceCount === 1 ? "source" : "sources"}`
+                    : " · finding authoritative sources"}
+                </p>
+              </div>
+              <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-blue-500/15 bg-blue-500/[0.07] px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">
+                <span
+                  className={`size-1.5 rounded-full ${isSearching ? "animate-pulse bg-cyan-500" : "bg-emerald-500"}`}
+                />
+                {isSearching ? "Live" : "Complete"}
+              </span>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-border/60 bg-background/65 px-3 py-2.5">
+              <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <Search className="size-3" aria-hidden="true" />
+                Search query
+              </div>
+              <p className="break-words font-mono text-xs leading-5 text-foreground/80">
+                {activity.query}
+              </p>
+            </div>
           </div>
+        </div>
+
+        <div className="ml-0 mt-4 sm:ml-12">
+          {visibleSources.length > 0 ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {visibleSources.map((source, index) => {
+                const hostname = new URL(source.url).hostname.replace(
+                  /^www\./,
+                  "",
+                );
+                const label = source.title ?? hostname;
+
+                return (
+                  <Source
+                    key={source.sourceId}
+                    href={source.url}
+                    title={label}
+                    className="group flex min-w-0 items-start gap-2.5 rounded-xl border border-border/60 bg-background/70 p-3 text-left transition-all hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-sm"
+                  >
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-blue-500/10 font-mono text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-medium text-foreground">
+                        {label}
+                      </span>
+                      <span className="mt-1 block truncate text-[11px] text-muted-foreground">
+                        {hostname}
+                      </span>
+                    </span>
+                    <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground opacity-40 transition-opacity group-hover:opacity-90" />
+                  </Source>
+                );
+              })}
+            </div>
+          ) : isSearching ? (
+            <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-border/70 bg-background/35 px-3 py-3 text-xs text-muted-foreground">
+              <span className="flex gap-1" aria-hidden="true">
+                <span className="size-1.5 animate-pulse rounded-full bg-blue-500 [animation-delay:-240ms]" />
+                <span className="size-1.5 animate-pulse rounded-full bg-blue-500 [animation-delay:-120ms]" />
+                <span className="size-1.5 animate-pulse rounded-full bg-blue-500" />
+              </span>
+              Sources will appear here as Exa returns them
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

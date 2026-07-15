@@ -1,0 +1,17 @@
+{
+  "scanned_at": "2026-07-15",
+  "font_stack": {
+    "primary": "DM Sans via next/font",
+    "registered_assets": ["Aeonik", "Aeonik Mono"]
+  },
+  "palette": "HSL application tokens with Tailwind brand colors",
+  "motion": "motion-on (framer-motion installed; example currently uses CSS transitions)",
+  "spacing": "Tailwind default spacing scale",
+  "framework": "Next.js 16 App Router, React 19, Tailwind CSS 3",
+  "preserve": [
+    "existing public example route and trust-surface information architecture",
+    "Open-Meteo and Frankfurter API contracts",
+    "current uncommitted Waypoint work",
+    "project font and application token conventions"
+  ]
+}

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { developerCodeGenPrompt } from "@/features/generation/agent-prompts";
 import { getMainCodingPrompt, softwareArchitectPrompt } from "@/lib/prompts";
 
 describe("prompt design guidance", () => {
@@ -11,13 +12,22 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain(
       "Spend visual boldness in one justified signature element",
     );
-    expect(prompt).toContain("mobile should reorganize around the core task");
+    expect(prompt).toContain("Mobile should reorganize around the core task");
     expect(prompt).toContain("Premium UI/UX execution contract");
     expect(prompt).toContain("Hierarchy before decoration");
     expect(prompt).toContain("Believable product content");
     expect(prompt).toContain("Complete interaction design");
     expect(prompt).toContain("Responsive composition");
+    expect(prompt).toContain("Structural variety");
     expect(prompt).toContain("Final design critique");
+    expect(prompt).toContain("centered hero → three equal feature cards → CTA");
+    expect(prompt).toContain("Never fabricate proof");
+    expect(prompt).toContain("fake browser bars");
+    expect(prompt).toContain("Headings and display type stay roman");
+    expect(prompt).toContain("320, 375, 414, and 768px");
+    expect(prompt).toContain(
+      "Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety",
+    );
     expect(prompt).toContain("Sandbox import contract:");
     expect(prompt).toContain("Never use braces for a default-only component");
     expect(prompt).toContain("Lucide React only supports these named exports");
@@ -39,14 +49,19 @@ describe("prompt design guidance", () => {
       'include a concise "Design direction" section',
     );
     expect(softwareArchitectPrompt).toContain("Subject/audience/job");
-    expect(softwareArchitectPrompt).toContain("Palette/type/layout/signature");
+    expect(softwareArchitectPrompt).toContain("Structural archetype");
+    expect(softwareArchitectPrompt).toContain("Palette/type/signature");
     expect(softwareArchitectPrompt).toContain("Anti-generic check");
+    expect(softwareArchitectPrompt).toContain("Content integrity");
     expect(softwareArchitectPrompt).toContain("Product states");
     expect(softwareArchitectPrompt).toContain("Responsive behavior");
     expect(softwareArchitectPrompt).toContain(
       "Treat premium as clarity, craft, and restraint",
     );
     expect(softwareArchitectPrompt).toContain("visual QA pass");
+    expect(softwareArchitectPrompt).toContain(
+      "centered hero → three equal feature cards → CTA",
+    );
     expect(softwareArchitectPrompt).toContain(
       "Build the actual product surface first",
     );
@@ -64,6 +79,21 @@ describe("prompt design guidance", () => {
     );
     expect(softwareArchitectPrompt).toContain(
       "use that contract directly without asking for redundant research",
+    );
+  });
+
+  it("keeps Hallmark-derived constraints in the plan-mode code generator", () => {
+    expect(developerCodeGenPrompt).toContain(
+      "Choose the structural archetype before styling",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Never fabricate metrics, testimonials, customer logos",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Do not draw fake browser, phone, terminal, code-window, or IDE chrome",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety",
     );
   });
 });

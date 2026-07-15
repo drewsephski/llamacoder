@@ -2,91 +2,50 @@ import { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Instagram } from "lucide-react";
-import {
-  benchmarkPage,
-  blogPages,
-  comparisonPages,
-} from "@/lib/marketing-pages";
 
 type FooterProps = {
   showPageLinks?: boolean;
 };
 
-const primaryLinks = [
-  { href: "/", label: "Home" },
+const landingLinks = [
+  { href: "/example", label: "Example" },
   { href: "/docs", label: "Docs" },
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/dashboard/usage", label: "Usage" },
-  { href: "/sign-in", label: "Sign in" },
-  { href: "/sign-up", label: "Create account" },
-];
-
-const pageLinkSections = [
-  {
-    title: "Pages",
-    links: primaryLinks,
-  },
-  {
-    title: "Compare",
-    links: comparisonPages.map((page) => ({
-      href: `/compare/${page.slug}`,
-      label: page.h1,
-    })),
-  },
-  {
-    title: "Guides",
-    links: [
-      ...blogPages.map((page) => ({
-        href: `/blog/${page.slug}`,
-        label: page.h1,
-      })),
-      {
-        href: `/benchmarks/${benchmarkPage.slug}`,
-        label: benchmarkPage.h1,
-      },
-    ],
-  },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
 ];
 
 const Footer = memo(({ showPageLinks = false }: FooterProps) => {
   if (showPageLinks) {
     return (
-      <footer className="mt-auto w-full px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-8 sm:px-6 sm:pb-6">
-        <div className="mx-auto grid w-full max-w-6xl gap-8 border-t border-border/60 pt-6 sm:grid-cols-2 lg:grid-cols-[1.35fr_repeat(3,minmax(0,1fr))]">
-          <div className="flex min-w-0 flex-col items-center gap-3 text-center sm:items-start sm:text-left">
-            <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm sm:justify-start">
+      <footer className="mt-auto w-full px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-10 sm:px-6 sm:pb-8 sm:pt-16">
+        <div className="mx-auto w-full max-w-6xl border-t border-border/70 pt-8 sm:pt-10">
+          <p className="max-w-[26ch] text-3xl font-medium leading-[1.05] tracking-[-0.035em] text-foreground sm:text-4xl">
+            Research, build, verify, and ship React apps with code you own.
+          </p>
+
+          <div className="mt-10 flex flex-col gap-5 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center gap-2.5 self-start whitespace-nowrap text-sm font-medium tracking-tight text-foreground/80 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
               <Image
                 src="/squidagent-logo.svg"
                 alt="Squid Agent"
                 width={24}
                 height={24}
-                className="h-6 w-auto opacity-90 transition-opacity hover:opacity-100"
+                className="h-6 w-auto"
               />
-              <span className="font-medium tracking-tight text-foreground/80">
-                Squid Agent
-              </span>
-            </div>
-            <p className="max-w-xs text-sm leading-6 text-muted-foreground/70">
-              Research, build, verify, and ship React apps with code you own.
-            </p>
-            <SocialLinks />
-          </div>
+              Squid Agent
+            </Link>
 
-          {pageLinkSections.map((section) => (
-            <nav
-              key={section.title}
-              aria-label={section.title}
-              className="text-center sm:text-left"
-            >
-              <h2 className="text-sm font-medium text-foreground/80">
-                {section.title}
-              </h2>
-              <ul className="mt-3 space-y-2">
-                {section.links.map((link) => (
+            <nav aria-label="Footer navigation">
+              <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:justify-end">
+                {landingLinks.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm leading-6 text-muted-foreground/70 transition-colors hover:text-foreground"
+                      className="inline-flex min-h-11 items-center whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       {link.label}
                     </Link>
@@ -94,7 +53,7 @@ const Footer = memo(({ showPageLinks = false }: FooterProps) => {
                 ))}
               </ul>
             </nav>
-          ))}
+          </div>
         </div>
       </footer>
     );

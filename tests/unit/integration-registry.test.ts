@@ -86,7 +86,7 @@ describe("integration registry", () => {
 
   it("registers Octagon as a browser-safe MMA data provider", () => {
     expect(getIntegrationProvider("octagon")).toMatchObject({
-      name: "Octagon API",
+      name: "UFC API",
       auth: "none",
       runtime: "browser",
       corsCompatible: true,

@@ -114,7 +114,7 @@ const providers = [
   },
   {
     id: "octagon",
-    name: "Octagon API",
+    name: "UFC API",
     category: "data",
     description:
       "MMA rankings, weight divisions, fighter profiles, and career records.",

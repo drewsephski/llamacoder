@@ -10,10 +10,19 @@ const NO_API_PATTERNS = [
   /\b(?:calculator|portfolio|brochure|landing page|static site|timer|counter|unit converter)\b/i,
 ];
 
-const SERVER_REQUIRED_PATTERNS = [
+const SERVER_SIDE_BEHAVIOR_PATTERNS = [
   /\b(?:send|submit)\b.{0,50}\b(?:contact form|email|message|notification)\b/i,
   /\b(?:save|sync|persist|store)\b.{0,60}\b(?:user|project|account|shared|cloud|database|data)\b/i,
-  /\b(?:payment|checkout|subscription|webhook|oauth|private api|secret key|server function|authentication|sign[ -]?in)\b/i,
+  /\b(?:payment|checkout|subscription|oauth|private api|secret key|server function|authentication|sign[ -]?in)\b/i,
+];
+
+const ACTIONABLE_WEBHOOK_PATTERNS = [
+  /\b(?:configure|connect|enable|handle|implement|integrate|listen for|process|receive|register|set up|verify|wire)\b.{0,80}\bwebhooks?\b/i,
+  /\bwebhooks?\b.{0,80}\b(?:endpoint|handler|listener|payload|receiver|secret|signature|URL)\b/i,
+];
+
+const PRESENTATIONAL_REQUEST_PATTERNS = [
+  /\b(?:brochure|landing page|marketing page|marketing site|product page|static site)\b/i,
 ];
 
 const LIVE_DATA_PATTERNS = [
@@ -27,7 +36,31 @@ export function detectLiveApiIntent(content: string): LiveApiIntent {
   const normalized = content.trim();
   if (!normalized) return { required: false, kind: "none", reason: null };
 
-  if (SERVER_REQUIRED_PATTERNS.some((pattern) => pattern.test(normalized))) {
+  const requestsServerBehavior =
+    SERVER_SIDE_BEHAVIOR_PATTERNS.some((pattern) => pattern.test(normalized)) ||
+    ACTIONABLE_WEBHOOK_PATTERNS.some((pattern) => pattern.test(normalized));
+  const requestsLiveData = LIVE_DATA_PATTERNS.some((pattern) =>
+    pattern.test(normalized),
+  );
+  const isPresentationalRequest = PRESENTATIONAL_REQUEST_PATTERNS.some(
+    (pattern) => pattern.test(normalized),
+  );
+
+  // Product descriptions often mention payments, auth, or webhooks as subject
+  // matter. A landing-page brief should not become an integration request
+  // unless it also asks for concrete runtime behavior.
+  if (
+    isPresentationalRequest &&
+    !requestsLiveData &&
+    !ACTIONABLE_WEBHOOK_PATTERNS.some((pattern) => pattern.test(normalized)) &&
+    !/\b(?:(?:add|configure|connect|enable|implement|integrate|set up|wire)\b.{0,80}|(?:functional|working)\b.{0,40})\b(?:authentication|checkout|oauth|payment|sign[ -]?in|subscription)\b/i.test(
+      normalized,
+    )
+  ) {
+    return { required: false, kind: "none", reason: null };
+  }
+
+  if (requestsServerBehavior) {
     return {
       required: true,
       kind: "server_required",
@@ -36,7 +69,7 @@ export function detectLiveApiIntent(content: string): LiveApiIntent {
     };
   }
 
-  if (LIVE_DATA_PATTERNS.some((pattern) => pattern.test(normalized))) {
+  if (requestsLiveData) {
     return {
       required: true,
       kind: "public_candidate",

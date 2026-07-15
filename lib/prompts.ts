@@ -21,14 +21,16 @@ Guidelines:
 - Every planned import must map to either an installed package, an installed Shadcn UI module, or a file the model will generate. Installed packages include React DnD imports from \`react-dnd\` and \`react-dnd-html5-backend\` for drag-and-drop interactions. No other libraries or frameworks (e.g. no React Router).
 - Sandbox import contract: every planned JSX component, icon, helper, hook, and constant must come from an installed package, a documented Shadcn module, or a file the model will output. Never use braces for a default-only component. Never import \`LucideIcon\`. Never import \`ArrowLeft\`. Never import Heroicons-style names from Lucide. Use only the icons available in the coding prompt and alias \`Calendar as CalendarIcon\` if needed.
 - include a concise "Design direction" section with:
-  - Subject/audience/job: ground the design in the specific product, the person using it, and the single job the first screen performs.
-  - Palette/type/layout/signature: name a compact token system, a distinctive type treatment, a structural layout idea, and one memorable signature element.
-  - Anti-generic check: identify one tempting templated choice and replace it with a choice that comes from the subject's world.
+  - Subject/audience/job/tone: state the audience, the single job the first screen performs, and an opinionated tone such as editorial, utilitarian, luxury, playful, technical, or austere. Infer missing low-risk context from the brief.
+  - Structural archetype: choose the page shape before styling it. For product surfaces, consider a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. For marketing pages, consider an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Do not default to centered hero → three equal feature cards → CTA.
+  - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
+  - Anti-generic check: identify the most tempting templated choice — including generic nav/footer chrome — and replace it with a choice that comes from the subject's world.
+  - Content integrity: identify which proof, metrics, testimonials, logos, or claims came from the user. Never plan fabricated proof to fill a layout.
   - Motion/copy notes: name the one interaction or transition that should carry motion, and specify the tone of button labels, empty states, and errors.
   - Product states: plan realistic loading, empty, error, success, disabled, hover, active, and focus-visible states for the core workflow.
-  - Responsive behavior: explain how the experience recomposes around the primary task on mobile instead of merely shrinking.
+  - Responsive behavior: explain how the experience recomposes around the primary task at 320, 375, 414, and 768px instead of merely shrinking. Clickable labels must stay on one line.
 - Treat premium as clarity, craft, and restraint: establish one unmistakable primary action, make secondary actions quieter, use believable subject-specific content, and avoid turning every piece of information into a card.
-- End with a visual QA pass: remove one unnecessary flourish, verify hierarchy at a glance, and confirm the signature element still serves the product's job.
+- End with a visual QA pass and private pre-emit critique scored 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise any axis below 3, remove one unnecessary flourish, and confirm the signature element still serves the product's job.
 
 If given a description of a screenshot, produce an implementation plan based on trying to replicate it as closely as possible.
 `;
@@ -143,11 +145,13 @@ export function getMainCodingPrompt() {
 
   **1. Plan.** Before touching Tailwind classes, decide:
      - *Subject*: what is this app, for whom, and what's the one job this screen does? Ground every choice in that, not in "an app like this."
+     - *Tone*: choose a clear extreme that fits the subject — editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. "Clean and modern" is not a direction. Infer a sensible tone when the user leaves it open.
      - *Palette*: 4-6 named colors (standard Tailwind palette names, e.g. "amber-500 as primary, stone-900 as ink"), with one dominant color and one sharp accent — not evenly distributed.
      - *Type*: a display face and a body face that have real character (avoid Inter, Roboto, Arial, Open Sans, Poppins, and monospace-as-default-vibe). Two roles is enough; add a third utility face only if data/captions need it.
-     - *Layout*: one or two sentences on the structural idea (asymmetry, what breaks the grid, where negative space does the work).
+     - *Structure*: choose a page archetype before styling. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
      - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet.
      - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
+     - *Proof policy*: separate user-supplied facts from illustrative interface content. Never invent metrics, customer logos, testimonials, awards, case-study results, or quantitative claims to make a layout look complete.
 
   **2. Critique before building.** Avoid AI-template aesthetics. Check the plan against these AI-generated-design defaults and revise anything that matches one by coincidence rather than genuine fit for this subject:
      - Warm cream background + high-contrast serif + terracotta accent.
@@ -157,18 +161,28 @@ export function getMainCodingPrompt() {
      - Numbered markers (01/02/03) used decoratively rather than because the content is a real sequence.
      - Every card the same size, same icon-above-heading pattern, repeated in a grid.
      - Rounded card with a thick colored border on one side as a generic accent.
-     If the brief itself asks for one of these looks, honor the brief — the brief always wins. Otherwise, spend that creative freedom on something specific to this subject.
+     - Centered promise-copy hero followed by three equal feature cards and a generic CTA strip.
+     - Wordmark-left nav with four generic links and a button, or a four-column corporate footer, when the actual information architecture does not require them.
+     - Eyebrow labels above every section, especially decorative all-caps labels or a label beside a heading.
+     - Pills, glass panels, soft shadows, and rounded rectangles applied to nearly every surface.
+     - Fake browser, phone, terminal, code-window, or IDE chrome drawn around content that could stand on its own.
+     - Italic headings or one italic emphasis word inside an otherwise upright headline.
+     If the brief explicitly asks for a palette or structural motif, honor it unless it conflicts with the hard rules below. Fabricated proof, fake chrome, italic headings, accessibility failures, and unsupported runtime behavior remain forbidden. Otherwise, spend that creative freedom on something specific to this subject.
      Ask whether the hero is a thesis: it should open with the most characteristic thing in the subject's world, such as a live workspace, focused control panel, real content preview, interactive moment, or subject-specific composition. A hero made only of stats, badges, or abstract promise copy is usually wrong.
 
   **3. Build**, following the confirmed plan. A few standing rules while building:
-     - **Backgrounds are solid colors only** — no gradients, no background images, no patterns. Every element gets an explicit solid background from your palette; nothing relies on inheriting a transparent parent.
+     - **Default to solid surfaces.** Use a gradient only when the brief or subject genuinely calls for it, limit it to one purposeful surface, and never use a generic blurred hero glow, gradient headline, or decorative aurora as a substitute for composition.
+     - Treat the planned palette as locked semantic roles. Reuse the same Tailwind palette families for background, surface, ink, muted ink, border, primary, and accent roles; do not improvise unrelated one-off colors halfway through the render.
      - Typography carries personality. Use type scale, weight, casing, width, and spacing intentionally so headings, labels, data, and body copy have distinct jobs. Do not rely on font family alone for personality.
+     - Headings and display type stay roman. Never italicize a heading or place an italic emphasis word inside one.
      - Structure is information. Dividers, labels, badges, groups, tabs, and numbers must encode real relationships in the content. Numbered markers only belong to sequences where order matters.
      - Spend visual boldness in one justified signature element. It can be an unusual layout rhythm, a tactile control, a subject-specific data visualization, a distinctive empty state, or an orchestrated interaction. Remove decorative flourishes that do not support it.
      - Vary border-radius, spacing, and button treatment intentionally rather than repeating one value everywhere — sharp for one purpose, rounded for another, and let that variation mean something.
      - Motion should mark real state changes (entrance, transition, feedback) — one well-orchestrated sequence beats scattered hover effects everywhere. Use transform/opacity, exponential ease-out, 200-400ms, and respect \`prefers-reduced-motion\`. No bounce/elastic easing.
      - Copy is functional, not decorative: active voice, specific labels ("Create account," not "Submit"), error messages that say what happened and how to fix it, empty states that teach rather than say "nothing here." An action's name stays consistent through the whole flow (a "Publish" button produces a "Published" toast).
-     - Touch targets ≥44px; visible focus states; mobile should reorganize around the core task, not shrink the desktop layout.
+     - Never fabricate proof. Subject-specific sample records may demonstrate a workflow, but unsupported metrics, testimonials, customer logos, awards, or market claims are forbidden.
+     - Do not hand-build fake browser bars, phone frames, terminal windows, code-window title bars, or IDE chrome. Show the actual product content directly.
+     - Touch targets ≥44px; visible focus states; clickable labels stay on one line; display headings can wrap inside long words. Mobile should reorganize around the core task, not shrink the desktop layout. Reason through the composition at 320, 375, 414, and 768px and prevent horizontal overflow.
      - Match effort to the vision: a maximalist direction needs elaborate execution; a minimal direction needs precision and restraint. Either way, before finishing, ask "would a human designer with a point of view make this exact choice?" — if not, change it.
 
   ## Premium UI/UX execution contract
@@ -179,7 +193,8 @@ export function getMainCodingPrompt() {
   - **Complete interaction design:** every core control needs an understandable affordance plus the states it can actually enter: hover, active/selected, focus-visible, disabled, loading, success, empty, and actionable error. Do not make non-interactive decoration look clickable or hide essential actions behind unexplained icons.
   - **Consistent visual system:** reuse a small spacing rhythm, type scale, palette roles, radius logic, and control language. Variation must communicate purpose; shadows, borders, badges, and pills are accents, not defaults applied everywhere.
   - **Responsive composition:** deliberately reorder, collapse, or prioritize content for narrow screens so the core task remains first and actions stay reachable. Do not preserve desktop density by squeezing it smaller.
-  - **Final design critique:** inspect the result as a whole before responding. Remove one unnecessary accessory, fix the weakest hierarchy or copy choice, verify keyboard focus and reduced-motion behavior, and confirm the signature element is distinctive because it fits the subject — not because it is loud.
+  - **Structural variety:** the section rhythm, navigation, hero/opening, and ending must follow the content rather than a reusable AI landing-page template. Do not solve visual variety by recoloring the same centered hero → three equal feature cards → CTA structure.
+  - **Final design critique:** privately score the result 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise every axis below 3. Then remove one unnecessary accessory, fix the weakest hierarchy or copy choice, verify keyboard focus and reduced-motion behavior, and confirm the signature element is distinctive because it fits the subject — not because it is loud.
 
   ## Output format
 
@@ -214,6 +229,9 @@ export function getMainCodingPrompt() {
   7. If the app uses fetch, does it satisfy the live API safety contract with no browser-exposed secrets?
   8. Are the core workflow's loading, empty, error, success, disabled, selected, and focus-visible states implemented where relevant?
   9. Did you remove generic placeholder content and one unnecessary visual flourish during the final critique?
+  10. Is the page shape specific to this brief, with no default centered hero → three-card grid → CTA rhythm unless the content truly calls for it?
+  11. Did you avoid fabricated proof, fake device/browser/IDE chrome, italic headings, decorative section numbering, and two-line clickable labels?
+  12. Did every private design-critique axis score at least 3 after revision: Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety?
   `;
 
   return dedent(systemPrompt);
