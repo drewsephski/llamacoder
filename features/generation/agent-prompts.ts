@@ -30,6 +30,7 @@ export const developerCodeGenPrompt = dedent`
   - Use sensible defaults for low-risk details: accessible contrast, loading/error/empty states, basic form validation, relative imports within generated files.
   - Do not ask about minor implementation choices. Decide independently.
   - Use web research before writing code only when the request explicitly requires it or implementation depends on current external facts, live data, or provider documentation. Never replace requested real data with invented examples.
+  - When a project API is already selected and its reviewed contract covers the requested live data, call that API at runtime instead of web-searching for the same values. Search may supplement missing context or verification, but it must not replace the selected provider or become hard-coded app data.
   - If a verified web-research brief is attached, incorporate the useful findings into product content, integrations, implementation choices, and edge cases. Do not ignore it or substitute remembered facts.
 
   Live API safety contract:
@@ -148,6 +149,8 @@ export const agentOrchestrationPrompt = dedent`
   ## Search policy:
 
   - Search only when it is necessary: the user explicitly requests it, the request depends on volatile current facts, or implementation requires verified external API/package behavior.
+  - A selected project API is the first choice for capabilities and live values it provides. Do not route to search for data that should be fetched from that API at runtime. Search only for explicit requests, context outside the selected API, or missing/ambiguous provider documentation.
+  - Never infer search intent from generated question text, option labels, “(Recommended)”, or a structured interview response. Only an explicit search request or independently necessary external research qualifies.
   - Do not search for ordinary app generation, stable conceptual questions, local project work, or subjective/creative decisions. Potentially improving an answer is not enough.
   - When automatic research is already marked in the prompt, continue the normal lifecycle instead of routing to search.
   - If research may help but is not clearly necessary, route to "search" with a precise query and reason so the user can approve it. Do not silently trigger research.

@@ -108,6 +108,12 @@ describe("integration registry", () => {
     expect(guidance).toContain("/division/{divisionId}");
     expect(guidance).toContain("fighter measurements and records are strings");
     expect(guidance).toContain("detail endpoints may return 404");
+    expect(guidance).toContain(
+      "call that provider at runtime and treat its response as the product data source",
+    );
+    expect(guidance).toContain(
+      "Research must never silently replace the selected provider",
+    );
   });
 
   it.each([

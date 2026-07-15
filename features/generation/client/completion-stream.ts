@@ -8,6 +8,7 @@ import {
 
 export type CompletionStream = {
   events: ReadableStream<UIMessageChunk>;
+  messageId: string;
   creditHoldId?: string;
   generationRunId?: string;
 };
@@ -56,6 +57,7 @@ export async function fetchCompletionStream({
 
   return {
     events,
+    messageId,
     creditHoldId: response.headers.get("x-credit-hold-id") || undefined,
     generationRunId: response.headers.get("x-generation-run-id") || undefined,
   };
@@ -87,9 +89,26 @@ export async function recoverCompletionStream(
 
   return {
     events,
+    messageId: run.messageId,
     creditHoldId: run.creditHoldId || undefined,
     generationRunId: run.id,
   };
+}
+
+export async function retryCompletionStream({
+  messageId,
+  model,
+  generationRunId,
+}: {
+  messageId: string;
+  model: string;
+  generationRunId?: string;
+}) {
+  if (generationRunId) {
+    await updateGenerationRun(generationRunId, { action: "cancel" });
+  }
+
+  return fetchCompletionStream({ messageId, model });
 }
 
 export async function updateGenerationRun(

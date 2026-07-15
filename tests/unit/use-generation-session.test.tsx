@@ -9,6 +9,7 @@ import type { CompletionStream } from "@/features/generation/client/completion-s
 function createStreamPromise() {
   return Promise.resolve({
     events: new ReadableStream(),
+    messageId: "message_1",
   } satisfies CompletionStream);
 }
 

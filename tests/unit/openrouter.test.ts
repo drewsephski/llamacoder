@@ -199,6 +199,11 @@ describe("OpenRouter helpers", () => {
     expect(
       getAIErrorMessage({ error: { message: "Provider unavailable" } }),
     ).toBe("Provider unavailable");
+    expect(
+      getAIErrorMessage(new Error("JSON error injected into SSE stream")),
+    ).toBe(
+      "The model provider interrupted the response before it finished. Your partial work was saved and can be retried or recovered.",
+    );
     expect(getAIErrorMessage({})).toBe(
       "The model provider returned an unexpected error.",
     );

@@ -115,6 +115,7 @@ export function getMainCodingPrompt() {
      - Never set browser-forbidden request headers such as \`User-Agent\`, \`Origin\`, \`Host\`, \`Referer\`, \`Cookie\`, or \`Content-Length\`.
      - Render loading, empty, actionable error, retry, and setup-required states. If server auth is needed, build the honest frontend state and document the server integration instead of faking success.
      - Treat the verified research brief, selected-provider guidance, or a complete endpoint contract supplied by the user as the only API source of truth. A bare API name or link is not a contract; never pretend to know its endpoints from memory.
+     - When selected-provider guidance covers the requested data, call that provider at runtime and treat its response as the product data source. Never replace the selected API with web-search results, remembered facts, or a hard-coded snapshot. Web research can supplement missing context, but cannot substitute for the selected provider.
      - When the user supplied endpoint methods/URLs and explained their behavior, use those exact details without substituting another provider or API version. Do not invent undocumented paths, parameters, headers, auth, CORS behavior, or response fields.
      - Live API features must never fall back to mock, sample, placeholder, hard-coded, or randomly generated data unless the user explicitly requested an offline demo. Request failures render honest error or setup-required states, never fake success.
 

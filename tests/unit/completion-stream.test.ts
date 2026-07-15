@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchCompletionStream,
   recoverCompletionStream,
+  retryCompletionStream,
 } from "@/features/generation/client/completion-stream";
 
 describe("fetchCompletionStream", () => {
@@ -54,6 +55,7 @@ describe("fetchCompletionStream", () => {
 
     expect(completion.creditHoldId).toBe("hold_1");
     expect(completion.generationRunId).toBe("run_1");
+    expect(completion.messageId).toBe("message_1");
     expect(received).toEqual(events);
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/get-next-completion-stream-promise",
@@ -75,6 +77,7 @@ describe("fetchCompletionStream", () => {
       vi.fn().mockResolvedValue(
         Response.json({
           id: "run_1",
+          messageId: "message_1",
           partialText:
             "```tsx{path=App.tsx}\nexport default function App(){}\n```",
           creditHoldId: "hold_1",
@@ -92,6 +95,55 @@ describe("fetchCompletionStream", () => {
     });
     expect(completion.creditHoldId).toBe("hold_1");
     expect(completion.generationRunId).toBe("run_1");
+    expect(completion.messageId).toBe("message_1");
+  });
+
+  it("cancels the interrupted run before retrying the same message", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ status: "cancelled" }))
+      .mockResolvedValueOnce(
+        createUIMessageStreamResponse({
+          stream: new ReadableStream<UIMessageChunk>({
+            start(controller) {
+              controller.close();
+            },
+          }),
+          headers: {
+            "x-credit-hold-id": "hold_2",
+            "x-generation-run-id": "run_2",
+          },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const completion = await retryCompletionStream({
+      messageId: "message_1",
+      model: "model_1",
+      generationRunId: "run_1",
+    });
+
+    expect(fetchMock.mock.calls).toEqual([
+      [
+        "/api/generation-runs/run_1",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ action: "cancel" }),
+        }),
+      ],
+      [
+        "/api/get-next-completion-stream-promise",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            messageId: "message_1",
+            model: "model_1",
+          }),
+        }),
+      ],
+    ]);
+    expect(completion.messageId).toBe("message_1");
+    expect(completion.generationRunId).toBe("run_2");
   });
 
   it("surfaces the persisted provider error when a run has no output", async () => {
@@ -100,6 +152,7 @@ describe("fetchCompletionStream", () => {
       vi.fn().mockResolvedValue(
         Response.json({
           id: "run_1",
+          messageId: "message_1",
           partialText: "",
           errorMessage: "Upstream provider rate limited",
         }),

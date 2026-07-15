@@ -974,21 +974,6 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       providerMetadata: undefined,
       response: { id: "orchestration_selected_api" },
     });
-    mockResearch(
-      [
-        {
-          id: "search_selected_api",
-          results: [
-            {
-              url: "https://frankfurter.dev/",
-              title: "Frankfurter API",
-              highlights: ["The public API uses the v2 rates endpoint."],
-            },
-          ],
-        },
-      ],
-      "research_selected_api",
-    );
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
@@ -1002,19 +987,283 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(generateTextMock.mock.calls[0][0].system).toContain(
       "Selected API purpose policy",
     );
-    expect(streamTextMock.mock.calls[0][0].prompt).toContain("frankfurter");
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
     const generationPrompt =
-      streamTextMock.mock.calls[1][0].messages.at(-1).content;
+      streamTextMock.mock.calls[0][0].messages.at(-1).content;
     expect(generationPrompt).toContain("SELECTED API IMPLEMENTATION GUIDANCE");
     expect(generationPrompt).toContain("LIVE API APP CONTRACT");
-    expect(streamTextMock.mock.calls[1][0].system).toContain(
+    expect(streamTextMock.mock.calls[0][0].system).toContain(
       "Selected API enforcement is a server policy",
     );
-    expect(streamTextMock.mock.calls[1][0].system).toContain(
+    expect(streamTextMock.mock.calls[0][0].system).toContain(
       "SELECTED API IMPLEMENTATION GUIDANCE",
     );
-    expect(generationPrompt).toContain(
-      "The public API uses the v2 rates endpoint.",
+    expect(generationPrompt).not.toContain("VERIFIED WEB RESEARCH");
+  });
+
+  it("does not turn a selected-API interview choice into a web-search query", async () => {
+    const content =
+      "Here are my choices:\n- What should the UFC API power?: Rankings browser with on-demand fighter profiles (Recommended)";
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nUFC API [octagon] uses https://api.octagon-api.com/rankings for live MMA rankings.\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["octagon"],
+      requiresServerRuntime: false,
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_octagon_choice",
+        content,
+        files: {
+          kind: "agent_interview_response",
+          requestId: "interview-octagon",
+          answers: {
+            "selected-api-purpose-octagon": ["api-powered-core"],
+          },
+          summary: [
+            {
+              label: "What should the UFC API power?",
+              value:
+                "Rankings browser with on-demand fighter profiles (Recommended)",
+            },
+          ],
+        },
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a UFC rankings app" },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        action: "generate_code",
+        specUpdate: {
+          integrations: [
+            {
+              providerId: "octagon",
+              name: "UFC API",
+              purpose:
+                "Power division rankings and on-demand fighter profiles.",
+              required: true,
+              docsUrl: "https://www.octagon-api.com/api-documentation",
+              baseUrl: "https://api.octagon-api.com",
+              auth: "none",
+              requiredSecrets: [],
+              corsCompatible: true,
+              runtime: "browser",
+            },
+          ],
+          features: {
+            mustHave: [
+              "Browse live division rankings",
+              "Open fighter profiles on demand",
+            ],
+            niceToHave: [],
+          },
+        },
+      },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_octagon_choice" },
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_octagon_choice", model: "model_1" }),
+    );
+    await collectUIChunks(response);
+
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    const generationCall = streamTextMock.mock.calls[0][0];
+    expect(generationCall.messages.at(-1).content).toContain(
+      "UFC API [octagon]",
+    );
+    expect(generationCall.messages.at(-1).content).not.toContain(
+      "VERIFIED WEB RESEARCH",
+    );
+  });
+
+  it("does not replay structured API choices as research on plan approval", async () => {
+    const content = "I approve the plan. Please build it now.";
+    const octagonIntegration = {
+      providerId: "octagon",
+      name: "UFC API",
+      purpose: "Power division rankings and fighter profiles.",
+      required: true,
+      docsUrl: "https://www.octagon-api.com/api-documentation",
+      baseUrl: "https://api.octagon-api.com",
+      auth: "none" as const,
+      requiredSecrets: [],
+      corsCompatible: true,
+      runtime: "browser" as const,
+    };
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nUFC API [octagon] supplies runtime ranking data.\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["octagon"],
+      requiresServerRuntime: false,
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_octagon_approval",
+        content,
+        files: {
+          kind: "agent_plan_approval",
+          requestId: "plan-octagon",
+          approved: true,
+        },
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+          appSpec: {
+            status: "awaiting_approval",
+            integrations: [octagonIntegration],
+          },
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      {
+        role: "user",
+        content: "Build an app with the current UFC rankings",
+        files: null,
+      },
+      {
+        role: "user",
+        content:
+          "Here are my choices:\n- What should the UFC API power?: Rankings browser with on-demand fighter profiles (Recommended)",
+        files: {
+          kind: "agent_interview_response",
+          requestId: "interview-octagon",
+          answers: {
+            "selected-api-purpose-octagon": ["api-powered-core"],
+          },
+          summary: [
+            {
+              label: "What should the UFC API power?",
+              value:
+                "Rankings browser with on-demand fighter profiles (Recommended)",
+            },
+          ],
+        },
+      },
+      {
+        role: "user",
+        content,
+        files: {
+          kind: "agent_plan_approval",
+          requestId: "plan-octagon",
+          approved: true,
+        },
+      },
+    ]);
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_octagon_approval", model: "model_1" }),
+    );
+    await collectUIChunks(response);
+
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+      "Fetch those values from that API at runtime",
+    );
+  });
+
+  it("still honors an explicit web-search request with a selected API", async () => {
+    const content =
+      "Build a UFC rankings app with Octagon and use web search to verify the official rankings context";
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nUFC API [octagon] supplies runtime ranking data.\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["octagon"],
+      requiresServerRuntime: false,
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_octagon_explicit_search",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        action: "generate_code",
+        specUpdate: {
+          integrations: [
+            {
+              providerId: "octagon",
+              name: "UFC API",
+              purpose: "Power the rankings browser with live Octagon data.",
+              required: true,
+              docsUrl: "https://www.octagon-api.com/api-documentation",
+              baseUrl: "https://api.octagon-api.com",
+              auth: "none",
+              requiredSecrets: [],
+              corsCompatible: true,
+              runtime: "browser",
+            },
+          ],
+        },
+      },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_octagon_explicit_search" },
+    });
+    mockResearch([
+      {
+        id: "search_octagon_context",
+        results: [
+          {
+            url: "https://www.ufc.com/rankings",
+            title: "UFC Rankings",
+            publishedDate: "2026-07-01T00:00:00.000Z",
+            highlights: ["Official UFC rankings context."],
+          },
+        ],
+      },
+    ]);
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({
+        messageId: "msg_octagon_explicit_search",
+        model: "model_1",
+      }),
+    );
+    await collectUIChunks(response);
+
+    expect(exaSearchMock).toHaveBeenCalledOnce();
+    expect(streamTextMock).toHaveBeenCalledTimes(2);
+    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
+      "Official UFC rankings context.",
+    );
+    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
+      "UFC API [octagon] supplies runtime ranking data",
     );
   });
 

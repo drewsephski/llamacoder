@@ -42,6 +42,9 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain(
       "must never fall back to mock, sample, placeholder",
     );
+    expect(prompt).toContain(
+      "Never replace the selected API with web-search results",
+    );
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -94,6 +97,9 @@ describe("prompt design guidance", () => {
     );
     expect(developerCodeGenPrompt).toContain(
       "Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "call that API at runtime instead of web-searching for the same values",
     );
   });
 });

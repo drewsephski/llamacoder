@@ -46,6 +46,7 @@ import { toast } from "sonner";
 import {
   fetchCompletionStream,
   recoverCompletionStream,
+  retryCompletionStream,
   updateGenerationRun,
   type CompletionStream,
 } from "@/features/generation/client/completion-stream";
@@ -155,6 +156,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     partialText: string;
     canRetry: boolean;
     failedMessageId?: string;
+    generationRunId?: string;
   } | null>(null);
 
   // Save state
@@ -226,11 +228,26 @@ export default function PageClient({ chat }: { chat: Chat }) {
     }
   };
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(async () => {
+    const failedStream = streamError;
     setStreamError(null);
-    // Note: ChatBox handles prompt state and retry via its own form submission
-    // We just clear the error state here
-  };
+    if (!failedStream?.failedMessageId) return;
+
+    try {
+      const retriedStream = await retryCompletionStream({
+        messageId: failedStream.failedMessageId,
+        model: chat.model,
+        generationRunId: failedStream.generationRunId,
+      });
+      setRecoverableRun(null);
+      setStreamPromise(Promise.resolve(retriedStream));
+    } catch (error) {
+      setStreamError({
+        ...failedStream,
+        message: getErrorMessage(error, "Unable to retry generation"),
+      });
+    }
+  }, [chat.model, streamError]);
 
   const handleStopGeneration = useCallback(async () => {
     const runId = generationRunId;
@@ -303,6 +320,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
       let hasEnteredWritingPhase = false;
       const sourceMap = new Map<string, SourceUrl>();
       let creditHoldId: string | undefined;
+      let activeStream: CompletionStream | undefined;
 
       try {
         setReasoningText("");
@@ -310,6 +328,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         setResearchActivity(null);
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         const stream = await streamPromise;
+        activeStream = stream;
         creditHoldId = stream.creditHoldId;
         setGenerationRunId(stream.generationRunId ?? null);
         setRecoverableRun(null);
@@ -629,7 +648,20 @@ export default function PageClient({ chat }: { chat: Chat }) {
           message: getErrorMessage(error, "Connection lost"),
           partialText: fullText,
           canRetry: true,
+          failedMessageId: activeStream?.messageId,
+          generationRunId: activeStream?.generationRunId,
         });
+        if (activeStream?.generationRunId && fullText) {
+          setRecoverableRun({
+            id: activeStream.generationRunId,
+            messageId: activeStream.messageId,
+            status: "recoverable",
+            phase: "finalizing",
+            label: "Recover interrupted generation",
+            partialTextLength: fullText.length,
+            createdAt: new Date(),
+          });
+        }
       } finally {
         try {
           reader?.releaseLock();
@@ -910,14 +942,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">Recover interrupted generation</p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    {`${recoverableRun.partialTextLength.toLocaleString()} characters are safely stored and ready to save.`}
+                    {`${recoverableRun.partialTextLength.toLocaleString()} characters are safely stored. Recover the draft now; Squid will validate it and repair the preview if needed.`}
                   </p>
                   <button
                     type="button"
                     className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground"
                     onClick={handleRecoverGeneration}
                   >
-                    <RotateCcw className="size-3" /> Resume and save
+                    <RotateCcw className="size-3" /> Recover draft
                   </button>
                 </div>
                 <button

@@ -159,6 +159,9 @@ export async function getConnectedIntegrationPromptContext({
   const prompt = [
     "=== CONNECTED PROJECT INTEGRATIONS ===",
     "The user explicitly selected these project-scoped APIs. Every selected provider is mandatory in the plan and generated app. Do not omit or substitute one, even when the latest user message does not mention it again.",
+    "Use a selected API as the primary source for every capability and live value it provides. Fetch that data through the reviewed client or server adapter at runtime; never replace it with web-search results, remembered facts, or a hard-coded snapshot.",
+    "Web research may supplement a selected API only when the user explicitly requests search, the app needs external context the API does not return, or the reviewed provider contract is missing or ambiguous. Search is not a substitute for calling the selected API.",
+    "Structured interview labels such as '(Recommended)' describe product choices; they are never themselves web-search requests or search queries.",
     "Before planning or generating, confirm that the user's prompt gives every selected API a specific user-visible job. If it does not, propose a few concrete ways to combine the app idea with the selected APIs, recommend the strongest direction first, and ask the user to choose.",
     "Connections are stored in Squid's encrypted server vault; never request, reveal, or emit their credentials.",
     ...bindings.map((binding) => {

@@ -873,6 +873,8 @@ export function buildIntegrationProviderGuidance(providerIds: string[]) {
     "=== SELECTED API IMPLEMENTATION GUIDANCE ===",
     "MANDATORY PROVIDER CONTRACT: every provider listed below is an explicit user requirement, not a suggestion.",
     "Use every selected provider in the app plan and generated implementation. Do not omit it, replace it with another provider, or fall back to mock/static data.",
+    "For capabilities and current values supplied by a selected provider, call that provider at runtime and treat its response as the product data source. Do not use web search, model memory, or copied search-result values in its place.",
+    "Use web research only as a supplement when explicitly requested, when required context is outside the selected provider's capabilities, or when this reviewed contract is missing or ambiguous. Research must never silently replace the selected provider.",
     "For each selected provider, carry its exact providerId into the app specification and integrations.ts, implement its reviewed client or server adapter, and connect it to a user-visible app flow.",
     "If credentials, authorization, or a server runtime are unavailable, keep the selected provider in the implementation and render an honest setup-required state. Never simulate success or substitute a different API.",
     "If a selected provider cannot safely satisfy the request, surface the conflict explicitly instead of generating an app that silently ignores the selection.",

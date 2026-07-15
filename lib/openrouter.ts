@@ -231,10 +231,15 @@ export function getAIErrorMessage(error: unknown) {
     }
   }
 
-  return getErrorMessage(
+  const message = getErrorMessage(
     error,
     "The model provider returned an unexpected error.",
   );
+  if (/JSON error injected into SSE stream/i.test(message)) {
+    return "The model provider interrupted the response before it finished. Your partial work was saved and can be retried or recovered.";
+  }
+
+  return message;
 }
 
 export function getAIErrorStatus(error: unknown) {

@@ -80,6 +80,7 @@ import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
 import { getConnectedIntegrationPromptContext } from "@/features/integrations/server/service";
+import { findIntegrationProviders } from "@/features/integrations/registry";
 import {
   buildSelectedApiPurposeStep,
   enforceSelectedProvidersInAppSpec,
@@ -418,9 +419,22 @@ export async function POST(req: Request) {
     const shouldCarryResearchThroughWorkflow =
       agentMetadata?.kind === "agent_plan_approval" ||
       agentMetadata?.kind === "agent_search_approval_response";
+    const isStructuredDecisionResponse =
+      agentMetadata?.kind === "agent_clarification_response" ||
+      agentMetadata?.kind === "agent_interview_response";
+    const researchUserMessages = rawMessages.filter((candidate) => {
+      if (candidate.role !== "user") return false;
+      const metadata = parseAgentMessageMetadata(candidate.files);
+      return (
+        metadata?.kind !== "agent_clarification_response" &&
+        metadata?.kind !== "agent_interview_response"
+      );
+    });
     const researchMessages = shouldCarryResearchThroughWorkflow
-      ? rawMessages.filter((candidate) => candidate.role === "user").slice(-24)
-      : [{ content: message.content }];
+      ? researchUserMessages.slice(-24)
+      : isStructuredDecisionResponse
+        ? []
+        : [{ content: message.content }];
     const shouldCarryChatUrlsThroughWorkflow =
       agentMetadata?.kind === "agent_clarification_response" ||
       agentMetadata?.kind === "agent_interview_response" ||
@@ -1095,14 +1109,36 @@ export async function POST(req: Request) {
               ? agentMetadata
               : null;
           const searchApproved = searchApproval?.approved === true;
+          const selectedProviderIds = new Set(
+            connectedIntegrationSelection.providerIds,
+          );
+          const selectedApiCoversResearchQuery =
+            researchIntent.query !== null &&
+            findIntegrationProviders(researchIntent.query).some((provider) =>
+              selectedProviderIds.has(provider.id),
+            );
+          const selectedApiShouldSupplyLiveData =
+            !researchIntent.explicitlyRequested &&
+            researchIntent.reason === "time-sensitive" &&
+            selectedApiCoversResearchQuery;
+          const hasOnlyReviewedConnectedApiContracts =
+            connectedIntegrationSelection.providerIds.length > 0 &&
+            finalSpec.integrations.every(
+              (integration) =>
+                integration.providerId !== null &&
+                integration.providerId !== undefined &&
+                selectedProviderIds.has(integration.providerId),
+            );
           const researchRequired =
             !isFreeRepairRequest &&
             (searchApproved ||
               (searchApproval?.approved !== false &&
                 ((researchIntent.required &&
+                  !selectedApiShouldSupplyLiveData &&
                   !linkedPagesSatisfyReferenceResearch) ||
                   (isCodeGeneration &&
                     effectiveLiveApiIntent.required &&
+                    !hasOnlyReviewedConnectedApiContracts &&
                     !apiDocumentation.hasCompleteEndpointContract &&
                     !linkedPagesSatisfyReferenceResearch))));
           const researchQuery = searchApproved
@@ -1178,6 +1214,18 @@ export async function POST(req: Request) {
               guardedMessages[lastUserMessageIndex] = {
                 ...guardedMessages[lastUserMessageIndex],
                 content: `${guardedMessages[lastUserMessageIndex].content}\n\nWeb research is required before generating code. The server will attach a verified research brief for: ${researchQuery}. Use that brief as the source of truth for factual app content. Do not invent or substitute placeholder data.`,
+              };
+            }
+          }
+
+          if (isCodeGeneration && selectedApiShouldSupplyLiveData) {
+            const lastUserMessageIndex = guardedMessages.findLastIndex(
+              (candidate) => candidate.role === "user",
+            );
+            if (lastUserMessageIndex !== -1) {
+              guardedMessages[lastUserMessageIndex] = {
+                ...guardedMessages[lastUserMessageIndex],
+                content: `${guardedMessages[lastUserMessageIndex].content}\n\nThe selected project API covers the requested current data. Fetch those values from that API at runtime and treat its response as the product data source. Do not web-search for the same values, copy a search-result snapshot into the app, hard-code current data, or substitute another provider.`,
               };
             }
           }
