@@ -384,8 +384,9 @@ export function detectResearchIntent(
 
     const classification = classifyResearch(content);
     if (classification) {
+      const messageApiDocumentation = assessApiDocumentation([{ content }]);
       const isApiReferenceOnly =
-        apiDocumentation.hasApiContext &&
+        messageApiDocumentation.hasApiContext &&
         (classification.reason === "technical-reference" ||
           classification.reason === "external-facts");
       if (isApiReferenceOnly && apiDocumentation.hasCompleteEndpointContract) {

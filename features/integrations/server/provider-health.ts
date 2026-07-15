@@ -97,6 +97,239 @@ function createHealthCheck({
               ),
           ),
       };
+    case "art-institute-chicago":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: {
+          "AIC-User-Agent": "Squid-Agent (support@squidagent.app)",
+        },
+        successMessage:
+          "Art Institute of Chicago returned a public-domain artwork and IIIF configuration.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          Array.isArray(payload.data) &&
+          payload.data.length > 0 &&
+          payload.data.every(
+            (artwork) =>
+              isRecord(artwork) &&
+              typeof artwork.id === "number" &&
+              typeof artwork.title === "string" &&
+              typeof artwork.image_id === "string" &&
+              artwork.is_public_domain === true,
+          ) &&
+          isRecord(payload.config) &&
+          typeof payload.config.iiif_url === "string",
+      };
+    case "usgs-earthquakes":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: { Accept: "application/geo+json, application/json" },
+        successMessage: "USGS returned a valid live GeoJSON earthquake feed.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          payload.type === "FeatureCollection" &&
+          isRecord(payload.metadata) &&
+          typeof payload.metadata.generated === "number" &&
+          typeof payload.metadata.count === "number" &&
+          Array.isArray(payload.features) &&
+          payload.features.every(
+            (feature) =>
+              isRecord(feature) &&
+              typeof feature.id === "string" &&
+              isRecord(feature.properties) &&
+              (typeof feature.properties.mag === "number" ||
+                feature.properties.mag === null) &&
+              typeof feature.properties.place === "string" &&
+              typeof feature.properties.time === "number" &&
+              isRecord(feature.geometry) &&
+              feature.geometry.type === "Point" &&
+              Array.isArray(feature.geometry.coordinates) &&
+              feature.geometry.coordinates.length >= 2 &&
+              feature.geometry.coordinates.every(
+                (coordinate) => typeof coordinate === "number",
+              ),
+          ),
+      };
+    case "met-museum":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: {},
+        successMessage: "The Met returned valid artwork search results.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          typeof payload.total === "number" &&
+          Array.isArray(payload.objectIDs) &&
+          payload.objectIDs.length > 0 &&
+          payload.objectIDs.every((objectId) => typeof objectId === "number"),
+      };
+    case "openfema":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: { Accept: "application/json" },
+        successMessage:
+          "OpenFEMA returned a valid v2 disaster declaration payload.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          isRecord(payload.metadata) &&
+          payload.metadata.version === "v2" &&
+          Array.isArray(payload.DisasterDeclarationsSummaries) &&
+          payload.DisasterDeclarationsSummaries.length > 0 &&
+          payload.DisasterDeclarationsSummaries.every(
+            (declaration) =>
+              isRecord(declaration) &&
+              typeof declaration.disasterNumber === "number" &&
+              typeof declaration.state === "string" &&
+              typeof declaration.declarationDate === "string" &&
+              typeof declaration.incidentType === "string" &&
+              typeof declaration.declarationTitle === "string" &&
+              typeof declaration.lastRefresh === "string" &&
+              (typeof declaration.incidentEndDate === "string" ||
+                declaration.incidentEndDate === null),
+          ),
+      };
+    case "federal-register":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: { Accept: "application/json" },
+        successMessage:
+          "Federal Register returned a valid document-search payload.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          typeof payload.count === "number" &&
+          typeof payload.total_pages === "number" &&
+          Array.isArray(payload.results) &&
+          payload.results.length > 0 &&
+          payload.results.every(
+            (document) =>
+              isRecord(document) &&
+              typeof document.document_number === "string" &&
+              typeof document.title === "string" &&
+              typeof document.type === "string" &&
+              typeof document.publication_date === "string" &&
+              typeof document.html_url === "string" &&
+              (typeof document.pdf_url === "string" ||
+                document.pdf_url === null),
+          ),
+      };
+    case "world-bank":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: { Accept: "application/json" },
+        successMessage:
+          "World Bank returned valid indicator metadata and observations.",
+        validate: (payload) => {
+          if (
+            !Array.isArray(payload) ||
+            payload.length !== 2 ||
+            !isRecord(payload[0]) ||
+            !Array.isArray(payload[1]) ||
+            payload[1].length === 0
+          ) {
+            return false;
+          }
+          return (
+            typeof payload[0].page === "number" &&
+            typeof payload[0].lastupdated === "string" &&
+            payload[1].every(
+              (observation) =>
+                isRecord(observation) &&
+                isRecord(observation.indicator) &&
+                typeof observation.indicator.id === "string" &&
+                typeof observation.countryiso3code === "string" &&
+                typeof observation.date === "string" &&
+                (typeof observation.value === "number" ||
+                  observation.value === null),
+            )
+          );
+        },
+      };
+    case "open-library":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: {
+          "User-Agent": "Squid-Agent/1.0 (support@squidagent.app)",
+        },
+        successMessage: "Open Library returned valid book-search results.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          typeof payload.numFound === "number" &&
+          Array.isArray(payload.docs) &&
+          payload.docs.length > 0 &&
+          payload.docs.every(
+            (book) =>
+              isRecord(book) &&
+              typeof book.key === "string" &&
+              typeof book.title === "string" &&
+              (book.author_name === undefined ||
+                (Array.isArray(book.author_name) &&
+                  book.author_name.every(
+                    (author) => typeof author === "string",
+                  ))) &&
+              (book.cover_i === undefined || typeof book.cover_i === "number"),
+          ),
+      };
+    case "open-food-facts":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: {
+          "User-Agent": "Squid-Agent/1.0 (support@squidagent.app)",
+        },
+        successMessage:
+          "Open Food Facts returned a valid v3 product payload.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          payload.status === "success" &&
+          isRecord(payload.result) &&
+          payload.result.id === "product_found" &&
+          isRecord(payload.product) &&
+          typeof payload.product.code === "string" &&
+          typeof payload.product.product_name === "string" &&
+          typeof payload.product.nutriscore_grade === "string" &&
+          typeof payload.product.image_front_small_url === "string",
+      };
+    case "gbif":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: {
+          "User-Agent": "Squid-Agent/1.0 (support@squidagent.app)",
+        },
+        successMessage: "GBIF returned valid licensed occurrence records.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          typeof payload.count === "number" &&
+          Array.isArray(payload.results) &&
+          payload.results.length > 0 &&
+          payload.results.every(
+            (occurrence) =>
+              isRecord(occurrence) &&
+              typeof occurrence.key === "number" &&
+              typeof occurrence.scientificName === "string" &&
+              typeof occurrence.datasetKey === "string" &&
+              typeof occurrence.license === "string" &&
+              Array.isArray(occurrence.media),
+          ),
+      };
+    case "openfda":
+      return {
+        url: provider.exampleEndpoint!,
+        headers: { Accept: "application/json" },
+        successMessage: "openFDA returned a valid drug-label payload.",
+        validate: (payload) =>
+          isRecord(payload) &&
+          isRecord(payload.meta) &&
+          typeof payload.meta.disclaimer === "string" &&
+          typeof payload.meta.last_updated === "string" &&
+          typeof payload.meta.terms === "string" &&
+          typeof payload.meta.license === "string" &&
+          Array.isArray(payload.results) &&
+          payload.results.length > 0 &&
+          payload.results.every(
+            (label) =>
+              isRecord(label) &&
+              typeof label.id === "string" &&
+              isRecord(label.openfda),
+          ),
+      };
     case "open-meteo":
       return {
         url: `${provider.baseUrl}/forecast?latitude=41.8781&longitude=-87.6298&current=temperature_2m&timezone=auto`,

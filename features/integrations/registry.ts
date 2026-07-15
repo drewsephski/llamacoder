@@ -153,6 +153,402 @@ const providers = [
     verifiedAt: "2026-07-14",
   },
   {
+    id: "art-institute-chicago",
+    name: "Art Institute of Chicago",
+    category: "data",
+    description:
+      "Search museum artworks, artists, exhibitions, and public-domain images.",
+    capabilities: [
+      "artwork search",
+      "museum collections",
+      "artists",
+      "public-domain images",
+    ],
+    keywords: [
+      "art institute of chicago",
+      "artic api",
+      "chicago art museum",
+      "public domain art",
+      "artwork explorer",
+    ],
+    hosts: ["api.artic.edu", "www.artic.edu"],
+    docsUrl: "https://api.artic.edu/docs/",
+    baseUrl: "https://api.artic.edu/api/v1",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "approved",
+    commercialUse: "review_required",
+    attribution:
+      "Preserve the API response's license text and identify the Art Institute of Chicago as the source.",
+    limits:
+      "Anonymous access is limited to 60 requests per minute. Request only needed fields, cache results, and avoid deep pagination or bulk scraping.",
+    guidance:
+      "Use public-domain artwork records for reusable image experiences. Do not assume an artwork has an image or that every served image is public domain.",
+    exampleEndpoint:
+      "https://api.artic.edu/api/v1/artworks/search?q=cats&query%5Bterm%5D%5Bis_public_domain%5D=true&limit=1&fields=id,title,image_id,is_public_domain",
+    implementationGuidance:
+      "Use /artworks/search with explicit fields and query[term][is_public_domain]=true when displaying reusable images. Build IIIF URLs from config.iiif_url and image_id using /full/843,/0/default.jpg; never hard-code the IIIF host or render a missing image_id.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "usgs-earthquakes",
+    name: "USGS Earthquakes",
+    category: "data",
+    description:
+      "Live and historical earthquake locations, magnitudes, alerts, and event details.",
+    capabilities: [
+      "earthquakes",
+      "seismic activity",
+      "hazard maps",
+      "event timelines",
+    ],
+    keywords: [
+      "usgs earthquake",
+      "earthquake tracker",
+      "earthquake map",
+      "seismic activity",
+      "seismic events",
+    ],
+    hosts: ["earthquake.usgs.gov"],
+    docsUrl:
+      "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php",
+    baseUrl: "https://earthquake.usgs.gov",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "approved",
+    commercialUse: "allowed",
+    attribution: "Identify the U.S. Geological Survey as the data source.",
+    limits:
+      "Prefer the bounded real-time summary feeds for current dashboards. Cap FDSN catalog queries at a user-visible scope and avoid repeatedly downloading unchanged feeds.",
+    guidance:
+      "Treat automatic earthquake solutions as preliminary and show the feed generation time. Do not present the data as emergency instructions or a guaranteed warning service.",
+    exampleEndpoint:
+      "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson",
+    implementationGuidance:
+      "Validate the response as a GeoJSON FeatureCollection. Read coordinates as [longitude, latitude, depthKm], not latitude-first, and tolerate null magnitudes or alert fields. For current maps use bounded summary feeds; use /fdsnws/event/1/query only for explicit historical or geographic searches.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "met-museum",
+    name: "The Met Collection",
+    category: "data",
+    description:
+      "Search The Met's collection metadata and eligible public-domain artwork images.",
+    capabilities: [
+      "artwork search",
+      "art history",
+      "museum departments",
+      "public-domain images",
+    ],
+    keywords: [
+      "met museum",
+      "met collection api",
+      "metropolitan museum of art",
+      "the met collection",
+      "museum exhibit builder",
+    ],
+    hosts: ["collectionapi.metmuseum.org", "images.metmuseum.org"],
+    docsUrl: "https://metmuseum.github.io/",
+    baseUrl: "https://collectionapi.metmuseum.org/public/collection/v1",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "approved",
+    commercialUse: "allowed",
+    attribution:
+      "Identify The Metropolitan Museum of Art as the source and link to each object's objectURL.",
+    limits:
+      "The documented limit is 80 requests per second. Search returns IDs, so bound detail-request fan-out and cache object responses.",
+    guidance:
+      "Use only records with isPublicDomain=true and a non-empty primaryImage or primaryImageSmall when the app needs reusable artwork imagery.",
+    exampleEndpoint:
+      "https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=sunflowers",
+    implementationGuidance:
+      "Call /search to discover objectIDs, slice the list before resolving /objects/{objectId} with bounded concurrency, and discard missing or non-public-domain images. Preserve objectURL, creditLine, and rightsAndReproduction instead of implying every result is unrestricted.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "openfema",
+    name: "OpenFEMA",
+    category: "data",
+    description:
+      "FEMA disaster declarations, assistance programs, mitigation, and recovery data.",
+    capabilities: [
+      "disaster declarations",
+      "emergency management",
+      "public assistance",
+      "hazard mitigation",
+    ],
+    keywords: [
+      "openfema",
+      "open fema",
+      "fema disaster",
+      "disaster declarations",
+      "emergency declarations",
+    ],
+    hosts: ["www.fema.gov"],
+    docsUrl: "https://www.fema.gov/about/openfema/api",
+    baseUrl: "https://www.fema.gov/api/open/v2",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "approved",
+    commercialUse: "allowed",
+    attribution:
+      "Identify FEMA and the specific OpenFEMA dataset as the source and display the record's lastRefresh value.",
+    limits:
+      "Use $select, $filter, $orderby, $top, and $skip to keep responses bounded. Dataset schemas and versions can change independently.",
+    guidance:
+      "Treat program flags and declarations as administrative records, not real-time emergency instructions, benefit eligibility decisions, or a complete account of current conditions.",
+    exampleEndpoint:
+      "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?$top=1&$orderby=declarationDate%20desc",
+    implementationGuidance:
+      "Use the v2 DisasterDeclarationsSummaries dataset with bounded OData-style query parameters. Validate its named response array, tolerate nullable incidentEndDate and filing dates, and surface lastRefresh. Do not generate the retired v1 endpoint.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "federal-register",
+    name: "Federal Register",
+    category: "data",
+    description:
+      "Federal rules, proposed rules, notices, executive orders, and agency documents.",
+    capabilities: [
+      "federal regulations",
+      "agency notices",
+      "executive orders",
+      "policy timelines",
+    ],
+    keywords: [
+      "federal register",
+      "federal regulations",
+      "executive order tracker",
+      "agency notices",
+      "proposed rules",
+    ],
+    hosts: ["federalregister.gov"],
+    docsUrl:
+      "https://www.federalregister.gov/developers/documentation/api/v1",
+    baseUrl: "https://www.federalregister.gov/api/v1",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "approved",
+    commercialUse: "allowed",
+    attribution:
+      "Identify FederalRegister.gov as the discovery source and link to the official govinfo.gov PDF when available.",
+    limits:
+      "Use bounded pages and date or agency filters. FederalRegister.gov may throttle abusive traffic even though no public fixed quota is documented.",
+    guidance:
+      "FederalRegister.gov is an informational rendition, not the official legal edition. Never describe API results as legal notice or provide legal advice from them.",
+    exampleEndpoint:
+      "https://www.federalregister.gov/api/v1/documents.json?per_page=1&order=newest",
+    implementationGuidance:
+      "Use the www.federalregister.gov host, request bounded pages, and preserve html_url plus pdf_url. Use publication_date and document_number as source metadata, tolerate a null pdf_url, and direct users to the official PDF for authoritative text.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "world-bank",
+    name: "World Bank Indicators",
+    category: "data",
+    description:
+      "Country-level economic, population, development, and sustainability indicators.",
+    capabilities: [
+      "economic indicators",
+      "country comparisons",
+      "development data",
+      "time-series charts",
+    ],
+    keywords: [
+      "world bank indicators",
+      "world bank data",
+      "development indicators",
+      "gdp dashboard",
+      "global development data",
+    ],
+    hosts: ["api.worldbank.org"],
+    docsUrl:
+      "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation",
+    baseUrl: "https://api.worldbank.org/v2",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "approved",
+    commercialUse: "review_required",
+    attribution:
+      "Attribute the World Bank and preserve the indicator, source, observation year, and applicable dataset license.",
+    limits:
+      "Use paging, date ranges, mrv, and explicit indicators to bound results. Dataset licenses can differ even though World Bank-produced open data is generally CC BY 4.0.",
+    guidance:
+      "Use reviewed World Bank Open Data indicators only. Show the observation year and last-updated metadata, and never present missing or older observations as current values.",
+    exampleEndpoint:
+      "https://api.worldbank.org/v2/country/USA/indicator/NY.GDP.MKTP.CD?format=json&per_page=1",
+    implementationGuidance:
+      "Always request format=json and validate the unusual two-element array: paging metadata at index 0 and records at index 1. Treat record.value as nullable, preserve indicator.id and countryiso3code, and use date or mrv instead of downloading an unbounded history.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "open-library",
+    name: "Open Library",
+    category: "data",
+    description: "Search books, authors, editions, subjects, and cover images.",
+    capabilities: ["book search", "authors", "editions", "book covers"],
+    keywords: [
+      "open library",
+      "openlibrary",
+      "book search api",
+      "reading list api",
+      "book cover api",
+    ],
+    hosts: ["openlibrary.org"],
+    docsUrl: "https://openlibrary.org/developers/api",
+    baseUrl: "https://openlibrary.org",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "conditional",
+    commercialUse: "review_required",
+    attribution:
+      "Identify Open Library and the Internet Archive as the source and link books to their Open Library work page.",
+    limits:
+      "Anonymous requests are limited to 1 per second. Identified requests receive 3 per second. The API is intended for low-volume human-facing discovery, not high-traffic commercial infrastructure.",
+    guidance:
+      "Use for low-volume book discovery and prototypes. Cache responses, debounce searches, and do not turn Open Library into the app's bulk or high-traffic backend.",
+    exampleEndpoint:
+      "https://openlibrary.org/search.json?q=the%20hobbit&limit=1&fields=key,title,author_name,cover_i",
+    implementationGuidance:
+      "Use /search.json with a small limit and explicit fields instead of resolving each result separately. Build cover URLs from cover_i through covers.openlibrary.org, tolerate missing authors and covers, and link the work key back to openlibrary.org.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "open-food-facts",
+    name: "Open Food Facts",
+    category: "data",
+    description:
+      "Crowdsourced food products, ingredients, nutrition, labels, and barcode lookup.",
+    capabilities: [
+      "barcode lookup",
+      "nutrition data",
+      "food ingredients",
+      "product images",
+    ],
+    keywords: [
+      "open food facts",
+      "openfoodfacts",
+      "barcode nutrition",
+      "food product lookup",
+      "nutrition scanner",
+    ],
+    hosts: ["openfoodfacts.org"],
+    docsUrl:
+      "https://openfoodfacts.github.io/documentation/docs/Product-Opener/api/",
+    baseUrl: "https://world.openfoodfacts.org/api/v3",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "conditional",
+    commercialUse: "review_required",
+    attribution:
+      "Attribute Open Food Facts, preserve ODbL database terms, and credit product images under their applicable CC BY-SA and third-party rights.",
+    limits:
+      "Product reads are limited to 15 requests per minute per IP and searches to 10 per minute per IP. Do not implement search-as-you-type or bulk retrieval.",
+    guidance:
+      "Treat product data as crowdsourced and potentially incomplete or inaccurate. Do not present nutrition scores as medical advice, and confirm license compliance before commercial publication.",
+    exampleEndpoint:
+      "https://world.openfoodfacts.org/api/v3/product/3017620422003.json?fields=code,product_name,nutriscore_grade,image_front_small_url",
+    implementationGuidance:
+      "Use the current v3 product-by-barcode endpoint with explicit fields. Validate result.id or status before reading product, tolerate missing nutrition and image fields, debounce barcode requests, and use an explicit submit action for any search endpoint.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "gbif",
+    name: "GBIF",
+    category: "data",
+    description:
+      "Global biodiversity species, taxonomy, occurrence, location, and media records.",
+    capabilities: [
+      "species search",
+      "biodiversity records",
+      "wildlife sightings",
+      "occurrence maps",
+    ],
+    keywords: [
+      "gbif",
+      "biodiversity api",
+      "species occurrence",
+      "wildlife sightings",
+      "species map",
+    ],
+    hosts: ["api.gbif.org"],
+    docsUrl: "https://techdocs.gbif.org/en/openapi/",
+    baseUrl: "https://api.gbif.org/v1",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "conditional",
+    commercialUse: "review_required",
+    attribution:
+      "Retain each record's dataset, publisher, license, rights holder, and references so the app can provide record-level attribution.",
+    limits:
+      "Search rate limits vary with server load and may return HTTP 429. Occurrence pages are capped at 300 records and deep paging at 100,000; use downloads for bulk research.",
+    guidance:
+      "Occurrence and media licenses vary by publisher and can prohibit commercial use. Filter or visibly label records by license and never assume an image inherits the dataset license.",
+    exampleEndpoint:
+      "https://api.gbif.org/v1/occurrence/search?scientificName=Panthera%20leo&mediaType=StillImage&limit=1",
+    implementationGuidance:
+      "Use /occurrence/search with a small limit and explicit taxonomic or geographic filters. Preserve key, datasetKey, publishingOrgKey, license, rightsHolder, references, and media metadata; tolerate coordinates, media, and common names being absent.",
+    verifiedAt: "2026-07-14",
+  },
+  {
+    id: "openfda",
+    name: "openFDA",
+    category: "data",
+    description:
+      "Public FDA drug, device, food, recall, adverse-event, and label datasets.",
+    capabilities: [
+      "drug labels",
+      "product recalls",
+      "adverse events",
+      "medical device data",
+    ],
+    keywords: [
+      "openfda",
+      "open fda",
+      "fda recall",
+      "drug label api",
+      "medical device recall",
+    ],
+    hosts: ["api.fda.gov", "open.fda.gov"],
+    docsUrl: "https://open.fda.gov/apis/",
+    baseUrl: "https://api.fda.gov",
+    auth: "none",
+    runtime: "browser",
+    requiredSecrets: [],
+    corsCompatible: true,
+    policyStatus: "conditional",
+    commercialUse: "review_required",
+    attribution: "Identify the U.S. Food and Drug Administration as the source.",
+    limits:
+      "The no-key tier permits 240 requests per minute and 1,000 requests per day per IP. An API key raises the daily quota but should not be embedded in browser code.",
+    guidance:
+      "Every openFDA experience must prominently state that results are unvalidated and must not be used to make medical-care decisions. Do not infer causation from adverse-event data.",
+    exampleEndpoint:
+      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:advil&limit=1",
+    implementationGuidance:
+      "Use one documented dataset endpoint at a time, URL-encode search expressions, cap limit and paging, and handle HTTP 404 as no matching records. Preserve meta.disclaimer, meta.last_updated, terms, and license in the UI or source details.",
+    verifiedAt: "2026-07-14",
+  },
+  {
     id: "weather-gov",
     name: "National Weather Service",
     category: "data",

@@ -109,4 +109,108 @@ describe("integration registry", () => {
     expect(guidance).toContain("fighter measurements and records are strings");
     expect(guidance).toContain("detail endpoints may return 404");
   });
+
+  it.each([
+    ["art-institute-chicago", "Art Institute of Chicago", "approved"],
+    ["usgs-earthquakes", "USGS Earthquakes", "approved"],
+    ["met-museum", "The Met Collection", "approved"],
+    ["openfema", "OpenFEMA", "approved"],
+    ["federal-register", "Federal Register", "approved"],
+    ["world-bank", "World Bank Indicators", "approved"],
+    ["open-library", "Open Library", "conditional"],
+    ["open-food-facts", "Open Food Facts", "conditional"],
+    ["gbif", "GBIF", "conditional"],
+    ["openfda", "openFDA", "conditional"],
+  ] as const)(
+    "registers %s as the reviewed browser provider %s",
+    (providerId, name, policyStatus) => {
+      expect(getIntegrationProvider(providerId)).toMatchObject({
+        name,
+        auth: "none",
+        runtime: "browser",
+        corsCompatible: true,
+        policyStatus,
+        verifiedAt: "2026-07-14",
+      });
+    },
+  );
+
+  it.each([
+    [
+      "https://api.artic.edu/api/v1/artworks/27992",
+      "art-institute-chicago",
+    ],
+    [
+      "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+      "usgs-earthquakes",
+    ],
+    [
+      "https://collectionapi.metmuseum.org/public/collection/v1/objects/436535",
+      "met-museum",
+    ],
+    [
+      "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries",
+      "openfema",
+    ],
+    [
+      "https://www.federalregister.gov/api/v1/documents.json",
+      "federal-register",
+    ],
+    [
+      "https://api.worldbank.org/v2/country/USA/indicator/SP.POP.TOTL",
+      "world-bank",
+    ],
+    ["https://openlibrary.org/search.json?q=dune", "open-library"],
+    [
+      "https://world.openfoodfacts.org/api/v3/product/3017620422003.json",
+      "open-food-facts",
+    ],
+    ["https://api.gbif.org/v1/occurrence/search", "gbif"],
+    ["https://api.fda.gov/drug/label.json", "openfda"],
+  ] as const)("maps %s to %s", (url, providerId) => {
+    expect(findIntegrationProviderByUrl(url)?.id).toBe(providerId);
+  });
+
+  it.each([
+    ["Build a public-domain artwork explorer", "art-institute-chicago"],
+    ["Build a live earthquake map", "usgs-earthquakes"],
+    ["Build a Met museum exhibit builder", "met-museum"],
+    ["Build a FEMA disaster declarations dashboard", "openfema"],
+    ["Build a Federal Register policy tracker", "federal-register"],
+    ["Build a World Bank GDP dashboard", "world-bank"],
+    ["Build a book search API reading list", "open-library"],
+    ["Build a barcode nutrition scanner", "open-food-facts"],
+    ["Build a wildlife sightings map with GBIF", "gbif"],
+    ["Build an FDA recall explorer", "openfda"],
+  ] as const)("discovers %s as %s", (prompt, providerId) => {
+    expect(
+      findIntegrationProviders(prompt).map((provider) => provider.id),
+    ).toContain(providerId);
+  });
+
+  it("carries provider-specific rights and safety rules into generation", () => {
+    const guidance = buildIntegrationProviderGuidance([
+      "art-institute-chicago",
+      "usgs-earthquakes",
+      "met-museum",
+      "openfema",
+      "federal-register",
+      "world-bank",
+      "open-library",
+      "open-food-facts",
+      "gbif",
+      "openfda",
+    ]);
+
+    expect(guidance).toContain("query[term][is_public_domain]=true");
+    expect(guidance).toContain("[longitude, latitude, depthKm]");
+    expect(guidance).toContain("bounded concurrency");
+    expect(guidance).toContain("not real-time emergency instructions");
+    expect(guidance).toContain("not the official legal edition");
+    expect(guidance).toContain("two-element array");
+    expect(guidance).toContain("not high-traffic commercial infrastructure");
+    expect(guidance).toContain("crowdsourced and potentially incomplete");
+    expect(guidance).toContain("licenses vary by publisher");
+    expect(guidance).toContain("must not be used to make medical-care decisions");
+  });
 });

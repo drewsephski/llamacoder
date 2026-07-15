@@ -66,10 +66,10 @@ const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
 type BuiltWithSquidProject = {
   name: string;
   href: string;
+  remixHref?: string;
   description: string;
   category: string;
   creatorName?: string;
-  featured?: boolean;
   imageSrc?: string;
   imageAlt?: string;
   preview?: string;
@@ -77,6 +77,17 @@ type BuiltWithSquidProject = {
 };
 
 const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
+  {
+    name: "Octagon Rankings",
+    href: "/share/v2/QAsvH2LT7gY1Kf_S",
+    remixHref: "/share/v2/QAsvH2LT7gY1Kf_S",
+    description:
+      "A live UFC rankings explorer with division navigation, fighter cards, and detailed athlete profiles.",
+    category: "Sports data",
+    creatorName: "Drew Sepeczi",
+    imageSrc: "/showcase/octagon-rankings.png",
+    imageAlt: "Octagon Rankings UFC fighter rankings app built with Squid",
+  },
   {
     name: "Phoenix Design Lab",
     href: "https://phoenixdev.agency/demo",
@@ -86,7 +97,6 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     imageSrc: "/showcase/phoenix-design-lab.webp",
     imageAlt: "Phoenix Design Lab homepage generated with Squid",
     preview: "Phoenix Design Lab",
-    featured: true,
   },
   {
     name: "PortfolioOS",
@@ -94,7 +104,7 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     description:
       "An AI-native professional identity site where portfolios answer questions in real time.",
     category: "AI portfolio builder",
-    imageSrc: "/showcase/portfolio-os.png",
+    imageSrc: "/showcase/portfolio-os.webp",
     imageAlt: "PortfolioOS homepage generated with Squid",
     preview: "Conversational identity",
     gradient: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #f8fafc 100%)",
@@ -105,7 +115,7 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     description:
       "A scheduling surface for coordinating group availability without spreadsheet back-and-forth.",
     category: "Event coordination",
-    imageSrc: "/showcase/slotflow.png",
+    imageSrc: "/showcase/slotflow.webp",
     imageAlt: "Slotflow homepage generated with Squid",
     preview: "Effortless coordination",
     gradient: "linear-gradient(135deg, #062f2f 0%, #14b8a6 50%, #f7fee7 100%)",
@@ -331,7 +341,7 @@ function readFileAsDataUrl(file: File) {
 /** Derives a clean, display-friendly URL for the browser-chrome mockups. */
 function getDisplayPreviewUrl(href: string) {
   try {
-    const url = new URL(href);
+    const url = new URL(href, "https://squidagent.app");
     const pathname = url.pathname === "/" ? "" : url.pathname;
 
     return `${url.protocol}//${url.hostname.replace(/^www\./, "")}${pathname}`;
@@ -2526,7 +2536,14 @@ function BuiltWithSquidSection() {
       .then((response) => (response.ok ? response.json() : { apps: [] }))
       .then((data) => {
         if (!cancelled) {
-          setProjects(Array.isArray(data.apps) ? data.apps : []);
+          setProjects(
+            Array.isArray(data.apps)
+              ? data.apps.map((project: BuiltWithSquidProject) => ({
+                  ...project,
+                  remixHref: project.remixHref ?? project.href,
+                }))
+              : [],
+          );
         }
       })
       .catch(() => {
@@ -2538,15 +2555,14 @@ function BuiltWithSquidSection() {
     };
   }, []);
 
-  const visibleProjects =
-    projects.length > 0 ? projects : [...BUILT_WITH_SQUID_PROJECTS];
-  const featuredProject =
-    visibleProjects.find((project) => project.featured) ?? visibleProjects[0];
-  const galleryProjects = visibleProjects
-    .filter((project) => project.href !== featuredProject?.href)
-    .slice(0, 4);
-
-  if (!featuredProject) return null;
+  const seenProjectHrefs = new Set<string>();
+  const visibleProjects = [...BUILT_WITH_SQUID_PROJECTS, ...projects]
+    .filter((project) => {
+      if (seenProjectHrefs.has(project.href)) return false;
+      seenProjectHrefs.add(project.href);
+      return true;
+    })
+    .slice(0, 8);
 
   const getProjectGradient = (project: BuiltWithSquidProject, index: number) =>
     project.gradient ??
@@ -2556,11 +2572,6 @@ function BuiltWithSquidSection() {
       "linear-gradient(135deg, #2f1731 0%, #db2777 55%, #fff7ed 100%)",
       "linear-gradient(135deg, #172554 0%, #4f46e5 52%, #ecfeff 100%)",
     ][index % 4];
-
-  const featuredGradient = getProjectGradient(featuredProject, 0);
-  const featuredPreview =
-    featuredProject.preview ??
-    featuredProject.name.split(/\s+/).slice(0, 4).join(" ");
 
   return (
     <section
@@ -2594,85 +2605,18 @@ function BuiltWithSquidSection() {
           </div>
         </div>
 
-        <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
-          <a
-            href={featuredProject.href}
-            target="_blank"
-            rel="noreferrer"
-            className="browser-window group flex flex-col"
-          >
-            <div className="browser-chrome">
-              <div className="browser-dots">
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className="browser-url-bar">
-                <span className="browser-url-lock" />
-                <span>{getDisplayPreviewUrl(featuredProject.href)}</span>
-              </div>
-              <ExternalLink className="size-3.5 flex-shrink-0 text-muted-foreground/60 transition-colors group-hover:text-blue-500" />
-            </div>
-            <div
-              className="relative flex aspect-[16/9] w-full items-end overflow-hidden p-6"
-              style={
-                featuredProject.imageSrc
-                  ? undefined
-                  : { background: featuredGradient }
-              }
+        <div className="relative grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visibleProjects.map((project, index) => (
+            <article
+              key={project.href}
+              className="browser-window group flex h-full min-h-[390px] flex-col"
             >
-              {featuredProject.imageSrc ? (
-                <Image
-                  src={featuredProject.imageSrc}
-                  alt={
-                    featuredProject.imageAlt ??
-                    `${featuredProject.name} project preview built with Squid`
-                  }
-                  fill
-                  sizes="(min-width: 1024px) 62rem, 100vw"
-                  className="object-cover object-top"
-                />
-              ) : (
-                <>
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(255,255,255,0.46),transparent_26%),linear-gradient(180deg,transparent,rgba(0,0,0,0.28))]" />
-                  <p className="relative max-w-md text-4xl font-semibold leading-none tracking-normal text-white sm:text-5xl">
-                    {featuredPreview}
-                  </p>
-                </>
-              )}
-            </div>
-            <div className="flex flex-col gap-5 border-t border-border/70 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
-              <div className="min-w-0">
-                <p className="font-mono-jb text-[10.5px] uppercase tracking-[0.14em] text-blue-500/80">
-                  {featuredProject.category}
-                </p>
-                <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
-                  {featuredProject.name}
-                </h3>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  {featuredProject.description}
-                </p>
-                {featuredProject.creatorName && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Shared by {featuredProject.creatorName}
-                  </p>
-                )}
-              </div>
-              <span className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-blue-500">
-                View project
-                <ExternalLink className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </span>
-            </div>
-          </a>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-            {galleryProjects.map((project, index) => (
               <a
-                key={project.href}
                 href={project.href}
                 target="_blank"
                 rel="noreferrer"
-                className="browser-window group flex min-h-[240px] flex-col"
+                aria-label={`View ${project.name}`}
+                className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
                 <div className="browser-chrome">
                   <div className="browser-dots">
@@ -2686,15 +2630,11 @@ function BuiltWithSquidSection() {
                   </div>
                 </div>
                 <div
-                  className={
-                    project.imageSrc
-                      ? "relative aspect-[1908/959] w-full flex-none overflow-hidden bg-white"
-                      : "relative flex min-h-28 flex-1 items-end overflow-hidden p-4"
-                  }
+                  className="relative flex aspect-[16/10] w-full items-end overflow-hidden bg-white p-5"
                   style={{
                     background: project.imageSrc
                       ? undefined
-                      : getProjectGradient(project, index + 1),
+                      : getProjectGradient(project, index),
                   }}
                 >
                   {project.imageSrc ? (
@@ -2705,40 +2645,60 @@ function BuiltWithSquidSection() {
                         `${project.name} project preview built with Squid`
                       }
                       fill
-                      sizes="(min-width: 1024px) 20rem, 50vw"
-                      className="object-contain object-center"
+                      sizes="(min-width: 1280px) 16rem, (min-width: 1024px) 22rem, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover object-top"
                     />
                   ) : (
                     <>
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(180deg,transparent,rgba(0,0,0,0.25))]" />
-                      <p className="relative max-w-[12rem] text-xl font-semibold leading-none tracking-tight text-white">
+                      <p className="relative max-w-[13rem] text-2xl font-semibold leading-[0.95] tracking-tight text-white">
                         {project.preview ?? project.name}
                       </p>
                     </>
                   )}
                 </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-mono-jb text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {project.category}
-                    </p>
-                    <ExternalLink className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-blue-500" />
-                  </div>
-                  <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-                    {project.name}
-                  </h3>
-                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
-                    {project.description}
+              </a>
+
+              <div className="flex flex-1 flex-col border-t border-border/70 p-4">
+                <p className="font-mono-jb text-[10px] uppercase tracking-[0.14em] text-blue-500/80">
+                  {project.category}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
+                  {project.name}
+                </h3>
+                <p className="mt-2 line-clamp-3 text-sm leading-5 text-muted-foreground">
+                  {project.description}
+                </p>
+                {project.creatorName && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Shared by {project.creatorName}
                   </p>
-                  {project.creatorName && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Shared by {project.creatorName}
-                    </p>
+                )}
+
+                <div className="mt-auto flex items-center gap-4 pt-5 text-sm font-medium">
+                  <a
+                    href={project.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-blue-500 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                  >
+                    View app
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                  {project.remixHref && (
+                    <a
+                      href={project.remixHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-foreground/70 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    >
+                      Remix
+                    </a>
                   )}
                 </div>
-              </a>
-            ))}
-          </div>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>

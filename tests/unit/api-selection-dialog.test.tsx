@@ -72,4 +72,36 @@ describe("API selection dialog", () => {
 
     expect(onSelectionChange).toHaveBeenCalledWith(["octagon"]);
   });
+
+  it("lists every newly reviewed public API in catalog search", async () => {
+    render(
+      <ApiSelectionDialog
+        selectedProviderIds={[]}
+        onSelectionChange={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Choose APIs" }));
+    const search = screen.getByRole("textbox", { name: "Search APIs" });
+    const providerNames = [
+      "Art Institute of Chicago",
+      "USGS Earthquakes",
+      "The Met Collection",
+      "OpenFEMA",
+      "Federal Register",
+      "World Bank Indicators",
+      "Open Library",
+      "Open Food Facts",
+      "GBIF",
+      "openFDA",
+    ];
+
+    for (const providerName of providerNames) {
+      await userEvent.clear(search);
+      await userEvent.type(search, providerName);
+      expect(
+        screen.getByRole("button", { name: new RegExp(providerName, "i") }),
+      ).toBeInTheDocument();
+    }
+  });
 });
