@@ -336,17 +336,9 @@ export async function POST(request: NextRequest) {
             usage: { include: true },
           }),
           providerOptions: getOpenRouterProviderOptions(FREE_MODEL, "low"),
-          messages: [
-            {
-              role: "system",
-              content:
-                "Create a succinct 3-5 word title for this app-building conversation. Return only the title.",
-            },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
+          system:
+            "Create a succinct 3-5 word title for this app-building conversation. Return only the title.",
+          prompt,
         });
 
         await titleTelemetry.record({

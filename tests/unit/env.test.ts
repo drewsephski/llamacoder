@@ -10,6 +10,7 @@ function validEnvironment(): NodeJS.ProcessEnv {
     BETTER_AUTH_URL: "https://squidagent.app",
     NEXT_PUBLIC_APP_URL: "https://squidagent.app",
     OPENROUTER_API_KEY: "openrouter",
+    EXA_API_KEY: "exa",
     RESEND_API_KEY: "resend",
     RESEND_FROM_EMAIL: "Squid Agent <hello@squidagent.app>",
     TURNSTILE_SECRET_KEY: "turnstile-secret",

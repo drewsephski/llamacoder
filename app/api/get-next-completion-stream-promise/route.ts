@@ -86,6 +86,13 @@ import {
   enforceSelectedProvidersInPlan,
   getSelectedProvidersNeedingPurpose,
 } from "@/features/integrations/generation-contract";
+import {
+  CHAT_URL_SYSTEM_GUARD,
+  buildChatUrlContext,
+  extractChatUrls,
+  loadChatUrlContent,
+  type ChatLinkedPage,
+} from "@/features/generation/server/chat-url-content";
 
 type CompletionMessage = {
   role: "system" | "user" | "assistant";
@@ -414,6 +421,18 @@ export async function POST(req: Request) {
     const researchMessages = shouldCarryResearchThroughWorkflow
       ? rawMessages.filter((candidate) => candidate.role === "user").slice(-24)
       : [{ content: message.content }];
+    const shouldCarryChatUrlsThroughWorkflow =
+      agentMetadata?.kind === "agent_clarification_response" ||
+      agentMetadata?.kind === "agent_interview_response" ||
+      agentMetadata?.kind === "agent_plan_approval" ||
+      agentMetadata?.kind === "agent_search_approval_response";
+    const chatUrlMessages = shouldCarryChatUrlsThroughWorkflow
+      ? rawMessages
+          .filter((candidate) => candidate.role === "user")
+          .slice(-24)
+          .reverse()
+      : [{ content: message.content }];
+    const chatUrls = extractChatUrls(chatUrlMessages);
     const apiDocumentation = assessApiDocumentation(researchMessages);
     const researchIntent = detectResearchIntent(researchMessages);
     const liveApiIntent = shouldCarryResearchThroughWorkflow
@@ -533,6 +552,91 @@ export async function POST(req: Request) {
           const latestUserContent =
             rawMessages.findLast((candidate) => candidate.role === "user")
               ?.content ?? message.content;
+          let linkedPages: ChatLinkedPage[] = [];
+          let linkedPageContext = "";
+          let linkedPageCoverageComplete = false;
+
+          if (chatUrls.length > 0 && !isFreeRepairRequest) {
+            const linkedUrlActivityQuery =
+              chatUrls.length === 1
+                ? chatUrls[0].slice(0, 500)
+                : `${chatUrls.length} URLs provided in chat`;
+            writeStatus({
+              phase: "searching",
+              label:
+                chatUrls.length === 1
+                  ? "Reading the linked page"
+                  : "Reading linked pages",
+            });
+            writeResearchActivity({
+              phase: "searching",
+              query: linkedUrlActivityQuery,
+              label:
+                chatUrls.length === 1
+                  ? "Reading the linked page"
+                  : "Reading linked pages",
+              sourceCount: 0,
+            });
+
+            try {
+              const linkedContent = await loadChatUrlContent({
+                urls: chatUrls,
+                query: latestUserContent,
+              });
+              linkedPages = linkedContent.pages;
+              linkedPageCoverageComplete =
+                linkedContent.pages.length ===
+                linkedContent.requestedUrls.length;
+              linkedPageContext = buildChatUrlContext(linkedPages);
+
+              linkedPages.forEach((page, index) => {
+                writer.write({
+                  type: "source-url",
+                  sourceId: `linked-page-${messageId}-${index + 1}`,
+                  url: page.url,
+                  title: page.title.slice(0, 300),
+                });
+              });
+              writeResearchActivity({
+                phase: "complete",
+                query: linkedUrlActivityQuery,
+                label:
+                  linkedPages.length > 0
+                    ? `Read ${linkedPages.length} ${linkedPages.length === 1 ? "linked page" : "linked pages"}`
+                    : "Linked page content unavailable",
+                sourceCount: linkedPages.length,
+              });
+
+              if (!linkedContent.configured) {
+                console.warn(
+                  "EXA_API_KEY is not configured; falling back to normal research behavior",
+                );
+              } else if (linkedContent.rejectedUrls.length > 0) {
+                console.warn(
+                  `Rejected ${linkedContent.rejectedUrls.length} unsafe chat URL(s)`,
+                );
+              }
+            } catch (error) {
+              writeResearchActivity({
+                phase: "complete",
+                query: linkedUrlActivityQuery,
+                label: "Linked page content unavailable",
+                sourceCount: 0,
+              });
+              console.warn(
+                "Chat URL extraction failed; falling back to normal research behavior:",
+                getAIErrorMessage(error),
+              );
+            }
+          }
+
+          const linkedPagesSatisfyReferenceResearch =
+            linkedPageCoverageComplete &&
+            linkedPages.length > 0 &&
+            !researchIntent.explicitlyRequested &&
+            researchIntent.freshness === "evergreen" &&
+            (researchIntent.reason === "technical-reference" ||
+              researchIntent.reason === "external-facts");
           const connectedIntegrationSelection =
             await getConnectedIntegrationPromptContext({
               projectId: message.chatId,
@@ -637,9 +741,14 @@ export async function POST(req: Request) {
               const conversationHasCode = rawMessages.some(
                 (candidate) => getStoredGeneratedFiles(candidate).length > 0,
               );
-              const automaticResearchContext = researchIntent.required
-                ? `\n\nAutomatic web research is required for this request because it is ${researchIntent.reason} research (${researchIntent.freshness} mode; query: ${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. The execution step will run web search before answering or generating code.`
-                : "";
+              const automaticResearchContext =
+                researchIntent.required && !linkedPagesSatisfyReferenceResearch
+                  ? `\n\nAutomatic web research is required for this request because it is ${researchIntent.reason} research (${researchIntent.freshness} mode; query: ${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. The execution step will run web search before answering or generating code.`
+                  : "";
+              const orchestrationLinkedPageContext = buildChatUrlContext(
+                linkedPages,
+                6_000,
+              );
 
               const orchestrationResult = await generateText({
                 model: createOpenRouterModel(openrouter, orchestrationModel, {
@@ -648,7 +757,9 @@ export async function POST(req: Request) {
                 }),
                 providerOptions: orchestrationReasoning.providerOptions,
                 output: Output.object({ schema: agentActionSchema }),
-                system: agentOrchestrationPrompt,
+                system: orchestrationLinkedPageContext
+                  ? `${agentOrchestrationPrompt}\n\n${CHAT_URL_SYSTEM_GUARD}`
+                  : agentOrchestrationPrompt,
                 prompt: `=== PERSISTENT APP SPEC ===\n${specContext}\n=== END SPEC ===${connectedIntegrationContext ? `\n\n${connectedIntegrationContext}` : ""}\n\nPlan mode enabled: ${planMode}.\n\nRecent conversation:\n${rawMessages
                   .filter((candidate) => candidate.role !== "system")
                   .slice(-8)
@@ -658,7 +769,7 @@ export async function POST(req: Request) {
                   )
                   .join(
                     "\n\n",
-                  )}\n\nLatest structured metadata:\n${JSON.stringify(
+                  )}${orchestrationLinkedPageContext ? `\n\n${orchestrationLinkedPageContext}` : ""}\n\nLatest structured metadata:\n${JSON.stringify(
                   agentMetadata,
                 )}\n\nConversation has generated code: ${conversationHasCode}.${automaticResearchContext}`,
               });
@@ -918,6 +1029,17 @@ export async function POST(req: Request) {
           });
 
           const isCodeGeneration = agentAction.action === "generate_code";
+          if (linkedPageContext) {
+            const lastUserMessageIndex = guardedMessages.findLastIndex(
+              (candidate) => candidate.role === "user",
+            );
+            if (lastUserMessageIndex !== -1) {
+              guardedMessages[lastUserMessageIndex] = {
+                ...guardedMessages[lastUserMessageIndex],
+                content: `${guardedMessages[lastUserMessageIndex].content}\n\n${linkedPageContext}`,
+              };
+            }
+          }
           if (isCodeGeneration && connectedIntegrationContext) {
             systemInstruction = [
               systemInstruction,
@@ -971,10 +1093,12 @@ export async function POST(req: Request) {
             !isFreeRepairRequest &&
             (searchApproved ||
               (searchApproval?.approved !== false &&
-                (researchIntent.required ||
+                ((researchIntent.required &&
+                  !linkedPagesSatisfyReferenceResearch) ||
                   (isCodeGeneration &&
                     effectiveLiveApiIntent.required &&
-                    !apiDocumentation.hasCompleteEndpointContract))));
+                    !apiDocumentation.hasCompleteEndpointContract &&
+                    !linkedPagesSatisfyReferenceResearch))));
           const researchQuery = searchApproved
             ? buildResearchQuery(searchApproval.query)
             : (researchIntent.query ??
@@ -1066,6 +1190,15 @@ export async function POST(req: Request) {
                 content: `${guardedMessages[lastUserMessageIndex].content}\n\nThe conversation already contains a complete user-supplied API endpoint contract. Use those exact methods, URLs, and stated behaviors as the source of truth. Do not run redundant API discovery, substitute another provider or version, invent undocumented contract details, or replace live requests with mock data.`,
               };
             }
+          }
+
+          if (linkedPageContext) {
+            systemInstruction = [
+              systemInstruction,
+              CHAT_URL_SYSTEM_GUARD,
+            ]
+              .filter(Boolean)
+              .join("\n\n");
           }
 
           if (researchRequired) {

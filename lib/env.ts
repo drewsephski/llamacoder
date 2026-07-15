@@ -11,6 +11,7 @@ const productionEnvironmentSchema = z.object({
   BETTER_AUTH_URL: z.string().url(),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   OPENROUTER_API_KEY: z.string().min(1),
+  EXA_API_KEY: z.string().min(1),
   RESEND_API_KEY: z.string().min(1),
   RESEND_FROM_EMAIL: z.string().min(3).optional(),
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),

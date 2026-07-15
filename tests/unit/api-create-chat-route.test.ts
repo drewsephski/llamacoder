@@ -227,6 +227,13 @@ describe("/api/create-chat", () => {
     expect(generateTextMock).not.toHaveBeenCalled();
 
     await afterTasks[0]();
+    expect(generateTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system:
+          "Create a succinct 3-5 word title for this app-building conversation. Return only the title.",
+        prompt: "Build a polished habit tracker with streak charts",
+      }),
+    );
     expect(prismaMock.chat.update).toHaveBeenCalledWith({
       where: { id: "chat_1" },
       data: {
