@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/maintenance/credit-holds",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/synthetic/launch",

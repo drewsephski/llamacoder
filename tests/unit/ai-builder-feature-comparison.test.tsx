@@ -19,7 +19,7 @@ describe("AI builder feature comparison", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /base44/i })).toHaveAttribute(
       "href",
-      "https://docs.base44.com/Getting-Started/Quick-start-guide",
+      "https://docs.base44.com/Account-and-billing/Credits",
     );
   });
 
