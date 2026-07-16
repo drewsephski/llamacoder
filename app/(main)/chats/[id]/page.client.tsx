@@ -88,6 +88,12 @@ const HeaderChat = memo(({ chat }: { chat: Chat }) => {
           <p className="truncate italic text-muted-foreground">{chat.title}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/gallery"
+            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline"
+          >
+            Gallery
+          </Link>
           <AnimatedThemeToggleButton variant="horizontal" />
         </div>
       </div>

@@ -175,17 +175,17 @@ export function Share({
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[92vh] gap-3 overflow-y-auto sm:max-w-2xl sm:p-5">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Publish to gallery</DialogTitle>
+            <DialogTitle className="text-xl">Publish to gallery</DialogTitle>
             <DialogDescription>
               Create a public page for this version of your app.
             </DialogDescription>
           </DialogHeader>
 
           {previewFiles.length > 0 && (
-            <div className="aspect-[16/7] overflow-hidden rounded-xl border border-border bg-muted/30">
-              <div className="pointer-events-none size-full" aria-hidden="true">
+            <div className="h-56 overflow-hidden rounded-xl border border-border bg-muted/30 sm:h-60">
+              <div className="size-full">
                 <CodeRunner files={previewFiles} />
               </div>
             </div>
@@ -197,14 +197,14 @@ export function Share({
               Loading publication settings…
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-4">
               <label className="grid gap-2 text-sm font-medium">
                 Title
                 <Input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                   maxLength={80}
-                  className="h-11"
+                  className="h-10"
                 />
               </label>
 
@@ -214,12 +214,12 @@ export function Share({
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   maxLength={280}
-                  rows={3}
+                  rows={2}
                   className="resize-none"
                 />
               </label>
 
-              <div className="flex items-center justify-between gap-6 border-y border-border py-4">
+              <div className="flex items-center justify-between gap-6 border-y border-border py-3">
                 <div>
                   <label
                     htmlFor="allow-remixes"
@@ -247,12 +247,12 @@ export function Share({
               </p>
 
               {publication?.isPublished && (
-                <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4">
+                <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3">
                   <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                     <CheckCircle2 className="size-4" />
                     Published! Your project is live.
                   </div>
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                     <Input
                       readOnly
                       value={publication.url}

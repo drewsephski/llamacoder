@@ -103,6 +103,9 @@ export default async function UsagePage() {
                 credits={user?.credits ?? 0}
                 currentTier={currentTier}
               />
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/gallery">Gallery</Link>
+              </Button>
               <AnimatedThemeToggleButton variant="horizontal" />
               <DashboardSignOutButton />
             </div>

@@ -133,6 +133,9 @@ export async function DashboardPage({
                 currentTier={currentTier}
               />
               <Button asChild variant="ghost" size="sm">
+                <Link href="/gallery">Gallery</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/dashboard/usage">Usage</Link>
               </Button>
               <AnimatedThemeToggleButton variant="horizontal" />

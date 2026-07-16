@@ -43,6 +43,12 @@ export function DocsShell({
           >
             Docs
           </Link>
+          <Link
+            href="/gallery"
+            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline"
+          >
+            Gallery
+          </Link>
 
           <div className="ml-auto flex items-center gap-2">
             <DocsSearch />
