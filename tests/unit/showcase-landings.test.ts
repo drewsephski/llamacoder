@@ -72,13 +72,13 @@ describe("showcase landing pages", () => {
         landing.files.find((file) => file.path === "styles.css")?.content ?? "",
     );
 
-    expect(styles[0]).toContain("macrostructure: Catalogue");
+    expect(styles[0]).toContain("macrostructure: Marquee Hero");
     expect(styles[1]).toContain("macrostructure: Workbench");
     expect(styles[2]).toContain("macrostructure: Letter");
-    expect(styles[0]).toContain("nav: N9");
+    expect(styles[0]).toContain("nav: N5");
     expect(styles[1]).toContain("nav: N1b");
     expect(styles[2]).toContain("nav: N12");
-    expect(styles[0]).toContain("footer: Ft4");
+    expect(styles[0]).toContain("footer: Ft5");
     expect(styles[1]).toContain("footer: Ft2");
     expect(styles[2]).toContain("footer: Ft6");
   });

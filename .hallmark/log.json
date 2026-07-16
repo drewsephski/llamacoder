@@ -1,6 +1,16 @@
 [
   {
     "date": "2026-07-16",
+    "macrostructure": "Marquee Hero",
+    "theme": "Lumen",
+    "drop": "night",
+    "enrichment": "E5 Tier-A CSS apparatus",
+    "brief": "Cinder Studio atmospheric architectural-lighting redesign",
+    "nav": "N5",
+    "footer": "Ft5"
+  },
+  {
+    "date": "2026-07-16",
     "macrostructure": "Letter",
     "theme": "Hum",
     "enrichment": "E6 CSS character",
