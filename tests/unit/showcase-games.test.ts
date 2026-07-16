@@ -18,6 +18,7 @@ describe("showcase games", () => {
       expect(game.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
       expect(game.prompt.length).toBeGreaterThan(200);
       expect(game.controls.length).toBeGreaterThanOrEqual(3);
+      expect(game.thumbnailUrl).toMatch(/^\/showcase\/[a-z0-9-]+\.webp$/);
       expect(getShowcaseGame(game.slug)?.id).toBe(game.id);
     }
   });

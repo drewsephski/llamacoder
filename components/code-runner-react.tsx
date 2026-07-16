@@ -40,7 +40,7 @@ export default function ReactCodeRunner({
   return (
     <SandpackProvider
       key={filesKey}
-      className="relative h-full w-full [&_.sp-preview-container]:flex [&_.sp-preview-container]:h-full [&_.sp-preview-container]:w-full [&_.sp-preview-container]:grow [&_.sp-preview-container]:flex-col [&_.sp-preview-container]:justify-center [&_.sp-preview-iframe]:grow"
+      className="relative h-full min-h-0 w-full min-w-0 overflow-hidden [&_.sp-preview-container]:flex [&_.sp-preview-container]:h-full [&_.sp-preview-container]:min-h-0 [&_.sp-preview-container]:w-full [&_.sp-preview-container]:min-w-0 [&_.sp-preview-container]:grow [&_.sp-preview-container]:flex-col [&_.sp-preview-container]:overflow-hidden [&_.sp-preview-iframe]:h-full [&_.sp-preview-iframe]:min-h-0 [&_.sp-preview-iframe]:w-full [&_.sp-preview-iframe]:min-w-0 [&_.sp-preview-iframe]:grow"
       {...getSandpackConfig(files)}
     >
       <SandpackPreview
@@ -49,7 +49,7 @@ export default function ReactCodeRunner({
         showRefreshButton={false}
         showRestartButton={false}
         showOpenNewtab={false}
-        className="h-full w-full"
+        className="h-full min-h-0 w-full min-w-0 overflow-hidden"
       />
       {onRequestFix && <ErrorMessage onRequestFix={onRequestFix} />}
       {onPreviewHealthChange && (

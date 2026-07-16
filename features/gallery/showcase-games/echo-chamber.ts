@@ -265,6 +265,7 @@ export const echoChamber: ShowcaseGame = {
     "Build an elegant browser memory game called Echo Chamber with React and TypeScript. Arrange six accessible tone pads in a radial spatial interface. Generate an increasingly long procedural sequence, play it back with animated light states and Web Audio oscillator tones positioned with StereoPannerNode, then validate mouse or number-key input. Include three playback speeds, a sound toggle, round and score tracking, sequence progress, failure and replay states, and a best score saved to localStorage. The art direction should feel like a nocturnal listening instrument with soft spectral colors, editorial serif typography, concentric orbital guides, responsive mobile layout, focus states, and reduced-motion support. Use no audio or image assets.",
   category: "Audio memory",
   accent: "#ffcd66",
+  thumbnailUrl: "/showcase/echo-chamber.webp",
   controls: [
     "Listen and watch while the chamber performs the sequence.",
     "Repeat it with the six pads or number keys 1–6.",

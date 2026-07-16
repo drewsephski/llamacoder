@@ -27,13 +27,14 @@ export function getShowcaseGameSummaries(query = "") {
       );
     })
     .map<ShowcaseGameSummary>(
-      ({ id, slug, title, description, category, accent }) => ({
+      ({ id, slug, title, description, category, accent, thumbnailUrl }) => ({
         id,
         slug,
         title,
         description,
         category,
         accent,
+        thumbnailUrl,
       }),
     );
 }

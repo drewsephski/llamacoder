@@ -527,6 +527,7 @@ export const orbitalSalvage: ShowcaseGame = {
     "Build a polished browser game called Orbital Salvage in React and TypeScript. Use a responsive HTML canvas with inertia-based ship controls, keyboard and touch steering, boost energy, collectible salvage cores, escalating proximity mines, particle effects, combo scoring, a 45-second mission timer, game-over and replay states, and a high score saved to localStorage. Give it a technical deep-space recovery interface with crisp telemetry, strong accessibility, and reduced-motion support. Do not use image assets or a game engine.",
   category: "Canvas arcade",
   accent: "#7df9ff",
+  thumbnailUrl: "/showcase/orbital-salvage.webp",
   controls: [
     "Steer with WASD or the arrow keys.",
     "Hold Space or Shift to burn boost energy.",

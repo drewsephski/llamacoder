@@ -1,24 +1,25 @@
 "use client";
 
-import CodeRunner from "@/components/code-runner";
-import { Button } from "@/components/ui/button";
-import type { ShowcaseGame } from "@/features/gallery/showcase-games/types";
 import {
   ArrowLeft,
   Check,
   Copy,
   ExternalLink,
-  Gamepad2,
+  PanelsTopLeft,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-export function ShowcaseGamePage({ game }: { game: ShowcaseGame }) {
+import CodeRunner from "@/components/code-runner";
+import { Button } from "@/components/ui/button";
+import type { ShowcaseLanding } from "@/features/gallery/showcase-landings/types";
+
+export function ShowcaseLandingPage({ landing }: { landing: ShowcaseLanding }) {
   const [didCopy, setDidCopy] = useState(false);
 
   const copyPrompt = async () => {
-    await navigator.clipboard.writeText(game.prompt);
+    await navigator.clipboard.writeText(landing.prompt);
     setDidCopy(true);
     window.setTimeout(() => setDidCopy(false), 1600);
   };
@@ -37,35 +38,35 @@ export function ShowcaseGamePage({ game }: { game: ShowcaseGame }) {
         <div className="mt-8">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
             <Sparkles className="size-3" />
-            Squid Arcade showcase
+            Landing page showcase
           </div>
           <p className="mt-5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            <Gamepad2 className="size-3.5" />
-            {game.category}
+            <PanelsTopLeft className="size-3.5" />
+            {landing.category}
           </p>
           <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">
-            {game.title}
+            {landing.title}
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {game.description}
+            {landing.description}
           </p>
         </div>
 
         <div className="mt-7 border-y border-border py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Controls
+            Design highlights
           </p>
           <ul className="mt-3 grid gap-2">
-            {game.controls.map((control) => (
+            {landing.highlights.map((highlight) => (
               <li
-                key={control}
+                key={highlight}
                 className="flex items-start gap-2 text-sm leading-5 text-foreground/80"
               >
                 <span
                   className="mt-2 size-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: game.accent }}
+                  style={{ backgroundColor: landing.accent }}
                 />
-                {control}
+                {highlight}
               </li>
             ))}
           </ul>
@@ -82,12 +83,12 @@ export function ShowcaseGamePage({ game }: { game: ShowcaseGame }) {
           </Button>
           <Button asChild variant="outline">
             <a
-              href={`/gallery/${game.slug}/preview`}
+              href={`/gallery/${landing.slug}/preview`}
               target="_blank"
               rel="noopener noreferrer"
             >
               <ExternalLink className="size-4" />
-              Open game only
+              Open page only
             </a>
           </Button>
           <Button asChild variant="ghost">
@@ -96,14 +97,14 @@ export function ShowcaseGamePage({ game }: { game: ShowcaseGame }) {
         </div>
 
         <p className="mt-auto hidden pt-6 text-xs leading-5 text-muted-foreground lg:block">
-          Runs in the same isolated React preview used by generated projects. No
-          game engine or image assets required.
+          A fictional product concept rendered in the same isolated React
+          preview used by generated projects.
         </p>
       </aside>
 
       <div className="w-full lg:pl-[360px]">
-        <main className="h-dvh min-h-[640px] w-full min-w-0 overflow-hidden bg-slate-950">
-          <CodeRunner files={game.files} />
+        <main className="h-dvh min-h-[720px] w-full min-w-0 overflow-hidden bg-muted">
+          <CodeRunner files={landing.files} />
         </main>
       </div>
     </div>

@@ -1,0 +1,29 @@
+[
+  {
+    "date": "2026-07-16",
+    "macrostructure": "Letter",
+    "theme": "Hum",
+    "enrichment": "E6 CSS character",
+    "brief": "Small Hours fictional neighborhood supper-club landing page",
+    "nav": "N12",
+    "footer": "Ft6"
+  },
+  {
+    "date": "2026-07-16",
+    "macrostructure": "Workbench",
+    "theme": "Cobalt",
+    "enrichment": "E4 CSS product surfaces",
+    "brief": "Relay fictional release-evidence developer-tool landing page",
+    "nav": "N1b",
+    "footer": "Ft2"
+  },
+  {
+    "date": "2026-07-16",
+    "macrostructure": "Catalogue",
+    "theme": "Atelier",
+    "enrichment": "E5 Tier-A CSS",
+    "brief": "Cinder Studio fictional architectural-lighting catalogue",
+    "nav": "N9",
+    "footer": "Ft4"
+  }
+]

@@ -12,7 +12,7 @@ export function GalleryProjectCard({
   project: GalleryProjectSummary;
 }) {
   return (
-    <article className="group overflow-hidden rounded-xl border border-border bg-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-foreground/20 hover:shadow-md hover:shadow-foreground/[0.04]">
+    <article className="overflow-hidden rounded-xl border border-border bg-background transition-[border-color,box-shadow] duration-200 hover:border-foreground/15 hover:shadow-sm hover:shadow-foreground/[0.025]">
       <Link
         href={`/gallery/${project.slug}`}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -28,10 +28,10 @@ export function GalleryProjectCard({
         <div className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 className="truncate text-base font-medium tracking-tight text-foreground/90 transition-[color,font-weight] group-hover:font-semibold group-hover:text-primary">
+              <h2 className="truncate text-base font-medium tracking-tight text-foreground/90">
                 {project.title}
               </h2>
-              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground transition-colors group-hover:text-foreground/70">
+              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                 {project.creator.image ? (
                   <Image
                     src={project.creator.image}

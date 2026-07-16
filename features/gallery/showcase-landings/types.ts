@@ -1,4 +1,4 @@
-export type ShowcaseGame = {
+export type ShowcaseLanding = {
   id: string;
   slug: string;
   title: string;
@@ -7,11 +7,11 @@ export type ShowcaseGame = {
   category: string;
   accent: string;
   thumbnailUrl: string;
-  controls: readonly string[];
+  highlights: readonly string[];
   files: Array<{ path: string; content: string }>;
 };
 
-export type ShowcaseGameSummary = Omit<
-  ShowcaseGame,
-  "prompt" | "controls" | "files"
+export type ShowcaseLandingSummary = Omit<
+  ShowcaseLanding,
+  "prompt" | "highlights" | "files"
 >;

@@ -71,7 +71,7 @@ export function GalleryProjectActions({
           size="sm"
           variant="ghost"
           onClick={() => setIsPrivacyDialogOpen(true)}
-          className="h-8 px-2.5 text-muted-foreground hover:bg-transparent hover:font-semibold hover:text-foreground"
+          className="h-8 border-b-0 px-2.5 text-muted-foreground transition-colors hover:translate-y-0 hover:border-b-0 hover:bg-transparent hover:text-foreground hover:brightness-100 active:translate-y-0 active:border-b-0"
         >
           <LockKeyhole className="size-3.5" />
           Make private
@@ -83,7 +83,7 @@ export function GalleryProjectActions({
           aria-label={`Delete ${projectTitle}`}
           title="Delete project"
           onClick={() => setIsDeleteDialogOpen(true)}
-          className="size-8 text-muted-foreground hover:bg-transparent hover:text-destructive"
+          className="size-8 border-b-0 text-muted-foreground transition-colors hover:translate-y-0 hover:border-b-0 hover:bg-transparent hover:text-red-400 hover:brightness-100 active:translate-y-0 active:border-b-0"
         >
           <Trash2 className="size-3.5" />
         </Button>

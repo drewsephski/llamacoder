@@ -285,6 +285,7 @@ export const runeCircuit: ShowcaseGame = {
     "Create a sophisticated React and TypeScript puzzle game called Rune Circuit. Render a responsive 5 by 5 grid of rotatable circuit tiles. Calculate power propagation using edge-to-edge connectivity and breadth-first search from a source to a receiver. Include clockwise and counterclockwise rotation, undo history, a limited visual hint, move and time tracking, best moves in localStorage, a completion dialog, and progressively re-scrambled levels. Art-direct it as a tactile ceramic archive-restoration instrument using an ivory, cobalt, and vermilion palette, editorial typography, subtle grain, keyboard focus states, and reduced-motion support. Use no image assets.",
   category: "Logic puzzle",
   accent: "#b3422d",
+  thumbnailUrl: "/showcase/rune-circuit.webp",
   controls: [
     "Click a rune to rotate it clockwise.",
     "Right-click a rune to rotate it counterclockwise.",

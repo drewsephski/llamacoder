@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { getPublicGalleryProject } from "@/features/gallery/server/queries";
 import { SharePageClient } from "@/app/share/v2/[messageId]/share-page-client";
 import { ShowcaseGamePage } from "@/features/gallery/components/showcase-game-page";
+import { ShowcaseLandingPage } from "@/features/gallery/components/showcase-landing-page";
 import { getShowcaseGame } from "@/features/gallery/showcase-games";
+import { getShowcaseLanding } from "@/features/gallery/showcase-landings";
 
 export async function generateMetadata({
   params,
@@ -12,6 +14,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const showcaseLanding = getShowcaseLanding(slug);
+  if (showcaseLanding) {
+    return {
+      title: `${showcaseLanding.title} · Squid Landing Pages`,
+      description: showcaseLanding.description,
+    };
+  }
   const showcaseGame = getShowcaseGame(slug);
   if (showcaseGame) {
     return {
@@ -41,6 +50,10 @@ export default async function GalleryProjectPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const showcaseLanding = getShowcaseLanding(slug);
+  if (showcaseLanding) {
+    return <ShowcaseLandingPage landing={showcaseLanding} />;
+  }
   const showcaseGame = getShowcaseGame(slug);
   if (showcaseGame) return <ShowcaseGamePage game={showcaseGame} />;
 

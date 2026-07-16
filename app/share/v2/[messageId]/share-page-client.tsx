@@ -82,71 +82,78 @@ export function SharePageClient({
   const downloadHref = `/api/export/${messageId}?starter=1`;
 
   return (
-    <div className="flex h-full w-full grow flex-col bg-background">
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <aside className="flex w-full shrink-0 flex-col gap-5 border-b border-border bg-background px-5 py-5 lg:w-[360px] lg:border-b-0 lg:border-r">
-          {galleryHref && (
-            <a
-              href={galleryHref}
-              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="size-4" />
-              Back to gallery
-            </a>
-          )}
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-              <Sparkles className="size-3" />
-              Built with Squid
-            </div>
-            <h1 className="text-2xl font-semibold tracking-normal">{title}</h1>
-            <p className="text-sm text-muted-foreground">By {creatorName}</p>
-          </div>
-
-          <div className="rounded-md border border-border bg-muted/30 p-3">
-            <p className="line-clamp-5 text-sm text-muted-foreground">
-              {prompt}
-            </p>
-          </div>
-
-          <div className="grid gap-2">
-            {allowRemixes ? (
-              <Button onClick={handleRemix} disabled={isPending}>
-                <GitFork className="size-4" />
-                {isPending ? "Remixing..." : "Remix this app"}
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-                <Eye className="size-4" />
-                This project is view only
-              </div>
-            )}
-            <Button variant="outline" onClick={handleCopyPrompt}>
-              <Copy className="size-4" />
-              {didCopy ? "Copied" : "Copy prompt"}
-            </Button>
-            <Button asChild variant="outline">
-              <a
-                href={downloadHref}
-                onClick={() => recordShareEvent(messageId, "download_starter")}
-              >
-                <Download className="size-4" />
-                Download starter
-              </a>
-            </Button>
-          </div>
-
+    <div
+      className="min-h-dvh w-full bg-background"
+      data-testid="shared-project-shell"
+    >
+      <aside
+        aria-label="Project details"
+        className="flex w-full shrink-0 flex-col gap-5 border-b border-border bg-background px-5 py-5 lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:h-dvh lg:w-[360px] lg:overflow-y-auto lg:border-b-0 lg:border-r"
+      >
+        {galleryHref && (
           <a
-            className="mt-auto inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            href={`https://squidagent.app/?ref=${messageId}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={galleryHref}
+            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Build your own with Squid Agent
+            <ArrowLeft className="size-4" />
+            Back to gallery
           </a>
-        </aside>
+        )}
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+            <Sparkles className="size-3" />
+            Built with Squid
+          </div>
+          <h1 className="text-2xl font-semibold tracking-normal">{title}</h1>
+          <p className="text-sm text-muted-foreground">By {creatorName}</p>
+        </div>
 
-        <main className="flex min-h-[520px] flex-1 items-center justify-center bg-muted/20">
+        <div className="rounded-md border border-border bg-muted/30 p-3">
+          <p className="line-clamp-5 text-sm text-muted-foreground">{prompt}</p>
+        </div>
+
+        <div className="grid gap-2">
+          {allowRemixes ? (
+            <Button onClick={handleRemix} disabled={isPending}>
+              <GitFork className="size-4" />
+              {isPending ? "Remixing..." : "Remix this app"}
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+              <Eye className="size-4" />
+              This project is view only
+            </div>
+          )}
+          <Button variant="outline" onClick={handleCopyPrompt}>
+            <Copy className="size-4" />
+            {didCopy ? "Copied" : "Copy prompt"}
+          </Button>
+          <Button asChild variant="outline">
+            <a
+              href={downloadHref}
+              onClick={() => recordShareEvent(messageId, "download_starter")}
+            >
+              <Download className="size-4" />
+              Download starter
+            </a>
+          </Button>
+        </div>
+
+        <a
+          className="mt-auto inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          href={`https://squidagent.app/?ref=${messageId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Build your own with Squid Agent
+        </a>
+      </aside>
+
+      <div className="w-full lg:pl-[360px]">
+        <main
+          aria-label="Generated app preview"
+          className="flex h-dvh min-h-[520px] w-full min-w-0 items-stretch overflow-hidden bg-muted/20"
+        >
           <CodeRunner files={files} />
         </main>
       </div>

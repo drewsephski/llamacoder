@@ -56,9 +56,12 @@ export default async function Page({
   }
 
   return (
-    <div className="flex h-full w-full grow items-center justify-center">
+    <main
+      aria-label="Generated app preview"
+      className="h-dvh min-h-[520px] w-full min-w-0 overflow-hidden"
+    >
       <CodeRunner language="tsx" code={generatedApp.code} />
-    </div>
+    </main>
   );
 }
 
