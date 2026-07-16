@@ -17,7 +17,7 @@ export function GalleryThumbnailRefresh({
   const router = useRouter();
 
   useEffect(() => {
-    if (!canBackfill || !pending) return;
+    if (!pending) return;
     let cancelled = false;
     let captureTimeout: number | undefined;
     let refreshTimeout: number | undefined;
@@ -50,7 +50,7 @@ export function GalleryThumbnailRefresh({
       }, REFRESH_INTERVAL_MS);
     };
 
-    void captureNext();
+    if (canBackfill) void captureNext();
     refreshPendingThumbnail();
 
     return () => {
