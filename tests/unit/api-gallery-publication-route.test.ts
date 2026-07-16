@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   getSessionMock,
+  getThumbnailObjectMock,
   prismaMock,
   revalidatePathMock,
   scheduleThumbnailMock,
 } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
+  getThumbnailObjectMock: vi.fn(),
   revalidatePathMock: vi.fn(),
   scheduleThumbnailMock: vi.fn(),
   prismaMock: {
@@ -24,6 +26,10 @@ vi.mock("@/features/gallery/server/thumbnail-jobs", () => ({
   scheduleGalleryThumbnailCapture: scheduleThumbnailMock,
 }));
 
+vi.mock("@/features/gallery/server/thumbnail-storage", () => ({
+  getGalleryThumbnailObject: getThumbnailObjectMock,
+}));
+
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: getSessionMock } },
 }));
@@ -37,7 +43,10 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { DELETE } from "@/app/api/gallery/[publicationId]/route";
-import { POST as retryThumbnail } from "@/app/api/gallery/[publicationId]/thumbnail/route";
+import {
+  GET as getThumbnail,
+  POST as retryThumbnail,
+} from "@/app/api/gallery/[publicationId]/thumbnail/route";
 import { GET } from "@/app/api/gallery/publication/route";
 
 describe("gallery publication management", () => {
@@ -128,5 +137,62 @@ describe("gallery publication management", () => {
       messageId: "message_1",
       slug: "focus-day-chat123",
     });
+  });
+
+  it("streams a current published thumbnail through the same-origin route", async () => {
+    const bytes = new TextEncoder().encode("thumbnail");
+    prismaMock.galleryPublication.findFirst.mockResolvedValue({
+      messageId: "message_1",
+      thumbnailUrl:
+        "https://squid-assets.s3.us-east-1.amazonaws.com/squid-gallery/publication_1/message_1.jpg",
+      thumbnailCapturedMessageId: "message_1",
+    });
+    getThumbnailObjectMock.mockResolvedValue({
+      Body: {
+        transformToWebStream: () =>
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(bytes);
+              controller.close();
+            },
+          }),
+      },
+      ContentLength: bytes.byteLength,
+      ContentType: "image/jpeg",
+      ETag: '"thumbnail-etag"',
+    });
+
+    const response = await getThumbnail(
+      new NextRequest(
+        "http://localhost/api/gallery/publication_1/thumbnail?v=message_1",
+      ),
+      { params: Promise.resolve({ publicationId: "publication_1" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(response.headers.get("cache-control")).toContain("immutable");
+    expect(await response.text()).toBe("thumbnail");
+    expect(getThumbnailObjectMock).toHaveBeenCalledWith(
+      "https://squid-assets.s3.us-east-1.amazonaws.com/squid-gallery/publication_1/message_1.jpg",
+    );
+  });
+
+  it("does not expose stale or unpublished thumbnail records", async () => {
+    prismaMock.galleryPublication.findFirst.mockResolvedValue({
+      messageId: "message_2",
+      thumbnailUrl:
+        "https://squid-assets.s3.us-east-1.amazonaws.com/squid-gallery/publication_1/message_1.jpg",
+      thumbnailCapturedMessageId: "message_1",
+    });
+
+    const response = await getThumbnail(
+      new NextRequest("http://localhost/api/gallery/publication_1/thumbnail"),
+      { params: Promise.resolve({ publicationId: "publication_1" }) },
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(getThumbnailObjectMock).not.toHaveBeenCalled();
   });
 });

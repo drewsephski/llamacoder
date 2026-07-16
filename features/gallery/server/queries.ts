@@ -84,7 +84,9 @@ export async function getGalleryProjects({
       description: row.description,
       allowRemixes: row.allowRemixes,
       publishedAt: row.publishedAt,
-      thumbnailUrl: hasCurrentThumbnail ? row.thumbnailUrl : null,
+      thumbnailUrl: hasCurrentThumbnail
+        ? `/api/gallery/${encodeURIComponent(row.id)}/thumbnail?v=${encodeURIComponent(row.messageId)}`
+        : null,
       thumbnailStatus: hasCurrentThumbnail
         ? "ready"
         : row.thumbnailStatus === "failed"

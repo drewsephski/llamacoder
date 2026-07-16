@@ -1,10 +1,9 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Stagehand } from "@browserbasehq/stagehand";
 import { revalidatePath } from "next/cache";
 
+import { uploadGalleryThumbnail } from "@/features/gallery/server/thumbnail-storage";
 import { getAppOrigin } from "@/lib/app-origin";
 import { getPrisma } from "@/lib/prisma";
 
@@ -27,22 +26,6 @@ function getRequiredEnvironmentValue(name: string) {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is required for gallery thumbnails.`);
   return value;
-}
-
-function getPublicObjectUrl({
-  bucket,
-  key,
-  region,
-}: {
-  bucket: string;
-  key: string;
-  region: string;
-}) {
-  const encodedKey = key
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `https://${bucket}.s3.${region}.amazonaws.com/${encodedKey}`;
 }
 
 async function captureThumbnail(slug: string) {
@@ -91,30 +74,6 @@ async function captureThumbnail(slug: string) {
   }
 }
 
-async function uploadThumbnail(job: GalleryThumbnailJob, body: Buffer) {
-  const bucket = getRequiredEnvironmentValue("S3_UPLOAD_BUCKET");
-  const region = getRequiredEnvironmentValue("S3_UPLOAD_REGION");
-  const accessKeyId = getRequiredEnvironmentValue("S3_UPLOAD_KEY");
-  const secretAccessKey = getRequiredEnvironmentValue("S3_UPLOAD_SECRET");
-  const key = `squid-gallery/${job.publicationId}/${job.messageId}-${randomUUID()}.jpg`;
-  const client = new S3Client({
-    region,
-    credentials: { accessKeyId, secretAccessKey },
-  });
-
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: body,
-      ContentType: "image/jpeg",
-      CacheControl: "public, max-age=31536000, immutable",
-    }),
-  );
-
-  return getPublicObjectUrl({ bucket, key, region });
-}
-
 export async function captureAndPersistGalleryThumbnail(
   job: GalleryThumbnailJob,
 ): Promise<ThumbnailResult> {
@@ -122,7 +81,7 @@ export async function captureAndPersistGalleryThumbnail(
 
   try {
     const screenshot = await captureThumbnail(job.slug);
-    const url = await uploadThumbnail(job, screenshot);
+    const url = await uploadGalleryThumbnail(job, screenshot);
     const updated = await prisma.galleryPublication.updateMany({
       where: {
         id: job.publicationId,

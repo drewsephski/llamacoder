@@ -69,7 +69,7 @@ describe("gallery project thumbnail versions", () => {
     });
 
     expect(result.projects[0]).toMatchObject({
-      thumbnailUrl: "https://assets.test/old.jpg",
+      thumbnailUrl: "/api/gallery/publication_1/thumbnail?v=message_new",
       thumbnailStatus: "ready",
     });
   });

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -51,6 +51,23 @@ describe("GalleryProjectCard", () => {
 
     expect(screen.getByAltText("Preview of Focus Day")).toBeInTheDocument();
     expect(container.querySelector("iframe")).not.toBeInTheDocument();
+  });
+
+  it("falls back to the live preview when a persisted thumbnail cannot load", () => {
+    const { container } = render(
+      <GalleryProjectCard
+        project={{
+          ...project,
+          thumbnailStatus: "ready",
+          thumbnailUrl: "/api/gallery/publication_1/thumbnail?v=message_1",
+        }}
+      />,
+    );
+
+    fireEvent.error(screen.getByAltText("Preview of Focus Day"));
+
+    expect(container.querySelector("iframe")).toBeInTheDocument();
+    expect(screen.getByText("Loading preview")).toBeInTheDocument();
   });
 
   it("only shows gallery management controls to the project owner", () => {
