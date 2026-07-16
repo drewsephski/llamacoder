@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { GalleryProjectSummary } from "@/features/gallery/contracts";
+import { GalleryProjectPreview } from "@/features/gallery/components/gallery-project-preview";
 
 export function GalleryProjectCard({
   project,
@@ -16,15 +17,7 @@ export function GalleryProjectCard({
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-muted/30">
-          <iframe
-            src={`/gallery/${project.slug}/preview`}
-            title={`${project.title} live preview`}
-            loading="lazy"
-            sandbox="allow-scripts allow-same-origin"
-            tabIndex={-1}
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 size-full border-0 bg-background"
-          />
+          <GalleryProjectPreview slug={project.slug} title={project.title} />
           <div className="absolute inset-0 bg-transparent transition-colors group-hover:bg-primary/[0.025]" />
         </div>
 

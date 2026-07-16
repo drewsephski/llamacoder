@@ -4,25 +4,31 @@ import { createMDX } from "fumadocs-mdx/next";
 const monacoAssetDirectory =
   "https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs/";
 
+function createContentSecurityPolicy(frameAncestors) {
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    `frame-ancestors ${frameAncestors}`,
+    "object-src 'none'",
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://plausible.io ${monacoAssetDirectory}`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${monacoAssetDirectory}`,
+    "img-src 'self' data: blob: https:",
+    `font-src 'self' data: https://fonts.gstatic.com ${monacoAssetDirectory}`,
+    "connect-src 'self' https: wss:",
+    "frame-src 'self' https://challenges.cloudflare.com https://*.codesandbox.io https://codesandbox.io https://*.csb.app",
+    "worker-src 'self' blob:",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   async headers() {
-    const contentSecurityPolicy = [
-      "default-src 'self'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-      "object-src 'none'",
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://plausible.io ${monacoAssetDirectory}`,
-      `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${monacoAssetDirectory}`,
-      "img-src 'self' data: blob: https:",
-      `font-src 'self' data: https://fonts.gstatic.com ${monacoAssetDirectory}`,
-      "connect-src 'self' https: wss:",
-      "frame-src 'self' https://challenges.cloudflare.com https://*.codesandbox.io https://codesandbox.io https://*.csb.app",
-      "worker-src 'self' blob:",
-      "upgrade-insecure-requests",
-    ].join("; ");
+    const contentSecurityPolicy = createContentSecurityPolicy("'none'");
+    const galleryPreviewContentSecurityPolicy =
+      createContentSecurityPolicy("'self'");
 
     return [
       {
@@ -35,6 +41,17 @@ const nextConfig = {
             key: "Permissions-Policy",
             value:
               "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+          },
+        ],
+      },
+      // This rule must follow the catch-all so its CSP wins for the one route
+      // intentionally embedded by same-origin gallery cards.
+      {
+        source: "/gallery/:slug/preview",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: galleryPreviewContentSecurityPolicy,
           },
         ],
       },
