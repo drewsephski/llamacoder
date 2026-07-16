@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { GalleryPreviewRunner } from "@/features/gallery/components/gallery-preview-runner";
 import { getPublicGalleryProject } from "@/features/gallery/server/queries";
+import { getShowcaseGame } from "@/features/gallery/showcase-games";
 
 export default async function GalleryPreviewPage({
   params,
@@ -9,6 +10,15 @@ export default async function GalleryPreviewPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const showcaseGame = getShowcaseGame(slug);
+  if (showcaseGame) {
+    return (
+      <div className="h-dvh min-h-[320px] w-full overflow-hidden bg-slate-950">
+        <GalleryPreviewRunner files={showcaseGame.files} />
+      </div>
+    );
+  }
+
   const result = await getPublicGalleryProject(slug);
   if (!result) notFound();
 

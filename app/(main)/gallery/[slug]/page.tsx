@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { getPublicGalleryProject } from "@/features/gallery/server/queries";
 import { SharePageClient } from "@/app/share/v2/[messageId]/share-page-client";
+import { ShowcaseGamePage } from "@/features/gallery/components/showcase-game-page";
+import { getShowcaseGame } from "@/features/gallery/showcase-games";
 
 export async function generateMetadata({
   params,
@@ -10,6 +12,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const showcaseGame = getShowcaseGame(slug);
+  if (showcaseGame) {
+    return {
+      title: `${showcaseGame.title} · Squid Arcade`,
+      description: showcaseGame.description,
+    };
+  }
   const result = await getPublicGalleryProject(slug);
   if (!result) return { title: "Project not found" };
 
@@ -32,6 +41,9 @@ export default async function GalleryProjectPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const showcaseGame = getShowcaseGame(slug);
+  if (showcaseGame) return <ShowcaseGamePage game={showcaseGame} />;
+
   const result = await getPublicGalleryProject(slug);
   if (!result) notFound();
 

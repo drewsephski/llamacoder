@@ -75,6 +75,41 @@ function PreviewHealthReporter({
   const { sandpack } = useSandpack();
 
   useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      const iframe = getPreviewIframe();
+      if (
+        event.source !== iframe?.contentWindow ||
+        event.data?.source !== PREVIEW_INSPECTOR_SOURCE ||
+        event.data?.type !== "ready"
+      ) {
+        return;
+      }
+
+      onChange({ status: "working" });
+    };
+    const pingPreview = () => {
+      getPreviewIframe()?.contentWindow?.postMessage(
+        { source: PREVIEW_PARENT_SOURCE, type: "ping" },
+        "*",
+      );
+    };
+
+    window.addEventListener("message", onMessage);
+    pingPreview();
+    const retryTimer = window.setInterval(pingPreview, 250);
+    const stopRetryTimer = window.setTimeout(
+      () => window.clearInterval(retryTimer),
+      5000,
+    );
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.clearInterval(retryTimer);
+      window.clearTimeout(stopRetryTimer);
+    };
+  }, [onChange]);
+
+  useEffect(() => {
     if (
       sandpack.status !== "done" &&
       sandpack.status !== "timeout" &&
