@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 import { GalleryProjectCard } from "@/features/gallery/components/gallery-project-card";
 import type { GalleryProjectSummary } from "@/features/gallery/contracts";
 
 const project: GalleryProjectSummary = {
   id: "publication_1",
+  ownerChatId: null,
   slug: "focus-day-chat123",
   title: "Focus Day",
   description: "A calmer way to plan focused work.",
@@ -40,5 +45,24 @@ describe("GalleryProjectCard", () => {
 
     expect(screen.getByAltText("Preview of Focus Day")).toBeInTheDocument();
     expect(container.querySelector("iframe")).not.toBeInTheDocument();
+  });
+
+  it("only shows gallery management controls to the project owner", () => {
+    const { rerender } = render(<GalleryProjectCard project={project} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Make private" }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <GalleryProjectCard project={{ ...project, ownerChatId: "chat_123" }} />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Make private" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Delete Focus Day" }),
+    ).toBeInTheDocument();
   });
 });

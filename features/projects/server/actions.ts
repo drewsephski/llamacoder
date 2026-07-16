@@ -38,6 +38,7 @@ export async function deleteProject(chatId: string) {
   await getPrisma().chat.delete({ where: { id: chatId } });
 
   revalidatePath("/dashboard");
+  revalidatePath("/gallery");
 }
 
 export async function renameProject(chatId: string, newTitle: string) {

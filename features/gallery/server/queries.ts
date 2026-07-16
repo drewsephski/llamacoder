@@ -13,11 +13,13 @@ export async function getGalleryProjects({
   query,
   remixable,
   sort,
+  viewerId,
 }: {
   page: number;
   query: string;
   remixable: boolean;
   sort: "newest" | "oldest";
+  viewerId?: string;
 }) {
   const prisma = getPrisma();
   const where = {
@@ -52,6 +54,8 @@ export async function getGalleryProjects({
       take: GALLERY_PAGE_SIZE,
       select: {
         id: true,
+        chatId: true,
+        userId: true,
         slug: true,
         title: true,
         description: true,
@@ -65,7 +69,14 @@ export async function getGalleryProjects({
   ]);
 
   const projects: GalleryProjectSummary[] = rows.map((row) => ({
-    ...row,
+    id: row.id,
+    ownerChatId: row.userId === viewerId ? row.chatId : null,
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    allowRemixes: row.allowRemixes,
+    publishedAt: row.publishedAt,
+    thumbnailUrl: row.thumbnailUrl,
     thumbnailStatus:
       row.thumbnailStatus === "ready" || row.thumbnailStatus === "failed"
         ? row.thumbnailStatus

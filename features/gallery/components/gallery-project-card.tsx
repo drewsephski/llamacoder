@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { GalleryProjectSummary } from "@/features/gallery/contracts";
+import { GalleryProjectActions } from "@/features/gallery/components/gallery-project-actions";
 import { GalleryProjectThumbnail } from "@/features/gallery/components/gallery-project-thumbnail";
 
 export function GalleryProjectCard({
@@ -11,7 +12,7 @@ export function GalleryProjectCard({
   project: GalleryProjectSummary;
 }) {
   return (
-    <article className="group overflow-hidden rounded-xl border border-border bg-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5">
+    <article className="group overflow-hidden rounded-xl border border-border bg-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-foreground/20 hover:shadow-md hover:shadow-foreground/[0.04]">
       <Link
         href={`/gallery/${project.slug}`}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -22,16 +23,15 @@ export function GalleryProjectCard({
             slug={project.slug}
             title={project.title}
           />
-          <div className="absolute inset-0 bg-transparent transition-colors group-hover:bg-primary/[0.025]" />
         </div>
 
         <div className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 className="truncate text-base font-semibold tracking-tight text-foreground">
+              <h2 className="truncate text-base font-medium tracking-tight text-foreground/90 transition-[color,font-weight] group-hover:font-semibold group-hover:text-primary">
                 {project.title}
               </h2>
-              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground transition-colors group-hover:text-foreground/70">
                 {project.creator.image ? (
                   <Image
                     src={project.creator.image}
@@ -66,6 +66,18 @@ export function GalleryProjectCard({
           </div>
         </div>
       </Link>
+      {project.ownerChatId ? (
+        <div className="flex items-center justify-between gap-3 border-t border-border bg-muted/20 px-3 py-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Your project
+          </span>
+          <GalleryProjectActions
+            chatId={project.ownerChatId}
+            projectTitle={project.title}
+            publicationId={project.id}
+          />
+        </div>
+      ) : null}
     </article>
   );
 }
