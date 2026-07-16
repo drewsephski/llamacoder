@@ -1,18 +1,24 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionMock, prismaMock, scheduleThumbnailMock } = vi.hoisted(
-  () => ({
-    getSessionMock: vi.fn(),
-    scheduleThumbnailMock: vi.fn(),
-    prismaMock: {
-      galleryPublication: {
-        findFirst: vi.fn(),
-        update: vi.fn(),
-      },
+const {
+  getSessionMock,
+  prismaMock,
+  revalidatePathMock,
+  scheduleThumbnailMock,
+} = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+  scheduleThumbnailMock: vi.fn(),
+  prismaMock: {
+    galleryPublication: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
     },
-  }),
-);
+  },
+}));
+
+vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
 
 vi.mock("@/features/gallery/server/thumbnail-jobs", () => ({
   scheduleGalleryThumbnailCapture: scheduleThumbnailMock,
@@ -89,6 +95,7 @@ describe("gallery publication management", () => {
         unpublishedAt: expect.any(Date),
       },
     });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/gallery");
   });
 
   it("lets the owner retry a failed thumbnail for a published project", async () => {

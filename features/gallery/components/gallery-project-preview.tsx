@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 const PREVIEW_WIDTH = 1280;
 const PREVIEW_HEIGHT = 800;
 const PREVIEW_MESSAGE_SOURCE = "squid-gallery-preview";
-const PREVIEW_FALLBACK_TIMEOUT_MS = 45_000;
+const PREVIEW_FALLBACK_TIMEOUT_MS = 15_000;
 
 export function GalleryProjectPreview({
   slug,

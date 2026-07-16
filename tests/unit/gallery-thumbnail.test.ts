@@ -12,6 +12,7 @@ const { closeMock, pageMock, prismaMock, revalidatePathMock, s3SendMock } =
     },
     prismaMock: {
       galleryPublication: {
+        findMany: vi.fn(),
         updateMany: vi.fn(),
       },
     },
@@ -48,7 +49,10 @@ vi.mock("@/lib/app-origin", () => ({
 }));
 vi.mock("@/lib/prisma", () => ({ getPrisma: () => prismaMock }));
 
-import { captureAndPersistGalleryThumbnail } from "@/features/gallery/server/thumbnail";
+import {
+  captureAndPersistGalleryThumbnail,
+  processGalleryThumbnailBatch,
+} from "@/features/gallery/server/thumbnail";
 
 const job = {
   publicationId: "publication_1",
@@ -99,6 +103,7 @@ describe("gallery thumbnail capture", () => {
         id: "publication_1",
         messageId: "message_1",
         isPublished: true,
+        thumbnailStatus: "pending",
       },
       data: expect.objectContaining({
         thumbnailStatus: "ready",
@@ -129,6 +134,7 @@ describe("gallery thumbnail capture", () => {
         id: "publication_1",
         messageId: "message_1",
         isPublished: true,
+        thumbnailStatus: "pending",
       },
       data: expect.objectContaining({
         thumbnailStatus: "failed",
@@ -136,5 +142,20 @@ describe("gallery thumbnail capture", () => {
       }),
     });
     expect(closeMock).toHaveBeenCalled();
+  });
+
+  it("prioritizes the newest pending publications during recovery", async () => {
+    prismaMock.galleryPublication.findMany.mockResolvedValueOnce([]);
+
+    await processGalleryThumbnailBatch();
+
+    expect(prismaMock.galleryPublication.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [
+          { thumbnailStatus: "desc" },
+          { publishedAt: "desc" },
+        ],
+      }),
+    );
   });
 });

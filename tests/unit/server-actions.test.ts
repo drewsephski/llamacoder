@@ -471,6 +471,7 @@ describe("server actions", () => {
     expect(prismaMock.chat.delete).toHaveBeenCalledWith({
       where: { id: "chat_1" },
     });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/gallery");
 
     prismaMock.chat.findUnique.mockResolvedValueOnce(
       buildChat({

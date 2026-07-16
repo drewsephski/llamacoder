@@ -19,6 +19,7 @@ interface DeleteProjectModalProps {
   projectTitle: string;
   isOpen: boolean;
   onClose: () => void;
+  onDeleted?: () => void;
 }
 
 export function DeleteProjectModal({
@@ -26,6 +27,7 @@ export function DeleteProjectModal({
   projectTitle,
   isOpen,
   onClose,
+  onDeleted,
 }: DeleteProjectModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -33,8 +35,9 @@ export function DeleteProjectModal({
     setIsDeleting(true);
     try {
       await deleteProject(projectId);
-      toast.success("Project deleted!");
+      toast.success("Project deleted");
       onClose();
+      onDeleted?.();
     } catch (error) {
       console.error("Failed to delete project:", error);
       toast.error("Failed to delete project");

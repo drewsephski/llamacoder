@@ -130,6 +130,7 @@ export async function captureAndPersistGalleryThumbnail(
         id: job.publicationId,
         messageId: job.messageId,
         isPublished: true,
+        thumbnailStatus: "pending",
       },
       data: {
         thumbnailUrl: url,
@@ -151,6 +152,7 @@ export async function captureAndPersistGalleryThumbnail(
         id: job.publicationId,
         messageId: job.messageId,
         isPublished: true,
+        thumbnailStatus: "pending",
       },
       data: {
         thumbnailStatus: "failed",
@@ -197,7 +199,10 @@ export async function processGalleryThumbnailBatch({
         },
       ],
     },
-    orderBy: { publishedAt: "asc" },
+    orderBy: [
+      { thumbnailStatus: "desc" },
+      { publishedAt: "desc" },
+    ],
     take: Math.max(1, Math.min(limit, 10)),
     select: { id: true, messageId: true, slug: true },
   });

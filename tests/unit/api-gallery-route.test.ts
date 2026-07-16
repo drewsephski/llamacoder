@@ -115,7 +115,11 @@ describe("/api/gallery", () => {
           allowRemixes: true,
           thumbnailStatus: "pending",
         }),
-        update: expect.objectContaining({ thumbnailStatus: "pending" }),
+        update: expect.objectContaining({
+          thumbnailUrl: null,
+          thumbnailStatus: "pending",
+          thumbnailCapturedMessageId: null,
+        }),
       }),
     );
     expect(scheduleThumbnailMock).toHaveBeenCalledWith({

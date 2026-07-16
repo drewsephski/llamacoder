@@ -41,6 +41,7 @@ export default async function GalleryPage({
     query: parsed.q,
     remixable: parsed.remixable,
     sort: parsed.sort,
+    viewerId: session?.user.id,
   });
   const hasPendingThumbnails = projects.some(
     (project) => project.thumbnailStatus === "pending",

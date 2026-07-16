@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { getPrisma } from "@/lib/prisma";
@@ -32,6 +33,7 @@ export async function DELETE(
     where: { id: publication.id },
     data: { isPublished: false, unpublishedAt: new Date() },
   });
+  revalidatePath("/gallery");
 
   return NextResponse.json({ ok: true });
 }

@@ -21,6 +21,7 @@ export type PublishProjectInput = z.infer<typeof publishProjectSchema>;
 
 export type GalleryProjectSummary = {
   id: string;
+  ownerChatId: string | null;
   slug: string;
   title: string;
   description: string;
