@@ -85,6 +85,9 @@ const INFORMATION_REQUEST_PATTERNS = [
 const MAX_RESEARCH_QUERY_CHARACTERS = 240;
 const MAX_RESEARCH_QUERY_WORDS = 32;
 
+const TARGETED_EDIT_OBJECTIVE_PATTERN =
+  /\bUser requested edit:\s*([\s\S]*?)(?=\n\s*\nSelected element context:|$)/i;
+
 const API_CONTEXT_PATTERN =
   /\b(?:api|endpoint|base url|request|response|fetch|webhook|sdk|authentication|authorization)\b|https?:\/\/(?:api\.|developer\.)[^\s]+|https?:\/\/[^\s]+\/(?:api|docs?|reference|swagger|openapi)(?:[/?#]|$)/i;
 const HTTP_ENDPOINT_PATTERN =
@@ -103,6 +106,19 @@ function extractUrls(value: string) {
         ?.map((url) => url.replace(/[),.;!?\]}]+$/, "")) ?? [],
     ),
   );
+}
+
+/**
+ * Targeted preview edits include DOM metadata and current source after the
+ * user's instruction. Those implementation details are useful to codegen but
+ * must never be treated as research intent or forwarded as a search query.
+ */
+export function extractResearchObjective(value: string) {
+  const targetedEditObjective = value.match(
+    TARGETED_EDIT_OBJECTIVE_PATTERN,
+  )?.[1];
+
+  return (targetedEditObjective ?? value).trim();
 }
 
 function hasDescribedEndpoint(value: string) {
@@ -126,7 +142,7 @@ export function assessApiDocumentation(
   messages: Array<{ content: string }>,
 ): ApiDocumentationAssessment {
   const content = messages
-    .map((message) => message.content.trim())
+    .map((message) => extractResearchObjective(message.content))
     .filter(Boolean)
     .join("\n");
   const referencedUrls = extractUrls(content);
@@ -255,10 +271,11 @@ function extractErrorQuery(value: string) {
  * become a search query.
  */
 export function buildResearchQuery(value: string) {
-  const errorQuery = extractErrorQuery(value);
+  const objective = extractResearchObjective(value);
+  const errorQuery = extractErrorQuery(objective);
   if (errorQuery) return limitQuery(errorQuery);
 
-  const apiDocumentation = assessApiDocumentation([{ content: value }]);
+  const apiDocumentation = assessApiDocumentation([{ content: objective }]);
   if (
     apiDocumentation.hasApiContext &&
     apiDocumentation.referencedUrls.length > 0 &&
@@ -269,10 +286,10 @@ export function buildResearchQuery(value: string) {
     );
   }
 
-  const lookupSubject = value.match(
+  const lookupSubject = objective.match(
     /\blook\s+(.{2,180}?)\s+up\b(?:\s+before\b.*)?/i,
   )?.[1];
-  const withoutSearchInstructions = (lookupSubject ?? value)
+  const withoutSearchInstructions = (lookupSubject ?? objective)
     .replace(/```[\s\S]*?```/g, " ")
     .replace(
       /^\s*(?:please\s+)?retry\s+this\s+with\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\s*:?\s*/i,
@@ -300,7 +317,7 @@ export function buildResearchQuery(value: string) {
     )
     .replace(/\s+([,.:;!?])/g, "$1");
 
-  return limitQuery(withoutSearchInstructions || value);
+  return limitQuery(withoutSearchInstructions || objective);
 }
 
 function classifyResearch(content: string): {
@@ -379,7 +396,7 @@ export function detectResearchIntent(
   const apiDocumentation = assessApiDocumentation(messages);
 
   for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const content = messages[index]?.content?.trim();
+    const content = extractResearchObjective(messages[index]?.content ?? "");
     if (!content) continue;
 
     const classification = classifyResearch(content);

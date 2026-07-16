@@ -8,6 +8,10 @@
     {
       "path": "/api/synthetic/launch",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/maintenance/gallery-thumbnails",
+      "schedule": "30 0 * * *"
     }
   ]
 }

@@ -2,6 +2,7 @@ import { getExtensionForLanguage, getLanguageOfFile } from "@/lib/utils";
 import {
   analyzeGeneratedApiIntegration,
   type GeneratedApiIntegrationReport,
+  validateSelectedApiUsage,
 } from "@/lib/generated-api";
 
 export type RawGeneratedFile = {
@@ -222,7 +223,10 @@ export function readGeneratedFilesStats(files: GeneratedFile[]) {
   };
 }
 
-export function validateGeneratedFiles(files: GeneratedFile[]) {
+export function validateGeneratedFiles(
+  files: GeneratedFile[],
+  selectedProviderIds: string[] = [],
+) {
   const diagnostics: GeneratedFileDiagnostic[] = [];
   const appFile = files.find((file) => file.path === "App.tsx");
   const runnableFiles = files.filter((file) =>
@@ -275,6 +279,7 @@ export function validateGeneratedFiles(files: GeneratedFile[]) {
   }
 
   diagnostics.push(...analyzeGeneratedApiIntegration(files).issues);
+  diagnostics.push(...validateSelectedApiUsage(files, selectedProviderIds));
 
   return diagnostics;
 }

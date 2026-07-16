@@ -66,6 +66,7 @@ import {
   assessApiDocumentation,
   buildResearchQuery,
   detectResearchIntent,
+  extractResearchObjective,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
 import {
@@ -82,11 +83,11 @@ import { getGenerationAvailability } from "@/lib/provider-controls";
 import { getConnectedIntegrationPromptContext } from "@/features/integrations/server/service";
 import { findIntegrationProviders } from "@/features/integrations/registry";
 import {
-  buildSelectedApiPurposeStep,
   enforceSelectedProvidersInAppSpec,
   enforceSelectedProvidersInPlan,
   getSelectedProvidersNeedingPurpose,
 } from "@/features/integrations/generation-contract";
+import { buildPlanModeFallbackInterview } from "@/features/generation/mode-policy";
 import {
   CHAT_URL_SYSTEM_GUARD,
   buildChatUrlContext,
@@ -416,25 +417,38 @@ export async function POST(req: Request) {
     });
 
     const rawMessages = messagesRes as CompletionMessage[];
+    const getResearchObjective = (candidate: {
+      content: string;
+      files?: unknown;
+    }) =>
+      isGeneratedAppRequestMetadata(candidate.files)
+        ? extractResearchObjective(candidate.content)
+        : candidate.content;
+    const latestResearchObjective = getResearchObjective(message);
     const shouldCarryResearchThroughWorkflow =
       agentMetadata?.kind === "agent_plan_approval" ||
       agentMetadata?.kind === "agent_search_approval_response";
     const isStructuredDecisionResponse =
       agentMetadata?.kind === "agent_clarification_response" ||
       agentMetadata?.kind === "agent_interview_response";
-    const researchUserMessages = rawMessages.filter((candidate) => {
-      if (candidate.role !== "user") return false;
-      const metadata = parseAgentMessageMetadata(candidate.files);
-      return (
-        metadata?.kind !== "agent_clarification_response" &&
-        metadata?.kind !== "agent_interview_response"
-      );
-    });
+    const researchUserMessages = rawMessages
+      .filter((candidate) => {
+        if (candidate.role !== "user") return false;
+        const metadata = parseAgentMessageMetadata(candidate.files);
+        return (
+          metadata?.kind !== "agent_clarification_response" &&
+          metadata?.kind !== "agent_interview_response"
+        );
+      })
+      .map((candidate) => ({
+        ...candidate,
+        content: getResearchObjective(candidate),
+      }));
     const researchMessages = shouldCarryResearchThroughWorkflow
       ? researchUserMessages.slice(-24)
       : isStructuredDecisionResponse
         ? []
-        : [{ content: message.content }];
+        : [{ content: latestResearchObjective }];
     const shouldCarryChatUrlsThroughWorkflow =
       agentMetadata?.kind === "agent_clarification_response" ||
       agentMetadata?.kind === "agent_interview_response" ||
@@ -445,7 +459,10 @@ export async function POST(req: Request) {
           .filter((candidate) => candidate.role === "user")
           .slice(-24)
           .reverse()
-      : [{ content: message.content }];
+          .map((candidate) => ({
+            content: getResearchObjective(candidate),
+          }))
+      : [{ content: latestResearchObjective }];
     const chatUrls = extractChatUrls(chatUrlMessages);
     const apiDocumentation = assessApiDocumentation(researchMessages);
     const researchIntent = detectResearchIntent(researchMessages);
@@ -454,10 +471,12 @@ export async function POST(req: Request) {
           .filter((candidate) => candidate.role === "user")
           .slice()
           .reverse()
-          .map((candidate) => detectLiveApiIntent(candidate.content))
+          .map((candidate) =>
+            detectLiveApiIntent(getResearchObjective(candidate)),
+          )
           .find((intent) => intent.required) ??
-        detectLiveApiIntent(message.content))
-      : detectLiveApiIntent(message.content);
+        detectLiveApiIntent(latestResearchObjective))
+      : detectLiveApiIntent(latestResearchObjective);
 
     let messages = z
       .array(
@@ -662,9 +681,46 @@ export async function POST(req: Request) {
             finalSpec,
             connectedIntegrationSelection.providerIds,
           );
+          const conversationHasCode = rawMessages.some(
+            (candidate) => getStoredGeneratedFiles(candidate).length > 0,
+          );
+          const initialPlanInterviewRequired =
+            planMode &&
+            !conversationHasCode &&
+            appSpec.status !== "approved" &&
+            appSpec.askedQuestionIds.length === 0 &&
+            agentMetadata?.kind !== "agent_interview_response" &&
+            agentMetadata?.kind !== "agent_clarification_response" &&
+            agentMetadata?.kind !== "agent_plan_approval";
 
           let agentAction: AgentAction;
+          const buildFallbackInterview = () => {
+            const fallback = buildPlanModeFallbackInterview({
+              messageId,
+              prompt: latestUserContent,
+              spec: finalSpec,
+              providersNeedingPurpose: getSelectedProvidersNeedingPurpose(
+                finalSpec,
+                connectedIntegrationSelection.providerIds,
+              ),
+            });
+            if (fallback.action === "interview") {
+              finalSpec = {
+                ...finalSpec,
+                status: "interviewing",
+                askedQuestionIds: Array.from(
+                  new Set([
+                    ...finalSpec.askedQuestionIds,
+                    ...fallback.request.steps.map((step) => step.id),
+                  ]),
+                ),
+              };
+            }
+            return fallback;
+          };
           const enforceSelectedApiPurpose = (action: AgentAction) => {
+            if (!planMode) return action;
+
             const providersNeedingPurpose = getSelectedProvidersNeedingPurpose(
               finalSpec,
               connectedIntegrationSelection.providerIds,
@@ -678,32 +734,40 @@ export async function POST(req: Request) {
               return action;
             }
 
-            const purposeStep = buildSelectedApiPurposeStep({
-              prompt: latestUserContent,
-              providers: providersNeedingPurpose,
-            });
-            finalSpec = {
-              ...finalSpec,
-              status: "interviewing",
-              askedQuestionIds: Array.from(
-                new Set([...finalSpec.askedQuestionIds, purposeStep.id]),
-              ),
-            };
-            return {
-              action: "interview" as const,
-              request: {
-                id: `interview-${messageId}`,
-                title: "Choose how the APIs should power your app",
-                deliveryContract: finalSpec.deliveryContract,
-                confirmedDecisions: Math.max(
-                  0,
-                  finalSpec.askedQuestionIds.length -
-                    providersNeedingPurpose.length,
-                ),
-                remainingDecisions: providersNeedingPurpose.length,
-                steps: [purposeStep],
-              },
-            };
+            return buildFallbackInterview();
+          };
+          const enforceModePolicy = (action: AgentAction): AgentAction => {
+            if (!planMode) {
+              return action.action === "interview" ||
+                action.action === "clarify" ||
+                action.action === "present_plan"
+                ? { action: "generate_code" }
+                : action;
+            }
+
+            const purposeGuardedAction = enforceSelectedApiPurpose(action);
+            if (
+              (purposeGuardedAction.action === "interview" ||
+                purposeGuardedAction.action === "clarify") &&
+              (purposeGuardedAction.request.steps.length < 3 ||
+                purposeGuardedAction.request.steps.length > 5)
+            ) {
+              return buildFallbackInterview();
+            }
+            if (
+              initialPlanInterviewRequired &&
+              purposeGuardedAction.action !== "interview"
+            ) {
+              return buildFallbackInterview();
+            }
+            if (
+              purposeGuardedAction.action === "generate_code" &&
+              !conversationHasCode &&
+              finalSpec.status !== "approved"
+            ) {
+              return buildFallbackInterview();
+            }
+            return purposeGuardedAction;
           };
 
           if (
@@ -711,10 +775,6 @@ export async function POST(req: Request) {
             agentMetadata.approved === true
           ) {
             finalSpec = { ...finalSpec, status: "approved" };
-            await prisma.chat.update({
-              where: { id: message.chatId },
-              data: { appSpec: JSON.parse(JSON.stringify(finalSpec)) },
-            });
             agentAction = { action: "generate_code" };
           } else if (
             isFreeRepairRequest ||
@@ -725,13 +785,9 @@ export async function POST(req: Request) {
             agentAction = { action: "answer" };
           } else if (shouldAnswerWithoutCode(latestUserContent)) {
             agentAction = { action: "answer" };
-          } else if (
-            !planMode &&
-            connectedIntegrationSelection.providerIds.length === 0
-          ) {
-            // Plan mode off: old behavior — generate code immediately,
-            // no interview, clarification, or plan. Selected APIs are the one
-            // exception because their product role may need clarification.
+          } else if (!planMode) {
+            // Direct mode is deterministic: generate immediately. Selected
+            // APIs are mandatory context and never introduce an interview.
             agentAction = { action: "generate_code" };
           } else {
             const orchestrationModel = FREE_MODEL;
@@ -752,9 +808,6 @@ export async function POST(req: Request) {
 
             try {
               const specContext = buildSpecContextLine(finalSpec);
-              const conversationHasCode = rawMessages.some(
-                (candidate) => getStoredGeneratedFiles(candidate).length > 0,
-              );
               const automaticResearchContext =
                 researchIntent.required && !linkedPagesSatisfyReferenceResearch
                   ? `\n\nAutomatic web research is required for this request because it is ${researchIntent.reason} research (${researchIntent.freshness} mode; query: ${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. The execution step will run web search before answering or generating code.`
@@ -770,6 +823,8 @@ export async function POST(req: Request) {
                   usage: { include: true },
                 }),
                 providerOptions: orchestrationReasoning.providerOptions,
+                abortSignal: req.signal,
+                timeout: { totalMs: 45_000 },
                 output: Output.object({ schema: agentActionSchema }),
                 system: orchestrationLinkedPageContext
                   ? `${agentOrchestrationPrompt}\n\n${CHAT_URL_SYSTEM_GUARD}`
@@ -805,6 +860,7 @@ export async function POST(req: Request) {
                   askedQuestionIds: Array.from(
                     new Set([
                       ...finalSpec.askedQuestionIds,
+                      ...routedAction.request.steps.map((step) => step.id),
                       ...(routedAction.specUpdate?.askedQuestionIds ?? []),
                     ]),
                   ),
@@ -827,6 +883,12 @@ export async function POST(req: Request) {
                 finalSpec = {
                   ...finalSpec,
                   status: "needs_clarification",
+                  askedQuestionIds: Array.from(
+                    new Set([
+                      ...finalSpec.askedQuestionIds,
+                      ...routedAction.request.steps.map((step) => step.id),
+                    ]),
+                  ),
                 };
                 agentAction = {
                   action: "clarify",
@@ -876,97 +938,7 @@ export async function POST(req: Request) {
                 agentAction = routedAction;
               }
 
-              agentAction = enforceSelectedApiPurpose(agentAction);
-
-              // Guard: protect against premature code generation for new builds
-              if (
-                planMode &&
-                agentAction.action === "generate_code" &&
-                !conversationHasCode &&
-                finalSpec.status !== "approved"
-              ) {
-                // Downgrade to either plan or interview
-                if (
-                  finalSpec.unresolvedDecisions.every(
-                    (d) => d.impact !== "high",
-                  )
-                ) {
-                  finalSpec = { ...finalSpec, status: "ready_for_plan" };
-                  // We do not have the plan content; ask model again to plan by routing to interview with a plan-prompt
-                  // Simpler: route to a default interview round asking the user to confirm going to plan
-                  agentAction = {
-                    action: "interview",
-                    request: {
-                      id: `interview-${messageId}`,
-                      title: "Ready to plan your app",
-                      deliveryContract: finalSpec.deliveryContract,
-                      confirmedDecisions: finalSpec.askedQuestionIds.length,
-                      remainingDecisions: finalSpec.unresolvedDecisions.length,
-                      steps: [
-                        {
-                          id: "confirm-plan",
-                          title: "I have enough info to draft a plan. Ready?",
-                          options: [
-                            {
-                              id: "yes",
-                              label: "Yes, show me the plan",
-                              description:
-                                "Draft a compact plan for approval before generating code.",
-                            },
-                            {
-                              id: "more",
-                              label: "Ask more questions",
-                              description:
-                                "Continue the interview to refine the spec.",
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  };
-                } else {
-                  agentAction = {
-                    action: "interview",
-                    request: {
-                      id: `interview-${messageId}`,
-                      title: "A few more choices will improve the result",
-                      deliveryContract: finalSpec.deliveryContract,
-                      confirmedDecisions: Math.max(
-                        0,
-                        finalSpec.askedQuestionIds.length -
-                          finalSpec.unresolvedDecisions.length,
-                      ),
-                      remainingDecisions: finalSpec.unresolvedDecisions.length,
-                      steps: finalSpec.unresolvedDecisions
-                        .filter((d) => d.impact === "high")
-                        .slice(0, 3)
-                        .map((d) => ({
-                          id: d.id,
-                          title: d.topic,
-                          description: d.question,
-                          options: [
-                            {
-                              id: `${d.id}-yes`,
-                              label: "Yes",
-                              description: "Include this requirement",
-                            },
-                            {
-                              id: `${d.id}-no`,
-                              label: "No",
-                              description: "Exclude this requirement",
-                            },
-                          ],
-                        })),
-                    },
-                  };
-                }
-              }
-
-              // Persist any spec updates
-              await prisma.chat.update({
-                where: { id: message.chatId },
-                data: { appSpec: JSON.parse(JSON.stringify(finalSpec)) },
-              });
+              agentAction = enforceModePolicy(agentAction);
 
               await orchestrationTelemetry.record({
                 status: "completed",
@@ -978,16 +950,23 @@ export async function POST(req: Request) {
             } catch (error) {
               await orchestrationTelemetry.record({ status: "error", error });
               console.warn(
-                "Agent routing failed; preserving code-generation behavior:",
+                "Agent routing failed; applying deterministic mode fallback:",
                 getAIErrorMessage(error),
               );
-              agentAction = { action: "generate_code" };
+              agentAction = planMode
+                ? buildFallbackInterview()
+                : { action: "generate_code" };
             }
           }
 
-          const purposeGuardedAction = enforceSelectedApiPurpose(agentAction);
-          if (purposeGuardedAction !== agentAction) {
-            agentAction = purposeGuardedAction;
+          const modeGuardedAction = enforceModePolicy(agentAction);
+          if (modeGuardedAction !== agentAction) {
+            agentAction = modeGuardedAction;
+          }
+          if (
+            planMode ||
+            connectedIntegrationSelection.providerIds.length > 0
+          ) {
             await prisma.chat.update({
               where: { id: message.chatId },
               data: { appSpec: JSON.parse(JSON.stringify(finalSpec)) },
@@ -1298,6 +1277,8 @@ export async function POST(req: Request) {
               const researchResult = streamText({
                 model: gateway(researchModel),
                 maxOutputTokens: 4_000,
+                abortSignal: req.signal,
+                timeout: { totalMs: 90_000, chunkMs: 30_000 },
                 providerOptions: {
                   gateway: {
                     user: session.user.id,
@@ -1491,6 +1472,8 @@ export async function POST(req: Request) {
                   VISION_ANALYSIS_MODEL,
                   "low",
                 ),
+                abortSignal: req.signal,
+                timeout: { totalMs: 90_000 },
                 temperature: 0.4,
                 messages: [
                   {
@@ -1557,6 +1540,8 @@ export async function POST(req: Request) {
               usage: { include: true },
             }),
             providerOptions: reasoning.providerOptions,
+            abortSignal: req.signal,
+            timeout: { totalMs: 270_000, chunkMs: 60_000 },
             system: systemInstruction,
             messages: clampMessagesToBillingBudget(guardedMessages),
             temperature: 0.4,

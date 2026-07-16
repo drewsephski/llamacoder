@@ -25,10 +25,14 @@ export const searchRequestSchema = z.object({
 export const clarificationRequestSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(120),
-  steps: z.array(QuestionFlowStepDefinitionSchema).min(1).max(3),
+  steps: z.array(QuestionFlowStepDefinitionSchema).min(1).max(5),
   deliveryContract: deliveryContractSchema.default("browser_frontend"),
   confirmedDecisions: z.number().int().min(0).default(0),
   remainingDecisions: z.number().int().min(0).default(0),
+});
+
+const generatedInterviewRequestSchema = clarificationRequestSchema.extend({
+  steps: z.array(QuestionFlowStepDefinitionSchema).min(3).max(5),
 });
 
 export const planSectionSchema = z.object({
@@ -75,12 +79,12 @@ export const agentActionSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("interview"),
-    request: clarificationRequestSchema,
+    request: generatedInterviewRequestSchema,
     specUpdate: partialAppSpecUpdateSchema.optional(),
   }),
   z.object({
     action: z.literal("clarify"),
-    request: clarificationRequestSchema,
+    request: generatedInterviewRequestSchema,
     specUpdate: partialAppSpecUpdateSchema.optional(),
   }),
   z.object({

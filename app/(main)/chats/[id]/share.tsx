@@ -38,6 +38,8 @@ type Publication = {
   description: string;
   allowRemixes: boolean;
   isPublished: boolean;
+  thumbnailStatus: "pending" | "ready" | "failed";
+  thumbnailError?: string | null;
   url: string;
 };
 
@@ -63,6 +65,7 @@ export function Share({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isRetryingThumbnail, setIsRetryingThumbnail] = useState(false);
   const previewFiles = useMemo(
     () =>
       message
@@ -161,6 +164,29 @@ export function Share({
     }
   };
 
+  const retryThumbnail = async () => {
+    if (!publication) return;
+    setIsRetryingThumbnail(true);
+    try {
+      const response = await fetch(`/api/gallery/${publication.id}/thumbnail`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        toast.error(data?.message ?? "Unable to retry the preview image");
+        return;
+      }
+      setPublication({
+        ...publication,
+        thumbnailStatus: "pending",
+        thumbnailError: null,
+      });
+      toast.success("Preview image queued");
+    } finally {
+      setIsRetryingThumbnail(false);
+    }
+  };
+
   return (
     <>
       <Button
@@ -251,6 +277,26 @@ export function Share({
                   <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                     <CheckCircle2 className="size-4" />
                     Published! Your project is live.
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span>
+                      {publication.thumbnailStatus === "ready"
+                        ? "Gallery preview image is ready."
+                        : publication.thumbnailStatus === "failed"
+                          ? "Gallery preview image could not be created."
+                          : "Gallery preview image is being prepared."}
+                    </span>
+                    {publication.thumbnailStatus === "failed" && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={retryThumbnail}
+                        disabled={isRetryingThumbnail}
+                      >
+                        {isRetryingThumbnail ? "Retrying…" : "Retry preview"}
+                      </Button>
+                    )}
                   </div>
                   <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                     <Input

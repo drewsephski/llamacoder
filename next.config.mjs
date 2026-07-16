@@ -29,7 +29,6 @@ const nextConfig = {
     const contentSecurityPolicy = createContentSecurityPolicy("'none'");
     const galleryPreviewContentSecurityPolicy =
       createContentSecurityPolicy("'self'");
-
     return [
       {
         source: "/(.*)",
@@ -44,8 +43,6 @@ const nextConfig = {
           },
         ],
       },
-      // This rule must follow the catch-all so its CSP wins for the one route
-      // intentionally embedded by same-origin gallery cards.
       {
         source: "/gallery/:slug/preview",
         headers: [

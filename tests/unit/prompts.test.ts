@@ -45,6 +45,13 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain(
       "Never replace the selected API with web-search results",
     );
+    expect(prompt).toContain(
+      "Treat each surface and foreground as one locked pair",
+    );
+    expect(prompt).toContain("Contrast may never fail");
+    expect(prompt).toContain("at least 4.5:1 contrast");
+    expect(prompt).toContain("component boundaries require at least 3:1");
+    expect(prompt).toContain("run a private contrast audit");
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -83,6 +90,10 @@ describe("prompt design guidance", () => {
     expect(softwareArchitectPrompt).toContain(
       "use that contract directly without asking for redundant research",
     );
+    expect(softwareArchitectPrompt).toContain("Contrast contract:");
+    expect(softwareArchitectPrompt).toContain(
+      "Normal, helper, and placeholder text must reach 4.5:1",
+    );
   });
 
   it("keeps Hallmark-derived constraints in the plan-mode code generator", () => {
@@ -100,6 +111,16 @@ describe("prompt design guidance", () => {
     );
     expect(developerCodeGenPrompt).toContain(
       "call that API at runtime instead of web-searching for the same values",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Treat every surface and its foreground as an inseparable, explicit pair",
+    );
+    expect(developerCodeGenPrompt).toContain("Contrast may never fail");
+    expect(developerCodeGenPrompt).toContain(
+      "Pair semantic Tailwind roles directly",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Opacity, gradients, images, and translucent overlays",
     );
   });
 });

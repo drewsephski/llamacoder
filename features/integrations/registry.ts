@@ -876,10 +876,11 @@ export function buildIntegrationProviderGuidance(providerIds: string[]) {
     "For capabilities and current values supplied by a selected provider, call that provider at runtime and treat its response as the product data source. Do not use web search, model memory, or copied search-result values in its place.",
     "Use web research only as a supplement when explicitly requested, when required context is outside the selected provider's capabilities, or when this reviewed contract is missing or ambiguous. Research must never silently replace the selected provider.",
     "For each selected provider, carry its exact providerId into the app specification and integrations.ts, implement its reviewed client or server adapter, and connect it to a user-visible app flow.",
+    "Use only the exact base URL, example endpoint, endpoint paths, methods, and response behavior stated in the reviewed contract below. Never invent a route, API version, parameter, field, or auth header. If the reviewed contract does not establish something required, keep an explicit setup-required boundary instead of guessing.",
     "If credentials, authorization, or a server runtime are unavailable, keep the selected provider in the implementation and render an honest setup-required state. Never simulate success or substitute a different API.",
     "If a selected provider cannot safely satisfy the request, surface the conflict explicitly instead of generating an app that silently ignores the selection.",
     ...matches.map(formatIntegrationProviderForPrompt),
-    "Before finishing, verify that every selected providerId appears in integrations.ts and that its adapter is used by the app. Missing any selected provider is a failed generation.",
+    "Before finishing, verify that every selected providerId appears in integrations.ts, its adapter is used by the app, and every emitted provider URL stays within the reviewed base URL or an explicitly documented alternate host. Missing any selected provider is a failed generation; inventing an endpoint is also a failed generation.",
     "=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
   ].join("\n");
 }

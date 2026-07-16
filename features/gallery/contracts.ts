@@ -26,6 +26,8 @@ export type GalleryProjectSummary = {
   description: string;
   allowRemixes: boolean;
   publishedAt: Date;
+  thumbnailUrl: string | null;
+  thumbnailStatus: "pending" | "ready" | "failed";
   creator: {
     name: string;
     image: string | null;

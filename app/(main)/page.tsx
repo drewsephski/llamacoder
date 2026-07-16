@@ -2363,43 +2363,6 @@ function HomepageFaqSection() {
 }
 
 function BuiltWithSquidSection() {
-  const [projects, setProjects] = useState<BuiltWithSquidProject[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch("/api/gallery")
-      .then((response) => (response.ok ? response.json() : { apps: [] }))
-      .then((data) => {
-        if (!cancelled) {
-          setProjects(
-            Array.isArray(data.apps)
-              ? data.apps.map((project: BuiltWithSquidProject) => ({
-                  ...project,
-                  remixHref: project.remixHref ?? project.href,
-                }))
-              : [],
-          );
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setProjects([]);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const seenProjectHrefs = new Set<string>();
-  const visibleProjects = [...BUILT_WITH_SQUID_PROJECTS, ...projects]
-    .filter((project) => {
-      if (seenProjectHrefs.has(project.href)) return false;
-      seenProjectHrefs.add(project.href);
-      return true;
-    })
-    .slice(0, 8);
-
   return (
     <section
       id="built-with-squid"
@@ -2429,7 +2392,7 @@ function BuiltWithSquidSection() {
         </div>
 
         <div className="mt-12 grid gap-x-6 gap-y-12 lg:grid-cols-12">
-          {visibleProjects.map((project) => (
+          {BUILT_WITH_SQUID_PROJECTS.map((project) => (
             <figure
               key={project.href}
               className="group min-w-0 border-t border-border/70 pt-4 lg:col-span-6"

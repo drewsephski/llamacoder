@@ -8,6 +8,7 @@ import {
   readGeneratedFilesStats,
   validateGeneratedFiles,
 } from "@/lib/generated-files";
+import { validateSelectedApiUsage } from "@/lib/generated-api";
 
 describe("generated file normalization", () => {
   it("normalizes safe paths and rejects traversal/protected modules", () => {
@@ -376,6 +377,68 @@ describe("generated file normalization", () => {
 
     expect(buildGeneratedFilesQualityReport(files).apiIntegration.status).toBe(
       "verified",
+    );
+  });
+
+  it("requires selected APIs to use their exact provider id and reviewed base URL", () => {
+    const validFiles = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { loadRates } from "./api"; export default function App() { return <button onClick={loadRates}>Load</button>; }',
+      },
+      {
+        path: "api.ts",
+        code: 'export function loadRates() { return fetch("https://api.frankfurter.dev/v2/rates?base=USD&quotes=EUR"); }',
+      },
+      {
+        path: "integrations.ts",
+        code: 'export const integrations = [{ providerId: "frankfurter" }];',
+      },
+    ]);
+
+    expect(validateSelectedApiUsage(validFiles, ["frankfurter"])).toEqual([]);
+
+    const hallucinatedVersion = normalizeGeneratedFiles([
+      ...validFiles.filter((file) => file.path !== "api.ts"),
+      {
+        path: "api.ts",
+        code: 'export function loadRates() { return fetch("https://api.frankfurter.dev/v1/convert?from=USD&to=EUR"); }',
+      },
+    ]);
+
+    expect(
+      validateSelectedApiUsage(hallucinatedVersion, ["frankfurter"]),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining("outside the reviewed base URL"),
+        }),
+      ]),
+    );
+  });
+
+  it("rejects mock data when a selected browser API is not called", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: "export default function App() { return <main>1 EUR</main>; }",
+      },
+      {
+        path: "data.ts",
+        code: "export const rate = 0.91;",
+      },
+      {
+        path: "integrations.ts",
+        code: 'export const integrations = [{ providerId: "frankfurter" }];',
+      },
+    ]);
+
+    expect(validateSelectedApiUsage(files, ["frankfurter"])).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining("must be called at runtime"),
+        }),
+      ]),
     );
   });
 

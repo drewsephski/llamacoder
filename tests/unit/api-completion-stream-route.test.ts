@@ -248,6 +248,8 @@ async function collectUIChunks(response: Response) {
 describe("/api/get-next-completion-stream-promise", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    generateTextMock.mockReset();
+    streamTextMock.mockReset();
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 11 });
     getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
     reserveCreditHoldMock.mockResolvedValue({
@@ -364,6 +366,11 @@ describe("/api/get-next-completion-stream-promise", () => {
         id: "msg_12",
         chatId: "chat_1",
         position: 12,
+        files: {
+          kind: "app_edit_request",
+          sourceMessageId: "assistant_old",
+          chargeCredits: true,
+        },
         chat: {
           id: "chat_1",
           userId: "user_1",
@@ -682,6 +689,77 @@ Use a crisp technical design with white and charcoal surfaces, dense monospace d
     ).toBe(false);
   });
 
+  it("does not research DOM context or source code embedded in a targeted edit", async () => {
+    const content = `Edit the selected preview element in "Meridian".
+
+User requested edit:
+make the buttons text always white
+
+Selected element context:
+Tag: button
+Path: div#root:nth-of-type(1) > main.min-h-screen > button
+Classes: bg-black text-black
+Text: Try the workspace demo
+
+Current selected version files:
+- App.tsx
+
+Current source:
+\`\`\`tsx{path=App.tsx}
+const rankingsUrl = "https://api.example.com/current-rankings";
+export default function App() { return <button>Latest results</button>; }
+\`\`\``;
+    const metadata = {
+      kind: "targeted_element_edit",
+      sourceMessageId: "assistant_source",
+      chargeCredits: true,
+      selection: {
+        tagName: "button",
+        domPath: "div#root:nth-of-type(1) > main.min-h-screen > button",
+        text: "Try the workspace demo",
+        className: "bg-black text-black",
+      },
+    };
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_targeted_color_edit",
+        content,
+        files: metadata,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      {
+        id: "assistant_source",
+        role: "assistant",
+        content:
+          "\`\`\`tsx{path=App.tsx}\nexport default function App() { return <button>Latest results</button>; }\n\`\`\`",
+      },
+      { role: "user", content, files: metadata },
+    ]);
+    mockGeneration({
+      text: '\`\`\`tsx{path=App.tsx}\nexport default function App() { return <button className="bg-black text-white">Latest results</button>; }\n\`\`\`',
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_targeted_color_edit", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(loadChatUrlContentMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(
+      chunks.some((chunk) => chunk.type === "data-research-activity"),
+    ).toBe(false);
+  });
+
   it("researches an exact API documentation link before generating code", async () => {
     const documentationUrl = "https://developer.example.com/api/v3/docs";
     const content = `Build a flight tracker using the API at ${documentationUrl}`;
@@ -981,12 +1059,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
     await collectUIChunks(response);
 
-    expect(generateTextMock.mock.calls[0][0].prompt).toContain(
-      "Plan mode enabled: false",
-    );
-    expect(generateTextMock.mock.calls[0][0].system).toContain(
-      "Selected API purpose policy",
-    );
+    expect(generateTextMock).not.toHaveBeenCalled();
     expect(exaSearchMock).not.toHaveBeenCalled();
     expect(streamTextMock).toHaveBeenCalledTimes(1);
     const generationPrompt =
@@ -1267,7 +1340,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
   });
 
-  it("asks what selected APIs should do when a direct-mode prompt is vague", async () => {
+  it("uses selected APIs without asking questions in direct mode", async () => {
     const content = "Build a travel app";
     getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
       prompt:
@@ -1291,15 +1364,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
-    // Even if orchestration tries to generate immediately, the server keeps
-    // the build behind a concrete API-purpose decision.
-    generateTextMock.mockResolvedValueOnce({
-      output: { action: "generate_code" },
-      usage: undefined,
-      finishReason: "stop",
-      providerMetadata: undefined,
-      response: { id: "orchestration_vague_selected_api" },
-    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
       request({ messageId: "msg_vague_selected_api", model: "model_1" }),
@@ -1311,31 +1376,17 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
 
     expect(actionChunk).toMatchObject({
       type: "data-agent-action",
-      data: {
-        action: "interview",
-        request: {
-          title: "Choose how the APIs should power your app",
-          steps: [
-            {
-              title: "What should Frankfurter do in this app?",
-              options: [
-                {
-                  label: expect.stringContaining("Recommended"),
-                  description: expect.stringContaining("Build a travel app"),
-                },
-                expect.any(Object),
-                expect.any(Object),
-              ],
-            },
-          ],
-        },
-      },
+      data: { action: "generate_code" },
+      transient: true,
     });
-    expect(streamTextMock).not.toHaveBeenCalled();
-    expect(generateTextMock).toHaveBeenCalledTimes(1);
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(streamTextMock.mock.calls[0][0].system).toContain(
+      "SELECTED API IMPLEMENTATION GUIDANCE",
+    );
   });
 
-  it("asks for approval instead of automatically running model-suggested research", async () => {
+  it("keeps the Plan mode interview ahead of model-suggested research", async () => {
     const content = "Build a polished habit tracker app";
     prismaMock.message.findUnique.mockResolvedValueOnce(
       buildMessage({
@@ -1378,18 +1429,35 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
         expect.objectContaining({
           type: "data-agent-action",
           data: expect.objectContaining({
-            action: "search",
+            action: "interview",
             request: expect.objectContaining({
-              id: "search-msg_optional_search",
-              query: "habit tracker behavior change research",
+              id: "interview-msg_optional_search",
+              steps: expect.arrayContaining([
+                expect.objectContaining({ id: "primary-outcome" }),
+                expect.objectContaining({ id: "primary-audience" }),
+                expect.objectContaining({ id: "data-and-accounts" }),
+              ]),
             }),
           }),
         }),
       ]),
     );
+    expect(streamTextMock).not.toHaveBeenCalled();
     expect(generateTextMock).toHaveBeenCalledTimes(1);
     expect(exaSearchMock).not.toHaveBeenCalled();
-    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(prismaMock.chat.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          appSpec: expect.objectContaining({
+            askedQuestionIds: expect.arrayContaining([
+              "primary-outcome",
+              "primary-audience",
+              "data-and-accounts",
+            ]),
+          }),
+        },
+      }),
+    );
   });
 
   it("uses undated authoritative sources for evergreen technical research", async () => {

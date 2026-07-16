@@ -1,14 +1,21 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionMock, prismaMock } = vi.hoisted(() => ({
-  getSessionMock: vi.fn(),
-  prismaMock: {
-    galleryPublication: {
-      findFirst: vi.fn(),
-      update: vi.fn(),
+const { getSessionMock, prismaMock, scheduleThumbnailMock } = vi.hoisted(
+  () => ({
+    getSessionMock: vi.fn(),
+    scheduleThumbnailMock: vi.fn(),
+    prismaMock: {
+      galleryPublication: {
+        findFirst: vi.fn(),
+        update: vi.fn(),
+      },
     },
-  },
+  }),
+);
+
+vi.mock("@/features/gallery/server/thumbnail-jobs", () => ({
+  scheduleGalleryThumbnailCapture: scheduleThumbnailMock,
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -24,6 +31,7 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { DELETE } from "@/app/api/gallery/[publicationId]/route";
+import { POST as retryThumbnail } from "@/app/api/gallery/[publicationId]/thumbnail/route";
 import { GET } from "@/app/api/gallery/publication/route";
 
 describe("gallery publication management", () => {
@@ -80,6 +88,38 @@ describe("gallery publication management", () => {
         isPublished: false,
         unpublishedAt: expect.any(Date),
       },
+    });
+  });
+
+  it("lets the owner retry a failed thumbnail for a published project", async () => {
+    prismaMock.galleryPublication.findFirst.mockResolvedValue({
+      id: "publication_1",
+      slug: "focus-day-chat123",
+      messageId: "message_1",
+      isPublished: true,
+    });
+    prismaMock.galleryPublication.update.mockResolvedValue({});
+
+    const response = await retryThumbnail(
+      new NextRequest("http://localhost/api/gallery/publication_1/thumbnail", {
+        method: "POST",
+      }),
+      { params: Promise.resolve({ publicationId: "publication_1" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.galleryPublication.update).toHaveBeenCalledWith({
+      where: { id: "publication_1" },
+      data: {
+        thumbnailStatus: "pending",
+        thumbnailError: null,
+        thumbnailUpdatedAt: expect.any(Date),
+      },
+    });
+    expect(scheduleThumbnailMock).toHaveBeenCalledWith({
+      publicationId: "publication_1",
+      messageId: "message_1",
+      slug: "focus-day-chat123",
     });
   });
 });

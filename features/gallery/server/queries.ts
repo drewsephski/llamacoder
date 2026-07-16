@@ -57,6 +57,8 @@ export async function getGalleryProjects({
         description: true,
         allowRemixes: true,
         publishedAt: true,
+        thumbnailUrl: true,
+        thumbnailStatus: true,
         user: { select: { name: true, image: true } },
       },
     }),
@@ -64,6 +66,10 @@ export async function getGalleryProjects({
 
   const projects: GalleryProjectSummary[] = rows.map((row) => ({
     ...row,
+    thumbnailStatus:
+      row.thumbnailStatus === "ready" || row.thumbnailStatus === "failed"
+        ? row.thumbnailStatus
+        : "pending",
     creator: {
       name: row.user.name ?? "Squid creator",
       image: row.user.image,

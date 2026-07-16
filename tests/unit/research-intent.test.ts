@@ -4,6 +4,7 @@ import {
   assessApiDocumentation,
   buildResearchQuery,
   detectResearchIntent,
+  extractResearchObjective,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
 
@@ -110,6 +111,40 @@ GET https://api.example.com/v2/flights — returns current flights.`;
     expect(buildResearchQuery(content)).toBe(
       "React TypeScript Unsupported widget configuration",
     );
+  });
+
+  it("isolates a targeted edit instruction from DOM context and current source", () => {
+    const content = `Edit the selected preview element in "Meridian".
+
+User requested edit:
+make the buttons text always white
+
+Selected element context:
+Tag: button
+Path: div#root:nth-of-type(1) > main.min-h-screen > button
+Classes: bg-black text-black
+Text: Try the workspace demo
+
+Current selected version files:
+- App.tsx
+
+Current source:
+\`\`\`tsx{path=App.tsx}
+const rankingsUrl = "https://api.example.com/current-rankings";
+export default function App() { return <button>Latest results</button>; }
+\`\`\``;
+
+    expect(extractResearchObjective(content)).toBe(
+      "make the buttons text always white",
+    );
+    expect(buildResearchQuery(content)).toBe("the buttons text always white");
+    expect(detectResearchIntent([{ content }])).toEqual({
+      required: false,
+      explicitlyRequested: false,
+      freshness: "evergreen",
+      reason: null,
+      query: null,
+    });
   });
 
   it("removes generic search instructions and bounds long queries", () => {

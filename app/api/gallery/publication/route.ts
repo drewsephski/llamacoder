@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
       description: true,
       allowRemixes: true,
       isPublished: true,
+      thumbnailStatus: true,
+      thumbnailError: true,
     },
   });
 

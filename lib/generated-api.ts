@@ -1,5 +1,6 @@
 import {
   findIntegrationProviderByUrl,
+  getIntegrationProvider,
   type IntegrationPolicyStatus,
 } from "@/features/integrations/registry";
 
@@ -233,4 +234,91 @@ export function analyzeGeneratedApiIntegration(
     policyWarnings: unique(policyWarnings),
     issues,
   };
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function validateSelectedApiUsage(
+  files: SourceFile[],
+  providerIds: string[],
+): ApiIntegrationIssue[] {
+  const selectedProviderIds = Array.from(new Set(providerIds));
+  if (selectedProviderIds.length === 0) return [];
+
+  const report = analyzeGeneratedApiIntegration(files);
+  const integrationManifest = files.find((file) =>
+    /(^|\/)integrations\.(?:ts|tsx|js|jsx)$/i.test(file.path),
+  );
+  const issues: ApiIntegrationIssue[] = [];
+
+  for (const providerId of selectedProviderIds) {
+    const provider = getIntegrationProvider(providerId);
+    if (!provider) {
+      issues.push({
+        message: `Selected API ${providerId} is not present in Squid's reviewed integration registry.`,
+      });
+      continue;
+    }
+
+    if (provider.policyStatus === "blocked") {
+      issues.push({
+        message: `${provider.name} is selected but blocked by Squid's integration policy.`,
+      });
+      continue;
+    }
+
+    const providerIdPattern = new RegExp(
+      `["']${escapeRegExp(provider.id)}["']`,
+    );
+    if (
+      !integrationManifest ||
+      !providerIdPattern.test(integrationManifest.code)
+    ) {
+      issues.push({
+        path: integrationManifest?.path,
+        message: `Selected API ${provider.name} [${provider.id}] must be declared in integrations.ts with its exact providerId.`,
+      });
+    }
+
+    if (provider.runtime !== "browser" || provider.auth !== "none") {
+      continue;
+    }
+
+    const matchedProvider = report.providers.find(
+      (candidate) => candidate.id === provider.id,
+    );
+    if (!matchedProvider || matchedProvider.matchedEndpoints.length === 0) {
+      issues.push({
+        message: `Selected API ${provider.name} [${provider.id}] must be called at runtime from its reviewed endpoint contract; mock or static data is not allowed.`,
+      });
+      continue;
+    }
+
+    const baseUrl = new URL(provider.baseUrl);
+    for (const endpoint of matchedProvider.matchedEndpoints) {
+      let endpointUrl: URL;
+      try {
+        endpointUrl = new URL(endpoint);
+      } catch {
+        continue;
+      }
+
+      const usesReviewedOrigin = endpointUrl.origin === baseUrl.origin;
+      const usesReviewedBasePath =
+        baseUrl.pathname === "/" ||
+        endpointUrl.pathname === baseUrl.pathname ||
+        endpointUrl.pathname.startsWith(
+          `${baseUrl.pathname.replace(/\/$/, "")}/`,
+        );
+      if (usesReviewedOrigin && !usesReviewedBasePath) {
+        issues.push({
+          message: `${provider.name} endpoint ${endpoint} is outside the reviewed base URL ${provider.baseUrl}. Do not invent or use legacy API versions.`,
+        });
+      }
+    }
+  }
+
+  return issues;
 }

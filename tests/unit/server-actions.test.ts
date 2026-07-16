@@ -42,6 +42,7 @@ const {
       update: vi.fn(),
     },
     message: { create: vi.fn() },
+    projectIntegration: { findMany: vi.fn() },
     creditHold: { findUnique: vi.fn() },
   },
 }));
@@ -116,6 +117,7 @@ describe("server actions", () => {
     txMock.message.update.mockResolvedValue({});
     txMock.generationLog.create.mockResolvedValue({});
     prismaMock.message.create.mockResolvedValue({ id: "user_msg_2" });
+    prismaMock.projectIntegration.findMany.mockResolvedValue([]);
     releaseCreditHoldMock.mockResolvedValue({ success: true });
   });
 
@@ -218,6 +220,42 @@ describe("server actions", () => {
       generatedText: "done",
       creditHoldId: undefined,
     });
+  });
+
+  it("rejects generated apps that omit a selected browser API contract", async () => {
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        messages: [
+          buildMessage({ position: 0, role: "system" }),
+          buildMessage({ position: 1, role: "user" }),
+        ],
+      }),
+    );
+    prismaMock.projectIntegration.findMany.mockResolvedValueOnce([
+      { providerId: "frankfurter" },
+    ]);
+
+    await expect(
+      createMessage(
+        "chat_1",
+        "done",
+        "assistant",
+        [
+          {
+            path: "App.tsx",
+            code: "export default function App() { return <main />; }",
+          },
+          {
+            path: "components/One.tsx",
+            code: "export function One() { return null; }",
+          },
+        ],
+        { creditHoldId: "hold_1" },
+      ),
+    ).rejects.toThrow("SELECTED_API_CONTRACT_VIOLATION");
+
+    expect(releaseCreditHoldMock).toHaveBeenCalledWith({ holdId: "hold_1" });
+    expect(txMock.message.create).not.toHaveBeenCalled();
   });
 
   it("creates preview repair messages and saves the matching repair response without charging credits", async () => {

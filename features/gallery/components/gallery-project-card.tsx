@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { GalleryProjectSummary } from "@/features/gallery/contracts";
-import { GalleryProjectPreview } from "@/features/gallery/components/gallery-project-preview";
+import { GalleryProjectThumbnail } from "@/features/gallery/components/gallery-project-thumbnail";
 
 export function GalleryProjectCard({
   project,
@@ -17,7 +17,11 @@ export function GalleryProjectCard({
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-muted/30">
-          <GalleryProjectPreview slug={project.slug} title={project.title} />
+          <GalleryProjectThumbnail
+            thumbnailUrl={project.thumbnailUrl}
+            slug={project.slug}
+            title={project.title}
+          />
           <div className="absolute inset-0 bg-transparent transition-colors group-hover:bg-primary/[0.025]" />
         </div>
 

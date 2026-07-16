@@ -16,6 +16,7 @@ import {
   type GeneratedFile,
   type RawGeneratedFile,
 } from "@/lib/generated-files";
+import { validateSelectedApiUsage } from "@/lib/generated-api";
 import {
   generateFollowUpPrompts,
   saveMessageFollowUpPrompts,
@@ -218,6 +219,30 @@ export async function createMessage(
     ? normalizeGeneratedFiles(files)
     : [];
   const assistantHasFiles = role === "assistant" && normalizedFiles.length > 0;
+  if (assistantHasFiles) {
+    const selectedBindings = await prisma.projectIntegration.findMany({
+      where: { chatId },
+      select: { providerId: true },
+    });
+    const selectedProviderIds = selectedBindings.map(
+      (binding) => binding.providerId,
+    );
+    const selectedApiDiagnostics = validateSelectedApiUsage(
+      normalizedFiles,
+      selectedProviderIds,
+    );
+
+    if (selectedApiDiagnostics.length > 0) {
+      if (options?.creditHoldId) {
+        await releaseCreditHold({ holdId: options.creditHoldId });
+      }
+      throw new Error(
+        `SELECTED_API_CONTRACT_VIOLATION: ${selectedApiDiagnostics
+          .map((diagnostic) => diagnostic.message)
+          .join(" ")}`,
+      );
+    }
+  }
   const followUpPrompts =
     role === "assistant"
       ? await generateFollowUpPrompts({

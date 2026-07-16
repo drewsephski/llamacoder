@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionMock, prismaMock } = vi.hoisted(() => ({
+const {
+  getSessionMock,
+  prismaMock,
+  revalidatePathMock,
+  scheduleThumbnailMock,
+} = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+  scheduleThumbnailMock: vi.fn(),
   prismaMock: {
     galleryPublication: {
       count: vi.fn(),
@@ -11,6 +18,12 @@ const { getSessionMock, prismaMock } = vi.hoisted(() => ({
     },
     message: { findFirst: vi.fn() },
   },
+}));
+
+vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
+
+vi.mock("@/features/gallery/server/thumbnail-jobs", () => ({
+  scheduleGalleryThumbnailCapture: scheduleThumbnailMock,
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -69,6 +82,7 @@ describe("/api/gallery", () => {
       description: "A calmer way to plan focused work.",
       allowRemixes: true,
       isPublished: true,
+      thumbnailStatus: "pending",
     });
 
     const response = await POST(
@@ -99,9 +113,21 @@ describe("/api/gallery", () => {
           userId: "owner_1",
           messageId: "message_1",
           allowRemixes: true,
+          thumbnailStatus: "pending",
         }),
+        update: expect.objectContaining({ thumbnailStatus: "pending" }),
       }),
     );
+    expect(scheduleThumbnailMock).toHaveBeenCalledWith({
+      publicationId: "publication_1",
+      messageId: "message_1",
+      slug: "focus-day-chat123",
+    });
+    await expect(response.json()).resolves.toEqual({
+      publication: expect.objectContaining({
+        thumbnailStatus: "pending",
+      }),
+    });
   });
 
   it("does not publish a version the current user does not own", async () => {

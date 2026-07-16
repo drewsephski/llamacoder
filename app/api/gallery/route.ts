@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { publishProjectSchema } from "@/features/gallery/contracts";
@@ -6,8 +7,11 @@ import {
   createGallerySlug,
   getGalleryProjects,
 } from "@/features/gallery/server/queries";
+import { scheduleGalleryThumbnailCapture } from "@/features/gallery/server/thumbnail-jobs";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getPrisma } from "@/lib/prisma";
+
+export const maxDuration = 120;
 
 export async function GET() {
   const { projects } = await getGalleryProjects({
@@ -91,6 +95,8 @@ export async function POST(request: NextRequest) {
       allowRemixes: parsed.data.allowRemixes,
       isPublished: true,
       publishedAt: now,
+      thumbnailStatus: "pending",
+      thumbnailUpdatedAt: now,
     },
     update: {
       messageId: message.id,
@@ -100,8 +106,18 @@ export async function POST(request: NextRequest) {
       isPublished: true,
       publishedAt: now,
       unpublishedAt: null,
+      thumbnailStatus: "pending",
+      thumbnailError: null,
+      thumbnailUpdatedAt: now,
     },
   });
+
+  scheduleGalleryThumbnailCapture({
+    publicationId: publication.id,
+    messageId: message.id,
+    slug: publication.slug,
+  });
+  revalidatePath("/gallery");
 
   return NextResponse.json({
     publication: {
@@ -111,6 +127,7 @@ export async function POST(request: NextRequest) {
       description: publication.description,
       allowRemixes: publication.allowRemixes,
       isPublished: publication.isPublished,
+      thumbnailStatus: "pending",
       url: `/gallery/${publication.slug}`,
     },
   });

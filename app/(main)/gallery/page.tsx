@@ -6,6 +6,7 @@ import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/features/auth/server/session";
 import { GalleryProjectCard } from "@/features/gallery/components/gallery-project-card";
+import { GalleryThumbnailRefresh } from "@/features/gallery/components/gallery-thumbnail-refresh";
 import { GalleryToolbar } from "@/features/gallery/components/gallery-toolbar";
 import { gallerySearchSchema } from "@/features/gallery/contracts";
 import { getGalleryProjects } from "@/features/gallery/server/queries";
@@ -41,9 +42,16 @@ export default async function GalleryPage({
     remixable: parsed.remixable,
     sort: parsed.sort,
   });
+  const hasPendingThumbnails = projects.some(
+    (project) => project.thumbnailStatus === "pending",
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <GalleryThumbnailRefresh
+        canBackfill={Boolean(session) && process.env.NODE_ENV === "production"}
+        pending={hasPendingThumbnails}
+      />
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 font-semibold">

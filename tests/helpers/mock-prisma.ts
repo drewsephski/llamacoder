@@ -50,6 +50,7 @@ export function createPrismaMock() {
       "updateMany",
     ]),
     runtimeVerification: createDelegateMock(["create", "findMany"]),
+    projectIntegration: createDelegateMock(["findMany"]),
     anonymousUsage: createDelegateMock(["create", "findFirst", "update"]),
     stripeWebhookEvent: createDelegateMock(["findUnique", "upsert"]),
     subscription: createDelegateMock([
