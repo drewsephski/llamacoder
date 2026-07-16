@@ -88,7 +88,7 @@ describe("gallery thumbnail capture", () => {
     );
     expect(pageMock.waitForSelector).toHaveBeenCalledWith(
       '[data-gallery-preview-status="ready"]',
-      expect.objectContaining({ timeout: 12_000 }),
+      expect.objectContaining({ timeout: 60_000 }),
     );
     expect(s3SendMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -142,6 +142,29 @@ describe("gallery thumbnail capture", () => {
       }),
     });
     expect(closeMock).toHaveBeenCalled();
+  });
+
+  it("does not persist an image until the generated preview reports ready", async () => {
+    pageMock.waitForSelector
+      .mockResolvedValueOnce(true)
+      .mockRejectedValueOnce(new Error("Preview did not compile"));
+
+    const result = await captureAndPersistGalleryThumbnail(job);
+
+    expect(result).toEqual({
+      status: "failed",
+      error: "Preview did not compile",
+    });
+    expect(pageMock.screenshot).not.toHaveBeenCalled();
+    expect(s3SendMock).not.toHaveBeenCalled();
+    expect(prismaMock.galleryPublication.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          thumbnailStatus: "failed",
+          thumbnailError: "Preview did not compile",
+        }),
+      }),
+    );
   });
 
   it("prioritizes the newest pending publications during recovery", async () => {

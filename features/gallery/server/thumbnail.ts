@@ -71,11 +71,9 @@ async function captureThumbnail(slug: string) {
     await page.waitForSelector(".sp-preview-iframe", {
       timeout: THUMBNAIL_READY_TIMEOUT_MS,
     });
-    await page
-      .waitForSelector('[data-gallery-preview-status="ready"]', {
-        timeout: 12_000,
-      })
-      .catch(() => undefined);
+    await page.waitForSelector('[data-gallery-preview-status="ready"]', {
+      timeout: THUMBNAIL_READY_TIMEOUT_MS,
+    });
     await page.waitForTimeout(1_000);
 
     return await page.screenshot({
