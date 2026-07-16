@@ -61,31 +61,41 @@ export async function getGalleryProjects({
         description: true,
         allowRemixes: true,
         publishedAt: true,
+        messageId: true,
         thumbnailUrl: true,
         thumbnailStatus: true,
+        thumbnailCapturedMessageId: true,
         user: { select: { name: true, image: true } },
       },
     }),
   ]);
 
-  const projects: GalleryProjectSummary[] = rows.map((row) => ({
-    id: row.id,
-    ownerChatId: row.userId === viewerId ? row.chatId : null,
-    slug: row.slug,
-    title: row.title,
-    description: row.description,
-    allowRemixes: row.allowRemixes,
-    publishedAt: row.publishedAt,
-    thumbnailUrl: row.thumbnailUrl,
-    thumbnailStatus:
-      row.thumbnailStatus === "ready" || row.thumbnailStatus === "failed"
-        ? row.thumbnailStatus
-        : "pending",
-    creator: {
-      name: row.user.name ?? "Squid creator",
-      image: row.user.image,
-    },
-  }));
+  const projects: GalleryProjectSummary[] = rows.map((row) => {
+    const hasCurrentThumbnail =
+      row.thumbnailStatus === "ready" &&
+      row.thumbnailCapturedMessageId === row.messageId &&
+      Boolean(row.thumbnailUrl);
+
+    return {
+      id: row.id,
+      ownerChatId: row.userId === viewerId ? row.chatId : null,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      allowRemixes: row.allowRemixes,
+      publishedAt: row.publishedAt,
+      thumbnailUrl: hasCurrentThumbnail ? row.thumbnailUrl : null,
+      thumbnailStatus: hasCurrentThumbnail
+        ? "ready"
+        : row.thumbnailStatus === "failed"
+          ? "failed"
+          : "pending",
+      creator: {
+        name: row.user.name ?? "Squid creator",
+        image: row.user.image,
+      },
+    };
+  });
 
   return {
     projects,

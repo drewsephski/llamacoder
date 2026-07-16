@@ -13,6 +13,7 @@
 # next.js
 /.next/
 /.next-e2e/
+/.next-gallery-qa/
 /out/
 /.source/
 
