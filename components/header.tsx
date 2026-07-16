@@ -115,6 +115,14 @@ function Header({ onHelpClick }: HeaderProps) {
               size="sm"
               className="text-foreground hover:bg-accent hover:text-white"
             >
+              <Link href="/gallery">Gallery</Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-foreground hover:bg-accent hover:text-white"
+            >
               <Link href="/dashboard">Dashboard</Link>
             </Button>
             <Button
@@ -136,6 +144,14 @@ function Header({ onHelpClick }: HeaderProps) {
           </>
         ) : (
           <>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-foreground hover:bg-accent hover:text-white"
+            >
+              <Link href="/gallery">Gallery</Link>
+            </Button>
             <Button
               onClick={() => openPricingModal("plans")}
               variant="ghost"
@@ -255,6 +271,14 @@ function Header({ onHelpClick }: HeaderProps) {
                     onClick={() => setMobileMenuOpen(false)}
                     className="min-h-12 justify-start"
                   >
+                    <Link href="/gallery">Gallery</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="default"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="min-h-12 justify-start"
+                  >
                     <Link href="/dashboard">Dashboard</Link>
                   </Button>
                   <Button
@@ -278,6 +302,14 @@ function Header({ onHelpClick }: HeaderProps) {
                 </>
               ) : (
                 <>
+                  <Button
+                    asChild
+                    variant="default"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="min-h-12 justify-start"
+                  >
+                    <Link href="/gallery">Gallery</Link>
+                  </Button>
                   <Button
                     onClick={() => {
                       openPricingModal("plans");

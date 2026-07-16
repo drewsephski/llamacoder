@@ -831,6 +831,8 @@ export default function CodeViewer({
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-3 md:px-4 md:py-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm md:gap-2.5">
           <Share
+            projectTitle={chat.title}
+            projectDescription={chat.prompt}
             message={
               disabledControls
                 ? undefined

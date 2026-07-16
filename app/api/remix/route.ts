@@ -49,6 +49,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const publication = await prisma.galleryPublication.findUnique({
+    where: { messageId: sourceMessage.id },
+    select: { allowRemixes: true, isPublished: true },
+  });
+  if (publication && (!publication.isPublished || !publication.allowRemixes)) {
+    return NextResponse.json(
+      {
+        error: "REMIX_NOT_ALLOWED",
+        message: "The creator has not allowed remixes for this project",
+      },
+      { status: 403 },
+    );
+  }
+
   const files = getMessageGeneratedFiles(sourceMessage);
 
   if (files.length === 0) {

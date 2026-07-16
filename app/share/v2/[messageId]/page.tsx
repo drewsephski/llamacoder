@@ -45,6 +45,9 @@ export default async function SharePage({
   const message = await prisma.message.findUnique({
     where: { id: messageId },
     include: {
+      galleryPublication: {
+        select: { allowRemixes: true, isPublished: true },
+      },
       chat: {
         include: {
           user: {
@@ -72,6 +75,12 @@ export default async function SharePage({
       prompt={message.chat.prompt}
       creatorName={message.chat.user?.name ?? "Squid creator"}
       files={files.map((file) => ({ path: file.path, content: file.code }))}
+      allowRemixes={
+        message.galleryPublication
+          ? message.galleryPublication.isPublished &&
+            message.galleryPublication.allowRemixes
+          : true
+      }
     />
   );
 }

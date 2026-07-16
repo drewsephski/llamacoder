@@ -16,6 +16,7 @@ const {
   },
   prismaMock: {
     $transaction: vi.fn(),
+    galleryPublication: { findUnique: vi.fn() },
     message: { findUnique: vi.fn() },
   },
 }));
@@ -91,6 +92,7 @@ describe("/api/remix", () => {
       hasActiveSubscription: false,
     });
     prismaMock.message.findUnique.mockResolvedValue(sourceMessage());
+    prismaMock.galleryPublication.findUnique.mockResolvedValue(null);
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback(txMock),
     );
@@ -170,6 +172,23 @@ describe("/api/remix", () => {
       error: "FORBIDDEN_MODEL",
       message: "Upgrade to remix apps built with this model",
     });
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("enforces a published project's remix setting before eligibility checks", async () => {
+    prismaMock.galleryPublication.findUnique.mockResolvedValueOnce({
+      isPublished: true,
+      allowRemixes: false,
+    });
+
+    const response = await POST(request({ messageId: "assistant_1" }));
+
+    expect(response.status).toBe(403);
+    await expect(readJson(response)).resolves.toEqual({
+      error: "REMIX_NOT_ALLOWED",
+      message: "The creator has not allowed remixes for this project",
+    });
+    expect(checkProjectCreationEligibilityMock).not.toHaveBeenCalled();
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 });

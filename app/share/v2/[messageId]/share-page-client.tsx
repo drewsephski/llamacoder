@@ -2,7 +2,14 @@
 
 import CodeRunner from "@/components/code-runner";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, GitFork, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  Download,
+  Eye,
+  GitFork,
+  Sparkles,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -18,6 +25,8 @@ type SharePageClientProps = {
   prompt: string;
   creatorName: string;
   files: SharedFile[];
+  allowRemixes?: boolean;
+  galleryHref?: string;
 };
 
 export function SharePageClient({
@@ -26,6 +35,8 @@ export function SharePageClient({
   prompt,
   creatorName,
   files,
+  allowRemixes = true,
+  galleryHref,
 }: SharePageClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -74,6 +85,15 @@ export function SharePageClient({
     <div className="flex h-full w-full grow flex-col bg-background">
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside className="flex w-full shrink-0 flex-col gap-5 border-b border-border bg-background px-5 py-5 lg:w-[360px] lg:border-b-0 lg:border-r">
+          {galleryHref && (
+            <a
+              href={galleryHref}
+              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" />
+              Back to gallery
+            </a>
+          )}
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
               <Sparkles className="size-3" />
@@ -90,10 +110,17 @@ export function SharePageClient({
           </div>
 
           <div className="grid gap-2">
-            <Button onClick={handleRemix} disabled={isPending}>
-              <GitFork className="size-4" />
-              {isPending ? "Remixing..." : "Remix this app"}
-            </Button>
+            {allowRemixes ? (
+              <Button onClick={handleRemix} disabled={isPending}>
+                <GitFork className="size-4" />
+                {isPending ? "Remixing..." : "Remix this app"}
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                <Eye className="size-4" />
+                This project is view only
+              </div>
+            )}
             <Button variant="outline" onClick={handleCopyPrompt}>
               <Copy className="size-4" />
               {didCopy ? "Copied" : "Copy prompt"}

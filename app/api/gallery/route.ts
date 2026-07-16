@@ -1,51 +1,117 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+import { getCurrentSession } from "@/features/auth/server/session";
+import { publishProjectSchema } from "@/features/gallery/contracts";
+import {
+  createGallerySlug,
+  getGalleryProjects,
+} from "@/features/gallery/server/queries";
+import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getPrisma } from "@/lib/prisma";
 
 export async function GET() {
-  const prisma = getPrisma();
-  const events = await prisma.shareEvent.findMany({
-    where: {
-      eventType: "gallery_featured",
-    },
-    orderBy: { createdAt: "desc" },
-    distinct: ["messageId"],
-    take: 6,
+  const { projects } = await getGalleryProjects({
+    page: 1,
+    query: "",
+    remixable: false,
+    sort: "newest",
   });
-  const messageIds = events.map((event) => event.messageId);
-
-  if (messageIds.length === 0) {
-    return NextResponse.json({ apps: [] });
-  }
-
-  const messages = await prisma.message.findMany({
-    where: {
-      id: { in: messageIds },
-    },
-    include: {
-      chat: {
-        include: {
-          user: {
-            select: {
-              name: true,
-              image: true,
-            },
-          },
-        },
-      },
-    },
-  });
-  const messageById = new Map(messages.map((message) => [message.id, message]));
 
   return NextResponse.json({
-    apps: messageIds
-      .map((messageId) => messageById.get(messageId))
-      .filter(Boolean)
-      .map((message) => ({
-        name: message!.chat.title,
-        href: `/share/v2/${message!.id}`,
-        description: message!.chat.prompt,
-        category: message!.chat.quality === "high" ? "High quality" : "Fast build",
-        creatorName: message!.chat.user?.name ?? "Squid creator",
-      })),
+    apps: projects.slice(0, 6).map((project) => ({
+      name: project.title,
+      href: `/gallery/${project.slug}`,
+      remixHref: project.allowRemixes ? `/gallery/${project.slug}` : undefined,
+      description: project.description,
+      category: project.allowRemixes ? "Remixable" : "View only",
+      creatorName: project.creator.name,
+    })),
+  });
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getCurrentSession();
+  if (!session) {
+    return NextResponse.json(
+      {
+        error: "AUTHENTICATION_REQUIRED",
+        message: "Please sign in to publish",
+      },
+      { status: 401 },
+    );
+  }
+
+  const parsed = publishProjectSchema.safeParse(
+    await request.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "INVALID_REQUEST", message: "Check the publication details" },
+      { status: 400 },
+    );
+  }
+
+  const prisma = getPrisma();
+  const message = await prisma.message.findFirst({
+    where: {
+      id: parsed.data.messageId,
+      role: "assistant",
+      chat: { userId: session.user.id },
+    },
+    include: { chat: true },
+  });
+
+  if (!message) {
+    return NextResponse.json(
+      { error: "NOT_FOUND", message: "Project version not found" },
+      { status: 404 },
+    );
+  }
+  if (getMessageGeneratedFiles(message).length === 0) {
+    return NextResponse.json(
+      { error: "NO_FILES", message: "Generate an app before publishing" },
+      { status: 400 },
+    );
+  }
+
+  const existing = await prisma.galleryPublication.findUnique({
+    where: { chatId: message.chatId },
+    select: { slug: true },
+  });
+  const now = new Date();
+  const publication = await prisma.galleryPublication.upsert({
+    where: { chatId: message.chatId },
+    create: {
+      slug: createGallerySlug(parsed.data.title, message.chatId),
+      chatId: message.chatId,
+      messageId: message.id,
+      userId: session.user.id,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      allowRemixes: parsed.data.allowRemixes,
+      isPublished: true,
+      publishedAt: now,
+    },
+    update: {
+      messageId: message.id,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      allowRemixes: parsed.data.allowRemixes,
+      isPublished: true,
+      publishedAt: now,
+      unpublishedAt: null,
+    },
+  });
+
+  return NextResponse.json({
+    publication: {
+      id: publication.id,
+      slug: existing?.slug ?? publication.slug,
+      title: publication.title,
+      description: publication.description,
+      allowRemixes: publication.allowRemixes,
+      isPublished: publication.isPublished,
+      url: `/gallery/${publication.slug}`,
+    },
   });
 }

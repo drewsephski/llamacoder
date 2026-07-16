@@ -8,6 +8,7 @@ type FooterProps = {
 };
 
 const landingLinks = [
+  { href: "/gallery", label: "Gallery" },
   { href: "/example", label: "Example" },
   { href: "/docs", label: "Docs" },
   { href: "/dashboard", label: "Dashboard" },
