@@ -7,6 +7,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
+vi.mock("@/features/projects/server/actions", () => ({
+  deleteProject: vi.fn(),
+}));
+
 import { GalleryProjectCard } from "@/features/gallery/components/gallery-project-card";
 import type { GalleryProjectSummary } from "@/features/gallery/contracts";
 
