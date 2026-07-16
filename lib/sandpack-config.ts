@@ -4,9 +4,8 @@ import { normalizeGeneratedFiles } from "@/lib/generated-files";
 export function getSandpackConfig(
   files: Array<{ path: string; content: string }>,
 ) {
+  const sandpackFiles: Record<string, string> = { ...shadcnFiles };
   const normalizedFiles = normalizeGeneratedFiles(files);
-  const sandpackFiles: Record<string, string> =
-    getRequiredShadcnFiles(normalizedFiles);
 
   // Add tsconfig
   sandpackFiles["/tsconfig.json"] = `{
@@ -81,7 +80,7 @@ export default function App() {
       externalResources: ["https://cdn.tailwindcss.com"],
     },
     customSetup: {
-      dependencies: getRequiredDependencies(sandpackFiles),
+      dependencies,
     },
   };
 }
@@ -149,93 +148,6 @@ export const shadcnFiles = {
   </html>
   `,
 };
-
-const availableShadcnFiles: Record<string, string> = shadcnFiles;
-const IMPORT_SOURCE_REGEX =
-  /\b(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
-
-function getRequiredShadcnFiles(
-  generatedFiles: Array<{ path: string; code: string }>,
-) {
-  const selected: Record<string, string> = {
-    "/public/index.html": shadcnFiles["/public/index.html"],
-  };
-  const pending: string[] = [];
-
-  const addImports = (fromPath: string, code: string) => {
-    IMPORT_SOURCE_REGEX.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = IMPORT_SOURCE_REGEX.exec(code)) !== null) {
-      const resolvedPath = resolveShadcnImport(fromPath, match[1]);
-      if (resolvedPath && !(resolvedPath in selected)) {
-        selected[resolvedPath] = availableShadcnFiles[resolvedPath];
-        pending.push(resolvedPath);
-      }
-    }
-  };
-
-  for (const file of generatedFiles) {
-    addImports(`/${file.path}`, file.code);
-  }
-  while (pending.length > 0) {
-    const path = pending.shift();
-    if (path) addImports(path, selected[path]);
-  }
-
-  return selected;
-}
-
-function resolveShadcnImport(fromPath: string, source: string) {
-  let basePath: string;
-  if (source.startsWith("@/")) {
-    basePath = `/${source.slice(2)}`;
-  } else if (source.startsWith("/")) {
-    basePath = source;
-  } else if (source.startsWith("./") || source.startsWith("../")) {
-    const directory = fromPath.slice(0, fromPath.lastIndexOf("/"));
-    basePath = normalizePath(`${directory}/${source}`);
-  } else {
-    return null;
-  }
-
-  const candidates = /\.[a-z]+$/i.test(basePath)
-    ? [basePath]
-    : [basePath, `${basePath}.tsx`, `${basePath}.ts`, `${basePath}/index.tsx`];
-  return (
-    candidates.find((candidate) => candidate in availableShadcnFiles) ?? null
-  );
-}
-
-function normalizePath(path: string) {
-  const segments: string[] = [];
-  for (const segment of path.split("/")) {
-    if (!segment || segment === ".") continue;
-    if (segment === "..") segments.pop();
-    else segments.push(segment);
-  }
-  return `/${segments.join("/")}`;
-}
-
-function getRequiredDependencies(files: Record<string, string>) {
-  const availableDependencies: Record<string, string> = dependencies;
-  const selected: Record<string, string> = {};
-
-  for (const code of Object.values(files)) {
-    IMPORT_SOURCE_REGEX.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = IMPORT_SOURCE_REGEX.exec(code)) !== null) {
-      const source = match[1];
-      const packageName = source.startsWith("@")
-        ? source.split("/").slice(0, 2).join("/")
-        : source.split("/")[0];
-      if (packageName in availableDependencies) {
-        selected[packageName] = availableDependencies[packageName];
-      }
-    }
-  }
-
-  return selected;
-}
 
 const squidPreviewInspectorComponent = `"use client";
 
