@@ -123,11 +123,11 @@ export default function ChatLog({
 
   return (
     <StickToBottom
-      className="relative min-w-0 grow overflow-x-hidden"
+      className="relative min-h-0 min-w-0 flex-1 overflow-hidden overscroll-contain"
       resize="smooth"
       initial="smooth"
     >
-      <StickToBottom.Content className="mx-auto flex w-full min-w-0 max-w-prose flex-col gap-8 overflow-x-hidden py-8 pl-4 pr-2">
+      <StickToBottom.Content className="mx-auto flex w-full min-w-0 max-w-[42rem] flex-col gap-6 overflow-x-hidden px-4 pb-6 pt-4 sm:px-5 sm:pb-8 sm:pt-6">
         <div
           className="pointer-events-none absolute inset-0 z-10"
           style={{

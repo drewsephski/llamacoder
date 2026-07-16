@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -97,8 +97,7 @@ describe("API selection dialog", () => {
     ];
 
     for (const providerName of providerNames) {
-      await userEvent.clear(search);
-      await userEvent.type(search, providerName);
+      fireEvent.change(search, { target: { value: providerName } });
       expect(
         screen.getByRole("button", { name: new RegExp(providerName, "i") }),
       ).toBeInTheDocument();

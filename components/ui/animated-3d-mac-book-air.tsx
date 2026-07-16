@@ -1,14 +1,18 @@
+import Image from "next/image";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-type MacbookProps = React.HTMLAttributes<HTMLDivElement>;
+type MacbookProps = React.HTMLAttributes<HTMLDivElement> & {
+  screenImageAlt?: string;
+  screenImageSrc?: string;
+};
 
 const keyClasses =
   "macbook-key custom-animate-keys float-left m-[1px] size-[6px] rounded-[2px] bg-[#444] shadow-[0_-2px_0_#222]";
 
 const Macbook = React.forwardRef<HTMLDivElement, MacbookProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, screenImageAlt = "", screenImageSrc, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -22,8 +26,17 @@ const Macbook = React.forwardRef<HTMLDivElement, MacbookProps>(
           <div className="macbook-screen custom-animate-lid-screen absolute bottom-0 left-0 h-[96px] w-[150px] rounded-[7px] bg-[#ddd] bg-[linear-gradient(45deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0)_100%)] bg-[length:300px_300px] bg-left-bottom shadow-[inset_0_3px_7px_rgba(255,255,255,0.5)]">
             <div className="macbook-screen-face-one absolute bottom-0 left-0 h-[96px] w-[150px] rounded-[7px] bg-[#d3d3d3] bg-[linear-gradient(45deg,rgba(0,0,0,0.24)_0%,rgba(0,0,0,0)_100%)]">
               <div className="absolute left-1/2 top-[4px] ml-[-1.5px] size-[3px] rounded-full bg-black" />
-              <div className="relative m-[10px] h-[74px] w-[130px] rounded-[1px] bg-black bg-[length:100%_100%] shadow-[inset_0_0_2px_rgba(0,0,0,1)]">
-                <div className="custom-animate-screen-shade absolute left-0 top-0 h-[74px] w-[130px] bg-[linear-gradient(-135deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.1)_47%,rgba(255,255,255,0)_48%)] bg-[length:300px_200px] bg-[position:0px_0px]" />
+              <div className="relative m-[10px] h-[74px] w-[130px] overflow-hidden rounded-[1px] bg-black shadow-[inset_0_0_2px_rgba(0,0,0,1)]">
+                {screenImageSrc ? (
+                  <Image
+                    src={screenImageSrc}
+                    alt={screenImageAlt}
+                    fill
+                    sizes="195px"
+                    className="object-cover"
+                  />
+                ) : null}
+                <div className="custom-animate-screen-shade pointer-events-none absolute left-0 top-0 z-10 h-[74px] w-[130px] bg-[linear-gradient(-135deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.1)_47%,rgba(255,255,255,0)_48%)] bg-[length:300px_200px] bg-[position:0px_0px]" />
               </div>
               <span className="absolute left-[57px] top-[85px] text-[6px] text-[#666]">
                 MacBook Air

@@ -12,7 +12,7 @@ describe("AI builder feature comparison", () => {
       name: /feature comparison of lovable, bolt.new, base44, v0, and squid agent/i,
     });
 
-    expect(within(table).getByText("Workflow visibility")).toBeInTheDocument();
+    expect(within(table).getByText("Expected build total")).toBeInTheDocument();
     expect(within(table).getByText("Squid Agent")).toBeInTheDocument();
     expect(
       within(table).getByText("Verified ZIP and GitHub publishing"),
@@ -29,6 +29,9 @@ describe("AI builder feature comparison", () => {
     expect(
       screen.getByRole("heading", { name: "Squid Agent", level: 3 }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Cost visibility")).toHaveLength(6);
+    expect(screen.getAllByText("Per-result cost record")).toHaveLength(6);
+    expect(screen.getAllByText("No bundled reports documented")).toHaveLength(
+      8,
+    );
   });
 });

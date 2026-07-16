@@ -79,15 +79,17 @@ const MAX_AUTOMATIC_PREVIEW_REPAIRS = 3;
 
 const HeaderChat = memo(({ chat }: { chat: Chat }) => {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <Link href="/">
-          <LogoSmall />
-        </Link>
-        <p className="truncate italic text-muted-foreground">{chat.title}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <AnimatedThemeToggleButton variant="horizontal" />
+    <div className="shrink-0 px-4 py-3 sm:px-5 sm:py-4">
+      <div className="mx-auto flex w-full max-w-[42rem] items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link href="/">
+            <LogoSmall />
+          </Link>
+          <p className="truncate italic text-muted-foreground">{chat.title}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <AnimatedThemeToggleButton variant="horizontal" />
+        </div>
       </div>
     </div>
   );
@@ -895,7 +897,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         <div
           className={`flex h-full min-w-0 flex-col overflow-x-hidden ${
             isShowingCodeViewer
-              ? "w-full lg:w-[clamp(20rem,30vw,32rem)] lg:shrink-0"
+              ? "w-full lg:w-[clamp(22rem,32vw,36rem)] lg:shrink-0"
               : "w-full"
           }`}
         >

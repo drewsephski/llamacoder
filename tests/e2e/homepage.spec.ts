@@ -20,7 +20,7 @@ test("feature comparison is shared across marketing surfaces", async ({
 
     await expect(
       page.getByRole("heading", {
-        name: "Compare the workflow after the first prompt.",
+        name: "The first prompt is the easy part.",
       }),
     ).toBeVisible();
     await expect(

@@ -68,8 +68,14 @@ export default function ChatBox({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    const collapsedMinHeight = 96;
-    const collapsedMaxHeight = 240;
+    const collapsedMinHeight = Math.max(
+      72,
+      Math.min(96, window.innerHeight * 0.12),
+    );
+    const collapsedMaxHeight = Math.max(
+      160,
+      Math.min(240, window.innerHeight * 0.3),
+    );
     const expandedHeight = Math.min(window.innerHeight * 0.46, 440);
     const minHeight = isComposerExpanded
       ? Math.max(collapsedMaxHeight, expandedHeight)
@@ -165,7 +171,10 @@ export default function ChatBox({
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
-        .chatbox-wrap { font-family: 'DM Sans', system-ui, sans-serif; }
+        .chatbox-wrap {
+          container-type: inline-size;
+          font-family: 'DM Sans', system-ui, sans-serif;
+        }
 
         .chatbox-field {
           border-radius: 18px;
@@ -232,6 +241,16 @@ export default function ChatBox({
           max-width: 160px;
         }
 
+        .composer-shortcut { display: none; }
+
+        @container (min-width: 29rem) {
+          .composer-shortcut { display: inline; }
+        }
+
+        @container (max-width: 24rem) {
+          .model-tag { max-width: 116px; }
+        }
+
         .streaming-indicator {
           display: flex;
           align-items: center;
@@ -254,7 +273,7 @@ export default function ChatBox({
 
       `}</style>
 
-      <div className="chatbox-wrap mx-auto mb-4 flex w-full min-w-0 max-w-4xl shrink-0 flex-col overflow-x-hidden px-4 sm:px-6">
+      <div className="chatbox-wrap mx-auto mb-3 flex w-full min-w-0 max-w-[42rem] shrink-0 flex-col overflow-x-hidden px-4 sm:px-5">
         {!hasActiveSubscription && (
           <UpgradeBanner
             variant={isPaidModel ? "model-locked" : "chat"}
@@ -263,14 +282,18 @@ export default function ChatBox({
         )}
 
         {!isStreaming && latestFollowUpPrompts.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div
+            className="mb-2.5 flex w-full snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin]"
+            role="group"
+            aria-label="Suggested follow-up prompts"
+          >
             {latestFollowUpPrompts.map((followUpPrompt) => (
               <button
                 key={followUpPrompt}
                 type="button"
                 disabled={disabled}
                 onClick={() => handleFollowUpPromptSelect(followUpPrompt)}
-                className="rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-left text-[12.5px] font-medium text-muted-foreground transition hover:border-blue-400/50 hover:bg-blue-50/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card/70 dark:hover:bg-blue-950/30"
+                className="max-w-[min(22rem,85vw)] shrink-0 snap-start rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-left text-[12.5px] font-medium text-muted-foreground transition hover:border-blue-400/50 hover:bg-blue-50/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card/70 dark:hover:bg-blue-950/30"
               >
                 {followUpPrompt}
               </button>
@@ -278,8 +301,8 @@ export default function ChatBox({
           </div>
         )}
 
-        <form className="relative flex w-full" action={handleSubmit}>
-          <fieldset className="w-full" disabled={disabled}>
+        <form className="relative flex w-full min-w-0" action={handleSubmit}>
+          <fieldset className="w-full min-w-0" disabled={disabled}>
             <div className="chatbox-field relative flex flex-col">
               {/* Textarea */}
               <Textarea
@@ -294,7 +317,7 @@ export default function ChatBox({
                 onChange={(e) => setPrompt(e.target.value)}
                 required
                 name="prompt"
-                className="chatbox-textarea min-h-24 resize-none overflow-y-auto border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed placeholder:text-muted-foreground/55 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="chatbox-textarea min-h-[4.5rem] resize-none overflow-y-auto border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed placeholder:text-muted-foreground/55 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     if (disabled || event.nativeEvent.isComposing) return;
@@ -342,7 +365,7 @@ export default function ChatBox({
 
                 {/* Right: composer controls */}
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <span className="hidden text-[10.5px] text-muted-foreground/65 md:inline">
+                  <span className="composer-shortcut text-[10.5px] text-muted-foreground/65">
                     <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 font-sans">
                       Enter
                     </kbd>{" "}

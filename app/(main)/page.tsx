@@ -2539,7 +2539,11 @@ function LandingMacbookSection() {
 
         <div className="relative flex h-[260px] min-w-0 items-center justify-center sm:h-[320px]">
           <div className="relative h-[220px] w-full max-w-md">
-            <Macbook className="scale-125 sm:scale-150" />
+            <Macbook
+              className="scale-125 sm:scale-150"
+              screenImageSrc="/macbook-squid-home.webp"
+              screenImageAlt="Squid Agent home screen"
+            />
           </div>
         </div>
       </div>
