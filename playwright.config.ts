@@ -1,12 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const e2ePort = process.env.E2E_PORT || "3100";
+const localBaseURL = `http://localhost:${e2ePort}`;
+const baseURL = process.env.E2E_BASE_URL || localBaseURL;
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  timeout: 30_000,
+  timeout: 60_000,
   fullyParallel: true,
-  reporter: [["list"], ["html", { open: "never" }]],
+  reporter: "list",
   use: {
     baseURL,
     trace: "on-first-retry",
@@ -20,9 +22,18 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: "E2E_SKIP_EMAIL_DELIVERY=1 pnpm dev",
+        command: [
+          `BETTER_AUTH_URL=${localBaseURL}`,
+          `NEXT_PUBLIC_APP_URL=${localBaseURL}`,
+          `NEXT_PUBLIC_BETTER_AUTH_URL=${localBaseURL}`,
+          `BETTER_AUTH_TRUSTED_ORIGINS=${localBaseURL}`,
+          `NEXT_PUBLIC_BETTER_AUTH_TRUSTED_ORIGINS=${localBaseURL}`,
+          "E2E_SKIP_EMAIL_DELIVERY=1",
+          "NEXT_DIST_DIR=.next-e2e",
+          `pnpm dev --port ${e2ePort}`,
+        ].join(" "),
         url: baseURL,
-        reuseExistingServer: true,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
 });

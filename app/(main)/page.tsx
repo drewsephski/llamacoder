@@ -31,7 +31,6 @@ import {
 } from "react";
 
 import Header from "@/components/header";
-import { usePresignedUpload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
@@ -55,6 +54,8 @@ import { fetchCompletionStream } from "@/features/generation/client/completion-s
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 import { getErrorMessage } from "@/features/shared/errors";
 import { ApiSelectionDialog } from "@/features/integrations/components/api-selection-dialog";
+import { AiBuilderFeatureComparison } from "@/components/ai-builder-feature-comparison";
+import { uploadScreenshot } from "@/lib/s3-upload-client";
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/png",
@@ -479,8 +480,6 @@ export default function Home() {
     setIsHoveringRing(false);
   };
 
-  const { uploadToS3 } = usePresignedUpload();
-
   const selectedModel = useMemo(
     () => MODELS.find((m) => m.value === model),
     [model],
@@ -614,9 +613,7 @@ export default function Home() {
 
       if (!isAuthenticated) return;
 
-      uploadToS3(file, {
-        endpoint: { request: { body: { filesize: file.size } } },
-      })
+      uploadScreenshot(file)
         .then(({ url }) => {
           setScreenshotUrl(url);
         })
@@ -1892,6 +1889,7 @@ export default function Home() {
           </div>
 
           <HomepageAnswerSection />
+          <AiBuilderFeatureComparison variant="homepage" />
           <BuiltWithSquidSection />
           <HomepageFaqSection />
           <HoverBrandLogo />

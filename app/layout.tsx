@@ -75,6 +75,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`h-full ${dmSans.variable}`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>

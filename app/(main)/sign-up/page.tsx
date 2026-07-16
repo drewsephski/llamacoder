@@ -114,6 +114,7 @@ export default function SignUpPage() {
               alt="Squid Agent"
               width={64}
               height={64}
+              loading="eager"
               className="h-16 w-auto"
             />
           </Link>

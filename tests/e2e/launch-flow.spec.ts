@@ -26,7 +26,7 @@ test.describe("billable generation API contract", () => {
       await page.getByLabel("Email address").fill(email);
       await page.getByLabel("Password").fill(password);
       await page.getByRole("button", { name: "Sign up" }).click();
-      await expect(page).toHaveURL(/\/verify-email/);
+      await expect(page).toHaveURL(/\/verify-email/, { timeout: 20_000 });
 
       const user = await prisma.user.findUniqueOrThrow({ where: { email } });
       userId = user.id;
@@ -55,11 +55,20 @@ test.describe("billable generation API contract", () => {
         });
       });
 
+      await page.context().clearCookies();
       await page.goto("/sign-in?callbackUrl=/dashboard");
       await page.getByLabel("Email address").fill(email);
       await page.getByLabel("Password").fill(password);
       await page.getByRole("button", { name: "Sign in" }).click();
-      await expect(page).toHaveURL(/\/dashboard$/);
+      await page.waitForURL((url) => url.pathname === "/dashboard", {
+        timeout: 20_000,
+      });
+
+      const sessionResponse = await page.request.get("/api/auth/get-session");
+      expect(sessionResponse.ok()).toBeTruthy();
+      await expect(sessionResponse.json()).resolves.toMatchObject({
+        user: { id: user.id },
+      });
 
       const createResponse = await page.request.post("/api/create-chat", {
         data: {
@@ -68,7 +77,10 @@ test.describe("billable generation API contract", () => {
           quality: "low",
         },
       });
-      expect(createResponse.ok()).toBeTruthy();
+      const createError = createResponse.ok()
+        ? undefined
+        : await createResponse.text();
+      expect(createResponse.ok(), createError).toBeTruthy();
       const created = (await createResponse.json()) as { chatId: string };
       chatId = created.chatId;
       await prisma.chat.update({
@@ -127,7 +139,7 @@ test.describe("billable generation API contract", () => {
       await page.goto(`/chats/${chatId}`);
       await page.reload();
       await expect(
-        page.getByText(/credits? used|actual/i).first(),
+        page.getByRole("button", { name: /credits? charged/i }),
       ).toBeVisible();
     } finally {
       if (chatId) {

@@ -21,6 +21,7 @@ import {
   MarketingFooter,
   MarketingHeader,
 } from "@/components/marketing-chrome";
+import { AiBuilderFeatureComparison } from "@/components/ai-builder-feature-comparison";
 
 type MarketingArticleProps = {
   page: MarketingPage;
@@ -42,6 +43,9 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
         : "/benchmarks";
   const tocItems = [
     ...(page.table ? [{ label: page.table.caption, id: "at-a-glance" }] : []),
+    ...(page.kind === "comparison"
+      ? [{ label: "Five-way feature comparison", id: "feature-comparison" }]
+      : []),
     ...(page.workflow
       ? [{ label: "Evaluation workflow", id: "workflow" }]
       : []),
@@ -166,6 +170,8 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
               </section>
 
               {page.table && <ComparisonTable table={page.table} />}
+
+              {page.kind === "comparison" && <AiBuilderFeatureComparison />}
 
               {page.workflow && (
                 <section id="workflow" className="scroll-mt-28 py-16">

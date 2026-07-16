@@ -18,6 +18,14 @@ function validEnvironment(): NodeJS.ProcessEnv {
     OPERATIONAL_ALERT_WEBHOOK_URL: "https://alerts.example.com/squid",
     SYNTHETIC_MONITOR_SECRET: "s".repeat(32),
     CRON_SECRET: "c".repeat(32),
+    STRIPE_SECRET_KEY: "sk_test_unit",
+    STRIPE_PUBLISHABLE_KEY: "pk_test_unit",
+    STRIPE_WEBHOOK_SECRET: "whsec_unit",
+    STRIPE_PRO_PRICE_ID: "price_pro",
+    STRIPE_PRO_PLUS_PRICE_ID: "price_pro_plus",
+    STRIPE_CREDITS_10_PRICE_ID: "price_credits_10",
+    STRIPE_CREDITS_25_PRICE_ID: "price_credits_25",
+    STRIPE_CREDITS_60_PRICE_ID: "price_credits_60",
   };
 }
 
@@ -58,5 +66,19 @@ describe("production environment validation", () => {
     expect(result.errors.join("\n")).toContain(
       "Configure all or none of: TURNSTILE_SECRET_KEY, NEXT_PUBLIC_TURNSTILE_SITE_KEY",
     );
+  });
+
+  it("rejects an incomplete Stripe billing configuration", () => {
+    const environment = validEnvironment();
+    delete environment.STRIPE_PRO_PLUS_PRICE_ID;
+
+    const result = validateProductionEnvironment(environment);
+
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.errors.join("\n")).toContain(
+      "Configure all or none of: STRIPE_SECRET_KEY",
+    );
+    expect(result.errors.join("\n")).toContain("STRIPE_PRO_PLUS_PRICE_ID");
   });
 });

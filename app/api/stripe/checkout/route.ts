@@ -13,6 +13,7 @@ import { normalizeTier } from "@/lib/billing";
 import { syncSubscriptionFromStripe } from "@/lib/billing/stripe-fulfillment";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
+import { getAppOrigin } from "@/lib/app-origin";
 
 type SubscriptionTier = keyof typeof STRIPE_PRICE_IDS;
 
@@ -210,10 +211,7 @@ export async function POST(request: NextRequest) {
         ? normalizeTier(user.subscription.tier)
         : "free";
 
-    const origin =
-      request.headers.get("origin") ||
-      process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
-      "http://localhost:3000";
+    const origin = getAppOrigin();
 
     if (user.subscription?.status === "active") {
       if (currentTier === tier) {

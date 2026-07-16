@@ -222,11 +222,8 @@ export async function POST(request: NextRequest) {
           chat.model,
           chat.quality === "high" ? "high" : "low",
         ),
+        system: getMainCodingPrompt(),
         messages: [
-          {
-            role: "system",
-            content: getMainCodingPrompt(),
-          },
           {
             role: "user",
             content: userContent,
@@ -398,6 +395,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         modelId: chat.model,
         chatId: chat.id,
+        messageId: createdMessage.id,
         description: `Code generation - ${chat.title}`,
         phase: "initial_generation",
         status: "completed",

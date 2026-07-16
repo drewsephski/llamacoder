@@ -604,7 +604,8 @@ function validateBasicAccessibility(files: GeneratedFile[]) {
     for (const match of inputMatches) {
       const attrs = match[1] || "";
       const hasAccessibleName =
-        /\b(?:aria-label|aria-labelledby|id|placeholder)=/.test(attrs);
+        /\b(?:aria-label|aria-labelledby|id|placeholder)=/.test(attrs) ||
+        isWrappedInLabel(file.code, match.index);
       if (!hasAccessibleName) {
         warnings.push({
           path: file.path,
@@ -627,6 +628,17 @@ function validateBasicAccessibility(files: GeneratedFile[]) {
   }
 
   return warnings;
+}
+
+function isWrappedInLabel(code: string, inputIndex: number) {
+  const sourceBeforeInput = code.slice(0, inputIndex);
+  const lastLabelOpen = sourceBeforeInput.lastIndexOf("<label");
+  const lastLabelClose = sourceBeforeInput.lastIndexOf("</label>");
+
+  return (
+    lastLabelOpen > lastLabelClose &&
+    code.indexOf("</label>", inputIndex) !== -1
+  );
 }
 
 function isInternalGeneratedImport(source: string) {

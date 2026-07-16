@@ -31,9 +31,14 @@ const productionEnvironmentSchema = z.object({
   S3_UPLOAD_BUCKET: z.string().optional(),
   S3_UPLOAD_SECRET: z.string().optional(),
   S3_UPLOAD_KEY: z.string().optional(),
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().min(1),
+  STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  STRIPE_PRO_PRICE_ID: z.string().min(1),
+  STRIPE_PRO_PLUS_PRICE_ID: z.string().min(1),
+  STRIPE_CREDITS_10_PRICE_ID: z.string().min(1),
+  STRIPE_CREDITS_25_PRICE_ID: z.string().min(1),
+  STRIPE_CREDITS_60_PRICE_ID: z.string().min(1),
   NEXT_PUBLIC_BETTER_AUTH_URL: optionalUrl,
 });
 
@@ -68,7 +73,16 @@ export function validateProductionEnvironment(
       "S3_UPLOAD_SECRET",
       "S3_UPLOAD_KEY",
     ],
-    ["STRIPE_SECRET_KEY", "STRIPE_PUBLISHABLE_KEY", "STRIPE_WEBHOOK_SECRET"],
+    [
+      "STRIPE_SECRET_KEY",
+      "STRIPE_PUBLISHABLE_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "STRIPE_PRO_PRICE_ID",
+      "STRIPE_PRO_PLUS_PRICE_ID",
+      "STRIPE_CREDITS_10_PRICE_ID",
+      "STRIPE_CREDITS_25_PRICE_ID",
+      "STRIPE_CREDITS_60_PRICE_ID",
+    ],
   ] as const;
 
   for (const group of conditionalGroups) {

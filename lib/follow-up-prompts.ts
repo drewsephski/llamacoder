@@ -38,10 +38,7 @@ type RawExecutor = {
   ) => Promise<number>;
 };
 
-export function normalizeFollowUpPrompts(
-  prompts: unknown,
-  fallback: string[],
-) {
+export function normalizeFollowUpPrompts(prompts: unknown, fallback: string[]) {
   const candidates = Array.isArray(prompts) ? prompts : [];
   const seen = new Set<string>();
   const normalized: string[] = [];
@@ -101,17 +98,9 @@ export async function generateFollowUpPrompts({
       }),
       providerOptions: getOpenRouterProviderOptions(FREE_MODEL),
       temperature: 0.45,
-      messages: [
-        {
-          role: "system",
-          content:
-            "Generate concise follow-up prompts for an AI app builder. Return only JSON shaped as {\"prompts\":[\"...\"]}.",
-        },
-        {
-          role: "user",
-          content: buildPromptContext({ chat, assistantContent, files }),
-        },
-      ],
+      system:
+        'Generate concise follow-up prompts for an AI app builder. Return only JSON shaped as {"prompts":["..."]}.',
+      prompt: buildPromptContext({ chat, assistantContent, files }),
     });
 
     const parsed = parsePromptsJson(response.text);
@@ -224,7 +213,10 @@ function buildFallbackPrompts(seed: string) {
 function normalizeSubject(seed: string) {
   const words = seed
     .replace(/[^\w\s-]/g, " ")
-    .replace(/\b(build|make|create|app|application|please|for|with|a|an|the)\b/gi, " ")
+    .replace(
+      /\b(build|make|create|app|application|please|for|with|a|an|the)\b/gi,
+      " ",
+    )
     .replace(/\s+/g, " ")
     .trim()
     .split(" ")

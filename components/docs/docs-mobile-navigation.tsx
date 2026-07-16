@@ -7,6 +7,7 @@ import { DocsNavigation } from "@/components/docs/docs-navigation";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -34,6 +35,9 @@ export function DocsMobileNavigation({
           <DialogTitle className="flex h-16 shrink-0 items-center border-b border-border px-5 pr-14 text-base">
             Squid Agent Docs
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Browse the Squid Agent documentation sections.
+          </DialogDescription>
           <div className="flex-1 overflow-y-auto px-5 py-6">
             <DocsNavigation
               sections={sections}

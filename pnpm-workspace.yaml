@@ -8,3 +8,17 @@ allowBuilds:
   protobufjs: true
   sharp: true
   unrs-resolver: true
+overrides:
+  '@babel/core': ^7.29.1
+  dompurify: ^3.4.11
+  fast-uri: ^3.1.2
+  form-data: ^4.0.6
+  hono: ^4.12.25
+  ip-address: ^10.1.1
+  js-yaml: ^4.1.2
+  mdast-util-to-hast: ^13.2.1
+  picomatch: ^4.0.4
+  postcss: ^8.5.10
+  protobufjs: ^7.6.1
+  qs: ^6.15.2
+  uuid: ^11.1.1

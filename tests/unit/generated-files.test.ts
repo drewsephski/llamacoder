@@ -263,6 +263,31 @@ describe("generated file normalization", () => {
     expect(report.status).toBe("warning");
   });
 
+  it("recognizes inputs wrapped by labels as accessible", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          "export default function App() {",
+          "  return <>",
+          '    <label><span>Search</span><input value="" onChange={() => {}} /></label>',
+          '    <input value="" onChange={() => {}} />',
+          "  </>;",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    const report = buildGeneratedFilesQualityReport(files);
+
+    expect(report.accessibilityWarnings).toEqual([
+      expect.objectContaining({
+        message:
+          "Input appears to be missing an accessible name, id, or placeholder.",
+      }),
+    ]);
+  });
+
   it("blocks unsafe or incomplete browser API clients", () => {
     const files = normalizeGeneratedFiles([
       {

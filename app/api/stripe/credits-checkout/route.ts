@@ -10,6 +10,7 @@ import { getPrisma } from "@/lib/prisma";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { getErrorMessage } from "@/features/shared/errors";
 import { recordOperationalEvent } from "@/lib/observability";
+import { getAppOrigin } from "@/lib/app-origin";
 
 type CreditPack = keyof typeof CREDIT_PACKS;
 
@@ -141,10 +142,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const origin =
-      request.headers.get("origin") ||
-      process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
-      "http://localhost:3000";
+    const origin = getAppOrigin();
 
     // Create checkout session for credits
     const checkoutSession = await createCreditsCheckoutSession(

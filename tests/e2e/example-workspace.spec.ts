@@ -49,7 +49,9 @@ test("public example exposes the full no-risk product proof", async ({
   await expect(page.getByText(/Approved build plan/i)).toBeVisible();
 
   await page.getByRole("button", { name: "Files" }).click();
-  await expect(page.getByText("tokens.css", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "tokens.css", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "components/Board.tsx" }).click();
   await expect(page.getByText(/export function Board/)).toBeVisible();
 

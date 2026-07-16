@@ -215,6 +215,7 @@ describe("/api/generate-code", () => {
       userId: "user_1",
       modelId: FREE_MODEL,
       chatId: "chat_1",
+      messageId: "assistant_1",
       description: "Code generation - Calculator",
       phase: "initial_generation",
       status: "completed",
@@ -259,7 +260,7 @@ describe("/api/generate-code", () => {
 
     expect(response.status).toBe(200);
     expect(generateTextMock).toHaveBeenCalledTimes(2);
-    expect(generateTextMock.mock.calls[1][0].messages[1].content).toContain(
+    expect(generateTextMock.mock.calls[1][0].messages[0].content).toContain(
       'Named import "Footer" from "./components/Footer" is invalid',
     );
     expect(txMock.message.create).toHaveBeenCalledWith({

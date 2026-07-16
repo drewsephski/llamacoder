@@ -6,6 +6,7 @@ import { ArrowRight, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -133,6 +134,9 @@ export function DocsSearch() {
 
       <DialogContent className="top-[12vh] block w-[calc(100vw-2rem)] max-w-2xl translate-y-0 gap-0 overflow-hidden rounded-2xl p-0 sm:w-full sm:rounded-2xl sm:p-0">
         <DialogTitle className="sr-only">Search documentation</DialogTitle>
+        <DialogDescription className="sr-only">
+          Search Squid Agent guides, examples, and prompt collections.
+        </DialogDescription>
         <div className="flex items-center gap-3 border-b border-border px-4">
           <Search className="size-5 text-muted-foreground" />
           <input

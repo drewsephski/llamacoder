@@ -6,6 +6,7 @@ import {
   MarketingFooter,
   MarketingHeader,
 } from "@/components/marketing-chrome";
+import { AiBuilderFeatureComparison } from "@/components/ai-builder-feature-comparison";
 
 type MarketingHubProps = {
   kind: MarketingPage["kind"];
@@ -91,6 +92,8 @@ export function MarketingHub({ kind, title, intro, pages }: MarketingHubProps) {
             </div>
           </div>
         </header>
+
+        {kind === "comparison" && <AiBuilderFeatureComparison variant="hub" />}
 
         <section className="mx-auto max-w-6xl px-6 py-16 lg:px-8 lg:py-20">
           <div className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
