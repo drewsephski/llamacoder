@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -24,6 +24,8 @@ const project: GalleryProjectSummary = {
 };
 
 describe("GalleryProjectCard", () => {
+  afterEach(() => vi.useRealTimers());
+
   it("renders the live preview fallback while no persisted image exists", () => {
     const { container } = render(<GalleryProjectCard project={project} />);
 
@@ -64,5 +66,14 @@ describe("GalleryProjectCard", () => {
     expect(
       screen.getByRole("button", { name: "Delete Focus Day" }),
     ).toBeInTheDocument();
+  });
+
+  it("does not leave the custom loading overlay stuck indefinitely", () => {
+    vi.useFakeTimers();
+    render(<GalleryProjectCard project={project} />);
+
+    act(() => vi.advanceTimersByTime(15_000));
+
+    expect(screen.queryByText("Loading preview")).not.toBeInTheDocument();
   });
 });

@@ -88,7 +88,7 @@ describe("gallery thumbnail capture", () => {
     );
     expect(pageMock.waitForSelector).toHaveBeenCalledWith(
       '[data-gallery-preview-status="ready"]',
-      expect.objectContaining({ timeout: 12_000 }),
+      expect.objectContaining({ timeout: 60_000 }),
     );
     expect(s3SendMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -151,10 +151,7 @@ describe("gallery thumbnail capture", () => {
 
     expect(prismaMock.galleryPublication.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        orderBy: [
-          { thumbnailStatus: "desc" },
-          { publishedAt: "desc" },
-        ],
+        orderBy: [{ thumbnailStatus: "desc" }, { publishedAt: "desc" }],
       }),
     );
   });

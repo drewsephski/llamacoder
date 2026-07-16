@@ -32,10 +32,7 @@ export function GalleryThumbnailRefresh({
       const result = (await response.json()) as { processed?: number };
       router.refresh();
       if ((result.processed ?? 0) > 0) {
-        captureTimeout = window.setTimeout(
-          captureNext,
-          NEXT_CAPTURE_DELAY_MS,
-        );
+        captureTimeout = window.setTimeout(captureNext, NEXT_CAPTURE_DELAY_MS);
       }
     };
 
