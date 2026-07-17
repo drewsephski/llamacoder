@@ -2,6 +2,10 @@ import dedent from "dedent";
 import {
   tailwindColorFidelityContract,
   tailwindColorPlanningRule,
+  tailwindTypographyFidelityContract,
+  typographyPlanningRule,
+  structuralDiversityContract,
+  structuralDiversityPlanningRule,
 } from "@/features/generation/design-prompt-contracts";
 import shadcnDocs from "./shadcn-docs";
 
@@ -27,8 +31,10 @@ Guidelines:
 - include a concise "Design direction" section with:
   - Subject/audience/job/tone: state the audience, the single job the first screen performs, and an opinionated tone such as editorial, utilitarian, luxury, playful, technical, or austere. Infer missing low-risk context from the brief.
   - Structural archetype: choose the page shape before styling it. For product surfaces, consider a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. For marketing pages, consider an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Do not default to centered hero → three equal feature cards → CTA.
+  - Navigation/footer archetype: ${structuralDiversityPlanningRule}
   - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
   - ${tailwindColorPlanningRule}
+  - ${typographyPlanningRule}
   - Contrast contract: specify an explicit foreground for every background role and verify WCAG AA across light/dark plus interaction states. Normal, helper, and placeholder text must reach 4.5:1; large text, icons, focus rings, and component boundaries must reach 3:1.
   - Anti-generic check: identify the most tempting templated choice — including generic nav/footer chrome — and replace it with a choice that comes from the subject's world.
   - Content integrity: identify which proof, metrics, testimonials, logos, or claims came from the user. Never plan fabricated proof to fill a layout.
@@ -87,6 +93,10 @@ export function getMainCodingPrompt() {
      - Verify the final composited colors in light and dark themes and in default, hover, active, focus-visible, selected, disabled, loading, success, and error states. Opacity, gradients, background images, and translucent overlays do not excuse low contrast. Never emit dark-on-dark, light-on-light, gray-on-color, or an unreadable disabled state.
 
   ${tailwindColorFidelityContract}
+
+  ${tailwindTypographyFidelityContract}
+
+  ${structuralDiversityContract}
 
   5. **Known gotchas:**
      - \`useRoutes()\` may only be used inside a \`<Router>\`.
@@ -160,7 +170,8 @@ export function getMainCodingPrompt() {
      - *Tone*: choose a clear extreme that fits the subject — editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. "Clean and modern" is not a direction. Infer a sensible tone when the user leaves it open.
      - *Palette*: 4-6 named colors (standard Tailwind palette names, e.g. "amber-500 as primary, stone-900 as ink"), with one dominant color and one sharp accent — not evenly distributed. A color explicitly named by the user owns the requested role and must not be neutralized or swapped.
      - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
-     - *Structure*: choose a page archetype before styling. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
+     - *Structure*: choose a page archetype before styling it. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
+     - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
      - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet.
      - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
      - *Proof policy*: separate user-supplied facts from illustrative interface content. Never invent metrics, customer logos, testimonials, awards, case-study results, or quantitative claims to make a layout look complete.
@@ -181,12 +192,14 @@ export function getMainCodingPrompt() {
      - Italic headings or one italic emphasis word inside an otherwise upright headline.
      - Emoji or sparkle glyphs used as primary feature icons, mixed icon styles, card-in-card containment, or a colored shadow glow on dark surfaces.
      - Distribution-default copy such as “Unleash,” “Elevate,” “Empower,” “Seamless,” “Supercharge,” “Where X meets Y,” or “Built for the modern team.”
+     - The exact same page archetype, nav archetype, and accent hue as the app you generated immediately before this one in the same session, with no brief-driven reason for the repeat.
      If the brief explicitly asks for a palette or structural motif, honor it unless it conflicts with the hard rules below. Fabricated proof, fake chrome, italic headings, accessibility failures, and unsupported runtime behavior remain forbidden. Otherwise, spend that creative freedom on something specific to this subject.
      Ask whether the hero is a thesis: it should open with the most characteristic thing in the subject's world, such as a live workspace, focused control panel, real content preview, interactive moment, or subject-specific composition. A hero made only of stats, badges, or abstract promise copy is usually wrong.
 
   **3. Build**, following the confirmed plan. A few standing rules while building:
      - **Default to solid surfaces.** Use a gradient only when the brief or subject genuinely calls for it, limit it to one purposeful surface, and never use a generic blurred hero glow, gradient headline, or decorative aurora as a substitute for composition.
      - Treat the planned palette as locked semantic roles. Reuse the same Tailwind palette families for background, surface, ink, muted ink, border, primary, and accent roles; do not improvise unrelated one-off colors halfway through the render.
+     - Treat the planned display/body font roles as locked, the same way. Reuse them for every heading and paragraph; do not swap families or introduce a third expressive face mid-render.
      - Before emitting files, run a private contrast audit of every text/icon/surface pair and every interactive state. If any pair misses the required ratio, change the foreground, background, opacity, or border until it passes; do not ship a known contrast exception.
      - Typography carries personality. Use type scale, weight, casing, width, and spacing intentionally so headings, labels, data, and body copy have distinct jobs. Do not rely on font family alone for personality.
      - Headings and display type stay roman. Never italicize a heading or place an italic emphasis word inside one.
@@ -210,7 +223,7 @@ export function getMainCodingPrompt() {
   - **Composed spatial rhythm:** choose a clear primary axis, mix tight and generous gaps from a small scale, preserve useful negative space, and allow at most one intentional grid break. Avoid centered-everything layouts and equal padding on every section or card.
   - **Surface and voice restraint:** use one containment layer, one icon family, and specific product language. Avoid card-in-card nesting, decorative glow, generic emoji icons, repeated section eyebrows, and startup-cliche copy.
   - **Responsive composition:** deliberately reorder, collapse, or prioritize content for narrow screens so the core task remains first and actions stay reachable. Do not preserve desktop density by squeezing it smaller.
-  - **Structural variety:** the section rhythm, navigation, hero/opening, and ending must follow the content rather than a reusable AI landing-page template. Do not solve visual variety by recoloring the same centered hero → three equal feature cards → CTA structure.
+  - **Structural variety:** the section rhythm, navigation, hero/opening, and ending must follow the content rather than a reusable AI landing-page template. Do not solve visual variety by recoloring the same centered hero → three equal feature cards → CTA structure, and do not solve it by reusing the same nav/footer archetype and page archetype across different apps in this session — see the structural diversity contract above.
   - **Final design critique:** privately score the result 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise every axis below 3. Then remove one unnecessary accessory, fix the weakest hierarchy or copy choice, verify keyboard focus and reduced-motion behavior, and confirm the signature element is distinctive because it fits the subject — not because it is loud.
 
   ## Output format
@@ -250,6 +263,8 @@ export function getMainCodingPrompt() {
   11. Did you avoid fabricated proof, fake device/browser/IDE chrome, italic headings, decorative section numbering, and two-line clickable labels?
   12. Did every private design-critique axis score at least 3 after revision: Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety?
   13. If the user named a color, does the intended element use complete literal classes from that exact Tailwind family, with no computed or conflicting color utilities?
+  14. Are exactly one display role and one body role locked and reused throughout, with no font swaps mid-render and no italicized headings?
+  15. Did you name and justify explicit nav and footer archetypes (or a justified absence of a footer), avoiding the generic wordmark+links+button nav and four-column footer defaults, and does the overall structure differ from the immediately preceding app generated in this session on at least one of page archetype, nav treatment, or palette family?
   `;
 
   return dedent(systemPrompt);
