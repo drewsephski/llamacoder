@@ -4,6 +4,10 @@ import {
   generatedAppDependencies,
   getRequiredGeneratedAppDependencies,
 } from "@/lib/generated-app-dependencies";
+import {
+  buildGeneratedThemeCss,
+  serializeGeneratedTailwindThemeExtension,
+} from "@/lib/generated-theme";
 
 export const dependencies = generatedAppDependencies;
 
@@ -152,6 +156,17 @@ export const shadcnFiles = {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Document</title>
       <script src="https://cdn.tailwindcss.com"></script>
+      <script>
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: ${serializeGeneratedTailwindThemeExtension()},
+          },
+        };
+      </script>
+      <style>
+${buildGeneratedThemeCss()}
+      </style>
     </head>
     <body>
       <div id="root"></div>

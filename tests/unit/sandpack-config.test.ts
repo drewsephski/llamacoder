@@ -19,8 +19,13 @@ export default function App() {
     expect(config.files["/lib/utils.ts"]).toBeDefined();
     expect(config.files["/components/ui/accordion.tsx"]).toBeUndefined();
     expect(config.files["/public/index.html"]).toBeDefined();
+    expect(config.files["/public/index.html"]).toContain('darkMode: "class"');
     expect(config.files["/public/index.html"]).toContain(
-      'tailwind.config = { darkMode: "class" }',
+      '"foreground": "hsl(var(--foreground))"',
+    );
+    expect(config.files["/public/index.html"]).toContain(".dark {");
+    expect(config.files["/public/index.html"]).toContain(
+      "--foreground: 0 0% 98%;",
     );
     expect(config.customSetup.dependencies["@radix-ui/react-slot"]).toBe(
       "^1.1.0",
@@ -43,7 +48,7 @@ export default function App() {
     ).toEqual([]);
   });
 
-  it("keeps unthemed dialog and form primitives white with readable text", () => {
+  it("keeps dialog and form primitives on theme-aware semantic pairs", () => {
     const config = getSandpackConfig([
       {
         path: "App.tsx",
@@ -69,19 +74,17 @@ export default function App() {
     const textarea = config.files["/components/ui/textarea.tsx"] as string;
 
     expect(dialog).toContain(
-      "border border-neutral-200 bg-white p-6 text-neutral-950",
+      "border border-border bg-background p-6 text-foreground",
     );
     expect(alertDialog).toContain(
-      "border border-neutral-200 bg-white p-6 text-neutral-950",
+      "border border-border bg-background p-6 text-foreground",
     );
-    expect(input).toContain("bg-white px-3 py-2 text-sm text-neutral-950");
-    expect(select).toContain("bg-white px-3 py-2 text-sm text-neutral-950");
-    expect(textarea).toContain("bg-white px-3 py-2 text-sm text-neutral-950");
-    expect(dialog).not.toContain("dark:bg-gray-950");
-    expect(alertDialog).not.toContain("dark:bg-gray-950");
-    expect(input).not.toContain("dark:bg-gray-950");
-    expect(select).not.toContain("dark:bg-gray-950");
-    expect(textarea).not.toContain("dark:bg-gray-950");
+    expect(input).toContain("border-input bg-background");
+    expect(input).toContain("text-foreground");
+    expect(select).toContain("border-input bg-background");
+    expect(select).toContain("bg-popover text-popover-foreground");
+    expect(textarea).toContain("border-input bg-background");
+    expect(textarea).toContain("text-foreground");
   });
 
   it("installs generated-app capabilities only when source imports them", () => {

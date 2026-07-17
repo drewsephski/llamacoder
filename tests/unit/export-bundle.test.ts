@@ -88,14 +88,22 @@ describe("export bundle", () => {
       bundle.files.find((file) => file.path === "tsconfig.json")!.content,
     );
 
-    expect(tailwindConfig).toContain("card: {");
-    expect(tailwindConfig).toContain("muted: {");
-    expect(tailwindConfig).toContain("secondary: {");
-    expect(tailwindConfig).toContain("accent: {");
-    expect(tailwindConfig).toContain("popover: {");
-    expect(tailwindConfig).toContain("destructive: {");
+    expect(tailwindConfig).toContain('"card": {');
+    expect(tailwindConfig).toContain('"muted": {');
+    expect(tailwindConfig).toContain('"secondary": {');
+    expect(tailwindConfig).toContain('"accent": {');
+    expect(tailwindConfig).toContain('"popover": {');
+    expect(tailwindConfig).toContain('"destructive": {');
     expect(tailwindConfig).not.toContain("./**/*.{ts,tsx}");
     expect(tailwindConfig).toContain("./components/**/*.{ts,tsx}");
+    expect(tailwindConfig).toContain('darkMode: "class"');
+    const styles = bundle.files.find(
+      (file) => file.path === "styles.css",
+    )!.content;
+    expect(styles).toContain(".dark {");
+    expect(styles).toContain("--background: 0 0% 3.9%;");
+    expect(styles).toContain("--foreground: 0 0% 98%;");
+    expect(styles).toContain("background-color: hsl(var(--background));");
     expect(tsconfig.compilerOptions.moduleResolution).toBe("Bundler");
     expect(bundle.verificationReport.status).toBe("verified");
   });

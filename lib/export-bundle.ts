@@ -5,6 +5,10 @@ import {
 } from "@/lib/generated-files";
 import { getRequiredShadcnFiles } from "@/lib/sandpack-config";
 import { getRequiredGeneratedAppDependencies } from "@/lib/generated-app-dependencies";
+import {
+  buildGeneratedThemeCss,
+  serializeGeneratedTailwindThemeExtension,
+} from "@/lib/generated-theme";
 import { generateIntelligentFilename, toTitleCase } from "@/lib/utils";
 import { analyzeGeneratedApiIntegration } from "@/lib/generated-api";
 
@@ -497,44 +501,7 @@ function buildIndexHtml(appTitle: string) {
 }
 
 function buildDefaultStyles() {
-  return [
-    "@tailwind base;",
-    "@tailwind components;",
-    "@tailwind utilities;",
-    "",
-    ":root {",
-    "  --background: 0 0% 100%;",
-    "  --foreground: 222.2 84% 4.9%;",
-    "  --card: 0 0% 100%;",
-    "  --card-foreground: 222.2 84% 4.9%;",
-    "  --popover: 0 0% 100%;",
-    "  --popover-foreground: 222.2 84% 4.9%;",
-    "  --primary: 221.2 83.2% 53.3%;",
-    "  --primary-foreground: 210 40% 98%;",
-    "  --secondary: 210 40% 96.1%;",
-    "  --secondary-foreground: 222.2 47.4% 11.2%;",
-    "  --muted: 210 40% 96.1%;",
-    "  --muted-foreground: 215.4 16.3% 46.9%;",
-    "  --accent: 210 40% 96.1%;",
-    "  --accent-foreground: 222.2 47.4% 11.2%;",
-    "  --destructive: 0 84.2% 60.2%;",
-    "  --destructive-foreground: 210 40% 98%;",
-    "  --border: 214.3 31.8% 91.4%;",
-    "  --input: 214.3 31.8% 91.4%;",
-    "  --ring: 221.2 83.2% 53.3%;",
-    "  --radius: 0.5rem;",
-    "}",
-    "",
-    "* {",
-    "  border-color: hsl(var(--border));",
-    "}",
-    "",
-    "body {",
-    "  margin: 0;",
-    "  min-width: 320px;",
-    "  min-height: 100vh;",
-    "}",
-  ].join("\n");
+  return buildGeneratedThemeCss({ includeTailwindDirectives: true });
 }
 
 function buildTsConfig() {
@@ -584,10 +551,16 @@ function buildViteConfig() {
 }
 
 function buildTailwindConfig() {
+  const themeExtension = serializeGeneratedTailwindThemeExtension()
+    .split("\n")
+    .map((line, index) => (index === 0 ? line : `    ${line}`))
+    .join("\n");
+
   return [
     'import type { Config } from "tailwindcss";',
     "",
     "export default {",
+    '  darkMode: "class",',
     "  content: [",
     '    "./index.html",',
     '    "./{App,main}.tsx",',
@@ -600,48 +573,7 @@ function buildTailwindConfig() {
     '    "./views/**/*.{ts,tsx}",',
     "  ],",
     "  theme: {",
-    "    extend: {",
-    "      colors: {",
-    '        border: "hsl(var(--border))",',
-    '        input: "hsl(var(--input))",',
-    '        ring: "hsl(var(--ring))",',
-    '        background: "hsl(var(--background))",',
-    '        foreground: "hsl(var(--foreground))",',
-    "        primary: {",
-    '          DEFAULT: "hsl(var(--primary))",',
-    '          foreground: "hsl(var(--primary-foreground))",',
-    "        },",
-    "        secondary: {",
-    '          DEFAULT: "hsl(var(--secondary))",',
-    '          foreground: "hsl(var(--secondary-foreground))",',
-    "        },",
-    "        destructive: {",
-    '          DEFAULT: "hsl(var(--destructive))",',
-    '          foreground: "hsl(var(--destructive-foreground))",',
-    "        },",
-    "        muted: {",
-    '          DEFAULT: "hsl(var(--muted))",',
-    '          foreground: "hsl(var(--muted-foreground))",',
-    "        },",
-    "        accent: {",
-    '          DEFAULT: "hsl(var(--accent))",',
-    '          foreground: "hsl(var(--accent-foreground))",',
-    "        },",
-    "        popover: {",
-    '          DEFAULT: "hsl(var(--popover))",',
-    '          foreground: "hsl(var(--popover-foreground))",',
-    "        },",
-    "        card: {",
-    '          DEFAULT: "hsl(var(--card))",',
-    '          foreground: "hsl(var(--card-foreground))",',
-    "        },",
-    "      },",
-    "      borderRadius: {",
-    '        lg: "var(--radius)",',
-    '        md: "calc(var(--radius) - 2px)",',
-    '        sm: "calc(var(--radius) - 4px)",',
-    "      },",
-    "    },",
+    `    extend: ${themeExtension},`,
     "  },",
     '  plugins: [require("tailwindcss-animate")],',
     "} satisfies Config;",

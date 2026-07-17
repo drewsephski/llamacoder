@@ -171,6 +171,62 @@ describe("generated file normalization", () => {
     ]);
   });
 
+  it("diagnoses a partial dark-mode toggle that does not own complete theme state", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { useEffect, useState } from "react";',
+          "export default function App() {",
+          "  const [isDark, setIsDark] = useState(false);",
+          "  useEffect(() => {",
+          '    if (isDark) document.documentElement.classList.add("dark");',
+          '    else document.documentElement.classList.remove("dark");',
+          "  }, [isDark]);",
+          "  return <button onClick={() => setIsDark(!isDark)}>Theme</button>;",
+          "}",
+        ].join("\n"),
+      },
+      {
+        path: "components/Panel.tsx",
+        code: "export function Panel() { return <section />; }",
+      },
+      { path: "types.ts", code: "export type Theme = 'light' | 'dark';" },
+    ]);
+
+    expect(validateGeneratedFiles(files)).toEqual([
+      {
+        path: "App.tsx",
+        message:
+          "Theme control is incomplete. Initialize from a persisted localStorage preference with a prefers-color-scheme fallback, persist changes, and update document.documentElement.style.colorScheme together with the root dark class.",
+      },
+    ]);
+  });
+
+  it("accepts a persisted dark-mode toggle with an OS fallback and color scheme", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'const saved = localStorage.getItem("theme");',
+          'const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;',
+          "const isDark = saved ? saved === 'dark' : systemDark;",
+          'document.documentElement.classList.toggle("dark", isDark);',
+          'document.documentElement.style.colorScheme = isDark ? "dark" : "light";',
+          'localStorage.setItem("theme", isDark ? "dark" : "light");',
+          "export default function App() { return <main />; }",
+        ].join("\n"),
+      },
+      {
+        path: "components/Panel.tsx",
+        code: "export function Panel() { return <section />; }",
+      },
+      { path: "types.ts", code: "export type Theme = 'light' | 'dark';" },
+    ]);
+
+    expect(validateGeneratedFiles(files)).toEqual([]);
+  });
+
   it("formats files as path-tagged markdown and builds actionable repair prompts", () => {
     const files = normalizeGeneratedFiles([
       {

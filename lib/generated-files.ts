@@ -283,6 +283,7 @@ export function validateGeneratedFiles(
   }
 
   diagnostics.push(...validateObviousInteractionFailures(files));
+  diagnostics.push(...validateThemeBehavior(files));
   diagnostics.push(...analyzeGeneratedApiIntegration(files).issues);
   diagnostics.push(...validateSelectedApiUsage(files, selectedProviderIds));
 
@@ -603,6 +604,67 @@ function validateObviousInteractionFailures(files: GeneratedFile[]) {
   }
 
   return diagnostics;
+}
+
+function validateThemeBehavior(files: GeneratedFile[]) {
+  const sourceFiles = files.filter((file) =>
+    /\.(tsx|ts|jsx|js)$/i.test(file.path),
+  );
+  const combinedSource = sourceFiles.map((file) => file.code).join("\n");
+  const addsDarkClass =
+    /document\.documentElement\.classList\.add\(\s*["'`]dark["'`]/.test(
+      combinedSource,
+    );
+  const removesDarkClass =
+    /document\.documentElement\.classList\.remove\(\s*["'`]dark["'`]/.test(
+      combinedSource,
+    );
+  const togglesDarkClass =
+    /document\.documentElement\.classList\.toggle\(\s*["'`]dark["'`]/.test(
+      combinedSource,
+    );
+
+  if (!togglesDarkClass && !(addsDarkClass && removesDarkClass)) return [];
+
+  const hasPersistedPreference =
+    /localStorage\.getItem\(/.test(combinedSource) &&
+    /localStorage\.setItem\(/.test(combinedSource);
+  const hasSystemFallback =
+    /matchMedia\(\s*["'`]\(prefers-color-scheme:\s*dark\)["'`]\s*\)/.test(
+      combinedSource,
+    );
+  const updatesColorScheme =
+    /document\.documentElement\.style\.colorScheme\s*=/.test(combinedSource) ||
+    /document\.documentElement\.style\.setProperty\(\s*["'`]color-scheme["'`]/.test(
+      combinedSource,
+    );
+
+  if (hasPersistedPreference && hasSystemFallback && updatesColorScheme) {
+    return [];
+  }
+
+  const themeOwner = sourceFiles.find((file) => {
+    const code = file.code;
+    return (
+      /document\.documentElement\.classList\.toggle\(\s*["'`]dark["'`]/.test(
+        code,
+      ) ||
+      (/document\.documentElement\.classList\.add\(\s*["'`]dark["'`]/.test(
+        code,
+      ) &&
+        /document\.documentElement\.classList\.remove\(\s*["'`]dark["'`]/.test(
+          code,
+        ))
+    );
+  });
+
+  return [
+    {
+      path: themeOwner?.path,
+      message:
+        "Theme control is incomplete. Initialize from a persisted localStorage preference with a prefers-color-scheme fallback, persist changes, and update document.documentElement.style.colorScheme together with the root dark class.",
+    },
+  ];
 }
 
 function countResolvedInternalImports(files: GeneratedFile[]) {
