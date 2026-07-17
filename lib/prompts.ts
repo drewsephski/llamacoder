@@ -1,11 +1,13 @@
 import dedent from "dedent";
 import {
+  neutralThemeDefaultContract,
+  neutralThemePlanningRule,
+  structuralDiversityContract,
+  structuralDiversityPlanningRule,
   tailwindColorFidelityContract,
   tailwindColorPlanningRule,
   tailwindTypographyFidelityContract,
   typographyPlanningRule,
-  structuralDiversityContract,
-  structuralDiversityPlanningRule,
 } from "@/features/generation/design-prompt-contracts";
 import shadcnDocs from "./shadcn-docs";
 
@@ -34,6 +36,7 @@ Guidelines:
   - Navigation/footer archetype: ${structuralDiversityPlanningRule}
   - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
   - ${tailwindColorPlanningRule}
+  - ${neutralThemePlanningRule}
   - ${typographyPlanningRule}
   - Contrast contract: specify an explicit foreground for every background role and verify WCAG AA across light/dark plus interaction states. Normal, helper, and placeholder text must reach 4.5:1; large text, icons, focus rings, and component boundaries must reach 3:1.
   - Anti-generic check: identify the most tempting templated choice — including generic nav/footer chrome — and replace it with a choice that comes from the subject's world.
@@ -93,6 +96,8 @@ export function getMainCodingPrompt() {
      - Verify the final composited colors in light and dark themes and in default, hover, active, focus-visible, selected, disabled, loading, success, and error states. Opacity, gradients, background images, and translucent overlays do not excuse low contrast. Never emit dark-on-dark, light-on-light, gray-on-color, or an unreadable disabled state.
 
   ${tailwindColorFidelityContract}
+
+  ${neutralThemeDefaultContract}
 
   ${tailwindTypographyFidelityContract}
 
@@ -244,7 +249,7 @@ export function getMainCodingPrompt() {
     \`\`\`ts{path=types.ts}
     \`\`\`
     Add \`utils/\` or more \`components/\` files as the app needs them.
-  - Placeholder images: \`<div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />\`
+  - Placeholder images: \`<div className="h-16 w-16 rounded-lg border border-dashed border-neutral-300 bg-neutral-100" />\`
   - Use a default export for the top-level runnable component.
 
   ## Before you finalize
@@ -265,6 +270,7 @@ export function getMainCodingPrompt() {
   13. If the user named a color, does the intended element use complete literal classes from that exact Tailwind family, with no computed or conflicting color utilities?
   14. Are exactly one display role and one body role locked and reused throughout, with no font swaps mid-render and no italicized headings?
   15. Did you name and justify explicit nav and footer archetypes (or a justified absence of a footer), avoiding the generic wordmark+links+button nav and four-column footer defaults, and does the overall structure differ from the immediately preceding app generated in this session on at least one of page archetype, nav treatment, or palette family?
+  16. If the user did not specify a theme, does the app use the Vercel-inspired Tailwind neutral fallback with no default slate, purple, chromatic gradient, or colored glow?
   `;
 
   return dedent(systemPrompt);

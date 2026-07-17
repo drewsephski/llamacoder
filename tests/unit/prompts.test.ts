@@ -65,6 +65,15 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Composed spatial rhythm");
     expect(prompt).toContain("Surface and voice restraint");
     expect(prompt).toContain("Distribution-default copy");
+    expect(prompt).toContain("Unspecified-theme default (mandatory)");
+    expect(prompt).toContain("light-first, Vercel-inspired Tailwind `neutral`");
+    expect(prompt).toContain("Do not default to `slate-*`, `purple-*`");
+    expect(prompt).toContain(
+      "Do not copy Vercel branding or force every product into a marketing-page structure",
+    );
+    expect(prompt).toContain(
+      "does the app use the Vercel-inspired Tailwind neutral fallback",
+    );
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -108,6 +117,10 @@ describe("prompt design guidance", () => {
     expect(softwareArchitectPrompt).toContain(
       "record the exact standard Tailwind family",
     );
+    expect(softwareArchitectPrompt).toContain("Unspecified-theme default:");
+    expect(softwareArchitectPrompt).toContain(
+      "plan a light-first Vercel-inspired Tailwind neutral system",
+    );
     expect(softwareArchitectPrompt).toContain(
       "Normal, helper, and placeholder text must reach 4.5:1",
     );
@@ -145,6 +158,12 @@ describe("prompt design guidance", () => {
     expect(developerCodeGenPrompt).toContain("`purple` stays `purple`");
     expect(developerCodeGenPrompt).toContain(
       "Avoid card-in-card nesting, emoji feature icons",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Unspecified-theme default (mandatory)",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "light-first, Vercel-inspired Tailwind `neutral`",
     );
   });
 });

@@ -15,6 +15,20 @@ export const tailwindColorFidelityContract = dedent`
 export const tailwindColorPlanningRule =
   "Explicit color fidelity: when the user names a color, record the exact standard Tailwind family and whether it is the canvas, surface, primary, or accent role. Preserve that family in implementation; do not substitute a neighboring hue, a semantic token with an unknown value, or a white/gray fallback.";
 
+export const neutralThemeDefaultContract = dedent`
+  **Unspecified-theme default (mandatory):**
+  - Apply this fallback to every new app when the user has not explicitly supplied a theme, palette, named color, visual reference, or aesthetic direction. Explicit user direction always wins. For edits to an existing app, preserve its established theme unless the user asks to restyle or recolor it.
+  - Default to a light-first, Vercel-inspired Tailwind \`neutral\` system: \`bg-neutral-50 text-neutral-950\` for the canvas, \`bg-white\` or \`bg-neutral-100\` for raised surfaces, \`border-neutral-200\` for rules, \`text-neutral-600\` for secondary copy, and \`bg-neutral-950 text-neutral-50\` for the primary action. If the app needs dark mode, use the same family with \`bg-neutral-950\`, \`bg-neutral-900\`, \`border-neutral-800\`, and \`text-neutral-50\`.
+  - Use complete literal \`neutral-*\` utilities on theme-defining wrappers and controls so the fallback renders predictably. Semantic Shadcn classes may supplement components only when their resolved values remain neutral and do not reintroduce an unspecified chromatic theme.
+  - Do not default to \`slate-*\`, \`purple-*\`, violet, indigo, blue, chromatic gradients, blurred color blooms, or colored shadow glows. Reserve red, amber, and emerald for small, truthful error, warning, and success states—not brand decoration.
+  - “Vercel-inspired” means restrained product craft, not a clone: high-contrast neutral hierarchy, crisp one-pixel borders, compact \`rounded-md\`/\`rounded-lg\` radii, precise spacing, restrained \`shadow-sm\` elevation, concise copy, and a clear black or near-black primary action. Do not copy Vercel branding or force every product into a marketing-page structure.
+  - Keep structure subject-specific and varied. The neutral fallback must not override the structural diversity, typography, accessibility, or explicit color-fidelity contracts.
+  - Before finalizing an unspecified-theme build, verify that its theme-defining classes use the Tailwind \`neutral\` family and that no slate, purple, or decorative chromatic default slipped into the canvas, primary action, major surfaces, or hero.
+`;
+
+export const neutralThemePlanningRule =
+  "Unspecified-theme default: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, plan a light-first Vercel-inspired Tailwind neutral system with neutral canvas/surfaces/ink, crisp borders, compact radii, restrained shadow, and a near-black primary action; do not default to slate, purple, chromatic gradients, or colored glow.";
+
 /**
  * Typography fidelity contract.
  *
