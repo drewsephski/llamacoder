@@ -50,6 +50,16 @@ describe("GalleryProjectCard", () => {
     );
 
     expect(screen.getByAltText("Preview of Focus Day")).toBeInTheDocument();
+    expect(container.querySelector("[data-gallery-thumbnail]")).toHaveClass(
+      "aspect-video",
+      "overflow-hidden",
+    );
+    expect(screen.getByAltText("Preview of Focus Day")).toHaveClass(
+      "origin-top-left",
+      "scale-[1.01]",
+      "object-cover",
+      "object-top",
+    );
     expect(container.querySelector("iframe")).not.toBeInTheDocument();
   });
 

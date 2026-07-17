@@ -4,7 +4,8 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const PREVIEW_WIDTH = 1280;
-const PREVIEW_HEIGHT = 800;
+const PREVIEW_HEIGHT = 720;
+const PREVIEW_OVERSCAN = 1.01;
 const PREVIEW_MESSAGE_SOURCE = "squid-gallery-preview";
 const PREVIEW_FALLBACK_TIMEOUT_MS = 15_000;
 
@@ -27,7 +28,7 @@ export function GalleryProjectPreview({
     if (!container || !iframe) return;
 
     const fitPreview = () => {
-      const scale = container.clientWidth / PREVIEW_WIDTH;
+      const scale = (container.clientWidth / PREVIEW_WIDTH) * PREVIEW_OVERSCAN;
       iframe.style.transform = `scale(${scale})`;
     };
     const onMessage = (event: MessageEvent) => {

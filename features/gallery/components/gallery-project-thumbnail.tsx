@@ -24,7 +24,7 @@ export function GalleryProjectThumbnail({
         fill
         unoptimized
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-        className="object-cover object-top"
+        className="origin-top-left scale-[1.01] object-cover object-top"
         onError={() => setFailedUrl(thumbnailUrl)}
       />
     );

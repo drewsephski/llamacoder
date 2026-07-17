@@ -8,7 +8,7 @@ import { getAppOrigin } from "@/lib/app-origin";
 import { getPrisma } from "@/lib/prisma";
 
 const THUMBNAIL_WIDTH = 1280;
-const THUMBNAIL_HEIGHT = 800;
+const THUMBNAIL_HEIGHT = 720;
 const THUMBNAIL_READY_TIMEOUT_MS = 60_000;
 const MAX_STORED_ERROR_LENGTH = 500;
 

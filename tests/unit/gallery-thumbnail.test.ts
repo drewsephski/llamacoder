@@ -82,6 +82,9 @@ describe("gallery thumbnail capture", () => {
       "https://squid.test/gallery/focus-day-chat123/preview",
       expect.objectContaining({ waitUntil: "domcontentloaded" }),
     );
+    expect(pageMock.setViewportSize).toHaveBeenCalledWith(1280, 720, {
+      deviceScaleFactor: 1,
+    });
     expect(pageMock.waitForSelector).toHaveBeenCalledWith(
       ".sp-preview-iframe",
       expect.objectContaining({ timeout: 60_000 }),

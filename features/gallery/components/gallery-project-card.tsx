@@ -17,7 +17,10 @@ export function GalleryProjectCard({
         href={`/gallery/${project.slug}`}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-muted/30">
+        <div
+          data-gallery-thumbnail
+          className="relative aspect-video overflow-hidden border-b border-border bg-muted/30"
+        >
           <GalleryProjectThumbnail
             thumbnailUrl={project.thumbnailUrl}
             slug={project.slug}
