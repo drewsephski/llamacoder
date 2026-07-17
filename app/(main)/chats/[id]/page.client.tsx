@@ -143,6 +143,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
   );
   const freeRepairRequestIdRef = useRef<string | null>(null);
   const freeRepairSourceMessageIdRef = useRef<string | null>(null);
+  const repairRequestInFlightRef = useRef(false);
   const automaticRepairAttemptsRef = useRef(0);
   const handledPreviewErrorRef = useRef<string | null>(null);
   const [previewRecovery, setPreviewRecovery] = useState<{
@@ -273,6 +274,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
     setReasoningText("");
     setStreamSources([]);
     setResearchActivity(null);
+    repairRequestInFlightRef.current = false;
+    freeRepairRequestIdRef.current = null;
+    freeRepairSourceMessageIdRef.current = null;
     toast.info("Generation stopped. Reserved credits were released.");
   }, [generationRunId]);
 
@@ -603,6 +607,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           cancelRenderFrame();
           freeRepairRequestIdRef.current = null;
           freeRepairSourceMessageIdRef.current = null;
+          repairRequestInFlightRef.current = false;
           setStreamText("");
           setReasoningText("");
           setStreamSources([]);
@@ -651,6 +656,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         freeRepairRequestIdRef.current = null;
         freeRepairSourceMessageIdRef.current = null;
+        repairRequestInFlightRef.current = false;
 
         setStreamError({
           message: getErrorMessage(error, "Connection lost"),
@@ -825,7 +831,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
   const requestPreviewRepair = useCallback(
     async (error: string, automatic: boolean) => {
-      if (!activeMessage || streamPromise) return;
+      if (!activeMessage || streamPromise || repairRequestInFlightRef.current) {
+        return;
+      }
 
       const errorKey = `${activeMessage.id}:${error}`;
       if (automatic && handledPreviewErrorRef.current === errorKey) return;
@@ -849,6 +857,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         );
       }
       setPreviewRecovery(null);
+      repairRequestInFlightRef.current = true;
 
       try {
         const repairMessage = await createPreviewRepairMessage(chat.id, error, {
@@ -864,6 +873,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         );
         router.refresh();
       } catch (repairError) {
+        repairRequestInFlightRef.current = false;
         if (automatic) {
           automaticRepairAttemptsRef.current = Math.max(
             0,

@@ -6,7 +6,7 @@ import {
   useSandpack,
 } from "@codesandbox/sandpack-react/unstyled";
 import { CheckIcon, CopyIcon, MousePointer2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSandpackConfig } from "@/lib/sandpack-config";
 import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
 import type { RuntimeVerificationReport } from "@/features/generation/runtime-verification";
@@ -73,6 +73,9 @@ function PreviewHealthReporter({
   onChange: (health: { status: "working" | "error"; error?: string }) => void;
 }) {
   const { sandpack } = useSandpack();
+  const [isPreviewReady, setIsPreviewReady] = useState(false);
+  const [latchedError, setLatchedError] = useState<string | null>(null);
+  const latchedErrorRef = useRef<string | null>(null);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -85,7 +88,7 @@ function PreviewHealthReporter({
         return;
       }
 
-      onChange({ status: "working" });
+      setIsPreviewReady(true);
     };
     const pingPreview = () => {
       getPreviewIframe()?.contentWindow?.postMessage(
@@ -107,29 +110,43 @@ function PreviewHealthReporter({
       window.clearInterval(retryTimer);
       window.clearTimeout(stopRetryTimer);
     };
-  }, [onChange]);
+  }, []);
+
+  useEffect(() => {
+    const error =
+      sandpack.error?.message ??
+      (sandpack.status === "timeout"
+        ? "The preview timed out while compiling."
+        : null);
+    if (!error) return;
+
+    latchedErrorRef.current = error;
+    setLatchedError(error);
+  }, [sandpack.error, sandpack.status]);
+
+  useEffect(() => {
+    if (!latchedError) return;
+    onChange({ status: "error", error: latchedError });
+  }, [latchedError, onChange]);
 
   useEffect(() => {
     if (
-      sandpack.status !== "done" &&
-      sandpack.status !== "timeout" &&
-      !sandpack.error
+      latchedError ||
+      sandpack.error ||
+      sandpack.status === "timeout" ||
+      (!isPreviewReady && sandpack.status !== "done")
     ) {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      const error =
-        sandpack.error?.message ??
-        (sandpack.status === "timeout"
-          ? "The preview timed out while compiling."
-          : undefined);
-
-      onChange(error ? { status: "error", error } : { status: "working" });
-    }, 900);
+      if (!latchedErrorRef.current) {
+        onChange({ status: "working" });
+      }
+    }, 1500);
 
     return () => window.clearTimeout(timer);
-  }, [onChange, sandpack.error, sandpack.status]);
+  }, [isPreviewReady, latchedError, onChange, sandpack.error, sandpack.status]);
 
   return null;
 }
@@ -291,8 +308,15 @@ function getPreviewIframe() {
 function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
   const { sandpack } = useSandpack();
   const [didCopy, setDidCopy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!sandpack.error) return null;
+  useEffect(() => {
+    if (sandpack.error?.message) {
+      setError(sandpack.error.message);
+    }
+  }, [sandpack.error]);
+
+  if (!error) return null;
 
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 text-base backdrop-blur-sm">
@@ -300,19 +324,15 @@ function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
         <p className="text-lg font-medium">Error</p>
 
         <p className="mt-4 line-clamp-[10] overflow-x-auto whitespace-pre font-mono text-xs">
-          {sandpack.error.message}
+          {error}
         </p>
 
         <div className="mt-8 flex justify-between gap-4">
           <button
             type="button"
             onClick={async () => {
-              if (!sandpack.error) return;
-
               setDidCopy(true);
-              await window.navigator.clipboard.writeText(
-                sandpack.error.message,
-              );
+              await window.navigator.clipboard.writeText(error);
               await new Promise((resolve) => setTimeout(resolve, 2000));
               setDidCopy(false);
             }}
@@ -322,13 +342,10 @@ function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (!sandpack.error) return;
-              onRequestFix(sandpack.error.message);
-            }}
+            onClick={() => onRequestFix(error)}
             className="rounded border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
           >
-            Try to fix
+            Fix error
           </button>
         </div>
       </div>

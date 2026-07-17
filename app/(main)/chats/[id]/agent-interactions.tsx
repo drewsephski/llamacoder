@@ -214,63 +214,55 @@ export function ResearchActivityCard({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-[linear-gradient(135deg,hsl(var(--card))_0%,hsl(var(--card))_58%,hsl(217_91%_60%/0.07)_100%)] shadow-[0_18px_60px_-42px_hsl(217_91%_60%/0.7)]"
+      className="overflow-hidden rounded-xl border border-border/70 bg-card/80 shadow-sm"
       role="status"
       aria-live="polite"
     >
-      <div className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-500" />
-      <div className="p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <span className="relative mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl border border-blue-500/15 bg-blue-500/10 text-blue-600 dark:text-blue-400">
+      <div className="p-3">
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
             {isSearching ? (
               <>
-                <span className="absolute inset-1 animate-pulse rounded-lg bg-blue-500/10" />
                 <LoaderCircle
-                  className="relative size-4 animate-spin"
+                  className="relative size-3.5 animate-spin"
                   aria-hidden="true"
                 />
               </>
             ) : (
-              <Check className="size-4" aria-hidden="true" />
+              <Check className="size-3.5" aria-hidden="true" />
             )}
           </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold tracking-tight text-foreground">
-                  {activity.label}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Exa web research
-                  {activity.sourceCount > 0
-                    ? ` · ${activity.sourceCount} ${activity.sourceCount === 1 ? "source" : "sources"}`
-                    : " · finding authoritative sources"}
-                </p>
-              </div>
-              <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-blue-500/15 bg-blue-500/[0.07] px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">
-                <span
-                  className={`size-1.5 rounded-full ${isSearching ? "animate-pulse bg-cyan-500" : "bg-emerald-500"}`}
-                />
-                {isSearching ? "Live" : "Complete"}
-              </span>
-            </div>
-
-            <div className="mt-3 rounded-xl border border-border/60 bg-background/65 px-3 py-2.5">
-              <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                <Search className="size-3" aria-hidden="true" />
-                Search query
-              </div>
-              <p className="break-words font-mono text-xs leading-5 text-foreground/80">
-                {activity.query}
-              </p>
-            </div>
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-xs font-semibold text-foreground">
+              {activity.label}
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Exa · {isSearching ? "Searching the web" : "Research complete"}
+            </p>
           </div>
+          <span
+            className="flex shrink-0 items-center gap-1.5 text-[10px] font-medium text-muted-foreground"
+            aria-label={isSearching ? "Search in progress" : "Search complete"}
+          >
+            <span
+              className={`size-1.5 rounded-full ${isSearching ? "animate-pulse bg-blue-500" : "bg-emerald-500"}`}
+            />
+            {isSearching ? "Live" : "Done"}
+          </span>
         </div>
 
-        <div className="ml-0 mt-4 sm:ml-12">
+        <div
+          className="mt-2.5 flex min-w-0 items-center gap-2 rounded-md bg-muted/55 px-2.5 py-2 text-[11px] text-muted-foreground"
+          title={activity.query}
+        >
+          <Search className="size-3 shrink-0" aria-hidden="true" />
+          <span className="truncate">{activity.query}</span>
+        </div>
+
+        <div className="mt-2">
           {visibleSources.length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {visibleSources.map((source, index) => {
+            <div className="grid overflow-hidden rounded-lg border border-border/60 sm:grid-cols-2">
+              {visibleSources.map((source) => {
                 const hostname = new URL(source.url).hostname.replace(
                   /^www\./,
                   "",
@@ -282,32 +274,32 @@ export function ResearchActivityCard({
                     key={source.sourceId}
                     href={source.url}
                     title={label}
-                    className="group flex min-w-0 items-start gap-2.5 rounded-xl border border-border/60 bg-background/70 p-3 text-left transition-all hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-sm"
+                    className="group -mb-px -mr-px flex min-w-0 items-center gap-2 border-b border-r border-border/60 bg-background/35 px-2.5 py-2 text-left transition-colors hover:bg-muted/60 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
                   >
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-blue-500/10 font-mono text-[10px] font-semibold text-blue-600 dark:text-blue-400">
-                      {String(index + 1).padStart(2, "0")}
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded bg-blue-500/10 text-[9px] font-semibold uppercase text-blue-600 dark:text-blue-400">
+                      {hostname.charAt(0)}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs font-medium text-foreground">
+                    <span className="min-w-0 flex-1 truncate text-[11px]">
+                      <span className="font-medium text-foreground/90">
                         {label}
                       </span>
-                      <span className="mt-1 block truncate text-[11px] text-muted-foreground">
-                        {hostname}
+                      <span className="text-muted-foreground">
+                        {` · ${hostname}`}
                       </span>
                     </span>
-                    <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground opacity-40 transition-opacity group-hover:opacity-90" />
+                    <ArrowUpRight className="size-3 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground/70" />
                   </Source>
                 );
               })}
             </div>
           ) : isSearching ? (
-            <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-border/70 bg-background/35 px-3 py-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 rounded-lg border border-dashed border-border/70 px-2.5 py-2 text-[11px] text-muted-foreground">
               <span className="flex gap-1" aria-hidden="true">
-                <span className="size-1.5 animate-pulse rounded-full bg-blue-500 [animation-delay:-240ms]" />
-                <span className="size-1.5 animate-pulse rounded-full bg-blue-500 [animation-delay:-120ms]" />
-                <span className="size-1.5 animate-pulse rounded-full bg-blue-500" />
+                <span className="size-1 animate-pulse rounded-full bg-blue-500 [animation-delay:-240ms]" />
+                <span className="size-1 animate-pulse rounded-full bg-blue-500 [animation-delay:-120ms]" />
+                <span className="size-1 animate-pulse rounded-full bg-blue-500" />
               </span>
-              Sources will appear here as Exa returns them
+              Finding relevant sources…
             </div>
           ) : null}
         </div>
