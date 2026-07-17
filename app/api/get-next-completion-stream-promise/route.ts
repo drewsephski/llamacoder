@@ -795,9 +795,10 @@ export async function POST(req: Request) {
           ): AgentAction => {
             if (action.action !== "search") return action;
 
-            // Research is classified and queried deterministically below. A
-            // model-suggested search must never widen that policy or send a
-            // fragment such as a color/style token to the web-search provider.
+            // The server bounds research candidates and query text below; the
+            // research model then decides whether the search tool is useful.
+            // Orchestration must not widen the candidate or send a fragment
+            // such as a color/style token to the web-search provider.
             if (shouldAnswerWithoutCode(latestUserContent)) {
               return { action: "answer" };
             }
@@ -846,8 +847,8 @@ export async function POST(req: Request) {
             try {
               const specContext = buildSpecContextLine(finalSpec);
               const automaticResearchContext =
-                researchIntent.required && !linkedPagesSatisfyReferenceResearch
-                  ? `\n\nAutomatic web research is required for this request because it is ${researchIntent.reason} research (${researchIntent.freshness} mode; query: ${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. The execution step will run web search before answering or generating code.`
+                researchIntent.candidate && !linkedPagesSatisfyReferenceResearch
+                  ? `\n\nWeb research may help with this ${researchIntent.reason} request (${researchIntent.freshness} mode; query: ${researchIntent.query}). Do not route to search or ask for search permission; continue the normal interview, plan, or code-generation lifecycle. During execution, the research model will decide whether searching would materially improve the output.`
                   : "";
               const orchestrationLinkedPageContext = buildChatUrlContext(
                 linkedPages,
@@ -1129,7 +1130,7 @@ export async function POST(req: Request) {
               ? agentMetadata
               : null;
           const approvedResearchQuery =
-            searchApproval?.approved === true && researchIntent.required
+            searchApproval?.approved === true && researchIntent.candidate
               ? researchIntent.query
               : null;
           const searchApproved = approvedResearchQuery !== null;
@@ -1153,11 +1154,11 @@ export async function POST(req: Request) {
                 integration.providerId !== undefined &&
                 selectedProviderIds.has(integration.providerId),
             );
-          const researchRequired =
+          const researchCandidate =
             !isFreeRepairRequest &&
             (searchApproved ||
               (searchApproval?.approved !== false &&
-                ((researchIntent.required &&
+                ((researchIntent.candidate &&
                   !selectedApiShouldSupplyLiveData &&
                   !linkedPagesSatisfyReferenceResearch &&
                   !attachedImageSatisfiesVisualReferenceResearch) ||
@@ -1172,7 +1173,7 @@ export async function POST(req: Request) {
               (integrationPolicyContext.trim()
                 ? buildResearchQuery(integrationPolicyContext)
                 : null));
-          const researchFreshness = researchIntent.required
+          const researchFreshness = researchIntent.candidate
             ? researchIntent.freshness
             : "evergreen";
 
@@ -1217,29 +1218,12 @@ export async function POST(req: Request) {
             }
           } else if (!isCodeGeneration) {
             systemInstruction = developerAgentPrompt;
-            if (researchRequired) {
-              guardedMessages.push({
-                role: "user",
-                content: `Web research is required for this request. Search for: ${researchQuery}. Use the results before answering the underlying request with current, source-grounded information.`,
-              });
-            } else if (searchApproval?.approved === false) {
+            if (searchApproval?.approved === false) {
               guardedMessages.push({
                 role: "user",
                 content:
                   "Internet search was declined. Answer using only the existing conversation and clearly note any current facts you cannot verify.",
               });
-            }
-          }
-
-          if (isCodeGeneration && researchRequired) {
-            const lastUserMessageIndex = guardedMessages.findLastIndex(
-              (candidate) => candidate.role === "user",
-            );
-            if (lastUserMessageIndex !== -1) {
-              guardedMessages[lastUserMessageIndex] = {
-                ...guardedMessages[lastUserMessageIndex],
-                content: `${guardedMessages[lastUserMessageIndex].content}\n\nWeb research is required before generating code. The server will attach a verified research brief for: ${researchQuery}. Use that brief as the source of truth for factual app content. Do not invent or substitute placeholder data.`,
-              };
             }
           }
 
@@ -1258,7 +1242,7 @@ export async function POST(req: Request) {
           if (
             isCodeGeneration &&
             apiDocumentation.hasCompleteEndpointContract &&
-            !researchRequired
+            !researchCandidate
           ) {
             const lastUserMessageIndex = guardedMessages.findLastIndex(
               (candidate) => candidate.role === "user",
@@ -1277,11 +1261,17 @@ export async function POST(req: Request) {
               .join("\n\n");
           }
 
-          if (researchRequired) {
+          if (researchCandidate) {
             const query = researchQuery?.trim();
             if (!query) {
               throw new Error("A web research query could not be determined");
             }
+            const researchDecisionContext = researchMessages
+              .slice(-4)
+              .map((candidate) => candidate.content.trim())
+              .filter(Boolean)
+              .join("\n\n")
+              .slice(0, 6_000);
 
             const researchLabel = researchIntent.explicitlyRequested
               ? "Searching as requested"
@@ -1292,13 +1282,8 @@ export async function POST(req: Request) {
                   : effectiveLiveApiIntent.required
                     ? "Verifying integration details"
                     : "Checking external sources";
-            writeStatus({ phase: "searching", label: researchLabel });
-            writeResearchActivity({
-              phase: "searching",
-              query,
-              label: researchLabel,
-              sourceCount: 0,
-            });
+            const forceWebSearch =
+              searchApproved || researchIntent.explicitlyRequested;
 
             const researchModel = WEB_RESEARCH_MODEL;
             const researchWindow =
@@ -1333,12 +1318,16 @@ export async function POST(req: Request) {
                 },
                 system:
                   researchWindow === null
-                    ? `Research the request before answering or generating software. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. When the objective contains an exact URL, inspect that exact page first and treat it as the primary source; do not replace it with remembered knowledge, a similarly named API, or a different documentation version. Search for information that materially improves accuracy, domain fit, implementation quality, or completeness. Prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set. Never recommend mock data as a replacement for the requested live integration." : ""} Return a concise factual brief with source support. Do not write application code.`
-                    : `Research current facts for a software-generation request. Today is ${researchWindow.endDate}. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. Use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. Return a concise factual brief with source support. Do not write application code.`,
+                    ? `${forceWebSearch ? "The user explicitly requested or approved web research, so call web_search before answering." : "Decide whether web research would materially improve the output before calling web_search. Search only when the request depends on current externally verifiable facts, unavailable external content, or missing API/provider documentation. Skip search for ordinary creative builds, local code or styling work, stable knowledge, subjective choices, and prompts whose supplied context is already sufficient."} Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. When the objective contains an exact URL, inspect that exact page first and treat it as the primary source; do not replace it with remembered knowledge, a similarly named API, or a different documentation version. If you search, prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate that needs research, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set. Never recommend mock data as a replacement for the requested live integration." : ""} If web_search is unnecessary, finish without calling it. Do not write application code.`
+                    : `${forceWebSearch ? "The user explicitly requested or approved current web research, so call web_search before answering." : "Decide whether current web research would materially improve the output before calling web_search. Search only when the output depends on volatile or externally verifiable facts that are not already established by the supplied context. Skip search for ordinary creative builds, local code or styling work, stable knowledge, and subjective choices."} Today is ${researchWindow.endDate}. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. If you search, use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. If web_search is unnecessary, finish without calling it. Do not write application code.`,
                 prompt:
                   researchWindow === null
-                    ? `${query}\n\nFind the most authoritative sources that can materially improve the response. Include stable documentation or background sources even when they are undated.`
-                    : `${query}\n\nRequired publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`,
+                    ? forceWebSearch
+                      ? `User objective:\n${researchDecisionContext}\n\nSearch objective:\n${query}\n\nFind the most authoritative sources that can materially improve the response. Include stable documentation or background sources even when they are undated.`
+                      : `User objective:\n${researchDecisionContext}\n\nPossible search objective:\n${query}\n\nDecide whether external research is necessary to materially improve this output. If the supplied context and stable model knowledge are sufficient, do not call web_search.`
+                    : forceWebSearch
+                      ? `User objective:\n${researchDecisionContext}\n\nSearch objective:\n${query}\n\nRequired publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`
+                      : `User objective:\n${researchDecisionContext}\n\nPossible search objective:\n${query}\n\nDecide whether volatile external facts are necessary for this output. If not, do not call web_search. Any search used must stay within ${researchWindow.startDate} through ${researchWindow.endDate}.`,
                 tools: {
                   web_search: gateway.tools.exaSearch({
                     type: "auto",
@@ -1365,12 +1354,24 @@ export async function POST(req: Request) {
                     },
                   }),
                 },
-                toolChoice: "required",
+                toolChoice: forceWebSearch ? "required" : "auto",
                 maxRetries: 1,
               });
               const toolOutputs: unknown[] = [];
               const emittedSourceUrls = new Set<string>();
               let markedFirstResearchEvent = false;
+              let webSearchCalled = false;
+              const markWebSearchStarted = () => {
+                if (webSearchCalled) return;
+                webSearchCalled = true;
+                writeStatus({ phase: "searching", label: researchLabel });
+                writeResearchActivity({
+                  phase: "searching",
+                  query,
+                  label: researchLabel,
+                  sourceCount: 0,
+                });
+              };
               const sourceOptions = researchWindow
                 ? { publicationWindow: researchWindow }
                 : {};
@@ -1413,6 +1414,12 @@ export async function POST(req: Request) {
                   markedFirstResearchEvent = true;
                   researchTelemetry.markFirstByte();
                 }
+                if (
+                  (part.type === "tool-call" || part.type === "tool-result") &&
+                  part.toolName === "web_search"
+                ) {
+                  markWebSearchStarted();
+                }
                 if (part.type === "tool-result") {
                   toolOutputs.push(part.output);
                   emitNewSources(toolOutputs);
@@ -1422,11 +1429,18 @@ export async function POST(req: Request) {
               }
 
               const finalToolResults = await researchResult.toolResults;
+              if (
+                finalToolResults.some(
+                  (result) => result.toolName === "web_search",
+                )
+              ) {
+                markWebSearchStarted();
+              }
               const webSources = emitNewSources([
                 ...toolOutputs,
                 ...finalToolResults.map(({ output }) => output),
               ]);
-              if (webSources.length === 0) {
+              if (webSearchCalled && webSources.length === 0) {
                 throw new Error(
                   researchWindow
                     ? `Web search returned no dated sources published from ${researchWindow.startDate} through ${researchWindow.endDate}`
@@ -1434,36 +1448,41 @@ export async function POST(req: Request) {
                 );
               }
 
-              writeResearchActivity({
-                phase: "complete",
-                query,
-                label: `Reviewed ${webSources.length} ${webSources.length === 1 ? "source" : "sources"}`,
-                sourceCount: webSources.length,
-              });
+              if (webSearchCalled) {
+                writeResearchActivity({
+                  phase: "complete",
+                  query,
+                  label: `Reviewed ${webSources.length} ${webSources.length === 1 ? "source" : "sources"}`,
+                  sourceCount: webSources.length,
+                });
 
-              const sourceEvidence = webSources.map(
-                (source, index) =>
-                  `[Source ${index + 1}] ${source.title}\nPublished: ${source.publishedDate?.slice(0, 10) ?? "Not provided"}\nURL: ${source.url}\nExcerpt:\n${source.excerpt || "No excerpt was returned."}`,
-              );
-              const researchBrief = [
-                "=== VERIFIED WEB RESEARCH ===",
-                researchWindow
-                  ? `Strict publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`
-                  : "Research mode: authoritative sources without an artificial publication-date cutoff.",
-                sourceEvidence.join("\n\n"),
-                "=== END VERIFIED WEB RESEARCH ===",
-                researchWindow
-                  ? "Use only this dated research as factual source material. Preserve its publication dates and source URLs in the generated app where attribution is useful. Do not revive facts from older conversation messages or label archived data as current."
-                  : "Use this research to improve factual accuracy, domain fit, and implementation decisions. Prefer primary sources, preserve source URLs where attribution is useful, and do not claim undated material is current.",
-              ].join("\n\n");
-              const lastUserMessageIndex = guardedMessages.findLastIndex(
-                (candidate) => candidate.role === "user",
-              );
-              if (lastUserMessageIndex !== -1) {
-                guardedMessages[lastUserMessageIndex] = {
-                  ...guardedMessages[lastUserMessageIndex],
-                  content: `${guardedMessages[lastUserMessageIndex].content}\n\n${researchBrief}`,
-                };
+                const sourceEvidence = webSources.map(
+                  (source, index) =>
+                    `[Source ${index + 1}] ${source.title}\nPublished: ${source.publishedDate?.slice(0, 10) ?? "Not provided"}\nURL: ${source.url}\nExcerpt:\n${source.excerpt || "No excerpt was returned."}`,
+                );
+                const researchBrief = [
+                  "=== VERIFIED WEB RESEARCH ===",
+                  researchWindow
+                    ? `Strict publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`
+                    : "Research mode: authoritative sources without an artificial publication-date cutoff.",
+                  sourceEvidence.join("\n\n"),
+                  "=== END VERIFIED WEB RESEARCH ===",
+                  researchWindow
+                    ? "Use only this dated research as factual source material. Preserve its publication dates and source URLs in the generated app where attribution is useful. Do not revive facts from older conversation messages or label archived data as current."
+                    : "Use this research to improve factual accuracy, domain fit, and implementation decisions. Prefer primary sources, preserve source URLs where attribution is useful, and do not claim undated material is current.",
+                ].join("\n\n");
+                const lastUserMessageIndex = guardedMessages.findLastIndex(
+                  (candidate) => candidate.role === "user",
+                );
+                if (lastUserMessageIndex !== -1) {
+                  const researchUsageInstruction = isCodeGeneration
+                    ? "Web research was used before generating code. Use the verified brief as the source of truth for factual app content. Do not invent or substitute placeholder data."
+                    : "Web research was used for this answer. Use the verified brief for externally verifiable claims.";
+                  guardedMessages[lastUserMessageIndex] = {
+                    ...guardedMessages[lastUserMessageIndex],
+                    content: `${guardedMessages[lastUserMessageIndex].content}\n\n${researchUsageInstruction}\n\n${researchBrief}`,
+                  };
+                }
               }
               const [usage, finishReason, providerMetadata, response] =
                 await Promise.all([

@@ -10,7 +10,7 @@ import {
 } from "@/features/generation/research-intent";
 
 describe("detectResearchIntent", () => {
-  it("requires research of the exact API documentation link when no contract is provided", () => {
+  it("offers research for an exact API documentation link when no contract is provided", () => {
     const content =
       "Build a flight tracker using the API at https://developer.example.com/api/v3/docs";
 
@@ -20,7 +20,7 @@ describe("detectResearchIntent", () => {
       referencedUrls: ["https://developer.example.com/api/v3/docs"],
     });
     expect(detectResearchIntent([{ content }])).toMatchObject({
-      required: true,
+      candidate: true,
       freshness: "evergreen",
       reason: "technical-reference",
       query: expect.stringContaining(
@@ -40,7 +40,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       hasCompleteEndpointContract: true,
     });
     expect(detectResearchIntent([{ content }])).toEqual({
-      required: false,
+      candidate: false,
       explicitlyRequested: false,
       freshness: "evergreen",
       reason: null,
@@ -54,7 +54,7 @@ Base URL: https://api.example.com/v2
 GET https://api.example.com/v2/flights — returns current flights.`;
 
     expect(detectResearchIntent([{ content }])).toMatchObject({
-      required: true,
+      candidate: true,
       explicitlyRequested: true,
       reason: "explicit",
     });
@@ -84,7 +84,7 @@ GET https://api.example.com/v2/flights — returns current flights.`;
       "site:squidagent.app https://squidagent.app/ homepage design layout typography colors sections interactions",
     );
     expect(detectResearchIntent([{ content }])).toMatchObject({
-      required: true,
+      candidate: true,
       reason: "external-facts",
       query: expect.stringMatching(/^site:squidagent\.app\b/),
     });
@@ -105,7 +105,7 @@ GET https://api.example.com/v2/flights — returns current flights.`;
     "Look the fighter records up before building this",
   ])("honors explicit research requests: %s", (content) => {
     expect(detectResearchIntent([{ content }])).toMatchObject({
-      required: true,
+      candidate: true,
       explicitlyRequested: true,
       freshness: expect.any(String),
       reason: "explicit",
@@ -166,7 +166,7 @@ export default function App() { return <button>Latest results</button>; }
     );
     expect(buildResearchQuery(content)).toBe("the buttons text always white");
     expect(detectResearchIntent([{ content }])).toEqual({
-      required: false,
+      candidate: false,
       explicitlyRequested: false,
       freshness: "evergreen",
       reason: null,
@@ -194,9 +194,9 @@ export default function App() { return <button>Latest results</button>; }
     "Build an app with the current UFC rankings",
     "Show the actual UFC rankings and records",
     "Create a dashboard for live scores today",
-  ])("requires recent research for volatile factual data: %s", (content) => {
+  ])("offers recent research for volatile factual data: %s", (content) => {
     expect(detectResearchIntent([{ content }])).toMatchObject({
-      required: true,
+      candidate: true,
       freshness: "recent",
     });
   });
@@ -207,10 +207,10 @@ export default function App() { return <button>Latest results</button>; }
     ["Verify this claim and cite the sources", "verification"],
     ["Summarize https://ai-sdk.dev/docs", "technical-reference"],
   ] as const)(
-    "uses evergreen research when external verification is necessary: %s",
+    "offers evergreen research when external verification may help: %s",
     (content, reason) => {
       expect(detectResearchIntent([{ content }])).toMatchObject({
-        required: true,
+        candidate: true,
         freshness: "evergreen",
         reason,
       });
@@ -231,7 +231,7 @@ export default function App() { return <button>Latest results</button>; }
     "Use a warmer, more playful visual style",
   ])("skips search for fully local or subjective work: %s", (content) => {
     expect(detectResearchIntent([{ content }])).toEqual({
-      required: false,
+      candidate: false,
       explicitlyRequested: false,
       freshness: "evergreen",
       reason: null,

@@ -1,5 +1,5 @@
 export type ResearchIntent = {
-  required: boolean;
+  candidate: boolean;
   explicitlyRequested: boolean;
   freshness: "recent" | "evergreen";
   reason: ResearchReason | null;
@@ -445,9 +445,9 @@ function classifyResearch(content: string): {
 }
 
 /**
- * Detects requests where generating without fresh external facts would be
- * incorrect or stale. Search is intentionally conservative: ordinary builds,
- * local edits, and stable questions continue without a separate research call.
+ * Detects requests where research may improve factual accuracy. This is only
+ * a candidate signal for the research model; it must not force a web search.
+ * Ordinary builds, local edits, and stable questions skip the decision call.
  */
 export function detectResearchIntent(
   messages: Array<{ content: string }>,
@@ -470,7 +470,7 @@ export function detectResearchIntent(
       }
 
       return {
-        required: true,
+        candidate: true,
         ...classification,
         query: buildResearchQuery(content),
       };
@@ -478,7 +478,7 @@ export function detectResearchIntent(
   }
 
   return {
-    required: false,
+    candidate: false,
     explicitlyRequested: false,
     freshness: "evergreen",
     reason: null,

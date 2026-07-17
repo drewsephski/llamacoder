@@ -225,6 +225,25 @@ function mockResearch(outputs: unknown[], responseId = "research_response_1") {
   });
 }
 
+function mockResearchSkipped(responseId = "research_skipped_1") {
+  const fullStream = (async function* () {
+    yield {
+      type: "text-delta" as const,
+      id: "research_decision_1",
+      text: "The supplied brief is sufficient; web search would not improve the output.",
+    };
+  })();
+
+  streamTextMock.mockReturnValueOnce({
+    fullStream,
+    toolResults: Promise.resolve([]),
+    usage: Promise.resolve(undefined),
+    finishReason: Promise.resolve("stop"),
+    providerMetadata: Promise.resolve(undefined),
+    response: Promise.resolve({ id: responseId }),
+  });
+}
+
 async function collectUIChunks(response: Response) {
   if (!response.body) throw new Error("Missing response body");
 
@@ -637,7 +656,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     ).toBe(true);
     expect(gatewayModelMock).toHaveBeenCalledWith("openai/gpt-5-nano");
     expect(call.messages.at(-1).content).toContain(
-      "Web research is required before generating code",
+      "Web research was used before generating code",
     );
     expect(call.messages.at(-1).content).toContain(
       "Do not invent or substitute placeholder data",
@@ -687,6 +706,55 @@ Use a crisp technical design with white and charcoal surfaces, dense monospace d
     expect(
       chunks.some((chunk) => chunk.type === "data-research-activity"),
     ).toBe(false);
+  });
+
+  it("lets the model skip web search when a complete creative brief already supplies the needed context", async () => {
+    const content = `Build a modern, engaging, mobile-responsive marketing site for pawshope.org.
+
+Use the supplied rescue story, adoption steps, donation CTA, contact details, and social-link labels exactly as written. Reinterpret the content into a warmer story-first layout with accessible navigation and a clear footer.`;
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_optional_research_skipped",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    mockResearchSkipped();
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({
+        messageId: "msg_optional_research_skipped",
+        model: "model_1",
+      }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    const researchDecisionCall = streamTextMock.mock.calls[0][0];
+    const generationCall = streamTextMock.mock.calls[1][0];
+    expect(researchDecisionCall.toolChoice).toBe("auto");
+    expect(researchDecisionCall.system).toContain(
+      "Decide whether web research would materially improve the output",
+    );
+    expect(streamTextMock).toHaveBeenCalledTimes(2);
+    expect(
+      chunks.some((chunk) => chunk.type === "data-research-activity"),
+    ).toBe(false);
+    expect(generationCall.messages.at(-1).content).not.toContain(
+      "VERIFIED WEB RESEARCH",
+    );
+    expect(generationCall.messages.at(-1).content).not.toContain(
+      "Web research was used",
+    );
   });
 
   it("does not research DOM context or source code embedded in a targeted edit", async () => {
@@ -1810,6 +1878,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
         endPublishedDate: expect.anything(),
       }),
     );
+    expect(streamTextMock.mock.calls[0][0].toolChoice).toBe("auto");
     expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
       "authoritative sources without an artificial publication-date cutoff",
     );
