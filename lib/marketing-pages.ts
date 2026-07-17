@@ -1402,7 +1402,7 @@ export function marketingMetadata(page: MarketingPage): Metadata {
       authors: [SITE_NAME],
       images: [
         {
-          url: "/og-image.png",
+          url: "/api/og?card=site&v=2",
           width: 1200,
           height: 630,
           alt: `${page.h1} — ${SITE_NAME}`,
@@ -1413,7 +1413,7 @@ export function marketingMetadata(page: MarketingPage): Metadata {
       card: "summary_large_image",
       title: page.title,
       description: page.description,
-      images: ["/og-image.png"],
+      images: ["/api/og?card=site&v=2"],
     },
   };
 }

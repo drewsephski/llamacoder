@@ -260,7 +260,7 @@ const homepageStructuredData = {
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web",
       url: "https://squidagent.app/",
-      image: "https://squidagent.app/og-image.png",
+      image: "https://squidagent.app/api/og?card=site&v=2",
       description:
         "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
       creator: {
