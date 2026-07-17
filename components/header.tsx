@@ -49,7 +49,7 @@ function Header({ onHelpClick }: HeaderProps) {
     <header className="sticky top-0 z-40 mx-auto flex w-full shrink-0 items-center justify-between bg-background/80 px-4 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/65 sm:py-6 md:relative md:bg-transparent md:backdrop-blur-none">
       <Link
         href="/"
-        className="group flex min-w-0 flex-row items-center gap-3 transition-opacity hover:opacity-90"
+        className="group flex min-w-0 flex-row items-center gap-2.5 transition-opacity hover:opacity-90 sm:gap-3"
       >
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 scale-[1.3] rounded-full bg-blue-500/10 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
@@ -195,7 +195,7 @@ function Header({ onHelpClick }: HeaderProps) {
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         variant="ghost"
         size="icon"
-        className="size-11 md:hidden"
+        className="size-11 shrink-0 md:hidden"
         aria-label="Toggle menu"
       >
         {mobileMenuOpen ? (
@@ -212,7 +212,7 @@ function Header({ onHelpClick }: HeaderProps) {
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="absolute inset-x-3 top-3 max-h-[calc(100svh-1.5rem)] overflow-y-auto rounded-2xl border border-border bg-background p-4 shadow-2xl">
+          <div className="absolute inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] max-h-[calc(100svh-max(1.5rem,env(safe-area-inset-top)))] overflow-y-auto rounded-2xl border border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl">
             <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <Image

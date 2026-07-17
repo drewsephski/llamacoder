@@ -64,6 +64,7 @@ export function ResourcesMenu({
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pinnedOpen = useRef(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstLinkRef = useRef<HTMLAnchorElement>(null);
 
@@ -75,6 +76,7 @@ export function ResourcesMenu({
   };
 
   const scheduleClose = () => {
+    if (pinnedOpen.current) return;
     cancelClose();
     closeTimer.current = setTimeout(() => setOpen(false), 140);
   };
@@ -94,17 +96,15 @@ export function ResourcesMenu({
         setOpen(true);
       }}
       onMouseLeave={scheduleClose}
-      onFocusCapture={() => {
-        cancelClose();
-        setOpen(true);
-      }}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          pinnedOpen.current = false;
           setOpen(false);
         }
       }}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
+          pinnedOpen.current = false;
           setOpen(false);
           triggerRef.current?.focus();
         }
@@ -121,6 +121,11 @@ export function ResourcesMenu({
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
+        onClick={() => {
+          cancelClose();
+          pinnedOpen.current = !pinnedOpen.current;
+          setOpen(pinnedOpen.current);
+        }}
         className={cn(
           "inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium text-muted-foreground transition-[background-color,color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-px motion-reduce:transition-colors",
           compact && "size-11 gap-0 px-0 sm:w-auto sm:px-3",
@@ -171,7 +176,10 @@ export function ResourcesMenu({
                   <Link
                     ref={index === 0 ? firstLinkRef : undefined}
                     href={link.href}
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      pinnedOpen.current = false;
+                      setOpen(false);
+                    }}
                     className="group flex min-h-14 items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-[background-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary active:translate-y-px motion-reduce:transition-colors"
                   >
                     <Icon

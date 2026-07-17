@@ -66,8 +66,11 @@ export default async function GalleryPage({
         pending={hasPendingThumbnails}
       />
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 font-semibold">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            className="flex min-w-0 items-center gap-2.5 font-semibold"
+          >
             <Image
               src="/squidagent-logo.svg"
               alt="Squid"
@@ -75,7 +78,7 @@ export default async function GalleryPage({
               height={30}
               className="size-8 object-contain"
             />
-            <span>Squid</span>
+            <span className="hidden min-[360px]:inline">Squid</span>
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm md:flex">
@@ -92,9 +95,12 @@ export default async function GalleryPage({
             )}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <Button asChild size="sm">
-              <Link href="/">Build an app</Link>
+              <Link href="/">
+                <span className="min-[400px]:hidden">Build</span>
+                <span className="hidden min-[400px]:inline">Build an app</span>
+              </Link>
             </Button>
             <AnimatedThemeToggleButton variant="horizontal" />
           </div>

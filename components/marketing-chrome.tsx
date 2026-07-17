@@ -20,7 +20,9 @@ export function MarketingHeader() {
             height={28}
             priority
           />
-          <span className="font-semibold tracking-tight">Squid Agent</span>
+          <span className="hidden whitespace-nowrap font-semibold tracking-tight min-[360px]:inline">
+            Squid Agent
+          </span>
         </Link>
         <nav
           aria-label="Marketing navigation"

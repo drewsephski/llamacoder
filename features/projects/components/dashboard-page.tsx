@@ -1,8 +1,7 @@
 import { renameProject } from "@/features/projects/server/actions";
 import { ProjectCardActions } from "@/features/projects/components/project-card-actions";
 import { UpgradeBanner } from "@/features/billing/components/upgrade-banner";
-import { DashboardSignOutButton } from "@/components/dashboard-sign-out-button";
-import { DashboardCreditsButton } from "@/components/dashboard-credits-button";
+import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { CREDIT_PACKS, FREE_PROJECT_LIMIT } from "@/lib/billing";
 import Link from "next/link";
 import {
@@ -24,11 +23,9 @@ import {
   Blocks,
   TriangleAlert,
 } from "lucide-react";
-import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { MODELS } from "@/lib/constants";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getDashboardData } from "@/features/projects/server/dashboard-query";
 import { getModelBadgeClass } from "@/features/projects/model-badge";
@@ -108,63 +105,35 @@ export async function DashboardPage({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-6xl px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link href="/" className="flex items-center">
-                <Image
-                  src="/squidagent-logo.svg"
-                  alt="Squid Agent"
-                  width={32}
-                  height={32}
-                  className="h-8 w-auto"
-                />
-              </Link>
-              <div className="hidden items-center gap-1 md:flex">
-                <span className="px-2 text-sm text-muted-foreground">/</span>
-                <span className="text-sm font-medium">Dashboard</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <DashboardCreditsButton
-                credits={userCredits}
-                currentTier={currentTier}
-              />
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/gallery">Gallery</Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/dashboard/usage">Usage</Link>
-              </Button>
-              <AnimatedThemeToggleButton variant="horizontal" />
-              <DashboardSignOutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <DashboardNavigation
+        credits={userCredits}
+        currentPage="Dashboard"
+        currentTier={currentTier}
+      />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-6 py-10 lg:px-8">
+      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
         {/* Hero Section */}
         <div className="mb-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="mb-1 text-sm font-medium text-muted-foreground">
                 Welcome back
               </p>
-              <h1 className="text-3xl font-semibold tracking-tight">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Hi, {userName}
               </h1>
             </div>
             {!hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT ? (
-              <Button disabled className="cursor-not-allowed opacity-50">
+              <Button
+                disabled
+                className="min-h-11 cursor-not-allowed opacity-50 sm:min-h-10"
+              >
                 <Plus className="h-4 w-4" />
                 Limit Reached
               </Button>
             ) : (
-              <Button asChild>
+              <Button asChild className="min-h-11 sm:min-h-10">
                 <Link href="/">
                   <Plus className="h-4 w-4" />
                   New Project
@@ -183,7 +152,7 @@ export async function DashboardPage({
             <h2 className="text-lg font-medium">Your Progress</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-border bg-card p-5">
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Projects Created
@@ -215,7 +184,7 @@ export async function DashboardPage({
                 />
               </div>
             </div>
-            <div className="rounded-xl border border-border bg-card p-5">
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Available Credits
@@ -340,10 +309,10 @@ export async function DashboardPage({
                     key={project.id}
                     className="group relative flex flex-col rounded-xl border border-border bg-card transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
                   >
-                    <div className="flex flex-1 flex-col p-5">
+                    <div className="flex flex-1 flex-col p-4 sm:p-5">
                       {/* Header */}
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                      <div className="mb-4 flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
                           <span
                             className={`rounded-md border px-2 py-0.5 text-xs font-medium ${getModelBadgeClass(project.model)}`}
                           >
@@ -446,13 +415,13 @@ export async function DashboardPage({
                         className="border-t border-border bg-muted/30 p-4"
                       >
                         <input type="hidden" name="chatId" value={project.id} />
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2 min-[420px]:flex-row">
                           <input
                             type="text"
                             name="newTitle"
                             placeholder="New title..."
                             defaultValue={project.title}
-                            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             required
                           />
                           <Button type="submit" size="sm">
@@ -467,7 +436,7 @@ export async function DashboardPage({
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="mt-8 flex items-center justify-center gap-2">
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                   {currentPage === 1 ? (
                     <Button variant="outline" size="sm" disabled>
                       Previous
@@ -479,7 +448,10 @@ export async function DashboardPage({
                       </Link>
                     </Button>
                   )}
-                  <div className="flex items-center gap-1">
+                  <span className="px-2 text-sm text-muted-foreground sm:hidden">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <div className="hidden items-center gap-1 sm:flex">
                     {paginationItems.map((item) =>
                       typeof item === "string" ? (
                         <span

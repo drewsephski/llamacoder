@@ -5,11 +5,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, Coins, FileText, ReceiptText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DashboardCreditsButton } from "@/components/dashboard-credits-button";
-import { DashboardSignOutButton } from "@/components/dashboard-sign-out-button";
-import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
+import { Coins, FileText, ReceiptText } from "lucide-react";
+import { DashboardNavigation } from "@/components/dashboard-navigation";
 
 export const metadata: Metadata = {
   title: "Usage Ledger",
@@ -83,42 +80,18 @@ export default async function UsagePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-6xl px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/dashboard">
-                  <ArrowLeft className="h-4 w-4" />
-                  Dashboard
-                </Link>
-              </Button>
-              <div className="hidden items-center gap-1 md:flex">
-                <span className="px-2 text-sm text-muted-foreground">/</span>
-                <span className="text-sm font-medium">Usage</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <DashboardCreditsButton
-                credits={user?.credits ?? 0}
-                currentTier={currentTier}
-              />
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/gallery">Gallery</Link>
-              </Button>
-              <AnimatedThemeToggleButton variant="horizontal" />
-              <DashboardSignOutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <DashboardNavigation
+        credits={user?.credits ?? 0}
+        currentPage="Usage"
+        currentTier={currentTier}
+      />
 
-      <main className="mx-auto max-w-6xl px-6 py-10 lg:px-8">
+      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
         <header className="mb-8">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <ReceiptText className="h-5 w-5 text-primary" />
           </div>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
             Usage ledger
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
@@ -129,7 +102,7 @@ export default async function UsagePage() {
         </header>
 
         <section className="rounded-2xl border border-border bg-card">
-          <div className="border-b border-border p-5">
+          <div className="border-b border-border p-4 sm:p-5">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
               <h2 className="font-semibold">Generation charges</h2>
@@ -138,70 +111,151 @@ export default async function UsagePage() {
           {generationLogs.length === 0 ? (
             <EmptyState text="No successful generations have been charged yet." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-sm">
-                <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-5 py-3 font-medium">Date</th>
-                    <th className="px-5 py-3 font-medium">Project</th>
-                    <th className="px-5 py-3 font-medium">Model</th>
-                    <th className="px-5 py-3 font-medium">Phase</th>
-                    <th className="px-5 py-3 text-right font-medium">
-                      Estimate
-                    </th>
-                    <th className="px-5 py-3 text-right font-medium">Actual</th>
-                    <th className="px-5 py-3 text-right font-medium">Refund</th>
-                    <th className="px-5 py-3 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {generationLogs.map((log) => (
-                    <tr key={log.id}>
-                      <td className="px-5 py-4 text-muted-foreground">
-                        {formatDate(log.createdAt)}
-                      </td>
-                      <td className="px-5 py-4">
+            <>
+              <div className="divide-y divide-border md:hidden">
+                {generationLogs.map((log) => (
+                  <article key={log.id} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
                         {log.chatId ? (
                           <Link
                             href={`/chats/${log.chatId}`}
-                            className="font-medium hover:underline"
+                            className="font-medium leading-snug hover:underline"
                           >
                             {chatTitleById.get(log.chatId) ?? "Project"}
                           </Link>
                         ) : (
-                          <span className="text-muted-foreground">None</span>
+                          <span className="font-medium text-muted-foreground">
+                            No linked project
+                          </span>
                         )}
-                      </td>
-                      <td className="max-w-[180px] truncate px-5 py-4 text-muted-foreground">
-                        {log.modelId}
-                      </td>
-                      <td className="px-5 py-4 text-muted-foreground">
-                        {formatLabel(log.phase ?? "generation")}
-                      </td>
-                      <td className="px-5 py-4 text-right tabular-nums">
-                        {log.estimatedCredits ?? log.creditsUsed}
-                      </td>
-                      <td className="px-5 py-4 text-right tabular-nums">
-                        {log.actualCredits ?? log.creditsUsed}
-                      </td>
-                      <td className="px-5 py-4 text-right tabular-nums">
-                        {log.refundedCredits}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-                          {formatLabel(log.status)}
-                        </span>
-                      </td>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatDate(log.createdAt)}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                        {formatLabel(log.status)}
+                      </span>
+                    </div>
+
+                    <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                      <div className="min-w-0">
+                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Model
+                        </dt>
+                        <dd className="mt-1 break-words text-foreground">
+                          {log.modelId}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Phase
+                        </dt>
+                        <dd className="mt-1">
+                          {formatLabel(log.phase ?? "generation")}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <dl className="mt-4 grid grid-cols-3 rounded-lg bg-muted/40 p-3 text-center">
+                      <div>
+                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Estimate
+                        </dt>
+                        <dd className="mt-1 font-medium tabular-nums">
+                          {log.estimatedCredits ?? log.creditsUsed}
+                        </dd>
+                      </div>
+                      <div className="border-x border-border">
+                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Actual
+                        </dt>
+                        <dd className="mt-1 font-medium tabular-nums">
+                          {log.actualCredits ?? log.creditsUsed}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Refund
+                        </dt>
+                        <dd className="mt-1 font-medium tabular-nums">
+                          {log.refundedCredits}
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+
+              <div className="hidden overflow-x-auto overscroll-x-contain md:block">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-5 py-3 font-medium">Date</th>
+                      <th className="px-5 py-3 font-medium">Project</th>
+                      <th className="px-5 py-3 font-medium">Model</th>
+                      <th className="px-5 py-3 font-medium">Phase</th>
+                      <th className="px-5 py-3 text-right font-medium">
+                        Estimate
+                      </th>
+                      <th className="px-5 py-3 text-right font-medium">
+                        Actual
+                      </th>
+                      <th className="px-5 py-3 text-right font-medium">
+                        Refund
+                      </th>
+                      <th className="px-5 py-3 font-medium">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {generationLogs.map((log) => (
+                      <tr key={log.id}>
+                        <td className="px-5 py-4 text-muted-foreground">
+                          {formatDate(log.createdAt)}
+                        </td>
+                        <td className="px-5 py-4">
+                          {log.chatId ? (
+                            <Link
+                              href={`/chats/${log.chatId}`}
+                              className="font-medium hover:underline"
+                            >
+                              {chatTitleById.get(log.chatId) ?? "Project"}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground">None</span>
+                          )}
+                        </td>
+                        <td className="max-w-[180px] truncate px-5 py-4 text-muted-foreground">
+                          {log.modelId}
+                        </td>
+                        <td className="px-5 py-4 text-muted-foreground">
+                          {formatLabel(log.phase ?? "generation")}
+                        </td>
+                        <td className="px-5 py-4 text-right tabular-nums">
+                          {log.estimatedCredits ?? log.creditsUsed}
+                        </td>
+                        <td className="px-5 py-4 text-right tabular-nums">
+                          {log.actualCredits ?? log.creditsUsed}
+                        </td>
+                        <td className="px-5 py-4 text-right tabular-nums">
+                          {log.refundedCredits}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                            {formatLabel(log.status)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </section>
 
         <section className="mt-8 rounded-2xl border border-border bg-card">
-          <div className="border-b border-border p-5">
+          <div className="border-b border-border p-4 sm:p-5">
             <div className="flex items-center gap-2">
               <Coins className="h-4 w-4 text-amber-500" />
               <h2 className="font-semibold">Credit history</h2>
