@@ -96,20 +96,73 @@ export function MarketingHub({ kind, title, intro, pages }: MarketingHubProps) {
         {kind === "comparison" && <AiBuilderFeatureComparison variant="hub" />}
 
         <section className="mx-auto max-w-6xl px-6 py-16 lg:px-8 lg:py-20">
-          <div className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
+          {kind === "guide" && (
+            <div className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-5">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">
+                  All posts
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Practical notes for taking generated React from prompt to
+                  production.
+                </p>
+              </div>
+              <p className="hidden font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground sm:block">
+                {pages.length} {pages.length === 1 ? "post" : "posts"}
+              </p>
+            </div>
+          )}
+
+          <div
+            className={
+              kind === "guide"
+                ? "grid gap-5 md:grid-cols-2 lg:grid-cols-3"
+                : "grid gap-px overflow-hidden border border-border bg-border md:grid-cols-2"
+            }
+          >
             {pages.map((page, index) => (
               <Link
                 key={page.slug}
                 href={getMarketingPath(page)}
-                className={`group relative flex min-h-[310px] flex-col bg-background p-7 transition-colors hover:bg-primary/[0.025] sm:p-9 ${
-                  pages.length % 2 === 1 && index === 0 ? "md:col-span-2" : ""
-                }`}
+                className={
+                  kind === "guide"
+                    ? `group relative flex min-h-[340px] flex-col overflow-hidden rounded-2xl border border-border bg-background p-7 transition-[border-color,background-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-primary/35 hover:bg-primary/[0.025] hover:shadow-[0_18px_50px_-32px_hsl(var(--primary)/0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:p-8 ${
+                        index === 0
+                          ? "md:col-span-2 lg:col-span-2 lg:min-h-[380px]"
+                          : ""
+                      }`
+                    : `group relative flex min-h-[310px] flex-col bg-background p-7 transition-colors hover:bg-primary/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-9 ${
+                        pages.length % 2 === 1 && index === 0
+                          ? "md:col-span-2"
+                          : ""
+                      }`
+                }
               >
+                {kind === "guide" && (
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    aria-hidden="true"
+                  />
+                )}
                 <div className="flex items-center justify-between gap-4 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                  <span>{page.readingTime}</span>
-                  <span>Updated {formatShortDate(page.updatedAt)}</span>
+                  <span>
+                    {kind === "guide"
+                      ? String(index + 1).padStart(2, "0")
+                      : page.readingTime}
+                  </span>
+                  <span>
+                    {kind === "guide"
+                      ? `${formatShortDate(page.publishedAt)} · ${page.readingTime}`
+                      : `Updated ${formatShortDate(page.updatedAt)}`}
+                  </span>
                 </div>
-                <h2 className="mt-10 max-w-2xl text-balance text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">
+                <h2
+                  className={`mt-10 max-w-2xl text-balance font-semibold tracking-[-0.025em] ${
+                    kind === "guide" && index === 0
+                      ? "text-3xl sm:text-4xl"
+                      : "text-2xl sm:text-3xl"
+                  }`}
+                >
                   {page.h1}
                 </h2>
                 <p className="mt-4 max-w-3xl leading-7 text-muted-foreground">
@@ -117,7 +170,10 @@ export function MarketingHub({ kind, title, intro, pages }: MarketingHubProps) {
                 </p>
                 <span className="mt-auto flex items-center gap-2 pt-9 text-sm font-semibold text-primary">
                   Read the {kind === "guide" ? "guide" : kind}
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight
+                    className="size-4 transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
+                  />
                 </span>
               </Link>
             ))}

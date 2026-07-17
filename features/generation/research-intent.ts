@@ -20,6 +20,12 @@ export type ApiDocumentationAssessment = {
   referencedUrls: string[];
 };
 
+export type WebsiteReferenceIntent = {
+  required: boolean;
+  url: string | null;
+  hostname: string | null;
+};
+
 const EXPLICIT_RESEARCH_PATTERNS = [
   /\b(?:web|internet|online)\s+(?:search|research)\b/i,
   /\b(?:use|do|run)\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\b/i,
@@ -85,6 +91,12 @@ const INFORMATION_REQUEST_PATTERNS = [
 const MAX_RESEARCH_QUERY_CHARACTERS = 240;
 const MAX_RESEARCH_QUERY_WORDS = 32;
 
+const WEBSITE_REFERENCE_PATTERNS = [
+  /\b(?:clone|recreate|replicate|copy)\b[\s\S]{0,160}?\b(https?:\/\/[^\s<>"'`]+)/i,
+  /\b(?:website|web\s*site|site|webpage|landing\s+page|interface|design|app)\b[\s\S]{0,80}?\b(?:like|similar\s+to|based\s+on|inspired\s+by|matching)\s+(https?:\/\/[^\s<>"'`]+)/i,
+  /\b(?:use|take)\s+(https?:\/\/[^\s<>"'`]+)[\s\S]{0,80}?\bas\s+(?:an?\s+)?(?:visual|design|website|site)?\s*reference\b/i,
+];
+
 const TARGETED_EDIT_OBJECTIVE_PATTERN =
   /\bUser requested edit:\s*([\s\S]*?)(?=\n\s*\nSelected element context:|$)/i;
 
@@ -119,6 +131,41 @@ export function extractResearchObjective(value: string) {
   )?.[1];
 
   return (targetedEditObjective ?? value).trim();
+}
+
+/**
+ * Recognizes prompts that use an exact webpage as a visual implementation
+ * reference. These should stay anchored to that page instead of drifting into
+ * semantic search results for similarly named products.
+ */
+export function detectWebsiteReferenceIntent(
+  value: string,
+): WebsiteReferenceIntent {
+  const objective = extractResearchObjective(value);
+  const matchedUrl = WEBSITE_REFERENCE_PATTERNS.reduce<string | null>(
+    (match, pattern) => match ?? objective.match(pattern)?.[1] ?? null,
+    null,
+  );
+
+  if (!matchedUrl) {
+    return { required: false, url: null, hostname: null };
+  }
+
+  const normalizedUrl = matchedUrl.replace(/[),.;!?\]}]+$/, "");
+  try {
+    const url = new URL(normalizedUrl);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return { required: false, url: null, hostname: null };
+    }
+
+    return {
+      required: true,
+      url: url.toString(),
+      hostname: url.hostname.toLowerCase(),
+    };
+  } catch {
+    return { required: false, url: null, hostname: null };
+  }
 }
 
 function hasDescribedEndpoint(value: string) {
@@ -275,6 +322,17 @@ export function buildResearchQuery(value: string) {
   const errorQuery = extractErrorQuery(objective);
   if (errorQuery) return limitQuery(errorQuery);
 
+  const websiteReference = detectWebsiteReferenceIntent(objective);
+  if (
+    websiteReference.required &&
+    websiteReference.url &&
+    websiteReference.hostname
+  ) {
+    return limitQuery(
+      `site:${websiteReference.hostname} ${websiteReference.url} homepage design layout typography colors sections interactions`,
+    );
+  }
+
   const apiDocumentation = assessApiDocumentation([{ content: objective }]);
   if (
     apiDocumentation.hasApiContext &&
@@ -308,7 +366,7 @@ export function buildResearchQuery(value: string) {
       " ",
     )
     .replace(
-      /^\s*(?:please\s+)?(?:build|create|make|show|find|get|tell me about)\s+(?:an?\s+)?/i,
+      /^\s*(?:please\s+)?(?:build|create|make|show|find|get|tell me about)\s+(?:me\s+)?(?:an?\s+)?/i,
       "",
     )
     .replace(

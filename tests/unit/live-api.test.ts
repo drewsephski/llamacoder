@@ -40,6 +40,29 @@ describe("live API intent", () => {
     },
   );
 
+  it.each([
+    "Build me a website like https://squidagent.app",
+    "Recreate the design from https://example.com/landing-page",
+    "Summarize https://example.com/company/about",
+  ])("does not treat an ordinary webpage URL as a live API: %s", (content) => {
+    expect(detectLiveApiIntent(content)).toEqual({
+      required: false,
+      kind: "none",
+      reason: null,
+    });
+  });
+
+  it.each([
+    "Build a flight tracker using the API at https://developer.example.com/docs",
+    "Fetch records from https://api.example.com/v2/records",
+    "Load data from https://example.com/products.json",
+  ])("still detects explicit or API-shaped URL integrations: %s", (content) => {
+    expect(detectLiveApiIntent(content)).toMatchObject({
+      required: true,
+      kind: "public_candidate",
+    });
+  });
+
   it("does not treat product subject matter as requested webhook behavior", () => {
     const intent = detectLiveApiIntent(
       "Build a product landing page for Relay, a hosted webhook debugging tool that captures, inspects, replays, and shares webhook events.",

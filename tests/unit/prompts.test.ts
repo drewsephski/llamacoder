@@ -17,6 +17,25 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Hierarchy before decoration");
     expect(prompt).toContain("Believable product content");
     expect(prompt).toContain("Complete interaction design");
+    expect(prompt).toContain("Functional interaction contract (mandatory)");
+    expect(prompt).toContain(
+      "inventory every visible button, link, menu item, tab, form, row action, and toggle",
+    );
+    expect(prompt).toContain("Do not emit inert controls");
+    expect(prompt).toContain("Shadcn `Dialog`");
+    expect(prompt).toContain("Shadcn `Toaster`");
+    expect(prompt).toContain("Theme behavior contract (mandatory");
+    expect(prompt).toContain(
+      'window.matchMedia("(prefers-color-scheme: dark)")',
+    );
+    expect(prompt).toContain(
+      "toggle the `dark` class on `document.documentElement`",
+    );
+    expect(prompt).toContain("document.documentElement.style.colorScheme");
+    expect(prompt).toContain('from "@/components/ui/dialog"');
+    expect(prompt).toContain('from "@/components/ui/alert-dialog"');
+    expect(prompt).toContain('from "@/components/ui/toaster"');
+    expect(prompt).toContain('from "@/components/ui/use-toast"');
     expect(prompt).toContain("Responsive composition");
     expect(prompt).toContain("Structural variety");
     expect(prompt).toContain("Final design critique");
@@ -86,6 +105,14 @@ describe("prompt design guidance", () => {
     expect(softwareArchitectPrompt).toContain("Anti-generic check");
     expect(softwareArchitectPrompt).toContain("Content integrity");
     expect(softwareArchitectPrompt).toContain("Product states");
+    expect(softwareArchitectPrompt).toContain("Interaction inventory:");
+    expect(softwareArchitectPrompt).toContain(
+      "No planned control may be inert",
+    );
+    expect(softwareArchitectPrompt).toContain("Theme behavior:");
+    expect(softwareArchitectPrompt).toContain(
+      "persisted light/dark state initialized from the OS",
+    );
     expect(softwareArchitectPrompt).toContain("Responsive behavior");
     expect(softwareArchitectPrompt).toContain(
       "Treat premium as clarity, craft, and restraint",
@@ -164,6 +191,16 @@ describe("prompt design guidance", () => {
     );
     expect(developerCodeGenPrompt).toContain(
       "light-first, Vercel-inspired Tailwind `neutral`",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Functional interaction contract (mandatory)",
+    );
+    expect(developerCodeGenPrompt).toContain("Do not emit inert controls");
+    expect(developerCodeGenPrompt).toContain(
+      "Theme behavior contract (mandatory",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "document.documentElement.style.colorScheme",
     );
   });
 });

@@ -62,12 +62,31 @@ describe("export bundle", () => {
         bundle.files.find((file) => file.path === "package.json")!.content,
       ).dependencies,
     ).toMatchObject({
-      react: "latest",
-      "lucide-react": "latest",
+      react: "19.2.4",
+      "react-dom": "19.2.4",
+    });
+    expect(
+      JSON.parse(
+        bundle.files.find((file) => file.path === "package.json")!.content,
+      ).dependencies["lucide-react"],
+    ).toBeUndefined();
+    expect(
+      JSON.parse(
+        bundle.files.find((file) => file.path === "package.json")!.content,
+      ).devDependencies,
+    ).toMatchObject({
+      "@types/react": "^19.1.0",
+      "@types/react-dom": "^19.1.0",
+      tailwindcss: "3.4.17",
+      "tailwindcss-animate": "1.0.7",
+      vite: "8.1.3",
     });
     const tailwindConfig = bundle.files.find(
       (file) => file.path === "tailwind.config.ts",
     )!.content;
+    const tsconfig = JSON.parse(
+      bundle.files.find((file) => file.path === "tsconfig.json")!.content,
+    );
 
     expect(tailwindConfig).toContain("card: {");
     expect(tailwindConfig).toContain("muted: {");
@@ -75,6 +94,9 @@ describe("export bundle", () => {
     expect(tailwindConfig).toContain("accent: {");
     expect(tailwindConfig).toContain("popover: {");
     expect(tailwindConfig).toContain("destructive: {");
+    expect(tailwindConfig).not.toContain("./**/*.{ts,tsx}");
+    expect(tailwindConfig).toContain("./components/**/*.{ts,tsx}");
+    expect(tsconfig.compilerOptions.moduleResolution).toBe("Bundler");
     expect(bundle.verificationReport.status).toBe("verified");
   });
 
@@ -108,5 +130,47 @@ describe("export bundle", () => {
     expect(
       bundle.files.find((file) => file.path === "README.md")?.content,
     ).toContain("API setup required");
+  });
+
+  it("exports only imported capability packages and transitive Shadcn dependencies", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { Form } from "@/components/ui/form";',
+          'import { ReactFlow } from "@xyflow/react";',
+          'import "@xyflow/react/dist/style.css";',
+          'import { QRCodeSVG } from "qrcode.react";',
+          'export default function App() { return <Form><ReactFlow nodes={[]} edges={[]} /><QRCodeSVG value="demo" /></Form>; }',
+        ].join("\n"),
+      },
+      {
+        path: "components/Status.tsx",
+        code: "export function Status() { return <p>Ready</p>; }",
+      },
+      {
+        path: "types.ts",
+        code: "export type Status = 'ready';",
+      },
+    ]);
+    const bundle = buildExportBundle(files);
+    const packageJson = JSON.parse(
+      bundle.files.find((file) => file.path === "package.json")!.content,
+    );
+    const paths = new Set(bundle.files.map((file) => file.path));
+
+    expect(packageJson.dependencies).toMatchObject({
+      react: "19.2.4",
+      "react-dom": "19.2.4",
+      "react-hook-form": "7.81.0",
+      "@radix-ui/react-label": "^2.1.0",
+      "@radix-ui/react-slot": "^1.1.0",
+      "@xyflow/react": "12.11.2",
+      "qrcode.react": "4.2.0",
+    });
+    expect(packageJson.dependencies["@tanstack/react-query"]).toBeUndefined();
+    expect(paths.has("components/ui/form.tsx")).toBe(true);
+    expect(paths.has("components/ui/label.tsx")).toBe(true);
+    expect(paths.has("components/ui/calendar.tsx")).toBe(false);
   });
 });

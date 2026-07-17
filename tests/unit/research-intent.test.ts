@@ -4,6 +4,7 @@ import {
   assessApiDocumentation,
   buildResearchQuery,
   detectResearchIntent,
+  detectWebsiteReferenceIntent,
   extractResearchObjective,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
@@ -69,6 +70,32 @@ GET https://api.example.com/v2/flights — returns current flights.`;
     expect(buildResearchQuery(content)).toBe(
       "Summarize https://example.com/company/about",
     );
+  });
+
+  it("anchors website recreation research to the exact referenced host", () => {
+    const content = "Build me a website like https://squidagent.app";
+
+    expect(detectWebsiteReferenceIntent(content)).toEqual({
+      required: true,
+      url: "https://squidagent.app/",
+      hostname: "squidagent.app",
+    });
+    expect(buildResearchQuery(content)).toBe(
+      "site:squidagent.app https://squidagent.app/ homepage design layout typography colors sections interactions",
+    );
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      required: true,
+      reason: "external-facts",
+      query: expect.stringMatching(/^site:squidagent\.app\b/),
+    });
+  });
+
+  it("does not classify an API implementation URL as a visual website reference", () => {
+    expect(
+      detectWebsiteReferenceIntent(
+        "Build an app using the API at https://developer.example.com/docs",
+      ),
+    ).toEqual({ required: false, url: null, hostname: null });
   });
 
   it.each([
@@ -155,6 +182,12 @@ export default function App() { return <button>Latest results</button>; }
     expect(query).toMatch(/^current official lightweight rankings/);
     expect(query.length).toBeLessThanOrEqual(240);
     expect(query.split(" ").length).toBeLessThanOrEqual(32);
+  });
+
+  it("removes first-person build phrasing without leaving a malformed query", () => {
+    expect(buildResearchQuery("Build me a polished analytics dashboard")).toBe(
+      "polished analytics dashboard",
+    );
   });
 
   it.each([

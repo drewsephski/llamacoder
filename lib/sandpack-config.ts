@@ -1,5 +1,11 @@
 import * as shadcnComponents from "@/lib/shadcn";
 import { normalizeGeneratedFiles } from "@/lib/generated-files";
+import {
+  generatedAppDependencies,
+  getRequiredGeneratedAppDependencies,
+} from "@/lib/generated-app-dependencies";
+
+export const dependencies = generatedAppDependencies;
 
 export function getSandpackConfig(
   files: Array<{ path: string; content: string }>,
@@ -103,6 +109,8 @@ export const shadcnFiles = {
   "/components/ui/dialog.tsx": shadcnComponents.dialog,
   "/components/ui/drawer.tsx": shadcnComponents.drawer,
   "/components/ui/dropdown-menu.tsx": shadcnComponents.dropdownMenu,
+  "/components/ui/form.tsx": shadcnComponents.form,
+  "/components/ui/hover-card.tsx": shadcnComponents.hoverCard,
   "/components/ui/input.tsx": shadcnComponents.input,
   "/components/ui/label.tsx": shadcnComponents.label,
   "/components/ui/menubar.tsx": shadcnComponents.menuBar,
@@ -111,6 +119,8 @@ export const shadcnFiles = {
   "/components/ui/popover.tsx": shadcnComponents.popover,
   "/components/ui/progress.tsx": shadcnComponents.progress,
   "/components/ui/radio-group.tsx": shadcnComponents.radioGroup,
+  "/components/ui/resizable.tsx": shadcnComponents.resizable,
+  "/components/ui/scroll-area.tsx": shadcnComponents.scrollArea,
   "/components/ui/select.tsx": shadcnComponents.select,
   "/components/ui/separator.tsx": shadcnComponents.separator,
   "/components/ui/skeleton.tsx": shadcnComponents.skeleton,
@@ -142,6 +152,9 @@ export const shadcnFiles = {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Document</title>
       <script src="https://cdn.tailwindcss.com"></script>
+      <script>
+        tailwind.config = { darkMode: "class" };
+      </script>
     </head>
     <body>
       <div id="root"></div>
@@ -154,7 +167,7 @@ const availableShadcnFiles: Record<string, string> = shadcnFiles;
 const IMPORT_SOURCE_REGEX =
   /\b(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
 
-function getRequiredShadcnFiles(
+export function getRequiredShadcnFiles(
   generatedFiles: Array<{ path: string; code: string }>,
 ) {
   const selected: Record<string, string> = {
@@ -217,24 +230,7 @@ function normalizePath(path: string) {
 }
 
 function getRequiredDependencies(files: Record<string, string>) {
-  const availableDependencies: Record<string, string> = dependencies;
-  const selected: Record<string, string> = {};
-
-  for (const code of Object.values(files)) {
-    IMPORT_SOURCE_REGEX.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = IMPORT_SOURCE_REGEX.exec(code)) !== null) {
-      const source = match[1];
-      const packageName = source.startsWith("@")
-        ? source.split("/").slice(0, 2).join("/")
-        : source.split("/")[0];
-      if (packageName in availableDependencies) {
-        selected[packageName] = availableDependencies[packageName];
-      }
-    }
-  }
-
-  return selected;
+  return getRequiredGeneratedAppDependencies(Object.values(files));
 }
 
 const squidPreviewInspectorComponent = `"use client";
@@ -456,45 +452,3 @@ export function SquidPreviewInspector() {
   return null;
 }
 `;
-
-export const dependencies = {
-  "lucide-react": "latest",
-  recharts: "2.9.0",
-  "react-router-dom": "latest",
-  "@radix-ui/react-accordion": "^1.2.0",
-  "@radix-ui/react-alert-dialog": "^1.1.1",
-  "@radix-ui/react-aspect-ratio": "^1.1.0",
-  "@radix-ui/react-avatar": "^1.1.0",
-  "@radix-ui/react-checkbox": "^1.1.1",
-  "@radix-ui/react-collapsible": "^1.1.0",
-  "@radix-ui/react-dialog": "^1.1.1",
-  "@radix-ui/react-dropdown-menu": "^2.1.1",
-  "@radix-ui/react-hover-card": "^1.1.1",
-  "@radix-ui/react-label": "^2.1.0",
-  "@radix-ui/react-menubar": "^1.1.1",
-  "@radix-ui/react-navigation-menu": "^1.2.0",
-  "@radix-ui/react-popover": "^1.1.1",
-  "@radix-ui/react-progress": "^1.1.0",
-  "@radix-ui/react-radio-group": "^1.2.0",
-  "@radix-ui/react-select": "^2.1.1",
-  "@radix-ui/react-separator": "^1.1.0",
-  "@radix-ui/react-slider": "^1.2.0",
-  "@radix-ui/react-slot": "^1.1.0",
-  "@radix-ui/react-switch": "^1.1.0",
-  "@radix-ui/react-tabs": "^1.1.0",
-  "@radix-ui/react-toast": "^1.2.1",
-  "@radix-ui/react-toggle": "^1.1.0",
-  "@radix-ui/react-toggle-group": "^1.1.0",
-  "@radix-ui/react-tooltip": "^1.1.2",
-  "class-variance-authority": "^0.7.0",
-  clsx: "^2.1.1",
-  "date-fns": "^3.6.0",
-  "embla-carousel-react": "^8.1.8",
-  "react-day-picker": "^8.10.1",
-  "tailwind-merge": "^2.4.0",
-  "tailwindcss-animate": "^1.0.7",
-  "framer-motion": "^11.15.0",
-  "react-dnd": "latest",
-  "react-dnd-html5-backend": "latest",
-  vaul: "^0.9.1",
-};

@@ -10,6 +10,10 @@ import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { Button } from "@/components/ui/button";
 import { useUserCredits } from "@/features/user/client/queries";
 import { authClient, useSession } from "@/lib/auth-client";
+import {
+  MobileResourcesList,
+  ResourcesMenu,
+} from "@/components/resources-menu";
 
 interface HeaderProps {
   onHelpClick?: () => void;
@@ -87,6 +91,7 @@ function Header({ onHelpClick }: HeaderProps) {
 
       {/* Desktop Navigation */}
       <div className="hidden items-center gap-3 md:flex lg:gap-4">
+        <ResourcesMenu className="hidden lg:block" />
         {loading ? (
           <span className="text-sm text-muted-foreground">Loading…</span>
         ) : session ? (
@@ -234,6 +239,9 @@ function Header({ onHelpClick }: HeaderProps) {
             </div>
 
             <div className="flex flex-col gap-3">
+              <MobileResourcesList
+                onNavigate={() => setMobileMenuOpen(false)}
+              />
               {loading ? (
                 <span className="text-sm text-muted-foreground">Loading…</span>
               ) : session ? (

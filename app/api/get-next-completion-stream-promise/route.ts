@@ -33,6 +33,7 @@ import {
 } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
 import { getMainCodingPrompt, screenshotToCodePrompt } from "@/lib/prompts";
+import { generatedAppRepairCapabilityRules } from "@/lib/generated-app-capabilities";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
   FREE_MODEL,
@@ -66,6 +67,7 @@ import {
   assessApiDocumentation,
   buildResearchQuery,
   detectResearchIntent,
+  detectWebsiteReferenceIntent,
   extractResearchObjective,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
@@ -287,6 +289,7 @@ Generation completeness requirements:
 - Shadcn imports under "@/components/ui/*" and "@/lib/utils" are already installed and should not be redefined.
 - If you call \`cn(...)\`, import it with \`import { cn } from "@/lib/utils"\`.
 - For Framer Motion, import lowercase motion: import { motion } from "framer-motion".
+${generatedAppRepairCapabilityRules}
 `;
 
 export async function POST(req: Request) {
@@ -425,6 +428,11 @@ export async function POST(req: Request) {
         ? extractResearchObjective(candidate.content)
         : candidate.content;
     const latestResearchObjective = getResearchObjective(message);
+    const websiteReferenceIntent = detectWebsiteReferenceIntent(
+      latestResearchObjective,
+    );
+    const hasAttachedWebsiteVisualReference =
+      Boolean(screenshotData) && websiteReferenceIntent.required;
     const shouldCarryResearchThroughWorkflow =
       agentMetadata?.kind === "agent_plan_approval" ||
       agentMetadata?.kind === "agent_search_approval_response";
@@ -642,7 +650,9 @@ export async function POST(req: Request) {
 
               if (!linkedContent.configured) {
                 console.warn(
-                  "EXA_API_KEY is not configured; falling back to normal research behavior",
+                  hasAttachedWebsiteVisualReference
+                    ? "EXA_API_KEY is not configured; continuing with the attached website reference image"
+                    : "EXA_API_KEY is not configured; falling back to normal research behavior",
                 );
               } else if (linkedContent.rejectedUrls.length > 0) {
                 console.warn(
@@ -657,7 +667,9 @@ export async function POST(req: Request) {
                 sourceCount: 0,
               });
               console.warn(
-                "Chat URL extraction failed; falling back to normal research behavior:",
+                hasAttachedWebsiteVisualReference
+                  ? "Chat URL extraction failed; continuing with the attached website reference image:"
+                  : "Chat URL extraction failed; falling back to normal research behavior:",
                 getAIErrorMessage(error),
               );
             }
@@ -670,6 +682,11 @@ export async function POST(req: Request) {
             researchIntent.freshness === "evergreen" &&
             (researchIntent.reason === "technical-reference" ||
               researchIntent.reason === "external-facts");
+          const attachedImageSatisfiesVisualReferenceResearch =
+            hasAttachedWebsiteVisualReference &&
+            !researchIntent.explicitlyRequested &&
+            researchIntent.freshness === "evergreen" &&
+            researchIntent.reason === "external-facts";
           const connectedIntegrationSelection =
             await getConnectedIntegrationPromptContext({
               projectId: message.chatId,
@@ -1114,7 +1131,8 @@ export async function POST(req: Request) {
               (searchApproval?.approved !== false &&
                 ((researchIntent.required &&
                   !selectedApiShouldSupplyLiveData &&
-                  !linkedPagesSatisfyReferenceResearch) ||
+                  !linkedPagesSatisfyReferenceResearch &&
+                  !attachedImageSatisfiesVisualReferenceResearch) ||
                   (isCodeGeneration &&
                     effectiveLiveApiIntent.required &&
                     !hasOnlyReviewedConnectedApiContracts &&

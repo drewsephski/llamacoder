@@ -73,3 +73,43 @@ export const structuralDiversityContract = dedent`
 
 export const structuralDiversityPlanningRule =
   "Structural diversity: name a nav archetype and a footer archetype (or an explicit, justified absence of a footer) as deliberate choices tied to the information architecture, avoiding the generic wordmark+links+button nav and four-column footer defaults unless the brief genuinely has that many destinations, and varying structure from the immediately preceding app generated in this session.";
+
+/**
+ * Functional interaction contract.
+ *
+ * Generated interfaces often look complete while their controls are inert. This
+ * contract makes every visible affordance part of a small, honest state machine
+ * and reserves overlays and notifications for outcomes they communicate well.
+ */
+export const functionalInteractionContract = dedent`
+  **Functional interaction contract (mandatory):**
+  - Before writing JSX, inventory every visible button, link, menu item, tab, form, row action, and toggle. Assign each one a concrete outcome: navigate or scroll, open an appropriate dialog/drawer/menu, submit validated data, mutate visible local state, change a selection/filter/view, copy/download, or trigger an honest setup/error state. Do not emit inert controls, empty handlers, dead \`href="#"\` links, or clickable-looking decoration.
+  - Build the core workflow end to end, not only its resting screen. Creation and editing flows must accept input, validate it, support cancel, update visible state on success, and make the result discoverable. Delete or other destructive actions require explicit confirmation and must actually remove or update the affected record in the UI.
+  - Use Shadcn \`Dialog\` for focused create/edit/detail/settings flows, \`AlertDialog\` for destructive or irreversible confirmation, and \`Drawer\` when a narrow-screen task genuinely benefits from a bottom sheet. Give every overlay a visible title and description, focus-safe controls, Escape/close behavior, a cancel path, and responsive max-height/overflow. Do not open a modal for a simple action whose visible result is already immediate and clear.
+  - Mount one Shadcn \`Toaster\` near the app root when the workflow has mutations, async completion, copy, save, publish, import, or delete actions. Use \`useToast\` for concise success or failure confirmation with terminology matching the initiating action. Keep field validation inline, keep persistent/actionable failures near the affected content, and never use a toast as the only explanation of a blocking error.
+  - Buttons that represent unavailable infrastructure must be disabled or open an honest setup state; never fake authentication, payment, persistence, email, upload, or server-side success. For browser-only demos, meaningful local state is acceptable, but do not imply that it persists remotely.
+  - Use semantic elements and state attributes: navigation uses real links with valid destinations, actions use \`type="button"\`, form submission uses \`type="submit"\`, toggles expose \`aria-pressed\` or their native checked state, menus/dialogs expose their Shadcn semantics, and icon-only controls have stable accessible names.
+  - Verify the interaction graph privately before emitting files: exercise the primary path plus cancel, invalid input, empty, loading/disabled, success, and error/retry paths; remove any control whose behavior is still undefined.
+`;
+
+export const functionalInteractionPlanningRule =
+  "Interaction inventory: list the core workflow and every meaningful control outcome, including which create/edit/detail/settings tasks use Dialog or Drawer, which destructive actions use AlertDialog, where inline validation appears, which completed mutations warrant a toast, and how visible local state changes. No planned control may be inert or point to a dead # link.";
+
+/**
+ * Theme behavior contract.
+ *
+ * Tailwind dark variants only become an application feature when a control owns
+ * and applies theme state. This contract keeps the visual and behavioral halves
+ * of a generated theme toggle together.
+ */
+export const themeToggleContract = dedent`
+  **Theme behavior contract (mandatory whenever a theme control is rendered):**
+  - A light/dark control is functional product state, never decorative. Initialize from a valid persisted preference, otherwise use \`window.matchMedia("(prefers-color-scheme: dark)")\`; on change, immediately toggle the \`dark\` class on \`document.documentElement\`, set \`document.documentElement.style.colorScheme\`, update React state, and persist the choice in \`localStorage\`. If a three-way system option is offered, subscribe to OS changes only while system mode is active and clean up the listener.
+  - The control must clearly communicate its current state and next action with visible icon/text plus a dynamic \`aria-label\`, \`title\`, and \`aria-pressed\` or native checked state. It must work by keyboard and must not briefly reset when unrelated app state changes.
+  - Theme the whole rendered tree, not only the page background: canvas, raised surfaces, text, muted text, borders, inputs, menus, dialogs, drawers, toasts, tooltips, tables, charts, empty/error states, focus rings, hover/selected/disabled states, and scroll/overlay treatments all need intentional light and dark pairs. Portalled Shadcn surfaces must respond through the root HTML class.
+  - Use complete literal Tailwind \`dark:\` pairs on theme-defining surfaces unless the generated app explicitly defines every semantic token it uses. Audit for hard-coded white/black or gray values that become unreadable in the opposite mode, including SVG/chart fills, inline styles, translucent layers, and third-party component props.
+  - If no theme control is rendered, preserve the requested or existing theme and do not add a nonfunctional toggle merely as decoration.
+`;
+
+export const themeTogglePlanningRule =
+  "Theme behavior: if the plan includes a theme control, specify persisted light/dark state initialized from the OS, root-html class and color-scheme updates, a keyboard-accessible state label, and complete light/dark treatment for portalled overlays, toasts, forms, data visualizations, and every interaction state. If there is no theme control, do not invent a decorative one.";

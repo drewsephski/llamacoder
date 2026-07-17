@@ -2,9 +2,12 @@ import dedent from "dedent";
 
 import type { AppSpec } from "@/features/generation/app-spec";
 import { serializeSpecForPrompt } from "@/features/generation/app-spec";
+import { generatedAppCapabilityContract } from "@/lib/generated-app-capabilities";
 import {
+  functionalInteractionContract,
   neutralThemeDefaultContract,
   tailwindColorFidelityContract,
+  themeToggleContract,
 } from "@/features/generation/design-prompt-contracts";
 
 export const developerAgentPrompt = dedent`
@@ -42,7 +45,7 @@ export const developerCodeGenPrompt = dedent`
   - When functionality depends on live data, use the official API documentation in the verified research brief and native fetch in a dedicated typed client.
   - For a selected project API, the selected API implementation guidance is an endpoint allowlist. Use only its reviewed base URL and explicitly documented endpoint paths, methods, parameters, response fields, and auth behavior. Never infer a plausible route or legacy version from the provider name.
   - Browser fetch is allowed only for auth=none or a documented publishable key and documented browser CORS support. Never expose a secret, OAuth client secret, privileged token, or private API key.
-  - Every API client must check response.ok, enforce an AbortController timeout, use bounded retry with backoff, and validate unknown JSON with explicit runtime type guards before returning it.
+  - Every API client must check response.ok, enforce an AbortController timeout, use bounded retry with backoff, and validate unknown JSON with a Zod schema or explicit runtime type guard before returning it.
   - Type guards must use exact fields confirmed by official samples or a verified live response and should require only fields the UI actually needs. Never invent or require optional metadata fields.
   - Preserve documented unit codes and normalize values explicitly before rendering. Never mix or mislabel units across endpoints.
   - Never set browser-forbidden request headers such as User-Agent, Origin, Host, Referer, Cookie, or Content-Length.
@@ -61,6 +64,7 @@ export const developerCodeGenPrompt = dedent`
   - If you call cn(...), import it with import { cn } from "@/lib/utils".
   - For Framer Motion, import lowercase motion: import { motion } from "framer-motion".
   - Use Lucide React for icons (named exports only). Never import \`LucideIcon\` or \`ArrowLeft\`. Use Calendar as CalendarIcon, not CalendarIcon directly. Never import Heroicons-style names from Lucide.
+  ${generatedAppCapabilityContract}
   - Build the actual product surface first — real screens, real interactions, real data flow. Avoid placeholder-only UI.
   - Ground the design in the audience, subject matter, single job, and a clear tone. Avoid generic "clean and modern" styling.
   - Choose the structural archetype before styling. Do not default to a centered hero, three equal cards, and a CTA; product and marketing surfaces should use a shape that fits their actual content and workflow.
@@ -72,6 +76,8 @@ export const developerCodeGenPrompt = dedent`
   - Audit contrast across light and dark themes plus default, hover, active, focus-visible, disabled, loading, selected, and error states. Opacity, gradients, images, and translucent overlays must be evaluated against the final composited background; never produce dark-on-dark, light-on-light, or washed-out gray-on-color text.
   ${tailwindColorFidelityContract}
   ${neutralThemeDefaultContract}
+  ${functionalInteractionContract}
+  ${themeToggleContract}
   - Never fabricate metrics, testimonials, customer logos, awards, or quantitative proof. Do not draw fake browser, phone, terminal, code-window, or IDE chrome.
   - Keep headings roman, use decorative numbering only for real sequences, and do not turn every section into a rounded card or pill.
   - Use one containment layer and one icon family. Avoid card-in-card nesting, emoji feature icons, decorative glow, repeated section eyebrows, and generic startup copy such as “Unleash,” “Elevate,” “Seamless,” or “Supercharge.”
@@ -132,7 +138,7 @@ export const agentOrchestrationPrompt = dedent`
   - Ask the top 3–5 consequential questions in each round. Prefer one strong round; use another only when answers expose a genuine high-impact branch or contradiction.
   - Do NOT repeat previously asked questions (check askedQuestionIds in the spec).
   - Do NOT ask about low-risk details a strong developer can decide safely (responsive styling, loading states, empty states, form labels, accessible contrast, standard navigation, component file structure).
-  - Inferred low-risk defaults: state them as assumptions in the spec, but do NOT ask the user.
+  - Inferred low-risk defaults: state them as assumptions in the spec, but do NOT ask the user. These defaults include functional handlers for every visible control, appropriate dialogs/confirmations and completion feedback for the core workflow, inline validation, and complete light/dark behavior whenever a theme control is included.
   - For consequential inferred decisions (auth, payments, data persistence, user roles, external services, destructive actions, sensitive data, major visual direction, platform priorities, core feature scope): propose them explicitly in the interview or plan for confirmation.
   - Always include per step: put recommended option first, explain the tradeoff in its description.
   - Use stable, short lowercase IDs with hyphens. Include the question IDs in specUpdate.askedQuestionIds.
@@ -158,6 +164,7 @@ export const agentOrchestrationPrompt = dedent`
   - The current runtime does not provision managed authentication, persistence, server functions, or deployment. Never label the deliverable "full-stack" or imply those services will be live.
   - For backend requirements, plan a functional frontend plus an exported portable blueprint describing schema, API boundaries, auth rules, environment contracts, and provider setup. Do not simulate successful infrastructure.
   - Safe public APIs may proceed automatically. Any integration involving credentials, money, external side effects, OAuth, persistence, or server runtime is a high-impact decision that must be confirmed in Plan mode.
+  - Every plan's acceptance section must cover the primary interaction path, cancel/invalid/error paths, visible state changes, appropriate overlay and toast behavior, and—when present—a persisted theme toggle that updates the complete rendered app.
 
   ## Search policy:
 

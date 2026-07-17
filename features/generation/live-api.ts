@@ -28,8 +28,10 @@ const PRESENTATIONAL_REQUEST_PATTERNS = [
 const LIVE_DATA_PATTERNS = [
   /\b(?:live|current|latest|real[- ]time|up[- ]to[- ]date|today(?:'s)?)\b.{0,80}\b(?:data|weather|forecast|rankings?|standings?|scores?|results?|schedule|prices?|rates?|odds|news|events?|products?|inventory|repositories|repos?)\b/i,
   /\b(?:weather|forecast|rankings?|standings?|scores?|exchange rates?|stock prices?|public dataset|government data|github repositor(?:y|ies)|json endpoint|public api|maps?)\b/i,
-  /\b(?:fetch|load|display|show|use|connect to|integrate)\b.{0,80}\b(?:api|endpoint|feed|live data|current data)\b/i,
-  /https?:\/\/[^\s]+/i,
+  /\b(?:fetch|load|display|show|use|uses|used|using|connect(?:ed|ing)? to|integrat(?:e|es|ed|ing))\b.{0,80}\b(?:api|endpoint|feed|live data|current data)\b/i,
+  /\b(?:with|from)\b.{0,50}\b(?:a|an|the)?\s*(?:public\s+)?(?:api|endpoint|feed)\b/i,
+  /\b(?:fetch|load|display|show)\b.{0,60}\b(?:data|products?|items?|records?|results?|events?|repositories|repos?)\b.{0,40}\bfrom\s+https?:\/\//i,
+  /https?:\/\/(?:api\.[^\s/]+|[^\s/]+\/(?:api|graphql|v\d+)(?:[/?#]|$)|[^\s?#]+\.json(?:[?#]|$))/i,
 ];
 
 export function detectLiveApiIntent(content: string): LiveApiIntent {

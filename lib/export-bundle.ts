@@ -3,10 +3,8 @@ import {
   type GeneratedFile,
   type GeneratedFilesQualityReport,
 } from "@/lib/generated-files";
-import {
-  dependencies as sandpackDependencies,
-  shadcnFiles,
-} from "@/lib/sandpack-config";
+import { getRequiredShadcnFiles } from "@/lib/sandpack-config";
+import { getRequiredGeneratedAppDependencies } from "@/lib/generated-app-dependencies";
 import { generateIntelligentFilename, toTitleCase } from "@/lib/utils";
 import { analyzeGeneratedApiIntegration } from "@/lib/generated-api";
 
@@ -50,13 +48,8 @@ export type ExportBundle = {
 };
 
 const BASE_DEPENDENCIES = {
-  ...sandpackDependencies,
-  "class-variance-authority": "latest",
-  clsx: "latest",
-  "lucide-react": "latest",
-  react: "latest",
-  "react-dom": "latest",
-  "tailwind-merge": "latest",
+  react: "19.2.4",
+  "react-dom": "19.2.4",
 };
 
 export function getExportAppTitle(files: GeneratedFile[]) {
@@ -105,17 +98,10 @@ export function inferPackageDependencies(
   files: Array<{ code: string }>,
 ): Record<string, string> {
   const source = files.map((file) => file.code).join("\n");
-  const dependencies: Record<string, string> = { ...BASE_DEPENDENCIES };
-
-  if (source.includes("framer-motion")) {
-    dependencies["framer-motion"] = "latest";
-  }
-  if (source.includes("recharts")) dependencies.recharts = "latest";
-  if (source.includes("@radix-ui/react-")) {
-    dependencies["@radix-ui/react-slot"] = "latest";
-  }
-
-  return dependencies;
+  return {
+    ...BASE_DEPENDENCIES,
+    ...getRequiredGeneratedAppDependencies([source]),
+  };
 }
 
 export function buildExportBundle(files: GeneratedFile[]): ExportBundle {
@@ -178,7 +164,8 @@ function assembleExportFiles({
     bundleFiles.set(file.path, file.code);
   }
 
-  for (const [path, content] of Object.entries(shadcnFiles)) {
+  const requiredShadcnFiles = getRequiredShadcnFiles(files);
+  for (const [path, content] of Object.entries(requiredShadcnFiles)) {
     if (path === "/public/index.html") continue;
 
     const exportPath = path.replace(/^\//, "");
@@ -210,7 +197,13 @@ function assembleExportFiles({
   }
 
   bundleFiles.set("index.html", buildIndexHtml(appTitle));
-  bundleFiles.set("package.json", buildPackageJson(packageName, files));
+  bundleFiles.set(
+    "package.json",
+    buildPackageJson(
+      packageName,
+      Array.from(bundleFiles.values(), (code) => ({ code })),
+    ),
+  );
   bundleFiles.set("README.md", buildReadme(appTitle, apiIntegration));
   bundleFiles.set(
     ".env.example",
@@ -382,7 +375,7 @@ function byteLength(content: string) {
   return new TextEncoder().encode(content).length;
 }
 
-function buildPackageJson(packageName: string, files: GeneratedFile[]) {
+function buildPackageJson(packageName: string, files: Array<{ code: string }>) {
   return JSON.stringify(
     {
       name: packageName,
@@ -397,13 +390,16 @@ function buildPackageJson(packageName: string, files: GeneratedFile[]) {
       },
       dependencies: inferPackageDependencies(files),
       devDependencies: {
-        "@types/node": "latest",
-        "@vitejs/plugin-react": "latest",
-        autoprefixer: "latest",
-        postcss: "latest",
-        tailwindcss: "latest",
-        typescript: "latest",
-        vite: "latest",
+        "@types/node": "^20.19.0",
+        "@types/react": "^19.1.0",
+        "@types/react-dom": "^19.1.0",
+        "@vitejs/plugin-react": "6.0.3",
+        autoprefixer: "10.4.27",
+        postcss: "8.5.16",
+        tailwindcss: "3.4.17",
+        "tailwindcss-animate": "1.0.7",
+        typescript: "5.9.2",
+        vite: "8.1.3",
       },
     },
     null,
@@ -555,7 +551,7 @@ function buildTsConfig() {
         strict: true,
         forceConsistentCasingInFileNames: true,
         module: "ESNext",
-        moduleResolution: "Node",
+        moduleResolution: "Bundler",
         resolveJsonModule: true,
         isolatedModules: true,
         noEmit: true,
@@ -592,7 +588,17 @@ function buildTailwindConfig() {
     'import type { Config } from "tailwindcss";',
     "",
     "export default {",
-    '  content: ["./index.html", "./**/*.{ts,tsx}"],',
+    "  content: [",
+    '    "./index.html",',
+    '    "./{App,main}.tsx",',
+    '    "./components/**/*.{ts,tsx}",',
+    '    "./features/**/*.{ts,tsx}",',
+    '    "./hooks/**/*.{ts,tsx}",',
+    '    "./lib/**/*.{ts,tsx}",',
+    '    "./pages/**/*.{ts,tsx}",',
+    '    "./utils/**/*.{ts,tsx}",',
+    '    "./views/**/*.{ts,tsx}",',
+    "  ],",
     "  theme: {",
     "    extend: {",
     "      colors: {",

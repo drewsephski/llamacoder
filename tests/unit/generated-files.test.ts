@@ -141,6 +141,36 @@ describe("generated file normalization", () => {
     ]);
   });
 
+  it("diagnoses unmistakably dead links and empty event handlers", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'export default function App() { return <a href="#">Start</a>; }',
+      },
+      {
+        path: "components/Actions.tsx",
+        code: "export function Actions() { return <button onClick={() => {}}>Save</button>; }",
+      },
+      {
+        path: "types.ts",
+        code: "export type Item = { id: string };",
+      },
+    ]);
+
+    expect(validateGeneratedFiles(files)).toEqual([
+      {
+        path: "App.tsx",
+        message:
+          'Dead href="#" destination. Use a valid route/section target or a button with a real state-changing handler.',
+      },
+      {
+        path: "components/Actions.tsx",
+        message:
+          "Empty event handler. Implement a real visible outcome or remove the inert control.",
+      },
+    ]);
+  });
+
   it("formats files as path-tagged markdown and builds actionable repair prompts", () => {
     const files = normalizeGeneratedFiles([
       {
@@ -167,6 +197,7 @@ describe("generated file normalization", () => {
     expect(repairPrompt).toContain(
       "Every import style must match the target file's exports",
     );
+    expect(repairPrompt).toContain('Replace dead `href="#"` destinations');
   });
 
   it("normalizes common Framer Motion codegen mistakes", () => {

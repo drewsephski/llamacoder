@@ -2,15 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Github, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const navLinks = [
-  { href: "/gallery", label: "Gallery" },
-  { href: "/docs", label: "Docs" },
-  { href: "/compare", label: "Compare" },
-  { href: "/blog", label: "Guides" },
-  { href: "/benchmarks", label: "Benchmark" },
-  { href: "/contact", label: "Support" },
-];
+import { ResourcesMenu } from "@/components/resources-menu";
 
 export function MarketingHeader() {
   return (
@@ -34,22 +26,24 @@ export function MarketingHeader() {
           aria-label="Marketing navigation"
           className="hidden items-center gap-7 md:flex"
         >
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <Button asChild size="sm" className="rounded-lg">
-          <Link href="/">
-            Build with Squid
-            <ArrowRight className="size-4" aria-hidden="true" />
+          <Link
+            href="/gallery"
+            className="inline-flex min-h-11 items-center whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            Gallery
           </Link>
-        </Button>
+          <ResourcesMenu />
+        </nav>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <ResourcesMenu align="end" compact className="md:hidden" />
+          <Button asChild size="sm" className="rounded-lg">
+            <Link href="/" className="whitespace-nowrap">
+              <span className="sm:hidden">Build</span>
+              <span className="hidden sm:inline">Build with Squid</span>
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </header>
   );
@@ -93,7 +87,7 @@ export function MarketingFooter() {
           title="Research"
           links={[
             { href: "/compare", label: "AI builder comparisons" },
-            { href: "/blog", label: "Guides" },
+            { href: "/blog", label: "Blog" },
             { href: "/benchmarks", label: "Benchmarks" },
           ]}
         />

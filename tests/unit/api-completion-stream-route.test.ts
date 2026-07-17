@@ -895,6 +895,63 @@ export default function App() { return <button>Latest results</button>; }
     );
   });
 
+  it("uses an attached website screenshot without broad fallback research", async () => {
+    const referenceUrl = "https://squidagent.app";
+    const content = `Build me a website like ${referenceUrl}`;
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_visual_reference",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    loadChatUrlContentMock.mockRejectedValueOnce(new Error("Exa unavailable"));
+    generateTextMock.mockResolvedValueOnce({
+      text: "A dark app-builder interface with a centered generation canvas.",
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const screenshotData = `data:image/png;base64,${Buffer.from("png").toString("base64")}`;
+    const response = await POST(
+      request({
+        messageId: "msg_visual_reference",
+        model: "model_1",
+        screenshotData,
+      }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(loadChatUrlContentMock).toHaveBeenCalledWith({
+      urls: ["https://squidagent.app/"],
+      query: content,
+    });
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(generateTextMock).toHaveBeenCalledTimes(1);
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-research-activity",
+          data: expect.objectContaining({
+            label: "Linked page content unavailable",
+          }),
+        }),
+      ]),
+    );
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
+      "A dark app-builder interface with a centered generation canvas.",
+    );
+  });
+
   it("answers from a fully read evergreen URL without adding generic external-facts search", async () => {
     const documentationUrl = "https://exa.ai/docs/reference/get-contents";
     const content = `Using ${documentationUrl}, summarize how maxAgeHours works in one sentence of plain prose. Do not build or modify an app.`;

@@ -1,4 +1,5 @@
 import { getExtensionForLanguage, getLanguageOfFile } from "@/lib/utils";
+import { generatedAppRepairCapabilityRules } from "@/lib/generated-app-capabilities";
 import {
   analyzeGeneratedApiIntegration,
   type GeneratedApiIntegrationReport,
@@ -70,6 +71,8 @@ const PROTECTED_MODULE_PATHS = new Set([
   "components/ui/dialog",
   "components/ui/drawer",
   "components/ui/dropdown-menu",
+  "components/ui/form",
+  "components/ui/hover-card",
   "components/ui/input",
   "components/ui/label",
   "components/ui/menubar",
@@ -78,6 +81,7 @@ const PROTECTED_MODULE_PATHS = new Set([
   "components/ui/popover",
   "components/ui/progress",
   "components/ui/radio-group",
+  "components/ui/resizable",
   "components/ui/scroll-area",
   "components/ui/select",
   "components/ui/separator",
@@ -278,6 +282,7 @@ export function validateGeneratedFiles(
     }
   }
 
+  diagnostics.push(...validateObviousInteractionFailures(files));
   diagnostics.push(...analyzeGeneratedApiIntegration(files).issues);
   diagnostics.push(...validateSelectedApiUsage(files, selectedProviderIds));
 
@@ -355,6 +360,8 @@ Requirements:
 - Do not import custom hooks/utilities unless you also output their files.
 - If you call \`cn(...)\`, import it with \`import { cn } from "@/lib/utils"\`.
 - Use \`import { motion } from "framer-motion"\` for Framer Motion.
+${generatedAppRepairCapabilityRules}
+- Replace dead \`href="#"\` destinations and empty event handlers with a valid destination or a real visible state change. Remove controls that still have no defined outcome.
 - If the app uses fetch, check response.ok, use AbortController timeout, bounded retry, and runtime response validation. Never hard-code API credentials or secret-bearing authorization headers.
 
 Original response:
@@ -565,6 +572,37 @@ function stripCodeComments(code: string) {
   return code
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
+function validateObviousInteractionFailures(files: GeneratedFile[]) {
+  const diagnostics: GeneratedFileDiagnostic[] = [];
+
+  for (const file of files) {
+    if (!/\.(tsx|jsx)$/i.test(file.path)) continue;
+
+    const code = stripCodeComments(file.code);
+    if (/\bhref\s*=\s*(?:["']#["']|\{\s*["']#["']\s*\})/.test(code)) {
+      diagnostics.push({
+        path: file.path,
+        message:
+          'Dead href="#" destination. Use a valid route/section target or a button with a real state-changing handler.',
+      });
+    }
+
+    if (
+      /\bon(?:Click|Submit|Change|CheckedChange|ValueChange)\s*=\s*\{\s*\([^)]*\)\s*=>\s*(?:\{\s*\}|undefined|null)\s*\}/.test(
+        code,
+      )
+    ) {
+      diagnostics.push({
+        path: file.path,
+        message:
+          "Empty event handler. Implement a real visible outcome or remove the inert control.",
+      });
+    }
+  }
+
+  return diagnostics;
 }
 
 function countResolvedInternalImports(files: GeneratedFile[]) {
