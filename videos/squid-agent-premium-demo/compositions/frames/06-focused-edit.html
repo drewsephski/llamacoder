@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>06-focused-edit</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+          font-family: "Squid DM Sans";
+          src: url("assets/fonts/DM_Sans_400.woff2") format("woff2");
+          font-style: normal;
+          font-weight: 400;
+        }
+
+        @font-face {
+          font-family: "Squid DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-style: normal;
+          font-weight: 400;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #f8fafc;
+          font-family: "Squid DM Sans";
+          container-type: size;
+        }
+
+        .f06-focused-edit-ground {
+          position: absolute;
+          inset: 0;
+          background: #07090d;
+        }
+
+        .f06-focused-edit-ground::after {
+          content: "";
+          position: absolute;
+          top: 895px;
+          left: 5.5cqw;
+          right: 5.5cqw;
+          height: 1px;
+          background: #262728;
+        }
+
+        .f06-focused-edit-viewport,
+        .f06-focused-edit-hud {
+          position: absolute;
+          inset: 0 0 auto;
+          width: 1920px;
+          height: 896px;
+          overflow: hidden;
+        }
+
+        .f06-focused-edit-world {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .f06-focused-edit-surface {
+          --dof: 0px;
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          object-fit: cover;
+          display: block;
+          filter: blur(var(--dof));
+          will-change: filter, opacity;
+          pointer-events: none;
+          user-select: none;
+        }
+
+        .f06-focused-edit-code-swap {
+          position: absolute;
+          left: 882px;
+          top: 704px;
+          width: 938px;
+          height: 92px;
+          overflow: hidden;
+          background: #07101b;
+          border-top: 1px solid rgba(0, 98, 255, 0.45);
+          border-bottom: 1px solid rgba(0, 98, 255, 0.45);
+        }
+
+        .f06-focused-edit-code-state {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          box-sizing: border-box;
+          padding: 0 34px 0 58px;
+          color: #f8fafc;
+          font-family: "Squid DM Mono";
+          font-size: 24px;
+          line-height: 1;
+          white-space: nowrap;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .f06-focused-edit-code-state .f06-focused-edit-line-number {
+          position: absolute;
+          left: 18px;
+          color: #5e6065;
+        }
+
+        .f06-focused-edit-code-accent {
+          color: #0ca8ff;
+        }
+
+        .f06-focused-edit-changed-bar {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 5px;
+          height: 100%;
+          background: #0062ff;
+          transform-origin: 50% 0;
+        }
+
+        .f06-focused-edit-track-box {
+          position: absolute;
+          left: 864px;
+          top: 688px;
+          width: 972px;
+          height: 124px;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+          pointer-events: none;
+        }
+
+        .f06-focused-edit-corner {
+          position: absolute;
+          width: 38px;
+          height: 38px;
+        }
+
+        .f06-focused-edit-corner-tl {
+          top: -2px;
+          left: -2px;
+          border-top: 4px solid #0062ff;
+          border-left: 4px solid #0062ff;
+        }
+
+        .f06-focused-edit-corner-tr {
+          top: -2px;
+          right: -2px;
+          border-top: 4px solid #0062ff;
+          border-right: 4px solid #0062ff;
+        }
+
+        .f06-focused-edit-corner-bl {
+          bottom: -2px;
+          left: -2px;
+          border-bottom: 4px solid #0062ff;
+          border-left: 4px solid #0062ff;
+        }
+
+        .f06-focused-edit-corner-br {
+          right: -2px;
+          bottom: -2px;
+          border-right: 4px solid #0062ff;
+          border-bottom: 4px solid #0062ff;
+        }
+
+        .f06-focused-edit-track-label {
+          position: absolute;
+          left: 0;
+          top: -35px;
+          padding: 8px 12px;
+          background: #0062ff;
+          color: #f8fafc;
+          font-family: "Squid DM Mono";
+          font-size: 13px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .f06-focused-edit-ripple {
+          position: absolute;
+          left: 1496px;
+          top: 726px;
+          width: 68px;
+          height: 68px;
+          box-sizing: border-box;
+          border: 2px solid #0ca8ff;
+          border-radius: 50%;
+          transform-origin: 50% 50%;
+          pointer-events: none;
+        }
+
+        .f06-focused-edit-hud {
+          pointer-events: none;
+        }
+
+        .f06-focused-edit-headline-stage {
+          position: absolute;
+          left: 72px;
+          top: 38px;
+          width: 900px;
+          height: 110px;
+        }
+
+        .f06-focused-edit-question-rail,
+        .f06-focused-edit-final-title {
+          position: absolute;
+          left: 0;
+          top: 0;
+          transform-origin: 0 50%;
+          will-change: transform, opacity, filter;
+        }
+
+        .f06-focused-edit-question-rail {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          height: 62px;
+          padding: 0 22px;
+          border-top: 1px solid #0062ff;
+          border-bottom: 1px solid #262728;
+          background: rgba(7, 9, 13, 0.84);
+          color: #f8fafc;
+          font-family: "Squid DM Mono";
+          font-size: 17px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .f06-focused-edit-question-rule {
+          display: block;
+          width: 36px;
+          height: 2px;
+          background: #0062ff;
+        }
+
+        .f06-focused-edit-final-title {
+          color: #f8fafc;
+          font-size: 86px;
+          line-height: 0.95;
+          letter-spacing: -0.04em;
+          text-transform: lowercase;
+          white-space: nowrap;
+        }
+
+        .f06-focused-edit-instruction {
+          position: absolute;
+          left: 820px;
+          top: 146px;
+          width: 980px;
+          height: 132px;
+          box-sizing: border-box;
+          border-top: 1px solid #0062ff;
+          border-bottom: 1px solid #262728;
+          background: rgba(7, 9, 13, 0.94);
+          z-index: 6;
+          will-change: transform, opacity;
+        }
+
+        .f06-focused-edit-instruction-label {
+          position: absolute;
+          left: 32px;
+          top: 20px;
+          color: #0ca8ff;
+          font-family: "Squid DM Mono";
+          font-size: 13px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .f06-focused-edit-text-wrap {
+          position: absolute;
+          left: 32px;
+          top: 62px;
+          width: 640px;
+          min-height: 34px;
+          display: flex;
+          align-items: baseline;
+          white-space: nowrap;
+          color: #f8fafc;
+          font-family: "Squid DM Mono";
+          font-size: 22px;
+        }
+
+        .f06-focused-edit-typing-caret {
+          display: inline-block;
+          width: 12px;
+          height: 23px;
+          margin-left: 8px;
+          background: #0062ff;
+        }
+
+        .f06-focused-edit-update {
+          position: absolute;
+          right: 28px;
+          top: 34px;
+          width: 172px;
+          height: 72px;
+          display: grid;
+          place-items: center;
+          border: 1px solid #0062ff;
+          background: #18191a;
+          color: #f8fafc;
+          font-family: "Squid DM Mono";
+          font-size: 17px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          transform-origin: 50% 50%;
+          will-change: transform, background-color;
+        }
+
+        .f06-focused-edit-pin {
+          --dof: 0px;
+          position: absolute;
+          top: 188px;
+          width: 340px;
+          height: 520px;
+          overflow: hidden;
+          border-top: 1px solid #262728;
+          border-bottom: 1px solid #262728;
+          background: #07090d;
+          z-index: 1;
+          filter: blur(var(--dof));
+          will-change: filter, opacity;
+        }
+
+        .f06-focused-edit-files-pin {
+          left: 64px;
+        }
+
+        .f06-focused-edit-preview-pin {
+          right: 64px;
+        }
+
+        .f06-focused-edit-pin-image {
+          position: absolute;
+          width: 1920px;
+          height: 1080px;
+          max-width: none;
+          display: block;
+          user-select: none;
+          pointer-events: none;
+        }
+
+        .f06-focused-edit-files-pin .f06-focused-edit-pin-image {
+          left: -490px;
+          top: -62px;
+        }
+
+        .f06-focused-edit-preview-pin .f06-focused-edit-pin-image {
+          left: -1510px;
+          top: -62px;
+        }
+
+        .f06-focused-edit-preserve {
+          position: absolute;
+          pointer-events: none;
+        }
+
+        .f06-focused-edit-preserve-files {
+          left: 46px;
+          top: 166px;
+          width: 376px;
+          height: 566px;
+        }
+
+        .f06-focused-edit-preserve-preview {
+          right: 46px;
+          top: 166px;
+          width: 376px;
+          height: 566px;
+        }
+
+        .f06-focused-edit-preserve-layout {
+          left: 438px;
+          top: 310px;
+          width: 1044px;
+          height: 474px;
+        }
+
+        .f06-focused-edit-preserve-label {
+          position: absolute;
+          left: 0;
+          top: -32px;
+          color: #0ca8ff;
+          font-family: "Squid DM Mono";
+          font-size: 13px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .f06-focused-edit-preserve .f06-focused-edit-corner {
+          width: 32px;
+          height: 32px;
+        }
+
+        .f06-focused-edit-cursor {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 64px;
+          height: 64px;
+          overflow: visible;
+          pointer-events: none;
+          transform-origin: 0 0;
+          will-change: transform, opacity;
+        }
+
+        .f06-focused-edit-cursor path {
+          fill: #0062ff;
+          stroke: #f8fafc;
+          stroke-width: 1.5;
+          stroke-linejoin: miter;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="06-focused-edit"
+        data-width="1920"
+        data-height="1080"
+        data-duration="8.289"
+      >
+        <div
+          id="f06-focused-edit-ground"
+          class="clip f06-focused-edit-ground"
+          data-start="0"
+          data-duration="8.289"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f06-focused-edit-viewport"
+          class="clip f06-focused-edit-viewport"
+          data-start="0"
+          data-duration="8.289"
+          data-track-index="1"
+        >
+          <div
+            id="f06-focused-edit-world"
+            class="f06-focused-edit-world"
+            data-layout-allow-overflow
+          >
+            <img
+              id="f06-focused-edit-surface"
+              class="f06-focused-edit-surface"
+              src="assets/02-visible-code-generation.png"
+              alt=""
+            />
+
+            <div id="f06-focused-edit-code-swap" class="f06-focused-edit-code-swap">
+              <div id="f06-focused-edit-code-before" class="f06-focused-edit-code-state">
+                <span class="f06-focused-edit-line-number">20</span>
+                <span>&lt;TrendIcon className=&quot;h-4 w-4&quot; /&gt;</span>
+              </div>
+              <div id="f06-focused-edit-code-after" class="f06-focused-edit-code-state">
+                <span class="f06-focused-edit-line-number">20</span>
+                <span>
+                  &lt;TrendIcon className=&quot;h-4 w-4
+                  <span class="f06-focused-edit-code-accent">text-blue-500</span>&quot; /&gt;
+                </span>
+              </div>
+              <div id="f06-focused-edit-changed-bar" class="f06-focused-edit-changed-bar"></div>
+            </div>
+
+            <div id="f06-focused-edit-track-box" class="f06-focused-edit-track-box">
+              <div class="f06-focused-edit-corner f06-focused-edit-corner-tl"></div>
+              <div class="f06-focused-edit-corner f06-focused-edit-corner-tr"></div>
+              <div class="f06-focused-edit-corner f06-focused-edit-corner-bl"></div>
+              <div class="f06-focused-edit-corner f06-focused-edit-corner-br"></div>
+              <div class="f06-focused-edit-track-label">Selected region</div>
+            </div>
+
+            <div class="f06-focused-edit-ripple" data-ripple="1"></div>
+            <div class="f06-focused-edit-ripple" data-ripple="2"></div>
+            <div class="f06-focused-edit-ripple" data-ripple="3"></div>
+          </div>
+        </div>
+
+        <div
+          id="f06-focused-edit-hud"
+          class="clip f06-focused-edit-hud"
+          data-start="0"
+          data-duration="8.289"
+          data-track-index="2"
+        >
+          <div class="f06-focused-edit-headline-stage">
+            <div id="f06-focused-edit-question" class="f06-focused-edit-question-rail">
+              <span class="f06-focused-edit-question-rule"></span>
+              <span>Want a change?</span>
+            </div>
+            <div id="f06-focused-edit-final-title" class="f06-focused-edit-final-title">
+              one focused change
+            </div>
+          </div>
+
+          <div id="f06-focused-edit-instruction" class="f06-focused-edit-instruction">
+            <div class="f06-focused-edit-instruction-label">Edit request</div>
+            <div class="f06-focused-edit-text-wrap">
+              <span id="f06-focused-edit-instruction-text"></span>
+              <span id="f06-focused-edit-typing-caret" class="f06-focused-edit-typing-caret"></span>
+            </div>
+            <div id="f06-focused-edit-update" class="f06-focused-edit-update">Update</div>
+          </div>
+
+          <div
+            id="f06-focused-edit-files-pin"
+            class="f06-focused-edit-pin f06-focused-edit-files-pin"
+            data-depth="1"
+            data-layout-allow-overflow
+          >
+            <img class="f06-focused-edit-pin-image" src="assets/02-visible-code-generation.png" alt="" />
+          </div>
+
+          <div
+            id="f06-focused-edit-preview-pin"
+            class="f06-focused-edit-pin f06-focused-edit-preview-pin"
+            data-depth="2"
+            data-layout-allow-overflow
+          >
+            <img class="f06-focused-edit-pin-image" src="assets/02-visible-code-generation.png" alt="" />
+          </div>
+
+          <div
+            class="f06-focused-edit-preserve f06-focused-edit-preserve-files"
+            data-preserve="files"
+          >
+            <div class="f06-focused-edit-preserve-label">Files</div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-tl"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-tr"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-bl"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-br"></div>
+          </div>
+
+          <div
+            class="f06-focused-edit-preserve f06-focused-edit-preserve-preview"
+            data-preserve="preview"
+          >
+            <div class="f06-focused-edit-preserve-label">Preview</div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-tl"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-tr"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-bl"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-br"></div>
+          </div>
+
+          <div
+            class="f06-focused-edit-preserve f06-focused-edit-preserve-layout"
+            data-preserve="layout"
+          >
+            <div class="f06-focused-edit-preserve-label">Layout</div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-tl"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-tr"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-bl"></div>
+            <div class="f06-focused-edit-corner f06-focused-edit-corner-br"></div>
+          </div>
+
+          <svg
+            id="f06-focused-edit-cursor"
+            class="f06-focused-edit-cursor"
+            viewBox="0 0 64 64"
+            aria-hidden="true"
+          >
+            <path d="M9 5 L51 31 L33 35 L24 55 Z" />
+          </svg>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const world = document.getElementById("f06-focused-edit-world");
+        const instructionText = document.getElementById("f06-focused-edit-instruction-text");
+        const typingCaret = document.getElementById("f06-focused-edit-typing-caret");
+        const cam = { scale: 1, x: 0, y: 0 };
+
+        function applyCamera() {
+          world.style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.scale})`;
+        }
+
+        applyCamera();
+
+        tl.set("#f06-focused-edit-surface", { "--dof": "0px", opacity: 1 }, 0);
+        tl.set("#f06-focused-edit-track-box", { opacity: 0, scale: 0.76 }, 0);
+        tl.set(".f06-focused-edit-ripple", { opacity: 0, scale: 0.3 }, 0);
+        tl.set("#f06-focused-edit-code-before", { opacity: 1, scale: 1 }, 0);
+        tl.set("#f06-focused-edit-code-after", { opacity: 0, scale: 0.72 }, 0);
+        tl.set("#f06-focused-edit-changed-bar", { opacity: 0, scaleY: 0 }, 0);
+        tl.set("#f06-focused-edit-instruction", { opacity: 0, y: 20 }, 0);
+        tl.set(".f06-focused-edit-pin", { "--dof": "0px", opacity: 0 }, 0);
+        tl.set(".f06-focused-edit-preserve", { opacity: 0 }, 0);
+        tl.set("#f06-focused-edit-cursor", { opacity: 0, x: 1810, y: 180, scale: 1 }, 0);
+        tl.set("#f06-focused-edit-final-title", { opacity: 0, scale: 1.25, filter: "blur(10px)" }, 0);
+
+        // Scene 1 — Cursor selects one exact code region, then the tracking brackets lock on.
+        tl.fromTo(
+          "#f06-focused-edit-question",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+          0.08,
+        );
+        tl.fromTo(
+          "#f06-focused-edit-cursor",
+          { opacity: 0, x: 1810, y: 180, scale: 1 },
+          { opacity: 1, x: 1530, y: 756, scale: 1, duration: 0.72, ease: "power2.inOut" },
+          0.12,
+        );
+        tl.to(
+          "#f06-focused-edit-cursor",
+          { scale: 0.84, duration: 0.09, ease: "power2.in" },
+          0.91,
+        );
+        tl.to(
+          "#f06-focused-edit-cursor",
+          { scale: 1, duration: 0.14, ease: "power2.out" },
+          1.0,
+        );
+        tl.fromTo(
+          ".f06-focused-edit-ripple",
+          { opacity: 0.72, scale: 0.3 },
+          {
+            opacity: 0,
+            scale: 4.5,
+            duration: 0.62,
+            ease: "power2.out",
+            stagger: 0.08,
+            immediateRender: false,
+          },
+          0.92,
+        );
+        tl.fromTo(
+          "#f06-focused-edit-track-box",
+          { opacity: 0, scale: 0.76 },
+          { opacity: 1, scale: 1, duration: 0.46, ease: "power3.out" },
+          1.02,
+        );
+
+        // Scene 2 — Camera chases the selection; instruction types while preserved edges stay pinned.
+        tl.to(
+          cam,
+          {
+            scale: 1.16,
+            x: -110,
+            y: -85,
+            duration: 0.82,
+            ease: "power3.inOut",
+            onUpdate: applyCamera,
+          },
+          1.6,
+        );
+        tl.to(
+          "#f06-focused-edit-cursor",
+          { x: 1448, y: 710, duration: 0.82, ease: "power3.inOut" },
+          1.6,
+        );
+        tl.to(
+          "#f06-focused-edit-surface",
+          { "--dof": "3px", opacity: 0.5, duration: 0.72, ease: "power2.inOut" },
+          1.62,
+        );
+        tl.fromTo(
+          "#f06-focused-edit-instruction",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+          1.72,
+        );
+        tl.fromTo(
+          ".f06-focused-edit-pin",
+          { opacity: 0, "--dof": "6px" },
+          { opacity: 0.48, "--dof": "1px", duration: 0.72, ease: "power2.inOut" },
+          1.78,
+        );
+
+        const instructionSequence = [
+          { t: 0, text: "" },
+          { t: 0.16, text: "Make" },
+          { t: 0.39, text: "Make the trend" },
+          { t: 0.69, text: "Make the trend icon" },
+          { t: 1.02, text: "Make the trend icon blue." },
+        ];
+
+        function instructionAt(time) {
+          for (let i = instructionSequence.length - 1; i >= 0; i -= 1) {
+            if (time >= instructionSequence[i].t) return instructionSequence[i].text;
+          }
+          return "";
+        }
+
+        const instructionDriver = { t: 0 };
+        tl.to(
+          instructionDriver,
+          {
+            t: 1.4,
+            duration: 1.4,
+            ease: "none",
+            onUpdate: () => {
+              instructionText.textContent = instructionAt(instructionDriver.t);
+            },
+          },
+          1.86,
+        );
+
+        const blinkDriver = { p: 0 };
+        tl.to(
+          blinkDriver,
+          {
+            p: Math.PI * 2 * 3,
+            duration: 1.8,
+            ease: "none",
+            onUpdate: () => {
+              typingCaret.style.opacity = Math.sin(blinkDriver.p) > 0 ? "1" : "0";
+            },
+          },
+          1.82,
+        );
+
+        // Scene 3 — UPDATE compresses with the cursor; only the same anchored code line swaps.
+        tl.to(
+          "#f06-focused-edit-cursor",
+          { x: 1692, y: 214, duration: 0.36, ease: "power2.inOut" },
+          3.6,
+        );
+        tl.to(
+          ["#f06-focused-edit-update", "#f06-focused-edit-cursor"],
+          { scale: 0.92, duration: 0.15, ease: "power1.in" },
+          3.96,
+        );
+        tl.to(
+          "#f06-focused-edit-update",
+          { backgroundColor: "#0062ff", duration: 0.15, ease: "power1.in" },
+          3.96,
+        );
+        tl.to(
+          ["#f06-focused-edit-update", "#f06-focused-edit-cursor"],
+          { scale: 1, duration: 0.48, ease: "power3.out" },
+          4.13,
+        );
+        tl.to(
+          "#f06-focused-edit-code-before",
+          { scale: 0.72, opacity: 0, duration: 0.35, ease: "power2.in" },
+          4.16,
+        );
+        tl.fromTo(
+          "#f06-focused-edit-code-after",
+          { scale: 0.72, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" },
+          4.36,
+        );
+        tl.fromTo(
+          "#f06-focused-edit-changed-bar",
+          { opacity: 0, scaleY: 0 },
+          { opacity: 1, scaleY: 1, duration: 0.46, ease: "power2.out" },
+          4.72,
+        );
+
+        // Scene 4 — Pull back once, refocus the full UI, and illuminate preserved regions in place.
+        tl.to(
+          cam,
+          {
+            scale: 1,
+            x: 0,
+            y: 0,
+            duration: 0.96,
+            ease: "power3.inOut",
+            onUpdate: applyCamera,
+          },
+          5.8,
+        );
+        tl.to(
+          "#f06-focused-edit-surface",
+          { "--dof": "0px", opacity: 0.78, duration: 0.88, ease: "power2.inOut" },
+          5.82,
+        );
+        tl.to(
+          ".f06-focused-edit-pin",
+          { "--dof": "0px", opacity: 0.68, duration: 0.78, ease: "power2.inOut" },
+          5.84,
+        );
+        tl.fromTo(
+          ".f06-focused-edit-preserve",
+          { opacity: 0 },
+          { opacity: 1, duration: 0.42, ease: "power2.out", stagger: 0.12 },
+          5.92,
+        );
+        tl.to(
+          "#f06-focused-edit-instruction",
+          { opacity: 0.2, duration: 0.55, ease: "power2.out" },
+          5.94,
+        );
+
+        // Inverse zoom-through: the small question rail recedes as the final control message arrives.
+        tl.to(
+          "#f06-focused-edit-question",
+          { scale: 0.8, filter: "blur(10px)", duration: 0.2, ease: "power3.in" },
+          6.1,
+        );
+        tl.to(
+          "#f06-focused-edit-question",
+          { opacity: 0.15, duration: 0.2, ease: "none" },
+          6.1,
+        );
+        tl.set("#f06-focused-edit-question", { opacity: 0 }, 6.3);
+        tl.set(
+          "#f06-focused-edit-final-title",
+          { opacity: 0.15, scale: 1.25, filter: "blur(10px)" },
+          6.3,
+        );
+        tl.to(
+          "#f06-focused-edit-final-title",
+          { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" },
+          6.3,
+        );
+
+        window.__timelines["06-focused-edit"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

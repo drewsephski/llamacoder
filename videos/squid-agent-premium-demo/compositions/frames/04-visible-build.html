@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/fonts/DM_Sans_400.woff2") format("woff2");
+          font-style: normal;
+          font-weight: 400;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-style: normal;
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: relative;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #f8fafc;
+        }
+
+        .clip {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          box-sizing: border-box;
+        }
+
+        [class~="04-visible-build-ground"] {
+          z-index: 0;
+          background: #07090d;
+        }
+
+        [class~="04-visible-build-stage"] {
+          z-index: 1;
+          overflow: hidden;
+        }
+
+        [class~="04-visible-build-chrome"] {
+          position: absolute;
+          left: 106px;
+          right: 106px;
+          top: 22px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid #262728;
+          padding-bottom: 0;
+          font-family: "DM Mono";
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 32px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #0062ff;
+        }
+
+        [class~="04-visible-build-approved"] {
+          position: absolute;
+          left: 710px;
+          top: 360px;
+          width: 500px;
+          height: 132px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 22px;
+          border-top: 1px solid #262728;
+          border-bottom: 1px solid #262728;
+          background: #07090d;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-approved-mark"] {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          border: 2px solid #0062ff;
+          border-radius: 50%;
+          font-family: "DM Mono";
+          font-size: 22px;
+          color: #0062ff;
+        }
+
+        [class~="04-visible-build-approved-copy"] {
+          font-family: "DM Sans";
+          font-size: 38px;
+          font-weight: 900;
+          line-height: 1;
+          letter-spacing: -0.03em;
+          text-transform: lowercase;
+          color: #f8fafc;
+        }
+
+        [class~="04-visible-build-surface"] {
+          position: absolute;
+          left: 100px;
+          top: 60px;
+          width: 1720px;
+          height: 820px;
+          overflow: hidden;
+          border: 1px solid #262728;
+          background: #07090d;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-view"] {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 1720px;
+          height: 968px;
+          transform-origin: 0 0;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-base-image"],
+        [class~="04-visible-build-crop-image"] {
+          position: absolute;
+          left: 0;
+          top: 0;
+          display: block;
+          width: 1720px;
+          height: 968px;
+          object-fit: cover;
+        }
+
+        [class~="04-visible-build-focus-plane"] {
+          --dof: 0px;
+          position: absolute;
+          overflow: hidden;
+          filter: blur(var(--dof));
+          will-change: filter, opacity;
+        }
+
+        [class~="04-visible-build-editor-base"] {
+          --dof: 0px;
+          inset: 0;
+          filter: blur(var(--dof));
+          will-change: filter, opacity;
+        }
+
+        [class~="04-visible-build-workflow-crop"] {
+          left: 0;
+          top: 0;
+          width: 440px;
+          height: 390px;
+        }
+
+        [class~="04-visible-build-editor-crop"] {
+          left: 748px;
+          top: 54px;
+          width: 972px;
+          height: 760px;
+        }
+
+        [class~="04-visible-build-crop-image"] {
+          left: 0;
+          top: 0;
+        }
+
+        [class~="04-visible-build-editor-crop"] [class~="04-visible-build-crop-image"] {
+          left: -748px;
+          top: -54px;
+        }
+
+        [class~="04-visible-build-workflow-highlight"] {
+          position: absolute;
+          left: 18px;
+          width: 400px;
+          height: 64px;
+          border-top: 1px solid #0062ff;
+          border-bottom: 1px solid #0062ff;
+          transform-origin: 0 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-workflow-highlight"]::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 4px;
+          height: 100%;
+          background: #0062ff;
+        }
+
+        [class~="04-visible-build-research-highlight"] {
+          top: 118px;
+        }
+
+        [class~="04-visible-build-plan-highlight"] {
+          top: 198px;
+        }
+
+        [class~="04-visible-build-active-line"] {
+          position: absolute;
+          left: 838px;
+          top: 0;
+          width: 782px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          border-left: 4px solid #0062ff;
+          border-top: 1px solid #0062ff;
+          border-bottom: 1px solid #0062ff;
+          padding-left: 18px;
+          box-sizing: border-box;
+          transform-origin: 0 50%;
+          opacity: 0;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-active-line-label"] {
+          font-family: "DM Mono";
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #f8fafc;
+        }
+
+        [class~="04-visible-build-build-base"] {
+          --dof: 3px;
+          inset: 0;
+          opacity: 0.74;
+          filter: blur(var(--dof));
+          will-change: filter, opacity;
+        }
+
+        [class~="04-visible-build-filetree-crop"] {
+          left: 438px;
+          top: 68px;
+          width: 312px;
+          height: 690px;
+        }
+
+        [class~="04-visible-build-filetree-crop"] [class~="04-visible-build-crop-image"] {
+          left: -438px;
+          top: -68px;
+        }
+
+        [class~="04-visible-build-callout"] {
+          position: absolute;
+          color: #0062ff;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-callout-components"] {
+          left: 448px;
+          top: 286px;
+          width: 310px;
+          height: 194px;
+        }
+
+        [class~="04-visible-build-callout-interactions"] {
+          left: 850px;
+          top: 548px;
+          width: 700px;
+          height: 210px;
+        }
+
+        [class~="04-visible-build-callout-label"] {
+          position: absolute;
+          left: 18px;
+          top: 16px;
+          font-family: "DM Mono";
+          font-size: 16px;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #0062ff;
+        }
+
+        [class~="04-visible-build-corner"] {
+          position: absolute;
+          width: 34px;
+          height: 34px;
+        }
+
+        [class~="04-visible-build-corner-tl"] {
+          left: 0;
+          top: 0;
+          border-left: 2px solid #0062ff;
+          border-top: 2px solid #0062ff;
+        }
+
+        [class~="04-visible-build-corner-tr"] {
+          right: 0;
+          top: 0;
+          border-right: 2px solid #0062ff;
+          border-top: 2px solid #0062ff;
+        }
+
+        [class~="04-visible-build-corner-bl"] {
+          left: 0;
+          bottom: 0;
+          border-left: 2px solid #0062ff;
+          border-bottom: 2px solid #0062ff;
+        }
+
+        [class~="04-visible-build-corner-br"] {
+          right: 0;
+          bottom: 0;
+          border-right: 2px solid #0062ff;
+          border-bottom: 2px solid #0062ff;
+        }
+
+        [class~="04-visible-build-file-row"] {
+          position: absolute;
+          left: 447px;
+          width: 300px;
+          height: 38px;
+          border-left: 4px solid #0062ff;
+          border-top: 1px solid #0062ff;
+          border-bottom: 1px solid #0062ff;
+          box-sizing: border-box;
+          transform-origin: 0 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-file-row-1"] {
+          top: 307px;
+        }
+
+        [class~="04-visible-build-file-row-2"] {
+          top: 349px;
+        }
+
+        [class~="04-visible-build-file-row-3"] {
+          top: 391px;
+        }
+
+        [class~="04-visible-build-together"] {
+          position: absolute;
+          z-index: 4;
+          right: 40px;
+          top: 38px;
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          font-family: "DM Sans";
+          font-size: 54px;
+          font-weight: 900;
+          line-height: 1;
+          letter-spacing: -0.03em;
+          text-transform: lowercase;
+          color: #f8fafc;
+          will-change: transform, opacity;
+        }
+
+        [class~="04-visible-build-together"]::before {
+          content: "";
+          display: block;
+          width: 36px;
+          height: 2px;
+          background: #0062ff;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="04-visible-build"
+        data-width="1920"
+        data-height="1080"
+        data-duration="8.337"
+      >
+        <div
+          id="f04-visible-build-ground"
+          class="clip 04-visible-build-ground"
+          data-start="0"
+          data-duration="8.337"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f04-visible-build-stage"
+          class="clip 04-visible-build-stage"
+          data-start="0"
+          data-duration="8.337"
+          data-track-index="1"
+        >
+          <div id="f04-visible-build-chrome" class="04-visible-build-chrome">
+            <span>visible build</span>
+            <span>04 / product surface</span>
+          </div>
+
+          <div id="f04-visible-build-approved" class="04-visible-build-approved">
+            <div class="04-visible-build-approved-mark">✓</div>
+            <div class="04-visible-build-approved-copy">plan approved</div>
+          </div>
+
+          <div id="f04-visible-build-surface" class="04-visible-build-surface">
+            <div
+              id="f04-visible-build-view-editor"
+              class="04-visible-build-view"
+              data-layout-allow-overflow
+            >
+              <div id="f04-visible-build-editor-base" class="04-visible-build-editor-base">
+                <img
+                  class="04-visible-build-base-image"
+                  src="assets/02-visible-code-generation.png"
+                  alt=""
+                />
+              </div>
+
+              <div id="f04-visible-build-workflow-crop" class="04-visible-build-focus-plane 04-visible-build-workflow-crop">
+                <img
+                  class="04-visible-build-crop-image"
+                  src="assets/02-visible-code-generation.png"
+                  alt=""
+                />
+                <div id="f04-visible-build-research-highlight" class="04-visible-build-workflow-highlight 04-visible-build-research-highlight"></div>
+                <div id="f04-visible-build-plan-highlight" class="04-visible-build-workflow-highlight 04-visible-build-plan-highlight"></div>
+              </div>
+
+              <div id="f04-visible-build-editor-crop" class="04-visible-build-focus-plane 04-visible-build-editor-crop">
+                <img
+                  class="04-visible-build-crop-image"
+                  src="assets/02-visible-code-generation.png"
+                  alt=""
+                />
+              </div>
+
+              <div id="f04-visible-build-active-line" class="04-visible-build-active-line">
+                <span id="f04-visible-build-active-line-label" class="04-visible-build-active-line-label"></span>
+              </div>
+            </div>
+
+            <div
+              id="f04-visible-build-view-build"
+              class="04-visible-build-view"
+              data-layout-allow-overflow
+            >
+              <div id="f04-visible-build-build-base" class="04-visible-build-build-base">
+                <img
+                  class="04-visible-build-base-image"
+                  src="assets/02-visible-code-generation.png"
+                  alt=""
+                />
+              </div>
+
+              <div id="f04-visible-build-filetree-crop" class="04-visible-build-focus-plane 04-visible-build-filetree-crop">
+                <img
+                  class="04-visible-build-crop-image"
+                  src="assets/02-visible-code-generation.png"
+                  alt=""
+                />
+              </div>
+
+              <div id="f04-visible-build-callout-components" class="04-visible-build-callout 04-visible-build-callout-components">
+                <span class="04-visible-build-corner 04-visible-build-corner-tl"></span>
+                <span class="04-visible-build-corner 04-visible-build-corner-tr"></span>
+                <span class="04-visible-build-corner 04-visible-build-corner-bl"></span>
+                <span class="04-visible-build-corner 04-visible-build-corner-br"></span>
+                <span class="04-visible-build-callout-label">pages</span>
+              </div>
+
+              <div id="f04-visible-build-callout-interactions" class="04-visible-build-callout 04-visible-build-callout-interactions">
+                <span class="04-visible-build-corner 04-visible-build-corner-tl"></span>
+                <span class="04-visible-build-corner 04-visible-build-corner-tr"></span>
+                <span class="04-visible-build-corner 04-visible-build-corner-bl"></span>
+                <span class="04-visible-build-corner 04-visible-build-corner-br"></span>
+                <span class="04-visible-build-callout-label">interactions</span>
+              </div>
+
+              <div id="f04-visible-build-file-row-1" class="04-visible-build-file-row 04-visible-build-file-row-1"></div>
+              <div id="f04-visible-build-file-row-2" class="04-visible-build-file-row 04-visible-build-file-row-2"></div>
+              <div id="f04-visible-build-file-row-3" class="04-visible-build-file-row 04-visible-build-file-row-3"></div>
+
+              <div id="f04-visible-build-together" class="04-visible-build-together">
+                coming together
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const approved = document.getElementById("f04-visible-build-approved");
+        const surface = document.getElementById("f04-visible-build-surface");
+        const editorView = document.getElementById("f04-visible-build-view-editor");
+        const buildView = document.getElementById("f04-visible-build-view-build");
+        const editorBase = document.getElementById("f04-visible-build-editor-base");
+        const buildBase = document.getElementById("f04-visible-build-build-base");
+        const workflowCrop = document.getElementById("f04-visible-build-workflow-crop");
+        const editorCrop = document.getElementById("f04-visible-build-editor-crop");
+        const filetreeCrop = document.getElementById("f04-visible-build-filetree-crop");
+        const researchHighlight = document.getElementById("f04-visible-build-research-highlight");
+        const planHighlight = document.getElementById("f04-visible-build-plan-highlight");
+        const activeLine = document.getElementById("f04-visible-build-active-line");
+        const activeLineLabel = document.getElementById("f04-visible-build-active-line-label");
+        const componentsCallout = document.getElementById("f04-visible-build-callout-components");
+        const interactionsCallout = document.getElementById("f04-visible-build-callout-interactions");
+        const together = document.getElementById("f04-visible-build-together");
+        const fileRows = Array.from(
+          document.querySelectorAll('[class~="04-visible-build-file-row"]'),
+        );
+
+        const lineContent = [
+          { key: "props", label: "props / interface", y: 232, body: "MetricCardProps" },
+          { key: "state", label: "state / function", y: 522, body: "MetricCard function" },
+          { key: "render", label: "render / component", y: 696, body: "React component" },
+        ];
+        const sequenceStart = 1.82;
+        const baseDuration = 0.25;
+        const secondsPerCharacter = 0.012;
+        const itemHold = 0.18;
+        let cumulative = sequenceStart;
+        const lineTimeline = lineContent.map((entry) => {
+          const duration = baseDuration + entry.body.length * secondsPerCharacter + itemHold;
+          const start = cumulative;
+          cumulative += duration;
+          return { ...entry, start, end: cumulative };
+        });
+
+        function lineAt(time) {
+          if (time < sequenceStart) return null;
+          for (let i = lineTimeline.length - 1; i >= 0; i -= 1) {
+            if (time >= lineTimeline[i].start) return lineTimeline[i];
+          }
+          return null;
+        }
+
+        function lineEnvelope(time, entry) {
+          const attackDuration = 0.16;
+          const releaseDuration = 0.2;
+          const sustainEnd = Math.max(entry.start + attackDuration, entry.end - releaseDuration);
+          if (time < entry.start) return 0;
+          if (time < entry.start + attackDuration) {
+            return (time - entry.start) / attackDuration;
+          }
+          if (time < sustainEnd) return 1;
+          if (time < entry.end) {
+            return 1 - ((time - sustainEnd) / (entry.end - sustainEnd)) * 0.82;
+          }
+          return 0.18;
+        }
+
+        const driver = { t: 0 };
+        let lastLineKey = "";
+        const timeline = gsap.timeline({ paused: true });
+
+        timeline.to(
+          driver,
+          {
+            t: 7.837,
+            duration: 7.837,
+            ease: "none",
+            onUpdate: () => {
+              const entry = lineAt(driver.t);
+              if (!entry) {
+                activeLine.style.opacity = "0";
+                activeLineLabel.textContent = "";
+                lastLineKey = "";
+                return;
+              }
+
+              if (entry.key !== lastLineKey) {
+                activeLineLabel.textContent = entry.label;
+                lastLineKey = entry.key;
+              }
+
+              const envelope = lineEnvelope(driver.t, entry);
+              const scale = 1 + envelope * 0.018;
+              activeLine.style.transform = `translateY(${entry.y}px) scaleX(${scale})`;
+              activeLine.style.opacity = String(0.18 + envelope * 0.52);
+              activeLine.style.backgroundColor = `rgba(0, 98, 255, ${0.08 + envelope * 0.16})`;
+            },
+          },
+          0,
+        );
+
+        timeline.to(
+          approved,
+          { scale: 0.72, opacity: 0, duration: 0.38, ease: "power2.in" },
+          0.16,
+        );
+
+        timeline.fromTo(
+          surface,
+          { scale: 0.72, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.58, ease: "power3.out" },
+          0.34,
+        );
+
+        timeline.fromTo(
+          editorBase,
+          { "--dof": "0px", opacity: 1 },
+          { "--dof": "4px", opacity: 0.62, duration: 0.72, ease: "power2.inOut" },
+          0.48,
+        );
+
+        timeline.fromTo(
+          researchHighlight,
+          { scaleX: 0.05, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.38, ease: "power3.out" },
+          0.56,
+        );
+
+        timeline.fromTo(
+          planHighlight,
+          { scaleX: 0.05, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.38, ease: "power3.out" },
+          0.94,
+        );
+
+        timeline.to(
+          editorView,
+          { scale: 1.2, x: -614, y: -134, duration: 0.74, ease: "power2.inOut" },
+          1.5,
+        );
+
+        timeline.to(
+          workflowCrop,
+          { "--dof": "8px", opacity: 0.34, duration: 0.7, ease: "power2.inOut" },
+          1.5,
+        );
+
+        timeline.fromTo(
+          editorCrop,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.7, ease: "power2.inOut" },
+          1.5,
+        );
+
+        timeline.to(
+          editorView,
+          { x: -844, opacity: 0, duration: 0.3, ease: "power4.in" },
+          3.54,
+        );
+
+        timeline.fromTo(
+          buildView,
+          { scale: 1.2, x: -30, y: -80, opacity: 0.35 },
+          { scale: 1.2, x: -260, y: -80, opacity: 1, duration: 0.3, ease: "power4.out" },
+          3.84,
+        );
+
+        timeline.fromTo(
+          componentsCallout,
+          { scale: 0.9, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+          4.0,
+        );
+
+        timeline.fromTo(
+          interactionsCallout,
+          { scale: 0.9, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+          4.66,
+        );
+
+        timeline.to(
+          buildView,
+          { scale: 1, x: 0, y: 0, duration: 0.7, ease: "power3.inOut" },
+          5.8,
+        );
+
+        timeline.to(
+          [componentsCallout, interactionsCallout],
+          { opacity: 0.18, duration: 0.46, ease: "power2.out" },
+          5.8,
+        );
+
+        timeline.to(
+          buildBase,
+          { "--dof": "0px", opacity: 1, duration: 0.7, ease: "power2.inOut" },
+          5.8,
+        );
+
+        timeline.fromTo(
+          filetreeCrop,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.7, ease: "power2.inOut" },
+          5.8,
+        );
+
+        fileRows.forEach((row, index) => {
+          timeline.fromTo(
+            row,
+            { scaleX: 0.05, opacity: 0 },
+            { scaleX: 1, opacity: 1, duration: 0.3, ease: "power3.out" },
+            5.92 + index * 0.28,
+          );
+        });
+
+        timeline.fromTo(
+          together,
+          { x: 28, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.34, ease: "power3.out" },
+          6.4,
+        );
+
+        window.__timelines["04-visible-build"] = timeline;
+      </script>
+    </template>
+  </body>
+</html>

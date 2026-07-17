@@ -1,0 +1,233 @@
+{
+  "tts_provider": null,
+  "voice_id": null,
+  "bgm": null,
+  "bgm_pending": false,
+  "bgm_provider": null,
+  "bgm_pid": null,
+  "bgm_log": null,
+  "bgm_mode": null,
+  "bgm_target_duration_s": null,
+  "bgm_seed_duration_s": null,
+  "bgm_loop_count": null,
+  "voices": [],
+  "sfx": [
+    {
+      "id": "01",
+      "name": "pencil tick",
+      "file": "assets/sfx/pencil-tick.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.936,
+      "volume": 0.35
+    },
+    {
+      "id": "01",
+      "name": "soft interface whoosh",
+      "file": "assets/sfx/soft-interface-whoosh.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 1.58,
+      "volume": 0.35
+    },
+    {
+      "id": "02",
+      "name": "cursor arrival",
+      "file": "assets/sfx/cursor-arrival.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.192,
+      "volume": 0.35
+    },
+    {
+      "id": "02",
+      "name": "input click",
+      "file": "assets/sfx/input-click.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.768,
+      "volume": 0.35
+    },
+    {
+      "id": "02",
+      "name": "result chime",
+      "file": "assets/sfx/result-chime.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 1.441,
+      "volume": 0.35
+    },
+    {
+      "id": "03",
+      "name": "search sweep",
+      "file": "assets/sfx/search-sweep.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 1.79,
+      "volume": 0.35
+    },
+    {
+      "id": "03",
+      "name": "question ticks",
+      "file": "assets/sfx/question-ticks.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 7.778,
+      "volume": 0.35
+    },
+    {
+      "id": "03",
+      "name": "approval click",
+      "file": "assets/sfx/approval-click.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.24,
+      "volume": 0.35
+    },
+    {
+      "id": "04",
+      "name": "build pulse",
+      "file": "assets/sfx/build-pulse.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 4.415,
+      "volume": 0.35
+    },
+    {
+      "id": "04",
+      "name": "file creation ticks",
+      "file": "assets/sfx/file-creation-ticks.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.768,
+      "volume": 0.35
+    },
+    {
+      "id": "04",
+      "name": "code resolve",
+      "file": "assets/sfx/code-resolve.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 3.855,
+      "volume": 0.35
+    },
+    {
+      "id": "05",
+      "name": "diagnostic sweep",
+      "file": "assets/sfx/diagnostic-sweep.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 2.764,
+      "volume": 0.35
+    },
+    {
+      "id": "05",
+      "name": "check ticks",
+      "file": "assets/sfx/check-ticks.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.768,
+      "volume": 0.35
+    },
+    {
+      "id": "05",
+      "name": "verified chime",
+      "file": "assets/sfx/verified-chime.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.72,
+      "volume": 0.35
+    },
+    {
+      "id": "06",
+      "name": "selection click",
+      "file": "assets/sfx/selection-click.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.768,
+      "volume": 0.35
+    },
+    {
+      "id": "06",
+      "name": "typing ticks",
+      "file": "assets/sfx/typing-ticks.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 2.521,
+      "volume": 0.35
+    },
+    {
+      "id": "06",
+      "name": "focused update whoosh",
+      "file": "assets/sfx/focused-update-whoosh.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 1.58,
+      "volume": 0.35
+    },
+    {
+      "id": "07",
+      "name": "share tick",
+      "file": "assets/sfx/share-tick.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 7.016,
+      "volume": 0.35
+    },
+    {
+      "id": "07",
+      "name": "remix tick",
+      "file": "assets/sfx/remix-tick.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 1.967,
+      "volume": 0.35
+    },
+    {
+      "id": "07",
+      "name": "bundle unfold",
+      "file": "assets/sfx/bundle-unfold.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 1.79,
+      "volume": 0.35
+    },
+    {
+      "id": "07",
+      "name": "ownership resolve",
+      "file": "assets/sfx/ownership-resolve.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 5.708,
+      "volume": 0.35
+    },
+    {
+      "id": "08",
+      "name": "logo resolve",
+      "file": "assets/sfx/logo-resolve.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 3.463,
+      "volume": 0.35
+    },
+    {
+      "id": "08",
+      "name": "cursor approach",
+      "file": "assets/sfx/cursor-approach.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.768,
+      "volume": 0.35
+    },
+    {
+      "id": "08",
+      "name": "final click",
+      "file": "assets/sfx/final-click.mp3",
+      "source": "heygen",
+      "offset_s": 0,
+      "duration_s": 0.264,
+      "volume": 0.35
+    }
+  ],
+  "total_duration_s": 0
+}

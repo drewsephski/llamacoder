@@ -52,6 +52,19 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("at least 4.5:1 contrast");
     expect(prompt).toContain("component boundaries require at least 3:1");
     expect(prompt).toContain("run a private contrast audit");
+    expect(prompt).toContain("Explicit color fidelity contract (mandatory)");
+    expect(prompt).toContain(
+      "A color named by the user is a hard visual requirement",
+    );
+    expect(prompt).toContain("`purple` stays `purple`");
+    expect(prompt).toContain("complete, literal, static Tailwind v3 utilities");
+    expect(prompt).toContain("never use `bg-${color}-500`");
+    expect(prompt).toContain(
+      "Do not append competing utilities and rely on class order",
+    );
+    expect(prompt).toContain("Composed spatial rhythm");
+    expect(prompt).toContain("Surface and voice restraint");
+    expect(prompt).toContain("Distribution-default copy");
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -91,6 +104,10 @@ describe("prompt design guidance", () => {
       "use that contract directly without asking for redundant research",
     );
     expect(softwareArchitectPrompt).toContain("Contrast contract:");
+    expect(softwareArchitectPrompt).toContain("Explicit color fidelity:");
+    expect(softwareArchitectPrompt).toContain(
+      "record the exact standard Tailwind family",
+    );
     expect(softwareArchitectPrompt).toContain(
       "Normal, helper, and placeholder text must reach 4.5:1",
     );
@@ -121,6 +138,13 @@ describe("prompt design guidance", () => {
     );
     expect(developerCodeGenPrompt).toContain(
       "Opacity, gradients, images, and translucent overlays",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Explicit color fidelity contract (mandatory)",
+    );
+    expect(developerCodeGenPrompt).toContain("`purple` stays `purple`");
+    expect(developerCodeGenPrompt).toContain(
+      "Avoid card-in-card nesting, emoji feature icons",
     );
   });
 });

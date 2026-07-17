@@ -1,0 +1,71 @@
+{
+  "lines": [
+    {
+      "id": "01",
+      "sfx": [
+        "pencil tick",
+        "soft interface whoosh"
+      ]
+    },
+    {
+      "id": "02",
+      "sfx": [
+        "cursor arrival",
+        "input click",
+        "result chime"
+      ]
+    },
+    {
+      "id": "03",
+      "sfx": [
+        "search sweep",
+        "question ticks",
+        "approval click"
+      ]
+    },
+    {
+      "id": "04",
+      "sfx": [
+        "build pulse",
+        "file creation ticks",
+        "code resolve"
+      ]
+    },
+    {
+      "id": "05",
+      "sfx": [
+        "diagnostic sweep",
+        "check ticks",
+        "verified chime"
+      ]
+    },
+    {
+      "id": "06",
+      "sfx": [
+        "selection click",
+        "typing ticks",
+        "focused update whoosh"
+      ]
+    },
+    {
+      "id": "07",
+      "sfx": [
+        "share tick",
+        "remix tick",
+        "bundle unfold",
+        "ownership resolve"
+      ]
+    },
+    {
+      "id": "08",
+      "sfx": [
+        "logo resolve",
+        "cursor approach",
+        "final click"
+      ]
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  }
+}

@@ -112,6 +112,8 @@ Requirements:
 - Preserve unrelated components, copy, state, imports, and interactions.
 - If the selected DOM path maps to repeated content, update the intended repeated item or shared component consistently.
 - For visual requests, make the concrete className/style/component changes needed to render the edit.
+- If the user names a color, preserve that exact Tailwind family and use complete literal static utilities (for example, a purple request uses \`bg-purple-*\`/\`text-purple-*\`, never violet, indigo, a computed \`bg-\${color}-*\`, or an unresolved semantic token).
+- Replace conflicting existing background, text, border, gradient, and dark-mode color utilities on the edited element. Do not append a second color class and rely on class order. Pair the new surface with a readable foreground and visible interaction states.
 
 Current source:
 ${formatGeneratedFilesMarkdown(files)}`;

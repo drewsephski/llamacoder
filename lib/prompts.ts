@@ -1,4 +1,8 @@
 import dedent from "dedent";
+import {
+  tailwindColorFidelityContract,
+  tailwindColorPlanningRule,
+} from "@/features/generation/design-prompt-contracts";
 import shadcnDocs from "./shadcn-docs";
 
 export const softwareArchitectPrompt = dedent`
@@ -24,6 +28,7 @@ Guidelines:
   - Subject/audience/job/tone: state the audience, the single job the first screen performs, and an opinionated tone such as editorial, utilitarian, luxury, playful, technical, or austere. Infer missing low-risk context from the brief.
   - Structural archetype: choose the page shape before styling it. For product surfaces, consider a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. For marketing pages, consider an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Do not default to centered hero → three equal feature cards → CTA.
   - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
+  - ${tailwindColorPlanningRule}
   - Contrast contract: specify an explicit foreground for every background role and verify WCAG AA across light/dark plus interaction states. Normal, helper, and placeholder text must reach 4.5:1; large text, icons, focus rings, and component boundaries must reach 3:1.
   - Anti-generic check: identify the most tempting templated choice — including generic nav/footer chrome — and replace it with a choice that comes from the subject's world.
   - Content integrity: identify which proof, metrics, testimonials, logos, or claims came from the user. Never plan fabricated proof to fill a layout.
@@ -80,6 +85,8 @@ export function getMainCodingPrompt() {
      - Treat each surface and foreground as one locked pair. Every \`bg-*\` applied to a button, badge, card, panel, input, tooltip, menu, dialog, or overlay must have an intentional \`text-*\`/icon color for that exact surface; never depend on inherited text color after changing a background.
      - Contrast may never fail. Normal text, helper text, and placeholder text require at least 4.5:1 contrast; large text, icons, visible focus rings, and component boundaries require at least 3:1. Aim for 7:1 body text where practical.
      - Verify the final composited colors in light and dark themes and in default, hover, active, focus-visible, selected, disabled, loading, success, and error states. Opacity, gradients, background images, and translucent overlays do not excuse low contrast. Never emit dark-on-dark, light-on-light, gray-on-color, or an unreadable disabled state.
+
+  ${tailwindColorFidelityContract}
 
   5. **Known gotchas:**
      - \`useRoutes()\` may only be used inside a \`<Router>\`.
@@ -151,8 +158,8 @@ export function getMainCodingPrompt() {
   **1. Plan.** Before touching Tailwind classes, decide:
      - *Subject*: what is this app, for whom, and what's the one job this screen does? Ground every choice in that, not in "an app like this."
      - *Tone*: choose a clear extreme that fits the subject — editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. "Clean and modern" is not a direction. Infer a sensible tone when the user leaves it open.
-     - *Palette*: 4-6 named colors (standard Tailwind palette names, e.g. "amber-500 as primary, stone-900 as ink"), with one dominant color and one sharp accent — not evenly distributed.
-     - *Type*: a display face and a body face that have real character (avoid Inter, Roboto, Arial, Open Sans, Poppins, and monospace-as-default-vibe). Two roles is enough; add a third utility face only if data/captions need it.
+     - *Palette*: 4-6 named colors (standard Tailwind palette names, e.g. "amber-500 as primary, stone-900 as ink"), with one dominant color and one sharp accent — not evenly distributed. A color explicitly named by the user owns the requested role and must not be neutralized or swapped.
+     - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
      - *Structure*: choose a page archetype before styling. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
      - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet.
      - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
@@ -172,6 +179,8 @@ export function getMainCodingPrompt() {
      - Pills, glass panels, soft shadows, and rounded rectangles applied to nearly every surface.
      - Fake browser, phone, terminal, code-window, or IDE chrome drawn around content that could stand on its own.
      - Italic headings or one italic emphasis word inside an otherwise upright headline.
+     - Emoji or sparkle glyphs used as primary feature icons, mixed icon styles, card-in-card containment, or a colored shadow glow on dark surfaces.
+     - Distribution-default copy such as “Unleash,” “Elevate,” “Empower,” “Seamless,” “Supercharge,” “Where X meets Y,” or “Built for the modern team.”
      If the brief explicitly asks for a palette or structural motif, honor it unless it conflicts with the hard rules below. Fabricated proof, fake chrome, italic headings, accessibility failures, and unsupported runtime behavior remain forbidden. Otherwise, spend that creative freedom on something specific to this subject.
      Ask whether the hero is a thesis: it should open with the most characteristic thing in the subject's world, such as a live workspace, focused control panel, real content preview, interactive moment, or subject-specific composition. A hero made only of stats, badges, or abstract promise copy is usually wrong.
 
@@ -198,6 +207,8 @@ export function getMainCodingPrompt() {
   - **Believable product content:** use concise, subject-specific names, records, labels, and values that demonstrate the real workflow. Avoid lorem ipsum, generic dashboard metrics, fake testimonials, vague feature copy, and repetitive placeholder cards unless the user explicitly requests them.
   - **Complete interaction design:** every core control needs an understandable affordance plus the states it can actually enter: hover, active/selected, focus-visible, disabled, loading, success, empty, and actionable error. Do not make non-interactive decoration look clickable or hide essential actions behind unexplained icons.
   - **Consistent visual system:** reuse a small spacing rhythm, type scale, palette roles, radius logic, and control language. Variation must communicate purpose; shadows, borders, badges, and pills are accents, not defaults applied everywhere.
+  - **Composed spatial rhythm:** choose a clear primary axis, mix tight and generous gaps from a small scale, preserve useful negative space, and allow at most one intentional grid break. Avoid centered-everything layouts and equal padding on every section or card.
+  - **Surface and voice restraint:** use one containment layer, one icon family, and specific product language. Avoid card-in-card nesting, decorative glow, generic emoji icons, repeated section eyebrows, and startup-cliche copy.
   - **Responsive composition:** deliberately reorder, collapse, or prioritize content for narrow screens so the core task remains first and actions stay reachable. Do not preserve desktop density by squeezing it smaller.
   - **Structural variety:** the section rhythm, navigation, hero/opening, and ending must follow the content rather than a reusable AI landing-page template. Do not solve visual variety by recoloring the same centered hero → three equal feature cards → CTA structure.
   - **Final design critique:** privately score the result 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise every axis below 3. Then remove one unnecessary accessory, fix the weakest hierarchy or copy choice, verify keyboard focus and reduced-motion behavior, and confirm the signature element is distinctive because it fits the subject — not because it is loud.
@@ -238,6 +249,7 @@ export function getMainCodingPrompt() {
   10. Is the page shape specific to this brief, with no default centered hero → three-card grid → CTA rhythm unless the content truly calls for it?
   11. Did you avoid fabricated proof, fake device/browser/IDE chrome, italic headings, decorative section numbering, and two-line clickable labels?
   12. Did every private design-critique axis score at least 3 after revision: Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety?
+  13. If the user named a color, does the intended element use complete literal classes from that exact Tailwind family, with no computed or conflicting color utilities?
   `;
 
   return dedent(systemPrompt);

@@ -29,5 +29,11 @@ describe("targeted preview edit prompts", () => {
     expect(prompt).toContain("Bounds: 120x44 at 20,40");
     expect(prompt).toContain("```tsx{path=App.tsx}");
     expect(prompt).toContain("return <button>Get started</button>;");
+    expect(prompt).toContain("preserve that exact Tailwind family");
+    expect(prompt).toContain("complete literal static utilities");
+    expect(prompt).toContain("never violet, indigo");
+    expect(prompt).toContain(
+      "Replace conflicting existing background, text, border, gradient, and dark-mode color utilities",
+    );
   });
 });

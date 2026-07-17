@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visible Quality</title>
+  </head>
+  <body>
+    <template id="f05-visible-quality-template">
+      <style>
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/fonts/DM_Sans_400.woff2") format("woff2");
+          font-weight: 400 900;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400 700;
+          font-style: normal;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #f8fafc;
+          font-family: "DM Sans";
+          container-type: size;
+          box-sizing: border-box;
+        }
+
+        .f05-visible-quality-ground {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          background: #07090d;
+        }
+
+        .f05-visible-quality-content {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .f05-visible-quality-top-rule {
+          position: absolute;
+          top: 38px;
+          left: 106px;
+          right: 106px;
+          height: 1px;
+          background: #262728;
+        }
+
+        .f05-visible-quality-index {
+          position: absolute;
+          top: 52px;
+          left: 108px;
+          color: #76787c;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .f05-visible-quality-editor-crop {
+          position: absolute;
+          left: 150px;
+          top: 96px;
+          width: 1520px;
+          height: 708px;
+          overflow: hidden;
+          border: 1px solid #262728;
+          background: #07090d;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+        }
+
+        .f05-visible-quality-editor-image {
+          position: absolute;
+          left: -430px;
+          top: -470px;
+          display: block;
+          width: 2496px;
+          height: 1404px;
+          max-width: none;
+          user-select: none;
+        }
+
+        .f05-visible-quality-broken-label {
+          position: absolute;
+          top: 24px;
+          left: 28px;
+          display: inline-block;
+          color: #f8fafc;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          transform-origin: 0 50%;
+          opacity: 0.22;
+          will-change: transform, opacity, text-shadow;
+        }
+
+        .f05-visible-quality-diagnostic-sweep {
+          position: absolute;
+          left: 0;
+          top: 342px;
+          width: 620px;
+          height: 2px;
+          background: #0062ff;
+          transform-origin: 50% 50%;
+          pointer-events: none;
+          will-change: transform, opacity;
+        }
+
+        .f05-visible-quality-report-crop {
+          position: absolute;
+          left: 1050px;
+          top: 118px;
+          width: 760px;
+          height: 700px;
+          overflow: hidden;
+          border: 1px solid #0062ff;
+          background: #07090d;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+          z-index: 3;
+        }
+
+        .f05-visible-quality-report-image {
+          position: absolute;
+          left: -1204px;
+          top: -70px;
+          display: block;
+          width: 1920px;
+          height: 1080px;
+          max-width: none;
+          user-select: none;
+        }
+
+        .f05-visible-quality-check-stack {
+          position: absolute;
+          left: 1022px;
+          top: 272px;
+          width: 650px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          z-index: 5;
+        }
+
+        .f05-visible-quality-check-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          min-height: 58px;
+          padding: 0 18px;
+          border-top: 1px solid #262728;
+          background: #07090d;
+          color: #f8fafc;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+        }
+
+        .f05-visible-quality-check-mark {
+          display: inline-flex;
+          align-items: center;
+          color: #0ca8ff;
+        }
+
+        .f05-visible-quality-check-mark::before {
+          content: "/";
+          margin-right: 12px;
+          color: #0062ff;
+        }
+
+        .f05-visible-quality-check-status {
+          color: #0062ff;
+        }
+
+        .f05-visible-quality-stats {
+          position: absolute;
+          left: 108px;
+          top: 674px;
+          width: 1704px;
+          height: 164px;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 36px;
+          z-index: 7;
+        }
+
+        .f05-visible-quality-stat {
+          position: relative;
+          display: grid;
+          grid-template-columns: auto 1fr;
+          align-items: end;
+          min-width: 0;
+          padding: 20px 8px 8px 0;
+          border-top: 1px solid #262728;
+          background: #07090d;
+          transform-origin: 50% 100%;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+        }
+
+        .f05-visible-quality-stat-value {
+          color: #0062ff;
+          font-family: "DM Sans";
+          font-size: 94px;
+          font-weight: 900;
+          line-height: 0.88;
+          letter-spacing: -0.04em;
+        }
+
+        .f05-visible-quality-stat-copy {
+          min-height: 86px;
+          padding: 5px 0 0 22px;
+          border-left: 1px solid #262728;
+          box-sizing: border-box;
+        }
+
+        .f05-visible-quality-stat-label {
+          max-width: 240px;
+          color: #f8fafc;
+          font-family: "DM Sans";
+          font-size: 24px;
+          font-weight: 700;
+          line-height: 1.08;
+          letter-spacing: -0.02em;
+          text-transform: lowercase;
+        }
+
+        .f05-visible-quality-stat-note {
+          margin-top: 12px;
+          color: #484b50;
+          font-family: "DM Mono";
+          font-size: 12px;
+          line-height: 1;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .f05-visible-quality-payoff {
+          position: absolute;
+          left: 108px;
+          top: 74px;
+          width: 880px;
+          height: 184px;
+          padding: 18px 0;
+          background: #07090d;
+          z-index: 9;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+        }
+
+        .f05-visible-quality-payoff-kicker {
+          color: #0062ff;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .f05-visible-quality-payoff-line {
+          display: flex;
+          align-items: baseline;
+          width: 100%;
+          min-height: 92px;
+          margin-top: 15px;
+          color: #f8fafc;
+          font-family: "DM Sans";
+          font-size: 66px;
+          font-weight: 900;
+          line-height: 0.94;
+          letter-spacing: -0.04em;
+          text-transform: lowercase;
+          white-space: nowrap;
+        }
+
+        .f05-visible-quality-payoff-text {
+          display: inline-block;
+          min-width: 752px;
+        }
+
+        .f05-visible-quality-payoff-cursor {
+          display: inline-block;
+          width: 7px;
+          height: 58px;
+          margin-left: 8px;
+          background: #0062ff;
+          vertical-align: baseline;
+          will-change: opacity;
+        }
+
+        .f05-visible-quality-verified-rail {
+          position: absolute;
+          left: 108px;
+          top: 232px;
+          width: 880px;
+          height: 50px;
+          overflow: hidden;
+          border: 1px solid #0062ff;
+          background: #07090d;
+          z-index: 10;
+          box-sizing: border-box;
+          will-change: opacity;
+        }
+
+        .f05-visible-quality-verified-fill {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          background: #0062ff;
+          transform-origin: 0 50%;
+          will-change: transform;
+        }
+
+        .f05-visible-quality-verified-label {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 18px;
+          color: #07090d;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          box-sizing: border-box;
+          will-change: opacity;
+        }
+
+        .f05-visible-quality-verified-code {
+          color: rgba(7, 9, 13, 0.7);
+          font-size: 12px;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="05-visible-quality"
+        data-width="1920"
+        data-height="1080"
+        data-duration="9.251"
+      >
+        <div
+          id="f05-visible-quality-ground"
+          class="clip f05-visible-quality-ground"
+          data-start="0"
+          data-duration="9.251"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f05-visible-quality-content"
+          class="clip f05-visible-quality-content"
+          data-start="0"
+          data-duration="9.251"
+          data-track-index="1"
+        >
+          <div class="f05-visible-quality-top-rule"></div>
+          <div class="f05-visible-quality-index">Quality / 05</div>
+
+          <div
+            id="f05-visible-quality-editor-crop"
+            class="f05-visible-quality-editor-crop"
+            data-layout-allow-overflow
+          >
+            <img
+              id="f05-visible-quality-editor-image"
+              class="f05-visible-quality-editor-image"
+              src="assets/04-repair-quality-proof.png"
+              alt="Squid Agent repaired JSX line in CashFlowChart.tsx"
+            />
+            <div
+              id="f05-visible-quality-broken-label"
+              class="f05-visible-quality-broken-label"
+            >
+              Broken Pieces
+            </div>
+            <div
+              id="f05-visible-quality-diagnostic-sweep"
+              class="f05-visible-quality-diagnostic-sweep"
+            ></div>
+          </div>
+
+          <div
+            id="f05-visible-quality-report-crop"
+            class="f05-visible-quality-report-crop"
+            data-layout-allow-overflow
+          >
+            <img
+              id="f05-visible-quality-report-image"
+              class="f05-visible-quality-report-image"
+              src="assets/04-repair-quality-proof.png"
+              alt="Squid Agent static quality report with files, imports, and credit status"
+            />
+          </div>
+
+          <div class="f05-visible-quality-check-stack">
+            <div
+              id="f05-visible-quality-check-files"
+              class="f05-visible-quality-check-row"
+            >
+              <span class="f05-visible-quality-check-mark">Missing Files</span>
+              <span class="f05-visible-quality-check-status">Checked</span>
+            </div>
+            <div
+              id="f05-visible-quality-check-accessibility"
+              class="f05-visible-quality-check-row"
+            >
+              <span class="f05-visible-quality-check-mark">Accessibility</span>
+              <span class="f05-visible-quality-check-status">Checked</span>
+            </div>
+          </div>
+
+          <div class="f05-visible-quality-stats">
+            <div id="f05-visible-quality-stat-files" class="f05-visible-quality-stat">
+              <div class="f05-visible-quality-stat-value">11</div>
+              <div class="f05-visible-quality-stat-copy">
+                <div class="f05-visible-quality-stat-label">files</div>
+                <div class="f05-visible-quality-stat-note">generated + source</div>
+              </div>
+            </div>
+            <div id="f05-visible-quality-stat-imports" class="f05-visible-quality-stat">
+              <div class="f05-visible-quality-stat-value">17</div>
+              <div class="f05-visible-quality-stat-copy">
+                <div class="f05-visible-quality-stat-label">imports resolved</div>
+                <div class="f05-visible-quality-stat-note">static quality report</div>
+              </div>
+            </div>
+            <div id="f05-visible-quality-stat-credits" class="f05-visible-quality-stat">
+              <div class="f05-visible-quality-stat-value">0</div>
+              <div class="f05-visible-quality-stat-copy">
+                <div class="f05-visible-quality-stat-label">credits charged</div>
+                <div class="f05-visible-quality-stat-note">repair result</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="f05-visible-quality-payoff" class="f05-visible-quality-payoff">
+            <div class="f05-visible-quality-payoff-kicker">Proof Before You Move On</div>
+            <div class="f05-visible-quality-payoff-line">
+              <span
+                id="f05-visible-quality-payoff-text"
+                class="f05-visible-quality-payoff-text"
+              ></span>
+              <span
+                id="f05-visible-quality-payoff-cursor"
+                class="f05-visible-quality-payoff-cursor"
+              ></span>
+            </div>
+          </div>
+
+          <div
+            id="f05-visible-quality-verified-rail"
+            class="f05-visible-quality-verified-rail"
+          >
+            <div
+              id="f05-visible-quality-verified-fill"
+              class="f05-visible-quality-verified-fill"
+            ></div>
+            <div
+              id="f05-visible-quality-verified-label"
+              class="f05-visible-quality-verified-label"
+            >
+              <span>Verified</span>
+              <span class="f05-visible-quality-verified-code">11 / 17 / 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const byId = (id) => document.getElementById(id);
+
+        const editorCrop = byId("f05-visible-quality-editor-crop");
+        const reportCrop = byId("f05-visible-quality-report-crop");
+        const brokenLabel = byId("f05-visible-quality-broken-label");
+        const diagnosticSweep = byId("f05-visible-quality-diagnostic-sweep");
+        const checkFiles = byId("f05-visible-quality-check-files");
+        const checkAccessibility = byId("f05-visible-quality-check-accessibility");
+        const statFiles = byId("f05-visible-quality-stat-files");
+        const statImports = byId("f05-visible-quality-stat-imports");
+        const statCredits = byId("f05-visible-quality-stat-credits");
+        const payoff = byId("f05-visible-quality-payoff");
+        const payoffText = byId("f05-visible-quality-payoff-text");
+        const payoffCursor = byId("f05-visible-quality-payoff-cursor");
+        const verifiedRail = byId("f05-visible-quality-verified-rail");
+        const verifiedFill = byId("f05-visible-quality-verified-fill");
+        const verifiedLabel = byId("f05-visible-quality-verified-label");
+
+        tl.set(reportCrop, { opacity: 0, scale: 0.72, x: 240 }, 0);
+        tl.set([checkFiles, checkAccessibility], { opacity: 0, x: 150 }, 0);
+        tl.set([statFiles, statImports, statCredits], { opacity: 0, y: 34, scale: 0.94 }, 0);
+        tl.set(payoff, { opacity: 0, y: -24 }, 0);
+        tl.set(verifiedRail, { opacity: 0 }, 0);
+        tl.set(verifiedFill, { scaleX: 0 }, 0);
+        tl.set(verifiedLabel, { opacity: 0 }, 0);
+        tl.set(diagnosticSweep, { opacity: 0, x: -920, scaleX: 0.2 }, 0);
+
+        // Scene 1 — exact JSX repair line under a restrained diagnostic sweep.
+        tl.fromTo(
+          editorCrop,
+          { opacity: 0.24, scale: 0.97, y: 16 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.58, ease: "power3.out" },
+          0,
+        );
+
+        const glowDriver = { t: 0 };
+        tl.to(
+          glowDriver,
+          {
+            t: 1.8,
+            duration: 1.8,
+            ease: "none",
+            onUpdate: () => {
+              const time = glowDriver.t;
+              const attack = Math.max(0, Math.min(1, (time - 0.18) / 0.2));
+              const release = time < 1.18 ? 1 : Math.max(0.16, 1 - (time - 1.18) / 0.46);
+              const envelope = attack * release;
+              brokenLabel.style.opacity = String(0.22 + envelope * 0.78);
+              brokenLabel.style.transform = "scale(" + (1 + envelope * 0.05) + ")";
+              brokenLabel.style.textShadow =
+                "0 0 " + (18 * envelope) + "px rgba(0,98,255," + (0.18 + envelope * 0.52) + ")";
+            },
+          },
+          0,
+        );
+
+        tl.to(
+          diagnosticSweep,
+          {
+            opacity: 1,
+            x: 980,
+            scaleX: 0.92,
+            duration: 1.08,
+            ease: "power3.inOut",
+          },
+          0.34,
+        );
+        tl.to(
+          diagnosticSweep,
+          { opacity: 0.12, duration: 0.22, ease: "power2.out" },
+          1.48,
+        );
+
+        // Scene 2 — cut-the-curve and same-anchor scale swap into the report.
+        tl.to(
+          editorCrop,
+          {
+            x: -430,
+            scale: 0.72,
+            opacity: 0.34,
+            duration: 0.46,
+            ease: "power4.in",
+          },
+          1.8,
+        );
+        tl.to(
+          reportCrop,
+          {
+            x: 0,
+            scale: 1,
+            opacity: 1,
+            duration: 0.62,
+            ease: "power4.out",
+          },
+          2.06,
+        );
+        tl.to(
+          checkFiles,
+          { opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+          2.72,
+        );
+        tl.to(
+          checkAccessibility,
+          { opacity: 1, x: 0, duration: 0.42, ease: "power3.out" },
+          3.46,
+        );
+
+        // Scene 3 — report becomes the hero and source-backed counters sequence.
+        tl.to(
+          reportCrop,
+          {
+            scale: 1.06,
+            x: -36,
+            y: -14,
+            duration: 0.72,
+            ease: "power3.inOut",
+          },
+          4.3,
+        );
+
+        const proofSequence = [
+          { element: statFiles, text: "FILES", hold: 0.12 },
+          { element: statImports, text: "IMPORTS RESOLVED", hold: 0.14 },
+          { element: statCredits, text: "CREDITS CHARGED", hold: 0.22 },
+        ];
+        let proofStart = 4.4;
+        proofSequence.forEach((item) => {
+          tl.to(
+            item.element,
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.5,
+              ease: "power3.out",
+            },
+            proofStart,
+          );
+          proofStart += 0.28 + item.text.length * 0.011 + item.hold;
+        });
+
+        // Scene 4 — type the payoff, close the verified rail, then hold still.
+        const payoffCopy = "shows you what passed";
+        const typeDriver = { chars: 0 };
+        tl.to(
+          payoff,
+          { opacity: 1, y: 0, duration: 0.34, ease: "power3.out" },
+          6.6,
+        );
+        tl.to(
+          typeDriver,
+          {
+            chars: payoffCopy.length,
+            duration: 0.78,
+            ease: "none",
+            onUpdate: () => {
+              payoffText.textContent = payoffCopy.slice(0, Math.floor(typeDriver.chars));
+            },
+          },
+          6.62,
+        );
+        tl.to(
+          verifiedRail,
+          { opacity: 1, duration: 0.24, ease: "power2.out" },
+          7.02,
+        );
+        tl.to(
+          verifiedFill,
+          { scaleX: 1, duration: 0.56, ease: "power3.inOut" },
+          7.08,
+        );
+        tl.to(
+          verifiedLabel,
+          { opacity: 1, duration: 0.28, ease: "power2.out" },
+          7.38,
+        );
+        tl.to(
+          payoffCursor,
+          { opacity: 0, duration: 0.12, ease: "none" },
+          7.64,
+        );
+
+        window.__timelines["05-visible-quality"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

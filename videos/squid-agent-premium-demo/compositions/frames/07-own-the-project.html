@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Own the Project</title>
+  </head>
+  <body>
+    <template id="f07-own-the-project-template">
+      <style>
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/fonts/DM_Sans_400.woff2") format("woff2");
+          font-weight: 400 900;
+          font-style: normal;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-weight: 400 700;
+          font-style: normal;
+          font-display: block;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #f8fafc;
+          font-family: "DM Sans";
+          container-type: size;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-ground {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          background: #07090d;
+        }
+
+        .f07-own-the-project-content {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .f07-own-the-project-stage {
+          position: absolute;
+          left: 60px;
+          top: 68px;
+          width: 1800px;
+          height: 790px;
+          overflow: hidden;
+          border: 1px solid #262728;
+          background: #07090d;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-world {
+          position: absolute;
+          left: 150px;
+          top: -10px;
+          width: 1500px;
+          height: 844px;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        .f07-own-the-project-image {
+          display: block;
+          width: 1500px;
+          height: 844px;
+          max-width: none;
+          user-select: none;
+        }
+
+        .f07-own-the-project-chrome {
+          position: absolute;
+          top: 20px;
+          left: 26px;
+          z-index: 8;
+          display: inline-flex;
+          align-items: center;
+          min-height: 36px;
+          padding: 0 14px;
+          border-left: 2px solid #0062ff;
+          background: #07090d;
+          color: #0ca8ff;
+          font-family: "DM Mono";
+          font-size: 14px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-connectors {
+          position: absolute;
+          inset: 0;
+          width: 1800px;
+          height: 790px;
+          z-index: 4;
+          pointer-events: none;
+        }
+
+        .f07-own-the-project-connectors path {
+          fill: none;
+          stroke: #0062ff;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          opacity: 0.9;
+        }
+
+        .f07-own-the-project-action-rail {
+          position: absolute;
+          left: 64px;
+          bottom: 22px;
+          width: 780px;
+          height: 62px;
+          z-index: 9;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          border-top: 1px solid #262728;
+          border-bottom: 1px solid #262728;
+          background: #07090d;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-action {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-width: 0;
+          padding: 0 18px;
+          border-right: 1px solid #262728;
+          color: #484b50;
+          font-family: "DM Mono";
+          font-size: 15px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          will-change: color, opacity;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-action:last-child {
+          border-right: 0;
+        }
+
+        .f07-own-the-project-action-index {
+          color: #484b50;
+          font-size: 11px;
+        }
+
+        .f07-own-the-project-action-line {
+          position: absolute;
+          left: 18px;
+          right: 18px;
+          bottom: 8px;
+          height: 2px;
+          background: #0062ff;
+          transform-origin: 0 50%;
+          will-change: transform;
+        }
+
+        .f07-own-the-project-artifact {
+          position: absolute;
+          z-index: 10;
+          display: flex;
+          align-items: center;
+          min-width: 142px;
+          min-height: 42px;
+          padding: 0 12px;
+          border-left: 2px solid #0062ff;
+          border-top: 1px solid #262728;
+          background: #07090d;
+          color: #f8fafc;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-artifact svg {
+          display: block;
+          width: 22px;
+          height: 22px;
+          margin-right: 10px;
+        }
+
+        .f07-own-the-project-artifact path {
+          fill: none;
+          stroke: #0062ff;
+          stroke-width: 2.5;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .f07-own-the-project-artifact-source {
+          left: 1118px;
+          top: 86px;
+        }
+
+        .f07-own-the-project-artifact-setup {
+          left: 1118px;
+          top: 252px;
+        }
+
+        .f07-own-the-project-artifact-quality {
+          left: 1118px;
+          top: 414px;
+        }
+
+        .f07-own-the-project-artifact-zip {
+          left: 1480px;
+          top: 490px;
+        }
+
+        .f07-own-the-project-deploy-rail {
+          position: absolute;
+          right: 64px;
+          bottom: 22px;
+          width: 820px;
+          height: 62px;
+          z-index: 11;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          border-top: 1px solid #262728;
+          border-bottom: 1px solid #262728;
+          background: #07090d;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-deploy {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 0;
+          border-right: 1px solid #262728;
+          color: #484b50;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          will-change: transform, opacity, color;
+        }
+
+        .f07-own-the-project-deploy:last-child {
+          border-right: 0;
+        }
+
+        .f07-own-the-project-deploy-check {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+          margin-right: 10px;
+          border: 1px solid #0062ff;
+          border-radius: 50%;
+          color: #0062ff;
+          font-size: 11px;
+        }
+
+        .f07-own-the-project-payoff {
+          position: absolute;
+          left: 28px;
+          top: 58px;
+          width: 920px;
+          min-height: 166px;
+          z-index: 12;
+          padding: 18px 24px 16px;
+          background: #07090d;
+          border-top: 1px solid #0062ff;
+          will-change: transform, opacity;
+          box-sizing: border-box;
+        }
+
+        .f07-own-the-project-payoff-kicker {
+          color: #0ca8ff;
+          font-family: "DM Mono";
+          font-size: 13px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .f07-own-the-project-payoff-line {
+          margin-top: 14px;
+          color: #f8fafc;
+          font-family: "DM Sans";
+          font-size: 64px;
+          font-weight: 900;
+          line-height: 0.9;
+          letter-spacing: -0.04em;
+          text-transform: lowercase;
+        }
+
+        .f07-own-the-project-payoff-accent {
+          color: #0062ff;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="07-own-the-project"
+        data-width="1920"
+        data-height="1080"
+        data-duration="10.087"
+      >
+        <div
+          id="f07-own-the-project-ground"
+          class="clip f07-own-the-project-ground"
+          data-start="0"
+          data-duration="10.087"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f07-own-the-project-content"
+          class="clip f07-own-the-project-content"
+          data-start="0"
+          data-duration="10.087"
+          data-track-index="1"
+        >
+          <div
+            id="f07-own-the-project-stage"
+            class="f07-own-the-project-stage"
+            data-layout-allow-overflow
+          >
+            <div id="f07-own-the-project-world" class="f07-own-the-project-world">
+              <img
+                id="f07-own-the-project-image"
+                class="f07-own-the-project-image"
+                src="assets/05-own-export.png"
+                alt="Finished Squid Agent project connected to source, setup, quality, deploy, and ZIP artifacts"
+              />
+            </div>
+
+            <div id="f07-own-the-project-chrome" class="f07-own-the-project-chrome">
+              When It Feels Right
+            </div>
+
+            <svg
+              class="f07-own-the-project-connectors"
+              viewBox="0 0 1800 790"
+              aria-hidden="true"
+            >
+              <path
+                id="f07-own-the-project-connector-one"
+                d="M 900 352 C 1030 352, 1056 300, 1190 300"
+              />
+              <path
+                id="f07-own-the-project-connector-two"
+                d="M 900 512 C 1050 512, 1080 574, 1290 574"
+              />
+            </svg>
+
+            <div class="f07-own-the-project-action-rail">
+              <div id="f07-own-the-project-action-share" class="f07-own-the-project-action">
+                <span>Share</span>
+                <span class="f07-own-the-project-action-index">01</span>
+                <span
+                  id="f07-own-the-project-action-share-line"
+                  class="f07-own-the-project-action-line"
+                ></span>
+              </div>
+              <div id="f07-own-the-project-action-remix" class="f07-own-the-project-action">
+                <span>Remix</span>
+                <span class="f07-own-the-project-action-index">02</span>
+                <span
+                  id="f07-own-the-project-action-remix-line"
+                  class="f07-own-the-project-action-line"
+                ></span>
+              </div>
+              <div id="f07-own-the-project-action-download" class="f07-own-the-project-action">
+                <span>Download</span>
+                <span class="f07-own-the-project-action-index">03</span>
+                <span
+                  id="f07-own-the-project-action-download-line"
+                  class="f07-own-the-project-action-line"
+                ></span>
+              </div>
+            </div>
+
+            <div
+              id="f07-own-the-project-artifact-source"
+              class="f07-own-the-project-artifact f07-own-the-project-artifact-source"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path id="f07-own-the-project-check-source" d="M 4 12 L 9 17 L 20 6" />
+              </svg>
+              Source
+            </div>
+            <div
+              id="f07-own-the-project-artifact-setup"
+              class="f07-own-the-project-artifact f07-own-the-project-artifact-setup"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path id="f07-own-the-project-check-setup" d="M 4 12 L 9 17 L 20 6" />
+              </svg>
+              Setup
+            </div>
+            <div
+              id="f07-own-the-project-artifact-quality"
+              class="f07-own-the-project-artifact f07-own-the-project-artifact-quality"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path id="f07-own-the-project-check-quality" d="M 4 12 L 9 17 L 20 6" />
+              </svg>
+              Quality
+            </div>
+            <div
+              id="f07-own-the-project-artifact-zip"
+              class="f07-own-the-project-artifact f07-own-the-project-artifact-zip"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path id="f07-own-the-project-check-zip" d="M 4 12 L 9 17 L 20 6" />
+              </svg>
+              ZIP
+            </div>
+
+            <div class="f07-own-the-project-deploy-rail">
+              <div id="f07-own-the-project-deploy-vercel" class="f07-own-the-project-deploy">
+                <span class="f07-own-the-project-deploy-check">✓</span>
+                Vercel
+              </div>
+              <div id="f07-own-the-project-deploy-netlify" class="f07-own-the-project-deploy">
+                <span class="f07-own-the-project-deploy-check">✓</span>
+                Netlify
+              </div>
+              <div id="f07-own-the-project-deploy-cloudflare" class="f07-own-the-project-deploy">
+                <span class="f07-own-the-project-deploy-check">✓</span>
+                Cloudflare
+              </div>
+            </div>
+
+            <div id="f07-own-the-project-payoff" class="f07-own-the-project-payoff">
+              <div class="f07-own-the-project-payoff-kicker">Complete Project Bundle</div>
+              <div class="f07-own-the-project-payoff-line">
+                your code. <span class="f07-own-the-project-payoff-accent">your project.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const byId = (id) => document.getElementById(id);
+
+        const world = byId("f07-own-the-project-world");
+        const image = byId("f07-own-the-project-image");
+        const chrome = byId("f07-own-the-project-chrome");
+        const connectorOne = byId("f07-own-the-project-connector-one");
+        const connectorTwo = byId("f07-own-the-project-connector-two");
+        const actionShare = byId("f07-own-the-project-action-share");
+        const actionRemix = byId("f07-own-the-project-action-remix");
+        const actionDownload = byId("f07-own-the-project-action-download");
+        const actionShareLine = byId("f07-own-the-project-action-share-line");
+        const actionRemixLine = byId("f07-own-the-project-action-remix-line");
+        const actionDownloadLine = byId("f07-own-the-project-action-download-line");
+        const artifactSource = byId("f07-own-the-project-artifact-source");
+        const artifactSetup = byId("f07-own-the-project-artifact-setup");
+        const artifactQuality = byId("f07-own-the-project-artifact-quality");
+        const artifactZip = byId("f07-own-the-project-artifact-zip");
+        const checkSource = byId("f07-own-the-project-check-source");
+        const checkSetup = byId("f07-own-the-project-check-setup");
+        const checkQuality = byId("f07-own-the-project-check-quality");
+        const checkZip = byId("f07-own-the-project-check-zip");
+        const deployVercel = byId("f07-own-the-project-deploy-vercel");
+        const deployNetlify = byId("f07-own-the-project-deploy-netlify");
+        const deployCloudflare = byId("f07-own-the-project-deploy-cloudflare");
+        const payoff = byId("f07-own-the-project-payoff");
+
+        const camera = { scale: 1.24, x: -72, y: -34 };
+
+        function applyCamera() {
+          world.style.transform =
+            "translate(" + camera.x + "px, " + camera.y + "px) scale(" + camera.scale + ")";
+        }
+
+        function preparePath(path) {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = String(length);
+          path.style.strokeDashoffset = String(length);
+        }
+
+        applyCamera();
+        [connectorOne, connectorTwo, checkSource, checkSetup, checkQuality, checkZip].forEach(
+          preparePath,
+        );
+
+        tl.set([actionShareLine, actionRemixLine, actionDownloadLine], { scaleX: 0 }, 0);
+        tl.set(
+          [artifactSource, artifactSetup, artifactQuality, artifactZip],
+          { opacity: 0, x: 38 },
+          0,
+        );
+        tl.set(
+          [deployVercel, deployNetlify, deployCloudflare],
+          { opacity: 0.24, y: 18 },
+          0,
+        );
+        tl.set(payoff, { opacity: 0, y: -28 }, 0);
+
+        // Scene 1 — finished app/source pair and connector rails establish ownership.
+        tl.fromTo(
+          image,
+          { opacity: 0.22, scale: 0.98 },
+          { opacity: 1, scale: 1, duration: 0.56, ease: "power3.out" },
+          0,
+        );
+        tl.fromTo(
+          chrome,
+          { opacity: 0, x: -30 },
+          { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+          0.18,
+        );
+        tl.to(
+          connectorOne,
+          { strokeDashoffset: 0, duration: 0.72, ease: "power2.out" },
+          0.42,
+        );
+        tl.to(
+          connectorTwo,
+          { strokeDashoffset: 0, duration: 0.72, ease: "power2.out" },
+          0.78,
+        );
+
+        // Scene 2 — action rail accumulates one spoken cue at a time.
+        const actionSequence = [
+          { element: actionShare, line: actionShareLine, text: "SHARE", hold: 0.16 },
+          { element: actionRemix, line: actionRemixLine, text: "REMIX", hold: 0.16 },
+          { element: actionDownload, line: actionDownloadLine, text: "DOWNLOAD", hold: 0.28 },
+        ];
+        let actionStart = 2.04;
+        actionSequence.forEach((item) => {
+          tl.to(
+            item.element,
+            {
+              opacity: 1,
+              color: "#f8fafc",
+              duration: 0.34,
+              ease: "power3.out",
+            },
+            actionStart,
+          );
+          tl.to(
+            item.line,
+            { scaleX: 1, duration: 0.42, ease: "power3.out" },
+            actionStart + 0.06,
+          );
+          actionStart += 0.38 + item.text.length * 0.022 + item.hold;
+        });
+
+        tl.to(
+          camera,
+          {
+            scale: 1.3,
+            x: -132,
+            y: -52,
+            duration: 0.82,
+            ease: "power3.inOut",
+            onUpdate: applyCamera,
+          },
+          3.24,
+        );
+
+        // Scene 3 — download focus reveals the exact supplied bundle artifacts.
+        tl.to(
+          actionDownload,
+          {
+            backgroundColor: "#0062ff",
+            color: "#07090d",
+            duration: 0.36,
+            ease: "power2.out",
+          },
+          4.6,
+        );
+        tl.to(
+          camera,
+          {
+            scale: 1.25,
+            x: -172,
+            y: -18,
+            duration: 0.9,
+            ease: "power3.inOut",
+            onUpdate: applyCamera,
+          },
+          4.64,
+        );
+
+        const artifactSequence = [
+          { element: artifactSource, path: checkSource, text: "SOURCE", hold: 0.1 },
+          { element: artifactSetup, path: checkSetup, text: "SETUP", hold: 0.1 },
+          { element: artifactQuality, path: checkQuality, text: "QUALITY", hold: 0.1 },
+          { element: artifactZip, path: checkZip, text: "ZIP", hold: 0.2 },
+        ];
+        let artifactStart = 4.78;
+        artifactSequence.forEach((item) => {
+          tl.to(
+            item.element,
+            { opacity: 1, x: 0, duration: 0.38, ease: "power3.out" },
+            artifactStart,
+          );
+          tl.to(
+            item.path,
+            { strokeDashoffset: 0, duration: 0.36, ease: "power2.out" },
+            artifactStart + 0.12,
+          );
+          artifactStart += 0.3 + item.text.length * 0.025 + item.hold;
+        });
+
+        // Scene 4 — deploy rail resolves as the camera reveals the whole ownership world.
+        tl.to(
+          camera,
+          {
+            scale: 1,
+            x: 0,
+            y: 0,
+            duration: 0.96,
+            ease: "power3.inOut",
+            onUpdate: applyCamera,
+          },
+          7.2,
+        );
+
+        const deploymentSequence = [
+          { element: deployVercel, text: "VERCEL", hold: 0.08 },
+          { element: deployNetlify, text: "NETLIFY", hold: 0.08 },
+          { element: deployCloudflare, text: "CLOUDFLARE", hold: 0.18 },
+        ];
+        let deploymentStart = 7.28;
+        deploymentSequence.forEach((item) => {
+          tl.to(
+            item.element,
+            {
+              opacity: 1,
+              y: 0,
+              color: "#f8fafc",
+              duration: 0.38,
+              ease: "power3.out",
+            },
+            deploymentStart,
+          );
+          deploymentStart += 0.28 + item.text.length * 0.018 + item.hold;
+        });
+
+        tl.to(
+          payoff,
+          { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+          7.92,
+        );
+
+        window.__timelines["07-own-the-project"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

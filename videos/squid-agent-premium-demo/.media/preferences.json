@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "youtube",
+      "confirmed_in": [
+        "squid-agent-premium-demo"
+      ],
+      "updated_at": "2026-07-17T00:44:14.090Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "squid-agent-premium-demo"
+      ],
+      "updated_at": "2026-07-17T00:44:14.243Z"
+    },
+    "language": {
+      "value": "en",
+      "confirmed_in": [
+        "squid-agent-premium-demo"
+      ],
+      "updated_at": "2026-07-17T00:44:14.379Z"
+    },
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "squid-agent-premium-demo"
+      ],
+      "updated_at": "2026-07-17T00:44:14.533Z"
+    },
+    "storyboard": {
+      "value": "no",
+      "confirmed_in": [
+        "squid-agent-premium-demo"
+      ],
+      "updated_at": "2026-07-17T00:44:14.667Z"
+    },
+    "voice": {
+      "value": "existing-approved-narration",
+      "confirmed_in": [
+        "squid-agent-premium-demo"
+      ],
+      "updated_at": "2026-07-17T00:44:14.788Z"
+    },
+    "style_preset.product-launch-video": {
+      "value": "broadside",
+      "confirmed_in": [
+        "squid-agent-premium-demo"
+      ],
+      "updated_at": "2026-07-17T00:49:53.602Z"
+    }
+  },
+  "sightings": {}
+}

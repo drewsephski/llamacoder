@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/fonts/DM_Sans_400.woff2") format("woff2");
+          font-style: normal;
+          font-weight: 400;
+          font-display: block;
+        }
+
+        @font-face {
+          font-family: "DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-style: normal;
+          font-weight: 400;
+          font-display: block;
+        }
+
+        #root {
+          position: relative;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #f8fafc;
+        }
+
+        .clip {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          box-sizing: border-box;
+        }
+
+        [class~="01-idea-to-app-ground"] {
+          z-index: 0;
+          background: #07090d;
+        }
+
+        [class~="01-idea-to-app-stage"] {
+          z-index: 1;
+          overflow: hidden;
+        }
+
+        [class~="01-idea-to-app-grid"] {
+          position: absolute;
+          inset: 0 0 184px;
+          opacity: 0.34;
+          pointer-events: none;
+        }
+
+        [class~="01-idea-to-app-grid"]::before,
+        [class~="01-idea-to-app-grid"]::after {
+          content: "";
+          position: absolute;
+          display: block;
+          background: #262728;
+        }
+
+        [class~="01-idea-to-app-grid"]::before {
+          left: 550px;
+          top: 0;
+          width: 1px;
+          height: 100%;
+        }
+
+        [class~="01-idea-to-app-grid"]::after {
+          left: 0;
+          top: 432px;
+          width: 100%;
+          height: 1px;
+        }
+
+        [class~="01-idea-to-app-thought"] {
+          position: absolute;
+          inset: 0;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="01-idea-to-app-index"] {
+          position: absolute;
+          left: 106px;
+          top: 150px;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          font-family: "DM Mono";
+          font-size: 18px;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #0062ff;
+          white-space: nowrap;
+        }
+
+        [class~="01-idea-to-app-index"]::before {
+          content: "";
+          display: block;
+          width: 36px;
+          height: 2px;
+          background: #0062ff;
+        }
+
+        [class~="01-idea-to-app-type-row"] {
+          position: absolute;
+          left: 106px;
+          top: 263px;
+          width: 1708px;
+          min-height: 92px;
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          font-family: "DM Mono";
+          font-size: 56px;
+          font-weight: 400;
+          line-height: 1.15;
+          letter-spacing: -0.035em;
+          white-space: pre;
+          color: #f8fafc;
+        }
+
+        [class~="01-idea-to-app-type-text"] {
+          display: inline-block;
+          white-space: pre;
+        }
+
+        [class~="01-idea-to-app-caret"] {
+          display: inline-block;
+          flex: 0 0 auto;
+          width: 12px;
+          height: 62px;
+          margin-left: 8px;
+          background: #0062ff;
+          vertical-align: -7px;
+        }
+
+        [class~="01-idea-to-app-slice"] {
+          position: absolute;
+          left: 106px;
+          top: 468px;
+          width: 1708px;
+          height: 236px;
+          overflow: hidden;
+          border-top: 1px solid #262728;
+          border-bottom: 1px solid #262728;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="01-idea-to-app-slice"]::before {
+          content: "";
+          position: absolute;
+          z-index: 2;
+          left: 0;
+          top: -1px;
+          width: 180px;
+          height: 2px;
+          background: #0062ff;
+        }
+
+        [class~="01-idea-to-app-slice-image"] {
+          position: absolute;
+          left: -106px;
+          top: -584px;
+          display: block;
+          width: 1920px;
+          height: 1080px;
+          object-fit: cover;
+          opacity: 0.88;
+        }
+
+        [class~="01-idea-to-app-slice-label"] {
+          position: absolute;
+          z-index: 3;
+          left: 30px;
+          bottom: 24px;
+          font-family: "DM Mono";
+          font-size: 15px;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #0062ff;
+        }
+
+        [class~="01-idea-to-app-hero"] {
+          position: absolute;
+          inset: 0;
+          z-index: 4;
+          width: 1920px;
+          height: 1080px;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="01-idea-to-app-hero-image"] {
+          display: block;
+          width: 1920px;
+          height: 1080px;
+          object-fit: cover;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="01-idea-to-app"
+        data-width="1920"
+        data-height="1080"
+        data-duration="4.971"
+      >
+        <div
+          id="f01-idea-to-app-ground"
+          class="clip 01-idea-to-app-ground"
+          data-start="0"
+          data-duration="4.971"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f01-idea-to-app-stage"
+          class="clip 01-idea-to-app-stage"
+          data-start="0"
+          data-duration="4.971"
+          data-track-index="1"
+        >
+          <div class="01-idea-to-app-grid" aria-hidden="true"></div>
+
+          <div id="f01-idea-to-app-thought" class="01-idea-to-app-thought">
+            <div id="f01-idea-to-app-index" class="01-idea-to-app-index">
+              01 / possibility
+            </div>
+
+            <div class="01-idea-to-app-type-row">
+              <span id="f01-idea-to-app-type-text" class="01-idea-to-app-type-text"></span>
+              <span id="f01-idea-to-app-caret" class="01-idea-to-app-caret" aria-hidden="true"></span>
+            </div>
+
+            <div id="f01-idea-to-app-slice" class="01-idea-to-app-slice">
+              <img
+                class="01-idea-to-app-slice-image"
+                src="assets/01-hero-turn-ideas.png"
+                alt=""
+              />
+              <div id="f01-idea-to-app-slice-label" class="01-idea-to-app-slice-label">
+                prompt / live product intent
+              </div>
+            </div>
+          </div>
+
+          <div id="f01-idea-to-app-hero" class="01-idea-to-app-hero">
+            <img
+              class="01-idea-to-app-hero-image"
+              src="assets/01-hero-turn-ideas.png"
+              alt="Squid Agent hero with the promise Turn ideas into apps and a build prompt"
+            />
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const sequence = [
+          { t: 0.0, text: "", segment: "main", color: "#0062FF" },
+          { t: 0.10, text: "w", segment: "main", color: "#0062FF" },
+          { t: 0.18, text: "what", segment: "main", color: "#0062FF" },
+          { t: 0.32, text: "what if", segment: "main", color: "#0062FF" },
+          { t: 0.48, text: "what if your", segment: "main", color: "#0062FF" },
+          { t: 0.66, text: "what if your app", segment: "main", color: "#0062FF" },
+          { t: 0.86, text: "what if your app idea", segment: "main", color: "#0062FF" },
+          { t: 1.10, text: "what if your app idea…", segment: "main", color: "#0062FF" },
+          {
+            t: 1.42,
+            text: "what if your app idea could stay",
+            segment: "edit",
+            color: "#484B50",
+          },
+          {
+            t: 1.70,
+            text: "what if your app idea could stay in a notebook",
+            segment: "edit",
+            color: "#484B50",
+          },
+          {
+            t: 1.96,
+            text: "what if your app idea could stay in a note",
+            segment: "edit",
+            color: "#484B50",
+          },
+          {
+            t: 2.10,
+            text: "what if your app idea could stay",
+            segment: "edit",
+            color: "#484B50",
+          },
+          {
+            t: 2.22,
+            text: "what if your app idea could",
+            segment: "edit",
+            color: "#484B50",
+          },
+          {
+            t: 2.38,
+            text: "what if your app idea could become",
+            segment: "payoff",
+            color: "#0062FF",
+          },
+          {
+            t: 2.56,
+            text: "what if your app idea could become a real",
+            segment: "payoff",
+            color: "#0062FF",
+          },
+          {
+            t: 2.72,
+            text: "what if your app idea could become a real app",
+            segment: "payoff",
+            color: "#0062FF",
+          },
+        ];
+
+        function entryAt(time) {
+          for (let i = sequence.length - 1; i >= 0; i -= 1) {
+            if (time >= sequence[i].t) return sequence[i];
+          }
+          return sequence[0];
+        }
+
+        const textElement = document.getElementById("f01-idea-to-app-type-text");
+        const caretElement = document.getElementById("f01-idea-to-app-caret");
+        const driver = { t: 0 };
+        const timeline = gsap.timeline({ paused: true });
+
+        timeline.to(
+          driver,
+          {
+            t: 4.571,
+            duration: 4.571,
+            ease: "none",
+            onUpdate: () => {
+              const entry = entryAt(driver.t);
+              textElement.textContent = entry.text;
+              caretElement.style.background = entry.color;
+              const isTyping = driver.t < 2.82 && driver.t - entry.t < 0.19;
+              const blinkPhase = (driver.t / 4.571) * Math.PI * 2 * 7;
+              caretElement.style.opacity =
+                driver.t >= 2.88 ? "0" : isTyping || Math.sin(blinkPhase) > 0 ? "1" : "0";
+            },
+          },
+          0,
+        );
+
+        const indexElement = document.getElementById("f01-idea-to-app-index");
+        const sliceElement = document.getElementById("f01-idea-to-app-slice");
+        const sliceLabelElement = document.getElementById("f01-idea-to-app-slice-label");
+        const thoughtElement = document.getElementById("f01-idea-to-app-thought");
+        const heroElement = document.getElementById("f01-idea-to-app-hero");
+
+        timeline.fromTo(
+          indexElement,
+          { opacity: 0, x: -24 },
+          { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" },
+          0.0,
+        );
+
+        timeline.fromTo(
+          textElement,
+          { opacity: 0.82 },
+          { opacity: 1, duration: 0.28, ease: "none" },
+          0.08,
+        );
+
+        timeline.fromTo(
+          sliceElement,
+          { opacity: 0, scaleX: 0.06 },
+          { opacity: 1, scaleX: 1, duration: 0.62, ease: "expo.out" },
+          1.42,
+        );
+
+        timeline.fromTo(
+          sliceLabelElement,
+          { opacity: 0, x: -18 },
+          { opacity: 1, x: 0, duration: 0.36, ease: "power3.out" },
+          1.82,
+        );
+
+        timeline.to(
+          thoughtElement,
+          { scale: 0.72, opacity: 0, duration: 0.36, ease: "power2.in" },
+          2.88,
+        );
+
+        timeline.fromTo(
+          heroElement,
+          { scale: 0.72, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+          3.06,
+        );
+
+        window.__timelines["01-idea-to-app"] = timeline;
+      </script>
+    </template>
+  </body>
+</html>

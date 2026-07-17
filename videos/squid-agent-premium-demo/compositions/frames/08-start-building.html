@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>08-start-building</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+          font-family: "Squid DM Sans";
+          src: url("assets/fonts/DM_Sans_400.woff2") format("woff2");
+          font-style: normal;
+          font-weight: 400;
+        }
+
+        @font-face {
+          font-family: "Squid DM Mono";
+          src: url("assets/fonts/DM_Mono_400.ttf") format("truetype");
+          font-style: normal;
+          font-weight: 400;
+        }
+
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          color: #f8fafc;
+          font-family: "Squid DM Sans";
+          container-type: size;
+        }
+
+        .f08-start-building-ground {
+          position: absolute;
+          inset: 0;
+          background: #07090d;
+        }
+
+        .f08-start-building-ground::after {
+          content: "";
+          position: absolute;
+          top: 895px;
+          left: 5.5cqw;
+          right: 5.5cqw;
+          height: 1px;
+          background: #262728;
+        }
+
+        .f08-start-building-stage,
+        .f08-start-building-hud {
+          position: absolute;
+          inset: 0 0 auto;
+          width: 1920px;
+          height: 896px;
+          overflow: hidden;
+        }
+
+        .f08-start-building-hero-image {
+          --dof: 0px;
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          object-fit: cover;
+          display: block;
+          filter: blur(var(--dof));
+          transform-origin: 50% 50%;
+          will-change: transform, filter, opacity;
+          pointer-events: none;
+          user-select: none;
+        }
+
+        .f08-start-building-cue {
+          position: absolute;
+          min-width: 470px;
+          padding-top: 16px;
+          border-top: 1px solid #0062ff;
+          color: #f8fafc;
+          font-family: "Squid DM Mono";
+          font-size: 20px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          will-change: transform, opacity;
+        }
+
+        .f08-start-building-cue-first {
+          left: 104px;
+          top: 72px;
+        }
+
+        .f08-start-building-cue-keep {
+          right: 104px;
+          top: 156px;
+          text-align: right;
+        }
+
+        .f08-start-building-cue-keep::before {
+          content: "";
+          position: absolute;
+          top: -1px;
+          right: 0;
+          width: 36px;
+          height: 2px;
+          background: #0062ff;
+        }
+
+        .f08-start-building-swap {
+          position: absolute;
+          left: 640px;
+          top: 270px;
+          width: 640px;
+          height: 150px;
+        }
+
+        .f08-start-building-swap-state {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        .f08-start-building-identity-crop {
+          position: relative;
+          width: 390px;
+          height: 110px;
+          overflow: hidden;
+          background: #07090d;
+        }
+
+        .f08-start-building-crop-image {
+          position: absolute;
+          left: -165px;
+          top: -175px;
+          width: 1920px;
+          height: 1080px;
+          max-width: none;
+          display: block;
+          pointer-events: none;
+          user-select: none;
+        }
+
+        .f08-start-building-action {
+          z-index: 2;
+          box-sizing: border-box;
+          border: 1px solid #0ca8ff;
+          background: #0062ff;
+          color: #f8fafc;
+          font-size: 62px;
+          line-height: 1;
+          letter-spacing: -0.03em;
+          text-transform: lowercase;
+        }
+
+        .f08-start-building-action-inner {
+          display: flex;
+          align-items: center;
+          gap: 28px;
+        }
+
+        .f08-start-building-action-arrow {
+          color: #07090d;
+          font-family: "Squid DM Mono";
+          font-size: 46px;
+        }
+
+        .f08-start-building-prompt-crop {
+          position: absolute;
+          left: 180px;
+          top: 500px;
+          width: 1540px;
+          height: 310px;
+          overflow: hidden;
+          border-top: 1px solid rgba(0, 98, 255, 0.66);
+          border-bottom: 1px solid #262728;
+          background: #07090d;
+          will-change: transform, opacity;
+        }
+
+        .f08-start-building-prompt-crop img {
+          position: absolute;
+          left: -180px;
+          top: -558px;
+          width: 1920px;
+          height: 1080px;
+          max-width: none;
+          display: block;
+          pointer-events: none;
+          user-select: none;
+        }
+
+        .f08-start-building-url-rail {
+          position: absolute;
+          left: 640px;
+          top: 442px;
+          width: 640px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-top: 1px solid #262728;
+          border-bottom: 1px solid #262728;
+          background: rgba(7, 9, 13, 0.94);
+          color: #0ca8ff;
+          font-family: "Squid DM Mono";
+          font-size: 17px;
+          letter-spacing: 0.14em;
+          text-transform: lowercase;
+          white-space: nowrap;
+          will-change: transform, opacity;
+        }
+
+        .f08-start-building-url-text {
+          display: inline-block;
+          min-width: 210px;
+          text-align: left;
+        }
+
+        .f08-start-building-url-caret {
+          display: inline-block;
+          width: 9px;
+          height: 20px;
+          margin-left: 8px;
+          background: #0062ff;
+        }
+
+        .f08-start-building-ripple {
+          position: absolute;
+          left: 990px;
+          top: 308px;
+          width: 72px;
+          height: 72px;
+          box-sizing: border-box;
+          border: 2px solid #0ca8ff;
+          border-radius: 50%;
+          transform-origin: 50% 50%;
+          pointer-events: none;
+        }
+
+        .f08-start-building-cursor {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 68px;
+          height: 68px;
+          overflow: visible;
+          pointer-events: none;
+          transform-origin: 0 0;
+          will-change: transform, opacity;
+        }
+
+        .f08-start-building-cursor path {
+          fill: #0062ff;
+          stroke: #f8fafc;
+          stroke-width: 1.5;
+          stroke-linejoin: miter;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="08-start-building"
+        data-width="1920"
+        data-height="1080"
+        data-duration="7.053"
+      >
+        <div
+          id="f08-start-building-ground"
+          class="clip f08-start-building-ground"
+          data-start="0"
+          data-duration="7.053"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f08-start-building-stage"
+          class="clip f08-start-building-stage"
+          data-start="0"
+          data-duration="7.053"
+          data-track-index="1"
+        >
+          <img
+            id="f08-start-building-hero-image"
+            class="f08-start-building-hero-image"
+            data-layout-allow-overflow
+            src="assets/01-hero-turn-ideas.png"
+            alt=""
+          />
+        </div>
+
+        <div
+          id="f08-start-building-hud"
+          class="clip f08-start-building-hud"
+          data-start="0"
+          data-duration="7.053"
+          data-track-index="2"
+        >
+          <div class="f08-start-building-cue f08-start-building-cue-first" data-cue="first">
+            From first idea
+          </div>
+          <div class="f08-start-building-cue f08-start-building-cue-keep" data-cue="keep">
+            To an app you keep
+          </div>
+
+          <div class="f08-start-building-swap">
+            <div id="f08-start-building-identity" class="f08-start-building-swap-state">
+              <div class="f08-start-building-identity-crop">
+                <img
+                  class="f08-start-building-crop-image"
+                  src="assets/01-hero-turn-ideas.png"
+                  alt=""
+                />
+              </div>
+            </div>
+
+            <div
+              id="f08-start-building-action"
+              class="f08-start-building-swap-state f08-start-building-action"
+            >
+              <div class="f08-start-building-action-inner">
+                <span>start building</span>
+                <span class="f08-start-building-action-arrow">→</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="f08-start-building-url" class="f08-start-building-url-rail">
+            <span id="f08-start-building-url-text" class="f08-start-building-url-text"></span>
+            <span id="f08-start-building-url-caret" class="f08-start-building-url-caret"></span>
+          </div>
+
+          <div id="f08-start-building-prompt" class="f08-start-building-prompt-crop">
+            <img src="assets/01-hero-turn-ideas.png" alt="" data-layout-allow-overflow />
+          </div>
+
+          <div id="f08-start-building-ripple" class="f08-start-building-ripple"></div>
+
+          <svg
+            id="f08-start-building-cursor"
+            class="f08-start-building-cursor"
+            viewBox="0 0 68 68"
+            aria-hidden="true"
+          >
+            <path d="M9 5 L55 33 L35 38 L25 59 Z" />
+          </svg>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const urlText = document.getElementById("f08-start-building-url-text");
+        const urlCaret = document.getElementById("f08-start-building-url-caret");
+
+        tl.set("#f08-start-building-hero-image", { "--dof": "0px", opacity: 0.72, scale: 1.025 }, 0);
+        tl.set(".f08-start-building-cue", { opacity: 0, y: 18 }, 0);
+        tl.set("#f08-start-building-identity", { opacity: 0, scale: 1 }, 0);
+        tl.set("#f08-start-building-action", { opacity: 0, scale: 0.72 }, 0);
+        tl.set("#f08-start-building-prompt", { opacity: 0, y: 18 }, 0);
+        tl.set("#f08-start-building-url", { opacity: 0, y: 12 }, 0);
+        tl.set("#f08-start-building-cursor", { opacity: 0, x: 1830, y: 120, scale: 1 }, 0);
+        tl.set("#f08-start-building-ripple", { opacity: 0, scale: 0.3 }, 0);
+
+        // Scene 1 — The full hero settles while the two promise cues sequence by content weight.
+        tl.to(
+          "#f08-start-building-hero-image",
+          { opacity: 0.88, scale: 1, duration: 1.1, ease: "power2.out" },
+          0.04,
+        );
+
+        const cueElements = gsap.utils.toArray(".f08-start-building-cue");
+        const cueWeights = cueElements.map((element) => 0.5 + element.textContent.trim().length * 0.03);
+        const cueWeightTotal = cueWeights.reduce((sum, value) => sum + value, 0);
+        let cueWeightCursor = 0;
+
+        cueElements.forEach((element, index) => {
+          const cueStart = 0.16 + (cueWeightCursor / cueWeightTotal) * 0.92;
+          tl.fromTo(
+            element,
+            { opacity: 0, y: 18 },
+            { opacity: 1, y: 0, duration: 0.44, ease: "power3.out" },
+            cueStart,
+          );
+          cueWeightCursor += cueWeights[index];
+        });
+
+        // Scene 2 — The atmosphere softens; official identity and prompt remain sharp at the morph.
+        tl.to(
+          "#f08-start-building-hero-image",
+          { "--dof": "5px", opacity: 0.26, duration: 0.72, ease: "power2.inOut" },
+          1.5,
+        );
+        tl.to(".f08-start-building-cue", { opacity: 0.22, duration: 0.55, ease: "power2.out" }, 1.54);
+        tl.fromTo(
+          "#f08-start-building-identity",
+          { opacity: 0, scale: 0.92 },
+          { opacity: 1, scale: 1, duration: 0.42, ease: "power3.out" },
+          1.5,
+        );
+        tl.fromTo(
+          "#f08-start-building-prompt",
+          { opacity: 0, y: 18 },
+          { opacity: 0.82, y: 0, duration: 0.62, ease: "power3.out" },
+          1.52,
+        );
+        tl.to(
+          "#f08-start-building-identity",
+          { scale: 0.72, opacity: 0, duration: 0.38, ease: "power2.in" },
+          1.92,
+        );
+        tl.fromTo(
+          "#f08-start-building-action",
+          { scale: 0.72, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.58, ease: "power3.out" },
+          2.11,
+        );
+
+        // Scene 3 — Human-aimed decelerating approach; stable URL rail types beneath the action.
+        tl.fromTo(
+          "#f08-start-building-url",
+          { opacity: 0, y: 12 },
+          { opacity: 1, y: 0, duration: 0.44, ease: "power3.out" },
+          3.02,
+        );
+        tl.fromTo(
+          "#f08-start-building-cursor",
+          { opacity: 0, x: 1830, y: 120, scale: 1 },
+          { opacity: 1, x: 1026, y: 350, scale: 1, duration: 1.22, ease: "power2.out" },
+          3.04,
+        );
+
+        const urlSequence = [
+          { t: 0, text: "" },
+          { t: 0.16, text: "squid" },
+          { t: 0.38, text: "squidagent" },
+          { t: 0.66, text: "squidagent.app" },
+        ];
+
+        function urlAt(time) {
+          for (let i = urlSequence.length - 1; i >= 0; i -= 1) {
+            if (time >= urlSequence[i].t) return urlSequence[i].text;
+          }
+          return "";
+        }
+
+        const urlDriver = { t: 0 };
+        tl.to(
+          urlDriver,
+          {
+            t: 1.08,
+            duration: 1.08,
+            ease: "none",
+            onUpdate: () => {
+              urlText.textContent = urlAt(urlDriver.t);
+            },
+          },
+          3.12,
+        );
+
+        const blinkDriver = { p: 0 };
+        tl.to(
+          blinkDriver,
+          {
+            p: Math.PI * 2 * 3,
+            duration: 2.15,
+            ease: "none",
+            onUpdate: () => {
+              urlCaret.style.opacity = Math.sin(blinkDriver.p) > 0 ? "1" : "0";
+            },
+          },
+          3.08,
+        );
+
+        // Scene 4 — Lockstep press, one bounded ripple, then a clicked-state hold to the end.
+        tl.to(
+          ["#f08-start-building-action", "#f08-start-building-cursor"],
+          { scale: 0.92, duration: 0.16, ease: "power1.in" },
+          5.3,
+        );
+        tl.to(
+          "#f08-start-building-action",
+          { backgroundColor: "#0ca8ff", duration: 0.16, ease: "power1.in" },
+          5.3,
+        );
+        tl.fromTo(
+          "#f08-start-building-ripple",
+          { opacity: 0.76, scale: 0.3 },
+          { opacity: 0, scale: 4.2, duration: 0.72, ease: "power2.out", immediateRender: false },
+          5.32,
+        );
+        tl.to(
+          ["#f08-start-building-action", "#f08-start-building-cursor"],
+          { scale: 1, duration: 0.5, ease: "power3.out" },
+          5.5,
+        );
+        tl.set("#f08-start-building-url-caret", { opacity: 0 }, 5.58);
+        tl.to("#f08-start-building-prompt", { opacity: 0.46, duration: 0.54, ease: "power2.out" }, 5.56);
+
+        window.__timelines["08-start-building"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
