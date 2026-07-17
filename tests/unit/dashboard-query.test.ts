@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getCurrentSession: vi.fn(),
   getPrisma: vi.fn(),
+  getUserCreditInfo: vi.fn(),
   reconcileCheckoutSessionForUser: vi.fn(),
 }));
 
@@ -10,6 +11,9 @@ vi.mock("@/features/auth/server/session", () => ({
   getCurrentSession: mocks.getCurrentSession,
 }));
 vi.mock("@/lib/prisma", () => ({ getPrisma: mocks.getPrisma }));
+vi.mock("@/lib/billing/credits", () => ({
+  getUserCreditInfo: mocks.getUserCreditInfo,
+}));
 vi.mock("@/lib/billing/stripe-fulfillment", () => ({
   reconcileCheckoutSessionForUser: mocks.reconcileCheckoutSessionForUser,
 }));
@@ -20,6 +24,11 @@ describe("dashboard verification evidence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentSession.mockResolvedValue({ user: { id: "user_1" } });
+    mocks.getUserCreditInfo.mockResolvedValue({
+      credits: 5,
+      tier: "free",
+      hasActiveSubscription: false,
+    });
   });
 
   it("binds runtime and export evidence to the latest assistant message", async () => {
@@ -55,12 +64,6 @@ describe("dashboard verification evidence", () => {
           },
         ]),
       },
-      user: {
-        findUnique: vi.fn().mockResolvedValue({
-          credits: 5,
-          subscription: null,
-        }),
-      },
       runtimeVerification: { findMany: runtimeFindMany },
       exportArtifact: { findMany: exportFindMany },
     });
@@ -81,5 +84,7 @@ describe("dashboard verification evidence", () => {
       runtime: "passed",
       export: "verified",
     });
+    expect(result.userCredits).toBe(5);
+    expect(mocks.getUserCreditInfo).toHaveBeenCalledWith("user_1");
   });
 });

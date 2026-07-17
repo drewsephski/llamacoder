@@ -86,6 +86,10 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Distribution-default copy");
     expect(prompt).toContain("Unspecified-theme default (mandatory)");
     expect(prompt).toContain("light-first, Vercel-inspired Tailwind `neutral`");
+    expect(prompt).toContain(
+      "every portalled overlay surface must be explicitly light",
+    );
+    expect(prompt).toContain("`bg-white text-neutral-950 border-neutral-200`");
     expect(prompt).toContain("Do not default to `slate-*`, `purple-*`");
     expect(prompt).toContain(
       "Do not copy Vercel branding or force every product into a marketing-page structure",
@@ -149,6 +153,9 @@ describe("prompt design guidance", () => {
       "plan a light-first Vercel-inspired Tailwind neutral system",
     );
     expect(softwareArchitectPrompt).toContain(
+      "explicitly white overlay and form-control surfaces",
+    );
+    expect(softwareArchitectPrompt).toContain(
       "Normal, helper, and placeholder text must reach 4.5:1",
     );
   });
@@ -191,6 +198,9 @@ describe("prompt design guidance", () => {
     );
     expect(developerCodeGenPrompt).toContain(
       "light-first, Vercel-inspired Tailwind `neutral`",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "every portalled overlay surface must be explicitly light",
     );
     expect(developerCodeGenPrompt).toContain(
       "Functional interaction contract (mandatory)",

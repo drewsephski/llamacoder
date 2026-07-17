@@ -4,7 +4,8 @@ import type { Chat } from "@prisma/client";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { getPrisma } from "@/lib/prisma";
-import { normalizeTier, type TierKey } from "@/lib/billing/config";
+import type { TierKey } from "@/lib/billing/config";
+import { getUserCreditInfo } from "@/lib/billing/credits";
 import { reconcileCheckoutSessionForUser } from "@/lib/billing/stripe-fulfillment";
 import { buildGeneratedFilesQualityReport } from "@/lib/generated-files";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
@@ -69,7 +70,7 @@ export async function getDashboardData({
     }
   }
 
-  const [totalProjects, projectRows, user] = await Promise.all([
+  const [totalProjects, projectRows, creditInfo] = await Promise.all([
     prisma.chat.count({ where: { userId: session.user.id } }),
     prisma.chat.findMany({
       where: { userId: session.user.id },
@@ -85,13 +86,7 @@ export async function getDashboardData({
         },
       },
     }),
-    prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        credits: true,
-        subscription: { select: { status: true, tier: true } },
-      },
-    }),
+    getUserCreditInfo(session.user.id),
   ]);
 
   const latestMessageIds = projectRows.flatMap((project) =>
@@ -167,17 +162,14 @@ export async function getDashboardData({
     };
   });
 
-  const hasActiveSubscription = user?.subscription?.status === "active";
   return {
     currentPage,
-    hasActiveSubscription,
+    hasActiveSubscription: creditInfo?.hasActiveSubscription ?? false,
     projects,
     session,
-    tier: hasActiveSubscription
-      ? normalizeTier(user?.subscription?.tier)
-      : "free",
+    tier: creditInfo?.tier ?? "free",
     totalPages: Math.ceil(totalProjects / PROJECTS_PER_PAGE),
     totalProjects,
-    userCredits: user?.credits || 0,
+    userCredits: creditInfo?.credits ?? 0,
   };
 }
