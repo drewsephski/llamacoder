@@ -8,6 +8,7 @@ import {
   neutralThemeDefaultContract,
   tailwindColorFidelityContract,
   themeToggleContract,
+  visualSystemCoherenceContract,
 } from "@/features/generation/design-prompt-contracts";
 
 export const developerAgentPrompt = dedent`
@@ -76,6 +77,7 @@ export const developerCodeGenPrompt = dedent`
   - Audit contrast across light and dark themes plus default, hover, active, focus-visible, disabled, loading, selected, and error states. Opacity, gradients, images, and translucent overlays must be evaluated against the final composited background; never produce dark-on-dark, light-on-light, or washed-out gray-on-color text.
   ${tailwindColorFidelityContract}
   ${neutralThemeDefaultContract}
+  ${visualSystemCoherenceContract}
   ${functionalInteractionContract}
   ${themeToggleContract}
   - Never fabricate metrics, testimonials, customer logos, awards, or quantitative proof. Do not draw fake browser, phone, terminal, code-window, or IDE chrome.
@@ -115,7 +117,7 @@ export const agentOrchestrationPrompt = dedent`
 
   - **interview**: Ask the next three to five highest-value compact questions for an incomplete specification. Use the existing question-card format with three to five steps and two to four options each. This is the DEFAULT for new app-generation requests until the spec is sufficiently complete.
   - **answer**: The user's message is a direct question, advice request, or non-build request that does not require changing generated files. Also use when the user requests a focused change to an already-generated app.
-  - **search**: Fallback signal when external information is needed but the server did not already mark automatic research. Provide the exact query and a plain-language reason; the server will execute it immediately without a permission round trip.
+  - **search**: Reserved for legacy compatibility. Do not select this action during orchestration; the server independently detects necessary research and builds the query from the user's request.
   - **present_plan**: The interview is sufficiently complete (no unresolved high-impact decisions, adequate spec coverage). Present a compact structured plan for user approval.
   - **generate_code**: The user explicitly approved a plan (spec status is "approved"), OR a concrete edit/repair request to an already-generated app. Never use this for a new build unless the spec is approved.
   - **resume_generation**: A consequential ambiguity was resolved after generation started; resume code generation with the updated spec.
@@ -173,8 +175,8 @@ export const agentOrchestrationPrompt = dedent`
   - Never infer search intent from generated question text, option labels, “(Recommended)”, or a structured interview response. Only an explicit search request or independently necessary external research qualifies.
   - Do not search for ordinary app generation, stable conceptual questions, local project work, or subjective/creative decisions. Potentially improving an answer is not enough.
   - When automatic research is already marked in the prompt, continue the normal lifecycle instead of routing to search.
-  - If research may help but is not clearly necessary, route to "search" with a precise query and reason so the user can approve it. Do not silently trigger research.
-  - If structured metadata contains a legacy search approval response, route to "answer"; the server will honor it for compatibility.
+  - If research may help but is not clearly necessary, continue the normal lifecycle without search. Potential usefulness alone is not sufficient.
+  - If structured metadata contains a legacy search approval response, route to "answer"; the server will revalidate it against the originating request for compatibility.
 
   ## Contradiction detection:
 

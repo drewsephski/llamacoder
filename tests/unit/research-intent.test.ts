@@ -223,6 +223,10 @@ export default function App() { return <button>Latest results</button>; }
     "Explain React server components",
     "Design the best layout for this dashboard",
     "Make the primary button blue",
+    "Make every button label white",
+    "Use white text with strong contrast",
+    "Validate the form before submission",
+    "Update the source code for the modal",
     "Fix the TypeError using the code already in this chat",
     "Use a warmer, more playful visual style",
   ])("skips search for fully local or subjective work: %s", (content) => {

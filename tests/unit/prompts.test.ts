@@ -97,6 +97,22 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain(
       "does the app use the Vercel-inspired Tailwind neutral fallback",
     );
+    expect(prompt).toContain("Visual system coherence contract (mandatory)");
+    expect(prompt).toContain("Choose one luminosity model for the screen");
+    expect(prompt).toContain(
+      "Do not create visual drama by dropping a collection of near-black cards",
+    );
+    expect(prompt).toContain(
+      "Never place `text-neutral-950`, `text-neutral-900`",
+    );
+    expect(prompt).toContain("uniform army of same-sized, same-colored cards");
+    expect(prompt).toContain(
+      "Reserve uppercase plus wide tracking for short tertiary labels only",
+    );
+    expect(prompt).toContain(
+      "Explicitly style every chart title, value, axis label, tick, grid line, legend, tooltip",
+    );
+    expect(prompt).toContain("one coherent luminosity model");
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -158,6 +174,10 @@ describe("prompt design guidance", () => {
     expect(softwareArchitectPrompt).toContain(
       "Normal, helper, and placeholder text must reach 4.5:1",
     );
+    expect(softwareArchitectPrompt).toContain("Visual-system coherence:");
+    expect(softwareArchitectPrompt).toContain(
+      "allow at most one focal inverse region",
+    );
   });
 
   it("keeps Hallmark-derived constraints in the plan-mode code generator", () => {
@@ -201,6 +221,12 @@ describe("prompt design guidance", () => {
     );
     expect(developerCodeGenPrompt).toContain(
       "every portalled overlay surface must be explicitly light",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Visual system coherence contract (mandatory)",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Data visualization inherits the screen's luminosity model",
     );
     expect(developerCodeGenPrompt).toContain(
       "Functional interaction contract (mandatory)",

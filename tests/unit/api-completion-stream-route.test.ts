@@ -1517,6 +1517,243 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
   });
 
+  it("turns a model-suggested color search into a local app edit", async () => {
+    const content = "Make every button label white";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_local_color_edit",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a project board" },
+      {
+        id: "assistant_app",
+        role: "assistant",
+        content: "created app",
+        files: [
+          {
+            path: "App.tsx",
+            language: "tsx",
+            code: "export default function App() { return <button>Save</button>; }",
+          },
+        ],
+      },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        action: "search",
+        request: {
+          id: "model-search",
+          query: "white",
+          reason: "Search for the requested color.",
+        },
+      },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_response_color" },
+    });
+    mockGeneration({
+      text: '```tsx{path=App.tsx}\nexport default function App() { return <button className="text-white">Save</button>; }\n```',
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_local_color_edit", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: { action: "generate_code" },
+          transient: true,
+        }),
+      ]),
+    );
+    expect(
+      chunks.some((chunk) => chunk.type === "data-research-activity"),
+    ).toBe(false);
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not execute an approved legacy search when the originating edit needs no research", async () => {
+    const content = "Approved internet search: white";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_approved_white_search",
+        content,
+        files: {
+          kind: "agent_search_approval_response",
+          requestId: "search-white",
+          query: "white",
+          approved: true,
+        },
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a project board" },
+      {
+        id: "assistant_app",
+        role: "assistant",
+        content: "created app",
+        files: [
+          {
+            path: "App.tsx",
+            language: "tsx",
+            code: "export default function App() { return <button>Save</button>; }",
+          },
+        ],
+      },
+      { role: "user", content: "Make every button label white" },
+      {
+        role: "assistant",
+        content: "I can search the internet for white.",
+        files: {
+          kind: "agent_search_approval_request",
+          request: {
+            id: "search-white",
+            query: "white",
+            reason: "Search for the requested color.",
+          },
+        },
+      },
+      {
+        role: "user",
+        content,
+        files: {
+          kind: "agent_search_approval_response",
+          requestId: "search-white",
+          query: "white",
+          approved: true,
+        },
+      },
+    ]);
+    mockGeneration({ text: "No web research is needed for this local edit." });
+
+    const response = await POST(
+      request({ messageId: "msg_approved_white_search", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(
+      chunks.some((chunk) => chunk.type === "data-research-activity"),
+    ).toBe(false);
+    expect(exaSearchMock).not.toHaveBeenCalled();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("rebuilds an approved legacy query from the research-worthy originating prompt", async () => {
+    const originatingPrompt =
+      "Use web search to compare Stripe Checkout and Elements";
+    const canonicalQuery = buildResearchQuery(originatingPrompt);
+    const content = "Approved internet search: white";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_approved_grounded_search",
+        content,
+        files: {
+          kind: "agent_search_approval_response",
+          requestId: "search-grounded",
+          query: "white",
+          approved: true,
+        },
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      {
+        id: "assistant_app",
+        role: "assistant",
+        content: "created app",
+        files: [
+          {
+            path: "App.tsx",
+            language: "tsx",
+            code: "export default function App() { return <main />; }",
+          },
+        ],
+      },
+      { role: "user", content: originatingPrompt },
+      {
+        role: "assistant",
+        content: "I can search the internet.",
+        files: {
+          kind: "agent_search_approval_request",
+          request: {
+            id: "search-grounded",
+            query: "white",
+            reason: "Compare the integration choices.",
+          },
+        },
+      },
+      {
+        role: "user",
+        content,
+        files: {
+          kind: "agent_search_approval_response",
+          requestId: "search-grounded",
+          query: "white",
+          approved: true,
+        },
+      },
+    ]);
+    mockResearch([
+      {
+        id: "search_1",
+        results: [
+          {
+            url: "https://docs.stripe.com/payments/checkout-vs-elements",
+            title: "Checkout versus Elements",
+            highlights: ["Official comparison"],
+          },
+        ],
+      },
+    ]);
+    mockGeneration({ text: "Checkout is hosted; Elements is composable." });
+
+    const response = await POST(
+      request({ messageId: "msg_approved_grounded_search", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-research-activity",
+          data: expect.objectContaining({ query: canonicalQuery }),
+        }),
+      ]),
+    );
+    expect(canonicalQuery).not.toContain("white");
+    expect(streamTextMock.mock.calls[0][0].prompt).toContain(canonicalQuery);
+    expect(streamTextMock.mock.calls[0][0].prompt).not.toContain("white");
+    expect(streamTextMock).toHaveBeenCalledTimes(2);
+  });
+
   it("uses undated authoritative sources for evergreen technical research", async () => {
     const content =
       "Build an app using Vercel AI SDK tool-calling best practices";

@@ -445,7 +445,9 @@ export async function POST(req: Request) {
         const metadata = parseAgentMessageMetadata(candidate.files);
         return (
           metadata?.kind !== "agent_clarification_response" &&
-          metadata?.kind !== "agent_interview_response"
+          metadata?.kind !== "agent_interview_response" &&
+          metadata?.kind !== "agent_plan_approval" &&
+          metadata?.kind !== "agent_search_approval_response"
         );
       })
       .map((candidate) => ({
@@ -453,7 +455,9 @@ export async function POST(req: Request) {
         content: getResearchObjective(candidate),
       }));
     const researchMessages = shouldCarryResearchThroughWorkflow
-      ? researchUserMessages.slice(-24)
+      ? agentMetadata?.kind === "agent_search_approval_response"
+        ? researchUserMessages.slice(-1)
+        : researchUserMessages.slice(-24)
       : isStructuredDecisionResponse
         ? []
         : [{ content: latestResearchObjective }];
@@ -786,6 +790,22 @@ export async function POST(req: Request) {
             }
             return purposeGuardedAction;
           };
+          const enforceServerResearchPolicy = (
+            action: AgentAction,
+          ): AgentAction => {
+            if (action.action !== "search") return action;
+
+            // Research is classified and queried deterministically below. A
+            // model-suggested search must never widen that policy or send a
+            // fragment such as a color/style token to the web-search provider.
+            if (shouldAnswerWithoutCode(latestUserContent)) {
+              return { action: "answer" };
+            }
+            if (conversationHasCode) {
+              return { action: "generate_code" };
+            }
+            return buildFallbackInterview();
+          };
 
           if (
             agentMetadata?.kind === "agent_plan_approval" &&
@@ -955,7 +975,9 @@ export async function POST(req: Request) {
                 agentAction = routedAction;
               }
 
-              agentAction = enforceModePolicy(agentAction);
+              agentAction = enforceModePolicy(
+                enforceServerResearchPolicy(agentAction),
+              );
 
               await orchestrationTelemetry.record({
                 status: "completed",
@@ -976,7 +998,9 @@ export async function POST(req: Request) {
             }
           }
 
-          const modeGuardedAction = enforceModePolicy(agentAction);
+          const modeGuardedAction = enforceModePolicy(
+            enforceServerResearchPolicy(agentAction),
+          );
           if (modeGuardedAction !== agentAction) {
             agentAction = modeGuardedAction;
           }
@@ -1104,7 +1128,11 @@ export async function POST(req: Request) {
             agentMetadata?.kind === "agent_search_approval_response"
               ? agentMetadata
               : null;
-          const searchApproved = searchApproval?.approved === true;
+          const approvedResearchQuery =
+            searchApproval?.approved === true && researchIntent.required
+              ? researchIntent.query
+              : null;
+          const searchApproved = approvedResearchQuery !== null;
           const selectedProviderIds = new Set(
             connectedIntegrationSelection.providerIds,
           );
@@ -1139,7 +1167,7 @@ export async function POST(req: Request) {
                     !apiDocumentation.hasCompleteEndpointContract &&
                     !linkedPagesSatisfyReferenceResearch))));
           const researchQuery = searchApproved
-            ? buildResearchQuery(searchApproval.query)
+            ? approvedResearchQuery
             : (researchIntent.query ??
               (integrationPolicyContext.trim()
                 ? buildResearchQuery(integrationPolicyContext)

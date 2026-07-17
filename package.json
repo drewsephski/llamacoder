@@ -99,6 +99,7 @@
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/eslintrc": "^3.3.5",
     "@next/bundle-analyzer": "^16.2.10",
+    "@next/env": "16.2.10",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/typography": "^0.5.20",
     "@testing-library/jest-dom": "^6.9.1",

@@ -13,6 +13,8 @@ import {
   themeToggleContract,
   themeTogglePlanningRule,
   typographyPlanningRule,
+  visualSystemCoherenceContract,
+  visualSystemPlanningRule,
 } from "@/features/generation/design-prompt-contracts";
 import shadcnDocs from "./shadcn-docs";
 
@@ -43,6 +45,7 @@ ${generatedAppCapabilityContract}
   - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
   - ${tailwindColorPlanningRule}
   - ${neutralThemePlanningRule}
+  - ${visualSystemPlanningRule}
   - ${typographyPlanningRule}
   - Contrast contract: specify an explicit foreground for every background role and verify WCAG AA across light/dark plus interaction states. Normal, helper, and placeholder text must reach 4.5:1; large text, icons, focus rings, and component boundaries must reach 3:1.
   - Anti-generic check: identify the most tempting templated choice — including generic nav/footer chrome — and replace it with a choice that comes from the subject's world.
@@ -98,7 +101,7 @@ export function getMainCodingPrompt() {
   4. **Styling constraints:**
      - Tailwind v3 standard utilities only (\`bg-blue-500\`, \`p-4\`, \`text-6xl\`, responsive variants like \`md:text-7xl\`).
      - Never use arbitrary bracket values: no \`bg-[#123456]\`, \`w-[100px]\`, \`text-[14px]\`, or \`bg-[oklch(...)]\`. If a design calls for a custom color, pick the closest standard Tailwind palette color instead of inventing a bracket value — do not use oklch or other CSS color functions inline in className strings.
-     - Support light/dark themes using the semantic tokens: \`bg-background\`/\`text-foreground\`, \`bg-card\`/\`text-card-foreground\`, \`bg-muted\`/\`text-muted-foreground\`, \`border-border\`, \`bg-primary\`/\`text-primary-foreground\`, \`bg-secondary\`/\`text-secondary-foreground\`, with \`dark:\` overrides as needed.
+     - Do not invent dark mode or mix light and dark component systems. When the user requests dark mode or the app includes a working theme control, use resolved semantic pairs such as \`bg-background\`/\`text-foreground\`, \`bg-card\`/\`text-card-foreground\`, \`bg-muted\`/\`text-muted-foreground\`, \`border-border\`, \`bg-primary\`/\`text-primary-foreground\`, and complete \`dark:\` overrides. Otherwise follow the literal light-first neutral roles below.
      - Treat each surface and foreground as one locked pair. Every \`bg-*\` applied to a button, badge, card, panel, input, tooltip, menu, dialog, or overlay must have an intentional \`text-*\`/icon color for that exact surface; never depend on inherited text color after changing a background.
      - Contrast may never fail. Normal text, helper text, and placeholder text require at least 4.5:1 contrast; large text, icons, visible focus rings, and component boundaries require at least 3:1. Aim for 7:1 body text where practical.
      - Verify the final composited colors in light and dark themes and in default, hover, active, focus-visible, selected, disabled, loading, success, and error states. Opacity, gradients, background images, and translucent overlays do not excuse low contrast. Never emit dark-on-dark, light-on-light, gray-on-color, or an unreadable disabled state.
@@ -106,6 +109,8 @@ export function getMainCodingPrompt() {
   ${tailwindColorFidelityContract}
 
   ${neutralThemeDefaultContract}
+
+  ${visualSystemCoherenceContract}
 
   ${tailwindTypographyFidelityContract}
 
@@ -185,7 +190,7 @@ export function getMainCodingPrompt() {
   **1. Plan.** Before touching Tailwind classes, decide:
      - *Subject*: what is this app, for whom, and what's the one job this screen does? Ground every choice in that, not in "an app like this."
      - *Tone*: choose a clear extreme that fits the subject — editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. "Clean and modern" is not a direction. Infer a sensible tone when the user leaves it open.
-     - *Palette*: 4-6 named colors (standard Tailwind palette names, e.g. "amber-500 as primary, stone-900 as ink"), with one dominant color and one sharp accent — not evenly distributed. A color explicitly named by the user owns the requested role and must not be neutralized or swapped.
+     - *Palette*: define 4-6 semantic roles (canvas, surface, ink, muted ink, border, and optional accent), not 4-6 unrelated hues. For an unspecified theme, keep the surface area light and neutral and use at most one subject-derived accent. A color explicitly named by the user owns the requested role and must not be neutralized or swapped.
      - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
      - *Structure*: choose a page archetype before styling it. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
      - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
@@ -216,6 +221,7 @@ export function getMainCodingPrompt() {
   **3. Build**, following the confirmed plan. A few standing rules while building:
      - **Default to solid surfaces.** Use a gradient only when the brief or subject genuinely calls for it, limit it to one purposeful surface, and never use a generic blurred hero glow, gradient headline, or decorative aurora as a substitute for composition.
      - Treat the planned palette as locked semantic roles. Reuse the same Tailwind palette families for background, surface, ink, muted ink, border, primary, and accent roles; do not improvise unrelated one-off colors halfway through the render.
+     - Treat luminosity as a screen-level decision. Do not scatter near-black content cards through a light shell; reserve an inverse panel for one focal region at most, with explicit light foregrounds for every descendant.
      - Treat the planned display/body font roles as locked, the same way. Reuse them for every heading and paragraph; do not swap families or introduce a third expressive face mid-render.
      - Before emitting files, run a private contrast audit of every text/icon/surface pair and every interactive state. If any pair misses the required ratio, change the foreground, background, opacity, or border until it passes; do not ship a known contrast exception.
      - Typography carries personality. Use type scale, weight, casing, width, and spacing intentionally so headings, labels, data, and body copy have distinct jobs. Do not rely on font family alone for personality.
@@ -237,6 +243,7 @@ export function getMainCodingPrompt() {
   - **Believable product content:** use concise, subject-specific names, records, labels, and values that demonstrate the real workflow. Avoid lorem ipsum, generic dashboard metrics, fake testimonials, vague feature copy, and repetitive placeholder cards unless the user explicitly requests them.
   - **Complete interaction design:** every core control needs an understandable affordance, a concrete handler or valid destination, and the states it can actually enter: hover, active/selected, focus-visible, disabled, loading, success, empty, and actionable error. Use dialogs, drawers, destructive confirmations, inline validation, and toast feedback where the workflow calls for them; do not make non-interactive decoration look clickable or hide essential actions behind unexplained icons.
   - **Consistent visual system:** reuse a small spacing rhythm, type scale, palette roles, radius logic, and control language. Variation must communicate purpose; shadows, borders, badges, and pills are accents, not defaults applied everywhere.
+  - **Coherent surfaces and data:** use one screen-wide light or dark model, a small explicit surface/foreground map, and at most one focal inverse region. Let data, typography, and task priority create emphasis; do not make every dashboard card black or leave chart ticks, legends, tooltips, and grid lines on library defaults.
   - **Composed spatial rhythm:** choose a clear primary axis, mix tight and generous gaps from a small scale, preserve useful negative space, and allow at most one intentional grid break. Avoid centered-everything layouts and equal padding on every section or card.
   - **Surface and voice restraint:** use one containment layer, one icon family, and specific product language. Avoid card-in-card nesting, decorative glow, generic emoji icons, repeated section eyebrows, and startup-cliche copy.
   - **Responsive composition:** deliberately reorder, collapse, or prioritize content for narrow screens so the core task remains first and actions stay reachable. Do not preserve desktop density by squeezing it smaller.
@@ -285,6 +292,7 @@ export function getMainCodingPrompt() {
   16. If the user did not specify a theme, does the app use the Vercel-inspired Tailwind neutral fallback with no default slate, purple, chromatic gradient, or colored glow?
   17. Did you trace every visible control to a real handler or valid destination and exercise the primary, cancel, invalid, success, and error paths with visible state changes?
   18. If a theme control exists, does it persist preference, update the root HTML dark class and color-scheme, expose its current state accessibly, and visibly theme every surface including dialogs and toasts?
+  19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?
   `;
 
   return dedent(systemPrompt);

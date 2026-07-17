@@ -49,8 +49,9 @@ const TEMPORAL_CUE_PATTERNS = [
 ];
 
 const VERIFICATION_PATTERNS = [
-  /\b(?:verify|fact[- ]check|confirm|validate|double[- ]check|source|citation|cite|evidence)\b/i,
-  /\b(?:source[- ]grounded|with sources|according to official)\b/i,
+  /\b(?:fact[- ]check|source[- ]grounded|with sources|provide sources|cite|citation|evidence|according to official)\b/i,
+  /\b(?:verify|confirm|validate|double[- ]check)\b.{0,80}\b(?:claim|fact|accuracy|information|source|citation|evidence|official|current|latest|external)\b/i,
+  /\b(?:claim|fact|accuracy|information|source|citation|evidence|official|current|latest|external)\b.{0,80}\b(?:verify|confirm|validate|double[- ]check)\b/i,
 ];
 
 const TECHNICAL_REFERENCE_PATTERNS = [
