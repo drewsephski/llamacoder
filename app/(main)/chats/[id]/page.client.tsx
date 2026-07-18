@@ -20,6 +20,7 @@ import {
   extractAllCodeBlocks,
 } from "@/lib/utils";
 import {
+  formatGeneratedFileDiagnostics,
   normalizeGeneratedFiles,
   validateGeneratedFiles,
   type GeneratedFile,
@@ -143,6 +144,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
   );
   const freeRepairRequestIdRef = useRef<string | null>(null);
   const freeRepairSourceMessageIdRef = useRef<string | null>(null);
+  const freeRepairSourceFilesRef = useRef<GeneratedFile[] | null>(null);
   const repairRequestInFlightRef = useRef(false);
   const automaticRepairAttemptsRef = useRef(0);
   const handledPreviewErrorRef = useRef<string | null>(null);
@@ -277,6 +279,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     repairRequestInFlightRef.current = false;
     freeRepairRequestIdRef.current = null;
     freeRepairSourceMessageIdRef.current = null;
+    freeRepairSourceFilesRef.current = null;
     toast.info("Generation stopped. Reserved credits were released.");
   }, [generationRunId]);
 
@@ -476,14 +479,19 @@ export default function PageClient({ chat }: { chat: Chat }) {
               (msg: Message) => msg.id === repairSourceMessageId,
             )
           : undefined;
+        const pendingRepairSourceFiles = repairSourceMessageId
+          ? freeRepairSourceFilesRef.current
+          : null;
 
         // Repairs are intentionally partial. Merge them onto the version that
         // produced the preview error, not onto an unrelated newer checkpoint.
         const previousFiles = repairSourceMessage
           ? getFilesFromMessage(repairSourceMessage)
-          : previousAssistantMessages.flatMap((msg: Message) =>
-              getFilesFromMessage(msg),
-            );
+          : pendingRepairSourceFiles
+            ? pendingRepairSourceFiles
+            : previousAssistantMessages.flatMap((msg: Message) =>
+                getFilesFromMessage(msg),
+              );
 
         const isStructuredInteraction =
           completedAgentAction?.action === "clarify" ||
@@ -525,6 +533,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         const repairMessageId = freeRepairRequestIdRef.current;
         let message: Message;
         let shouldOpenPreview = false;
+        let queuedRepairStream: Promise<CompletionStream> | undefined;
 
         if (completedAgentAction?.action === "clarify") {
           message = (await createAgentAssistantMessage(
@@ -596,6 +605,50 @@ export default function PageClient({ chat }: { chat: Chat }) {
           shouldOpenPreview = true;
         }
 
+        if (shouldOpenPreview && diagnostics.length > 0) {
+          const validationError = formatGeneratedFileDiagnostics(diagnostics);
+
+          if (
+            automaticRepairAttemptsRef.current < MAX_AUTOMATIC_PREVIEW_REPAIRS
+          ) {
+            automaticRepairAttemptsRef.current += 1;
+            repairRequestInFlightRef.current = true;
+            toast.info(
+              `Repairing generated app (${automaticRepairAttemptsRef.current}/${MAX_AUTOMATIC_PREVIEW_REPAIRS})`,
+            );
+
+            try {
+              const repairRequest = await createPreviewRepairMessage(
+                chat.id,
+                validationError,
+                { sourceMessageId: message.id },
+              );
+              freeRepairRequestIdRef.current = repairRequest.id;
+              freeRepairSourceMessageIdRef.current = message.id;
+              freeRepairSourceFilesRef.current = allFiles;
+              queuedRepairStream = fetchCompletionStream({
+                messageId: repairRequest.id,
+                model: chat.model,
+              });
+              shouldOpenPreview = false;
+            } catch (repairError) {
+              repairRequestInFlightRef.current = false;
+              setPreviewRecovery({
+                error: getErrorMessage(
+                  repairError,
+                  "Unable to repair generated app validation failures",
+                ),
+                attempts: automaticRepairAttemptsRef.current,
+              });
+            }
+          } else {
+            setPreviewRecovery({
+              error: validationError,
+              attempts: automaticRepairAttemptsRef.current,
+            });
+          }
+        }
+
         if (stream.generationRunId) {
           await updateGenerationRun(stream.generationRunId, {
             action: "complete",
@@ -605,15 +658,20 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
         startTransition(() => {
           cancelRenderFrame();
-          freeRepairRequestIdRef.current = null;
-          freeRepairSourceMessageIdRef.current = null;
-          repairRequestInFlightRef.current = false;
+          if (!queuedRepairStream) {
+            freeRepairRequestIdRef.current = null;
+            freeRepairSourceMessageIdRef.current = null;
+            freeRepairSourceFilesRef.current = null;
+            repairRequestInFlightRef.current = false;
+          }
           setStreamText("");
           setReasoningText("");
           setStreamSources([]);
           setResearchActivity(null);
           setGenerationStatus(DEFAULT_GENERATION_STATUS);
-          setStreamPromise(undefined);
+          if (!queuedRepairStream) {
+            setStreamPromise(undefined);
+          }
           setGenerationRunId(null);
           if (shouldOpenPreview) {
             setActiveMessage(message);
@@ -633,6 +691,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
           router.refresh();
         });
+
+        if (queuedRepairStream) {
+          window.queueMicrotask(() => setStreamPromise(queuedRepairStream));
+        }
       } catch (error: unknown) {
         console.warn(
           "Generation stream failed:",
@@ -656,6 +718,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
         freeRepairRequestIdRef.current = null;
         freeRepairSourceMessageIdRef.current = null;
+        freeRepairSourceFilesRef.current = null;
         repairRequestInFlightRef.current = false;
 
         setStreamError({
@@ -698,6 +761,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
   }, [
     chat.id,
     chat.messages,
+    chat.model,
     plausible,
     router,
     streamPromise,
@@ -865,6 +929,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
         });
         freeRepairRequestIdRef.current = repairMessage.id;
         freeRepairSourceMessageIdRef.current = activeMessage.id;
+        freeRepairSourceFilesRef.current =
+          getMessageGeneratedFiles(activeMessage);
         setStreamPromise(
           fetchCompletionStream({
             messageId: repairMessage.id,

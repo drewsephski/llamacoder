@@ -1,4 +1,5 @@
 export const FREE_MODEL = "deepseek/deepseek-v4-flash";
+export const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 export const LEGACY_FREE_MODEL = "tencent/hy3-preview:free";
 export const LEGACY_SECONDARY_STARTER_MODEL = "minimax/minimax-m2.5";
 export const LEGACY_MIMO_STARTER_MODEL = "xiaomi/mimo-v2.5";
@@ -52,6 +53,19 @@ export type ModelOption = {
 
 export const MODELS: ModelOption[] = [
   {
+    label: "Gemini 3 Flash Preview",
+    value: DEFAULT_MODEL,
+    free: true,
+    group: "free",
+    summary: "Fast multimodal starter model for screenshot-first app work.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["high", "medium", "low", "minimal"],
+      defaultEffort: "medium",
+    },
+  },
+  {
     label: "DeepSeek V4 Flash",
     value: FREE_MODEL,
     free: true,
@@ -70,19 +84,6 @@ export const MODELS: ModelOption[] = [
     group: "free",
     summary: "Fast low-cost Gemini starter model for app generation.",
     reasoning: { supported: true, mandatory: false },
-  },
-  {
-    label: "Gemini 3 Flash Preview",
-    value: "google/gemini-3-flash-preview",
-    paid: true,
-    group: "paid",
-    summary: "Fast multimodal builder for screenshot-first app work.",
-    reasoning: {
-      supported: true,
-      mandatory: false,
-      supportedEfforts: ["high", "medium", "low", "minimal"],
-      defaultEffort: "medium",
-    },
   },
   {
     label: "GPT-4.1",

@@ -19,13 +19,21 @@ export default function App() {
     expect(config.files["/lib/utils.ts"]).toBeDefined();
     expect(config.files["/components/ui/accordion.tsx"]).toBeUndefined();
     expect(config.files["/public/index.html"]).toBeDefined();
-    expect(config.files["/public/index.html"]).toContain('darkMode: "class"');
-    expect(config.files["/public/index.html"]).toContain(
+    expect(config.files["/App.tsx"]).toContain(
+      'import "./squid-preview-theme"',
+    );
+    expect(config.files["/squid-preview-theme.ts"]).toContain(
+      'darkMode: "class"',
+    );
+    expect(config.files["/squid-preview-theme.ts"]).toContain(
       '"foreground": "hsl(var(--foreground))"',
     );
-    expect(config.files["/public/index.html"]).toContain(".dark {");
-    expect(config.files["/public/index.html"]).toContain(
+    expect(config.files["/squid-preview-theme.ts"]).toContain(".dark {");
+    expect(config.files["/squid-preview-theme.ts"]).toContain(
       "--foreground: 0 0% 98%;",
+    );
+    expect(config.files["/squid-preview-theme.ts"]).toContain(
+      'styleId = "squid-generated-theme"',
     );
     expect(config.customSetup.dependencies["@radix-ui/react-slot"]).toBe(
       "^1.1.0",

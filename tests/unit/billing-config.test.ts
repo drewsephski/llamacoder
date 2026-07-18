@@ -8,6 +8,7 @@ import {
   normalizeTier,
 } from "@/lib/billing/config";
 import {
+  DEFAULT_MODEL,
   FREE_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
@@ -22,6 +23,7 @@ import {
 describe("billing config", () => {
   it("uses conservative model costs and fails closed for unknown models", () => {
     expect(getModelCreditCost(FREE_MODEL)).toBe(1);
+    expect(getModelCreditCost(DEFAULT_MODEL)).toBe(3);
     expect(getModelCreditCost(SECONDARY_STARTER_MODEL)).toBe(1);
     expect(getModelCreditCost(LEGACY_SECONDARY_STARTER_MODEL)).toBe(1);
     expect(getModelCreditCost(LEGACY_MIMO_STARTER_MODEL)).toBe(1);
@@ -76,6 +78,7 @@ describe("billing config", () => {
 
   it("enforces tier model access from the config", () => {
     expect(canTierUseModel("free", FREE_MODEL)).toBe(true);
+    expect(canTierUseModel("free", DEFAULT_MODEL)).toBe(true);
     expect(canTierUseModel("free", SECONDARY_STARTER_MODEL)).toBe(true);
     expect(canTierUseModel("free", LEGACY_SECONDARY_STARTER_MODEL)).toBe(true);
     expect(canTierUseModel("free", LEGACY_MIMO_STARTER_MODEL)).toBe(true);

@@ -1,4 +1,5 @@
 import {
+  DEFAULT_MODEL,
   FREE_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
@@ -314,6 +315,7 @@ export const TIERS = {
   free: {
     monthlyCredits: 5,
     allowedModels: [
+      DEFAULT_MODEL,
       FREE_MODEL,
       LEGACY_FREE_MODEL,
       SECONDARY_STARTER_MODEL,

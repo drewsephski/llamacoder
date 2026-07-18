@@ -7,12 +7,20 @@ import Spinner from "@/components/spinner";
 import * as Select from "@radix-ui/react-select";
 import assert from "assert";
 import {
+  Box,
   CheckIcon,
   ChevronDownIcon,
+  Code2,
   Coins,
   ExternalLink,
   Info,
+  Lightbulb,
   Link2,
+  MapIcon,
+  MessageSquare,
+  Rocket,
+  Search,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import Image from "next/image";
@@ -32,7 +40,7 @@ import {
 
 import Header from "@/components/header";
 import UploadIcon from "@/components/icons/upload-icon";
-import { MODELS, SUGGESTED_PROMPTS, FREE_MODEL } from "@/lib/constants";
+import { DEFAULT_MODEL, MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { HelpPanel } from "@/components/help-panel";
@@ -238,6 +246,160 @@ const homepageControlPromises = [
   },
 ] as const;
 
+const homepageFlowSteps = [
+  {
+    label: "Idea",
+    eyebrow: "01 · Start anywhere",
+    title: "Describe what you want",
+    detail:
+      "Use a prompt, screenshot, or URL. Squid turns rough intent into a buildable brief.",
+    artifacts: ["Prompt captured", "Goal clarified", "Build brief ready"],
+    icon: Lightbulb,
+  },
+  {
+    label: "Research",
+    eyebrow: "02 · Ground the idea",
+    title: "Research the real world",
+    detail:
+      "Sources, APIs, and constraints become visible context before the first line of code.",
+    artifacts: ["Sources collected", "API fit checked", "Constraints surfaced"],
+    icon: Search,
+  },
+  {
+    label: "Plan",
+    eyebrow: "03 · Approve the direction",
+    title: "See the plan before the build",
+    detail:
+      "Review consequential choices and steer the architecture while changes are still cheap.",
+    artifacts: ["Architecture mapped", "Tradeoffs exposed", "Plan approved"],
+    icon: MapIcon,
+  },
+  {
+    label: "Build",
+    eyebrow: "04 · Watch it take shape",
+    title: "Generate a working app",
+    detail:
+      "The interface, logic, and files arrive together in an inspectable workspace.",
+    artifacts: ["React files created", "Preview running", "Source inspectable"],
+    icon: Code2,
+  },
+  {
+    label: "Refine",
+    eyebrow: "05 · Keep the momentum",
+    title: "Refine in conversation",
+    detail:
+      "Ask for changes in plain language while Squid preserves the parts that already work.",
+    artifacts: ["Request understood", "Change scoped", "Version saved"],
+    icon: MessageSquare,
+  },
+  {
+    label: "Verify",
+    eyebrow: "06 · Earn confidence",
+    title: "Verify before release",
+    detail:
+      "Quality checks and repair loops show what passed, what changed, and what still needs attention.",
+    artifacts: ["Checks executed", "Repairs attempted", "Report visible"],
+    icon: ShieldCheck,
+  },
+  {
+    label: "Ship",
+    eyebrow: "07 · Own the outcome",
+    title: "Ship the whole project",
+    detail:
+      "Deploy when ready, export every file, and keep a transparent record of how it was built.",
+    artifacts: ["Bundle portable", "Deployment ready", "History preserved"],
+    icon: Rocket,
+  },
+] as const;
+
+const homepageFlowOrbitPoints = [
+  { x: 40, y: 140 },
+  { x: 112, y: 28 },
+  { x: 360, y: 12 },
+  { x: 608, y: 28 },
+  { x: 680, y: 140 },
+  { x: 608, y: 252 },
+  { x: 112, y: 252 },
+] as const;
+
+const homepageFlowProgressPath = homepageFlowOrbitPoints
+  .map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`)
+  .join(" ");
+const homepageFlowOrbitPath = `${homepageFlowProgressPath} Z`;
+const homepageFlowSegmentLengths = homepageFlowOrbitPoints
+  .slice(0, -1)
+  .map((point, index) => {
+    const nextPoint = homepageFlowOrbitPoints[index + 1];
+    return Math.hypot(nextPoint.x - point.x, nextPoint.y - point.y);
+  });
+const homepageFlowTotalLength = homepageFlowSegmentLengths.reduce(
+  (total, length) => total + length,
+  0,
+);
+const homepageFlowOrbitProgress = (() => {
+  let traveled = 0;
+
+  return homepageFlowOrbitPoints.map((_, index) => {
+    if (index > 0) traveled += homepageFlowSegmentLengths[index - 1];
+    return (traveled / homepageFlowTotalLength) * 100;
+  });
+})();
+
+function getHomepageFlowPosition(progress: number) {
+  let remainingDistance =
+    (Math.min(Math.max(progress, 0), 100) / 100) * homepageFlowTotalLength;
+
+  for (let index = 0; index < homepageFlowSegmentLengths.length; index += 1) {
+    const segmentLength = homepageFlowSegmentLengths[index];
+    const start = homepageFlowOrbitPoints[index];
+    const end = homepageFlowOrbitPoints[index + 1];
+
+    if (remainingDistance <= segmentLength) {
+      const segmentProgress = remainingDistance / segmentLength;
+      return {
+        x: start.x + (end.x - start.x) * segmentProgress,
+        y: start.y + (end.y - start.y) * segmentProgress,
+      };
+    }
+
+    remainingDistance -= segmentLength;
+  }
+
+  return homepageFlowOrbitPoints.at(-1)!;
+}
+
+function getHomepageFlowPartialPath(progress: number) {
+  const targetDistance =
+    (Math.min(Math.max(progress, 0), 100) / 100) * homepageFlowTotalLength;
+  const pathParts = [
+    `M${homepageFlowOrbitPoints[0].x} ${homepageFlowOrbitPoints[0].y}`,
+  ];
+  let traveled = 0;
+
+  for (let index = 0; index < homepageFlowSegmentLengths.length; index += 1) {
+    const segmentLength = homepageFlowSegmentLengths[index];
+    const nextPoint = homepageFlowOrbitPoints[index + 1];
+
+    if (traveled + segmentLength <= targetDistance) {
+      pathParts.push(`L${nextPoint.x} ${nextPoint.y}`);
+      traveled += segmentLength;
+      continue;
+    }
+
+    const start = homepageFlowOrbitPoints[index];
+    const segmentProgress = Math.max(
+      0,
+      (targetDistance - traveled) / segmentLength,
+    );
+    pathParts.push(
+      `L${start.x + (nextPoint.x - start.x) * segmentProgress} ${start.y + (nextPoint.y - start.y) * segmentProgress}`,
+    );
+    break;
+  }
+
+  return pathParts.join(" ");
+}
+
 const homepageStructuredData = {
   "@context": "https://schema.org",
   "@graph": [
@@ -338,7 +500,7 @@ export default function Home() {
   const plausible = usePlausible();
 
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState(FREE_MODEL);
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [quality, setQuality] = useState("low");
   const [selectedProviderIds, setSelectedProviderIds] = useState<string[]>([]);
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
@@ -1314,6 +1476,90 @@ export default function Home() {
           }
         }
 
+        /* ---------- Interactive product workflow ---------- */
+        .flow-orbit-track,
+        .flow-orbit-progress {
+          fill: none;
+          stroke-linejoin: round;
+          vector-effect: non-scaling-stroke;
+        }
+        .flow-orbit-track {
+          stroke: hsl(var(--border));
+          stroke-width: 1.25;
+        }
+        .flow-orbit-progress {
+          stroke: rgb(59 130 246);
+          stroke-width: 2.5;
+          stroke-linecap: round;
+        }
+        .flow-orbit-progress-glow {
+          fill: none;
+          stroke: rgb(59 130 246 / 0.16);
+          stroke-width: 9;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          vector-effect: non-scaling-stroke;
+        }
+        .flow-orbit-marker {
+          fill: rgb(255 255 255);
+          stroke: rgb(59 130 246);
+          stroke-width: 3;
+          filter: drop-shadow(0 0 8px rgb(59 130 246 / 0.95));
+        }
+        .flow-orbit-pulse {
+          fill: rgb(59 130 246 / 0.16);
+          stroke: rgb(59 130 246 / 0.26);
+          stroke-width: 1;
+          animation: flow-orbit-pulse 2.2s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        .flow-node {
+          position: absolute;
+          transform: translate(-50%, -50%);
+        }
+        .flow-active-card {
+          animation: flow-card-enter 360ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .flow-artifact {
+          opacity: 0;
+          animation: flow-artifact-enter 320ms ease forwards;
+        }
+        @keyframes flow-card-enter {
+          from { opacity: 0.45; transform: translateY(7px) scale(0.985); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes flow-artifact-enter {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes flow-orbit-pulse {
+          0%, 100% { opacity: 0.48; transform: scale(0.82); }
+          50% { opacity: 1; transform: scale(1.18); }
+        }
+        @media (max-width: 767px) {
+          .flow-node,
+          .flow-node:nth-child(n) {
+            position: static;
+            transform: none;
+          }
+          .flow-stage {
+            min-height: auto;
+            overflow: visible;
+          }
+          .flow-nodes {
+            scrollbar-width: none;
+          }
+          .flow-nodes::-webkit-scrollbar {
+            display: none;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .flow-active-card { animation: none; }
+          .flow-orbit-marker,
+          .flow-orbit-pulse { animation: none; }
+          .flow-artifact { opacity: 1; animation: none; }
+        }
       `}</style>
 
       <div className="font-sans-dm relative flex min-h-svh w-full flex-col overflow-x-clip">
@@ -1894,6 +2140,7 @@ export default function Home() {
           <HomepageFaqSection />
           <HoverBrandLogo />
 
+          <HomepageFlowSection />
           <LandingMacbookSection />
           <Footer showPageLinks />
         </div>
@@ -2319,6 +2566,259 @@ function HomepageNarrativeArticle({
   );
 }
 
+function HomepageFlowSection() {
+  const [activeStep, setActiveStep] = useState(0);
+  const orbitProgressRef = useRef(0);
+  const orbitAnimationFrameRef = useRef<number | null>(null);
+  const [orbitAnimation, setOrbitAnimation] = useState<{
+    progress: number;
+    x: number;
+    y: number;
+  }>({
+    progress: 0,
+    x: homepageFlowOrbitPoints[0].x,
+    y: homepageFlowOrbitPoints[0].y,
+  });
+  const step = homepageFlowSteps[activeStep];
+  const ActiveIcon = step.icon;
+  const goToStep = (index: number) => {
+    setActiveStep(
+      (index + homepageFlowSteps.length) % homepageFlowSteps.length,
+    );
+  };
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const timeout = window.setTimeout(() => {
+      setActiveStep(
+        (currentStep) => (currentStep + 1) % homepageFlowSteps.length,
+      );
+    }, 4200);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeStep]);
+
+  useEffect(() => {
+    if (orbitAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(orbitAnimationFrameRef.current);
+    }
+
+    const startProgress = orbitProgressRef.current;
+    const targetProgress = homepageFlowOrbitProgress[activeStep];
+    const progressDelta = targetProgress - startProgress;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const updateOrbit = (progress: number) => {
+      const point = getHomepageFlowPosition(progress);
+      orbitProgressRef.current = progress;
+      setOrbitAnimation({ progress, x: point.x, y: point.y });
+    };
+
+    if (reducedMotion || Math.abs(progressDelta) < 0.01) {
+      updateOrbit(targetProgress);
+      return;
+    }
+
+    const startedAt = performance.now();
+    const duration = Math.min(900, 360 + Math.abs(progressDelta) * 6);
+    const animateOrbit = (now: number) => {
+      const elapsed = Math.min((now - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      updateOrbit(startProgress + progressDelta * eased);
+
+      if (elapsed < 1) {
+        orbitAnimationFrameRef.current =
+          window.requestAnimationFrame(animateOrbit);
+      } else {
+        orbitAnimationFrameRef.current = null;
+      }
+    };
+
+    orbitAnimationFrameRef.current = window.requestAnimationFrame(animateOrbit);
+
+    return () => {
+      if (orbitAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(orbitAnimationFrameRef.current);
+        orbitAnimationFrameRef.current = null;
+      }
+    };
+  }, [activeStep]);
+
+  return (
+    <section
+      aria-labelledby="squid-agent-overview"
+      className="relative z-10 w-full px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-6"
+    >
+      <div className="mx-auto w-full max-w-6xl border-t border-border/60 py-12 sm:py-16">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
+            One connected workflow
+          </p>
+          <h2
+            id="squid-agent-overview"
+            className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
+          >
+            Your idea keeps moving. You stay in control.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
+            Move from a rough idea to a shipped app without losing the context,
+            decisions, or code along the way. Select a stage to see what Squid
+            handles—and where you stay in control.
+          </p>
+        </div>
+
+        <div className="flow-stage relative mx-auto mt-10 min-h-[470px] max-w-5xl overflow-visible px-4 py-10 sm:mt-12 md:grid md:place-items-center md:px-12">
+          <svg
+            className="flow-orbit pointer-events-none absolute inset-[30px_3%_20px] hidden h-[calc(100%-50px)] w-[94%] overflow-visible md:block"
+            viewBox="0 0 720 280"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label={`Workflow progress: step ${activeStep + 1} of ${homepageFlowSteps.length}`}
+          >
+            <path
+              className="flow-orbit-track"
+              pathLength="100"
+              d={homepageFlowOrbitPath}
+            />
+            <path
+              className="flow-orbit-progress-glow"
+              d={getHomepageFlowPartialPath(orbitAnimation.progress)}
+            />
+            <path
+              className="flow-orbit-progress"
+              d={getHomepageFlowPartialPath(orbitAnimation.progress)}
+            />
+            <circle
+              className="flow-orbit-pulse"
+              cx={orbitAnimation.x}
+              cy={orbitAnimation.y}
+              r="11"
+            />
+            <circle
+              className="flow-orbit-marker"
+              cx={orbitAnimation.x}
+              cy={orbitAnimation.y}
+              r="4.5"
+            />
+          </svg>
+
+          <nav
+            className="flow-nodes relative z-10 mb-4 flex gap-2 overflow-x-auto pb-2 md:absolute md:inset-[30px_3%_20px] md:mb-0 md:block md:overflow-visible md:pb-0"
+            aria-label="Build stages"
+            onKeyDown={(event) => {
+              if (event.key === "ArrowRight") {
+                event.preventDefault();
+                goToStep(activeStep + 1);
+              }
+              if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                goToStep(activeStep - 1);
+              }
+            }}
+          >
+            {homepageFlowSteps.map((flowStep, index) => {
+              const StepIcon = flowStep.icon;
+              return (
+                <button
+                  key={flowStep.label}
+                  type="button"
+                  className="flow-node inline-flex shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-background/95 px-3 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur transition-[color,border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-foreground hover:shadow-[0_0_22px_-8px_rgba(59,130,246,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 data-[active=true]:border-blue-500/30 data-[active=true]:bg-blue-500 data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-blue-500/20"
+                  data-active={index === activeStep}
+                  aria-pressed={index === activeStep}
+                  onClick={() => setActiveStep(index)}
+                  style={{
+                    left: `${(homepageFlowOrbitPoints[index].x / 720) * 100}%`,
+                    top: `${(homepageFlowOrbitPoints[index].y / 280) * 100}%`,
+                  }}
+                >
+                  <StepIcon className="size-4" aria-hidden="true" />
+                  {flowStep.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <article
+            key={activeStep}
+            className="flow-active-card relative z-[2] mx-auto flex min-h-[290px] w-full max-w-md flex-col items-center justify-center rounded-[26px] border border-border/70 bg-background/90 p-6 text-center shadow-[0_28px_80px_-46px_rgba(0,0,0,0.7)] backdrop-blur sm:p-8"
+            aria-live="polite"
+          >
+            <span className="flex size-11 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg shadow-blue-500/25">
+              <ActiveIcon className="size-5" aria-hidden="true" />
+            </span>
+            <p className="font-mono-jb mt-5 text-[10px] font-medium uppercase tracking-[0.16em] text-blue-500">
+              {step.eyebrow}
+            </p>
+            <h3 className="mt-3 text-2xl font-semibold tracking-normal text-foreground">
+              {step.title}
+            </h3>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+              {step.detail}
+            </p>
+            <div
+              className="mt-5 flex flex-wrap justify-center gap-2"
+              aria-label={`${step.label} outputs`}
+            >
+              {step.artifacts.map((artifact, index) => (
+                <span
+                  key={artifact}
+                  className="flow-artifact inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs text-foreground"
+                  style={{ animationDelay: `${index * 70}ms` }}
+                >
+                  <CheckIcon
+                    className="size-3 text-blue-500"
+                    aria-hidden="true"
+                  />
+                  {artifact}
+                </span>
+              ))}
+            </div>
+          </article>
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => goToStep(activeStep - 1)}
+            className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-[border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:shadow-[0_0_20px_-8px_rgba(59,130,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            aria-label="Previous workflow step"
+          >
+            <ChevronDownIcon className="size-4 rotate-90" />
+          </button>
+          <span>
+            Step {activeStep + 1} of {homepageFlowSteps.length}
+          </span>
+          <span aria-hidden="true">→</span>
+          <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1.5 font-medium text-foreground">
+            <Box className="size-4 text-blue-500" aria-hidden="true" />
+            Every artifact is yours
+          </span>
+          <button
+            type="button"
+            onClick={() => goToStep(activeStep + 1)}
+            className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-[border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:shadow-[0_0_20px_-8px_rgba(59,130,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            aria-label="Next workflow step"
+          >
+            <ChevronDownIcon className="size-4 -rotate-90" />
+          </button>
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <Link
+            href="/example"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition-[background-color,box-shadow] hover:bg-blue-600 hover:shadow-md hover:shadow-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            Explore the full workflow
+            <ArrowRightIcon className="size-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 function HomepageFaqSection() {
   return (
     <section

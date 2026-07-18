@@ -48,10 +48,12 @@ export function getSandpackConfig(
 
   sandpackFiles["/squid-preview-inspector.tsx"] =
     squidPreviewInspectorComponent;
+  sandpackFiles["/squid-preview-theme.ts"] = generatedPreviewThemeRuntime;
 
   // Ensure App.tsx is the entry point, wrapping it with preview-only tooling.
   if (sandpackFiles["/App.generated.tsx"]) {
-    sandpackFiles["/App.tsx"] = `import GeneratedApp from "./App.generated";
+    sandpackFiles["/App.tsx"] = `import "./squid-preview-theme";
+import GeneratedApp from "./App.generated";
 import { SquidPreviewInspector } from "./squid-preview-inspector";
 
 export default function App() {
@@ -70,7 +72,8 @@ export default function App() {
 
     const importPath = mainFile.path.replace(/\.(tsx?|jsx?)$/, "");
 
-    sandpackFiles["/App.tsx"] = `import React from 'react';
+    sandpackFiles["/App.tsx"] = `import "./squid-preview-theme";
+import React from 'react';
 import MainComponent from './${importPath}';
 import { SquidPreviewInspector } from "./squid-preview-inspector";
 
@@ -155,18 +158,6 @@ export const shadcnFiles = {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Document</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-      <script>
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: ${serializeGeneratedTailwindThemeExtension()},
-          },
-        };
-      </script>
-      <style>
-${buildGeneratedThemeCss()}
-      </style>
     </head>
     <body>
       <div id="root"></div>
@@ -174,6 +165,44 @@ ${buildGeneratedThemeCss()}
   </html>
   `,
 };
+
+const generatedPreviewThemeRuntime = `type TailwindRuntime = {
+  config: unknown;
+};
+
+const configureTailwind = () => {
+  const runtime = (window as Window & { tailwind?: TailwindRuntime }).tailwind;
+  if (!runtime) return false;
+
+  runtime.config = {
+    darkMode: "class",
+    theme: {
+      extend: ${serializeGeneratedTailwindThemeExtension()},
+    },
+  };
+  return true;
+};
+
+const styleId = "squid-generated-theme";
+if (!document.getElementById(styleId)) {
+  const style = document.createElement("style");
+  style.id = styleId;
+  style.textContent = ${JSON.stringify(buildGeneratedThemeCss())};
+  document.head.appendChild(style);
+}
+
+if (!configureTailwind()) {
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+    if (configureTailwind() || attempts >= 40) {
+      window.clearInterval(timer);
+    }
+  }, 25);
+}
+
+export {};
+`;
 
 const availableShadcnFiles: Record<string, string> = shadcnFiles;
 const IMPORT_SOURCE_REGEX =

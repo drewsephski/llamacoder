@@ -128,7 +128,34 @@ export const functionalInteractionPlanningRule =
  */
 export const themeToggleContract = dedent`
   **Theme behavior contract (mandatory whenever a theme control is rendered):**
-  - A light/dark control is functional product state, never decorative. Initialize from a valid persisted preference, otherwise use \`window.matchMedia("(prefers-color-scheme: dark)")\`; on change, immediately toggle the \`dark\` class on \`document.documentElement\`, set \`document.documentElement.style.colorScheme\`, update React state, and persist the choice in \`localStorage\`. If a three-way system option is offered, subscribe to OS changes only while system mode is active and clean up the listener.
+  - A light/dark control is functional product state, never decorative. Tailwind \`dark:\` utilities activate only when an ancestor has the \`dark\` class, so changing an icon, boolean, \`data-theme\`, body class, or CSS \`color-scheme\` alone is not a working toggle. The state owner must apply \`dark\` to \`document.documentElement\` (the preview iframe's root HTML element).
+  - For a two-way light/dark control, follow this exact state flow unless the existing app already has an equivalent complete theme hook/provider:
+    \`\`\`tsx
+    type Theme = "light" | "dark";
+
+    const getInitialTheme = (): Theme => {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") return saved;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    };
+
+    const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+    useEffect(() => {
+      const isDark = theme === "dark";
+      document.documentElement.classList.toggle("dark", isDark);
+      document.documentElement.style.colorScheme = theme;
+      localStorage.setItem("theme", theme);
+    }, [theme]);
+
+    const toggleTheme = () =>
+      setTheme((current) => (current === "dark" ? "light" : "dark"));
+    \`\`\`
+  - Bind every rendered theme button/switch directly to that shared \`theme\` state and \`toggleTheme\` handler. Do not create separate header/settings booleans, do not mutate the DOM only once outside an effect, and do not reset the preference on unrelated renders. If the theme logic lives in \`hooks/useTheme.ts\`, output that file and import it relatively.
+  - After the click, the icon/label, \`aria-pressed\` or checked state, root HTML \`dark\` class, \`document.documentElement.style.colorScheme\`, and visible surfaces must all change in the same render cycle. Before emitting files, mentally click the control twice and verify dark -> light -> dark updates the actual preview, not only the control chrome.
+  - If a three-way system option is offered, persist \`"system"\`, resolve it through \`window.matchMedia("(prefers-color-scheme: dark)")\`, subscribe to OS changes only while system mode is active, and clean up the listener.
   - The control must clearly communicate its current state and next action with visible icon/text plus a dynamic \`aria-label\`, \`title\`, and \`aria-pressed\` or native checked state. It must work by keyboard and must not briefly reset when unrelated app state changes.
   - Theme the whole rendered tree, not only the page background: canvas, raised surfaces, text, muted text, borders, inputs, menus, dialogs, drawers, toasts, tooltips, tables, charts, empty/error states, focus rings, hover/selected/disabled states, and scroll/overlay treatments all need intentional light and dark pairs. Portalled Shadcn surfaces must respond through the root HTML class.
   - Use complete literal Tailwind \`dark:\` pairs on theme-defining surfaces unless the generated app explicitly defines every semantic token it uses. Audit for hard-coded white/black or gray values that become unreadable in the opposite mode, including SVG/chart fills, inline styles, translucent layers, and third-party component props.
@@ -136,4 +163,4 @@ export const themeToggleContract = dedent`
 `;
 
 export const themeTogglePlanningRule =
-  "Theme behavior: if the plan includes a theme control, specify persisted light/dark state initialized from the OS, root-html class and color-scheme updates, a keyboard-accessible state label, and complete light/dark treatment for portalled overlays, toasts, forms, data visualizations, and every interaction state. If there is no theme control, do not invent a decorative one.";
+  "Theme behavior: if the plan includes a theme control, specify one shared light/dark state owner initialized from localStorage with an OS fallback; every control must call the same toggle handler, toggle the dark class on document.documentElement, update document.documentElement.style.colorScheme, persist the choice, expose a keyboard-accessible dynamic state label, and theme portalled overlays, toasts, forms, data visualizations, and every interaction state. If there is no theme control, do not invent a decorative one.";

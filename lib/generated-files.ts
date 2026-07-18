@@ -290,6 +290,18 @@ export function validateGeneratedFiles(
   return diagnostics;
 }
 
+export function formatGeneratedFileDiagnostics(
+  diagnostics: GeneratedFileDiagnostic[],
+) {
+  return [
+    "Generated app validation failed. Repair every issue before returning the changed files:",
+    ...diagnostics.map(
+      (diagnostic) =>
+        `- ${diagnostic.path ? `${diagnostic.path}: ` : ""}${diagnostic.message}`,
+    ),
+  ].join("\n");
+}
+
 export function buildGeneratedFilesQualityReport(
   files: GeneratedFile[],
 ): GeneratedFilesQualityReport {
@@ -623,8 +635,15 @@ function validateThemeBehavior(files: GeneratedFile[]) {
     /document\.documentElement\.classList\.toggle\(\s*["'`]dark["'`]/.test(
       combinedSource,
     );
+  const hasDarkVariants = /\bdark:[\w\-\[\]/.:%]+/.test(combinedSource);
+  const hasThemeStateSetter =
+    /\b(?:setIsDark|setDarkMode|setTheme|toggleTheme)\b/.test(combinedSource);
+  const hasThemeControl =
+    togglesDarkClass ||
+    (addsDarkClass && removesDarkClass) ||
+    (hasDarkVariants && hasThemeStateSetter);
 
-  if (!togglesDarkClass && !(addsDarkClass && removesDarkClass)) return [];
+  if (!hasThemeControl) return [];
 
   const hasPersistedPreference =
     /localStorage\.getItem\(/.test(combinedSource) &&
@@ -638,8 +657,15 @@ function validateThemeBehavior(files: GeneratedFile[]) {
     /document\.documentElement\.style\.setProperty\(\s*["'`]color-scheme["'`]/.test(
       combinedSource,
     );
+  const updatesRootDarkClass =
+    togglesDarkClass || (addsDarkClass && removesDarkClass);
 
-  if (hasPersistedPreference && hasSystemFallback && updatesColorScheme) {
+  if (
+    updatesRootDarkClass &&
+    hasPersistedPreference &&
+    hasSystemFallback &&
+    updatesColorScheme
+  ) {
     return [];
   }
 
@@ -654,7 +680,8 @@ function validateThemeBehavior(files: GeneratedFile[]) {
       ) &&
         /document\.documentElement\.classList\.remove\(\s*["'`]dark["'`]/.test(
           code,
-        ))
+        )) ||
+      /\b(?:setIsDark|setDarkMode|setTheme|toggleTheme)\b/.test(code)
     );
   });
 

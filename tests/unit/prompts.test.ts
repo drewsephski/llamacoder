@@ -29,7 +29,16 @@ describe("prompt design guidance", () => {
       'window.matchMedia("(prefers-color-scheme: dark)")',
     );
     expect(prompt).toContain(
-      "toggle the `dark` class on `document.documentElement`",
+      "Tailwind `dark:` utilities activate only when an ancestor has the `dark` class",
+    );
+    expect(prompt).toContain(
+      'document.documentElement.classList.toggle("dark", isDark)',
+    );
+    expect(prompt).toContain(
+      'setTheme((current) => (current === "dark" ? "light" : "dark"))',
+    );
+    expect(prompt).toContain(
+      "mentally click the control twice and verify dark -> light -> dark",
     );
     expect(prompt).toContain("document.documentElement.style.colorScheme");
     expect(prompt).toContain('from "@/components/ui/dialog"');
@@ -131,7 +140,10 @@ describe("prompt design guidance", () => {
     );
     expect(softwareArchitectPrompt).toContain("Theme behavior:");
     expect(softwareArchitectPrompt).toContain(
-      "persisted light/dark state initialized from the OS",
+      "one shared light/dark state owner initialized from localStorage with an OS fallback",
+    );
+    expect(softwareArchitectPrompt).toContain(
+      "toggle the dark class on document.documentElement",
     );
     expect(softwareArchitectPrompt).toContain("Responsive behavior");
     expect(softwareArchitectPrompt).toContain(
@@ -237,6 +249,12 @@ describe("prompt design guidance", () => {
     );
     expect(developerCodeGenPrompt).toContain(
       "document.documentElement.style.colorScheme",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      'document.documentElement.classList.toggle("dark", isDark)',
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "Bind every rendered theme button/switch directly to that shared `theme` state",
     );
   });
 });

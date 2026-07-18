@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildGeneratedFilesQualityReport,
   buildGeneratedFilesRepairPrompt,
+  formatGeneratedFileDiagnostics,
   formatGeneratedFilesMarkdown,
   normalizeGeneratedFiles,
   normalizeGeneratedPath,
@@ -9,6 +10,23 @@ import {
   validateGeneratedFiles,
 } from "@/lib/generated-files";
 import { validateSelectedApiUsage } from "@/lib/generated-api";
+
+describe("generated file diagnostics", () => {
+  it("formats validation failures as an actionable repair request", () => {
+    expect(
+      formatGeneratedFileDiagnostics([
+        { path: "App.tsx", message: "Theme control is incomplete." },
+        { message: "Missing App.tsx entry file." },
+      ]),
+    ).toBe(
+      [
+        "Generated app validation failed. Repair every issue before returning the changed files:",
+        "- App.tsx: Theme control is incomplete.",
+        "- Missing App.tsx entry file.",
+      ].join("\n"),
+    );
+  });
+});
 
 describe("generated file normalization", () => {
   it("normalizes safe paths and rejects traversal/protected modules", () => {
@@ -184,6 +202,36 @@ describe("generated file normalization", () => {
           '    else document.documentElement.classList.remove("dark");',
           "  }, [isDark]);",
           "  return <button onClick={() => setIsDark(!isDark)}>Theme</button>;",
+          "}",
+        ].join("\n"),
+      },
+      {
+        path: "components/Panel.tsx",
+        code: "export function Panel() { return <section />; }",
+      },
+      { path: "types.ts", code: "export type Theme = 'light' | 'dark';" },
+    ]);
+
+    expect(validateGeneratedFiles(files)).toEqual([
+      {
+        path: "App.tsx",
+        message:
+          "Theme control is incomplete. Initialize from a persisted localStorage preference with a prefers-color-scheme fallback, persist changes, and update document.documentElement.style.colorScheme together with the root dark class.",
+      },
+    ]);
+  });
+
+  it("diagnoses a theme button that changes state without activating Tailwind dark variants", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { useState } from "react";',
+          "export default function App() {",
+          "  const [isDark, setIsDark] = useState(false);",
+          '  return <main className="bg-white text-black dark:bg-black dark:text-white">',
+          '    <button onClick={() => setIsDark(!isDark)}>{isDark ? "Light" : "Dark"}</button>',
+          "  </main>;",
           "}",
         ].join("\n"),
       },
