@@ -11,7 +11,7 @@
     },
     {
       "path": "/api/maintenance/gallery-thumbnails",
-      "schedule": "*/5 * * * *"
+      "schedule": "30 0 * * *"
     }
   ]
 }
