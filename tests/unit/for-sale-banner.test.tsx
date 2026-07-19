@@ -6,6 +6,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ForSaleBanner } from "@/features/for-sale/components/for-sale-banner";
 
+const { beginForSaleCheckoutMock } = vi.hoisted(() => ({
+  beginForSaleCheckoutMock: vi.fn(),
+}));
+
+vi.mock("@/features/for-sale/checkout", () => ({
+  beginForSaleCheckout: beginForSaleCheckoutMock,
+}));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/forma",
 }));
@@ -26,7 +34,10 @@ describe("ForSaleBanner", () => {
     ).toHaveAttribute("href", "/showcase/forma-hero.png");
   });
 
-  it("keeps checkout stubbed behind the checkout boundary", async () => {
+  it("reports checkout failures without implying payment was collected", async () => {
+    beginForSaleCheckoutMock.mockRejectedValueOnce(
+      new Error("Unable to start checkout."),
+    );
     const user = userEvent.setup();
     render(<ForSaleBanner />);
 
@@ -36,7 +47,7 @@ describe("ForSaleBanner", () => {
     );
 
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "No payment has been collected",
+      "Unable to start checkout.",
     );
   });
 

@@ -1,16 +1,22 @@
+import { z } from "zod";
+
 import type { ForSaleProduct } from "@/features/for-sale/types";
 
-export type CheckoutResult = {
-  status: "stubbed";
-  productRoute: string;
-};
+const responseSchema = z.object({ url: z.string().url() });
 
-/**
- * Checkout boundary for sale-page purchases. Replace this implementation with
- * a server action or checkout endpoint when Stripe products are configured.
- */
-export async function beginForSaleCheckout(
-  product: ForSaleProduct,
-): Promise<CheckoutResult> {
-  return Promise.resolve({ status: "stubbed", productRoute: product.route });
+export async function beginForSaleCheckout(product: ForSaleProduct) {
+  const response = await fetch("/api/stripe/page-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productKey: product.key }),
+  });
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      typeof payload?.error === "string" ? payload.error : "Checkout failed",
+    );
+  }
+
+  return responseSchema.parse(payload);
 }

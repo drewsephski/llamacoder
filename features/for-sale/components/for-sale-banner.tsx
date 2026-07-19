@@ -36,10 +36,12 @@ export function ForSaleBanner() {
   const startCheckout = () => {
     setCheckoutMessage(null);
     startTransition(async () => {
-      const result = await beginForSaleCheckout(product);
-      if (result.status === "stubbed") {
+      try {
+        const { url } = await beginForSaleCheckout(product);
+        window.location.assign(url);
+      } catch (error) {
         setCheckoutMessage(
-          "Checkout is coming soon. No payment has been collected.",
+          error instanceof Error ? error.message : "Unable to start checkout.",
         );
       }
     });
@@ -161,7 +163,7 @@ export function ForSaleBanner() {
               </a>
             </Button>
             <p className="flex items-center justify-center text-center text-xs leading-5 text-neutral-500">
-              Secure checkout via Stripe · coming soon
+              Secure one-time checkout via Stripe
             </p>
           </div>
 

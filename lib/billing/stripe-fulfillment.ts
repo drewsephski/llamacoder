@@ -8,6 +8,7 @@ import {
   normalizeTier,
   type TierKey,
 } from "./config";
+import { fulfillPagePurchase } from "@/features/for-sale/server/purchases";
 
 type CreditGrantType = "purchase" | "subscription" | "referral";
 type SubscriptionTier = Extract<TierKey, "pro" | "pro_plus">;
@@ -326,10 +327,7 @@ async function grantReferralCreditsForUpgrade({
     },
   });
 
-  if (
-    !referral?.referrerUserId ||
-    referral.referrerUserId === upgradedUserId
-  ) {
+  if (!referral?.referrerUserId || referral.referrerUserId === upgradedUserId) {
     return { granted: false, reason: "no_referrer" };
   }
 
@@ -609,6 +607,9 @@ export async function fulfillCheckoutSession(
   eventId?: string,
 ) {
   if (session.mode === "payment") {
+    if (session.metadata?.kind === "page_license") {
+      return fulfillPagePurchase(session);
+    }
     return fulfillCreditPackCheckout(session, eventId);
   }
 

@@ -132,8 +132,25 @@ model User {
   generationRuns         GenerationRun[]
   runtimeVerifications   RuntimeVerification[]
   galleryPublications    GalleryPublication[]
+  pagePurchases          PagePurchase[]
 
   @@map("user")
+}
+
+model PagePurchase {
+  id                      String    @id @default(nanoid(16))
+  userId                  String
+  productKey              String
+  route                   String
+  stripeCheckoutSessionId String    @unique
+  stripePaymentIntentId   String?
+  status                  String    @default("paid")
+  purchasedAt             DateTime  @default(now())
+  lastDownloadedAt        DateTime?
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, productKey])
+  @@index([userId, purchasedAt])
 }
 
 model GalleryPublication {

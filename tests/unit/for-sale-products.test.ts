@@ -10,6 +10,12 @@ describe("getForSaleProduct", () => {
     );
   });
 
+  it("maps sale pages to immutable Stripe prices", () => {
+    expect(getForSaleProduct("/forma")?.priceId).toBe(
+      "price_1Tv0PrRWYMzP8fBmeKf9aAxP",
+    );
+  });
+
   it("uses the parent showcase product on preview routes", () => {
     expect(getForSaleProduct("/gallery/cinder-studio/preview")?.assetHref).toBe(
       "/showcase/cinder-studio.webp",

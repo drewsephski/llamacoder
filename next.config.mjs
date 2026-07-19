@@ -26,6 +26,15 @@ function createContentSecurityPolicy(frameAncestors) {
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  outputFileTracingIncludes: {
+    "/api/page-purchases/[sessionId]/download": [
+      "./app/**/*.tsx",
+      "./components/**/*",
+      "./features/gallery/showcase-landings/**/*",
+      "./public/**/*",
+      "./package.json",
+    ],
+  },
   async headers() {
     const contentSecurityPolicy = createContentSecurityPolicy("'none'");
     const galleryPreviewContentSecurityPolicy =
