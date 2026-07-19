@@ -124,6 +124,149 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
   },
 ];
 
+type HomepageLandingPage = {
+  name: string;
+  href: string;
+  category: string;
+  description: string;
+  imageSrc: string;
+  imageAlt: string;
+};
+
+const HOMEPAGE_LANDING_PAGES: readonly HomepageLandingPage[] = [
+  {
+    name: "Axon",
+    href: "/axon",
+    category: "Automation platform",
+    description:
+      "A bright, editorial landing page for digital workers that quietly run routine browser workflows.",
+    imageSrc: "/showcase/axon-hero.png",
+    imageAlt:
+      "Axon landing page hero showing digital workers for mundane workflows",
+  },
+  {
+    name: "Velorah",
+    href: "/velorah",
+    category: "Creative tools",
+    description:
+      "An atmospheric studio landing page for tools that give deep thinkers room to focus and make.",
+    imageSrc: "/showcase/velorah-hero.png",
+    imageAlt:
+      "Velorah landing page hero with a dark underwater-inspired visual",
+  },
+  {
+    name: "Mindloop",
+    href: "/mindloop",
+    category: "Content studio",
+    description:
+      "A luminous editorial space for meaningful ideas, thoughtful updates, and a shared journey toward depth.",
+    imageSrc: "/showcase/mindloop-hero.png",
+    imageAlt: "Mindloop landing page hero with an inspired editorial landscape",
+  },
+  {
+    name: "CozyPaws",
+    href: "/cozypaws",
+    category: "Pet marketplace",
+    description:
+      "A warm, playful storefront that makes discovering happy-making products for pets feel effortless.",
+    imageSrc: "/showcase/cozypaws-hero.png",
+    imageAlt: "CozyPaws landing page hero with pets and a product marketplace",
+  },
+  {
+    name: "Sentinel AI",
+    href: "/sentinel",
+    category: "Security systems",
+    description:
+      "A high-contrast security landing page pairing zero-trust systems with a precise, technical visual language.",
+    imageSrc: "/showcase/sentinel-hero.png",
+    imageAlt: "Sentinel AI landing page hero for enterprise security systems",
+  },
+  {
+    name: "Axion Studio",
+    href: "/axion-studio",
+    category: "Digital studio",
+    description:
+      "A strategy-led agency landing page for digital experiences built around category leadership.",
+    imageSrc: "/showcase/axion-studio-hero.png",
+    imageAlt:
+      "Axion Studio landing page hero for category-leading digital experiences",
+  },
+  {
+    name: "Design Rocket Certificates",
+    href: "/design-rocket-certificates",
+    category: "AI education",
+    description:
+      "A focused course landing page for leaders learning to guide AI transformation inside their organizations.",
+    imageSrc: "/showcase/design-rocket-certificates-hero.png",
+    imageAlt:
+      "Design Rocket Certificates landing page hero for AI transformation training",
+  },
+  {
+    name: "Forma",
+    href: "/forma",
+    category: "Product studio",
+    description:
+      "A concise studio landing page with motion-led visuals and a direct project intake surface.",
+    imageSrc: "/showcase/forma-hero.png",
+    imageAlt: "Forma landing page hero for a digital product studio",
+  },
+  {
+    name: "TerraElix",
+    href: "/terraelix",
+    category: "Wellness supplements",
+    description:
+      "A vivid wellness landing page for plant-based supplements, daily balance, and clean energy.",
+    imageSrc: "/showcase/terraelix-hero.png",
+    imageAlt:
+      "TerraElix landing page hero for plant-based wellness supplements",
+  },
+  {
+    name: "Mentality",
+    href: "/mentality",
+    category: "Wellbeing resources",
+    description:
+      "A calm mental wellbeing resource page with expressive editorial typography and a guided question entry point.",
+    imageSrc: "/showcase/mentality-hero.png",
+    imageAlt: "Mentality landing page hero for mental wellbeing resources",
+  },
+  {
+    name: "Questly",
+    href: "/questly",
+    category: "AI search content",
+    description:
+      "A content strategy landing page for shipping articles that answer customer questions and earn AI citations.",
+    imageSrc: "/showcase/questly-hero.png",
+    imageAlt: "Questly landing page hero for AI search content strategy",
+  },
+  {
+    name: "RIVR",
+    href: "/rivr",
+    category: "Asset liquidity",
+    description:
+      "A cinematic finance landing page for smart vaults, staking, NFTs, and fluid asset streams.",
+    imageSrc: "/showcase/rivr-hero.png",
+    imageAlt: "RIVR landing page hero for fluid asset streams",
+  },
+  {
+    name: "SkyElite",
+    href: "/skyelite",
+    category: "Private aviation",
+    description:
+      "A premium private aviation landing page positioning jet access as refined and attainable.",
+    imageSrc: "/showcase/skyelite-hero.png",
+    imageAlt: "SkyElite landing page hero for premium private jets",
+  },
+  {
+    name: "Drew",
+    href: "/jack",
+    category: "3D creator portfolio",
+    description:
+      "A dark, motion-led portfolio for a 3D creator who turns striking visual systems into unforgettable projects.",
+    imageSrc: "/showcase/drew-hero.png",
+    imageAlt: "Drew 3D creator portfolio landing page",
+  },
+];
+
 const homepageFaq = [
   {
     question: "What is Squid Agent?",
@@ -2135,6 +2278,7 @@ export default function Home() {
           </div>
 
           <HomepageAnswerSection />
+          <HomepageLandingPagesSection />
           <AiBuilderFeatureComparison variant="homepage" />
           <BuiltWithSquidSection />
           <HomepageFaqSection />
@@ -2706,7 +2850,7 @@ function HomepageFlowSection() {
           </svg>
 
           <nav
-            className="flow-nodes relative z-10 mb-4 flex gap-2 overflow-x-auto pb-2 md:absolute md:inset-[30px_3%_20px] md:mb-0 md:block md:overflow-visible md:pb-0"
+            className="flow-nodes relative z-10 mb-4 flex max-w-full flex-wrap justify-center gap-2 md:absolute md:inset-[30px_3%_20px] md:mb-0 md:block md:max-w-none md:overflow-visible"
             aria-label="Build stages"
             onKeyDown={(event) => {
               if (event.key === "ArrowRight") {
@@ -2725,7 +2869,7 @@ function HomepageFlowSection() {
                 <button
                   key={flowStep.label}
                   type="button"
-                  className="flow-node inline-flex shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-background/95 px-3 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur transition-[color,border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-foreground hover:shadow-[0_0_22px_-8px_rgba(59,130,246,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 data-[active=true]:border-blue-500/30 data-[active=true]:bg-blue-500 data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-blue-500/20"
+                  className="flow-node inline-flex shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-background/95 px-2.5 py-2 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur transition-[color,border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-foreground hover:shadow-[0_0_22px_-8px_rgba(59,130,246,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 data-[active=true]:border-blue-500/30 data-[active=true]:bg-blue-500 data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-blue-500/20 sm:px-3 sm:text-sm"
                   data-active={index === activeStep}
                   aria-pressed={index === activeStep}
                   onClick={() => setActiveStep(index)}
@@ -2779,27 +2923,29 @@ function HomepageFlowSection() {
           </article>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
+        <div className="mt-5 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 text-sm text-muted-foreground sm:flex sm:flex-wrap sm:justify-center">
           <button
             type="button"
             onClick={() => goToStep(activeStep - 1)}
-            className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-[border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:shadow-[0_0_20px_-8px_rgba(59,130,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="col-start-1 row-start-1 inline-flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-[border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:shadow-[0_0_20px_-8px_rgba(59,130,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             aria-label="Previous workflow step"
           >
             <ChevronDownIcon className="size-4 rotate-90" />
           </button>
-          <span>
-            Step {activeStep + 1} of {homepageFlowSteps.length}
+          <span className="col-start-2 row-start-1 flex min-w-0 items-center justify-center gap-3">
+            <span className="whitespace-nowrap">
+              Step {activeStep + 1} of {homepageFlowSteps.length}
+            </span>
+            <span aria-hidden="true">→</span>
           </span>
-          <span aria-hidden="true">→</span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1.5 font-medium text-foreground">
+          <span className="col-span-3 row-start-2 inline-flex items-center gap-2 justify-self-center rounded-full bg-blue-500/10 px-3 py-1.5 font-medium text-foreground">
             <Box className="size-4 text-blue-500" aria-hidden="true" />
             Every artifact is yours
           </span>
           <button
             type="button"
             onClick={() => goToStep(activeStep + 1)}
-            className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-[border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:shadow-[0_0_20px_-8px_rgba(59,130,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="col-start-3 row-start-1 inline-flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-[border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:shadow-[0_0_20px_-8px_rgba(59,130,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             aria-label="Next workflow step"
           >
             <ChevronDownIcon className="size-4 -rotate-90" />
@@ -2809,7 +2955,7 @@ function HomepageFlowSection() {
         <div className="mt-10 flex justify-center">
           <Link
             href="/example"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition-[background-color,box-shadow] hover:bg-blue-600 hover:shadow-md hover:shadow-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition-[background-color,box-shadow] hover:bg-blue-600 hover:shadow-md hover:shadow-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
           >
             Explore the full workflow
             <ArrowRightIcon className="size-4" />
@@ -3039,6 +3185,84 @@ function LoadingMessage({
         </p>
       </div>
     </div>
+  );
+}
+
+function HomepageLandingPagesSection() {
+  return (
+    <section
+      aria-labelledby="homepage-landing-pages-heading"
+      className="relative z-10 w-full px-4 pb-16 sm:px-6 sm:pb-24"
+      data-testid="homepage-landing-pages"
+      id="homepage-landing-pages"
+    >
+      <div className="mx-auto w-full max-w-6xl border-y border-border/70 py-12 sm:py-16">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:items-end">
+          <div>
+            <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
+              New landing pages
+            </p>
+            <h2
+              id="homepage-landing-pages-heading"
+              className="mt-4 max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl"
+            >
+              Pages with a point of view.
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+            Open the finished pages to experience the hero, motion, and
+            responsive layout in full. Each one is a working example of how a
+            visual idea becomes a real React landing page.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {HOMEPAGE_LANDING_PAGES.map((landing) => (
+            <Link
+              key={landing.href}
+              href={landing.href}
+              className="group min-w-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4"
+            >
+              <div className="relative aspect-video overflow-hidden rounded-2xl border border-border/80 bg-muted/40 shadow-[0_18px_50px_-38px_rgba(0,0,0,0.7)]">
+                <Image
+                  src={landing.imageSrc}
+                  alt={landing.imageAlt}
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.025]"
+                />
+                <div
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-80"
+                  aria-hidden="true"
+                />
+                <span className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/35 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
+                  Open landing page
+                  <ArrowRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
+
+              <div className="pt-5">
+                <p className="text-xs font-medium text-blue-500">
+                  {landing.category}
+                </p>
+                <div className="mt-2 flex items-start justify-between gap-4">
+                  <h3 className="text-xl font-semibold tracking-tight text-foreground">
+                    {landing.name}
+                  </h3>
+                  <ArrowRightIcon
+                    className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  {landing.description}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

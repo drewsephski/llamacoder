@@ -19,6 +19,18 @@ const config: Config = {
         sans: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
         display: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.sans],
         mono: ["var(--font-dm-sans)", ...defaultTheme.fontFamily.mono],
+        sora: ["var(--font-sentinel-sora)", ...defaultTheme.fontFamily.sans],
+        questly: [
+          "Nimbus Sans TW01",
+          "Helvetica Neue",
+          "Helvetica",
+          "Arial",
+          "sans-serif",
+        ],
+      },
+      animation: {
+        "fade-up": "fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "fade-in": "fade-in 0.5s ease-out forwards",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -27,6 +39,8 @@ const config: Config = {
       },
       colors: {
         brand: "#E1E7EC",
+        "brand-green": "#9FFF00",
+        "bg-base": "#EDEEF5",
         blue: {
           "300": "#94b2fa",
           "500": "#326DF5",
@@ -66,6 +80,8 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        "nav-button": "hsl(var(--nav-button))",
+        "hero-bg": "hsl(var(--hero-bg))",
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",
@@ -95,6 +111,24 @@ const config: Config = {
           700: "#6739AC",
           900: "#2C1155",
         },
+      },
+    },
+    keyframes: {
+      "fade-up": {
+        "0%": {
+          opacity: "0",
+          transform: "translateY(20px)",
+          filter: "blur(4px)",
+        },
+        "100%": {
+          opacity: "1",
+          transform: "translateY(0)",
+          filter: "blur(0)",
+        },
+      },
+      "fade-in": {
+        "0%": { opacity: "0" },
+        "100%": { opacity: "1" },
       },
     },
   },

@@ -14,6 +14,7 @@ function createContentSecurityPolicy(frameAncestors) {
     `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://plausible.io ${monacoAssetDirectory}`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${monacoAssetDirectory}`,
     "img-src 'self' data: blob: https:",
+    "media-src 'self' blob: https://d8j0ntlcm91z4.cloudfront.net",
     `font-src 'self' data: https://fonts.gstatic.com ${monacoAssetDirectory}`,
     "connect-src 'self' https: wss:",
     "frame-src 'self' https://challenges.cloudflare.com https://*.codesandbox.io https://codesandbox.io https://*.csb.app",

@@ -40,7 +40,9 @@
     ".next-e2e/types/**/*.ts",
     ".next-e2e/dev/types/**/*.ts",
     ".next-gallery-qa/types/**/*.ts",
-    ".next-gallery-qa/dev/types/**/*.ts"
+    ".next-gallery-qa/dev/types/**/*.ts",
+    ".next-design-rocket/types/**/*.ts",
+    ".next-design-rocket/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
