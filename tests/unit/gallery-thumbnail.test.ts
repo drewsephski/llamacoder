@@ -4,6 +4,7 @@ const { closeMock, pageMock, prismaMock, revalidatePathMock, s3SendMock } =
   vi.hoisted(() => ({
     closeMock: vi.fn(),
     pageMock: {
+      evaluate: vi.fn(),
       goto: vi.fn(),
       screenshot: vi.fn(),
       setViewportSize: vi.fn(),
@@ -71,6 +72,7 @@ describe("gallery thumbnail capture", () => {
     process.env.S3_UPLOAD_KEY = "s3-key";
     process.env.S3_UPLOAD_SECRET = "s3-secret";
     pageMock.waitForSelector.mockResolvedValue(true);
+    pageMock.evaluate.mockResolvedValue("ready");
     pageMock.screenshot.mockResolvedValue(Buffer.from("thumbnail"));
     prismaMock.galleryPublication.updateMany.mockResolvedValue({ count: 1 });
   });
@@ -89,10 +91,7 @@ describe("gallery thumbnail capture", () => {
       ".sp-preview-iframe",
       expect.objectContaining({ timeout: 45_000 }),
     );
-    expect(pageMock.waitForSelector).toHaveBeenCalledWith(
-      '[data-gallery-preview-status="ready"]',
-      expect.objectContaining({ state: "attached", timeout: 45_000 }),
-    );
+    expect(pageMock.evaluate).toHaveBeenCalledOnce();
     expect(s3SendMock).toHaveBeenCalledWith(
       expect.objectContaining({
         input: expect.objectContaining({
@@ -148,15 +147,13 @@ describe("gallery thumbnail capture", () => {
   });
 
   it("does not persist an image until the generated preview reports ready", async () => {
-    pageMock.waitForSelector
-      .mockResolvedValueOnce(true)
-      .mockRejectedValueOnce(new Error("Preview did not compile"));
+    pageMock.evaluate.mockResolvedValueOnce("error");
 
     const result = await captureAndPersistGalleryThumbnail(job);
 
     expect(result).toEqual({
       status: "failed",
-      error: "Preview did not compile",
+      error: "Generated gallery preview failed to compile.",
     });
     expect(pageMock.screenshot).not.toHaveBeenCalled();
     expect(s3SendMock).not.toHaveBeenCalled();
@@ -164,10 +161,24 @@ describe("gallery thumbnail capture", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           thumbnailStatus: "failed",
-          thumbnailError: "Preview did not compile",
+          thumbnailError: "Generated gallery preview failed to compile.",
         }),
       }),
     );
+  });
+
+  it("polls the preview status until a delayed render reports ready", async () => {
+    pageMock.evaluate
+      .mockResolvedValueOnce("loading")
+      .mockResolvedValueOnce("loading")
+      .mockResolvedValueOnce("ready");
+
+    const result = await captureAndPersistGalleryThumbnail(job);
+
+    expect(result.status).toBe("ready");
+    expect(pageMock.evaluate).toHaveBeenCalledTimes(3);
+    expect(pageMock.waitForTimeout).toHaveBeenCalledWith(250);
+    expect(pageMock.screenshot).toHaveBeenCalledOnce();
   });
 
   it("prioritizes the newest pending publications during recovery", async () => {

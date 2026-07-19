@@ -10,6 +10,7 @@ import { getPrisma } from "@/lib/prisma";
 const THUMBNAIL_WIDTH = 1280;
 const THUMBNAIL_HEIGHT = 720;
 const THUMBNAIL_READY_TIMEOUT_MS = 45_000;
+const THUMBNAIL_READY_POLL_INTERVAL_MS = 250;
 const MAX_STORED_ERROR_LENGTH = 500;
 
 export type GalleryThumbnailJob = {
@@ -54,10 +55,26 @@ async function captureThumbnail(slug: string) {
     await page.waitForSelector(".sp-preview-iframe", {
       timeout: THUMBNAIL_READY_TIMEOUT_MS,
     });
-    await page.waitForSelector('[data-gallery-preview-status="ready"]', {
-      state: "attached",
-      timeout: THUMBNAIL_READY_TIMEOUT_MS,
-    });
+    const readyDeadline = Date.now() + THUMBNAIL_READY_TIMEOUT_MS;
+    let previewStatus: string | null = null;
+    while (Date.now() < readyDeadline) {
+      previewStatus = await page.evaluate(
+        () =>
+          document
+            .querySelector("[data-gallery-preview-status]")
+            ?.getAttribute("data-gallery-preview-status") ?? null,
+      );
+      if (previewStatus === "ready") break;
+      if (previewStatus === "error") {
+        throw new Error("Generated gallery preview failed to compile.");
+      }
+      await page.waitForTimeout(THUMBNAIL_READY_POLL_INTERVAL_MS);
+    }
+    if (previewStatus !== "ready") {
+      throw new Error(
+        "Generated gallery preview did not become ready in time.",
+      );
+    }
     await page.waitForTimeout(1_000);
 
     return await page.screenshot({
