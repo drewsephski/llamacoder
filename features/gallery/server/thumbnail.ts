@@ -55,6 +55,7 @@ async function captureThumbnail(slug: string) {
       timeout: THUMBNAIL_READY_TIMEOUT_MS,
     });
     await page.waitForSelector('[data-gallery-preview-status="ready"]', {
+      state: "attached",
       timeout: THUMBNAIL_READY_TIMEOUT_MS,
     });
     await page.waitForTimeout(1_000);

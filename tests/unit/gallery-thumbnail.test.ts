@@ -91,7 +91,7 @@ describe("gallery thumbnail capture", () => {
     );
     expect(pageMock.waitForSelector).toHaveBeenCalledWith(
       '[data-gallery-preview-status="ready"]',
-      expect.objectContaining({ timeout: 45_000 }),
+      expect.objectContaining({ state: "attached", timeout: 45_000 }),
     );
     expect(s3SendMock).toHaveBeenCalledWith(
       expect.objectContaining({
