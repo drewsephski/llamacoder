@@ -131,8 +131,44 @@ export default async function GalleryPage({
           />
         </div>
 
+        {projects.length > 0 ? (
+          <section
+            className="mt-8"
+            aria-labelledby="community-projects-heading"
+          >
+            <div className="mb-5 border-b border-border pb-3">
+              <h2
+                id="community-projects-heading"
+                className="text-lg font-semibold tracking-tight"
+              >
+                Community projects
+              </h2>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project, index) => (
+                <GalleryProjectCard
+                  key={project.id}
+                  project={project}
+                  priority={index === 0}
+                />
+              ))}
+            </div>
+          </section>
+        ) : showcaseGames.length === 0 && showcaseLandings.length === 0 ? (
+          <div className="mt-16 border-y border-border py-20 text-center">
+            <h2 className="text-xl font-semibold">
+              No published projects yet.
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+              {parsed.q || parsed.remixable
+                ? "Try a different search or turn off the remixable filter."
+                : "Publish a generated app and it will appear here for the community to explore."}
+            </p>
+          </div>
+        ) : null}
+
         {showcaseGames.length > 0 && (
-          <section className="mt-8" aria-labelledby="squid-arcade-heading">
+          <section className="mt-12" aria-labelledby="squid-arcade-heading">
             <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -184,38 +220,6 @@ export default async function GalleryPage({
             </div>
           </section>
         )}
-
-        {projects.length > 0 ? (
-          <section
-            className="mt-12"
-            aria-labelledby="community-projects-heading"
-          >
-            <div className="mb-5 border-b border-border pb-3">
-              <h2
-                id="community-projects-heading"
-                className="text-lg font-semibold tracking-tight"
-              >
-                Community projects
-              </h2>
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {projects.map((project) => (
-                <GalleryProjectCard key={project.id} project={project} />
-              ))}
-            </div>
-          </section>
-        ) : showcaseGames.length === 0 && showcaseLandings.length === 0 ? (
-          <div className="mt-16 border-y border-border py-20 text-center">
-            <h2 className="text-xl font-semibold">
-              No published projects yet.
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-              {parsed.q || parsed.remixable
-                ? "Try a different search or turn off the remixable filter."
-                : "Publish a generated app and it will appear here for the community to explore."}
-            </p>
-          </div>
-        ) : null}
 
         {totalPages > 1 && (
           <nav

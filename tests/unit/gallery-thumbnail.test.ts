@@ -87,11 +87,11 @@ describe("gallery thumbnail capture", () => {
     });
     expect(pageMock.waitForSelector).toHaveBeenCalledWith(
       ".sp-preview-iframe",
-      expect.objectContaining({ timeout: 60_000 }),
+      expect.objectContaining({ timeout: 45_000 }),
     );
     expect(pageMock.waitForSelector).toHaveBeenCalledWith(
       '[data-gallery-preview-status="ready"]',
-      expect.objectContaining({ timeout: 60_000 }),
+      expect.objectContaining({ timeout: 45_000 }),
     );
     expect(s3SendMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -180,5 +180,27 @@ describe("gallery thumbnail capture", () => {
         orderBy: [{ thumbnailStatus: "desc" }, { publishedAt: "desc" }],
       }),
     );
+  });
+
+  it("captures claimed publications concurrently", async () => {
+    const secondJob = {
+      publicationId: "publication_2",
+      messageId: "message_2",
+      slug: "second-project-chat456",
+    };
+    prismaMock.galleryPublication.findMany.mockResolvedValueOnce([
+      { id: job.publicationId, messageId: job.messageId, slug: job.slug },
+      {
+        id: secondJob.publicationId,
+        messageId: secondJob.messageId,
+        slug: secondJob.slug,
+      },
+    ]);
+    prismaMock.galleryPublication.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await processGalleryThumbnailBatch({ limit: 2 });
+
+    expect(result).toEqual({ processed: 2, ready: 2, failed: 0 });
+    expect(pageMock.screenshot).toHaveBeenCalledTimes(2);
   });
 });

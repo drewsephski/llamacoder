@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -28,13 +28,14 @@ const project: GalleryProjectSummary = {
 };
 
 describe("GalleryProjectCard", () => {
-  afterEach(() => vi.useRealTimers());
-
-  it("renders the live preview fallback while no persisted image exists", () => {
+  it("renders a lightweight placeholder while the persisted image is pending", () => {
     const { container } = render(<GalleryProjectCard project={project} />);
 
-    expect(screen.getByText("Loading preview")).toBeInTheDocument();
-    expect(container.querySelector("iframe")).toBeInTheDocument();
+    expect(screen.getByText("Preparing preview")).toBeInTheDocument();
+    expect(container.querySelector("iframe")).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-gallery-thumbnail-status="pending"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders the persisted thumbnail when it is available", () => {
@@ -63,7 +64,7 @@ describe("GalleryProjectCard", () => {
     expect(container.querySelector("iframe")).not.toBeInTheDocument();
   });
 
-  it("falls back to the live preview when a persisted thumbnail cannot load", () => {
+  it("falls back to a lightweight failure state when an image cannot load", () => {
     const { container } = render(
       <GalleryProjectCard
         project={{
@@ -76,8 +77,8 @@ describe("GalleryProjectCard", () => {
 
     fireEvent.error(screen.getByAltText("Preview of Focus Day"));
 
-    expect(container.querySelector("iframe")).toBeInTheDocument();
-    expect(screen.getByText("Loading preview")).toBeInTheDocument();
+    expect(container.querySelector("iframe")).not.toBeInTheDocument();
+    expect(screen.getByText("Preview unavailable")).toBeInTheDocument();
   });
 
   it("only shows gallery management controls to the project owner", () => {
@@ -99,12 +100,14 @@ describe("GalleryProjectCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not leave the custom loading overlay stuck indefinitely", () => {
-    vi.useFakeTimers();
-    render(<GalleryProjectCard project={project} />);
+  it("renders a failure state without booting the live app", () => {
+    const { container } = render(
+      <GalleryProjectCard
+        project={{ ...project, thumbnailStatus: "failed" }}
+      />,
+    );
 
-    act(() => vi.advanceTimersByTime(15_000));
-
-    expect(screen.queryByText("Loading preview")).not.toBeInTheDocument();
+    expect(screen.getByText("Preview unavailable")).toBeInTheDocument();
+    expect(container.querySelector("iframe")).not.toBeInTheDocument();
   });
 });

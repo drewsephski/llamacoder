@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowRight,
-  Check,
-  Download,
-  ShoppingBag,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { ArrowRight, Check, ShoppingBag, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -155,17 +148,9 @@ export function ForSaleBanner() {
               : `Get this page for ${product.priceLabel}`}
           </Button>
 
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <Button asChild className="text-neutral-600" variant="ghost">
-              <a download href={product.assetHref}>
-                <Download className="size-4" />
-                Download preview asset
-              </a>
-            </Button>
-            <p className="flex items-center justify-center text-center text-xs leading-5 text-neutral-500">
-              Secure one-time checkout via Stripe
-            </p>
-          </div>
+          <p className="mt-2 text-center text-xs leading-5 text-neutral-500">
+            Secure one-time checkout via Stripe
+          </p>
 
           <p
             className="mt-2 min-h-5 text-center text-xs leading-5 text-neutral-500"

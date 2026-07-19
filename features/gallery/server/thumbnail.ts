@@ -9,7 +9,7 @@ import { getPrisma } from "@/lib/prisma";
 
 const THUMBNAIL_WIDTH = 1280;
 const THUMBNAIL_HEIGHT = 720;
-const THUMBNAIL_READY_TIMEOUT_MS = 60_000;
+const THUMBNAIL_READY_TIMEOUT_MS = 45_000;
 const MAX_STORED_ERROR_LENGTH = 500;
 
 export type GalleryThumbnailJob = {
@@ -136,7 +136,7 @@ export async function processGalleryThumbnailBatch({
 } = {}) {
   const prisma = getPrisma();
   const stalePendingCutoff = new Date(Date.now() - 5 * 60 * 1000);
-  const failedRetryCutoff = new Date(Date.now() - 60 * 60 * 1000);
+  const failedRetryCutoff = new Date(Date.now() - 15 * 60 * 1000);
   const publications = await prisma.galleryPublication.findMany({
     where: {
       isPublished: true,
@@ -161,7 +161,6 @@ export async function processGalleryThumbnailBatch({
     select: { id: true, messageId: true, slug: true },
   });
 
-  const results: ThumbnailResult[] = [];
   const claimedAt = new Date();
   const claims = await Promise.all(
     publications.map((publication) =>
@@ -197,15 +196,15 @@ export async function processGalleryThumbnailBatch({
   const claimedPublications = publications.filter(
     (_publication, index) => claims[index]?.count === 1,
   );
-  for (const publication of claimedPublications) {
-    results.push(
-      await captureAndPersistGalleryThumbnail({
+  const results = await Promise.all(
+    claimedPublications.map((publication) =>
+      captureAndPersistGalleryThumbnail({
         publicationId: publication.id,
         messageId: publication.messageId,
         slug: publication.slug,
       }),
-    );
-  }
+    ),
+  );
 
   return {
     processed: results.length,

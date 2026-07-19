@@ -8,8 +8,10 @@ import { GalleryProjectThumbnail } from "@/features/gallery/components/gallery-p
 
 export function GalleryProjectCard({
   project,
+  priority = false,
 }: {
   project: GalleryProjectSummary;
+  priority?: boolean;
 }) {
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-background transition-[border-color,box-shadow] duration-200 hover:border-foreground/15 hover:shadow-sm hover:shadow-foreground/[0.025]">
@@ -23,8 +25,10 @@ export function GalleryProjectCard({
         >
           <GalleryProjectThumbnail
             thumbnailUrl={project.thumbnailUrl}
+            thumbnailStatus={project.thumbnailStatus}
             slug={project.slug}
             title={project.title}
+            priority={priority}
           />
         </div>
 
