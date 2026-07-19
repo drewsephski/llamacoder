@@ -58,6 +58,9 @@ export default async function GalleryPage({
   const hasPendingThumbnails = projects.some(
     (project) => project.thumbnailStatus === "pending",
   );
+  const priorityThumbnailIndex = projects.findIndex(
+    (project) => project.thumbnailUrl !== null,
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -149,7 +152,7 @@ export default async function GalleryPage({
                 <GalleryProjectCard
                   key={project.id}
                   project={project}
-                  priority={index === 0}
+                  priority={index === priorityThumbnailIndex}
                 />
               ))}
             </div>
