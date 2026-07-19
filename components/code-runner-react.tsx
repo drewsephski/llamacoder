@@ -13,6 +13,7 @@ import type { RuntimeVerificationReport } from "@/features/generation/runtime-ve
 
 const PREVIEW_INSPECTOR_SOURCE = "squid-preview-inspector";
 const PREVIEW_PARENT_SOURCE = "squid-preview-parent";
+const PREVIEW_HANDSHAKE_TIMEOUT_MS = 60_000;
 
 export default function ReactCodeRunner({
   files,
@@ -78,6 +79,7 @@ function PreviewHealthReporter({
   const latchedErrorRef = useRef<string | null>(null);
 
   useEffect(() => {
+    let retryTimer: number | undefined;
     const onMessage = (event: MessageEvent) => {
       const iframe = getPreviewIframe();
       if (
@@ -89,6 +91,11 @@ function PreviewHealthReporter({
       }
 
       setIsPreviewReady(true);
+      if (retryTimer !== undefined) window.clearInterval(retryTimer);
+      iframe?.contentWindow?.postMessage(
+        { source: PREVIEW_PARENT_SOURCE, type: "ready-ack" },
+        "*",
+      );
     };
     const pingPreview = () => {
       getPreviewIframe()?.contentWindow?.postMessage(
@@ -99,10 +106,10 @@ function PreviewHealthReporter({
 
     window.addEventListener("message", onMessage);
     pingPreview();
-    const retryTimer = window.setInterval(pingPreview, 250);
+    retryTimer = window.setInterval(pingPreview, 250);
     const stopRetryTimer = window.setTimeout(
       () => window.clearInterval(retryTimer),
-      5000,
+      PREVIEW_HANDSHAKE_TIMEOUT_MS,
     );
 
     return () => {

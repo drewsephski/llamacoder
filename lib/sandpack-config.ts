@@ -280,10 +280,12 @@ import { useEffect } from "react";
 
 const PREVIEW_SOURCE = "squid-preview-inspector";
 const PARENT_SOURCE = "squid-preview-parent";
+const READY_ANNOUNCEMENT_TIMEOUT_MS = 60_000;
 
 export function SquidPreviewInspector() {
   useEffect(() => {
     let selectionMode = false;
+    let readyAnnouncementTimer: number | undefined;
 
     function ensureSelectionStyles() {
       if (document.getElementById("squid-preview-selection-style")) return;
@@ -456,6 +458,10 @@ export function SquidPreviewInspector() {
         postReady();
       }
 
+      if (message.type === "ready-ack" && readyAnnouncementTimer !== undefined) {
+        window.clearInterval(readyAnnouncementTimer);
+      }
+
       if (message.type === "run-runtime-test") {
         runRuntimeTest(Number(message.requestId) || 0);
       }
@@ -482,10 +488,17 @@ export function SquidPreviewInspector() {
     window.addEventListener("click", onClick, true);
     ensureSelectionStyles();
     postReady();
+    readyAnnouncementTimer = window.setInterval(postReady, 500);
+    const stopReadyAnnouncementTimer = window.setTimeout(
+      () => window.clearInterval(readyAnnouncementTimer),
+      READY_ANNOUNCEMENT_TIMEOUT_MS,
+    );
 
     return () => {
       window.removeEventListener("message", onMessage);
       window.removeEventListener("click", onClick, true);
+      window.clearInterval(readyAnnouncementTimer);
+      window.clearTimeout(stopReadyAnnouncementTimer);
       document.body?.classList.remove("squid-preview-selecting");
     };
   }, []);

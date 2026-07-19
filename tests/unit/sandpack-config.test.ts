@@ -56,6 +56,23 @@ export default function App() {
     ).toEqual([]);
   });
 
+  it("keeps announcing readiness for previews that compile slowly", () => {
+    const config = getSandpackConfig([
+      {
+        path: "App.tsx",
+        content: "export default function App() { return <main>Hello</main>; }",
+      },
+    ]);
+    const inspector = config.files["/squid-preview-inspector.tsx"] as string;
+
+    expect(inspector).toContain("const READY_ANNOUNCEMENT_TIMEOUT_MS = 60_000");
+    expect(inspector).toContain(
+      "readyAnnouncementTimer = window.setInterval(postReady, 500)",
+    );
+    expect(inspector).toContain('message.type === "ready-ack"');
+    expect(inspector).toContain("window.clearInterval(readyAnnouncementTimer)");
+  });
+
   it("keeps dialog and form primitives on theme-aware semantic pairs", () => {
     const config = getSandpackConfig([
       {
