@@ -3235,10 +3235,6 @@ function HomepageLandingPagesSection() {
                   className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-80"
                   aria-hidden="true"
                 />
-                <span className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/35 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
-                  Open landing page
-                  <ArrowRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                </span>
               </div>
 
               <div className="pt-5">
@@ -3249,10 +3245,13 @@ function HomepageLandingPagesSection() {
                   <h3 className="text-xl font-semibold tracking-tight text-foreground">
                     {landing.name}
                   </h3>
-                  <ArrowRightIcon
-                    className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1"
+                  <span
+                    className="relative mt-1 h-5 w-14 shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground motion-reduce:transition-none"
                     aria-hidden="true"
-                  />
+                  >
+                    <span className="absolute right-0 top-1/2 h-px w-8 -translate-y-1/2 bg-current transition-[width,height] duration-300 ease-out group-hover:h-0.5 group-hover:w-12 motion-reduce:transition-none" />
+                    <span className="absolute right-0 top-1/2 size-2 -translate-y-1/2 rotate-45 border-r border-t border-current transition-[width,height,border-width] duration-300 ease-out group-hover:size-2.5 group-hover:border-r-2 group-hover:border-t-2 motion-reduce:transition-none" />
+                  </span>
                 </div>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
                   {landing.description}

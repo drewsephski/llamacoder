@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import PlausibleProvider from "next-plausible";
 import { DM_Sans } from "next/font/google";
+
+import { ForSaleBanner } from "@/features/for-sale/components/for-sale-banner";
+
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -83,6 +86,7 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground antialiased">
         {children}
+        <ForSaleBanner />
       </body>
     </html>
   );
