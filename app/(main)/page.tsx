@@ -3246,11 +3246,11 @@ function HomepageLandingPagesSection() {
                     {landing.name}
                   </h3>
                   <span
-                    className="relative mt-1 h-5 w-14 shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground motion-reduce:transition-none"
+                    className="relative mr-2 mt-1 h-5 w-14 shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground motion-reduce:transition-none"
                     aria-hidden="true"
                   >
-                    <span className="absolute right-0 top-1/2 h-px w-8 -translate-y-1/2 bg-current transition-[width,height] duration-300 ease-out group-hover:h-0.5 group-hover:w-12 motion-reduce:transition-none" />
-                    <span className="absolute right-0 top-1/2 size-2 -translate-y-1/2 rotate-45 border-r border-t border-current transition-[width,height,border-width] duration-300 ease-out group-hover:size-2.5 group-hover:border-r-2 group-hover:border-t-2 motion-reduce:transition-none" />
+                    <span className="absolute left-0 top-1/2 h-px w-8 -translate-y-1/2 bg-current transition-[width,height] duration-300 ease-out group-hover:h-0.5 group-hover:w-12 motion-reduce:transition-none" />
+                    <span className="absolute left-6 top-1/2 size-2 -translate-y-1/2 rotate-45 border-r border-t border-current transition-[left,width,height,border-width] duration-300 ease-out group-hover:left-[2.625rem] group-hover:size-2.5 group-hover:border-r-2 group-hover:border-t-2 motion-reduce:transition-none" />
                   </span>
                 </div>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
