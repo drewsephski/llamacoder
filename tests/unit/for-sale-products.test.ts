@@ -16,6 +16,15 @@ describe("getForSaleProduct", () => {
     );
   });
 
+  it("covers every curated homepage landing route", () => {
+    expect(getForSaleProduct("/mindloop")?.priceId).toBe(
+      "price_1Tv1CZRWYMzP8fBmVS6CYKYC",
+    );
+    expect(getForSaleProduct("/sentinel")?.priceId).toBe(
+      "price_1Tv1CYRWYMzP8fBmpvDe3Pjn",
+    );
+  });
+
   it("uses the parent showcase product on preview routes", () => {
     expect(getForSaleProduct("/gallery/cinder-studio/preview")?.assetHref).toBe(
       "/showcase/cinder-studio.webp",

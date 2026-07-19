@@ -8,7 +8,7 @@ import { getLanguageOfFile } from "@/lib/utils";
 
 type BundleFile = { path: string; content: string | Buffer };
 const sourceExtensions = [".ts", ".tsx", ".js", ".jsx", ".css", ".json"];
-const importPattern = /(?:from\s*|import\s*)["']([^"']+)["']/g;
+const importPattern = /(?:from\s*|import\s*(?:\(\s*)?)["']([^"']+)["']/g;
 const cssImportPattern = /@import\s+(?:url\()?['"]([^'"]+)['"]/g;
 const publicAssetPattern =
   /["'(]((?:\/[A-Za-z0-9_@.,+~%\-/]+)\.(?:png|jpe?g|webp|svg|gif|avif|mp4|webm|woff2?|ttf|otf))["')]/gi;

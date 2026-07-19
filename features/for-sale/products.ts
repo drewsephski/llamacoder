@@ -86,6 +86,18 @@ const products = [
     entryFile: "app/mentality/page.tsx",
   },
   {
+    key: "mindloop",
+    route: "/mindloop",
+    name: "Mindloop",
+    description:
+      "A luminous editorial landing page for meaningful content and thoughtful communities.",
+    assetHref: "/showcase/mindloop-hero.png",
+    assetLabel: "Mindloop preview",
+    priceLabel: "$99",
+    priceId: "price_1Tv1CZRWYMzP8fBmVS6CYKYC",
+    entryFile: "app/(main)/mindloop/page.tsx",
+  },
+  {
     key: "questly",
     route: "/questly",
     name: "Questly",
@@ -118,6 +130,18 @@ const products = [
     priceLabel: "$99",
     priceId: "price_1Tv0Q1RWYMzP8fBm53yiWLAV",
     entryFile: "app/skyelite/page.tsx",
+  },
+  {
+    key: "sentinel",
+    route: "/sentinel",
+    name: "Sentinel AI",
+    description:
+      "A high-contrast security landing page with interactive 3D visuals and precise technical styling.",
+    assetHref: "/showcase/sentinel-hero.png",
+    assetLabel: "Sentinel AI preview",
+    priceLabel: "$129",
+    priceId: "price_1Tv1CYRWYMzP8fBmpvDe3Pjn",
+    entryFile: "app/sentinel/page.tsx",
   },
   {
     key: "terraelix",
