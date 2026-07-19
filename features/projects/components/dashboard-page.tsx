@@ -1,6 +1,7 @@
 import { renameProject } from "@/features/projects/server/actions";
 import { ProjectCardActions } from "@/features/projects/components/project-card-actions";
 import { UpgradeBanner } from "@/features/billing/components/upgrade-banner";
+import { StripeCheckoutButton } from "@/features/billing/components/stripe-checkout-button";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { CREDIT_PACKS, FREE_PROJECT_LIMIT } from "@/lib/billing";
 import Link from "next/link";
@@ -601,12 +602,12 @@ export async function DashboardPage({
                   Included in Pro Plus
                 </Button>
               ) : (
-                <form action="/api/stripe/checkout" method="POST">
-                  <input type="hidden" name="plan" value="pro" />
-                  <Button type="submit" className="w-full">
-                    Upgrade to Pro
-                  </Button>
-                </form>
+                <StripeCheckoutButton
+                  checkout={{ plan: "pro" }}
+                  className="w-full"
+                >
+                  Upgrade to Pro
+                </StripeCheckoutButton>
               )}
             </div>
 
@@ -651,14 +652,15 @@ export async function DashboardPage({
                   Current Plan
                 </Button>
               ) : (
-                <form action="/api/stripe/checkout" method="POST">
-                  <input type="hidden" name="plan" value="pro_plus" />
-                  <Button type="submit" variant="outline" className="w-full">
-                    {currentTier === "pro"
-                      ? "Upgrade to Pro Plus"
-                      : "Get Pro Plus"}
-                  </Button>
-                </form>
+                <StripeCheckoutButton
+                  checkout={{ plan: "pro_plus" }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {currentTier === "pro"
+                    ? "Upgrade to Pro Plus"
+                    : "Get Pro Plus"}
+                </StripeCheckoutButton>
               )}
             </div>
           </div>
@@ -718,16 +720,13 @@ export async function DashboardPage({
                       <span>No subscription required</span>
                     </li>
                   </ul>
-                  <form action="/api/stripe/credits-checkout" method="POST">
-                    <input type="hidden" name="pack" value={key} />
-                    <Button
-                      type="submit"
-                      variant={isPopular ? "default" : "outline"}
-                      className="w-full"
-                    >
-                      Buy Credits
-                    </Button>
-                  </form>
+                  <StripeCheckoutButton
+                    checkout={{ pack: key }}
+                    variant={isPopular ? "default" : "outline"}
+                    className="w-full"
+                  >
+                    Buy Credits
+                  </StripeCheckoutButton>
                 </div>
               );
             })}

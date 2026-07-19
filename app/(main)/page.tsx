@@ -1766,39 +1766,12 @@ export default function Home() {
                   Ship React code you own.
                 </span>
               </p>
-
-              <ul
-                className="animate-fade-up-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-1 text-xs font-medium text-muted-foreground sm:gap-x-6"
-                aria-label="Squid Agent product guarantees"
-              >
-                <li className="flex items-center gap-1.5">
-                  <ShieldCheck
-                    className="size-3.5 text-blue-500"
-                    aria-hidden="true"
-                  />
-                  Verified builds
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Box
-                    className="size-3.5 text-blue-500"
-                    aria-hidden="true"
-                  />
-                  Portable source
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Coins
-                    className="size-3.5 text-blue-500"
-                    aria-hidden="true"
-                  />
-                  Transparent credits
-                </li>
-              </ul>
             </div>
 
             {/* Main form */}
             <form
               id="builder"
-              className="animate-fade-up-3 relative w-full max-w-2xl pt-5 sm:pt-7 lg:pt-10"
+              className="animate-fade-up-3 relative w-full max-w-2xl pt-6 sm:pt-8 lg:pt-12"
               action={async (formData) => {
                 setIsCheckingEligibility(true);
                 const currentModel = (formData.get("model") as string) || model;
