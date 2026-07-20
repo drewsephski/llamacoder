@@ -433,14 +433,6 @@ function classifyResearch(content: string): {
     };
   }
 
-  if (matchesAny(content, EXTERNAL_REFERENCE_PATTERNS)) {
-    return {
-      reason: "external-facts",
-      freshness: "evergreen",
-      explicitlyRequested: false,
-    };
-  }
-
   return null;
 }
 

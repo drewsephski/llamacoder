@@ -84,9 +84,7 @@ GET https://api.example.com/v2/flights — returns current flights.`;
       "site:squidagent.app https://squidagent.app/ homepage design layout typography colors sections interactions",
     );
     expect(detectResearchIntent([{ content }])).toMatchObject({
-      candidate: true,
-      reason: "external-facts",
-      query: expect.stringMatching(/^site:squidagent\.app\b/),
+      candidate: false,
     });
   });
 
