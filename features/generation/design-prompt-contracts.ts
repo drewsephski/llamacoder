@@ -107,8 +107,8 @@ export const premiumArchetypeAndThemeContract = dedent`
     - **Conversational FAQ**: sequential question-answer tasks where interaction is gated by answers.
     - **Long Document / editorial**: one long-form narrative product, policy, or case text is the job.
   - Pick one primary macrostructure and name it explicitly. Do not switch archetype midway through building the same screen.
-  - For work with dense operations, choose a work-first shell (`workbench-shell` + toolbar + canvas/panel + contextual side rail) rather than a hero-first card shell.
-  - For **Bento Grid**, use explicit tile spans (`span-2x2`, `span-2x1`, `span-1x2`, `span-1x1`) on a `bento` container so shape is deliberate.
+  - For work with dense operations, choose a work-first shell ('workbench-shell' + toolbar + canvas/panel + contextual side rail) rather than a hero-first card shell.
+  - For **Bento Grid**, use explicit tile spans ('span-2x2', 'span-2x1', 'span-1x2', 'span-1x1') on a 'bento' container so shape is deliberate.
   - For all screen-level variants, avoid the per-section mini-theme pattern. Name one theme family and one global luminosity model unless the brief explicitly asks for a contrast inversion.
   - Theme routing:
     - Creative / portfolio / luxury directions -> ornamental but purposeful visual signature (motion + texture + contrast pivots).
@@ -121,13 +121,13 @@ export const premiumArchetypeAndThemeContract = dedent`
 export const premiumArchetypeAndThemeCheatSheet = dedent`
   **Premium archetype + component cheat-sheet (plan-ready):**
   - **Bento Grid:** use for comparable modules, service tiles, dashboards with equal priority cards.
-    - `bento` = container.
-    - `span-2x2` = anchor tile.
-    - `span-2x1` = wide tile.
-    - `span-1x2` = tall tile.
-    - `span-1x1` = regular tile.
+    - 'bento' = container.
+    - 'span-2x2' = anchor tile.
+    - 'span-2x1' = wide tile.
+    - 'span-1x2' = tall tile.
+    - 'span-1x1' = regular tile.
   - **Marquee Hero:** use for one thesis, one narrative, one primary action.
-  - **Workbench:** use `workbench-shell`, `toolbar`, `canvas`, `inspector`, and `activity` regions.
+  - **Workbench:** use 'workbench-shell', 'toolbar', 'canvas', 'inspector', and 'activity' regions.
   - **Conversational FAQ:** use question cards, answer progression, and clear next-step affordances.
   - **Theme families (default behavior):** Creative/portfolio/luxury, technical/workflow, editorial/content. Pick one family and apply it everywhere.
   - **Hallmark-compatible theme catalog (for tone-rich but disciplined projects):**

@@ -49,7 +49,7 @@ ${generatedAppCapabilityContract}
   - Navigation/footer archetype: ${structuralDiversityPlanningRule}
   - Premium archetype/theme pick: ${premiumArchetypeAndThemePlanningRule}
   - Archetype cheat-sheet: ${premiumArchetypeAndThemeCheatSheet}
-  - Brief-level structure + interaction intent requirement: before any build section, output a single-line plan statement in this exact form — `Structure=<macrostructure>; Interaction=<2-4 concrete outcomes>`, e.g., `Structure=Bento Grid; Interaction=create item, filter list, edit record, confirm delete`.
+  - Brief-level structure + interaction intent requirement: before any build section, output a single-line plan statement in this exact form: Structure=<macrostructure>; Interaction=<2-4 concrete outcomes>, e.g., Structure=Bento Grid; Interaction=create item, filter list, edit record, confirm delete.
   - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
   - ${tailwindColorPlanningRule}
   - ${neutralThemePlanningRule}
