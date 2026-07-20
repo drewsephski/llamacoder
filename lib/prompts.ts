@@ -16,6 +16,8 @@ import {
   visualSystemCoherenceContract,
   visualSystemPlanningRule,
 } from "@/features/generation/design-prompt-contracts";
+import type { DesignScoreSummary } from "@/features/generation/design-quality-scoring";
+import { buildDesignEmphasis } from "@/features/generation/design-quality-scoring";
 import shadcnDocs from "./shadcn-docs";
 
 export const softwareArchitectPrompt = dedent`
@@ -71,7 +73,13 @@ Describe the attached screenshot in detail. I will send what you give me to a de
 - Use the exact text from the screenshot.
 `;
 
-export function getMainCodingPrompt() {
+export function getMainCodingPrompt(options?: {
+  designScoreSummary?: DesignScoreSummary | null;
+}) {
+  const designEmphasis = buildDesignEmphasis(
+    options?.designScoreSummary ?? null,
+  );
+
   let systemPrompt = `
   # SquidAgent
 
@@ -293,6 +301,7 @@ export function getMainCodingPrompt() {
   17. Did you trace every visible control to a real handler or valid destination and exercise the primary, cancel, invalid, success, and error paths with visible state changes?
   18. If a theme control exists, does it persist preference, update the root HTML dark class and color-scheme, expose its current state accessibly, and visibly theme every surface including dialogs and toasts?
   19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?
+  ${designEmphasis ? `\n${designEmphasis}\n` : ""}
   `;
 
   return dedent(systemPrompt);

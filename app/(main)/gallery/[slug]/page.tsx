@@ -66,7 +66,7 @@ export default async function GalleryProjectPage({
       <SharePageClient
         messageId={publication.messageId}
         title={publication.title}
-        prompt={publication.chat.prompt}
+        prompt={publication.description}
         creatorName={publication.user.name ?? "Squid creator"}
         files={files.map((file) => ({
           path: file.path,

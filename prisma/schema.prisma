@@ -62,6 +62,7 @@ model Message {
   changeSummary        String?
   versionKind          String?
   versionLabel         String?
+  designScores         Json?
   isBookmarked         Boolean               @default(false)
   createdAt            DateTime              @default(now())
   chat                 Chat                  @relation(fields: [chatId], references: [id], onDelete: Cascade)

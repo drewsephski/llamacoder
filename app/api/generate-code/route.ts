@@ -34,6 +34,8 @@ import { recoverStaleGenerationLocks } from "@/lib/generation-recovery";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
+import { extractDesignScores } from "@/features/generation/design-quality-scoring";
+import { auditContrast } from "@/features/generation/contrast-audit";
 
 class CreditConsumptionError extends Error {
   constructor(
@@ -139,6 +141,19 @@ export async function POST(request: NextRequest) {
     }
     activeChatId = chat.id;
 
+    // Fetch previous assistant messages with design scores for dynamic emphasis
+    const previousMessages = await prisma.message.findMany({
+      where: { chatId: chat.id, role: "assistant" },
+      select: { designScores: true },
+      orderBy: { position: "desc" },
+      take: 3,
+    });
+    const latestDesignScores = previousMessages.find(
+      (m) => m.designScores !== null,
+    )?.designScores as
+      | import("@/features/generation/design-quality-scoring").DesignScoreSummary
+      | null;
+
     const generationStart = await prisma.chat.updateMany({
       where: {
         id: chat.id,
@@ -222,7 +237,7 @@ export async function POST(request: NextRequest) {
           chat.model,
           chat.quality === "high" ? "high" : "low",
         ),
-        system: getMainCodingPrompt(),
+        system: getMainCodingPrompt({ designScoreSummary: latestDesignScores }),
         messages: [
           {
             role: "user",
@@ -368,6 +383,10 @@ export async function POST(request: NextRequest) {
       files: generatedFiles,
     });
 
+    // Run contrast audit and extract design scores
+    const contrastViolations = auditContrast(generatedFiles);
+    const designScores = extractDesignScores(generatedText);
+
     const message = await prisma.$transaction(async (tx) => {
       const createdMessage = await tx.message.create({
         data: {
@@ -378,6 +397,9 @@ export async function POST(request: NextRequest) {
             : null,
           chatId: chat.id,
           position: 2,
+          designScores: designScores
+            ? JSON.parse(JSON.stringify(designScores))
+            : null,
         },
       });
 

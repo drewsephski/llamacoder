@@ -53,6 +53,7 @@ function message(overrides: Partial<ProjectMessage> = {}): ProjectMessage {
     changeSummary: "Built dashboard",
     versionKind: "generation",
     versionLabel: null,
+    designScores: null,
     isBookmarked: false,
     generationReceipt: {
       estimatedCredits: 3,

@@ -828,7 +828,7 @@ export default function App() { return <button>Latest results</button>; }
     ).toBe(false);
   });
 
-  it("researches an exact API documentation link before generating code", async () => {
+  it("skips redundant web search when the prompt already contains a documentation URL", async () => {
     const documentationUrl = "https://developer.example.com/api/v3/docs";
     const content = `Build a flight tracker using the API at ${documentationUrl}`;
     prismaMock.message.findUnique.mockResolvedValueOnce(
@@ -847,22 +847,20 @@ export default function App() { return <button>Latest results</button>; }
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
-    loadChatUrlContentMock.mockRejectedValueOnce(new Error("Exa unavailable"));
-    mockResearch(
-      [
+    loadChatUrlContentMock.mockResolvedValueOnce({
+      configured: true,
+      requestedUrls: [documentationUrl],
+      pages: [
         {
-          id: "search_api_docs",
-          results: [
-            {
-              url: documentationUrl,
-              title: "Example API v3",
-              highlights: ["GET /flights returns flight status records."],
-            },
-          ],
+          requestedUrl: documentationUrl,
+          url: documentationUrl,
+          title: "Example API v3",
+          publishedDate: null,
+          text: "GET /flights returns live flight status records.",
         },
       ],
-      "research_api_docs",
-    );
+      rejectedUrls: [],
+    });
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
@@ -870,14 +868,8 @@ export default function App() { return <button>Latest results</button>; }
     );
     await collectUIChunks(response);
 
-    const researchCall = streamTextMock.mock.calls[0][0];
-    expect(researchCall.prompt).toContain(documentationUrl);
-    expect(researchCall.system).toContain(
-      "inspect that exact page first and treat it as the primary source",
-    );
-    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
-      "GET /flights returns flight status records.",
-    );
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(exaSearchMock).not.toHaveBeenCalled();
   });
 
   it("reads a URL typed in chat with Exa Contents and injects it without redundant search", async () => {

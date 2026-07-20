@@ -1156,6 +1156,7 @@ export async function POST(req: Request) {
             );
           const researchCandidate =
             !isFreeRepairRequest &&
+            chatUrls.length === 0 &&
             (searchApproved ||
               (searchApproval?.approved !== false &&
                 ((researchIntent.candidate &&
