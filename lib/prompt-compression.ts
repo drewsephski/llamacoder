@@ -111,14 +111,14 @@ export function getCompressedCodingPrompt(): string {
 
   Build the actual product surface first. Ground the design in the subject. Choose a clear tone (editorial, brutalist, soft, utilitarian, luxury, playful, technical, austere).
 
-  Before coding, output a one-line plan declaration: `Structure=<macrostructure>; Interaction=<2-4 outcomes>`.
+  Before coding, output a one-line plan declaration: Structure=<macrostructure>; Interaction=<2-4 outcomes>.
 
   Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Pick deliberate nav and footer archetypes.
   Archetype dispatch:
   - Many equally important features/entry points (6+ tiles/modules): choose a Bento Grid layout.
   - Single thesis or statement-first product story: choose Marquee Hero.
   - Tool-like, control-first workflows: choose Workbench/command + panel composition.
-  - For Bento Grid use explicit tile role classes (`bento`, `span-2x2`, `span-2x1`, `span-1x2`, `span-1x1`) so span logic is visible and intentional.
+  - For Bento Grid use explicit tile role classes ('bento', 'span-2x2', 'span-2x1', 'span-1x2', 'span-1x1') so span logic is visible and intentional.
   - Pick one theme family for the whole screen and keep one global surface tone. Avoid per-section theme shifts.
 
   Spend boldness in one signature element. Keep the rest disciplined.
