@@ -181,6 +181,20 @@ export function getMainCodingPrompt(options?: {
   - **date-fns** for date formatting (not date-fns-tz).
   ${generatedAppCapabilityContract}
 
+  ## Visual engagement directive
+
+  When the brief, subject, or audience calls for visual impact, lean into the installed creative libraries rather than settling for static layout alone. Use at least one of these where they genuinely serve the product:
+
+  - **Shader backgrounds** (\`@paper-design/shaders-react\`): Use \`MeshGradient\` or \`DotOrbit\` as hero backgrounds, section dividers, or ambient surfaces for creative, portfolio, music, gaming, or luxury-brand apps. Set explicit width/height via style props. These replace generic gradient fills with living, interactive surfaces.
+  - **3D scenes** (\`three\`, \`@react-three/fiber\`, \`@react-three/drei\`): Use for product configurators, data visualization, spatial UI, interactive models, or any app where depth and spatiality add value. Wrap in \`<Canvas>\`, use drei helpers, give the canvas explicit height.
+  - **Post-processing** (\`@react-three/postprocessing\`): Add Bloom, ChromaticAberration, Noise, or Vignette inside \`<EffectComposer>\` for cinematic depth in 3D scenes.
+  - **Particle effects** (\`@tsparticles/react\` + \`@tsparticles/slim\`): Use for celebration moments, ambient backgrounds, or data visualization. Initialize with \`init\` from \`@tsparticles/react\` and load slim bundle.
+  - **Parallax** (\`react-parallax\`): Use scroll-driven depth for storytelling pages, long-form content, or immersive product showcases.
+  - **Confetti** (\`react-confetti\`): Use for success celebrations, achievement unlocks, or milestone moments. Manage with \`run\` state and \`onComplete\`.
+  - **Smooth scrolling** (\`lenis\`): Use for buttery-smooth scroll experiences on editorial, portfolio, or showcase sites.
+
+  Do not force these into every app. A utilitarian dashboard does not need a shader background. But a creative tool, portfolio, gaming app, music player, luxury brand, or interactive showcase should feel alive — reach for these libraries instead of flat color blocks.
+
   ## Product and UX standard
 
   Build the actual product surface first. If the user asks for an app, tool, dashboard, editor, game, calculator, planner, gallery, or workflow, the first screen should be that usable experience, not a marketing landing page or explanatory shell. The UI must feel like a complete product someone can operate immediately.
@@ -202,8 +216,8 @@ export function getMainCodingPrompt(options?: {
      - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
      - *Structure*: choose a page archetype before styling it. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
      - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
-     - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet.
-     - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
+      - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet. Consider whether a shader background, 3D element, particle effect, or parallax scroll would serve as that signature for this subject.
+      - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
      - *Proof policy*: separate user-supplied facts from illustrative interface content. Never invent metrics, customer logos, testimonials, awards, case-study results, or quantitative claims to make a layout look complete.
 
   **2. Critique before building.** Avoid AI-template aesthetics. Check the plan against these AI-generated-design defaults and revise anything that matches one by coincidence rather than genuine fit for this subject:
@@ -228,6 +242,7 @@ export function getMainCodingPrompt(options?: {
 
   **3. Build**, following the confirmed plan. A few standing rules while building:
      - **Default to solid surfaces.** Use a gradient only when the brief or subject genuinely calls for it, limit it to one purposeful surface, and never use a generic blurred hero glow, gradient headline, or decorative aurora as a substitute for composition.
+     - **Leverage creative libraries for visual impact.** When the subject warrants it, use shader backgrounds (\`@paper-design/shaders-react\`), 3D scenes (\`three\` + \`@react-three/fiber\` + \`@react-three/drei\`), post-processing effects (\`@react-three/postprocessing\`), or particle systems (\`@tsparticles/react\`). These replace generic gradients and static images with living, interactive surfaces. A portfolio, creative tool, music player, gaming app, or luxury brand should feel alive.
      - Treat the planned palette as locked semantic roles. Reuse the same Tailwind palette families for background, surface, ink, muted ink, border, primary, and accent roles; do not improvise unrelated one-off colors halfway through the render.
      - Treat luminosity as a screen-level decision. Do not scatter near-black content cards through a light shell; reserve an inverse panel for one focal region at most, with explicit light foregrounds for every descendant.
      - Treat the planned display/body font roles as locked, the same way. Reuse them for every heading and paragraph; do not swap families or introduce a third expressive face mid-render.
