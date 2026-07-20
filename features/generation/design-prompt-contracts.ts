@@ -98,6 +98,46 @@ export const structuralDiversityContract = dedent`
 export const structuralDiversityPlanningRule =
   "Structural diversity: name a nav archetype and a footer archetype (or an explicit, justified absence of a footer) as deliberate choices tied to the information architecture, avoiding the generic wordmark+links+button nav and four-column footer defaults unless the brief genuinely has that many destinations, and varying structure from the immediately preceding app generated in this session.";
 
+export const premiumArchetypeAndThemeContract = dedent`
+  **Premium archetype and theme contract (mandatory):**
+  - Use this dispatch model before choosing layout:
+    - **Bento Grid**: multiple comparable actions/features/modules (usually 6+) with at least 2 valid entry paths.
+    - **Marquee Hero**: one clear thesis or promise-first goal with one featured action.
+    - **Workbench / split-workspace**: tool-like, state-heavy, command-driven, create/edit/apply/delete workflows.
+    - **Conversational FAQ**: sequential question-answer tasks where interaction is gated by answers.
+    - **Long Document / editorial**: one long-form narrative product, policy, or case text is the job.
+  - Pick one primary macrostructure and name it explicitly. Do not switch archetype midway through building the same screen.
+  - For work with dense operations, choose a work-first shell (`workbench-shell` + toolbar + canvas/panel + contextual side rail) rather than a hero-first card shell.
+  - For **Bento Grid**, use explicit tile spans (`span-2x2`, `span-2x1`, `span-1x2`, `span-1x1`) on a `bento` container so shape is deliberate.
+  - For all screen-level variants, avoid the per-section mini-theme pattern. Name one theme family and one global luminosity model unless the brief explicitly asks for a contrast inversion.
+  - Theme routing:
+    - Creative / portfolio / luxury directions -> ornamental but purposeful visual signature (motion + texture + contrast pivots).
+    - Technical / data-heavy / workflows -> utilitarian minimal, high-legibility tones with restrained ornamentation.
+    - Editorial / content-led -> rhythm-first hierarchy and low-motion polish.
+  - If the user explicitly states a tone, lock it. If silent, infer one stable tone from subject and audience.
+  - Reject multi-theme surfaces. One screen should have one primary theme family and one consistent surface map.
+`;
+
+export const premiumArchetypeAndThemeCheatSheet = dedent`
+  **Premium archetype + component cheat-sheet (plan-ready):**
+  - **Bento Grid:** use for comparable modules, service tiles, dashboards with equal priority cards.
+    - `bento` = container.
+    - `span-2x2` = anchor tile.
+    - `span-2x1` = wide tile.
+    - `span-1x2` = tall tile.
+    - `span-1x1` = regular tile.
+  - **Marquee Hero:** use for one thesis, one narrative, one primary action.
+  - **Workbench:** use `workbench-shell`, `toolbar`, `canvas`, `inspector`, and `activity` regions.
+  - **Conversational FAQ:** use question cards, answer progression, and clear next-step affordances.
+  - **Theme families (default behavior):** Creative/portfolio/luxury, technical/workflow, editorial/content. Pick one family and apply it everywhere.
+  - **Hallmark-compatible theme catalog (for tone-rich but disciplined projects):**
+    Specimen, Atelier, Brutal, Newsprint, Studio, Manifesto, Terminal, Midnight, Almanac, Garden, Riso, Sport, Bloom, Coral, Cobalt, Aurora, Editorial, Carnival, Lumen, Hum.
+    Use one family unless the brief explicitly requests custom tone work; never split theme families in one screen.
+`;
+
+export const premiumArchetypeAndThemePlanningRule =
+  "Pick the primary archetype from intent: single-thesis screen = Marquee Hero; multiple entry points / modules = Bento Grid; tool/flow-centric = Workbench; content/docs with question path = Conversational FAQ. State the exact archetype and interaction intent before writing sections; declare 2–4 required user outcomes (create/edit/submit/update/filter/confirm etc.). Commit to one theme family and one luminosity model for the screen unless user explicitly requests change; do not create per-section mini-themes.";
+
 /**
  * Functional interaction contract.
  *

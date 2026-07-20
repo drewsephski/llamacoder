@@ -540,18 +540,18 @@ kbd { font-family: var(--font-mono); font-size: var(--text-xs); }
 export const relay: ShowcaseLanding = {
   id: "showcase-landing-relay",
   slug: "relay-release-evidence",
-  title: "Relay",
+  title: "Relay — Release Workbench",
   description:
-    "A precise release-evidence workspace that leads with a working product surface, live policy context, and an accessible command menu.",
+    "A premium engineering landing for a release workbench that places verification, policy, and decision context into one trustworthy review surface.",
   prompt:
-    "Build a premium responsive landing page for a fictional developer tool called Relay, a release-evidence workspace that keeps code changes, policy decisions, and verification notes in one reviewable record. Use a modern-minimal Cobalt art direction: cool engineered near-white paper, electric cobalt as the only signal accent, a condensed system-sans display, neutral system body, local system-mono labels, ruler-drawn hairlines, tight radii, and one graphite verification band. Structure the page as a Workbench guided by real product surfaces—not a hero plus three feature cards. Include a dense three-section navigation, a fully functional accessible command search with Cmd/Ctrl+K, Esc, arrow navigation, focus management, and filtering; an interactive changed-file surface where selecting a file swaps its diff and evidence note; a three-stage evidence walkthrough; a sample check action with staggered loading and success states and a real elapsed-time readout; a sticky CTA; and a single-line footer. Do not use fake browser chrome, gradients, stock imagery, fabricated metrics, logos, testimonials, external links, or remote font imports. Put all OKLCH design tokens and font families in tokens.css, style all eight interaction states, support 320/375/414/768 widths with overflow-x clip, and respect reduced motion.",
-  category: "Developer tool",
+    "Build a premium responsive landing page for a fictional developer tool called Relay, a release workbench that keeps code changes, policy decisions, and verification notes in one reviewable record. Use a modern-minimal Cobalt art direction: cool engineered near-white paper, electric cobalt as the primary signal, condensed system-sans display, neutral system body, local system-mono labels, hairline rhythm, and graphite verification discipline. Structure as a Workbench driven by real surfaces, not a generic hero and card stack: three navigable sections, a keyboard-first command palette (Cmd/Ctrl+K, Esc, arrows, jump by digits), a per-file evidence surface, timed check simulation, and a focused review footer. Never use remote links, fake chrome, invented testimonials, fabricated performance claims, gradients, or stock visuals. Keep all tokens in `tokens.css`, style every interaction state, support 320/375/414/768, and include reduced-motion behavior.",
+  category: "Developer tooling",
   accent: "oklch(58% 0.2 256)",
   thumbnailUrl: "/showcase/relay-release-evidence.webp",
   highlights: [
-    "Workbench structure led by an interactive, per-file release surface",
-    "Keyboard-accessible command search with digit-jump shortcuts and live state",
-    "Cobalt design system with layered elevation and a single graphite verification beat",
+    "Workbench-first layout built from the product surface itself",
+    "Keyboard-first command search and file-context switching",
+    "Verification pipeline section with staged states and elapsed-time feedback",
   ],
   files: [
     { path: "App.tsx", content: app },

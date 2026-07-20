@@ -44,9 +44,15 @@ export function ShowcaseLandingPage({ landing }: { landing: ShowcaseLanding }) {
             <PanelsTopLeft className="size-3.5" />
             {landing.category}
           </p>
-          <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">
+          <h1
+            className="mt-3 font-display text-3xl font-medium leading-tight tracking-tight"
+            style={{ color: landing.accent }}
+          >
             {landing.title}
           </h1>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Distinct theme landing concept
+          </p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             {landing.description}
           </p>
@@ -54,22 +60,29 @@ export function ShowcaseLandingPage({ landing }: { landing: ShowcaseLanding }) {
 
         <div className="mt-7 border-y border-border py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Design highlights
+            Design intent
           </p>
           <ul className="mt-3 grid gap-2">
             {landing.highlights.map((highlight) => (
               <li
                 key={highlight}
-                className="flex items-start gap-2 text-sm leading-5 text-foreground/80"
+                className="flex items-start gap-2 rounded-md border border-dashed border-border px-2.5 py-2 text-sm leading-5 text-foreground/80"
               >
-                <span
-                  className="mt-2 size-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: landing.accent }}
-                />
+                <span className="mt-2 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: landing.accent }} />
                 {highlight}
               </li>
             ))}
           </ul>
+        </div>
+
+        <div className="mt-5 rounded-xl border border-dashed border-border bg-muted/45 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Built to copy
+          </p>
+          <p className="mt-2 text-sm leading-6 text-foreground/80">
+            Use the generated prompt below as your starting brief. It targets real
+            interaction behavior, not UI chrome.
+          </p>
         </div>
 
         <div className="mt-5 grid gap-2">

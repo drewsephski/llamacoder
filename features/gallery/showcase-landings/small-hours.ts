@@ -292,18 +292,18 @@ a { text-underline-offset: 4px; }
 export const smallHours: ShowcaseLanding = {
   id: "showcase-landing-small-hours",
   slug: "small-hours-table",
-  title: "Small Hours",
+  title: "Small Hours — Community Table",
   description:
-    "A warm letter-shaped supper-club page with tactile noticeboard cards, a responsive announcement bar, and a working table-list form.",
+    "A premium hospitality concept with a letter-shaped story, tactile community notices, and a lightweight invitation flow designed for recurring dinner events.",
   prompt:
-    "Create a premium responsive landing page for a fictional neighborhood supper club called Small Hours. Use a warm playful Hum art direction: cream paper, pear-yellow primary action, sky-cyan secondary surfaces, one coral high-energy accent, rounded system typography, local system-mono labels, generous radii, and tactile physical button presses. Structure it as a personal Letter rather than a generic conversion page: a dismissible announcement banner with retract-on-scroll behavior, a long-form kitchen note with no CTA in the first fold, a small custom CSS plate character, three offset noticeboard notes, an inline table-list email form with validation/loading/error/success states, and a letter-close footer. Keep headings roman, avoid fabricated metrics and testimonials, label the concept honestly, and use no stock images, gradient blends, external links, or remote font imports. Put all OKLCH colors and fonts in tokens.css, style all eight interaction states, keep clickable labels to one line, support 320/375/414/768 widths with root overflow-x clip, and respect reduced motion.",
-  category: "Playful hospitality",
+    "Create a premium responsive landing page for a fictional neighborhood supper club called Small Hours. Use a warm, playful letter-form direction: creamy paper backgrounds, pear-yellow action, sky-cyan secondary surfaces, a coral contrast accent, rounded system typography, and local mono labelling. Structure the page as an unfolding letter narrative instead of a generic conversion funnel: a dismissible announcement bar with retract-on-scroll behavior, a long-form kitchen note without first-fold pressure, three noticeboard cards, and an invitation form with validation, loading, and success states. Keep the page human-first: no stock photography, no fake proof, no remote links, no fabricated metrics, and no fake browser chrome. Include all tokens in `tokens.css`, complete interaction-state styling, responsive behavior at 320/375/414/768, and reduced-motion handling.",
+  category: "Hospitality",
   accent: "oklch(86% 0.18 95)",
   thumbnailUrl: "/showcase/small-hours-table.webp",
   highlights: [
-    "Letter macrostructure with no first-fold conversion button",
-    "Tactile Hum interactions and a hand-built CSS plate character",
-    "Validated table-list form with loading, error, and success states",
+    "Letter-first narrative flow with a clear community-first tone",
+    "Noticeboard cards and tactile states that feel handcrafted",
+    "Invitation form with transparent validation and motion-light feedback",
   ],
   files: [
     { path: "App.tsx", content: app },

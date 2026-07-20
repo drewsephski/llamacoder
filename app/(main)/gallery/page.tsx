@@ -208,8 +208,9 @@ export default async function GalleryPage({
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-6 text-muted-foreground sm:text-right">
-                Three complete React landing pages with distinct structures,
-                working interactions, and copyable build prompts.
+                Three complete React landing pages built with distinct structures,
+                premium interaction systems, and reusable build prompts for your
+                next generation.
               </p>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

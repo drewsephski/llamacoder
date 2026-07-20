@@ -387,18 +387,18 @@ a { text-decoration: none; }
 export const cinderStudio: ShowcaseLanding = {
   id: "showcase-landing-cinder-studio",
   slug: "cinder-studio",
-  title: "Cinder Studio",
+  title: "Cinder Studio — Atelier Edition",
   description:
-    "A dark, instrument-grade lighting studio built around a live CSS light chamber, sculptural type, and a deliberately quiet fixture ledger.",
+    "A premium atmospheric concept for an architectural lighting atelier: dark luxury, cinematic interaction rhythms, and a calm, instrument-driven showcase of fixture craftsmanship.",
   prompt:
-    "Create a premium responsive landing page for a fictional architectural lighting studio called Cinder Studio. Use an atmospheric luxury direction inspired by an optical laboratory: a cool-violet near-black canvas, molten-brass light, a classical upright serif, a refined humanist sans, and mono fixture annotations. Structure it as a Marquee Hero with no sales CTA in the fold, one hand-built interactive CSS light chamber, a procedural meter strip, a restrained fixture ledger, an honest materials note, and a statement footer. Let visitors switch the chamber between the four fixtures, tune three demonstration colour temperatures, hold fixtures for viewing, and request the material sheet. Use no photography, fake browser frames, invented testimonials, fabricated performance metrics, external links, or remote font imports. Include accessible focus states, full interaction-state styling, OKLCH tokens in tokens.css, responsive layouts at 320/375/414/768 widths, root overflow-x clip, and reduced-motion support.",
-  category: "Atmospheric studio",
+    "Create a premium responsive landing page for a fictional architectural lighting studio called Cinder Studio. Use an atmospheric luxury direction inspired by an optical laboratory: cool-violet near-black canvas, molten-brass glow, classical upright serif for hierarchy, refined humanist sans for body copy, and mono fixture labels. Structure the page as a marquee-style studio thesis: a live light chamber in the hero, interactive fixture controls, material-led storytelling, a restrained ledger for four fixtures, and a quiet statement footer. Keep interactions subtle: one-click fixture switching, three light temperatures, and one stateful action for material requests. Never add fabricated metrics, testimonials, remote links, stock imagery, or fake UI chrome. Ensure full keyboard focus support, reduced-motion parity, responsive behavior at 320/375/414/768, and all styling tokens in `tokens.css` using OKLCH variables.",
+  category: "Atmospheric luxury studio",
   accent: "oklch(76% 0.17 50)",
   thumbnailUrl: "/showcase/cinder-studio.webp",
   highlights: [
-    "Interactive optical chamber with fixture and temperature controls",
-    "Marquee structure replaces the previous uniform catalogue grid",
-    "Lumen Night Foundry tokens with local-only typography",
+    "Atmospheric studio layout without a generic hero-only pattern",
+    "Interactive light chamber with fixture presets and temperature tuning",
+    "Local typography and tokenized CSS for a high-end tactile atmosphere",
   ],
   files: [
     { path: "App.tsx", content: app },
