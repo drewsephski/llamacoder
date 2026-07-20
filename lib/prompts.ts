@@ -185,7 +185,7 @@ export function getMainCodingPrompt(options?: {
 
   When the brief, subject, or audience calls for visual impact, lean into the installed creative libraries rather than settling for static layout alone. Use at least one of these where they genuinely serve the product:
 
-  - **Shader backgrounds** (\`@paper-design/shaders-react\`): Use \`MeshGradient\` or \`DotOrbit\` as hero backgrounds, section dividers, or ambient surfaces for creative, portfolio, music, gaming, or luxury-brand apps. Set explicit width/height via style props. These replace generic gradient fills with living, interactive surfaces.
+  - **Shader backgrounds** (\`@paper-design/shaders-react\`): ONLY \`MeshGradient\` and \`DotOrbit\` exist. No other components — do NOT invent names. Use \`MeshGradient\` with a \`colors\` array for flowing gradients, or \`DotOrbit\` with \`colors\` for animated dot patterns. Set explicit width/height via style props. These replace generic gradient fills with living, interactive surfaces.
   - **3D scenes** (\`three\`, \`@react-three/fiber\`, \`@react-three/drei\`): Use for product configurators, data visualization, spatial UI, interactive models, or any app where depth and spatiality add value. Wrap in \`<Canvas>\`, use drei helpers, give the canvas explicit height.
   - **Post-processing** (\`@react-three/postprocessing\`): Add Bloom, ChromaticAberration, Noise, or Vignette inside \`<EffectComposer>\` for cinematic depth in 3D scenes.
   - **Particle effects** (\`@tsparticles/react\` + \`@tsparticles/slim\`): Use for celebration moments, ambient backgrounds, or data visualization. Initialize with \`init\` from \`@tsparticles/react\` and load slim bundle.
