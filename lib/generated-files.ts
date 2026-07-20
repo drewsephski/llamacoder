@@ -374,7 +374,7 @@ Requirements:
 - If you call \`cn(...)\`, import it with \`import { cn } from "@/lib/utils"\`.
 - Use \`import { motion } from "framer-motion"\` for Framer Motion.
 ${generatedAppRepairCapabilityRules}
-- Replace dead \`href="#"\` destinations and empty event handlers with a valid destination or a real visible state change. Remove controls that still have no defined outcome.
+- Replace empty event handlers with a real visible state change. Remove controls that still have no defined outcome.
 - If the app uses fetch, check response.ok, use AbortController timeout, bounded retry, and runtime response validation. Never hard-code API credentials or secret-bearing authorization headers.
 
 Original response:
@@ -594,14 +594,6 @@ function validateObviousInteractionFailures(files: GeneratedFile[]) {
     if (!/\.(tsx|jsx)$/i.test(file.path)) continue;
 
     const code = stripCodeComments(file.code);
-    if (/\bhref\s*=\s*(?:["']#["']|\{\s*["']#["']\s*\})/.test(code)) {
-      diagnostics.push({
-        path: file.path,
-        message:
-          'Dead href="#" destination. Use a valid route/section target or a button with a real state-changing handler.',
-      });
-    }
-
     if (
       /\bon(?:Click|Submit|Change|CheckedChange|ValueChange)\s*=\s*\{\s*\([^)]*\)\s*=>\s*(?:\{\s*\}|undefined|null)\s*\}/.test(
         code,
