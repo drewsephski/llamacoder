@@ -15,7 +15,6 @@ export const maxDuration = 120;
 
 export async function GET() {
   const { projects } = await getGalleryProjects({
-    page: 1,
     query: "",
     remixable: false,
     sort: "newest",

@@ -37,19 +37,15 @@ export default async function GalleryPage({
       typeof rawSearchParams.sort === "string"
         ? rawSearchParams.sort
         : "newest",
-    page: typeof rawSearchParams.page === "string" ? rawSearchParams.page : "1",
   });
   const session = await getCurrentSession();
-  const showcaseGames =
-    parsed.page === 1 && !parsed.remixable
-      ? getShowcaseGameSummaries(parsed.q)
-      : [];
-  const showcaseLandings =
-    parsed.page === 1 && !parsed.remixable
-      ? getShowcaseLandingSummaries(parsed.q)
-      : [];
-  const { projects, totalPages } = await getGalleryProjects({
-    page: parsed.page,
+  const showcaseGames = !parsed.remixable
+    ? getShowcaseGameSummaries(parsed.q)
+    : [];
+  const showcaseLandings = !parsed.remixable
+    ? getShowcaseLandingSummaries(parsed.q)
+    : [];
+  const { projects } = await getGalleryProjects({
     query: parsed.q,
     remixable: parsed.remixable,
     sort: parsed.sort,
@@ -222,36 +218,6 @@ export default async function GalleryPage({
               ))}
             </div>
           </section>
-        )}
-
-        {totalPages > 1 && (
-          <nav
-            aria-label="Gallery pagination"
-            className="mt-10 flex items-center justify-center gap-2"
-          >
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (page) => {
-                const params = new URLSearchParams();
-                if (parsed.q) params.set("q", parsed.q);
-                if (parsed.remixable) params.set("remixable", "true");
-                if (parsed.sort !== "newest") params.set("sort", parsed.sort);
-                if (page > 1) params.set("page", String(page));
-                return (
-                  <Button
-                    key={page}
-                    asChild
-                    size="icon"
-                    variant={page === parsed.page ? "default" : "outline"}
-                    aria-label={`Go to page ${page}`}
-                  >
-                    <Link href={`/gallery${params.size ? `?${params}` : ""}`}>
-                      {page}
-                    </Link>
-                  </Button>
-                );
-              },
-            )}
-          </nav>
         )}
       </main>
     </div>

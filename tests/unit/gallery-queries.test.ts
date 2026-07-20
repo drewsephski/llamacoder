@@ -39,7 +39,6 @@ describe("gallery project thumbnail versions", () => {
     prismaMock.galleryPublication.findMany.mockResolvedValue([publication]);
 
     const result = await getGalleryProjects({
-      page: 1,
       query: "",
       remixable: false,
       sort: "newest",
@@ -62,7 +61,6 @@ describe("gallery project thumbnail versions", () => {
     ]);
 
     const result = await getGalleryProjects({
-      page: 1,
       query: "",
       remixable: false,
       sort: "newest",

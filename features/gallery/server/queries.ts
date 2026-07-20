@@ -6,16 +6,12 @@ import type { GalleryProjectSummary } from "@/features/gallery/contracts";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getPrisma } from "@/lib/prisma";
 
-export const GALLERY_PAGE_SIZE = 9;
-
 export async function getGalleryProjects({
-  page,
   query,
   remixable,
   sort,
   viewerId,
 }: {
-  page: number;
   query: string;
   remixable: boolean;
   sort: "newest" | "oldest";
@@ -50,8 +46,6 @@ export async function getGalleryProjects({
     prisma.galleryPublication.findMany({
       where,
       orderBy: { publishedAt: sort === "oldest" ? "asc" : "desc" },
-      skip: (page - 1) * GALLERY_PAGE_SIZE,
-      take: GALLERY_PAGE_SIZE,
       select: {
         id: true,
         chatId: true,
@@ -102,7 +96,6 @@ export async function getGalleryProjects({
   return {
     projects,
     totalProjects,
-    totalPages: Math.ceil(totalProjects / GALLERY_PAGE_SIZE),
   };
 }
 
