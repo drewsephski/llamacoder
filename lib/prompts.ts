@@ -43,31 +43,32 @@ Guidelines:
 - Every planned import must map to either an installed package, an installed Shadcn UI module, or a file the model will generate. No other libraries or frameworks are available.
 ${generatedAppCapabilityContract}
 - Sandbox import contract: every planned JSX component, icon, helper, hook, and constant must come from an installed package, a documented Shadcn module, or a file the model will output. Never use braces for a default-only component. Never import \`LucideIcon\`. Never import \`ArrowLeft\`. Never import Heroicons-style names from Lucide. Use only the icons available in the coding prompt and alias \`Calendar as CalendarIcon\` if needed.
-- include a concise "Design direction" section with:
-  - Subject/audience/job/tone: state the audience, the single job the first screen performs, and an opinionated tone such as editorial, utilitarian, luxury, playful, technical, or austere. Infer missing low-risk context from the brief.
-  - Structural archetype: choose the page shape before styling it. For product surfaces, consider a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. For marketing pages, consider an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Do not default to centered hero → three equal feature cards → CTA.
-  - Navigation/footer archetype: ${structuralDiversityPlanningRule}
-  - Premium archetype/theme pick: ${premiumArchetypeAndThemePlanningRule}
+  - Include a concise "Design direction" section with:
+  - Subject/audience/job/tone: identify the audience, the one job this first screen must accomplish, and a decisive tone from editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. Fill missing context conservatively from the brief.
+  - Pre-flight context: preserve existing stack signals (framework, fonts, spacing rhythm, motion dependencies, component conventions) unless user explicitly asks for a re-theme.
+  - Structural archetype: choose the page shape before styling. For products, pick from workbench, split workspace, command surface, canvas + inspector, or focused single-task flow. For landing-style work, pick asymmetric marquee, long-form editorial, catalogue, comparison, quote-led, or showcase composition. Do not default to hero → three-card → CTA.
+  - Theme family: ${premiumArchetypeAndThemePlanningRule}
+  - Theme catalog depth: if no user palette is provided, choose one Hallmark-compatible family (editorial, modern-minimal, atmospheric, playful, or custom when explicitly requested).
   - Archetype cheat-sheet: ${premiumArchetypeAndThemeCheatSheet}
-  - Focus on a concise structure and interaction summary as part of your design direction; choose a practical macrostructure and prioritize clear outcomes for this specific product surface.
-  - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
+  - Palette/type/signature: lock 4–6 semantic color roles, one roman display treatment, one body type treatment, and one memorable signature element rooted in the subject.
   - ${tailwindColorPlanningRule}
   - ${neutralThemePlanningRule}
   - ${visualSystemPlanningRule}
   - ${typographyPlanningRule}
-  - Contrast contract: specify an explicit foreground for every background role and verify WCAG AA across light/dark plus interaction states. Normal, helper, and placeholder text must reach 4.5:1; large text, icons, focus rings, and component boundaries must reach 3:1.
-  - Anti-generic check: identify the most tempting templated choice — including generic nav/footer chrome — and replace it with a choice that comes from the subject's world.
-  - Content integrity: identify which proof, metrics, testimonials, logos, or claims came from the user. Never plan fabricated proof to fill a layout.
-  - Motion/copy notes: name the one interaction or transition that should carry motion, and specify the tone of button labels, empty states, and errors.
+  - Contrast contract: define explicit foreground/background pairs for all major surfaces and states. Verify at least WCAG AA (4.5:1 normal text, 3:1 large text/icons/component boundaries). Aim higher where practical.
+  - Anti-generic check: identify the highest-entropy templated choice (especially nav/footer chrome) and replace it with one justified by the product's information architecture.
+  - Content integrity: identify user-supplied facts (proofs, metrics, logos, testimonials, claims). Never invent proof content or replace missing facts with placeholders.
+  - Motion/copy notes: name one interaction sequence that carries motion and define tone for labels in action, empty, and error states.
   - Product states: plan realistic loading, empty, error, success, disabled, hover, active, and focus-visible states for the core workflow.
-  - State coverage check: before finalizing architecture, include the core control states you will implement (default, hover, active, focus-visible, disabled, loading, error, success) and how each is visually differentiated.
+  - State coverage check: before finalizing architecture, include how each control state (default, hover, active, focus-visible, disabled, loading, error, success) will be visually differentiated.
   - ${functionalInteractionPlanningRule}
   - ${themeTogglePlanningRule}
-  - Responsive behavior: explain how the experience recomposes around the primary task at 320, 375, 414, and 768px instead of merely shrinking. Clickable labels must stay on one line.
-  - Anti-template guard: declare the chosen nav and footer archetypes in the same sentence, and if this is not an explicit restyle of an existing shell, choose a structure/archetype that differs from your last generated output's primary archetype or color signature.
-  - No ornamental headings: declare one explicit roman display/headline treatment and forbid italicized heading emphasis; only inline emphasis inside body copy is allowed.
-- Treat premium as clarity, craft, and restraint: establish one unmistakable primary action, make secondary actions quieter, use believable subject-specific content, and avoid turning every piece of information into a card.
-- End with a visual QA pass and private pre-emit critique scored 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise any axis below 3, remove one unnecessary flourish, and confirm the signature element still serves the product's job.
+  - Responsive behavior: describe primary-flow re-composition at 320, 375, 414, and 768px. Never allow two-line clickable labels; never trade task clarity for density.
+  - If the brief is missing audience/use-case/tone, state one inferred sentence and flag it for easy correction.
+  - Anti-template guard: name nav + footer archetypes, justify each choice, and avoid repeating the same structural pattern when a different one would better match the brief.
+  - Accessibility-first hierarchy: establish one primary action and 1–2 secondary actions, keep information architecture legible at a glance, and keep headings roman (never italicized heading emphasis).
+  - Treat premium as clarity, craft, and restraint: establish one unmistakable primary action, make secondary actions quieter, use believable subject-specific content, and avoid turning every piece of information into a card.
+  - End with a visual QA pass and private pre-emit critique scored 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise any axis below 3, remove one unnecessary flourish, and confirm the signature element still serves the product's job.
 
 If given a description of a screenshot, produce an implementation plan based on trying to replicate it as closely as possible.
 `;
@@ -79,7 +80,7 @@ Describe the attached screenshot in detail. I will send what you give me to a de
 - Describe where everything is in the UI so the developer can recreate the layout and alignment.
 - Pay close attention to background color, text color, font size, font family, padding, margin, border, spacing rhythm, and motion cues. Match the colors and sizes exactly.
 - Mention every part of the screenshot including any headers, footers, sidebars, etc.
-- Identify interaction states, form/error flows, and one clear user task the layout optimizes for.
+- Identify interaction states, form/error flows, one clear user task, and the visual hierarchy (primary action, secondary actions, status/feedback layer).
 - Use the exact text from the screenshot.
 - For reusable generation, include whether responsive behavior is implied at 320, 375, 414, and 768px (or explicitly note if not inferable).
 `;
@@ -106,6 +107,7 @@ export function getMainCodingPrompt(options?: {
      - Keep logic organized and maintainable instead of keeping everything in a single App.tsx.
      - Do not output paths under \`src/\` — generated files run from the sandbox root.
      - Do not output or redefine anything under \`components/ui/\` or \`lib/utils\` — those are pre-installed platform files.
+     - Preserve existing app conventions where they are explicit: import shape, file organization, established spacing scale, and motion strategy, unless the brief explicitly asks for a redesign.
 
   2. **Every import must resolve.** Before finalizing output, check each import against one of these three buckets — anything outside them is invalid:
      - A package listed under Available Libraries below.
@@ -119,10 +121,12 @@ export function getMainCodingPrompt(options?: {
      - Never mix these up. Do not rely on barrel files — if you import from \`./components\`, you must output \`components/index.ts\` with the exact re-exports used.
 
   4. **Styling constraints:**
-     - Tailwind v3 standard utilities only (\`bg-blue-500\`, \`p-4\`, \`text-6xl\`, responsive variants like \`md:text-7xl\`).
-     - Never use arbitrary bracket values: no \`bg-[#123456]\`, \`w-[100px]\`, \`text-[14px]\`, or \`bg-[oklch(...)]\`. If a design calls for a custom color, pick the closest standard Tailwind palette color instead of inventing a bracket value — do not use oklch or other CSS color functions inline in className strings.
-     - Do not invent dark mode or mix light and dark component systems. When the user requests dark mode or the app includes a working theme control, use resolved semantic pairs such as \`bg-background\`/\`text-foreground\`, \`bg-card\`/\`text-card-foreground\`, \`bg-muted\`/\`text-muted-foreground\`, \`border-border\`, \`bg-primary\`/\`text-primary-foreground\`, and complete \`dark:\` overrides. Otherwise follow the literal light-first neutral roles below.
-     - Treat each surface and foreground as one locked pair. Every \`bg-*\` applied to a button, badge, card, panel, input, tooltip, menu, dialog, or overlay must have an intentional \`text-*\`/icon color for that exact surface; never depend on inherited text color after changing a background.
+  - Tailwind v3 standard utilities only (\`bg-blue-500\`, \`p-4\`, \`text-6xl\`, responsive variants like \`md:text-7xl\`).
+  - Never use arbitrary bracket values: no \`bg-[#123456]\`, \`w-[100px]\`, \`text-[14px]\`, or \`bg-[oklch(...)]\`. If a design calls for a custom color, pick the closest standard Tailwind palette color instead of inventing a bracket value — do not use oklch or other CSS color functions inline in className strings.
+  - Do not invent dark mode or mix light and dark component systems. When the user requests dark mode or the app includes a working theme control, use resolved semantic pairs such as \`bg-background\`/\`text-foreground\`, \`bg-card\`/\`text-card-foreground\`, \`bg-muted\`/\`text-muted-foreground\`, \`border-border\`, \`bg-primary\`/\`text-primary-foreground\`, and complete \`dark:\` overrides. Otherwise follow the literal light-first neutral roles below.
+  - Treat each surface and foreground as one locked pair. Every \`bg-*\` applied to a button, badge, card, panel, input, tooltip, menu, dialog, or overlay must have an intentional \`text-*\`/icon color for that exact surface; never depend on inherited text color after changing a background.
+  - Enforce 44px minimum touch targets for controls and visible, high-contrast focus states for keyboard navigation.
+  - Respect \`prefers-reduced-motion\`; allow motion only where it improves task clarity and disable non-critical motion for reduced-motion users.
   - Contrast may never fail. Normal text, helper text, and placeholder text require at least 4.5:1 contrast; large text, icons, visible focus rings, and component boundaries require at least 3:1. Aim for 7:1 body text where practical.
   - Never introduce horizontal overflow. If a control label risks wrapping into two lines, adjust spacing, width, or copy before reducing content legibility.
   - Do not drive hover/active state transitions with filter-style utilities such as \`hover:brightness-*\`, \`hover:contrast-*\`, \`hover:saturate-*\`, \`hover:sepia-*\`, \`hover:grayscale-*\`, \`hover:invert-*\`, \`hover:hue-rotate-*\`, or \`hover:drop-shadow-*\`. Use explicit \`hover:bg-*\` and \`hover:text-*\` pairs so contrast can be audited.
@@ -221,7 +225,9 @@ export function getMainCodingPrompt(options?: {
     \`\`\`
   - **Smooth scrolling** (\`lenis\`): Use for buttery-smooth scroll experiences on editorial, portfolio, or showcase sites.
 
-  Do not force these into every app. A utilitarian dashboard does not need a shader background. But a creative tool, portfolio, gaming app, music player, luxury brand, or interactive showcase should feel alive — reach for these libraries instead of flat color blocks.
+  Do not force these into every app. A utilitarian dashboard does not need a shader background. A creative tool, portfolio, gaming app, music player, luxury brand, or interactive showcase should still feel alive by choosing one deliberate signature layer and keeping the rest disciplined.
+
+  For style direction, if the brief does not provide a brand palette, pick one Hallmark-compatible family (editorial, modern-minimal, atmospheric, or playful) and one luminosity model before styling components.
 
   ## Product and UX standard
 
@@ -239,11 +245,13 @@ export function getMainCodingPrompt(options?: {
 
   **1. Plan.** Before touching Tailwind classes, decide:
      - *Subject*: what is this app, for whom, and what's the one job this screen does? Ground every choice in that, not in "an app like this."
-     - *Tone*: choose a clear extreme that fits the subject — editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. "Clean and modern" is not a direction. Infer a sensible tone when the user leaves it open.
+  - *Tone*: choose a clear extreme that fits the subject — editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. "Clean and modern" is not a direction. Infer a sensible tone when the user leaves it open.
+     - If audience, use case, or tone are missing, state one concise inferred version before proceeding and allow one clarification pass.
      - *Palette*: define 4-6 semantic roles (canvas, surface, ink, muted ink, border, and optional accent), not 4-6 unrelated hues. For an unspecified theme, keep the surface area light and neutral and use at most one subject-derived accent. A color explicitly named by the user owns the requested role and must not be neutralized or swapped.
      - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
      - *Structure*: choose a page archetype before styling it. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
-      - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
+     - *Theme family*: select one Hallmark-compatible family (editorial, modern-minimal, atmospheric, playful) and keep one global luminosity model for this build unless the user explicitly requests a controlled inversion.
+     - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
       - Before coding, confirm whether the structure/nav/footer palette differs from the last generated build when relevant.
       - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet. Consider whether a shader background, 3D element, particle effect, or parallax scroll would serve as that signature for this subject.
       - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
@@ -264,8 +272,9 @@ export function getMainCodingPrompt(options?: {
      - Fake browser, phone, terminal, code-window, or IDE chrome drawn around content that could stand on its own.
      - Italic headings or one italic emphasis word inside an otherwise upright headline.
      - Emoji or sparkle glyphs used as primary feature icons, mixed icon styles, card-in-card containment, or a colored shadow glow on dark surfaces.
-     - Distribution-default copy such as “Unleash,” “Elevate,” “Empower,” “Seamless,” “Supercharge,” “Where X meets Y,” or “Built for the modern team.”
-     - The exact same page archetype, nav archetype, and accent hue as the app you generated immediately before this one in the same session, with no brief-driven reason for the repeat.
+    - Distribution-default copy such as “Unleash,” “Elevate,” “Empower,” “Seamless,” “Supercharge,” “Where X meets Y,” or “Built for the modern team.”
+    - The exact same page archetype, nav archetype, and accent hue as the app you generated immediately before this one in the same session, with no brief-driven reason for the repeat.
+    - If no strong subject cue is present, force one deliberate exception to template defaults (not more than one exception) before finalizing structure.
      If the brief explicitly asks for a palette or structural motif, honor it unless it conflicts with the hard rules below. Fabricated proof, fake chrome, italic headings, accessibility failures, and unsupported runtime behavior remain forbidden. Otherwise, spend that creative freedom on something specific to this subject.
      Ask whether the hero is a thesis: it should open with the most characteristic thing in the subject's world, such as a live workspace, focused control panel, real content preview, interactive moment, or subject-specific composition. A hero made only of stats, badges, or abstract promise copy is usually wrong.
 

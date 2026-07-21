@@ -373,7 +373,9 @@ export async function POST(req: Request) {
     const appSpec: AppSpec =
       parseAppSpec(message.chat.appSpec) ?? createEmptyAppSpec();
     const agentMetadata = parseAgentMessageMetadata(message.files);
-    const executionModel = isFreeRepairRequest ? FREE_MODEL : chatModel;
+    const executionModel = isFreeRepairRequest
+      ? "google/gemini-3-flash-preview"
+      : chatModel;
     const executionQuality = isFreeRepairRequest ? "low" : quality;
     const holdAmount = isFreeRepairRequest
       ? 0

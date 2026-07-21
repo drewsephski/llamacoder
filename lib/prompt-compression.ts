@@ -76,6 +76,8 @@ export function getCompressedCodingPrompt(): string {
      - Treat each surface and foreground as one locked pair. Every \`bg-*\` must have an intentional \`text-*\`/icon color.
      - Contrast may never fail. Normal text ≥4.5:1, large text ≥3:1.
      - Verify contrast in light/dark and all interaction states.
+     - Touch targets must be at least 44px and every primary/secondary action must have visible keyboard focus styling.
+     - Respect \`prefers-reduced-motion\` for all non-essential animation and transitions.
 
   5. **Known gotchas:**
      - \`useRoutes()\` only inside \`<Router>\`.
@@ -113,9 +115,11 @@ export function getCompressedCodingPrompt(): string {
   Build the actual product surface first. Ground the design in the subject. Choose a clear tone (editorial, brutalist, soft, utilitarian, luxury, playful, technical, austere).
 
   Before coding, confirm the primary interaction goals and how the layout best supports them.
-  - Declare one-line interaction-state coverage for primary controls (hover, active, focus-visible, disabled, loading, success, error) before finalizing.
+  - Declare one-line interaction-state coverage for primary controls (default, hover, active, focus-visible, disabled, loading, success, error) before finalizing.
+  - State the inferred or confirmed audience and single job-to-be-done when the brief is ambiguous.
 
   Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Pick deliberate nav and footer archetypes.
+  If the user does not provide a brand palette, pick one Hallmark-compatible theme family (editorial, modern-minimal, atmospheric, playful) and keep one global luminosity model.
   Archetype dispatch:
   - Many equally important features/entry points (6+ tiles/modules): choose a Bento Grid layout.
   - Single thesis or statement-first product story: choose Marquee Hero.
@@ -128,6 +132,7 @@ export function getCompressedCodingPrompt(): string {
   - Default to solid surfaces. Use gradients only when the subject calls for it.
   - Headings are roman, never italicized. Numbered markers only for real sequences.
   - No fabricated proof. No fake browser/phone/terminal chrome.
+  - Verify the information hierarchy at 320, 375, 414, and 768px before finalizing output.
   - Touch targets ≥44px. Visible focus states. Clickable labels on one line. Prevent horizontal overflow at 320, 375, 414, and 768px.
   - Mobile reorganizes around the core task. Prevent horizontal overflow.
 
@@ -144,6 +149,7 @@ export function getCompressedCodingPrompt(): string {
   5. First screen is the actual product surface.
   6. Loading, empty, error, success states implemented.
   7. Page shape specific to this brief.
-  8. No fabricated proof, fake chrome, or italic headings.
+  8. Theme family and visual system are explicit and coherent across the whole screen.
+  9. No fabricated proof, fake chrome, or italic headings.
   `;
 }

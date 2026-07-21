@@ -44,6 +44,7 @@ export const visualSystemCoherenceContract = dedent`
   - Every surface-setting wrapper must set its own foreground, and every nested override must remain compatible. Dark neutral surfaces use \`text-neutral-50\`/\`text-neutral-100\` for primary content and \`text-neutral-300\`/\`text-neutral-400\` for secondary content; light surfaces use \`text-neutral-950\`/\`text-neutral-900\` and \`text-neutral-600\`/\`text-neutral-700\`. Never place \`text-neutral-950\`, \`text-neutral-900\`, or low-opacity black on \`bg-neutral-950\`/\`bg-neutral-900\`; never place white or very pale text on white/neutral-50. Do not use opacity as a substitute for choosing a readable foreground.
   - Build hierarchy with composition before color. Give the screen one dominant work area, then group supporting information with spacing, alignment, dividers, and typography. Do not render a uniform army of same-sized, same-colored cards. Dashboard metrics should normally sit on light surfaces or in one grouped summary band; charts, activity rows, and support content should not all receive the same heavy container treatment.
   - Make information hierarchy readable at a glance: primary values and task titles receive the strongest contrast, supporting labels remain comfortably legible, and metadata recedes without becoming faint. Reserve uppercase plus wide tracking for short tertiary labels only; never use it for essential instructions or as the only distinction between every dashboard section. Use tabular numerals for aligned quantitative data when available.
+  - Validate structure at 320, 375, 414, and 768px so the core task lane remains primary, secondary content reflows cleanly, and no clickable action is forced onto two lines.
   - A neutral foundation is not a lifeless interface. When the subject provides a natural cue, choose exactly one restrained accent family and use it consistently for the most important action, selected state, focus treatment, and/or primary data series. Keep most surface area neutral, keep status colors semantic, and never use weak gray text on the accent.
   - Data visualization inherits the screen's luminosity model. Explicitly style every chart title, value, axis label, tick, grid line, legend, tooltip, annotation, and empty/loading state for its actual background; never rely on a chart library's default or inherited text color. Use the accent for the primary series, quieter neutrals for scaffolding, and ensure the data—not the container—is the highest-contrast element.
   - Use elevation sparingly: prefer a one-pixel border and spacing for ordinary grouping, \`shadow-sm\` for truly raised controls or overlays, and no large shadow on every panel. Radius, border, shadow, and padding choices must communicate hierarchy instead of repeating one generic card recipe.
@@ -68,6 +69,7 @@ export const tailwindTypographyFidelityContract = dedent`
   - Never reference a font family that is not actually imported/installed in the generated app. If a specific characterful face cannot be confirmed available, build character through scale, weight, tracking, and case on a real, available face rather than naming an aspirational font that will silently fall back.
   - Avoid leaning on Inter, Roboto, Arial, system-ui, Open Sans, or Poppins as the page's only voice. If a system/default sans is the body face, pair it with a display face that carries genuine character so the page doesn't read as generic SaaS defaults.
   - Headings and display type are always roman — never italicized, and never with a single italic emphasis word inside an otherwise upright heading. Reserve italics, if used at all, for inline emphasis inside running body copy.
+  - Build hierarchy with explicit levels (primary headings, secondary labels, supporting microcopy) and clear reading rhythm before tweaking color. Avoid typographic effects that do not increase meaning.
   - Once a size/weight/tracking combination is chosen for a heading level (h1, h2, card title, label, etc.), reuse that exact combination for every instance of that level. Do not vary heading treatment ad hoc from section to section.
   - On edits, replace conflicting legacy font-family, font-weight, and tracking utilities in the requested scope rather than layering new type classes on top of old ones.
 `;
@@ -93,6 +95,7 @@ export const structuralDiversityContract = dedent`
     - Footer options: a single statement line with minimal links and no sitemap, a compact utility/status bar (version, links, environment) for tools and dashboards, a colophon-style dense block for editorial or documentation contexts, a multi-column index only when the product is genuinely a docs root or hub with that many real destinations, or no separate footer when the product is a full-height application shell where a footer would just push content off-screen.
   - Default away from "wordmark-left + three or four generic links + button-right" nav and "four-column link grid + social row + tiny copyright" footer. These are the most recognizable templated patterns; reach for them only when the brief's actual information architecture has that many top-level destinations to justify them.
   - Within a single build session, do not repeat the same page archetype, nav treatment, and dominant accent hue as the immediately preceding app generated in this conversation, unless the user is iterating on that same app or explicitly asks to match it. Vary at least one of those three axes so consecutive apps read as distinct products, not reskins of one template.
+  - Confirm mobile nav/footer density at 320, 375, 414, and 768px so navigation and legal/support links do not crowd or disappear while preserving core task accessibility.
   - This contract governs structure and chrome; it never overrides the color fidelity contract, the typography fidelity contract, or any explicit user requirement.
 `;
 
@@ -110,12 +113,19 @@ export const premiumArchetypeAndThemeContract = dedent`
   - Pick one primary macrostructure and name it explicitly. Do not switch archetype midway through building the same screen.
   - For work with dense operations, choose a work-first shell ('workbench-shell' + toolbar + canvas/panel + contextual side rail) rather than a hero-first card shell.
   - For **Bento Grid**, use explicit tile spans ('span-2x2', 'span-2x1', 'span-1x2', 'span-1x1') on a 'bento' container so shape is deliberate.
-  - For all screen-level variants, avoid the per-section mini-theme pattern. Name one theme family and one global luminosity model unless the brief explicitly asks for a contrast inversion.
+  - For all screen-level variants, avoid per-section theme changes. Use one theme family and one global luminosity model unless the brief explicitly asks for contrast inversion.
+  - Keep motion meaningful: one intentional signature transition for engagement and one confirmation/feedback motion; avoid utility-level effects on every element.
+  - If the user does not provide a brand palette, default to a Hallmark-compatible family:
+    - **Editorial family:** Specimen, Atelier, Brutal, Newsprint, Studio, Manifesto, Almanac, Garden, Riso, Sport, Editorial, Carnival.
+    - **Modern-minimal family:** Coral, Cobalt.
+    - **Atmospheric family:** Bloom, Midnight, Terminal, Aurora, Lumen.
+    - **Playful family:** Hum.
+    - **Custom:** use a custom theme only when the brief explicitly asks for it, provides a specific anchor tone/color, or requires a structural brief that does not fit catalog constraints.
   - Theme routing:
     - Creative / portfolio / luxury directions -> ornamental but purposeful visual signature (motion + texture + contrast pivots).
     - Technical / data-heavy / workflows -> utilitarian minimal, high-legibility tones with restrained ornamentation.
     - Editorial / content-led -> rhythm-first hierarchy and low-motion polish.
-  - If the user explicitly states a tone, lock it. If silent, infer one stable tone from subject and audience.
+    - If the user explicitly states a tone, lock it. If silent, infer one stable tone from subject and audience.
   - Reject multi-theme surfaces. One screen should have one primary theme family and one consistent surface map.
 `;
 
@@ -132,7 +142,10 @@ export const premiumArchetypeAndThemeCheatSheet = dedent`
   - **Conversational FAQ:** use question cards, answer progression, and clear next-step affordances.
   - **Theme families (default behavior):** Creative/portfolio/luxury, technical/workflow, editorial/content. Pick one family and apply it everywhere.
   - **Hallmark-compatible theme catalog (for tone-rich but disciplined projects):**
-    Specimen, Atelier, Brutal, Newsprint, Studio, Manifesto, Terminal, Midnight, Almanac, Garden, Riso, Sport, Bloom, Coral, Cobalt, Aurora, Editorial, Carnival, Lumen, Hum.
+    Editorial: Specimen, Atelier, Brutal, Newsprint, Studio, Manifesto, Almanac, Garden, Riso, Sport, Editorial, Carnival.
+    Modern-minimal: Coral, Cobalt.
+    Atmospheric: Bloom, Midnight, Terminal, Aurora, Lumen.
+    Playful: Hum.
     Use one family unless the brief explicitly requests custom tone work; never split theme families in one screen.
 `;
 
@@ -155,6 +168,7 @@ export const functionalInteractionContract = dedent`
   - Buttons that represent unavailable infrastructure must be disabled or open an honest setup state; never fake authentication, payment, persistence, email, upload, or server-side success. For browser-only demos, meaningful local state is acceptable, but do not imply that it persists remotely.
   - Use semantic elements and state attributes: navigation uses real links with valid destinations, actions use \`type="button"\`, form submission uses \`type="submit"\`, toggles expose \`aria-pressed\` or their native checked state, menus/dialogs expose their Shadcn semantics, and icon-only controls have stable accessible names.
   - For any control with asynchronous behavior or important state changes, explicitly support and style hover, active, focus-visible, disabled, loading, success, and error states. Do not leave core actions visually static while behavior changes.
+  - All interactive controls should remain discoverable on keyboard and pointer: enforce 44px minimum touch targets, one-line action labels, and explicit visible focus order.
   - Verify the interaction graph privately before emitting files: exercise the primary path plus cancel, invalid input, empty, loading/disabled, success, and error/retry paths; remove any control whose behavior is still undefined.
 `;
 
