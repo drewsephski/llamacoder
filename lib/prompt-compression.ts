@@ -112,7 +112,7 @@ export function getCompressedCodingPrompt(): string {
 
   Build the actual product surface first. Ground the design in the subject. Choose a clear tone (editorial, brutalist, soft, utilitarian, luxury, playful, technical, austere).
 
-  Before coding, output a one-line plan declaration: Structure=<macrostructure>; Interaction=<2-4 outcomes>.
+  Before coding, confirm the primary interaction goals and how the layout best supports them.
   - Declare one-line interaction-state coverage for primary controls (hover, active, focus-visible, disabled, loading, success, error) before finalizing.
 
   Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Pick deliberate nav and footer archetypes.

@@ -197,6 +197,38 @@ export default function ChatBox({
           scrollbar-color: hsl(var(--muted-foreground) / 0.28) transparent;
         }
 
+        .follow-up-prompts-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: hsl(var(--foreground) / 0.38) hsl(var(--muted) / 0.16);
+        }
+
+        .follow-up-prompts-scroll::-webkit-scrollbar {
+          height: 8px;
+        }
+
+        .follow-up-prompts-scroll::-webkit-scrollbar-track {
+          background: hsl(var(--muted) / 0.22);
+          border-radius: 9999px;
+        }
+
+        .follow-up-prompts-scroll::-webkit-scrollbar-thumb {
+          background: linear-gradient(
+            90deg,
+            hsl(var(--foreground) / 0.26),
+            hsl(var(--foreground) / 0.45)
+          );
+          border-radius: 9999px;
+          border: 2px solid hsl(var(--muted) / 0.22);
+        }
+
+        .follow-up-prompts-scroll::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(
+            90deg,
+            hsl(var(--foreground) / 0.34),
+            hsl(var(--foreground) / 0.56)
+          );
+        }
+
         .send-btn {
           width: 34px;
           height: 34px;
@@ -282,8 +314,8 @@ export default function ChatBox({
         )}
 
         {!isStreaming && latestFollowUpPrompts.length > 0 && (
-          <div
-            className="mb-2.5 flex w-full snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin]"
+              <div
+            className="follow-up-prompts-scroll mb-2.5 flex w-full snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1"
             role="group"
             aria-label="Suggested follow-up prompts"
           >
@@ -293,7 +325,7 @@ export default function ChatBox({
                 type="button"
                 disabled={disabled}
                 onClick={() => handleFollowUpPromptSelect(followUpPrompt)}
-                className="max-w-[min(22rem,85vw)] shrink-0 snap-start rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-left text-[12.5px] font-medium text-muted-foreground transition hover:border-blue-400/50 hover:bg-blue-50/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card/70 dark:hover:bg-blue-950/30"
+                className="max-w-[min(22rem,85vw)] shrink-0 snap-start rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-left text-[11px] leading-tight font-medium text-muted-foreground transition hover:border-blue-400/50 hover:bg-blue-50/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card/70 dark:hover:bg-blue-950/30"
               >
                 {followUpPrompt}
               </button>

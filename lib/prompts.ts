@@ -49,7 +49,7 @@ ${generatedAppCapabilityContract}
   - Navigation/footer archetype: ${structuralDiversityPlanningRule}
   - Premium archetype/theme pick: ${premiumArchetypeAndThemePlanningRule}
   - Archetype cheat-sheet: ${premiumArchetypeAndThemeCheatSheet}
-  - Brief-level structure + interaction intent requirement: before any build section, output a single-line plan statement in this exact form: Structure=<macrostructure>; Interaction=<2-4 concrete outcomes>, e.g., Structure=Bento Grid; Interaction=create item, filter list, edit record, confirm delete.
+  - Focus on a concise structure and interaction summary as part of your design direction; choose a practical macrostructure and prioritize clear outcomes for this specific product surface.
   - Palette/type/signature: name a compact set of semantic color roles, a distinctive roman display treatment plus a refined body treatment, and one memorable element rooted in the subject.
   - ${tailwindColorPlanningRule}
   - ${neutralThemePlanningRule}
@@ -244,7 +244,7 @@ export function getMainCodingPrompt(options?: {
      - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
      - *Structure*: choose a page archetype before styling it. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
       - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
-      - Before coding, output a one-line plan statement in the exact format: \`Structure=<macrostructure>; Interaction=<2-4 concrete outcomes>\`, and confirm whether the structure/nav/footer palette differs from the last generated build.
+      - Before coding, confirm whether the structure/nav/footer palette differs from the last generated build when relevant.
       - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet. Consider whether a shader background, 3D element, particle effect, or parallax scroll would serve as that signature for this subject.
       - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
      - *Proof policy*: separate user-supplied facts from illustrative interface content. Never invent metrics, customer logos, testimonials, awards, case-study results, or quantitative claims to make a layout look complete.
