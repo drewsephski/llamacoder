@@ -218,7 +218,7 @@ export async function generateFollowUpPrompts({
 }
 
 function dedentSystemPrompt(previousContext: string): string {
-  return `Generate exactly ${CANDIDATE_COUNT} brief prompts the user can click to continue improving this generated app. Return only JSON shaped as {"prompts":["prompt1","prompt2",...]}.
+  return `Generate concise follow-up prompts to help continue improving this generated app. Return only JSON shaped as {"prompts":["prompt1","prompt2",...]}.
 
 Rules:
 - Generate exactly ${CANDIDATE_COUNT} candidates (we will pick the best 3).

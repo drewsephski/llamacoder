@@ -303,7 +303,7 @@ function enrichInternalLinks(
 }
 
 export function withMinimumInternalLinks(
-  page: MarketingPage,
+  page: MarketingPageSeed,
   kind: MarketingPage["kind"] = page.kind,
 ): MarketingPage {
   return enrichInternalLinks(page, kind);
@@ -954,6 +954,12 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
         description: "Official Squid AI product site.",
         external: true,
       },
+      {
+        href: "https://squidagent.ai/features",
+        label: "Squid Agent features",
+        description: "Product capabilities and workflow documentation for Squid Agent.",
+        external: true,
+      },
     ],
     internalLinks: sharedComparisonLinks,
     cta: "Compare ownership and handoff posture",
@@ -963,8 +969,8 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
     slug: "squid-vs-bolt-for-agencies",
     title:
       "Squid vs Bolt.new for agencies (2026): Deliverables, reviews, and recovery",
-    description:
-      "An agency-specific benchmark for Squid and Bolt.new covering brief handling, stakeholder review loops, restoreability, deployment handoff, cost signaling, and production transfer quality.",
+      description:
+        "A practical benchmark for Squid vs Bolt.new: brief handling, review loops, restoreability, deployment handoff, and cost signaling in one decision frame.",
     h1: "Squid vs Bolt.new for agencies",
     intro:
       "Agencies care about stable handoff artifacts and predictable revision loops more than single-shot previews. The meaningful question is which workflow preserves review traceability, makes rollback simple, and keeps exports deployable on the first pass.",
@@ -1040,6 +1046,10 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
       {
         title: "Where Bolt can still be the better fit",
         body: "If your team needs Bolt-centric full-stack ecosystems, integrated hosting, and established Bolt-specific editor collaboration, it may be the right primary platform. Squid is strongest when the primary decision is a highly portable React output with a strong verification layer around export.",
+      },
+      {
+        title: "Match the tool to your client governance model",
+        body: "When review windows, client sign-off cadence, and predictable checkpoints are contractual, Squid's explicit restore and artifact reporting is usually easier to govern; Bolt is stronger if your team is already embedded in its deployment workflows.",
       },
     ],
     faqs: [
@@ -1177,6 +1187,10 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
         title: "Where Lovable can still be the better choice",
         body: "Lovable may be preferable if your startup needs its managed modules and team-native flow as a primary productivity layer. Squid is better aligned when portability and verifiable export are central from day one.",
       },
+      {
+        title: "Align tooling with your runway goals",
+        body: "Use the same set of acceptance checks for both products. If your team’s runway is constrained, Squid’s explicit spend telemetry helps prevent silent cost drift during pivots and feature spikes.",
+      },
     ],
     faqs: [
       {
@@ -1304,6 +1318,10 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
       {
         title: "Design-led value is recovery-safe iteration",
         body: "When a stakeholder requests a narrow copy or spacing adjustment, a good workflow should confine changes. Compare restore and diff behavior just as aggressively as visual output.",
+      },
+      {
+        title: "Choose review checkpoints before visual polish",
+        body: "Design teams should lock review cadence, export cadence, and rollback checks before generation begins. If checkpoints are unclear, visual polish wins early while long-term maintainability suffers.",
       },
     ],
     faqs: [
@@ -2011,6 +2029,11 @@ const blogPagesSeed: MarketingPageSeed[] = [
         answer:
           "Displayed estimate, actual charge, and refund policy on save/resolve events.",
       },
+      {
+        question: "Can governance still work with a credit model?",
+        answer:
+          "Yes, when checkpoints, usage evidence, and rollback controls are part of your internal release process, not just dashboard summaries.",
+      },
     ],
     cta: "Compare tools with the acceptance ledger",
   },
@@ -2024,7 +2047,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "Exporting is the final handoff point for real ownership. The real question is whether the output stays runnable and reviewable after it leaves the generator.",
     summary:
-      "Use version freeze, manifest review, clean-folder installs, build checks, and diff discipline to protect team ownership.",
+      "Use version freeze, manifest review, clean-folder installs, build checks, and diff discipline to protect team ownership and preserve deployment confidence.",
     publishedAt: "2026-07-16",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -2086,6 +2109,11 @@ const blogPagesSeed: MarketingPageSeed[] = [
         answer:
           "Source, package config, scripts, README, environment notes, and clear evidence files are minimum.",
       },
+      {
+        question: "How do I preserve approval history after export?",
+        answer:
+          "Store acceptance evidence and the exact checkpoint metadata with the exported artifact so downstream teams can verify who approved the delivered baseline.",
+      },
     ],
     internalLinks: [
       {
@@ -2119,7 +2147,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "Verification is a sequence, not a single pass. Squid validates file graphs, runtime behavior, interactions, and portability as part of the delivery story.",
     summary:
-      "Follow this process to know what has passed, what still needs review, and what to test locally before shipping.",
+      "Follow this process to know what has passed, what still needs review, where risk remains, and what to test locally before shipping so every release has a defendable evidence trail.",
     publishedAt: "2026-07-16",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "7 min read",
@@ -2160,6 +2188,11 @@ const blogPagesSeed: MarketingPageSeed[] = [
         question: "Can verification replace human QA?",
         answer:
           "No. It reduces risk and clarifies failure points, but human review is still needed for business logic and edge behavior.",
+      },
+      {
+        question: "How often should verification artifacts be refreshed?",
+        answer:
+          "Refresh them after each significant edit, framework update, and dependency change so the evidence remains tied to the current running code.",
       },
     ],
     internalLinks: [
@@ -2215,6 +2248,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
         title: "Review diffs after each edit",
         body: "A narrow change should not rewrite unrelated components, styling, or routes.",
       },
+      {
+        title: "Document any deviations before handoff",
+        body: "Record every unresolved deviation in a short handoff note so your team can budget follow-up work and avoid hidden assumptions in the repository transfer.",
+      },
     ],
     table: {
       caption: "AI-generation handoff checklist",
@@ -2251,6 +2288,11 @@ const blogPagesSeed: MarketingPageSeed[] = [
         question: "Do we need to check export artifacts?",
         answer:
           "Yes. Export artifacts are the true proof of ownership once work leaves the builder.",
+      },
+      {
+        question: "When should we document unresolved issues?",
+        answer:
+          "Document them immediately after each verification loop so handoff stays aligned to known risk and owners know what still requires follow-up.",
       },
     ],
     internalLinks: [

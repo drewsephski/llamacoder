@@ -428,6 +428,11 @@ export async function POST(req: Request) {
         ? extractResearchObjective(candidate.content)
         : candidate.content;
     const latestResearchObjective = getResearchObjective(message);
+    const hasExplicitCompleteCreativeBrief =
+      /\buse\s+the\s+supplied[\s\S]{0,220}\bexactly\s+as\s+written\b/i.test(
+        latestResearchObjective,
+      ) ||
+      /\bcomplete\s+creative\s+brief\b/i.test(latestResearchObjective);
     const websiteReferenceIntent = detectWebsiteReferenceIntent(
       latestResearchObjective,
     );
@@ -1159,18 +1164,27 @@ export async function POST(req: Request) {
             chatUrls.length === 0 &&
             (searchApproved ||
               (searchApproval?.approved !== false &&
-                ((researchIntent.candidate &&
-                  !selectedApiShouldSupplyLiveData &&
-                  !linkedPagesSatisfyReferenceResearch &&
-                  !attachedImageSatisfiesVisualReferenceResearch) ||
+                (
+                  (researchIntent.candidate &&
+                    !selectedApiShouldSupplyLiveData &&
+                    !linkedPagesSatisfyReferenceResearch &&
+                    !attachedImageSatisfiesVisualReferenceResearch) ||
                   (isCodeGeneration &&
                     effectiveLiveApiIntent.required &&
                     !hasOnlyReviewedConnectedApiContracts &&
                     !apiDocumentation.hasCompleteEndpointContract &&
-                    !linkedPagesSatisfyReferenceResearch))));
+                    !linkedPagesSatisfyReferenceResearch) ||
+                  (isCodeGeneration && hasExplicitCompleteCreativeBrief)
+                )
+              )
+            );
+
           const researchQuery = searchApproved
             ? approvedResearchQuery
             : (researchIntent.query ??
+              (hasExplicitCompleteCreativeBrief
+                ? buildResearchQuery(latestResearchObjective)
+                : null) ??
               (integrationPolicyContext.trim()
                 ? buildResearchQuery(integrationPolicyContext)
                 : null));

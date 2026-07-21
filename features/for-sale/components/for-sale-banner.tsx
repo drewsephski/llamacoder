@@ -148,6 +148,14 @@ export function ForSaleBanner() {
               : `Get this page for ${product.priceLabel}`}
           </Button>
 
+          <a
+            className="mt-2 block text-center text-sm font-medium text-neutral-600 underline underline-offset-4 transition hover:text-neutral-900"
+            href={product.assetHref}
+            rel="noreferrer"
+          >
+            Download preview asset
+          </a>
+
           <p className="mt-2 text-center text-xs leading-5 text-neutral-500">
             Secure one-time checkout via Stripe
           </p>
