@@ -34,7 +34,10 @@ import { recoverStaleGenerationLocks } from "@/lib/generation-recovery";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
-import { extractDesignScores } from "@/features/generation/design-quality-scoring";
+import {
+  extractDesignScores,
+  getRecentDesignScores,
+} from "@/features/generation/design-quality-scoring";
 import {
   auditContrast,
   formatContrastReport,
@@ -144,30 +147,7 @@ export async function POST(request: NextRequest) {
     }
     activeChatId = chat.id;
 
-    // Fetch previous assistant messages with design scores for dynamic emphasis
-    const messageModel = (
-      prisma as {
-        message?: { findMany: (args: unknown) => Promise<unknown[]> };
-      }
-    ).message;
-    const previousMessages =
-      typeof messageModel?.findMany === "function"
-        ? await messageModel.findMany({
-            where: { chatId: chat.id, role: "assistant" },
-            select: { designScores: true },
-            orderBy: { position: "desc" },
-            take: 3,
-          })
-        : [];
-    const latestDesignScores = (
-      previousMessages as Array<{
-        designScores:
-          | import("@/features/generation/design-quality-scoring").DesignScoreSummary
-          | null;
-      }>
-    ).find((m) => m.designScores !== null)?.designScores as
-      | import("@/features/generation/design-quality-scoring").DesignScoreSummary
-      | null;
+    const latestDesignScores = await getRecentDesignScores(chat.id);
 
     const generationStart = await prisma.chat.updateMany({
       where: {
