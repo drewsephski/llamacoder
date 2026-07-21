@@ -60,9 +60,12 @@ ${generatedAppCapabilityContract}
   - Content integrity: identify which proof, metrics, testimonials, logos, or claims came from the user. Never plan fabricated proof to fill a layout.
   - Motion/copy notes: name the one interaction or transition that should carry motion, and specify the tone of button labels, empty states, and errors.
   - Product states: plan realistic loading, empty, error, success, disabled, hover, active, and focus-visible states for the core workflow.
+  - State coverage check: before finalizing architecture, include the core control states you will implement (default, hover, active, focus-visible, disabled, loading, error, success) and how each is visually differentiated.
   - ${functionalInteractionPlanningRule}
   - ${themeTogglePlanningRule}
   - Responsive behavior: explain how the experience recomposes around the primary task at 320, 375, 414, and 768px instead of merely shrinking. Clickable labels must stay on one line.
+  - Anti-template guard: declare the chosen nav and footer archetypes in the same sentence, and if this is not an explicit restyle of an existing shell, choose a structure/archetype that differs from your last generated output's primary archetype or color signature.
+  - No ornamental headings: declare one explicit roman display/headline treatment and forbid italicized heading emphasis; only inline emphasis inside body copy is allowed.
 - Treat premium as clarity, craft, and restraint: establish one unmistakable primary action, make secondary actions quieter, use believable subject-specific content, and avoid turning every piece of information into a card.
 - End with a visual QA pass and private pre-emit critique scored 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise any axis below 3, remove one unnecessary flourish, and confirm the signature element still serves the product's job.
 
@@ -74,9 +77,11 @@ Describe the attached screenshot in detail. I will send what you give me to a de
 
 - Think step by step and describe the UI in great detail.
 - Describe where everything is in the UI so the developer can recreate the layout and alignment.
-- Pay close attention to background color, text color, font size, font family, padding, margin, border, etc. Match the colors and sizes exactly.
+- Pay close attention to background color, text color, font size, font family, padding, margin, border, spacing rhythm, and motion cues. Match the colors and sizes exactly.
 - Mention every part of the screenshot including any headers, footers, sidebars, etc.
+- Identify interaction states, form/error flows, and one clear user task the layout optimizes for.
 - Use the exact text from the screenshot.
+- For reusable generation, include whether responsive behavior is implied at 320, 375, 414, and 768px (or explicitly note if not inferable).
 `;
 
 export function getMainCodingPrompt(options?: {
@@ -118,8 +123,9 @@ export function getMainCodingPrompt(options?: {
      - Never use arbitrary bracket values: no \`bg-[#123456]\`, \`w-[100px]\`, \`text-[14px]\`, or \`bg-[oklch(...)]\`. If a design calls for a custom color, pick the closest standard Tailwind palette color instead of inventing a bracket value — do not use oklch or other CSS color functions inline in className strings.
      - Do not invent dark mode or mix light and dark component systems. When the user requests dark mode or the app includes a working theme control, use resolved semantic pairs such as \`bg-background\`/\`text-foreground\`, \`bg-card\`/\`text-card-foreground\`, \`bg-muted\`/\`text-muted-foreground\`, \`border-border\`, \`bg-primary\`/\`text-primary-foreground\`, and complete \`dark:\` overrides. Otherwise follow the literal light-first neutral roles below.
      - Treat each surface and foreground as one locked pair. Every \`bg-*\` applied to a button, badge, card, panel, input, tooltip, menu, dialog, or overlay must have an intentional \`text-*\`/icon color for that exact surface; never depend on inherited text color after changing a background.
-     - Contrast may never fail. Normal text, helper text, and placeholder text require at least 4.5:1 contrast; large text, icons, visible focus rings, and component boundaries require at least 3:1. Aim for 7:1 body text where practical.
-     - Do not drive hover/active state transitions with filter-style utilities such as \`hover:brightness-*\`, \`hover:contrast-*\`, \`hover:saturate-*\`, \`hover:sepia-*\`, \`hover:grayscale-*\`, \`hover:invert-*\`, \`hover:hue-rotate-*\`, or \`hover:drop-shadow-*\`. Use explicit \`hover:bg-*\` and \`hover:text-*\` pairs so contrast can be audited.
+  - Contrast may never fail. Normal text, helper text, and placeholder text require at least 4.5:1 contrast; large text, icons, visible focus rings, and component boundaries require at least 3:1. Aim for 7:1 body text where practical.
+  - Never introduce horizontal overflow. If a control label risks wrapping into two lines, adjust spacing, width, or copy before reducing content legibility.
+  - Do not drive hover/active state transitions with filter-style utilities such as \`hover:brightness-*\`, \`hover:contrast-*\`, \`hover:saturate-*\`, \`hover:sepia-*\`, \`hover:grayscale-*\`, \`hover:invert-*\`, \`hover:hue-rotate-*\`, or \`hover:drop-shadow-*\`. Use explicit \`hover:bg-*\` and \`hover:text-*\` pairs so contrast can be audited.
      - Verify the final composited colors in light and dark themes and in default, hover, active, focus-visible, selected, disabled, loading, success, and error states. Opacity, gradients, background images, and translucent overlays do not excuse low contrast. Never emit dark-on-dark, light-on-light, gray-on-color, or an unreadable disabled state.
 
   ${tailwindColorFidelityContract}
@@ -237,7 +243,8 @@ export function getMainCodingPrompt(options?: {
      - *Palette*: define 4-6 semantic roles (canvas, surface, ink, muted ink, border, and optional accent), not 4-6 unrelated hues. For an unspecified theme, keep the surface area light and neutral and use at most one subject-derived accent. A color explicitly named by the user owns the requested role and must not be neutralized or swapped.
      - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
      - *Structure*: choose a page archetype before styling it. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
-     - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
+      - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
+      - Before coding, output a one-line plan statement in the exact format: \`Structure=<macrostructure>; Interaction=<2-4 concrete outcomes>\`, and confirm whether the structure/nav/footer palette differs from the last generated build.
       - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet. Consider whether a shader background, 3D element, particle effect, or parallax scroll would serve as that signature for this subject.
       - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
      - *Proof policy*: separate user-supplied facts from illustrative interface content. Never invent metrics, customer logos, testimonials, awards, case-study results, or quantitative claims to make a layout look complete.
@@ -271,6 +278,7 @@ export function getMainCodingPrompt(options?: {
      - Before emitting files, run a private contrast audit of every text/icon/surface pair and every interactive state. If any pair misses the required ratio, change the foreground, background, opacity, or border until it passes; do not ship a known contrast exception.
      - Typography carries personality. Use type scale, weight, casing, width, and spacing intentionally so headings, labels, data, and body copy have distinct jobs. Do not rely on font family alone for personality.
      - Headings and display type stay roman. Never italicize a heading or place an italic emphasis word inside one.
+     - Keep the information architecture readable at mobile widths: nav/footer density can simplify, but primary task controls and primary actions remain prominent and single-line clickable at 320, 375, 414, and 768px.
      - Structure is information. Dividers, labels, badges, groups, tabs, and numbers must encode real relationships in the content. Numbered markers only belong to sequences where order matters.
      - Spend visual boldness in one justified signature element. It can be an unusual layout rhythm, a tactile control, a subject-specific data visualization, a distinctive empty state, or an orchestrated interaction. Remove decorative flourishes that do not support it.
      - Vary border-radius, spacing, and button treatment intentionally rather than repeating one value everywhere — sharp for one purpose, rounded for another, and let that variation mean something.
@@ -292,6 +300,7 @@ export function getMainCodingPrompt(options?: {
   - **Composed spatial rhythm:** choose a clear primary axis, mix tight and generous gaps from a small scale, preserve useful negative space, and allow at most one intentional grid break. Avoid centered-everything layouts and equal padding on every section or card.
   - **Surface and voice restraint:** use one containment layer, one icon family, and specific product language. Avoid card-in-card nesting, decorative glow, generic emoji icons, repeated section eyebrows, and startup-cliche copy.
   - **Responsive composition:** deliberately reorder, collapse, or prioritize content for narrow screens so the core task remains first and actions stay reachable. Do not preserve desktop density by squeezing it smaller.
+  - **State-first interaction design:** for every core control class, support and style default, hover, active, focus-visible, disabled, loading, error, and success states; do not ship static surfaces where real state transitions are expected.
   - **Structural variety:** the section rhythm, navigation, hero/opening, and ending must follow the content rather than a reusable AI landing-page template. Do not solve visual variety by recoloring the same centered hero → three equal feature cards → CTA structure, and do not solve it by reusing the same nav/footer archetype and page archetype across different apps in this session — see the structural diversity contract above.
   - **Final design critique:** privately score the result 1-5 on Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety. Revise every axis below 3. Then remove one unnecessary accessory, fix the weakest hierarchy or copy choice, verify keyboard focus and reduced-motion behavior, and confirm the signature element is distinctive because it fits the subject — not because it is loud.
 
@@ -332,6 +341,7 @@ export function getMainCodingPrompt(options?: {
   17. Did you trace every visible control to a real handler or valid destination and exercise the primary, cancel, invalid, success, and error paths with visible state changes?
   18. If a theme control exists, does it persist preference, update the root HTML dark class and color-scheme, expose its current state accessibly, and visibly theme every surface including dialogs and toasts?
   19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?
+  20. Does every meaningful control expose all relevant explicit UI states (hover, active, focus-visible, disabled, loading, success, error), and are any necessary labels kept one-line at mobile widths?
   ${designEmphasis ? `\n${designEmphasis}\n` : ""}
   `;
 

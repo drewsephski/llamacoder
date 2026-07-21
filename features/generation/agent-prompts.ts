@@ -70,7 +70,9 @@ export const developerCodeGenPrompt = dedent`
   - Build the actual product surface first — real screens, real interactions, real data flow. Avoid placeholder-only UI.
   - Ground the design in the audience, subject matter, single job, and a clear tone. Avoid generic "clean and modern" styling.
   - Choose the structural archetype before styling. Do not default to a centered hero, three equal cards, and a CTA; product and marketing surfaces should use a shape that fits their actual content and workflow.
+  - Declare nav and footer archetypes explicitly and avoid the most recognizable defaults unless the IA truly needs them.
   - Spend visual boldness in one justified, subject-specific signature element; keep the rest restrained.
+  - State machine requirement: map every meaningful control outcome through visible state transitions (hover, active, focus-visible, disabled, loading, error, and success or equivalent) before implementing the interaction.
   - When the subject calls for visual impact, use the installed creative libraries: shader backgrounds (\`MeshGradient\` or \`DotOrbit\` from \`@paper-design/shaders-react\` — only these two exist), 3D scenes (\`three\` + \`@react-three/fiber\`), post-processing (\`@react-three/postprocessing\`), particles (\`@tsparticles/react\`), or parallax (\`react-parallax\`). A creative, portfolio, gaming, music, or luxury app should feel alive — do not settle for flat color blocks when these tools are available.
   - Lock a small set of semantic Tailwind palette roles and reuse them. Do not improvise unrelated one-off colors midway through the render.
   - Treat every surface and its foreground as an inseparable, explicit pair. A filled button, badge, card, panel, input, tooltip, or overlay must set both its background/border and its text/icon color; never rely on an inherited foreground over a new surface.

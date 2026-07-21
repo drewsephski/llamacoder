@@ -113,6 +113,7 @@ export function getCompressedCodingPrompt(): string {
   Build the actual product surface first. Ground the design in the subject. Choose a clear tone (editorial, brutalist, soft, utilitarian, luxury, playful, technical, austere).
 
   Before coding, output a one-line plan declaration: Structure=<macrostructure>; Interaction=<2-4 outcomes>.
+  - Declare one-line interaction-state coverage for primary controls (hover, active, focus-visible, disabled, loading, success, error) before finalizing.
 
   Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Pick deliberate nav and footer archetypes.
   Archetype dispatch:
@@ -127,7 +128,7 @@ export function getCompressedCodingPrompt(): string {
   - Default to solid surfaces. Use gradients only when the subject calls for it.
   - Headings are roman, never italicized. Numbered markers only for real sequences.
   - No fabricated proof. No fake browser/phone/terminal chrome.
-  - Touch targets ≥44px. Visible focus states. Clickable labels on one line.
+  - Touch targets ≥44px. Visible focus states. Clickable labels on one line. Prevent horizontal overflow at 320, 375, 414, and 768px.
   - Mobile reorganizes around the core task. Prevent horizontal overflow.
 
   ## Output format
