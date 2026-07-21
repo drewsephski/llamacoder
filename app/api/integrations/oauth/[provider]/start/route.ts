@@ -50,10 +50,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
   const config = getOAuthProviderConfig(providerParam);
   if (!config) {
+    const providerDisplayName =
+      providerParam === "github"
+        ? "GitHub"
+        : providerParam === "vercel"
+          ? "Vercel"
+          : "Supabase";
     return NextResponse.json(
       {
         error: "OAUTH_NOT_CONFIGURED",
-        message: `${providerParam === "github" ? "GitHub" : "Vercel"} OAuth is not configured for this Squid environment.`,
+        message: `${providerDisplayName} OAuth is not configured for this Squid environment.`,
       },
       { status: 503 },
     );
@@ -89,10 +95,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       providerId: providerParam,
       environment: environment.data,
     });
-    const pkce =
-      providerParam === "github" && config.mode === "oauth_app"
-        ? createPkcePair()
-        : null;
+    const pkce = config.mode === "oauth_app" ? createPkcePair() : null;
     const response = NextResponse.redirect(
       buildOAuthAuthorizationUrl({
         config,

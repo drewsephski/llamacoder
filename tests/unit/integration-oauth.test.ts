@@ -21,6 +21,8 @@ const originalEnv = {
   vercelId: process.env.VERCEL_INTEGRATION_CLIENT_ID,
   vercelSecret: process.env.VERCEL_INTEGRATION_CLIENT_SECRET,
   vercelSlug: process.env.VERCEL_INTEGRATION_SLUG,
+  supabaseId: process.env.SUPABASE_OAUTH_CLIENT_ID,
+  supabaseSecret: process.env.SUPABASE_OAUTH_CLIENT_SECRET,
 };
 
 describe("integration OAuth", () => {
@@ -36,6 +38,8 @@ describe("integration OAuth", () => {
     process.env.VERCEL_INTEGRATION_CLIENT_ID = "vercel-client";
     process.env.VERCEL_INTEGRATION_CLIENT_SECRET = "vercel-secret";
     process.env.VERCEL_INTEGRATION_SLUG = "squid-agent";
+    process.env.SUPABASE_OAUTH_CLIENT_ID = "supabase-client";
+    process.env.SUPABASE_OAUTH_CLIENT_SECRET = "supabase-secret";
   });
 
   afterEach(() => {
@@ -49,6 +53,8 @@ describe("integration OAuth", () => {
       ["VERCEL_INTEGRATION_CLIENT_ID", originalEnv.vercelId],
       ["VERCEL_INTEGRATION_CLIENT_SECRET", originalEnv.vercelSecret],
       ["VERCEL_INTEGRATION_SLUG", originalEnv.vercelSlug],
+      ["SUPABASE_OAUTH_CLIENT_ID", originalEnv.supabaseId],
+      ["SUPABASE_OAUTH_CLIENT_SECRET", originalEnv.supabaseSecret],
     ] as const) {
       if (value === undefined) delete process.env[name];
       else process.env[name] = value;
@@ -93,6 +99,22 @@ describe("integration OAuth", () => {
     expect(url.searchParams.get("state")).toBe("signed-state");
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");
     expect(url.searchParams.get("scope")).toContain("repo");
+  });
+
+  it("builds Supabase authorization with signed state and PKCE", () => {
+    const config = getOAuthProviderConfig("supabase");
+    expect(config).not.toBeNull();
+    const url = buildOAuthAuthorizationUrl({
+      config: config!,
+      state: "signed-state",
+      codeChallenge: "challenge",
+    });
+    expect(url.origin).toBe("https://api.supabase.com");
+    expect(url.pathname).toBe("/v1/oauth/authorize");
+    expect(url.searchParams.get("state")).toBe("signed-state");
+    expect(url.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(url.searchParams.get("response_type")).toBe("code");
+    expect(url.searchParams.get("scope")).toBe("all");
   });
 
   it("prefers repository-scoped GitHub App installation authorization", () => {
@@ -157,6 +179,40 @@ describe("integration OAuth", () => {
     expect(result.metadata).toEqual({
       teamId: "team_1",
       vercelUserId: "user_vercel",
+    });
+  });
+
+  it("uses Supabase's form-encoded token exchange with basic auth", async () => {
+    const fetchMock = vi.fn(async (_input: unknown, init?: RequestInit) => {
+      const headers = new Headers(init?.headers as HeadersInit);
+      expect(headers.get("authorization")).toBe(
+        `Basic ${Buffer.from("supabase-client:supabase-secret").toString("base64")}`,
+      );
+      expect(init?.body).toBeInstanceOf(URLSearchParams);
+      const body = init?.body as URLSearchParams;
+      expect(body.get("grant_type")).toBe("authorization_code");
+      expect(body.get("code_verifier")).toBe("verifier");
+      return new Response(
+        JSON.stringify({
+          access_token: "supabase-access-token",
+          refresh_token: "supabase-refresh-token",
+          scope: "",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    });
+    const result = await exchangeOAuthCode({
+      config: getOAuthProviderConfig("supabase")!,
+      code: "temporary-code",
+      codeVerifier: "verifier",
+      fetchImpl: fetchMock as typeof fetch,
+    });
+    expect(result).toEqual({
+      accessToken: "supabase-access-token",
+      scopes: [],
+      metadata: {
+        supabaseRefreshToken: "supabase-refresh-token",
+      },
     });
   });
 });

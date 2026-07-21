@@ -14,6 +14,10 @@ import {
   deployVercelBundle,
   listVercelProjects,
 } from "@/features/integrations/server/vercel";
+import {
+  listSupabaseOrganizations,
+  provisionSupabaseProject,
+} from "@/features/integrations/server/supabase";
 import { getPrisma } from "@/lib/prisma";
 import {
   getAuthorizedProjectIntegration,
@@ -71,6 +75,10 @@ async function requireBinding({
   return binding;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export async function listIntegrationResources(input: {
   projectId: string;
   bindingId: string;
@@ -79,6 +87,7 @@ export async function listIntegrationResources(input: {
   const binding = await requireBinding(input);
   if (binding.providerId === "github") return listGitHubRepositories(input);
   if (binding.providerId === "vercel") return listVercelProjects(input);
+  if (binding.providerId === "supabase") return listSupabaseOrganizations(input);
   throw new IntegrationServiceError(
     "RESOURCES_UNSUPPORTED",
     "This integration does not expose selectable resources.",
@@ -99,13 +108,32 @@ export async function executeIntegrationAction({
 }) {
   const binding = await requireBinding({ projectId, bindingId, userId });
   const expectedProvider =
-    action.action === "github_publish" ? "github" : "vercel";
+    action.action === "github_publish"
+      ? "github"
+      : action.action === "vercel_deploy"
+        ? "vercel"
+        : "supabase";
   if (binding.providerId !== expectedProvider) {
     throw new IntegrationServiceError(
       "ACTION_PROVIDER_MISMATCH",
       "This action does not match the connected provider.",
       400,
     );
+  }
+  const operationMetadata: Record<string, unknown> = {};
+  if (action.messageId) {
+    operationMetadata.messageId = action.messageId;
+  }
+  if (action.action === "supabase_provision") {
+    if (action.organizationId) {
+      operationMetadata.organizationId = action.organizationId;
+    }
+    if (action.region) {
+      operationMetadata.region = action.region;
+    }
+    if (action.projectName) {
+      operationMetadata.projectName = action.projectName;
+    }
   }
   const operation = await getPrisma().integrationOperation.create({
     data: {
@@ -116,13 +144,68 @@ export async function executeIntegrationAction({
       providerId: binding.providerId,
       kind: action.action,
       status: "running",
-      metadata: { messageId: action.messageId } as Prisma.InputJsonValue,
+      metadata: operationMetadata as Prisma.InputJsonValue,
     },
   });
   try {
+    if (action.action === "supabase_provision") {
+      const provisionResult = await provisionSupabaseProject({
+        projectId,
+        bindingId,
+        userId,
+        organizationId: action.organizationId,
+        region: action.region,
+        projectName: action.projectName,
+      });
+      const completed = await getPrisma().$transaction(async (tx) => {
+        const previousConfig = await tx.projectIntegration.findUnique({
+          where: { id: binding.id },
+          select: { config: true },
+        });
+        const existingConfig = isRecord(previousConfig?.config)
+          ? (previousConfig.config as Record<string, unknown>)
+          : {};
+        await tx.projectIntegration.update({
+          where: { id: binding.id },
+          data: {
+            config: {
+              ...existingConfig,
+              ...provisionResult.config,
+            } as Prisma.InputJsonValue,
+          },
+        });
+        await tx.integrationAuditEvent.create({
+          data: {
+            userId,
+            providerId: binding.providerId,
+            action: action.action,
+            environment: binding.environment,
+            connectionId: binding.connectionId,
+            projectIntegrationId: binding.id,
+            metadata: provisionResult.metadata,
+          },
+        });
+        return tx.integrationOperation.update({
+          where: { id: operation.id },
+          data: {
+            status: provisionResult.operationStatus,
+            externalId: provisionResult.externalId,
+            url: provisionResult.url,
+            commitSha: null,
+            metadata: provisionResult.metadata,
+            completedAt:
+              provisionResult.operationStatus === "succeeded"
+                ? new Date()
+                : null,
+          },
+        });
+      });
+      return serializeOperation(completed);
+    }
+
     const bundle = await getProjectExportBundle({
       projectId,
-      messageId: action.messageId,
+      messageId: action.messageId!,
       userId,
     });
     const result =
@@ -215,9 +298,9 @@ export async function refreshIntegrationOperation({
     );
   }
   if (
-    operation.providerId !== "vercel" ||
     operation.status !== "running" ||
-    !operation.externalId
+    !operation.externalId ||
+    operation.providerId !== "vercel"
   ) {
     return serializeOperation(operation);
   }

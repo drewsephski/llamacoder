@@ -15,6 +15,7 @@ import Link from "next/link";
 import { SiNetlify } from "react-icons/si";
 import { toast } from "sonner";
 import { Vercel } from "@/logos/vercel";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ import {
   getExtensionForLanguage,
   toTitleCase,
 } from "@/lib/utils";
+import { parseAppSpec } from "@/features/generation/app-spec";
 import {
   attachGeneratedFilesStats,
   normalizeGeneratedFiles,
@@ -53,6 +55,12 @@ import { StickToBottom } from "use-stick-to-bottom";
 import JSZip from "jszip";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import {
+  integrationActionResponseSchema,
+  integrationWorkspaceSchema,
+  type ProjectIntegrationView,
+} from "@/features/integrations/contracts";
+import { fetchJson } from "@/features/shared/client/http";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { QualityReportPanel } from "@/components/quality-report-panel";
 import { SelectedElementEditTray } from "@/components/selected-element-edit-tray";
@@ -87,6 +95,22 @@ function parseCodeFenceTag(tag: string) {
       : `file.${getExtensionForLanguage(language)}`;
 
   return { language, path };
+}
+
+function getIntegrationConfigValue(
+  integration: ProjectIntegrationView,
+  key: string,
+) {
+  const value = integration.config?.[key];
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function isSupabaseProjectProvisioned(integration: ProjectIntegrationView) {
+  return (
+    getIntegrationConfigValue(integration, "supabaseProjectRef") !== null ||
+    getIntegrationConfigValue(integration, "supabaseProjectUrl") !== null ||
+    getIntegrationConfigValue(integration, "supabaseAnonKey") !== null
+  );
 }
 
 function extractLatestStreamBlock(
@@ -436,6 +460,94 @@ export default function CodeViewer({
 
   const [refresh, setRefresh] = useState(0);
   const disabledControls = !!streamText || files.length === 0;
+  const parsedAppSpec = useMemo(() => parseAppSpec(chat.appSpec), [chat.appSpec]);
+  const queryClient = useQueryClient();
+  const showSupabaseConnectCta =
+    !disabledControls &&
+    !!chat.userId &&
+    parsedAppSpec?.dataPersistence.recommendation === "require_database";
+  const integrationWorkspaceQuery = useQuery({
+    queryKey: ["project-integrations", chat.id],
+    enabled: showSupabaseConnectCta,
+    queryFn: () =>
+      fetchJson(
+        `/api/projects/${chat.id}/integrations`,
+        integrationWorkspaceSchema,
+      ),
+  });
+  const supabaseIntegration =
+    integrationWorkspaceQuery.data?.integrations.find(
+      (integration) =>
+        integration.providerId === "supabase" &&
+        integration.environment === "development",
+    ) ??
+    integrationWorkspaceQuery.data?.integrations.find(
+      (integration) => integration.providerId === "supabase",
+    );
+  const isSupabaseReady = supabaseIntegration?.status === "ready";
+  const isSupabaseProvisioned = supabaseIntegration
+    ? isSupabaseProjectProvisioned(supabaseIntegration)
+    : false;
+  const supabaseProjectUrl = supabaseIntegration
+    ? getIntegrationConfigValue(supabaseIntegration, "supabaseProjectUrl")
+    : null;
+  const supabaseAnonKey = supabaseIntegration
+    ? getIntegrationConfigValue(supabaseIntegration, "supabaseAnonKey")
+    : null;
+  const supabaseEnvVars =
+    supabaseProjectUrl && supabaseAnonKey
+      ? `VITE_SUPABASE_URL=${supabaseProjectUrl}\nVITE_SUPABASE_ANON_KEY=${supabaseAnonKey}`
+      : null;
+
+  const supabaseProvisionMutation = useMutation({
+    mutationFn: () =>
+      fetchJson(
+        `/api/projects/${chat.id}/integrations/${supabaseIntegration!.id}/actions`,
+        integrationActionResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "supabase_provision" }),
+        },
+      ),
+    onSuccess: async ({ operation }) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["project-integrations", chat.id],
+      });
+      toast.success(
+        "Supabase project provisioning started",
+        operation.url ? { description: operation.url } : undefined,
+      );
+    },
+    onError: (error) =>
+      toast.error("Supabase provision failed", {
+        description: error instanceof Error ? error.message : undefined,
+      }),
+  });
+
+  const copySupabaseEnvVars = async () => {
+    if (!supabaseEnvVars) return;
+    if (typeof navigator?.clipboard?.writeText === "function") {
+      try {
+        await navigator.clipboard.writeText(supabaseEnvVars);
+        toast.success("Copied Supabase environment variables");
+        return;
+      } catch (error) {
+        // fall through to fallback
+      }
+    }
+    const copied = window.prompt(
+      "Clipboard not available. Copy this and save into .env.local:",
+      supabaseEnvVars,
+    );
+    if (copied !== null) {
+      toast.success("Environment variables are available in the dialog for copy");
+    } else {
+      toast.error("Clipboard unavailable", {
+        description: "Paste values manually from the dialog text.",
+      });
+    }
+  };
   const selectValue = disabledControls
     ? undefined
     : (allAssistantMessages.length - 1 - currentVersionIndex).toString();
@@ -686,6 +798,82 @@ export default function CodeViewer({
             )}
           </div>
           <div className="flex shrink-0 items-center justify-end gap-2">
+            {showSupabaseConnectCta &&
+              integrationWorkspaceQuery.isLoading &&
+              !integrationWorkspaceQuery.isError && (
+                <Button size="sm" variant="secondary" disabled>
+                  <Loader2 className="size-3.5 animate-spin" />{" "}
+                  Checking Supabase setup
+                </Button>
+              )}
+            {showSupabaseConnectCta &&
+              integrationWorkspaceQuery.isError && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => integrationWorkspaceQuery.refetch()}
+                >
+                  Retry Supabase check
+                </Button>
+              )}
+            {showSupabaseConnectCta &&
+              !integrationWorkspaceQuery.isLoading &&
+              !integrationWorkspaceQuery.isError &&
+              !integrationWorkspaceQuery.isFetching &&
+              (!supabaseIntegration || !isSupabaseReady) && (
+                <Button asChild size="sm" variant="secondary">
+                  <Link
+                    href={`/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(chat.id)}&environment=development`}
+                  >
+                    {supabaseIntegration ? "Reconnect Supabase" : "Connect Supabase"}
+                  </Link>
+                </Button>
+              )}
+            {showSupabaseConnectCta &&
+              !integrationWorkspaceQuery.isLoading &&
+              !integrationWorkspaceQuery.isError &&
+              !integrationWorkspaceQuery.isFetching &&
+              isSupabaseReady &&
+              !isSupabaseProvisioned && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={supabaseProvisionMutation.isPending}
+                  onClick={() => supabaseProvisionMutation.mutate()}
+                >
+                  {supabaseProvisionMutation.isPending ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : null}
+                  Create Supabase project
+                </Button>
+              )}
+            {showSupabaseConnectCta &&
+              !integrationWorkspaceQuery.isLoading &&
+              !integrationWorkspaceQuery.isError &&
+              !integrationWorkspaceQuery.isFetching &&
+              isSupabaseReady &&
+              isSupabaseProvisioned && (
+                <>
+                  {supabaseProjectUrl && (
+                    <Button asChild size="sm" variant="secondary">
+                      <Link
+                        href={supabaseProjectUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open Supabase <ExternalLink className="size-3.5" />
+                      </Link>
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void copySupabaseEnvVars()}
+                  >
+                    Copy environment variables
+                  </Button>
+                </>
+              )}
             <Button
               asChild
               variant="outline"

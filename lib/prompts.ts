@@ -213,18 +213,7 @@ export function getMainCodingPrompt(options?: {
   - **Post-processing** (\`@react-three/postprocessing\`): Add Bloom, ChromaticAberration, Noise, or Vignette inside \`<EffectComposer>\` for cinematic depth in 3D scenes.
   - **Particle effects** (\`@tsparticles/react\` + \`@tsparticles/slim\`): Use for celebration moments, ambient backgrounds, or data visualization. Initialize with \`init\` from \`@tsparticles/react\` and load slim bundle.
   - **Parallax** (\`react-parallax\`): Use scroll-driven depth for storytelling pages, long-form content, or immersive product showcases.
-  - **Confetti** (\`react-confetti\`): Use for success celebrations, achievement unlocks, or milestone moments. Render only after import interop:
-
-    \`\`\`tsx
-    import * as ReactConfettiModule from "react-confetti";
-    import type { ComponentType } from "react";
-
-    const Confetti =
-      (ReactConfettiModule as { default?: ComponentType }).default ??
-      (ReactConfettiModule as ComponentType);
-
-    <Confetti width={width} height={height} run={isComplete} onComplete={handleDone} />
-    \`\`\`
+  - **Supabase** (\`@supabase/supabase-js\`, \`@supabase/ssr\`): Use for managed PostgreSQL, authentication, server-safe sessions, and secure client initialization. Keep auth secrets and service-role keys out of generated browser code.
   - **Smooth scrolling** (\`lenis\`): Use for buttery-smooth scroll experiences on editorial, portfolio, or showcase sites.
 
   Do not force these into every app. A utilitarian dashboard does not need a shader background. A creative tool, portfolio, gaming app, music player, luxury brand, or interactive showcase should still feel alive by choosing one deliberate signature layer and keeping the rest disciplined.

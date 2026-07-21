@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { domain } from "@/lib/domain";
 
-export type OAuthProviderId = "github" | "vercel";
+export type OAuthProviderId = "github" | "vercel" | "supabase";
 
 export type OAuthProviderConfig = {
   providerId: OAuthProviderId;
@@ -48,6 +48,19 @@ export function getOAuthProviderConfig(
     };
   }
 
+  if (providerId === "supabase") {
+    const clientId = requiredValue("SUPABASE_OAUTH_CLIENT_ID");
+    const clientSecret = requiredValue("SUPABASE_OAUTH_CLIENT_SECRET");
+    if (!clientId || !clientSecret) return null;
+    return {
+      providerId,
+      mode: "oauth_app",
+      clientId,
+      clientSecret,
+      callbackUrl: `${domain}/api/integrations/oauth/supabase/callback`,
+    };
+  }
+
   const clientId = requiredValue("VERCEL_INTEGRATION_CLIENT_ID");
   const clientSecret = requiredValue("VERCEL_INTEGRATION_CLIENT_SECRET");
   const slug = requiredValue("VERCEL_INTEGRATION_SLUG");
@@ -63,7 +76,7 @@ export function getOAuthProviderConfig(
 }
 
 export function isOAuthProviderId(value: string): value is OAuthProviderId {
-  return value === "github" || value === "vercel";
+  return value === "github" || value === "vercel" || value === "supabase";
 }
 
 export function buildOAuthAuthorizationUrl({
@@ -95,6 +108,19 @@ export function buildOAuthAuthorizationUrl({
     }
     return url;
   }
+  if (config.providerId === "supabase") {
+    const url = new URL("https://api.supabase.com/v1/oauth/authorize");
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("client_id", config.clientId);
+    url.searchParams.set("redirect_uri", config.callbackUrl);
+    url.searchParams.set("scope", "all");
+    url.searchParams.set("state", state);
+    if (codeChallenge) {
+      url.searchParams.set("code_challenge", codeChallenge);
+      url.searchParams.set("code_challenge_method", "S256");
+    }
+    return url;
+  }
 
   const url = new URL(
     `https://vercel.com/integrations/${encodeURIComponent(config.slug!)}/new`,
@@ -116,6 +142,17 @@ const vercelTokenSchema = z.object({
   token_type: z.string().optional(),
   team_id: z.string().nullable().optional(),
   user_id: z.string().optional(),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
+});
+
+const supabaseTokenSchema = z.object({
+  access_token: z.string().min(1),
+  token_type: z.string().optional(),
+  scope: z.string().optional(),
+  refresh_token: z.string().optional(),
+  error: z.string().optional(),
+  error_description: z.string().optional(),
 });
 
 export async function exchangeOAuthCode({
@@ -167,6 +204,46 @@ export async function exchangeOAuthCode({
       metadata: {},
     };
   }
+  if (config.providerId === "supabase") {
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: config.callbackUrl,
+      ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
+    });
+    const credentials = Buffer.from(
+      `${config.clientId}:${config.clientSecret}`,
+    ).toString("base64");
+    const response = await fetchImpl("https://api.supabase.com/v1/oauth/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+        Authorization: `Basic ${credentials}`,
+      },
+      body,
+      cache: "no-store",
+    });
+    const responseBody: unknown = await response.json().catch(() => null);
+    if (!response.ok) throw new Error("Supabase token exchange failed.");
+    const parsed = supabaseTokenSchema.safeParse(responseBody);
+    if (!parsed.success || parsed.data.error) {
+      throw new Error(
+        parsed.success && parsed.data.error_description
+          ? parsed.data.error_description
+          : "Supabase token exchange returned an invalid response.",
+      );
+    }
+    return {
+      accessToken: parsed.data.access_token,
+      scopes: parsed.data.scope ? parsed.data.scope.split(",").filter(Boolean) : [],
+      metadata: {
+        ...(parsed.data.refresh_token
+          ? { supabaseRefreshToken: parsed.data.refresh_token }
+          : {}),
+      },
+    };
+  }
 
   const body = new URLSearchParams({
     client_id: config.clientId,
@@ -200,5 +277,6 @@ export function oauthProviderAvailability() {
   return {
     github: getOAuthProviderConfig("github") !== null,
     vercel: getOAuthProviderConfig("vercel") !== null,
+    supabase: getOAuthProviderConfig("supabase") !== null,
   } as const;
 }

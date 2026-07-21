@@ -14,7 +14,7 @@ export async function getAuthorizedProjectIntegration({
   projectId: string;
   bindingId: string;
   userId: string;
-  expectedProvider: "github" | "vercel";
+  expectedProvider: "github" | "vercel" | "supabase";
 }) {
   const binding = await getPrisma().projectIntegration.findFirst({
     where: {
@@ -75,7 +75,7 @@ export async function getAuthorizedProjectIntegration({
 }
 
 export async function providerFetch(
-  provider: "github" | "vercel",
+  provider: "github" | "vercel" | "supabase",
   accessToken: string,
   input: string,
   init: RequestInit = {},
@@ -103,7 +103,13 @@ export async function providerFetch(
         : `HTTP ${response.status}`;
     throw new IntegrationServiceError(
       `${provider.toUpperCase()}_REQUEST_FAILED`,
-      `${provider === "github" ? "GitHub" : "Vercel"}: ${providerMessage}`,
+      `${
+        provider === "github"
+          ? "GitHub"
+          : provider === "vercel"
+            ? "Vercel"
+            : "Supabase"
+      }: ${providerMessage}`,
       response.status >= 400 && response.status < 500 ? response.status : 502,
     );
   }

@@ -37,7 +37,7 @@ function projectRedirect(
 
 function clearOAuthCookies(
   response: NextResponse,
-  providerId: "github" | "vercel",
+  providerId: "github" | "vercel" | "supabase",
 ) {
   response.cookies.set(oauthCookieName(providerId, "nonce"), "", {
     maxAge: 0,
@@ -98,12 +98,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const codeVerifier = request.cookies.get(
       oauthCookieName(providerParam, "verifier"),
     )?.value;
-    if (
-      providerParam === "github" &&
-      config.mode === "oauth_app" &&
-      !codeVerifier
-    ) {
-      throw new Error("GitHub PKCE verifier is missing.");
+    if (config.mode === "oauth_app" && !codeVerifier) {
+      throw new Error("OAuth PKCE verifier is missing.");
     }
 
     const token = isGitHubAppInstallation
@@ -124,6 +120,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
               request.nextUrl.searchParams.get("configurationId") ?? null,
             vercelUserId: tokenMetadata.vercelUserId ?? null,
           }
+        : providerParam === "supabase"
+          ? {
+              supabaseRefreshToken:
+                request.nextUrl.searchParams.get("refresh_token") ??
+                tokenMetadata.supabaseRefreshToken ??
+                null,
+            }
         : isGitHubAppInstallation
           ? { installationId: installationId! }
           : {};

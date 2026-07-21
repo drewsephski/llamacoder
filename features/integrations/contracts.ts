@@ -142,6 +142,13 @@ export const integrationActionInputSchema = z.discriminatedUnion("action", [
     projectId: z.string().optional(),
     target: z.enum(["preview", "production"]).default("preview"),
   }),
+  z.object({
+    action: z.literal("supabase_provision"),
+    messageId: z.string().min(1).optional(),
+    organizationId: z.string().trim().min(1).optional(),
+    projectName: z.string().trim().min(1).max(120).optional(),
+    region: z.string().trim().min(1).max(64).optional(),
+  }),
 ]);
 
 export const integrationActionResponseSchema = z.object({

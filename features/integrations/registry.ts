@@ -714,7 +714,7 @@ const providers = [
     baseUrl: "https://api.supabase.com/v1",
     auth: "oauth",
     runtime: "server",
-    requiredSecrets: [],
+    requiredSecrets: ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"],
     corsCompatible: null,
     policyStatus: "conditional",
     commercialUse: "allowed",

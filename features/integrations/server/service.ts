@@ -22,7 +22,10 @@ import {
   encryptIntegrationCredential,
   fingerprintCredential,
 } from "@/features/integrations/server/credential-vault";
-import { oauthProviderAvailability } from "@/features/integrations/server/oauth-provider";
+import {
+  oauthProviderAvailability,
+  type OAuthProviderId,
+} from "@/features/integrations/server/oauth-provider";
 import { requestProviderHealth } from "@/features/integrations/server/provider-health";
 import { getPrisma } from "@/lib/prisma";
 
@@ -197,7 +200,7 @@ export async function completeOAuthProjectIntegration({
 }: {
   projectId: string;
   userId: string;
-  providerId: "github" | "vercel";
+  providerId: OAuthProviderId;
   environment: IntegrationEnvironment;
   accessToken?: string;
   scopes: string[];

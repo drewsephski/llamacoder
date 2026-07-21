@@ -4,7 +4,9 @@ import {
   type IntegrationProvider,
 } from "@/features/integrations/registry";
 
-type OAuthAvailability = Partial<Record<"github" | "vercel", boolean>>;
+type OAuthAvailability = Partial<
+  Record<"github" | "vercel" | "supabase", boolean>
+>;
 
 export function getIntegrationCredentialKind(
   provider: IntegrationProvider,
@@ -48,7 +50,9 @@ export function buildIntegrationProviderSummaries({
     healthCheckAvailable: provider.policyStatus !== "blocked",
     credentialKind: getIntegrationCredentialKind(provider),
     oauthAvailable:
-      provider.id === "github" || provider.id === "vercel"
+      provider.id === "github" ||
+      provider.id === "vercel" ||
+      provider.id === "supabase"
         ? (oauthAvailability[provider.id] ?? false)
         : false,
   }));

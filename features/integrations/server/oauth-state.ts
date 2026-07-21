@@ -13,7 +13,7 @@ import { integrationEnvironmentSchema } from "@/features/integrations/contracts"
 const oauthStateSchema = z.object({
   userId: z.string().min(1),
   projectId: z.string().min(1),
-  providerId: z.enum(["github", "vercel"]),
+  providerId: z.enum(["github", "vercel", "supabase"]),
   environment: integrationEnvironmentSchema,
   nonce: z.string().min(32),
   expiresAt: z.number().int(),
@@ -85,7 +85,7 @@ export function createPkcePair() {
 }
 
 export function oauthCookieName(
-  providerId: "github" | "vercel",
+  providerId: "github" | "vercel" | "supabase",
   kind: "nonce" | "verifier",
 ) {
   return `squid_${providerId}_oauth_${kind}`;

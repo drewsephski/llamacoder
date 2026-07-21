@@ -52,6 +52,23 @@ function integrationQueryKey(projectId: string) {
   return ["project-integrations", projectId] as const;
 }
 
+function getIntegrationConfigValue(
+  integration: ProjectIntegrationView,
+  key: string,
+) {
+  const value = integration.config?.[key];
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function isSupabaseProjectProvisioned(integration: ProjectIntegrationView) {
+  return (
+    integration.providerId === "supabase" &&
+    (getIntegrationConfigValue(integration, "supabaseProjectRef") !== null ||
+      getIntegrationConfigValue(integration, "supabaseProjectUrl") !== null ||
+      getIntegrationConfigValue(integration, "supabaseAnonKey") !== null)
+  );
+}
+
 function statusPresentation(status: ProjectIntegrationView["status"]) {
   if (status === "ready") {
     return {
@@ -208,6 +225,149 @@ function ProviderActions({
       {resourcesQuery.isError && (
         <p className="text-xs text-destructive sm:col-span-2">
           Could not load provider targets. Test or reconnect the integration.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SupabaseProvisionActions({
+  projectId,
+  integration,
+}: {
+  projectId: string;
+  integration: ProjectIntegrationView;
+}) {
+  const queryClient = useQueryClient();
+  const [resourceId, setResourceId] = useState("");
+  const [projectName, setProjectName] = useState("");
+  const resourcesQuery = useQuery({
+    queryKey: ["integration-resources", projectId, integration.id],
+    queryFn: () =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/resources`,
+        integrationResourcesResponseSchema,
+      ),
+  });
+  const resources = resourcesQuery.data?.resources ?? [];
+  const defaultResourceId =
+    getIntegrationConfigValue(integration, "supabaseOrganizationId") ??
+    resources[0]?.id ??
+    "";
+  const selectedResource = resourceId || defaultResourceId;
+  const provisioned = isSupabaseProjectProvisioned(integration);
+
+  useEffect(() => {
+    if (!resourceId && defaultResourceId) {
+      setResourceId(defaultResourceId);
+    }
+  }, [resourceId, defaultResourceId]);
+
+  const createMutation = useMutation({
+    mutationFn: () =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/actions`,
+        integrationActionResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "supabase_provision",
+            ...(selectedResource ? { organizationId: selectedResource } : {}),
+            ...(projectName.trim() ? { projectName: projectName.trim() } : {}),
+          }),
+        },
+      ),
+    onSuccess: async ({ operation }) => {
+      await queryClient.invalidateQueries({
+        queryKey: integrationQueryKey(projectId),
+      });
+      toast.success(
+        "Supabase project provisioning started",
+        operation.url ? { description: operation.url } : undefined,
+      );
+    },
+    onError: (error) =>
+      toast.error("Supabase provision failed", {
+        description: error instanceof Error ? error.message : undefined,
+      }),
+  });
+
+  const canRun =
+    !createMutation.isPending &&
+    !resourcesQuery.isLoading &&
+    !resourcesQuery.isError &&
+    Boolean(selectedResource);
+
+  if (provisioned) {
+    const projectUrl = getIntegrationConfigValue(integration, "supabaseProjectUrl");
+    const configuredProjectName = getIntegrationConfigValue(
+      integration,
+      "supabaseProjectName",
+    );
+
+    return (
+      <div className="mt-2 rounded-md border border-border/60 bg-muted/30 p-3 text-xs">
+        <p className="font-semibold">
+          {configuredProjectName || "Project configured"}
+        </p>
+        {projectUrl && (
+          <a
+            href={projectUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-primary hover:underline"
+          >
+            Open project <ExternalLink className="size-3" />
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 grid gap-2 border-t border-border/60 pt-3">
+      <Select value={selectedResource} onValueChange={setResourceId}>
+        <SelectTrigger className="h-9">
+          <SelectValue
+            placeholder={
+              resourcesQuery.isLoading
+                ? "Loading organizations..."
+                : resources.length
+                  ? "Choose organization"
+                  : "No organization found"
+            }
+          />
+        </SelectTrigger>
+        <SelectContent>
+          {resources.map((resource) => (
+            <SelectItem key={resource.id} value={resource.id}>
+              {resource.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Input
+        value={projectName}
+        onChange={(event) => setProjectName(event.target.value)}
+        placeholder="Project name (optional)"
+      />
+      <Button
+        type="button"
+        size="sm"
+        disabled={!canRun}
+        onClick={() => createMutation.mutate()}
+      >
+        {createMutation.isPending ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          <Rocket />
+        )}
+        Create Supabase project
+      </Button>
+      {resourcesQuery.isError && (
+        <p className="text-xs text-destructive">
+          Could not load organizations. Make sure the integration is connected.
         </p>
       )}
     </div>
@@ -673,6 +833,13 @@ export function ProjectIntegrationsPanel({
                                 integration={integration}
                               />
                             )}
+                          {integration.status === "ready" &&
+                            integration.providerId === "supabase" && (
+                              <SupabaseProvisionActions
+                                projectId={projectId}
+                                integration={integration}
+                              />
+                            )}
                         </div>
                       );
                     })}
@@ -686,7 +853,7 @@ export function ProjectIntegrationsPanel({
                     id="recent-provider-operations"
                     className="text-sm font-semibold"
                   >
-                    Recent publishes and deployments
+                    Recent integration actions
                   </h3>
                   <div className="mt-2 grid gap-2">
                     {workspace.recentOperations.slice(0, 5).map((operation) => (
@@ -704,7 +871,11 @@ export function ProjectIntegrationsPanel({
                         <span>
                           {operation.kind === "github_publish"
                             ? "GitHub publish"
-                            : "Vercel deployment"}{" "}
+                            : operation.kind === "vercel_deploy"
+                              ? "Vercel deployment"
+                              : operation.kind === "supabase_provision"
+                                ? "Supabase project provisioning"
+                                : "Integration action"}{" "}
                           · {operation.status}
                           {operation.commitSha
                             ? ` · ${operation.commitSha.slice(0, 7)}`
