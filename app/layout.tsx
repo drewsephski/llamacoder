@@ -17,8 +17,10 @@ const title = "Squid Agent - Research, Build, Verify, and Ship React Apps";
 const description =
   "Research the live web, approve a plan, build and verify React apps, restore versions, connect APIs, deploy to Vercel, and export code you own.";
 const url = "https://squidagent.app/";
-const ogimage = "https://squidagent.app/api/og?card=site&v=2";
+const ogimage = "https://squidagent.app/api/og?card=site&v=3";
 const sitename = "Squid Agent";
+const browserIconPng192 = "/squidagent-logo-192.png";
+const browserIconPng512 = "/squidagent-logo-512.png";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -50,7 +52,13 @@ export const metadata: Metadata = {
     "v0 alternative",
   ],
   icons: {
-    icon: [{ url: "/squidagent-logo.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/squidagent-logo.svg", type: "image/svg+xml", sizes: "any" },
+      { url: browserIconPng192, type: "image/png", sizes: "192x192" },
+      { url: browserIconPng512, type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
     images: [ogimage],

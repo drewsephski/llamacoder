@@ -1,4 +1,7 @@
-import type { GeneratedFile } from "@/lib/generated-files";
+type GeneratedFile = {
+  path: string;
+  code: string;
+};
 
 export type ContrastViolation = {
   file: string;
@@ -262,17 +265,130 @@ const ACCENT_LUMINANCE: Record<string, Record<string, number>> = {
   },
 };
 
-/**
- * Approximate relative luminance for a Tailwind color class like "neutral-500".
- * Falls back to neutral scale for unknown families.
- */
-function getLuminance(colorClass: string): number | null {
-  const match = colorClass.match(/^(\w+)-(\d{2,3})$/);
+const GENERATED_THEME_SEMANTICS = {
+  light: {
+    background: "0 0% 100%",
+    foreground: "0 0% 3.9%",
+    card: "0 0% 100%",
+    "card-foreground": "0 0% 3.9%",
+    popover: "0 0% 100%",
+    "popover-foreground": "0 0% 3.9%",
+    primary: "0 0% 9%",
+    "primary-foreground": "0 0% 98%",
+    secondary: "0 0% 96.1%",
+    "secondary-foreground": "0 0% 9%",
+    muted: "0 0% 96.1%",
+    "muted-foreground": "0 0% 45.1%",
+    accent: "0 0% 96.1%",
+    "accent-foreground": "0 0% 9%",
+    destructive: "0 84.2% 60.2%",
+    "destructive-foreground": "0 0% 98%",
+  },
+  dark: {
+    background: "0 0% 3.9%",
+    foreground: "0 0% 98%",
+    card: "0 0% 3.9%",
+    "card-foreground": "0 0% 98%",
+    popover: "0 0% 3.9%",
+    "popover-foreground": "0 0% 98%",
+    primary: "0 0% 98%",
+    "primary-foreground": "0 0% 9%",
+    secondary: "0 0% 14.9%",
+    "secondary-foreground": "0 0% 98%",
+    muted: "0 0% 14.9%",
+    "muted-foreground": "0 0% 63.9%",
+    accent: "0 0% 14.9%",
+    "accent-foreground": "0 0% 98%",
+    destructive: "0 62.8% 30.6%",
+    "destructive-foreground": "0 0% 98%",
+  },
+} as const;
+
+function getThemeSemanticLuminance(
+  themeMode: "light" | "dark",
+  colorClass: string,
+) {
+  const value =
+    GENERATED_THEME_SEMANTICS[themeMode][
+      colorClass as keyof (typeof GENERATED_THEME_SEMANTICS)[typeof themeMode]
+    ];
+  if (!value) return null;
+  return hslToLuminance(value);
+}
+
+function hslToLuminance(colorClass: string): number | null {
+  if (colorClass === "white") return 1.0;
+  if (colorClass === "black") return 0.0;
+
+  const normalized = colorClass.trim();
+  const match = normalized.match(
+    /^(\d{1,3}(?:\.\d+)?)\s+(\d{1,3}(?:\.\d+)?)%\s+(\d{1,3}(?:\.\d+)?)%$/,
+  );
   if (!match) return null;
+
+  const h = Number(match[1]);
+  const s = Number(match[2]) / 100;
+  const l = Number(match[3]) / 100;
+
+  const hueToRgb = (p: number, q: number, tRaw: number) => {
+    let t = tRaw;
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+
+  const hue = h / 360;
+  const sat = s;
+  const lightness = l;
+
+  const q =
+    lightness < 0.5
+      ? lightness * (1 + sat)
+      : lightness + sat - lightness * sat;
+  const p = 2 * lightness - q;
+
+  const rgb = [
+    hueToRgb(p, q, hue + 1 / 3),
+    hueToRgb(p, q, hue),
+    hueToRgb(p, q, hue - 1 / 3),
+  ].map((channel) =>
+    channel <= 0.03928
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4,
+  );
+
+  return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+}
+
+function isThemeAwareSemantic(colorClass: string) {
+  return colorClass in GENERATED_THEME_SEMANTICS.light;
+}
+
+function parseColorClass(colorClass: string) {
+  return colorClass.split("/")[0];
+}
+
+function getLuminanceForTheme(
+  colorClass: string,
+  themeMode: "light" | "dark",
+): number | null {
+  const normalized = parseColorClass(colorClass);
+
+  if (isThemeAwareSemantic(normalized)) {
+    return getThemeSemanticLuminance(themeMode, normalized);
+  }
+
+  const match = normalized.match(/^([a-z]+)-(\d{2,3})$/);
+  if (!match) {
+    return hslToLuminance(normalized);
+  }
 
   const family = match[1];
   const shade = match[2];
-
   if (family === "white") return 1.0;
   if (family === "black") return 0.0;
 
@@ -291,24 +407,30 @@ function contrastRatio(l1: number, l2: number): number {
 
 /**
  * Extract background/foreground color pairs from a single line of code.
- * Matches patterns like: bg-neutral-950 text-neutral-50, bg-white text-black, etc.
+ * Supports theme tokens, variants (hover:, dark:), and opacity utilities.
  */
 function extractColorPairs(line: string): Array<{ bg: string; fg: string }> {
   const pairs: Array<{ bg: string; fg: string }> = [];
+  const bgClasses: string[] = [];
+  const textClasses: string[] = [];
+  const classTokenRegex =
+    /\b(?:[a-z0-9-]+:)*(bg|text)-([a-z0-9-]+(?:\/[\d.]+)?)\b/g;
 
-  const bgClasses =
-    line.match(/\b(bg-(?:\w+)-\d{2,3}|bg-white|bg-black|bg-transparent)\b/g) ??
-    [];
-  const textClasses =
-    line.match(/\b(text-(?:\w+)-\d{2,3}|text-white|text-black)\b/g) ?? [];
+  for (const match of line.matchAll(classTokenRegex)) {
+    const [_, type, rawValue] = match;
+    const value = parseColorClass(rawValue);
+    if (!type || !value || value === "transparent") continue;
+
+    if (type === "bg") {
+      bgClasses.push(value);
+    } else {
+      textClasses.push(value);
+    }
+  }
 
   for (const bg of bgClasses) {
-    const bgValue = bg.replace("bg-", "");
-    if (bgValue === "transparent") continue;
-
     for (const text of textClasses) {
-      const fgValue = text.replace("text-", "");
-      pairs.push({ bg: bgValue, fg: fgValue });
+      pairs.push({ bg, fg: text });
     }
   }
 
@@ -336,30 +458,43 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
       const pairs = extractColorPairs(line);
 
       for (const pair of pairs) {
-        const bgLum = getLuminance(pair.bg);
-        const fgLum = getLuminance(pair.fg);
-        if (bgLum === null || fgLum === null) continue;
+        const lightBgLum = getLuminanceForTheme(pair.bg, "light");
+        const lightFgLum = getLuminanceForTheme(pair.fg, "light");
+        const darkBgLum = getLuminanceForTheme(pair.bg, "dark");
+        const darkFgLum = getLuminanceForTheme(pair.fg, "dark");
+        if (
+          lightBgLum === null ||
+          lightFgLum === null ||
+          darkBgLum === null ||
+          darkFgLum === null
+        ) {
+          continue;
+        }
 
         checkedPairs++;
-        const ratio = contrastRatio(bgLum, fgLum);
-        const roundedRatio = Math.round(ratio * 100) / 100;
+        const lightRatio = contrastRatio(lightBgLum, lightFgLum);
+        const darkRatio = contrastRatio(darkBgLum, darkFgLum);
+        const minRatio = Math.min(lightRatio, darkRatio);
+        const roundedMinRatio = Math.round(minRatio * 100) / 100;
+        const roundedLightRatio = Math.round(lightRatio * 100) / 100;
+        const roundedDarkRatio = Math.round(darkRatio * 100) / 100;
 
-        if (ratio >= WCAG_AA_NORMAL) {
+        if (minRatio >= WCAG_AA_NORMAL) {
           passedPairs++;
           continue;
         }
 
-        if (ratio >= WCAG_AA_LARGE) {
+        if (minRatio >= WCAG_AA_LARGE) {
           passedPairs++;
           violations.push({
             file: file.path,
             line: i + 1,
             background: pair.bg,
             foreground: pair.fg,
-            estimatedRatio: roundedRatio,
+            estimatedRatio: roundedMinRatio,
             requiredRatio: WCAG_AA_LARGE,
             severity: "warning",
-            message: `bg-${pair.bg}/text-${pair.fg} passes large text only (${roundedRatio}:1). Normal text requires ${WCAG_AA_NORMAL}:1.`,
+            message: `bg-${pair.bg}/text-${pair.fg} passes large text only in dark/light themes at worst (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1.`,
           });
         } else {
           violations.push({
@@ -367,10 +502,10 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
             line: i + 1,
             background: pair.bg,
             foreground: pair.fg,
-            estimatedRatio: roundedRatio,
+            estimatedRatio: roundedMinRatio,
             requiredRatio: WCAG_AA_NORMAL,
             severity: "error",
-            message: `bg-${pair.bg}/text-${pair.fg} fails WCAG AA (${roundedRatio}:1 < ${WCAG_AA_NORMAL}:1).`,
+            message: `bg-${pair.bg}/text-${pair.fg} fails WCAG AA in at least one theme (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1.`,
           });
         }
       }

@@ -35,7 +35,10 @@ import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
 import { extractDesignScores } from "@/features/generation/design-quality-scoring";
-import { auditContrast } from "@/features/generation/contrast-audit";
+import {
+  auditContrast,
+  formatContrastReport,
+} from "@/features/generation/contrast-audit";
 
 class CreditConsumptionError extends Error {
   constructor(
@@ -399,6 +402,19 @@ export async function POST(request: NextRequest) {
     // Run contrast audit and extract design scores
     const contrastViolations = auditContrast(generatedFiles);
     const designScores = extractDesignScores(generatedText);
+    if (contrastViolations.some((v) => v.severity === "error")) {
+      console.warn(formatContrastReport(contrastViolations));
+      await releaseHoldAndResetChat();
+      return NextResponse.json(
+        {
+          error: "CONTRAST_VIOLATION",
+          message:
+            "Generated app contrast issues are likely to reduce text visibility in a theme. Please regenerate.",
+          violations: contrastViolations,
+        },
+        { status: 422 },
+      );
+    }
 
     const message = await prisma.$transaction(async (tx) => {
       const createdMessage = await tx.message.create({

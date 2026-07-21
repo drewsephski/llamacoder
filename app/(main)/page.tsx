@@ -324,6 +324,11 @@ const homepageFaq = [
     answer:
       "Squid Agent shows the model and expected credit range before generation, then records the actual charge after successful work is saved. Failed initial generations are not charged, preview repairs are free, and receipts make charges and refunds visible.",
   },
+  {
+    question: "Can I use the generated project outside Squid Agent?",
+    answer:
+      "Yes. You can export a complete project bundle or continue in your own repository with the generated source, dependency list, deployment instructions, and quality context. The handoff is intentionally designed for local or external workflows.",
+  },
 ] as const;
 
 const homepageNarrativeBlocks = [
@@ -331,48 +336,48 @@ const homepageNarrativeBlocks = [
     stage: "01",
     label: "Research + approve",
     side: "left",
-    question: "Turn an uncertain idea into an approved product plan.",
-    body: "Start with a prompt, screenshot, or website. Squid Agent researches current sources when the work depends on outside knowledge, asks only the decisions that change the build, and gives you a structured plan to revise and approve.",
+    question: "Turn a rough idea into a clear plan.",
+    body: "Start with a prompt, screenshot, or URL. We gather source-backed context and ask only the decisions that affect the build.",
     proofs: [
-      "Live web research with visible sources",
-      "Interactive questions and a persistent app specification",
-      "Explicit approval before code generation",
+      "Source-backed research you can inspect",
+      "Decision checkpoints, not endless questions",
+      "You approve the build plan",
     ],
   },
   {
     stage: "02",
     label: "Build + iterate",
     side: "right",
-    question: "Build a real React project, then refine it in place.",
-    body: "Generate a multi-file React and TypeScript application with a live preview and inspectable source. Keep iterating through chat, or select an element in the preview and request a focused change without replacing the whole project.",
+    question: "Generate real code, then refine quickly.",
+    body: "Create a production-style React project with live preview and file-level context, then make focused follow-up edits by chat or element selection.",
     proofs: [
-      "Multi-file React, TypeScript, Tailwind, and shadcn code",
-      "Live preview, file tree, and source-aware follow-up edits",
-      "Selected-element edits for precise visual changes",
+      "React + TypeScript code generation",
+      "Live preview and file tree in one place",
+      "Precise edits without full rewrites",
     ],
   },
   {
     stage: "03",
     label: "Verify + recover",
     side: "left",
-    question: "Know what works—and keep a safe way back.",
-    body: "Squid Agent checks the generated files and running preview, discloses what still needs review, and attempts recoverable repairs. Every code-bearing response becomes a checkpoint you can compare, label, restore, or selectively recover file by file.",
+    question: "Validate continuously, with confidence to recover.",
+    body: "Run checks across files and preview, then get clear status. If needed, automatic recoverable repair fixes issues while preserving your previous state.",
     proofs: [
-      "Static, accessibility, API-safety, and runtime checks",
-      "Automatic preview repair with no repair charge",
-      "Exact version diffs, bookmarks, and selective restore",
+      "Static, accessibility, API, and runtime checks",
+      "Automatic repair attempts for recoverable issues",
+      "Version checkpoints with selective restore",
     ],
   },
   {
     stage: "04",
     label: "Connect + ship",
     side: "right",
-    question: "Move from verified preview to code you control.",
-    body: "Connect supported services with scoped credentials and health checks. Publish to GitHub, deploy a Vercel preview or production build, share a remixable project, or leave with a verified source bundle and the instructions to run it anywhere.",
+    question: "Ship confidently with full ownership.",
+    body: "Hook up supported services behind safe boundaries, then publish, deploy, or export a verified bundle you can run anywhere.",
     proofs: [
-      "Honest API setup boundaries and connection health",
-      "GitHub publishing and Vercel deployments",
-      "Portable source, configuration, and quality reports",
+      "Safe API setup + health checks",
+      "GitHub publish and Vercel deploy paths",
+      "Portable source bundle with docs",
     ],
   },
 ] as const;
@@ -392,11 +397,6 @@ const homepageControlPromises = [
     label: "Safe rollback + export",
     title: "Verify before shipping.",
     body: "Restore checkpoints without losing unrelated work, then export a package with manifest, quality report, and deployment guidance before continuing.",
-  },
-  {
-    label: "Portable by design",
-    title: "Own the handoff.",
-    body: "Publish verified code or download the complete React project with configuration, setup guidance, deployment files, and quality reports.",
   },
 ] as const;
 
@@ -562,7 +562,7 @@ const homepageStructuredData = {
       "@id": "https://squidagent.app/#organization",
       name: "Squid Agent",
       url: "https://squidagent.app/",
-      logo: "https://squidagent.app/squidagent-logo.svg",
+      logo: "https://squidagent.app/squidagent-logo-512.png",
       sameAs: [
         "https://www.instagram.com/drew.sepeczi",
         "https://github.com/drewsephski",
@@ -576,7 +576,7 @@ const homepageStructuredData = {
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web",
       url: "https://squidagent.app/",
-      image: "https://squidagent.app/api/og?card=site&v=2",
+      image: "https://squidagent.app/api/og?card=site&v=3",
       description:
         "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
       creator: {
@@ -3008,6 +3008,10 @@ function HomepageFlowSection() {
   );
 }
 function HomepageFaqSection() {
+  const firstColumnFaqCount = Math.ceil(homepageFaq.length / 2);
+  const [leftOpenItem, setLeftOpenItem] = useState<number | null>(null);
+  const [rightOpenItem, setRightOpenItem] = useState<number | null>(null);
+
   return (
     <section
       aria-labelledby="squid-agent-faq"
@@ -3031,22 +3035,96 @@ function HomepageFaqSection() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {homepageFaq.map((item) => (
-            <article
-              key={item.question}
-              className="rounded-[22px] border border-border/70 bg-background/80 p-5 shadow-[0_16px_42px_-34px_rgba(0,0,0,0.55)] backdrop-blur"
-            >
-              <h3 className="text-lg font-semibold leading-snug tracking-normal text-foreground">
-                {item.question}
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {item.answer}
-              </p>
-            </article>
-          ))}
+          <div className="grid gap-4">
+            {homepageFaq
+              .slice(0, firstColumnFaqCount)
+              .map((item, index) => (
+                <HomepageFaqAccordionCard
+                  key={item.question}
+                  faq={item}
+                  id={`squid-agent-faq-left-${index}`}
+                  isOpen={leftOpenItem === index}
+                  onToggle={() =>
+                    setLeftOpenItem(
+                      leftOpenItem === index ? null : index,
+                    )
+                  }
+                />
+              ))}
+          </div>
+          <div className="grid gap-4">
+            {homepageFaq.slice(firstColumnFaqCount).map((item, index) => {
+              const globalIndex = firstColumnFaqCount + index;
+
+              return (
+                <HomepageFaqAccordionCard
+                  key={item.question}
+                  faq={item}
+                  id={`squid-agent-faq-right-${globalIndex}`}
+                  isOpen={rightOpenItem === globalIndex}
+                  onToggle={() =>
+                    setRightOpenItem(
+                      rightOpenItem === globalIndex
+                        ? null
+                        : globalIndex,
+                    )
+                  }
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function HomepageFaqAccordionCard({
+  faq,
+  id,
+  isOpen,
+  onToggle,
+}: {
+  faq: (typeof homepageFaq)[number];
+  id: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <article className="rounded-[22px] border border-border/70 bg-background/80 p-5 shadow-[0_16px_42px_-34px_rgba(0,0,0,0.55)] backdrop-blur">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={id}
+        className="flex w-full items-start justify-between gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+      >
+        <h3 className="text-lg font-semibold leading-snug tracking-normal text-foreground">
+          {faq.question}
+        </h3>
+        <ChevronDownIcon
+          className={`mt-1 size-5 shrink-0 text-muted-foreground transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      <div
+        id={id}
+        className="grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out"
+        style={{
+          gridTemplateRows: isOpen ? "1fr" : "0fr",
+          opacity: isOpen ? 1 : 0,
+        }}
+      >
+        <div
+          className="min-h-0 transition-opacity duration-300"
+          style={{ opacity: isOpen ? 1 : 0 }}
+        >
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            {faq.answer}
+          </p>
+        </div>
+      </div>
+    </article>
   );
 }
 

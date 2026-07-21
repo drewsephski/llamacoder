@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     description: appHomeDescription,
     images: [
       {
-        url: `${appBaseUrl}/api/og?card=site&v=2`,
+        url: `${appBaseUrl}/api/og?card=site&v=3`,
         width: 1200,
         height: 630,
       },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: appHomeTitle,
     description: appHomeDescription,
-    images: [`${appBaseUrl}/api/og?card=site&v=2`],
+    images: [`${appBaseUrl}/api/og?card=site&v=3`],
   },
 };
 

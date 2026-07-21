@@ -14,6 +14,7 @@ export async function GET(request: Request) {
       ? `${prompt.slice(0, 107)}...`
       : prompt
     : SITE_HEADLINE;
+  const logoUrl = `${domain}/squidagent-logo-192.png`;
 
   return new ImageResponse(
     (
@@ -65,7 +66,7 @@ export async function GET(request: Request) {
             }}
           >
             <img
-              src={`${domain}/squidagent-logo.svg`}
+              src={logoUrl}
               alt=""
               width={54}
               height={54}
