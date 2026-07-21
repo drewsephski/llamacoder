@@ -181,3 +181,25 @@ export function enforceSelectedProvidersInPlan(
     ],
   };
 }
+
+export function enforceRequestedPersistenceProvider(spec: AppSpec): AppSpec {
+  if (spec.dataPersistence.status !== "connect_confirmed") {
+    return spec;
+  }
+
+  const providerId = "supabase";
+  if (
+    spec.integrations.some(
+      (integration) => integration.providerId === providerId,
+    )
+  ) {
+    return spec;
+  }
+
+  const provider = getIntegrationProvider(providerId);
+  if (!provider) {
+    return spec;
+  }
+
+  return enforceSelectedProvidersInAppSpec(spec, [provider.id]);
+}

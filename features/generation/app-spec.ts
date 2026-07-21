@@ -53,6 +53,26 @@ export const dataEntitySchema = z.object({
 
 export type DataEntity = z.infer<typeof dataEntitySchema>;
 
+export const dataPersistenceIntentSchema = z.object({
+  detected: z.boolean().default(false),
+  confidence: z.number().min(0).max(100).default(0),
+  recommendation: z
+    .enum(["prototype", "suggest_database", "require_database"])
+    .default("prototype"),
+  useCase: z.string().optional(),
+  reason: z.string().optional(),
+  status: z
+    .enum(["not_prompted", "connect_confirmed", "connect_declined"])
+    .default("not_prompted"),
+  proposedSchema: z.array(dataEntitySchema).default([]),
+});
+
+export const defaultDataPersistenceIntent = dataPersistenceIntentSchema.parse(
+  {},
+);
+
+export type DataPersistenceIntent = z.infer<typeof dataPersistenceIntentSchema>;
+
 export const integrationSchema = z.object({
   providerId: z.string().min(1).optional(),
   name: z.string().min(1),
@@ -105,6 +125,9 @@ export const appSpecSchema = z.object({
     .default({}),
 
   dataModel: z.array(dataEntitySchema).default([]),
+  dataPersistence: dataPersistenceIntentSchema.default(
+    defaultDataPersistenceIntent,
+  ),
 
   integrations: z.array(integrationSchema).default([]),
 
@@ -169,6 +192,12 @@ export function mergeSpecUpdate(
     constraints: { ...spec.constraints, ...update.constraints },
     userFlows: update.userFlows ?? spec.userFlows,
     dataModel: update.dataModel ?? spec.dataModel,
+    dataPersistence: update.dataPersistence
+      ? {
+          ...spec.dataPersistence,
+          ...update.dataPersistence,
+        }
+      : spec.dataPersistence,
     integrations: update.integrations ?? spec.integrations,
     edgeCases: update.edgeCases ?? spec.edgeCases,
     acceptanceCriteria: update.acceptanceCriteria ?? spec.acceptanceCriteria,
@@ -242,6 +271,27 @@ export function serializeSpecForPrompt(
       `Data: ${spec.dataModel
         .map((e) => `${e.entity} (${e.purpose})`)
         .join("; ")}`,
+    );
+  }
+
+  if (spec.dataPersistence.detected) {
+    const decisionLabel =
+      spec.dataPersistence.recommendation === "require_database"
+        ? "required"
+        : spec.dataPersistence.recommendation === "suggest_database"
+          ? "recommended"
+          : "prototype-first";
+    const statusLabel =
+      spec.dataPersistence.status === "connect_confirmed"
+        ? "confirmed"
+        : spec.dataPersistence.status === "connect_declined"
+          ? "declined"
+          : "pending";
+    const proposedSchema = spec.dataPersistence.proposedSchema
+      .map((entity) => entity.entity)
+      .join(", ");
+    parts.push(
+      `Persistence intent: ${decisionLabel}; status=${statusLabel}; confidence=${spec.dataPersistence.confidence}; useCase=${spec.dataPersistence.useCase || "not specified"}; schema=${proposedSchema || "pending"}`,
     );
   }
 

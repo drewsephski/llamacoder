@@ -3,6 +3,7 @@ import type {
   ClarificationRequest,
 } from "@/features/generation/agent-contracts";
 import type { AppSpec } from "@/features/generation/app-spec";
+import { describePersistenceIntent } from "@/features/generation/persistence-intent";
 import { buildSelectedApiPurposeStep } from "@/features/integrations/generation-contract";
 import type { IntegrationProvider } from "@/features/integrations/registry";
 
@@ -12,6 +13,66 @@ function summarizePrompt(prompt: string) {
   return normalized.length <= 90
     ? `“${normalized}”`
     : `“${normalized.slice(0, 87).trimEnd()}...”`;
+}
+
+function buildPersistenceDecisionStep(
+  spec: AppSpec,
+): ClarificationRequest["steps"] {
+  const intent = spec.dataPersistence;
+  const hasAlreadySelectedPersistenceProvider = spec.integrations.some(
+    (integration) => integration.providerId === "supabase",
+  );
+  const shouldAskPersistenceQuestion =
+    !hasAlreadySelectedPersistenceProvider &&
+    intent.detected &&
+    intent.status === "not_prompted" &&
+    intent.recommendation !== "prototype";
+
+  if (!shouldAskPersistenceQuestion) {
+    return [];
+  }
+
+  const appSummary = summarizePrompt(spec.overview.purpose || "this app");
+  const shouldConnectLabel =
+    intent.recommendation === "require_database"
+      ? "Use real database (Recommended)"
+      : "Use real database now (Recommended)";
+
+  const schemaLine =
+    intent.proposedSchema.length > 0
+      ? `Proposed schema: ${intent.proposedSchema
+          .map((entity) => entity.entity)
+          .join(", ")}.`
+      : "";
+
+  return [
+    {
+      id: "data-persistence-connect",
+      title: "How should records be persisted?",
+      description:
+        `We detected a recurring data record model for ${appSummary}. ${schemaLine} ${describePersistenceIntent(intent)} Choose the persistence strategy now.`.trim(),
+      options: [
+        {
+          id: "connect-db-now",
+          label: shouldConnectLabel,
+          description:
+            "Use a real backend store so records survive refreshes, support multiple users, and enable future query/edit/history patterns.",
+        },
+        {
+          id: "prototype-local-only",
+          label: "Prototype locally first",
+          description:
+            "Keep local state for v1, but keep a clear upgrade path to a real database in the plan.",
+        },
+        {
+          id: "defer-db-planning",
+          label: "Defer persistence design",
+          description:
+            "Do not add storage assumptions yet; keep the app shape and wire persistence later.",
+        },
+      ],
+    },
+  ];
 }
 
 export function buildPlanModeFallbackInterview({
@@ -27,6 +88,7 @@ export function buildPlanModeFallbackInterview({
 }): AgentAction {
   const appSummary = summarizePrompt(prompt);
   const steps: ClarificationRequest["steps"] = [];
+  steps.push(...buildPersistenceDecisionStep(spec));
 
   if (providersNeedingPurpose.length > 0) {
     steps.push(

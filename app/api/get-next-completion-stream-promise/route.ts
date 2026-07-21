@@ -76,6 +76,10 @@ import {
   detectLiveApiIntent,
 } from "@/features/generation/live-api";
 import {
+  detectPersistenceIntentFromMessages,
+  describePersistenceIntent,
+} from "@/features/generation/persistence-intent";
+import {
   createResearchWindow,
   extractWebSources,
 } from "@/features/generation/research-policy";
@@ -88,6 +92,7 @@ import {
   enforceSelectedProvidersInAppSpec,
   enforceSelectedProvidersInPlan,
   getSelectedProvidersNeedingPurpose,
+  enforceRequestedPersistenceProvider,
 } from "@/features/integrations/generation-contract";
 import { buildPlanModeFallbackInterview } from "@/features/generation/mode-policy";
 import {
@@ -433,8 +438,7 @@ export async function POST(req: Request) {
     const hasExplicitCompleteCreativeBrief =
       /\buse\s+the\s+supplied[\s\S]{0,220}\bexactly\s+as\s+written\b/i.test(
         latestResearchObjective,
-      ) ||
-      /\bcomplete\s+creative\s+brief\b/i.test(latestResearchObjective);
+      ) || /\bcomplete\s+creative\s+brief\b/i.test(latestResearchObjective);
     const websiteReferenceIntent = detectWebsiteReferenceIntent(
       latestResearchObjective,
     );
@@ -483,6 +487,15 @@ export async function POST(req: Request) {
           }))
       : [{ content: latestResearchObjective }];
     const chatUrls = extractChatUrls(chatUrlMessages);
+    const persistenceIntent = detectPersistenceIntentFromMessages(
+      shouldCarryResearchThroughWorkflow
+        ? rawMessages
+            .filter((candidate) => candidate.role === "user")
+            .map((candidate) => ({ content: getResearchObjective(candidate) }))
+            .filter((candidate) => candidate.content.trim().length > 0)
+            .slice(-4)
+        : [{ content: latestResearchObjective }],
+    );
     const apiDocumentation = assessApiDocumentation(researchMessages);
     const researchIntent = detectResearchIntent(researchMessages);
     const liveApiIntent = shouldCarryResearchThroughWorkflow
@@ -601,6 +614,49 @@ export async function POST(req: Request) {
 
           // Final spec state (persisted after orchestration decision)
           let finalSpec = appSpec;
+          const currentPersistenceState = finalSpec.dataPersistence;
+          finalSpec = {
+            ...finalSpec,
+            dataPersistence:
+              currentPersistenceState.status !== "not_prompted"
+                ? currentPersistenceState
+                : persistenceIntent.detected ||
+                    currentPersistenceState.confidence > 0
+                  ? {
+                      ...currentPersistenceState,
+                      ...persistenceIntent,
+                      status: currentPersistenceState.status,
+                      reason:
+                        currentPersistenceState.reason ??
+                        persistenceIntent.reason ??
+                        undefined,
+                      useCase:
+                        currentPersistenceState.useCase ??
+                        persistenceIntent.useCase ??
+                        "Workflow data tracking",
+                    }
+                  : currentPersistenceState,
+          };
+          const metadataPersistenceSelection =
+            agentMetadata?.kind === "agent_interview_response" ||
+            agentMetadata?.kind === "agent_clarification_response"
+              ? agentMetadata.answers["data-persistence-connect"]?.[0]
+              : null;
+          if (
+            metadataPersistenceSelection &&
+            finalSpec.dataPersistence.status === "not_prompted"
+          ) {
+            finalSpec = {
+              ...finalSpec,
+              dataPersistence: {
+                ...finalSpec.dataPersistence,
+                status:
+                  metadataPersistenceSelection === "connect-db-now"
+                    ? "connect_confirmed"
+                    : "connect_declined",
+              },
+            };
+          }
           const latestUserContent =
             rawMessages.findLast((candidate) => candidate.role === "user")
               ?.content ?? message.content;
@@ -709,6 +765,7 @@ export async function POST(req: Request) {
             finalSpec,
             connectedIntegrationSelection.providerIds,
           );
+          finalSpec = enforceRequestedPersistenceProvider(finalSpec);
           const conversationHasCode = rawMessages.some(
             (candidate) => getStoredGeneratedFiles(candidate).length > 0,
           );
@@ -1012,6 +1069,7 @@ export async function POST(req: Request) {
           if (modeGuardedAction !== agentAction) {
             agentAction = modeGuardedAction;
           }
+          finalSpec = enforceRequestedPersistenceProvider(finalSpec);
           if (
             planMode ||
             connectedIntegrationSelection.providerIds.length > 0
@@ -1111,16 +1169,30 @@ export async function POST(req: Request) {
                 reason:
                   "The approved specification includes an external integration.",
               }
-            : connectedIntegrationSelection.providerIds.length
+            : finalSpec.dataPersistence.detected &&
+                finalSpec.dataPersistence.status !== "connect_declined" &&
+                finalSpec.dataPersistence.confidence >= 58
               ? {
                   required: true,
-                  kind: connectedIntegrationSelection.requiresServerRuntime
-                    ? ("server_required" as const)
-                    : ("public_candidate" as const),
+                  kind: "server_required" as const,
                   reason:
-                    "The user selected an API for this project in the Integrations panel.",
+                    "The app includes a persistent-record workflow, so local mock data is not suitable for this data model.",
                 }
-              : liveApiIntent;
+              : connectedIntegrationSelection.providerIds.length
+                ? {
+                    required: true,
+                    kind: connectedIntegrationSelection.requiresServerRuntime
+                      ? ("server_required" as const)
+                      : ("public_candidate" as const),
+                    reason:
+                      "The user selected an API for this project in the Integrations panel.",
+                  }
+                : liveApiIntent;
+          const persistenceContext =
+            finalSpec.dataPersistence.detected ||
+            finalSpec.dataPersistence.status !== "not_prompted"
+              ? `\n\n=== DATA PERSISTENCE RECOMMENDATION ===\n${describePersistenceIntent(finalSpec.dataPersistence)}\n=== END DATA PERSISTENCE RECOMMENDATION ===`
+              : "";
           const integrationPolicyContext = [
             latestUserContent,
             ...connectedIntegrationSelection.providerIds,
@@ -1166,20 +1238,16 @@ export async function POST(req: Request) {
             chatUrls.length === 0 &&
             (searchApproved ||
               (searchApproval?.approved !== false &&
-                (
-                  (researchIntent.candidate &&
-                    !selectedApiShouldSupplyLiveData &&
-                    !linkedPagesSatisfyReferenceResearch &&
-                    !attachedImageSatisfiesVisualReferenceResearch) ||
+                ((researchIntent.candidate &&
+                  !selectedApiShouldSupplyLiveData &&
+                  !linkedPagesSatisfyReferenceResearch &&
+                  !attachedImageSatisfiesVisualReferenceResearch) ||
                   (isCodeGeneration &&
                     effectiveLiveApiIntent.required &&
                     !hasOnlyReviewedConnectedApiContracts &&
                     !apiDocumentation.hasCompleteEndpointContract &&
                     !linkedPagesSatisfyReferenceResearch) ||
-                  (isCodeGeneration && hasExplicitCompleteCreativeBrief)
-                )
-              )
-            );
+                  (isCodeGeneration && hasExplicitCompleteCreativeBrief))));
 
           const researchQuery = searchApproved
             ? approvedResearchQuery
@@ -1204,6 +1272,7 @@ export async function POST(req: Request) {
                 ...guardedMessages[lastUserMessageIndex],
                 content:
                   guardedMessages[lastUserMessageIndex].content +
+                  persistenceContext +
                   specBlock +
                   (connectedIntegrationContext
                     ? `\n\n${connectedIntegrationContext}`
@@ -1224,6 +1293,7 @@ export async function POST(req: Request) {
                 ...guardedMessages[lastUserMessageIndex],
                 content:
                   guardedMessages[lastUserMessageIndex].content +
+                  persistenceContext +
                   (connectedIntegrationContext
                     ? `\n\n${connectedIntegrationContext}`
                     : "") +

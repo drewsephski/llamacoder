@@ -1283,6 +1283,100 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
   });
 
+  it("persists a confirmed persistence choice and enforces Supabase in the app spec", async () => {
+    const content = "Build a CRM to track leads and deal stages";
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nFrankfurter [frankfurter] is selected.\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["frankfurter"],
+      requiresServerRuntime: false,
+    });
+    const persistenceInterviewMessage = {
+      kind: "agent_interview_response" as const,
+      requestId: "interview-persistence",
+      answers: {
+        "data-persistence-connect": ["connect-db-now"],
+      },
+      summary: [
+        {
+          label: "How should records be persisted?",
+          value: "Use real database now (Recommended)",
+        },
+      ],
+    };
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_persistence_confirm",
+        content,
+        files: persistenceInterviewMessage,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      {
+        role: "user",
+        content: "Build a CRM to track leads and deal stages",
+      },
+      {
+        role: "user",
+        content,
+        files: persistenceInterviewMessage,
+      },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        action: "generate_code",
+        specUpdate: {},
+      },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_persistence_confirm" },
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const response = await POST(
+      request({ messageId: "msg_persistence_confirm", model: "model_1" }),
+    );
+    await collectUIChunks(response);
+
+    if (streamTextMock.mock.calls.length > 0) {
+      const lastGenerationCall =
+        streamTextMock.mock.calls[streamTextMock.mock.calls.length - 1];
+      const lastMessages = lastGenerationCall?.[0]?.messages ?? [];
+      const lastMessage = lastMessages[lastMessages.length - 1];
+      const generationPrompt = lastMessage?.content;
+      if (generationPrompt !== undefined) {
+        expect(generationPrompt).toContain("DATA PERSISTENCE RECOMMENDATION");
+        expect(generationPrompt).toContain("Detected persistence need");
+      }
+    }
+    expect(prismaMock.chat.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          appSpec: expect.objectContaining({
+            dataPersistence: expect.objectContaining({
+              status: "connect_confirmed",
+            }),
+            integrations: expect.arrayContaining([
+              expect.objectContaining({
+                providerId: "supabase",
+                required: true,
+                runtime: "server",
+              }),
+            ]),
+          }),
+        },
+      }),
+    );
+  });
+
   it("does not replay structured API choices as research on plan approval", async () => {
     const content = "I approve the plan. Please build it now.";
     const octagonIntegration = {
