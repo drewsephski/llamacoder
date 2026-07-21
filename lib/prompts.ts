@@ -209,7 +209,7 @@ export function getMainCodingPrompt(options?: {
   - **Parallax** (\`react-parallax\`): Use scroll-driven depth for storytelling pages, long-form content, or immersive product showcases.
   - **Confetti** (\`react-confetti\`): Use for success celebrations, achievement unlocks, or milestone moments. Render only after import interop:
 
-    ```tsx
+    \`\`\`tsx
     import * as ReactConfettiModule from "react-confetti";
     import type { ComponentType } from "react";
 
@@ -218,7 +218,7 @@ export function getMainCodingPrompt(options?: {
       (ReactConfettiModule as ComponentType);
 
     <Confetti width={width} height={height} run={isComplete} onComplete={handleDone} />
-    ```
+    \`\`\`
   - **Smooth scrolling** (\`lenis\`): Use for buttery-smooth scroll experiences on editorial, portfolio, or showcase sites.
 
   Do not force these into every app. A utilitarian dashboard does not need a shader background. But a creative tool, portfolio, gaming app, music player, luxury brand, or interactive showcase should feel alive — reach for these libraries instead of flat color blocks.

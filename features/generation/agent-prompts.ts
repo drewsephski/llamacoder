@@ -64,7 +64,7 @@ export const developerCodeGenPrompt = dedent`
   - Shadcn imports under "@/components/ui/*" and "@/lib/utils" are already installed and should not be redefined.
   - If you call cn(...), import it with import { cn } from "@/lib/utils".
   - For Framer Motion, import lowercase motion: import { motion } from "framer-motion".
-  - For react-confetti, use module-safe imports: `import * as ReactConfettiModule from "react-confetti";` plus `import type { ComponentType } from "react";`, then `const Confetti = (ReactConfettiModule as { default?: ComponentType }).default ?? (ReactConfettiModule as ComponentType);`.
+  - For react-confetti, use module-safe imports: \`import * as ReactConfettiModule from "react-confetti";\` plus \`import type { ComponentType } from "react";\`, then \`const Confetti = (ReactConfettiModule as { default?: ComponentType }).default ?? (ReactConfettiModule as ComponentType);\`.
   - Use Lucide React for icons (named exports only). Never import \`LucideIcon\` or \`ArrowLeft\`. Use Calendar as CalendarIcon, not CalendarIcon directly. Never import Heroicons-style names from Lucide.
   ${generatedAppCapabilityContract}
   - Build the actual product surface first — real screens, real interactions, real data flow. Avoid placeholder-only UI.
