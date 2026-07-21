@@ -24,6 +24,19 @@ type MarketingLink = {
   external?: boolean;
 };
 
+type MarketingExampleScreenshot = {
+  src: string;
+  alt: string;
+  caption?: string;
+};
+
+type MarketingExample = {
+  title: string;
+  prompt: string;
+  files: string[];
+  screenshots: MarketingExampleScreenshot[];
+};
+
 export type MarketingPage = {
   kind: "comparison" | "guide" | "benchmark";
   slug: string;
@@ -60,6 +73,8 @@ export type MarketingPage = {
   sources?: MarketingLink[];
   internalLinks: MarketingLink[];
   cta: string;
+  ctaPrompt?: string;
+  realExample?: MarketingExample;
 };
 
 const sharedComparisonLinks: MarketingLink[] = [
@@ -2322,6 +2337,1790 @@ const blogPagesSeed: MarketingPageSeed[] = [
       },
     ],
     cta: "Run the post-generation checklist",
+  },
+  {
+    kind: "guide",
+    slug: "lovable-alternative-with-predictable-pricing",
+    title:
+      "Lovable Alternative with Predictable Pricing: A Practical Decision Guide for Teams",
+    description:
+      "Compare AI app builders on visible spend estimates, actual charge behavior, repair policy, and export ownership before choosing a Lovable alternative.",
+    h1: "Lovable alternative with predictable pricing",
+    intro:
+      "Teams compare builders on outcomes, but a fair decision starts with predictable usage signals: expected spend, reserve-release policy, cost per accepted milestone, and export portability.",
+    summary:
+      "Use Squid when predictable credits, explicit spend checkpoints, and auditable checkpoints matter more than feature parity alone.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Move from plan estimates to accepted-output cost",
+        body: "A real decision starts with cost per accepted output, not token or credit cost per message. Ask for expected usage before generation and compare the spend against saved, verified artifacts.",
+      },
+      {
+        title: "Demand reserve and refund visibility",
+        body: "Demand a ledger model that shows reserved usage, charged usage, and any refunds when a generation fails, times out, or requires a re-run.",
+      },
+      {
+        title: "Track cost across failed attempts",
+        body: "If a workflow repeatedly fails, compare total usage across retries. A cheaper first estimate is less useful if every accepted result requires three to five paid attempts.",
+      },
+      {
+        title: "Keep preview and export ownership separate",
+        body: "Preview quality is not a substitute for export health. A portable React ZIP with run instructions and diagnostics reduces post-generation migration risk.",
+      },
+      {
+        title: "Use one benchmark for predictability",
+        body: "Build the same brief across at least two similar tasks and compare acceptance pass rate, restoration reliability, and local build stability before selecting an alternative.",
+      },
+    ],
+    table: {
+      caption: "Predictability scorecard",
+      columns: ["Signal", "What to verify", "Pass condition"],
+      rows: [
+        ["Estimation", "Visible estimate before generation", "Estimate shown and understood"],
+        ["Failure policy", "Reserve/release for failures", "No silent hold with no explanation"],
+        ["Retry behavior", "Attempt-level accounting", "Accepted result cost is predictable"],
+        [
+          "Export ownership",
+          "Manifest, dependencies, and deployment guidance",
+          "Clean clean-room install and build",
+        ],
+      ],
+    },
+    ctaPrompt:
+      "Build a Lovable alternative with predictable pricing checkpoints and export-ready checkpoints.",
+    cta: "Compare spend signals before you choose",
+    realExample: {
+      title: "Real example: AI-powered pricing dashboard for founder teams",
+      prompt:
+        "Build a founder-facing pricing-comparison dashboard for AI app builders. Include expected credits, actual spend per accepted run, refund status, token vs credit normalization notes, and a monthly summary panel that exports CSV. Use local mock data and a Vite + React app structure with reusable card and table components.",
+      files: [
+        "src/App.tsx",
+        "src/components/CostSummaryCard.tsx",
+        "src/components/BuilderProvider.tsx",
+        "src/components/SpendLedger.tsx",
+        "src/components/EstimateBreakdownTable.tsx",
+        "src/data/mockUsage.ts",
+        "src/lib/formatCurrency.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/terraelix-hero.png",
+          alt: "Founders dashboard with spend and export controls",
+          caption: "Generated React app with spending summaries and export links.",
+        },
+        {
+          src: "/showcase/velorah-hero.png",
+          alt: "Cost benchmark panel on desktop viewport",
+          caption: "Predictability-focused sections with clear cost status.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Is predictable pricing possible when models differ by route?",
+        answer:
+          "Yes, but you should compare normalized outcomes. Ask for explicit estimate plus actual cost and refuse to optimize on only the first attempt.",
+      },
+      {
+        question: "What should fail-state pricing include?",
+        answer:
+          "You need to know whether failed generations reserve and hold usage, whether release is automatic, and how retries are counted in final totals.",
+      },
+      {
+        question: "Can I use a cost dashboard for model selection?",
+        answer:
+          "Yes. A dashboard is useful when your team has recurring patterns and can standardize prompts, viewport requirements, and acceptance criteria.",
+      },
+      {
+        question: "How does this compare to Lovable alternatives?",
+        answer:
+          "A predictable builder should provide pre-run estimates, ledger details, restore safety, and export artifacts. Compare these across options, not just UI comfort.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/ai-coding-tool-comparison-with-credits",
+        label: "Compare credits and usage policies",
+        description: "Use this framework before budget sign-off.",
+      },
+      {
+        href: "/blog/why-ai-app-builders-burn-credits",
+        label: "Understand why builders burn spend",
+        description: "See hidden cost drivers beyond the headline estimate.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-app-builder-does-not-charge-failed-generations",
+    title:
+      "AI App Builder That Does Not Charge for Failed Generations: How to Verify Policy",
+    description:
+      "How to choose and test builders with explicit failed-run policies, restore behavior, and cost reporting for interrupted generation.",
+    h1: "AI app builder that does not charge for failed generations",
+    intro:
+      "A no-charge policy for failed generations is a reliability signal only if it is enforced in the same way across streaming failures, parse errors, validation blocks, and interrupted sessions.",
+    summary:
+      "Demand written policy: failure classes, reserve release guarantees, and repeatable testing before selecting the builder.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Define failure classes before billing",
+        body: "Start by defining failure states: stream interruption, syntax validation failure, import mismatch, and interrupted preview generation. Each class should have a defined billing outcome.",
+      },
+      {
+        title: "Check reserve behavior after a hard fail",
+        body: "Record reserved credits and whether they are released after no persistence. If release is delayed, include that in your acceptance policy.",
+      },
+      {
+        title: "Use checkpoints to reduce retries",
+        body: "When a generation fails, use minimal deterministic repair prompts and verify that restore/retry does not rebuild unrelated files before billing another result.",
+      },
+      {
+        title: "Require proof in the ledger",
+        body: "Good policy should show reserved, charged, refunded, and final usage row-by-row so you can audit cost disputes with support logs.",
+      },
+      {
+        title: "Pilot on your highest-risk prompts",
+        body: "Test the policy on complex prompts with many imports and references. These are the cases where generation failures are most expensive.",
+      },
+    ],
+    table: {
+      caption: "Failure-to-charge verification checklist",
+      columns: ["Failure type", "What to expect", "Verification test"],
+      rows: [
+        ["Timeout or disconnect", "Release within one retry window", "Repeat after simulated drop"],
+        ["Invalid import graph", "No hidden charge without persistence", "Run build before billing"],
+        ["Repair-only pass", "Transparent repair policy", "Compare first pass and repair pass"],
+        ["Interruption at save", "No final charge without persisted result", "Attempt save boundary recovery"],
+      ],
+    },
+    ctaPrompt:
+      "Create a policy-driven failed-generation test and verify refund/ledger behavior in Squid.",
+    cta: "Verify failed-generation billing behavior",
+    realExample: {
+      title:
+        "Real example: Failure-safe billing controls for generator-assisted editing",
+      prompt:
+        "Create a generator failure-test panel that tracks generation runs, stream outcomes, validation status, and cost impact by phase. Build a UI that clearly separates failed runs from saved versions and highlights where refunds are applied.",
+      files: [
+        "src/App.tsx",
+        "src/components/RunMonitor.tsx",
+        "src/components/CostEventTable.tsx",
+        "src/components/RestoreBanner.tsx",
+        "src/hooks/useGenerationLedger.ts",
+        "src/lib/runClassifier.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/skyelite-hero.png",
+          alt: "Generated panel showing run outcomes and billing status",
+          caption: "Monitoring page for failed, pending, and settled runs.",
+        },
+        {
+          src: "/showcase/octagon-rankings.png",
+          alt: "Ledger grid with restore and retry control surfaces",
+          caption: "Billing ledger linked to restore actions and run status.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Do failed runs always mean no charge?",
+        answer:
+          "No. Policies differ by tool and failure class, so insist on explicit documentation and a reproducible test plan.",
+      },
+      {
+        question: "What is a meaningful way to measure billing fairness?",
+        answer:
+          "Measure accepted milestone cost per durable result, not average cost per raw request.",
+      },
+      {
+        question: "How should a builder expose failed-run data?",
+        answer:
+          "A durable ledger with run ID, reason, status, reserved credits, charged credits, and refund status is the minimum useful standard.",
+      },
+      {
+        question: "Can this be automated?",
+        answer:
+          "Yes. Add post-run checks that flag charges for failed outcomes and block budget approvals until outcomes are classed as expected.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/ai-coding-tool-comparison-with-credits",
+        label: "Compare failure-sensitive tool cost",
+        description: "Evaluate charging behavior across tools and outcomes.",
+      },
+      {
+        href: "/compare/squid-vs-bolt",
+        label: "Review Bolt token behavior",
+        description: "Understand how token growth affects cost during complex retries.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "how-to-recover-a-broken-lovable-project",
+    title: "How to Recover a Broken Lovable Project Without Losing Momentum",
+    description:
+      "A practical recovery playbook for users moving away from a broken Lovable state while preserving content, version context, and rollout confidence.",
+    h1: "How to recover a broken Lovable project",
+    intro:
+      "Project breakage usually appears as a preview mismatch, missing route, broken import state, or unstable behavior after one narrow edit. The recovery method should be auditable and reversible.",
+    summary:
+      "Use a restore-safe workflow, snapshot project structure, and export into a clean local environment before rebuilding. A broken state in builder preview should never be your only recovery point.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "9 min read",
+    sections: [
+      {
+        title: "Isolate the bad change",
+        body: "Revert the scope manually with one restore step and identify the first commit where the route graph broke. Do not keep iterating blindly on the broken state.",
+      },
+      {
+        title: "Export before next edits",
+        body: "Even if output is broken, export the latest known-good and broken states. File diffing across two exports reveals what changed.",
+      },
+      {
+        title: "Map the Lovable recovery limitations",
+        body: "Lovable history can restore and preview, but your migration plan should preserve the latest valid architecture before rewriting large sections.",
+      },
+      {
+        title: "Rebuild in a clean local environment",
+        body: "Load both versions into clean folders, run build validation, and compare route and dependency differences outside builder tooling.",
+      },
+      {
+        title: "Decide whether to switch engines",
+        body: "If restore paths repeatedly fail under normal edits, compare alternatives that preserve checkpoints differently and provide stronger export verification workflows.",
+      },
+    ],
+    ctaPrompt:
+      "Run a recovery drill: restore a broken build, compare exports, and rebuild in a clean local environment.",
+    cta: "Rebuild a broken project with confidence",
+    realExample: {
+      title: "Real example: Broken-state recovery workflow",
+      prompt:
+        "Design a recovery dashboard for broken app states. Show a side-by-side diff of last-good and latest exports, import graph status, route health checks, and one-click restore guidance.",
+      files: [
+        "src/App.tsx",
+        "src/components/RecoveryTimeline.tsx",
+        "src/components/DiffInspector.tsx",
+        "src/components/RouteHealthPanel.tsx",
+        "src/lib/compareExports.ts",
+        "src/lib/exportSnapshot.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/axion-studio-hero.png",
+          alt: "Recovery panel comparing last-good and broken project versions",
+          caption: "A practical recovery workflow built from exported states.",
+        },
+        {
+          src: "/showcase/cozypaws-hero.png",
+          alt: "Diff and route health cards after project rollback",
+          caption: "Recovery controls tied to route checks and export snapshots.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Should I restore directly in Lovable first?",
+        answer:
+          "Yes as a first step, but continue by exporting the pre-restore and post-restore states for local diffing and safety.",
+      },
+      {
+        question: "What if every restore feels destructive?",
+        answer:
+          "That is a signal to move toward a checkpoint model with stronger version provenance and reproducible local export checkpoints.",
+      },
+      {
+        question: "How much export evidence is enough?",
+        answer:
+          "At minimum include app files, package files, route map, and dependency graph outputs from both states.",
+      },
+      {
+        question: "Can this workflow map to non-Lovable projects?",
+        answer:
+          "Yes. The recovery structure is a general approach for any builder that has partial or inconsistent rollback behavior.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/compare/squid-vs-lovable",
+        label: "Compare recovery semantics",
+        description: "See a side-by-side breakdown of restore behavior.",
+      },
+      {
+        href: "/blog/ai-app-builder-with-version-recovery",
+        label: "Use version recovery by design",
+        description:
+          "Evaluate AI builders that keep recovery safe and measurable.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "bolt-new-keeps-burning-tokens",
+    title: "Why Bolt.new Keeps Burning Tokens and How to Control It",
+    description:
+      "Understand why token burn increases as projects grow and how to cap cost with fixed-size edits, bounded context, and measurable checkpoints.",
+    h1: "Bolt.new keeps burning tokens",
+    intro:
+      "Token growth is often tied to context and project scale, not just prompt length. A control plan requires measurement at each edit, not just initial generation assumptions.",
+    summary:
+      "Profile context size, edit scope, and restore loops to stop token inflation while preserving iteration speed.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "7 min read",
+    sections: [
+      {
+        title: "Measure before and after project growth",
+        body: "Repeat the same edit at project start and after multiple files accumulate. Rising token spend often comes from expanding context and repeated history reads.",
+      },
+      {
+        title: "Bound the context in your prompts",
+        body: "Keep prompts minimal and explicit. State region to edit and file boundaries so the model does not rebuild large unrelated sections.",
+      },
+      {
+        title: "Use narrow verification loops",
+        body: "One narrow visual or state change is cheaper and easier to review than rewriting broad surfaces under a full-page regeneration strategy.",
+      },
+      {
+        title: "Track burn-rate per accepted checkpoint",
+        body: "Acceptance should be measured by saved checkpoints, not by individual prompts. This converts token burn into meaningful budget impact.",
+      },
+      {
+        title: "Compare with credit-based alternatives",
+        body: "Credit systems can simplify forecasting when you need predictable usage signals tied to model selection and run outcome.",
+      },
+    ],
+    table: {
+      caption: "Token-burn control worksheet",
+      columns: ["Phase", "What to track", "Control action"],
+      rows: [
+        ["Initial generation", "Starting token footprint", "Capture baseline",
+        ],
+        ["Growth edit", "Prompt scope and file count", "Limit context sent per edit"],
+        ["Retry loop", "Retry count and reason", "Stop after acceptable threshold"],
+        ["Export phase", "Local build and checkpoint quality", "Run and archive checkpoints"],
+      ],
+    },
+    ctaPrompt:
+      "Build a token burn control plan with bounded prompts and context checkpoints in Squid.",
+    cta: "Control AI token burn without sacrificing quality",
+    realExample: {
+      title: "Real example: Token burn tracker for iterative redesign",
+      prompt:
+        "Create an app that tracks token or credit burn per phase, shows context scope size by file count, flags edits with broad diffs, and recommends cheaper bounded edit prompts.",
+      files: [
+        "src/App.tsx",
+        "src/components/TokenTracker.tsx",
+        "src/components/EditScopeBadge.tsx",
+        "src/components/IterationSummary.tsx",
+        "src/hooks/useTokenBudget.ts",
+        "src/lib/scoreDiff.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/rivr-hero.png",
+          alt: "Iteration tracker and edit boundary dashboard",
+          caption: "Tracks token burn with bounded edit controls.",
+        },
+        {
+          src: "/showcase/mentality-hero.png",
+          alt: "Prompt scope and acceptance score on repeated edits",
+          caption: "A UI that highlights prompt growth over time.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Why does token burn increase on later edits?",
+        answer:
+          "Larger project context means the model processes more content each step. Narrow scope prompts reduce unnecessary context usage.",
+      },
+      {
+        question: "Can token tools be compared to credit tools?",
+        answer:
+          "Only after normalizing to accepted checkpoints. Raw units are useful only with equivalent acceptance criteria.",
+      },
+      {
+        question: "What is the practical stopping rule?",
+        answer:
+          "Stop when burn exceeds your per-checkpoint threshold and switch to a narrower, structured edit prompt.",
+      },
+      {
+        question: "How do I prove burn control in a review deck?",
+        answer:
+          "Log token or credit burn per attempt, plus restore/diff outcome and local-build status for each accepted output.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "best-ai-builder-for-exportable-react-code",
+    title: "Best AI Builder for Exportable React Code: A Decision Framework",
+    description:
+      "Compare builders on export artifacts, dependency closure, checkpointing, and verification quality to choose an app builder that reliably produces portable React code.",
+    h1: "Best AI builder for exportable React code",
+    intro:
+      "An exportable app is only useful when dependencies, scripts, and diagnostics are complete and reproducible outside the generator.",
+    summary:
+      "Choose the builder that makes handoff easy: verified output bundles, readable manifests, and predictable restore workflows.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Export must be an audit package, not a ZIP",
+        body: "A robust export includes source graph, package metadata, diagnostics, deployment guidance, and enough context to reproduce the first run.",
+      },
+      {
+        title: "Evaluate what happens after export",
+        body: "Run a clean install and build as part of the selection criteria. A beautiful preview that fails locally is not portable.",
+      },
+      {
+        title: "Check recovery and restore semantics",
+        body: "Portable exports are easier to trust when restore actions create clear checkpoints and preserve change history.",
+      },
+      {
+        title: "Demand component-level evidence",
+        body: "File graph completeness and import resolution are mandatory checks before shipping generated code.",
+      },
+      {
+        title: "Align framework and deployment expectations",
+        body: "Exportable output quality differs by framework target and deployment target; compare intended architecture first.",
+      },
+    ],
+    table: {
+      caption: "Exportability decision grid",
+      columns: ["Criterion", "Exporter strength", "Why it matters"],
+      rows: [
+        ["Diagnostics", "Dependency checks and export manifests", "Reduces integration surprises"],
+        ["Structure", "Stable file graph and entrypoints", "Simplifies local handoff"],
+        ["Recovery", "Checkpointed restore history", "Protects edit velocity"],
+        ["Deployment", "Starter deployment configs", "Reduces first-mile operations"],
+      ],
+    },
+    ctaPrompt:
+      "Generate an exportability audit of AI-built React code with validation before handoff.",
+    cta: "Export with a verifiable React bundle",
+    realExample: {
+      title: "Real example: Export pack audit for an AI-built application",
+      prompt:
+        "Build a small React export-audit dashboard that validates entrypoints, package scripts, manifest quality, and deployment readiness for generated projects. Include a one-click JSON report export.",
+      files: [
+        "src/App.tsx",
+        "src/components/ExportAuditPage.tsx",
+        "src/components/FileManifestTable.tsx",
+        "src/components/DeploymentReadinessCard.tsx",
+        "src/components/DependencyGraph.tsx",
+        "src/lib/exportAudit.ts",
+        "src/lib/runChecks.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/slotflow.webp",
+          alt: "Audit dashboard showing manifest and dependency checks",
+          caption: "Export audit evidence with build checks and file inventory.",
+        },
+        {
+          src: "/showcase/orbital-salvage.webp",
+          alt: "Export report details and deployment targets",
+          caption: "Portable package summary for team handoff.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can any generated ZIP be considered export-ready?",
+        answer:
+          "No. ZIP quality should include complete scripts, dependencies, diagnostics, and clean-room run behavior.",
+      },
+      {
+        question: "What is the first signal of poor exportability?",
+        answer:
+          "A preview works but clean install/build fails, or dependencies are ambiguous in the package structure.",
+      },
+      {
+        question: "Do I need checkpointed rollback for export workflows?",
+        answer:
+          "Rollback does not replace export checks, but it prevents expensive blind rewrites during last-mile fixes.",
+      },
+      {
+        question: "How should a team compare alternatives?",
+        answer:
+          "Use one architecture brief and one benchmark flow that ends in clean export + local build + interaction checks.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-app-builder-with-version-recovery",
+    title: "AI App Builder with Version Recovery: What to Look for Beyond Preview",
+    description:
+      "A recovery-first framework for choosing tools with non-destructive history, stable checkpoints, and predictable rollback outcomes.",
+    h1: "AI app builder with version recovery",
+    intro:
+      "Version recovery is a production requirement, not a convenience. You need predictable restores, clear history, and auditable diffs when prompts miss the target.",
+    summary:
+      "Prioritize checkpoint semantics that preserve history and make rollback behavior reproducible in the same edit path.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Differentiate preview history from recoverable checkpoints",
+        body: "Preview history may show states, but recovery should create a clearly persisted checkpoint path you can reuse for audits and handoff.",
+      },
+      {
+        title: "Define recovery scope and naming",
+        body: "Require human-readable checkpoint labels and reasons to keep restore events meaningful during handoff and incident reviews.",
+      },
+      {
+        title: "Test restore under edits",
+        body: "Restore an earlier version after one narrow edit. If unrelated files drift after restore, your recovery signal is weak.",
+      },
+      {
+        title: "Keep exports tied to checkpoints",
+        body: "Export should always reference the checkpoint metadata so you can reproduce exactly the version you accepted.",
+      },
+      {
+        title: "Use recovery tests as an acceptance gate",
+        body: "A project not recoverable under a known regression is not production-ready, regardless of preview quality.",
+      },
+    ],
+    ctaPrompt:
+      "Set up a recovery-first workflow with checkpoint labeling, restore drills, and checkpoint-linked exports.",
+    cta: "Add version recovery to your generator workflow",
+    realExample: {
+      title: "Real example: Recovery dashboard for generated products",
+      prompt:
+        "Create an application recovery dashboard with checkpoint timeline, restore action, restore diff preview, and version-linked export panel. Include warning states for unrelated file drift.",
+      files: [
+        "src/App.tsx",
+        "src/components/RecoveryTimeline.tsx",
+        "src/components/RestoreActionSheet.tsx",
+        "src/components/DiffScopeWarning.tsx",
+        "src/hooks/useCheckpointHistory.ts",
+        "src/lib/versionRecovery.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/axion-studio-hero.png",
+          alt: "Recovery timeline with checkpoint history",
+          caption: "A UI for non-destructive restore planning.",
+        },
+        {
+          src: "/showcase/mindloop-hero.png",
+          alt: "Version-linked export panel",
+          caption: "Exports tied directly to checkpoint IDs and drift status.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Is version recovery a UI feature or workflow requirement?",
+        answer:
+          "Both. A UI button is insufficient if checkpoints are not durable, named, and traceable to exports.",
+      },
+      {
+        question: "How often should recovery drills run?",
+        answer:
+          "At least after each significant feature edit and before each public-facing export.",
+      },
+      {
+        question: "What makes a restore trustworthy?",
+        answer:
+          "Stable file graph behavior, narrow changes on restore, and clear version metadata.",
+      },
+      {
+        question: "Can recovery fail quietly?",
+        answer:
+          "Yes if drift is broad and diffs are unreadable. A dedicated recovery test prevents silent risk.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/how-to-recover-a-broken-lovable-project",
+        label: "Restore a broken project safely",
+        description: "Use recovery methods that preserve a clean handoff path.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "screenshot-to-responsive-react",
+    title: "Screenshot to Responsive React: Turning One View into Multi-viewport UI",
+    description:
+      "Build responsive React interfaces from screenshots by defining viewport behavior, breakpoints, and interaction requirements up front.",
+    h1: "Screenshot to responsive React",
+    intro:
+      "Responsive output needs explicit behavior at small, medium, and large viewports. One desktop reference is not enough for production-ready AI output.",
+    summary:
+      "Use viewport rules, component-level ownership, and responsive acceptance tests to convert a screenshot into a stable multi-device React app.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "9 min read",
+    sections: [
+      {
+        title: "Treat the screenshot as a partial requirement",
+        body: "A screenshot communicates layout intent but not hidden navigation transformations, stacked content, or mobile interaction behavior. Capture these in your prompt and acceptance criteria.",
+      },
+      {
+        title: "Define responsive transformations by region",
+        body: "For each section, specify behavior for tablet and mobile: collapse, reorder, hide, or stack. This prevents accidental one-size-fits-all output.",
+      },
+      {
+        title: "Request states that are absent in the screenshot",
+        body: "Loading, error, success, and active states are usually missing in static references and must be explicitly required.",
+      },
+      {
+        title: "Validate at three widths before judging",
+        body: "Generate for desktop, tablet, and mobile before acceptance, then compare spacing, target sizes, and interaction parity.",
+      },
+      {
+        title: "Finish with restore and clean export checks",
+        body: "A responsive app is still not production-ready until it restores cleanly and installs in a fresh directory.",
+      },
+    ],
+    ctaPrompt:
+      "Build a responsive React app from a screenshot with viewport-specific behavior rules.",
+    cta: "Convert one screenshot into responsive production code",
+    realExample: {
+      title: "Real example: Responsive landing blocks from a desktop screenshot",
+      prompt:
+        "Convert a provided desktop screenshot of a landing hero into a responsive React page. Define desktop/tablet/mobile behavior for navigation, pricing cards, and call-to-action layout, including keyboard-visible focus states.",
+      files: [
+        "src/App.tsx",
+        "src/components/HeroSection.tsx",
+        "src/components/ResponsiveGrid.tsx",
+        "src/components/CTABanner.tsx",
+        "src/styles/responsive.css",
+        "src/hooks/useViewport.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/axon-hero.png",
+          alt: "Landing page mockup used for responsive conversion",
+          caption: "Screenshot reference converted into responsive UI sections.",
+        },
+        {
+          src: "/showcase/forma-hero.png",
+          alt: "Responsive sections on tablet and mobile states",
+          caption: "Converted output with breakpoint-specific behavior.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can desktop screenshots reliably infer mobile behavior?",
+        answer:
+          "Not reliably. Explicit responsive rules prevent inconsistent shrink behavior and hidden overflow issues.",
+      },
+      {
+        question: "How should I test multi-viewport quality?",
+        answer:
+          "Use the same interaction script on all widths, including touch interactions and spacing checks.",
+      },
+      {
+        question: "What are the minimum responsive acceptance checks?",
+        answer:
+          "No overflow, stable hierarchy, readable typography, and preserved core actions.",
+      },
+      {
+        question: "Should responsive conversion happen after first generation?",
+        answer:
+          "No. It should be planned in the prompt, then verified with separate viewport checks.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/from-screenshot-to-production-react",
+        label: "Use the production workflow",
+        description: "See a practical screenshot-to-code workflow with verification.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "turn-figma-screenshot-into-react",
+    title: "Turn a Figma Screenshot into React: Practical AI Workflow",
+    description:
+      "Convert Figma screenshots into React structure with explicit component ownership, responsive behavior, and local validation.",
+    h1: "Turn Figma screenshot into React",
+    intro:
+      "Figma captures often hide spacing system assumptions and state flow. The goal is to convert visual intent into componentized React behavior with explicit constraints.",
+    summary:
+      "Use a structured extraction pass and verification routine so your Figma-to-code result survives edits and exports cleanly.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Extract design intent before generation",
+        body: "List typography, spacing, component hierarchy, action intent, and data containers from the screenshot before opening the generation call.",
+      },
+      {
+        title: "Define component families",
+        body: "Require reusable card, panel, button, and table families. This avoids one giant component and improves maintainability.",
+      },
+      {
+        title: "Preserve semantic and interaction intent",
+        body: "Map each control to explicit roles, labels, and interaction states from the reference and expected behavior.",
+      },
+      {
+        title: "Model token boundaries with strict tasks",
+        body: "Generate the core structure, then add micro-interactions in bounded passes. This increases consistency and reduces accidental rewrites.",
+      },
+      {
+        title: "Verify as if no Figma file exists",
+        body: "After generation, validate accessibility, responsive behavior, and local build as production checkpoints.",
+      },
+    ],
+    ctaPrompt:
+      "Turn one Figma screenshot into a React app with reusable components and explicit interaction states.",
+    cta: "Convert Figma visuals into inspectable React",
+    realExample: {
+      title: "Real example: Figma visual to responsive dashboard page",
+      prompt:
+        "Use the provided Figma screenshot to generate a responsive React page with component families for header, feature cards, pricing table, and stateful detail panel. Include keyboard-friendly buttons and accessible form patterns.",
+      files: [
+        "src/App.tsx",
+        "src/components/FigmaHeader.tsx",
+        "src/components/FeatureCard.tsx",
+        "src/components/PricingGrid.tsx",
+        "src/components/DetailPanel.tsx",
+        "src/styles/tokens.css",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/forma-hero.png",
+          alt: "Figma input image used as design source",
+          caption: "Visual source converted into React component families.",
+        },
+        {
+          src: "/showcase/portfolio-os.webp",
+          alt: "Resulting responsive page generated from screenshot",
+          caption: "Converted design with reusable components and responsive controls.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Does a screenshot include all design constraints?",
+        answer:
+          "No. Add spacing scale, copy hierarchy, and interaction behavior that are not always visible.",
+      },
+      {
+        question: "Should I include all states in the first prompt?",
+        answer:
+          "Include primary action states first, then add optional micro-states in bounded follow-ups.",
+      },
+      {
+        question: "How do I prevent giant components?",
+        answer:
+          "Declare explicit reusable component families and file-level ownership in your prompt.",
+      },
+      {
+        question: "What is the clean output proof?",
+        answer:
+          "Local install, build, and interaction test on multiple widths with diff stability.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-saas-mvp-builder",
+    title: "AI SaaS MVP Builder: How to Generate a Launch-Ready MVP Faster",
+    description:
+      "A practical plan for building and validating AI-generated SaaS MVP apps with checkpoints, core auth-like flows, pricing, and export readiness.",
+    h1: "AI SaaS MVP builder",
+    intro:
+      "An MVP needs more than a strong UI: it needs route structure, pricing logic, onboarding, and maintainable fallback behavior for real users.",
+    summary:
+      "Use a staged build sequence with checkpointed milestones and verification gates to keep your AI-assisted MVP on track.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "9 min read",
+    sections: [
+      {
+        title: "Start with product boundaries, not visual style",
+        body: "Define authentication flow, onboarding milestones, usage billing surface, and support pages before pixel generation begins.",
+      },
+      {
+        title: "Generate module by module",
+        body: "Build landing, onboarding, workspace, and settings in separate bounded passes to preserve diffs and reduce accidental rewrites.",
+      },
+      {
+        title: "Add recovery and checkpoint checkpoints",
+        body: "Treat milestone boundaries as checkpoints so each phase can be restored, reviewed, and exported independently.",
+      },
+      {
+        title: "Run real acceptance tests before growth",
+        body: "Confirm signup simulation, plan updates, basic CRUD actions, and responsive behavior before adding advanced AI features.",
+      },
+      {
+        title: "Export and stage in a team directory",
+        body: "A clean export into local CI-ready structure lowers risk before early adopter onboarding.",
+      },
+    ],
+    table: {
+      caption: "MVP readiness checklist",
+      columns: ["Milestone", "Acceptance gate", "Pass criteria"],
+      rows: [
+        ["Landing", "Visual and content correctness", "No broken interactions"],
+        ["Onboarding", "Flow completion rate", "Core states and errors handled"],
+        ["Workspace", "Data mutation safety", "No unrelated file drift"],
+        ["Export", "Local installation", "Clean build and route test"],
+      ],
+    },
+    ctaPrompt:
+      "Generate an AI SaaS MVP with staged checkpoints, onboarding flow, and export-ready delivery.",
+    cta: "Build your AI SaaS MVP in stages",
+    realExample: {
+      title:
+        "Real example: Minimal SaaS MVP with pricing and usage dashboard",
+      prompt:
+        "Build a lightweight SaaS MVP with landing page, onboarding flow, usage dashboard, team settings, and plan selection surface. Use reusable components and checkpoint comments so each milestone can be exported and validated independently.",
+      files: [
+        "src/App.tsx",
+        "src/pages/LandingPage.tsx",
+        "src/pages/Onboarding.tsx",
+        "src/pages/Dashboard.tsx",
+        "src/components/PlanSelector.tsx",
+        "src/components/UsageChart.tsx",
+        "src/hooks/useMvpState.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/mentality-hero.png",
+          alt: "SaaS landing and onboarding sequence",
+          caption: "Multi-step startup flow converted into a React app.",
+        },
+        {
+          src: "/showcase/terraelix-hero.png",
+          alt: "Usage dashboard and plan cards",
+          caption: "MVP-ready dashboard generated from product requirements.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can this replace a full product dev team?",
+        answer:
+          "It accelerates first milestones, not final long-term operations. Use it for launch speed with structured reviews.",
+      },
+      {
+        question: "What is the best iteration order?",
+        answer:
+          "Landing, onboarding, dashboard, settings, then retention features.",
+      },
+      {
+        question: "How do I keep MVP scope under control?",
+        answer:
+          "Gate each milestone with explicit acceptance criteria and preserve checkpoints between phases.",
+      },
+      {
+        question: "When should I export the MVP?",
+        answer:
+          "Export only after each milestone passes local build and interaction checks with clean diffs.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-landing-page-builder-with-code-export",
+    title:
+      "AI Landing-Page Builder with Code Export: Build, Iterate, and Ship",
+    description:
+      "A hands-on guide to generating landing pages that remain editable and exportable as clean React apps with full handoff artifacts.",
+    h1: "AI landing-page builder with code export",
+    intro:
+      "Landing pages are often treated as disposable mockups; this workflow keeps them production-safe through file-level ownership and export evidence.",
+    summary:
+      "Generate sections separately, enforce responsive behavior, then export and test in a clean environment before publish.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "7 min read",
+    sections: [
+      {
+        title: "Treat sections as components from day one",
+        body: "Separate nav, hero, value proposition, proof block, and CTAs into distinct files so updates remain bounded and diff-friendly.",
+      },
+      {
+        title: "Define conversion events explicitly",
+        body: "Specify CTA tracking events, form success/error copy, and fallback states in the generation prompt.",
+      },
+      {
+        title: "Build a validation pass for each breakpoint",
+        body: "Use desktop, tablet, and mobile checks to avoid spacing collapse and hidden CTA accessibility issues.",
+      },
+      {
+        title: "Export with manifest and readiness checks",
+        body: "A landing app is only useful if the export installs and runs outside the generator.",
+      },
+      {
+        title: "Preserve for handoff",
+        body: "Keep component boundaries and comments so a human can quickly continue work after export.",
+      },
+    ],
+    ctaPrompt:
+      "Generate a conversion-focused landing page and export it as a clean, production-ready React project.",
+    cta: "Build a landing page with full export handoff",
+    realExample: {
+      title: "Real example: Conversion landing page with export checks",
+      prompt:
+        "Create a landing page for an AI product with sticky header, conversion-focused hero, pricing section, social proof cards, and a lead capture form. Include responsive breakpoints and explicit success/error states.",
+      files: [
+        "src/App.tsx",
+        "src/components/HeroBlock.tsx",
+        "src/components/PricingSection.tsx",
+        "src/components/ProofStrip.tsx",
+        "src/components/LeadCaptureForm.tsx",
+        "src/components/LaunchHeader.tsx",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/slotflow.webp",
+          alt: "Generated responsive landing sections and CTA",
+          caption: "Landing-first structure suitable for conversion testing.",
+        },
+        {
+          src: "/showcase/rivr-hero.png",
+          alt: "Desktop and mobile landing layout preview",
+          caption: "Export-ready landing page generated with responsive controls.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can I use this for campaign landing pages?",
+        answer:
+          "Yes, but keep form and conversion logic explicit so generated code is easy to audit.",
+      },
+      {
+        question: "When should I run accessibility checks?",
+        answer:
+          "Immediately after generation and before final export, especially on form labels and button contrast.",
+      },
+      {
+        question: "Is code export enough for handoff?",
+        answer:
+          "Export plus manifest and manifest-linked checkpoint metadata gives teams immediate review confidence.",
+      },
+      {
+        question: "How do I prevent full-page rewrites?",
+        answer:
+          "Generate section-by-section with explicit file boundaries and bounded prompts.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "build-react-dashboard-with-ai",
+    title: "Build React Dashboard with AI: A Practical, Export-First Workflow",
+    description:
+      "A practical guide to generating React dashboards with chart surfaces, role-based states, and stable export readiness.",
+    h1: "Build React dashboard with AI",
+    intro:
+      "A dashboard is a data-rich application, not a static page. It needs explicit state boundaries and interaction checks before you trust generated output.",
+    summary:
+      "Generate dashboard surface components in clear ownership layers, validate actions and data states, and finish with clean export and local build.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "9 min read",
+    sections: [
+      {
+        title: "Model the data contract first",
+        body: "Define chart data shape, filters, permission scopes, and refresh strategy before generating components.",
+      },
+      {
+        title: "Break dashboard surfaces into modules",
+        body: "Create separate modules for metrics, trends, lists, and settings so edits remain scoped and reviewable.",
+      },
+      {
+        title: "Handle empty and error states",
+        body: "Dashboard quality is visible in loading, empty, error, and stale state handling—not only initial render.",
+      },
+      {
+        title: "Add restore-friendly checkpoints",
+        body: "Checkpoints are vital for narrowing regressions when data and interactions evolve.",
+      },
+      {
+        title: "Export and attach manifest metadata",
+        body: "Handoff should include manifest, dependency map, and build evidence.",
+      },
+    ],
+    table: {
+      caption: "Dashboard generation checklist",
+      columns: ["Layer", "What to verify", "Pass criterion"],
+      rows: [
+        ["Data", "Type-safe data adapters", "No unresolved fetch assumptions"],
+        ["Interaction", "Filters and drilldowns", "Deterministic behavior"],
+        ["State", "Error/loading states", "Clear user feedback"],
+        ["Build", "Clean install", "Stable local run"],
+      ],
+    },
+    ctaPrompt:
+      "Generate a React dashboard with modular data views, scoped states, and export-ready checkpointing.",
+    cta: "Generate a production-ready dashboard",
+    realExample: {
+      title: "Real example: Analytics dashboard with role-aware modules",
+      prompt:
+        "Generate a React dashboard for an internal analytics use case. Include metric cards, line chart area, filter controls, table drilldowns, error/loading states, and role-based feature toggles.",
+      files: [
+        "src/App.tsx",
+        "src/components/MetricCards.tsx",
+        "src/components/DataFilters.tsx",
+        "src/components/TrendChart.tsx",
+        "src/components/DataTable.tsx",
+        "src/components/ErrorState.tsx",
+        "src/lib/mockData.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/axion-studio-hero.png",
+          alt: "Dashboard generation with metric and filter modules",
+          caption: "Modular dashboard components with clear section ownership.",
+        },
+        {
+          src: "/showcase/axion-studio-hero.png",
+          alt: "Dashboard data states and export ready run",
+          caption: "Export artifact preview for dashboard handoff.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can AI build accurate dashboards in one run?",
+        answer:
+          "It can draft quickly, but stability improves when sections are modular and state behavior is explicitly required.",
+      },
+      {
+        question: "How do I keep regressions manageable?",
+        answer: "Use scoped prompts and module-level checkpoints for each dashboard surface.",
+      },
+      {
+        question: "What is the key sign the dashboard is production-ready?",
+        answer:
+          "Stable states under empty, error, and loading conditions with clean local build.",
+      },
+      {
+        question: "Should charts be generated with mock data first?",
+        answer:
+          "Yes for layout and state behavior before connecting real data services.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "vibe-coding-cost-calculator",
+    title:
+      "Vibe Coding Cost Calculator: Forecast AI App Builder Spend Before You Start",
+    description:
+      "A practical calculator-backed workflow to estimate cost per accepted output for prompt-heavy AI coding and avoid surprise charges.",
+    h1: "Vibe coding cost calculator",
+    intro:
+      "The best cost estimator combines complexity, iterations, context growth, and rescue passes into one accepted-output budget.",
+    summary:
+      "Use an explicit calculator to model first-pass, edits, failures, and exports before running expensive generation sequences.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "6 min read",
+    sections: [
+      {
+        title: "Model complexity as the first input",
+        body: "Define target model and expected generation depth. Small prompts still require context processing and dependency resolution.",
+      },
+      {
+        title: "Track expected iteration counts",
+        body: "Assume at least two refinement rounds and one recovery action for non-trivial pages. This reduces optimistic underestimation.",
+      },
+      {
+        title: "Separate failed run carry cost",
+        body: "Assign probability for failed attempts and reserve assumptions for each project category.",
+      },
+      {
+        title: "Add export and validation overhead",
+        body: "Include clean-room install, lint/type checks, and manual interaction checks as part of total effort cost.",
+      },
+      {
+        title: "Set budget thresholds before generation",
+        body: "Stop early if the estimated result exceeds your acceptable per-feature cost without quality offsets.",
+      },
+    ],
+    table: {
+      caption: "Cost model inputs",
+      columns: ["Input", "Purpose", "Practical range"],
+      rows: [
+        ["First-pass estimate", "Base cost signal", "1-3 accepted generations"],
+        ["Iteration buffer", "Refinement allowance", "20-40% of base"],
+        ["Failure buffer", "Retry and repair drift", "10-30% of base"],
+        ["Export and validation", "Review and handoff", "1-2 hours of engineering"],
+      ],
+    },
+    ctaPrompt:
+      "Create a cost calculator for prompt-based AI builds and compare expected spend across builders.",
+    cta: "Build your first AI cost calculator",
+    realExample: {
+      title: "Real example: Builder cost calculator in React",
+      prompt:
+        "Generate a cost calculator for AI coding sessions with sliders for complexity, iterations, fail-rate, and export validation hours. The result should return accepted-output cost and scenario recommendations.",
+      files: [
+        "src/App.tsx",
+        "src/components/ScenarioCalculator.tsx",
+        "src/components/RateInputs.tsx",
+        "src/components/CostBandDisplay.tsx",
+        "src/hooks/useCalculationEngine.ts",
+        "src/lib/costModels.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/orbital-salvage.webp",
+          alt: "Interactive cost inputs and output tiers",
+          caption: "Budget estimation dashboard for accepted outputs.",
+        },
+        {
+          src: "/showcase/slotflow.webp",
+          alt: "Scenario comparison between builders",
+          caption: "Output includes recommendations and risk bands.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Is this calculator accurate for all tools?",
+        answer:
+          "It is a planning tool, not a billing engine. Use it with observed outcomes from each tool.",
+      },
+      {
+        question: "Should failure probability be fixed?",
+        answer:
+          "No. Update it per project category and historical observed pass rates.",
+      },
+      {
+        question: "Can I use this model for team budgeting?",
+        answer:
+          "Yes, especially when combined with weekly outcome metrics and accepted-output tracking.",
+      },
+      {
+        question: "What should I measure with this model?",
+        answer:
+          "Accepted outcomes, average retry count, reserved-usage release timing, and validation time to deploy.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/why-ai-app-builders-burn-credits",
+        label: "Compare charge behavior",
+        description: "Review root causes of unpredictable builder spend.",
+      },
+      {
+        href: "/blog/ai-app-builder-does-not-charge-failed-generations",
+        label: "Set fail-state policy",
+        description: "Verify no-charge behavior before committing budget.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-crm-builder",
+    title: "AI CRM Builder: Build a Client Management App with AI",
+    description:
+      "A practical AI workflow for generating a CRM UI with contacts, pipelines, filters, notes, permissions, and audit-ready exports.",
+    h1: "AI CRM builder",
+    intro:
+      "CRM apps demand reliable data structure and predictable behavior, not just a polished list view. Build in modules, recovery safety, and export checkpoints.",
+    summary:
+      "Use structured data models and scoped prompts to generate maintainable CRM surfaces that survive edits and exports.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Design record ownership upfront",
+        body: "Define contact entities, deal stages, assignment flow, and activity feed before generation.",
+      },
+      {
+        title: "Generate module surfaces, not monoliths",
+        body: "Split contacts, pipeline, activity, and settings into independent components for controlled edits.",
+      },
+      {
+        title: "Add guardrails for sensitive state",
+        body: "Include empty/error states, confirmation paths, and role-aware actions so team operations stay safe.",
+      },
+      {
+        title: "Export with full project handoff",
+        body: "Use clean export with manifest and build metadata to preserve CRM logic outside the builder.",
+      },
+    ],
+    ctaPrompt:
+      "Generate an AI CRM with scoped data modules, guarded CRUD actions, and export-ready checkpoints.",
+    cta: "Build a CRM with predictable edits",
+    realExample: {
+      title: "Real example: AI-generated CRM client workspace",
+      prompt:
+        "Generate a CRM web app with contact list, pipeline board, activity timeline, notes panel, and role-based actions. Include local filtering, search, and edit history markers.",
+      files: [
+        "src/App.tsx",
+        "src/components/ContactList.tsx",
+        "src/components/PipelineBoard.tsx",
+        "src/components/ActivityTimeline.tsx",
+        "src/components/RoleActions.tsx",
+        "src/hooks/useCrmData.ts",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/portfolio-os.webp",
+          alt: "CRM components and timeline panel",
+          caption: "Generated CRM layout with modular data surfaces.",
+        },
+        {
+          src: "/showcase/terraelix-hero.png",
+          alt: "CRM pipeline and notes modules",
+          caption: "Scaffolded client management app generated with checkpoints.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can AI-generated CRM handle complex workflows?",
+        answer:
+          "Yes for first version, but keep scope bounded and state boundaries explicit to avoid rewrites.",
+      },
+      {
+        question: "How should search and filters be modeled?",
+        answer:
+          "They should be component-owned with clear typing and stable props to avoid drift during updates.",
+      },
+      {
+        question: "What is the biggest failure point?",
+        answer:
+          "Monolithic generation that rewrites unrelated modules during one small edit.",
+      },
+      {
+        question: "Should I use this for enterprise CRM immediately?",
+        answer:
+          "Use for prototype and early user loops. Add hardening after handoff for production.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/ai-app-builder-with-version-recovery",
+        label: "Build with recoverable milestones",
+        description: "Keep CRM modules safe during iterative edits.",
+      },
+      {
+        href: "/blog/how-to-evaluate-ai-generated-react-code",
+        label: "Evaluate the generated React code",
+        description: "Validate CRM output before shipping.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-client-portal-builder",
+    title: "AI Client Portal Builder: Generate Secure Client Access Surfaces",
+    description:
+      "A practical template for generating client portal pages with account views, project updates, uploads, and secure handoff.",
+    h1: "AI client portal builder",
+    intro:
+      "Client portals need clear navigation, file boundaries, and predictable interaction flow before styling polish.",
+    summary:
+      "Generate the portal in layers and tie each release to checkpoints and export artifacts.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Start with role and access states",
+        body: "Define what logged-in clients can see and edit before visual generation begins.",
+      },
+      {
+        title: "Build tabs and status modules separately",
+        body: "Projects, invoices, files, messages, and settings should live in separate files to minimize collateral edits.",
+      },
+      {
+        title: "Protect critical interactions",
+        body: "Uploads, approvals, and status updates should include confirmations and error handling.",
+      },
+      {
+        title: "Use checkpointed exports",
+        body: "Tie each client-facing release to a checkpoint and manifest so support issues can be reproduced.",
+      },
+    ],
+    ctaPrompt:
+      "Generate a client portal UI with role-aware sections and audit-friendly export checkpoints.",
+    cta: "Generate a secure client portal app",
+    realExample: {
+      title: "Real example: Client portal dashboard with account modules",
+      prompt:
+        "Generate a client portal app with overview cards, project progress tracker, invoice status list, message thread panel, and support ticket form. Include role-based access controls for client and admin views.",
+      files: [
+        "src/App.tsx",
+        "src/components/PortalLayout.tsx",
+        "src/components/ProjectStatusCard.tsx",
+        "src/components/InvoiceList.tsx",
+        "src/components/MessageThread.tsx",
+        "src/components/SecurityBanner.tsx",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/cozypaws-hero.png",
+          alt: "Client portal overview and project cards",
+          caption: "Generated portal with role-based card surfaces.",
+        },
+        {
+          src: "/showcase/drew-hero.png",
+          alt: "Message and invoice modules from generated app",
+          caption: "Secure-facing modules with clear status and actions.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can AI generate a production-safe portal?",
+        answer:
+          "It can generate the interface quickly, but security boundaries should be validated in a real backend before release.",
+      },
+      {
+        question: "How to avoid accidental role leakage?",
+        answer:
+          "Keep role checks in explicit component props and state paths with clear fallback behavior.",
+      },
+      {
+        question: "What is minimum verification for this use case?",
+        answer:
+          "Navigation isolation, upload state, error handling, and clean local build with manifest evidence.",
+      },
+      {
+        question: "Can portals be updated safely after handoff?",
+        answer:
+          "Yes with checkpointed architecture and scoped modules for small edits.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-booking-app-builder",
+    title: "AI Booking-App Builder: Fast Appointments and Availability Surfaces",
+    description:
+      "Generate booking apps with calendar views, availability rules, confirmation states, and exportable React code.",
+    h1: "AI booking-app builder",
+    intro:
+      "Booking apps are state-sensitive. Availability conflicts, timezone handling, and confirmation copy need explicit prompt contracts.",
+    summary:
+      "Build date, time, timezone, and confirmation flows first, then generate modules in controlled passes for clean maintenance.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Define booking rules before UI",
+        body: "Encode lead time, time zone, blackout windows, cancellation policy, and booking confirmation behavior before generating components.",
+      },
+      {
+        title: "Generate calendar and form as separate modules",
+        body: "Keep the calendar grid and booking form in separate files to prevent broad rewrites.",
+      },
+      {
+        title: "Add deterministic validation",
+        body: "Booking should reject invalid overlaps and invalid durations consistently.",
+      },
+      {
+        title: "Export with test data and scenario checks",
+        body: "Verify booking success and failure flows in a clean local environment before sharing.",
+      },
+    ],
+    ctaPrompt:
+      "Generate a booking app with timezone-safe slots, availability checks, and explicit confirmation states.",
+    cta: "Build a booking app with recoverable flow",
+    realExample: {
+      title: "Real example: Booking app for service appointments",
+      prompt:
+        "Generate a booking app for service appointments with service picker, timezone-aware calendar grid, slot availability, booking confirmation, and cancellation confirmation panel. Include mock provider data and failure states.",
+      files: [
+        "src/App.tsx",
+        "src/components/ServicePicker.tsx",
+        "src/components/CalendarGrid.tsx",
+        "src/components/BookingForm.tsx",
+        "src/components/SlotWarningBanner.tsx",
+        "src/components/ConfirmPanel.tsx",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/slotflow.webp",
+          alt: "Calendar grid and availability module",
+          caption: "AI-generated booking surface with timezone and slot controls.",
+        },
+        {
+          src: "/showcase/axion-studio-hero.png",
+          alt: "Booking confirmation and failure state screens",
+          caption: "Generated flow includes deterministic success and error handling.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "How important is timezone handling?",
+        answer:
+          "Critical. It affects the trust model. Explicit UTC/locale handling should be defined in the brief.",
+      },
+      {
+        question: "Should I generate booking logic in one run?",
+        answer:
+          "Generate core UI first and add rule validation in a second bounded pass.",
+      },
+      {
+        question: "How do I handle race conditions?",
+        answer:
+          "Use optimistic updates with clear conflict messaging and idempotent confirmation actions.",
+      },
+      {
+        question: "Can this replace calendar APIs?",
+        answer:
+          "It replaces manual front-end generation only. Backend integrations still need proper verification.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-dashboard-builder",
+    title: "AI Dashboard Builder: Generate Operational and Product Dashboards",
+    description:
+      "A template for generating React dashboards with role-specific widgets, filters, and consistent state checks.",
+    h1: "AI dashboard builder",
+    intro:
+      "A dashboard is not one view; it is several operational surfaces with strict state expectations and editability requirements.",
+    summary:
+      "Generate dashboards in modules, validate interactions, and preserve checkpointed export behavior for team handoff.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Define dashboard semantics early",
+        body: "List which widgets are critical, which are secondary, and who can edit each module before generation.",
+      },
+      {
+        title: "Use typed widget contracts",
+        body: "Each widget should accept clear data contracts to reduce accidental drift between generation passes.",
+      },
+      {
+        title: "Preserve layout and interaction boundaries",
+        body: "Grid systems, breakpoints, and collapse behavior should be deterministic for predictable resizing.",
+      },
+      {
+        title: "Track diffs by widget",
+        body: "Widget-level file boundaries allow safe edits and reduce scope creep in long-lived dashboards.",
+      },
+    ],
+    ctaPrompt:
+      "Generate a modular React dashboard with role-aware widgets and export-safe checkpoints.",
+    cta: "Generate a production-quality dashboard",
+    realExample: {
+      title: "Real example: Operations dashboard with modular widgets",
+      prompt:
+        "Generate a React operations dashboard with reusable widgets for metrics, charts, recent activity, and alert controls. Include role-based rendering and empty/error fallback states.",
+      files: [
+        "src/App.tsx",
+        "src/components/DashboardLayout.tsx",
+        "src/components/MetricsWidget.tsx",
+        "src/components/ChartWidget.tsx",
+        "src/components/AlertsWidget.tsx",
+        "src/components/RoleGate.tsx",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/portfolio-os.webp",
+          alt: "Modular operations dashboard output",
+          caption: "Modular widget structure for controlled iteration.",
+        },
+        {
+          src: "/showcase/mindloop-hero.png",
+          alt: "Dashboard roles and alerts module",
+          caption: "Role-aware dashboard sections rendered from generated code.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can dashboards be generated without backend?",
+        answer:
+          "A front-end scaffold is effective for planning, but production should validate real API contracts before launch.",
+      },
+      {
+        question: "How often should widget-level checks run?",
+        answer:
+          "After each change to data schema, filters, or role rules.",
+      },
+      {
+        question: "What makes dashboard output trustworthy?",
+        answer:
+          "Stable state contracts, explicit fallback UI, and clean export with checkpoints.",
+      },
+      {
+        question: "Should I export early in the flow?",
+        answer:
+          "Export after each milestone to preserve a recoverable history.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-portfolio-builder",
+    title: "AI Portfolio Builder: Turn Work into a Branded React Portfolio",
+    description:
+      "A practical template for generating portfolio websites with project sections, contact capture, and responsive grids.",
+    h1: "AI portfolio builder",
+    intro:
+      "Portfolio sites need consistent narrative and layout rhythm more than heavy logic. Use AI to generate structure with clear sections and export discipline.",
+    summary:
+      "Create a branded React portfolio in explicit sections and verify responsiveness across key viewports.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "7 min read",
+    sections: [
+      {
+        title: "Define narrative sections before generation",
+        body: "Specify hero, about, work, capabilities, featured projects, and contact CTA as fixed sections.",
+      },
+      {
+        title: "Generate section components separately",
+        body: "Use separate files for each section so project updates do not rewrite the whole portfolio.",
+      },
+      {
+        title: "Optimize responsive media handling",
+        body: "Image sizes, aspect ratios, and gallery behavior should be explicitly handled by viewport.",
+      },
+      {
+        title: "Export with clean metadata",
+        body: "Include project structure, dependency file, and deployment notes for handoff.",
+      },
+    ],
+    ctaPrompt:
+      "Generate a branded React portfolio with section modules and responsive media handling.",
+    cta: "Generate a portfolio website quickly",
+    realExample: {
+      title: "Real example: Personal portfolio with project showcase",
+      prompt:
+        "Generate a portfolio site with hero intro, about section, featured projects grid, skill badges, resume modal, and contact form. Keep all modules reusable and responsive.",
+      files: [
+        "src/App.tsx",
+        "src/components/Hero.tsx",
+        "src/components/About.tsx",
+        "src/components/ProjectGrid.tsx",
+        "src/components/SkillsStrip.tsx",
+        "src/components/ContactForm.tsx",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/portfolio-os.webp",
+          alt: "Generated portfolio homepage",
+          caption: "Portfolio structure with reusable module boundaries.",
+        },
+        {
+          src: "/showcase/portfolio-os.png",
+          alt: "Portfolio project card grid and contact section",
+          caption: "Export-ready portfolio components with responsive behavior.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Should I ask for a complete portfolio in one prompt?",
+        answer:
+          "Start with section scaffolding first, then add interaction polish in follow-up prompts to reduce rewrite risk.",
+      },
+      {
+        question: "How do I keep project content editable?",
+        answer:
+          "Keep data arrays in a separate file and avoid hardcoded text in multiple components.",
+      },
+      {
+        question: "Can this be deployed as-is?",
+        answer:
+          "Yes, after local build checks and accessibility review of contact and navigation surfaces.",
+      },
+      {
+        question: "What indicates a production-ready portfolio build?",
+        answer:
+          "Clean install, responsive checks, no broken links, and export documentation.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-marketplace-builder",
+    title: "AI Marketplace Builder: Generate Product Listings with Scalable UI",
+    description:
+      "A practical guide to generating marketplace-style pages with product cards, search, cart-like flows, and exportable React architecture.",
+    h1: "AI marketplace builder",
+    intro:
+      "Marketplace apps need repeatable item cards, filters, sorting, and stateful detail flows. Define data structure and interaction boundaries first.",
+    summary:
+      "Build marketplace surfaces in reusable modules and validate search/filter behavior before handoff.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Model product data before UI",
+        body: "Define product schema, listing metadata, filter options, sort keys, and availability states before generation.",
+      },
+      {
+        title: "Separate search, cards, and details",
+        body: "Generate product catalog and detail pages as distinct modules to prevent broad rewrites.",
+      },
+      {
+        title: "Add deterministic filter behavior",
+        body: "Ensure sorting and filtering preserve selected states and do not trigger full list remounts.",
+      },
+      {
+        title: "Export cleanly and test core paths",
+        body: "Validate search, filter, detail view, and cart-like interactions from exported code.",
+      },
+    ],
+    ctaPrompt:
+      "Generate a scalable marketplace experience with reusable product cards and filter logic.",
+    cta: "Build a marketplace starter in React",
+    realExample: {
+      title: "Real example: Marketplace catalog with filters and details",
+      prompt:
+        "Generate a marketplace home with product cards, search and category filters, sort controls, item detail drawer, and responsive grid behavior.",
+      files: [
+        "src/App.tsx",
+        "src/components/SearchBar.tsx",
+        "src/components/ProductCard.tsx",
+        "src/components/FilterPanel.tsx",
+        "src/components/ProductDetail.tsx",
+        "src/components/SortToolbar.tsx",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/slotflow.webp",
+          alt: "Generated marketplace catalog and filters",
+          caption: "Reusable product grid and filter controls.",
+        },
+        {
+          src: "/showcase/rivr-hero.png",
+          alt: "Product detail and sort interactions",
+          caption: "Responsive marketplace surfaces generated with scoped modules.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "Can a generated marketplace handle state drift?",
+        answer:
+          "It can, if modules are bounded and filter logic is defined with explicit state contracts.",
+      },
+      {
+        question: "How do I avoid giant product components?",
+        answer:
+          "Separate search, card, filters, and detail flows into dedicated files.",
+      },
+      {
+        question: "What is essential for conversion?",
+        answer:
+          "Fast filter feedback, clear availability indicators, and stable detail context.",
+      },
+      {
+        question: "Can this replace backend integration?",
+        answer:
+          "No. Front-end generation is for scaffolding; connect production data and secure actions separately.",
+      },
+    ],
+  },
+  {
+    kind: "guide",
+    slug: "ai-internal-tool-builder",
+    title: "AI Internal-Tool Builder: Build Internal Workflows with AI",
+    description:
+      "Generate internal tool interfaces with task workflows, review states, admin surfaces, and export-ready React structure.",
+    h1: "AI internal-tool builder",
+    intro:
+      "Internal tools need clarity and consistency: task queues, state transitions, role views, and reliable recovery from mistakes.",
+    summary:
+      "Create internal surfaces in modules with strong state modeling and export checkpoints for team delivery.",
+    publishedAt: "2026-07-20",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Define the workflow graph first",
+        body: "Identify states, actors, transitions, and handoff points before asking AI to generate components.",
+      },
+      {
+        title: "Separate controls from data views",
+        body: "Create dedicated modules for actions, lists, and detail panels to avoid accidental coupling.",
+      },
+      {
+        title: "Add audit and recovery hooks",
+        body: "Build in change notes, edit history markers, and restore actions to support internal governance.",
+      },
+      {
+        title: "Export with manifests and docs",
+        body: "Include manifest, quality checks, and run guidance before handing to internal engineering.",
+      },
+    ],
+    ctaPrompt:
+      "Generate an internal tool in React with workflow states, role-aware actions, and checkpoint-linked handoff.",
+    cta: "Generate an internal tool prototype",
+    realExample: {
+      title: "Real example: Internal workflow management tool",
+      prompt:
+        "Generate an internal operations tool with queue list, assignment panel, detail review drawer, audit log, and recovery controls. Make all modules independently editable.",
+      files: [
+        "src/App.tsx",
+        "src/components/WorkQueue.tsx",
+        "src/components/AssignmentPanel.tsx",
+        "src/components/DetailDrawer.tsx",
+        "src/components/AuditLog.tsx",
+        "src/components/RecoveryPanel.tsx",
+      ],
+      screenshots: [
+        {
+          src: "/showcase/axion-studio-hero.png",
+          alt: "Internal queue and assignment tool layout",
+          caption: "Modular internal tool built with scoped edit boundaries.",
+        },
+        {
+          src: "/showcase/velorah-hero.png",
+          alt: "Audit log and recovery controls",
+          caption: "Recovery-aware UI with checkpoint-oriented workflow.",
+        },
+      ],
+    },
+    faqs: [
+      {
+        question: "What is a good starting scope for internal tools?",
+        answer:
+          "Start with one workflow queue, one action panel, and one detail view. Expand after acceptance.",
+      },
+      {
+        question: "How do I prevent accidental permission leaks?",
+        answer:
+          "Keep role checks in explicit panel-level components and validate states for each route.",
+      },
+      {
+        question: "Can internal teams edit the generated output?",
+        answer:
+          "Yes if modules are separated and checkpoints preserve history around each edit cycle.",
+      },
+      {
+        question: "What do I validate before rollout?",
+        answer:
+          "State transitions, diff scope, restore behavior, and local build of exported project.",
+      },
+    ],
   },
 ];
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Check,
@@ -10,6 +11,7 @@ import {
   ExternalLink,
   FileCheck2,
   Folder,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +51,7 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
     ...(page.workflow
       ? [{ label: "Evaluation workflow", id: "workflow" }]
       : []),
+    ...(page.realExample ? [{ label: "Real generated example", id: "real-example" }] : []),
     ...page.sections.map((section) => ({
       label: section.title,
       id: sectionId(section.title),
@@ -60,7 +63,9 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
   const hasWorkflowSteps = Boolean(page.workflow && page.workflow.length > 0);
   const workflowStart = page.workflow?.[0];
   const workflowEnd = page.workflow?.[page.workflow.length - 1];
-  const ctaPrompt = `Use this ${page.kind} strategy in Squid: ${page.h1}.`;
+  const ctaPrompt =
+    page.ctaPrompt ??
+    `Use this ${page.kind} strategy in Squid: ${page.h1}.`;
   const ctaDefaultPrompt = `Run ${page.h1} in Squid with explicit review and verification checkpoints.`;
   const ctaHref =
     page.kind === "comparison"
@@ -338,6 +343,77 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                     <pre className="overflow-x-auto p-5 text-sm leading-7">
                       <code>{page.codeExample.code}</code>
                     </pre>
+                  </div>
+                </section>
+              )}
+
+              {page.realExample && (
+                <section id="real-example" className="scroll-mt-28 py-16">
+                  <SectionHeading
+                    label="Real generated example"
+                    title={page.realExample.title}
+                    description="Use this concrete example as a starting point, not a final template."
+                  />
+                  <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] xl:items-start">
+                    <div className="rounded-xl border border-border p-5 sm:p-6">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <ImageIcon
+                          className="size-4 text-primary"
+                          aria-hidden="true"
+                        />
+                        Prompt used
+                      </p>
+                      <pre className="mt-4 overflow-x-auto rounded-lg border border-border/70 bg-slate-950/85 px-4 py-4 text-sm leading-7 text-slate-100">
+                        {page.realExample.prompt}
+                      </pre>
+                      <p className="mt-6 flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <Folder
+                          className="size-4 text-primary"
+                          aria-hidden="true"
+                        />
+                        Generated file inventory
+                      </p>
+                      <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
+                        {page.realExample.files.map((file) => (
+                          <li key={file} className="flex gap-2.5">
+                            <span className="font-mono text-primary">&bull;</span>
+                            <span className="font-mono">{file}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button asChild size="sm" className="mt-6">
+                        <Link
+                          href={`/?plan=1&prompt=${encodeURIComponent(
+                            page.realExample.prompt,
+                          )}&source=${encodeURIComponent(path)}`}
+                        >
+                          Remix this example in Squid
+                          <ArrowRight className="size-4" aria-hidden="true" />
+                        </Link>
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {page.realExample.screenshots.map((screenshot) => (
+                        <figure
+                          key={`${screenshot.src}-${screenshot.alt}`}
+                          className="overflow-hidden rounded-xl border border-border bg-muted"
+                        >
+                          <Image
+                            src={screenshot.src}
+                            alt={screenshot.alt}
+                            width={1280}
+                            height={720}
+                            className="h-auto w-full object-cover"
+                          />
+                          {screenshot.caption && (
+                            <figcaption className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+                              {screenshot.caption}
+                            </figcaption>
+                          )}
+                        </figure>
+                      ))}
+                    </div>
                   </div>
                 </section>
               )}
