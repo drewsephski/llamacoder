@@ -64,7 +64,12 @@ export const developerCodeGenPrompt = dedent`
   - Shadcn imports under "@/components/ui/*" and "@/lib/utils" are already installed and should not be redefined.
   - If you call cn(...), import it with import { cn } from "@/lib/utils".
   - For Framer Motion, import lowercase motion: import { motion } from "framer-motion".
-  - For react-confetti, use module-safe imports: `import * as ReactConfettiModule from "react-confetti";` plus `import type { ComponentType } from "react";`, then `const Confetti = (ReactConfettiModule as { default?: ComponentType }).default ?? (ReactConfettiModule as ComponentType);`.
+  - For react-confetti, use module-safe imports:
+    import * as ReactConfettiModule from "react-confetti";
+    import type { ComponentType } from "react";
+    const Confetti =
+      (ReactConfettiModule as { default?: ComponentType }).default ??
+      (ReactConfettiModule as ComponentType);
   - Use Lucide React for icons (named exports only). Never import \`LucideIcon\` or \`ArrowLeft\`. Use Calendar as CalendarIcon, not CalendarIcon directly. Never import Heroicons-style names from Lucide.
   ${generatedAppCapabilityContract}
   - Build the actual product surface first — real screens, real interactions, real data flow. Avoid placeholder-only UI.
@@ -75,6 +80,8 @@ export const developerCodeGenPrompt = dedent`
   - Lock a small set of semantic Tailwind palette roles and reuse them. Do not improvise unrelated one-off colors midway through the render.
   - Treat every surface and its foreground as an inseparable, explicit pair. A filled button, badge, card, panel, input, tooltip, or overlay must set both its background/border and its text/icon color; never rely on an inherited foreground over a new surface.
   - Contrast may never fail: normal text and helper/placeholder text must meet at least 4.5:1, while large text, icons, focus rings, and component boundaries must meet at least 3:1. Aim for 7:1 body text where the palette allows it.
+  - Emit a strict design-system manifest in App.tsx before exported content. The base colorRoles must include at least canvas, surface, mutedSurface, inverse, primary, secondary, accent, success, and destructive, plus contrastTargets and required surfaceInteractions.
+  - Add conditional manifest roles when those surfaces render: overlay (dialogs/drawers/menus/overlays), input (form controls), table (tabular views), chart (Recharts visuals), and toast (notifications).
   - Pair semantic Tailwind roles directly (for example, bg-primary with text-primary-foreground, bg-card with text-card-foreground, and bg-muted with text-muted-foreground). When using standard palette utilities, choose and apply a deliberate text-* color for that exact bg-* shade.
   - Audit contrast across light and dark themes plus default, hover, active, focus-visible, disabled, loading, selected, and error states. Opacity, gradients, images, and translucent overlays must be evaluated against the final composited background; never produce dark-on-dark, light-on-light, or washed-out gray-on-color text.
   ${tailwindColorFidelityContract}

@@ -121,6 +121,46 @@ export function getMainCodingPrompt(options?: {
      - Contrast may never fail. Normal text, helper text, and placeholder text require at least 4.5:1 contrast; large text, icons, visible focus rings, and component boundaries require at least 3:1. Aim for 7:1 body text where practical.
      - Do not drive hover/active state transitions with filter-style utilities such as \`hover:brightness-*\`, \`hover:contrast-*\`, \`hover:saturate-*\`, \`hover:sepia-*\`, \`hover:grayscale-*\`, \`hover:invert-*\`, \`hover:hue-rotate-*\`, or \`hover:drop-shadow-*\`. Use explicit \`hover:bg-*\` and \`hover:text-*\` pairs so contrast can be audited.
      - Verify the final composited colors in light and dark themes and in default, hover, active, focus-visible, selected, disabled, loading, success, and error states. Opacity, gradients, background images, and translucent overlays do not excuse low contrast. Never emit dark-on-dark, light-on-light, gray-on-color, or an unreadable disabled state.
+     - Emit a strict design-system manifest in App.tsx before the exported component:
+
+       const __designSystemManifest = {
+         "colorRoles": {
+           "canvas": { "background": "bg-neutral-50", "foreground": "text-neutral-950" },
+           "surface": { "background": "bg-white", "foreground": "text-neutral-950" },
+           "mutedSurface": { "background": "bg-neutral-100", "foreground": "text-neutral-700" },
+           "inverse": { "background": "bg-neutral-950", "foreground": "text-neutral-50" },
+           "primary": { "background": "bg-neutral-900", "foreground": "text-neutral-50", "border": "border-neutral-700" },
+           "secondary": { "background": "bg-neutral-100", "foreground": "text-neutral-900" },
+           "accent": { "background": "bg-neutral-200", "foreground": "text-neutral-900" },
+           "success": { "background": "bg-emerald-100", "foreground": "text-emerald-900" },
+           "destructive": { "background": "bg-rose-100", "foreground": "text-rose-900" },
+           "overlay": { "background": "bg-white", "foreground": "text-neutral-950" },
+           "input": { "background": "bg-white", "foreground": "text-neutral-950", "border": "border-neutral-200" },
+           "table": { "background": "bg-white", "foreground": "text-neutral-950", "border": "border-neutral-200" },
+           "toast": { "background": "bg-neutral-950", "foreground": "text-neutral-50" },
+           "chart": { "background": "bg-white", "foreground": "text-neutral-950" }
+         },
+         "contrastTargets": {
+           "bodyText": 4.5,
+           "largeText": 3,
+           "interactive": 4.5,
+           "focusRing": 3,
+           "disabled": 3
+         },
+         "surfaceInteractions": {
+           "hover": "hover:bg-neutral-100 hover:text-neutral-900",
+           "active": "active:bg-neutral-200 active:text-neutral-950",
+           "focus": "focus-visible:ring-neutral-400/60 focus-visible:ring-offset-2",
+           "selected": "bg-neutral-100 text-neutral-900",
+           "loading": "cursor-wait opacity-70",
+           "disabled": "text-neutral-400 cursor-not-allowed",
+           "success": "bg-emerald-50 text-emerald-950",
+           "error": "bg-rose-50 text-rose-950"
+         }
+       } as const;
+
+  - Include at least nine required base entries in \`colorRoles\` (\`canvas\`, \`surface\`, \`mutedSurface\`, \`inverse\`, \`primary\`, \`secondary\`, \`accent\`, \`success\`, \`destructive\`), include a \`contrastTargets\` object, and reuse these role assignments consistently across every rendered surface.
+  - If the app renders overlays (Dialog/Drawer/Sheet/Popover/Tooltip/Menu), input surfaces, tables, charts, or toasts, add corresponding roles (\`overlay\`, \`input\`, \`table\`, \`chart\`, \`toast\`) so portalled or data surfaces cannot inherit unreadable colors.
 
   ${tailwindColorFidelityContract}
 
@@ -202,8 +242,6 @@ export function getMainCodingPrompt(options?: {
   - **Particle effects** (\`@tsparticles/react\` + \`@tsparticles/slim\`): Use for celebration moments, ambient backgrounds, or data visualization. Initialize with \`init\` from \`@tsparticles/react\` and load slim bundle.
   - **Parallax** (\`react-parallax\`): Use scroll-driven depth for storytelling pages, long-form content, or immersive product showcases.
   - **Confetti** (\`react-confetti\`): Use for success celebrations, achievement unlocks, or milestone moments. Render only after import interop:
-
-    ```tsx
     import * as ReactConfettiModule from "react-confetti";
     import type { ComponentType } from "react";
 
@@ -212,7 +250,6 @@ export function getMainCodingPrompt(options?: {
       (ReactConfettiModule as ComponentType);
 
     <Confetti width={width} height={height} run={isComplete} onComplete={handleDone} />
-    ```
   - **Smooth scrolling** (\`lenis\`): Use for buttery-smooth scroll experiences on editorial, portfolio, or showcase sites.
 
   Do not force these into every app. A utilitarian dashboard does not need a shader background. But a creative tool, portfolio, gaming app, music player, luxury brand, or interactive showcase should feel alive — reach for these libraries instead of flat color blocks.
@@ -332,6 +369,7 @@ export function getMainCodingPrompt(options?: {
   17. Did you trace every visible control to a real handler or valid destination and exercise the primary, cancel, invalid, success, and error paths with visible state changes?
   18. If a theme control exists, does it persist preference, update the root HTML dark class and color-scheme, expose its current state accessibly, and visibly theme every surface including dialogs and toasts?
   19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?
+  20. Is __designSystemManifest present and valid in App.tsx, with required semantic surface roles + contrastTargets, required interaction states, and matching background/foreground usage across all rendered surfaces?
   ${designEmphasis ? `\n${designEmphasis}\n` : ""}
   `;
 
