@@ -120,6 +120,11 @@ export function getCompressedCodingPrompt(): string {
 
   Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Pick deliberate nav and footer archetypes.
   If the user does not provide a brand palette, pick one Hallmark-compatible theme family (editorial, modern-minimal, atmospheric, playful) and keep one global luminosity model.
+  - Modern-minimal (technical/dev): prefer Cobalt semantics (single signal hue, bordered controls, code/API anchor, compact corners, low ornamentation).
+  - Atmospheric (AI-creative): prefer Lumen semantics (dark-first canvas, one engineered apparatus motif, low-chroma rhythm, one controlled reveal).
+  - Playful (friendly): prefer Hum semantics (rounded sans, muted multi-accent, one reacting mark/moment, gentle hover lift).
+  - Editorial loud/culture briefs: allow Carnival semantics only when domain tone supports loud poster-like language (press, independent music, zine culture).
+  For brutalist tone, keep the register raw: heavy edges, minimal ornament, one strong accent, sharp corners over pill-heavy geometry, and no bounce-based motion defaults.
   Archetype dispatch:
   - Many equally important features/entry points (6+ tiles/modules): choose a Bento Grid layout.
   - Single thesis or statement-first product story: choose Marquee Hero.
@@ -130,6 +135,7 @@ export function getCompressedCodingPrompt(): string {
   Spend boldness in one signature element. Keep the rest disciplined.
 
   - Default to solid surfaces. Use gradients only when the subject calls for it.
+  - Brutalist guardrail: one intentional motion pattern for engagement and one for feedback; no bounce/elastic easing; avoid glow-heavy defaults and unnecessary rounded containers.
   - Headings are roman, never italicized. Numbered markers only for real sequences.
   - No fabricated proof. No fake browser/phone/terminal chrome.
   - Verify the information hierarchy at 320, 375, 414, and 768px before finalizing output.

@@ -126,6 +126,22 @@ export const premiumArchetypeAndThemeContract = dedent`
     - Technical / data-heavy / workflows -> utilitarian minimal, high-legibility tones with restrained ornamentation.
     - Editorial / content-led -> rhythm-first hierarchy and low-motion polish.
     - If the user explicitly states a tone, lock it. If silent, infer one stable tone from subject and audience.
+  - Hallmark style profile selection:
+    - Editorial profile (default for content / portfolio / manifesto / craft / storytelling briefs): asymmetric composition, strong typographic hierarchy, hairline structure, roman headings, restrained motion, and minimal rounded geometry. Prefer one accent and visible white/cream paper contrast. Avoid decorative centered hero + 3-card pattern defaults unless the brief proves they fit.
+    - Modern-minimal profile (technical briefs, API/tools/docs): cool or warm monochrome register, low ornament, high legibility, one signal accent. Prefer a working demonstration anchor (code/API/terminal/command surface), bordered controls, and controlled density. Avoid glassmorphism, decorative shadows, and palette floods.
+    - Atmospheric profile (AI/creative/voice/music tools): dark-to-low-key canvas as the default, one warm accent family, built instrument/focus motif, and strict visual economy. Prefer lower motion, measured reveal, and one focal canvas treatment. Keep paper light only in defined profile drops.
+    - Playful profile (friendly/onboarding/consumer-first with low-stakes tone): rounded sans language, low-chroma accents, friendly but disciplined motion, and a soft tactile rhythm. Avoid saturated generic consumer gradients and decorative emoji-as-icon language.
+    - If the user specifies or the brief clearly implies one of these, lock that profile before styling and keep the screen internally consistent.
+  - Concrete profile-to-theme preferences from Hallmark:
+    - Modern-minimal (technical): prefer **Cobalt** over Coral for dev docs, API demos, and command-heavy flows.
+    - Atmospheric (AI model tools): prefer **Lumen** for instrument-style premium AI pages; keep it distinct from dark "orb" patterns.
+    - Playful (alive/friendly): prefer **Hum** as the only rounded-multi-accent signature theme.
+    - Editorial-with-loud voice: allow **Carnival** when the brief is loud, independent-music-adjacent, DIY cultural, or event-driven; avoid if it would outrun the subject tone.
+  - Brutal tone mechanics (when selected):
+    - Use a raw, edge-driven register: heavy borders, sharp section edges, strong density contrasts, minimal decorative ornament.
+    - Prefer slab / condensed display behavior, tracked caps only when they add intent, no unnecessary rounded corners on primary containers.
+    - Keep motion strict and explicit: at most three intentional motion primitives on the page, no elastic/bouncy easings by default, and no universal hover choreography.
+    - Require one bold signature element (e.g., one strong shell, one editorial-scale headline treatment, one interaction pivot) and remove all decorative extras.
   - Reject multi-theme surfaces. One screen should have one primary theme family and one consistent surface map.
 `;
 
@@ -146,6 +162,13 @@ export const premiumArchetypeAndThemeCheatSheet = dedent`
     Modern-minimal: Coral, Cobalt.
     Atmospheric: Bloom, Midnight, Terminal, Aurora, Lumen.
     Playful: Hum.
+    Brutal signature: N7 Brutal slab nav; overlap/full-bleed structure cues where they materially improve the brief; one accent system and one clear typographic hierarchy role.
+  - **Hallmark style quick checks (choose exactly one):**
+    - **Editorial:** asymmetric layout first; one-hue accents; hairlines and print-like rhythm; no gradient text; headings stay upright.
+    - **Modern-minimal / Cobalt:** one strong signal color, code-or-terminal hero or live request/response artifact, bordered controls with 6px radii, one dark rhythm section, no rounded pill-heavy language unless explicitly requested.
+    - **Atmospheric / Lumen:** one engineered apparatus motif, lowercase headline + uppercase mono callouts, blueprint-grid support when appropriate, one warm focal accent, motion reduced to reveals.
+    - **Playful / Hum:** rounded sans, three accent roles (primary, secondary, pop), one reacting character/mark, hover lift patterns, and one short celebration sequence only where justified.
+    - **Carnival:** duo-tone alternation, decorative typographic ornaments, hard-offset shadows, poster-like blocks, and no flattened "same-every-surface" radius/spacing.
     Use one family unless the brief explicitly requests custom tone work; never split theme families in one screen.
 `;
 

@@ -246,11 +246,20 @@ export function getMainCodingPrompt(options?: {
   **1. Plan.** Before touching Tailwind classes, decide:
      - *Subject*: what is this app, for whom, and what's the one job this screen does? Ground every choice in that, not in "an app like this."
   - *Tone*: choose a clear extreme that fits the subject — editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. "Clean and modern" is not a direction. Infer a sensible tone when the user leaves it open.
+    - Brutalist-specific register: raw edge-driven hierarchy, dense measured rhythm, restrained ornamentation, and one signature visual move rather than repeated decoration.
+    - Editorial profile (default for storytelling/portfolio/craft): asymmetric composition, text-first rhythm, paper-and-rule language, and one accent system.
+    - Modern-minimal profile (technical/dev/infra): low-chroma, bordered hierarchy, and a single technical anchor (code, terminal, request/response, or command palette). Prefer Cobalt-like restraint over decorative warmth.
+    - Atmospheric profile (AI/creative tools): dark or night-first ground, one warm accent family, controlled reveals, and one handcrafted focal artifact.
+    - Playful profile (friendly/onboarding/family): rounded sans, muted multi-accent support, gentle hover motion, and one small reaction/moment.
      - If audience, use case, or tone are missing, state one concise inferred version before proceeding and allow one clarification pass.
      - *Palette*: define 4-6 semantic roles (canvas, surface, ink, muted ink, border, and optional accent), not 4-6 unrelated hues. For an unspecified theme, keep the surface area light and neutral and use at most one subject-derived accent. A color explicitly named by the user owns the requested role and must not be neutralized or swapped.
      - *Type*: establish a display role and a body role using only font stacks that are actually available in the generated app. Create character through deliberate scale, weight, width, tracking, and measure; never reference a font that is not imported or installed. Two roles is enough; add a third utility role only if data or captions need it.
      - *Structure*: choose a page archetype before styling it. Product surfaces can be a workbench, split workspace, command surface, canvas with inspector, content rail, or focused single-task flow. Marketing pages can be an asymmetric marquee, long-form narrative, catalogue, comparison, quote-led, or showcase composition. Select the one that best expresses the subject and task; do not fall through to the same page rhythm for every brief.
-     - *Theme family*: select one Hallmark-compatible family (editorial, modern-minimal, atmospheric, playful) and keep one global luminosity model for this build unless the user explicitly requests a controlled inversion.
+  - *Theme family*: select one Hallmark-compatible family (editorial, modern-minimal, atmospheric, playful) and keep one global luminosity model for this build unless the user explicitly requests a controlled inversion.
+    - If the brief is technical or API-style, default to modern-minimal and prefer **Cobalt** semantics (one signal accent, code-first hero, bordered controls).
+    - If the brief is AI creative/voice/image/music oriented, default to atmospheric and prefer **Lumen** semantics (single apparatus motif, strict rhythm, no generic orb glow).
+    - If the brief is friendly consumer-first without being playful-heavy, prefer **Hum** only when rounded softness and multi-accent energy are explicitly called for.
+    - If the brief is loud cultural/editorial, keep Carnival-style options for loud duo-tone and hard shadows when it matches the content domain.
      - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
       - Before coding, confirm whether the structure/nav/footer palette differs from the last generated build when relevant.
       - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet. Consider whether a shader background, 3D element, particle effect, or parallax scroll would serve as that signature for this subject.
@@ -280,6 +289,11 @@ export function getMainCodingPrompt(options?: {
 
   **3. Build**, following the confirmed plan. A few standing rules while building:
      - **Default to solid surfaces.** Use a gradient only when the brief or subject genuinely calls for it, limit it to one purposeful surface, and never use a generic blurred hero glow, gradient headline, or decorative aurora as a substitute for composition.
+     - **Brutal tone details:** maintain raw edge language and restrained ornamentation. Keep rounded corners to intentional exceptions, flatten decorative shadows, and limit motion to one meaningful entry and one feedback pattern (no bounce/elastic defaults).
+     - **Modern-minimal/Cobalt profile:** keep one signal color, one bordered hero/feature anchor, light base with one deliberate dark-band rhythm, and one primary control family with compact radii. Avoid pill-heavy nav and glass cards.
+     - **Atmospheric/Lumen profile:** keep a clear dark-first canvas language, one engineered focal artifact, lowercase serif/serif-like headline system, mono uppercase eyebrow callouts, and one controlled reveal sequence. Avoid animated orbital glows.
+     - **Playful/Hum profile:** keep rounded surfaces, one character-or-mark reaction, one accent that pops, and hover lift/reveal sequences that support onboarding or habit loops.
+     - **Carnival profile (when selected):** keep duo-tone rhythm, decorative type ornaments, hard-offset shadows, and poster-like blocks that stay legible on scroll.
      - **Leverage creative libraries for visual impact.** When the subject warrants it, use shader backgrounds (\`@paper-design/shaders-react\`), 3D scenes (\`three\` + \`@react-three/fiber\` + \`@react-three/drei\`), post-processing effects (\`@react-three/postprocessing\`), or particle systems (\`@tsparticles/react\`). These replace generic gradients and static images with living, interactive surfaces. A portfolio, creative tool, music player, gaming app, or luxury brand should feel alive.
      - Treat the planned palette as locked semantic roles. Reuse the same Tailwind palette families for background, surface, ink, muted ink, border, primary, and accent roles; do not improvise unrelated one-off colors halfway through the render.
      - Treat luminosity as a screen-level decision. Do not scatter near-black content cards through a light shell; reserve an inverse panel for one focal region at most, with explicit light foregrounds for every descendant.
@@ -351,6 +365,7 @@ export function getMainCodingPrompt(options?: {
   18. If a theme control exists, does it persist preference, update the root HTML dark class and color-scheme, expose its current state accessibly, and visibly theme every surface including dialogs and toasts?
   19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?
   20. Does every meaningful control expose all relevant explicit UI states (hover, active, focus-visible, disabled, loading, success, error), and are any necessary labels kept one-line at mobile widths?
+     21. If the selected tone is brutalist, is the page using an edge-forward register (heavy borders/clear rhythm, minimal ornament, restrained rounded corners) with no glow-first motion and no decorative hover choreography across all controls?
   ${designEmphasis ? `\n${designEmphasis}\n` : ""}
   `;
 
