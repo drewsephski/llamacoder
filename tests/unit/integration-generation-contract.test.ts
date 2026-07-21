@@ -4,6 +4,7 @@ import type { Plan } from "@/features/generation/agent-contracts";
 import { createEmptyAppSpec } from "@/features/generation/app-spec";
 import {
   buildSelectedApiPurposeStep,
+  enforceRequestedPersistenceProvider,
   enforceSelectedProvidersInAppSpec,
   enforceSelectedProvidersInPlan,
   getSelectedProvidersNeedingPurpose,
@@ -121,5 +122,62 @@ describe("selected API generation contract", () => {
     });
     expect(step.options[0].description).toContain("currency conversion");
     expect(step.options[0].description).toContain("forecasts");
+  });
+
+  it("adds Supabase when persistence is explicitly confirmed", () => {
+    const spec = createEmptyAppSpec();
+    const updated = enforceRequestedPersistenceProvider({
+      ...spec,
+      dataPersistence: {
+        ...spec.dataPersistence,
+        detected: true,
+        confidence: 72,
+        recommendation: "require_database",
+        status: "connect_confirmed",
+        reason: "The app tracks persistent records.",
+        useCase: "Workflow data tracking",
+        proposedSchema: [
+          {
+            entity: "contacts",
+            purpose: "Store customer records.",
+            fields: ["id", "name"],
+          },
+        ],
+      },
+    });
+
+    expect(updated.integrations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          providerId: "supabase",
+          required: true,
+          runtime: "server",
+        }),
+      ]),
+    );
+  });
+
+  it("does not add Supabase when persistence is declined", () => {
+    const spec = createEmptyAppSpec();
+    const updated = enforceRequestedPersistenceProvider({
+      ...spec,
+      dataPersistence: {
+        ...spec.dataPersistence,
+        detected: true,
+        confidence: 72,
+        recommendation: "suggest_database",
+        status: "connect_declined",
+        reason: "Prototype-first chosen for early iteration.",
+        useCase: "CRM / sales pipeline",
+        proposedSchema: [],
+      },
+      integrations: [],
+    });
+
+    expect(
+      updated.integrations.some(
+        (integration) => integration.providerId === "supabase",
+      ),
+    ).toBe(false);
   });
 });

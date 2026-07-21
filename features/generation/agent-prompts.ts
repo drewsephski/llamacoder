@@ -189,7 +189,7 @@ export const agentOrchestrationPrompt = dedent`
   ## specUpdate on every turn:
 
   - Always include specUpdate when the user's answers or message contains information that should persist in the spec.
-  - Merge new answers into the existing spec fields (overview, features, architecture, dataModel, integrations, design, constraints, edgeCases, acceptanceCriteria, assumptions, unresolvedDecisions). Preserve a reviewed providerId when Squid's integration registry supplies one.
+  - Merge new answers into the existing spec fields (overview, features, architecture, dataModel, dataPersistence, integrations, design, constraints, edgeCases, acceptanceCriteria, assumptions, unresolvedDecisions). Preserve a reviewed providerId when Squid's integration registry supplies one.
   - Add newly asked question IDs to specUpdate.askedQuestionIds.
   - Update specUpdate.confidence (0–100) based on how complete the spec feels.
   - Update specUpdate.unresolvedDecisions: remove resolved ones, add newly discovered ones.

@@ -40,6 +40,25 @@ describe("parseAppSpec", () => {
     expect(result?.features.niceToHave).toEqual(["history"]);
   });
 
+  it("parses legacy specs with a default persistence intent", () => {
+    const input = {
+      version: 1,
+      status: "approved",
+      overview: { name: "Calculator" },
+      features: {
+        mustHave: ["arithmetic"],
+      },
+    } as unknown as Parameters<typeof appSpecSchema.parse>[0];
+    const result = parseAppSpec(input);
+
+    expect(result).not.toBeNull();
+    expect(result?.dataPersistence).toMatchObject({
+      detected: false,
+      status: "not_prompted",
+      recommendation: "prototype",
+    });
+  });
+
   it("returns null for invalid spec", () => {
     expect(parseAppSpec({ status: "bogus" })).toBeNull();
   });
@@ -76,6 +95,32 @@ describe("mergeSpecUpdate", () => {
     });
     expect(merged.userFlows).toHaveLength(1);
     expect(merged.userFlows[0].name).toBe("Login");
+  });
+
+  it("deep-merges persistence intent updates", () => {
+    const spec = createEmptyAppSpec();
+    const merged = mergeSpecUpdate(spec, {
+      dataPersistence: {
+        detected: true,
+        confidence: 88,
+        recommendation: "require_database",
+        status: "connect_confirmed",
+        reason: "Track customers through lifecycle",
+        useCase: "CRM / sales pipeline",
+        proposedSchema: [
+          {
+            entity: "contacts",
+            purpose: "Store prospects.",
+            fields: ["id", "name"],
+          },
+        ],
+      },
+    });
+
+    expect(merged.dataPersistence.detected).toBe(true);
+    expect(merged.dataPersistence.status).toBe("connect_confirmed");
+    expect(merged.dataPersistence.recommendation).toBe("require_database");
+    expect(merged.dataPersistence.proposedSchema).toHaveLength(1);
   });
 
   it("returns the same spec when update is null", () => {
@@ -147,6 +192,32 @@ describe("serializeSpecForPrompt", () => {
     const text = serializeSpecForPrompt(spec, "full");
     expect(text).toContain("Frontend + portable backend blueprint");
     expect(text).toContain("Do not simulate managed auth");
+  });
+
+  it("reports persistence detection in full serialized prompt output", () => {
+    const spec: AppSpec = appSpecSchema.parse({
+      status: "interviewing",
+      dataPersistence: {
+        detected: true,
+        confidence: 74,
+        recommendation: "suggest_database",
+        useCase: "Support tickets & service log",
+        reason: "Track service cases across state transitions.",
+        status: "not_prompted",
+        proposedSchema: [
+          {
+            entity: "support_tickets",
+            purpose: "Track support tickets.",
+            fields: ["id", "status"],
+          },
+        ],
+      },
+    });
+    const text = serializeSpecForPrompt(spec, "full");
+
+    expect(text).toContain("Persistence intent");
+    expect(text).toContain("Persistence intent: recommended");
+    expect(text).toContain("Support tickets & service log");
   });
 });
 
