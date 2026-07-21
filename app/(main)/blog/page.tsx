@@ -21,7 +21,7 @@ export default function BlogIndexPage() {
     <MarketingHub
       kind="guide"
       title="Field guides for React apps built with AI"
-      intro="Move from an impressive first preview to code you can inspect, test, recover, export, and hand to another developer with confidence."
+      intro="Start from problem-led intent pages like export and cost comparison, then use these middle-stage guides to decide and execute with verified checkpoints."
       pages={blogPages}
     />
   );

@@ -243,12 +243,6 @@ export function validateGeneratedFiles(
     });
   }
 
-  if (runnableFiles.length < 3) {
-    diagnostics.push({
-      message: "Generated app should contain at least 3 source files.",
-    });
-  }
-
   for (const file of files) {
     for (const source of extractImportSources(file.code)) {
       if (!isInternalGeneratedImport(source)) continue;
@@ -366,7 +360,7 @@ ${fileList}
 Rewrite the app as a complete, runnable multi-file React + TypeScript application.
 Requirements:
 - Output only complete files in fenced code blocks using \`\`\`tsx{path=App.tsx} format.
-- Include App.tsx plus at least two supporting source files.
+- Include App.tsx plus any supporting source files needed.
 - Every relative or @/ internal import must resolve to a file you output, except installed shadcn imports under "@/components/ui/*" and "@/lib/utils".
 - Every import style must match the target file's exports: named imports require named exports, and default imports require default exports.
 - If a file exports \`export default function Footer()\`, import it as \`import Footer from "./components/Footer"\`; if it exports \`export function Footer()\`, import it as \`import { Footer } from "./components/Footer"\`.

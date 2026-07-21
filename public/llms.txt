@@ -14,15 +14,22 @@
 ## Current Comparisons
 
 - [Squid vs Lovable](https://squidagent.app/compare/squid-vs-lovable): React export, GitHub sync, credits, version history, quality evidence, and product fit.
+- [Squid vs Lovable for Startups](https://squidagent.app/compare/squid-vs-lovable-for-startups): Startup-focused comparison on speed, ownership, cost, and portability.
 - [Squid vs Bolt.new](https://squidagent.app/compare/squid-vs-bolt): Tokens, project export, GitHub, version history, verification, and product fit.
+- [Squid vs Bolt.new for Agencies](https://squidagent.app/compare/squid-vs-bolt-for-agencies): Agency-focused comparison on deliverables, review loops, and rollback behavior.
 - [Squid vs v0](https://squidagent.app/compare/squid-vs-v0): React and Next.js workflows, code export, Git, checkpoints, and quality evidence.
+- [Squid vs v0 for Design-led teams](https://squidagent.app/compare/squid-vs-v0-for-design-led-teams): Design-led comparison on design-system fit, edit cadence, and deployment workflows.
 
 ## Guides
 
 - [Why AI App Builders Burn Credits](https://squidagent.app/blog/why-ai-app-builders-burn-credits): Measure the complete cost of reaching an accepted result.
+- [AI Coding Tool Comparison with Credits](https://squidagent.app/blog/ai-coding-tool-comparison-with-credits): Decision framework for output quality, spend, portability, and verification.
 - [How to Evaluate AI-Generated React Code](https://squidagent.app/blog/how-to-evaluate-ai-generated-react-code): A production-minded React acceptance checklist.
 - [Screenshot-to-React Is Table Stakes](https://squidagent.app/blog/screenshot-to-react-is-table-stakes): What to measure beyond the first visual preview.
 - [How to Export an AI-Generated React App](https://squidagent.app/blog/how-to-export-ai-generated-react-app): Validate a clean, portable handoff.
+- [Export React app from AI](https://squidagent.app/blog/export-react-app-from-ai): Validate ownership and delivery with a practical export checklist.
+- [How We Verify Code](https://squidagent.app/blog/how-we-verify-code): Step-by-step explanation of Squid verification layers.
+- [What to Check After AI Generation](https://squidagent.app/blog/what-to-check-after-ai-generation): Practical post-generation receipt for safe continuation.
 - [From Screenshot to Production React](https://squidagent.app/blog/from-screenshot-to-production-react): Convert a visual reference into responsive and functional requirements.
 
 ## Benchmarks

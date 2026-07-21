@@ -21,7 +21,7 @@ export default function CompareIndexPage() {
     <MarketingHub
       kind="comparison"
       title="AI app builder comparisons without stale talking points"
-      intro="Compare the workflows that matter after the demo: usage visibility, edit stability, recovery, source portability, local builds, and the evidence each product gives you."
+      intro="Compare the workflows that matter after the demo: usage visibility, edit stability, recovery, source portability, local builds, and the evidence each product gives you. Start with agencies, startups, or design-led teams to match your business model."
       pages={comparisonPages}
     />
   );

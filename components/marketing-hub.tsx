@@ -39,6 +39,57 @@ const hubConfig = {
   },
 };
 
+const hubQuickLinks = {
+  comparison: [
+    {
+      href: "/compare/squid-vs-bolt-for-agencies",
+      label: "For agencies",
+      description:
+        "Compare versioning and delivery behavior for studio workflows.",
+    },
+    {
+      href: "/compare/squid-vs-lovable-for-startups",
+      label: "For startups",
+      description:
+        "Compare portability, spend clarity, and recovery when speed matters.",
+    },
+    {
+      href: "/compare/squid-vs-v0-for-design-led-teams",
+      label: "For design-led teams",
+      description:
+        "Compare component, interaction, and export expectations across tools.",
+    },
+  ],
+  guide: [
+    {
+      href: "/blog/export-react-app-from-ai",
+      label: "Export from AI without surprises",
+      description:
+        "Use this problem-led entry guide before planning your first handoff.",
+    },
+    {
+      href: "/blog/ai-coding-tool-comparison-with-credits",
+      label: "Compare credits and spend signals",
+      description:
+        "Set expectations for budget and delivery before choosing a builder.",
+    },
+    {
+      href: "/blog/how-to-evaluate-ai-generated-react-code",
+      label: "Validate generated React output",
+      description:
+        "Use this review checklist before accepting the first finished build.",
+    },
+  ],
+  benchmark: [
+    {
+      href: "/blog/ai-coding-tool-comparison-with-credits",
+      label: "Compare cost signals before running a benchmark",
+      description:
+        "Set your acceptance criteria and budget guardrails before scoring outputs.",
+    },
+  ],
+} as const;
+
 export function MarketingHub({ kind, title, intro, pages }: MarketingHubProps) {
   const config = hubConfig[kind];
   const Icon = config.icon;
@@ -85,6 +136,20 @@ export function MarketingHub({ kind, title, intro, pages }: MarketingHubProps) {
                 <p className="mt-6 max-w-3xl text-pretty text-lg leading-8 text-muted-foreground sm:text-xl sm:leading-9">
                   {intro}
                 </p>
+                <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {hubQuickLinks[kind].map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="group rounded-xl border border-border/70 bg-background p-4 transition-colors hover:border-primary/35 hover:bg-primary/[0.03]"
+                    >
+                      <p className="text-sm font-semibold">{link.label}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {link.description}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
               </div>
               <div className="border-l-2 border-primary pl-5 text-sm leading-6 text-muted-foreground">
                 {config.supporting}

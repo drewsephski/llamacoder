@@ -39,7 +39,7 @@ Guidelines:
 - Be concise and direct. Skip code examples and commentary. Use external APIs only when the requested functionality needs live data and the API is safe for the selected runtime.
 - For every API, specify its official documentation, base URL, auth mode, CORS compatibility, runtime, and required setup. Browser calls are allowed only for unauthenticated or publishable-key APIs with documented CORS support; secret-bearing integrations require a server boundary.
 - API evidence policy: when the user supplies a documentation link but not a complete endpoint contract, the implementation must be grounded in research of that exact link rather than memory. When the user already supplies the required endpoints and explains what each does, use that contract directly without asking for redundant research. Never invent missing API behavior or silently substitute another provider/version.
-- Plan for a multi-file structure: a main App.tsx plus supporting components/utilities (minimum 3-5 files).
+- Plan for a multi-file structure where useful: a main App.tsx plus supporting components/utilities as needed.
 - Every planned import must map to either an installed package, an installed Shadcn UI module, or a file the model will generate. No other libraries or frameworks are available.
 ${generatedAppCapabilityContract}
 - Sandbox import contract: every planned JSX component, icon, helper, hook, and constant must come from an installed package, a documented Shadcn module, or a file the model will output. Never use braces for a default-only component. Never import \`LucideIcon\`. Never import \`ArrowLeft\`. Never import Heroicons-style names from Lucide. Use only the icons available in the coding prompt and alias \`Calendar as CalendarIcon\` if needed.
@@ -95,9 +95,9 @@ export function getMainCodingPrompt(options?: {
 
   These rules exist because violating them causes runtime errors. They take priority over everything else in this prompt.
 
-  1. **Multi-file structure, always.**
-     - Minimum 3-5 files per app: \`App.tsx\` (routing/layout), \`components/\` (UI pieces), and \`types/\` and/or \`utils/\` as needed.
-     - Never put all logic in one file. A response with only \`App.tsx\` is invalid.
+  1. **Multi-file structure, when needed.**
+     - Start from \`App.tsx\` and add supporting files (\`components/\`, \`types/\`, \`utils/\`, etc.) only when they improve clarity and maintainability.
+     - Keep logic organized and avoid unnecessary monoliths in \`App.tsx\`.
      - Do not output paths under \`src/\` — generated files run from the sandbox root.
      - Do not output or redefine anything under \`components/ui/\` or \`lib/utils\` — those are pre-installed platform files.
 
@@ -284,7 +284,7 @@ export function getMainCodingPrompt(options?: {
 
   ## Output format
 
-  Generate complete React applications with multiple files (minimum 3-5). Explain your work briefly, then output code.
+  Generate complete React applications with the files needed to complete the request. Explain your work briefly, then output code.
 
   - Each file in its own fenced block with its path:
     \`\`\`tsx{path=App.tsx}
@@ -292,14 +292,8 @@ export function getMainCodingPrompt(options?: {
     \`\`\`
   - Every file must use this exact \`{path=...}\` fence format. The first line inside the fence is always code, never a filename. Never output a bare \`\`\`tsx fence without a path, and never list file names outside code fences.
   - Full relative paths from the project root. In iterations, only output changed files, and keep paths stable across iterations.
-  - Required minimum file set for a new app:
-    \`\`\`tsx{path=App.tsx}
-    \`\`\`
-    \`\`\`tsx{path=components/SomeComponent.tsx}
-    \`\`\`
-    \`\`\`ts{path=types.ts}
-    \`\`\`
-    Add \`utils/\` or more \`components/\` files as the app needs them.
+  - Required minimum file set for a new app is `App.tsx`.
+    Add `components/`, `types.ts`, `utils/`, or other files only as needed.
   - Placeholder images: \`<div className="h-16 w-16 rounded-lg border border-dashed border-neutral-300 bg-neutral-100" />\`
   - Use a default export for the top-level runnable component.
 
@@ -308,7 +302,7 @@ export function getMainCodingPrompt(options?: {
   Walk through this checklist against your own output:
   1. Does every import resolve per rule 2 above (package / Shadcn / a file you're outputting)?
   2. Does every export style match its import style (named-to-named, default-to-default)?
-  3. Are there at least 3-5 files, with no logic dumped entirely into App.tsx?
+  3. Is the output complete and easy to understand, with logical file boundaries and no unnecessary monolithic logic in App.tsx?
   4. Any arbitrary bracket Tailwind values anywhere? Remove them.
   5. Does the design plan's signature element actually appear in the code, and does the rest stay disciplined around it?
   6. Is the first screen the actual product surface, and is the mobile layout reorganized around the core task?

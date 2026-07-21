@@ -132,13 +132,13 @@ export function getCompressedCodingPrompt(): string {
 
   ## Output format
 
-  Generate complete React applications with multiple files (minimum 3-5). Each file in its own fenced block: \`\`\`tsx{path=App.tsx}\`. Every file must use this format. Full relative paths from project root.
+  Generate complete React applications using only the files needed to satisfy the request. Each file in its own fenced block: \`\`\`tsx{path=App.tsx}\`. Every file must use this format. Full relative paths from project root.
 
   ## Before you finalize
 
   1. Every import resolves per rule 2.
   2. Export/import styles match.
-  3. At least 3-5 files.
+  3. Keep output complete and organized, with logical file boundaries where they improve clarity.
   4. No arbitrary bracket Tailwind values.
   5. First screen is the actual product surface.
   6. Loading, empty, error, success states implemented.

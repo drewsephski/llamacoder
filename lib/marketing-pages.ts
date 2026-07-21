@@ -76,7 +76,229 @@ const sharedComparisonLinks: MarketingLink[] = [
   },
 ];
 
-export const comparisonPages = [
+type MarketingPageSeed = Omit<MarketingPage, "internalLinks"> & {
+  internalLinks?: MarketingLink[];
+};
+
+export const marketingLandingPaths = [
+  "/axon",
+  "/axion-studio",
+  "/cozypaws",
+  "/design-rocket-certificates",
+  "/forma",
+  "/jack",
+  "/mindloop",
+  "/mentality",
+  "/prisma",
+  "/questly",
+  "/rivr",
+  "/sentinel",
+  "/skyelite",
+  "/terraelix",
+  "/velorah",
+  "/launch",
+  "/gallery",
+  "/example",
+];
+
+export const marketingDemoLinks: MarketingLink[] = [
+  {
+    href: "/axon",
+    label: "Axon landing page",
+    description: "Explore an automation-heavy editorial demo.",
+  },
+  {
+    href: "/axion-studio",
+    label: "Axion Studio landing page",
+    description: "Review a full-case campaign landing page built with Squid.",
+  },
+  {
+    href: "/cozypaws",
+    label: "CozyPaws case study",
+    description: "Inspect a warm-commerce-style storefront with interactive sections.",
+  },
+  {
+    href: "/sentinel",
+    label: "Sentinel AI case study",
+    description: "See a high-contrast technical product landing surface.",
+  },
+  {
+    href: "/example",
+    label: "Public workspace example",
+    description: "Open an unlisted public demo and review the generated output path.",
+  },
+];
+
+const useCasePageLinks: MarketingLink[] = [
+  {
+    href: "/compare/squid-vs-lovable",
+    label: "Compare with Lovable",
+    description: "Decision criteria for managed full-stack workflows.",
+  },
+  {
+    href: "/compare/squid-vs-bolt",
+    label: "Compare with Bolt.new",
+    description: "Decision criteria for preview-heavy full-stack generation.",
+  },
+  {
+    href: "/compare/squid-vs-v0",
+    label: "Compare with v0",
+    description: "Decision criteria for framework-first builder workflows.",
+  },
+  {
+    href: "/compare/squid-vs-lovable-for-startups",
+    label: "Squid vs Lovable for startups",
+    description: "A startup-oriented fit comparison with ownership and speed.",
+  },
+  {
+    href: "/compare/squid-vs-bolt-for-agencies",
+    label: "Squid vs Bolt.new for agencies",
+    description: "A production-velocity comparison for agency handoff.",
+  },
+  {
+    href: "/compare/squid-vs-v0-for-design-led-teams",
+    label: "Squid vs v0 for design-led teams",
+    description: "Framework and export fit for design-first delivery.",
+  },
+];
+
+const getCompareLink = (href: string) =>
+  useCasePageLinks.find((link) => link.href === href);
+
+const preferredUseCaseLinksBySlug: Record<string, string[]> = {
+  "squid-vs-lovable": [
+    "/compare/squid-vs-v0",
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-bolt-for-agencies",
+  ],
+  "squid-vs-bolt": [
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-v0",
+    "/compare/squid-vs-bolt-for-agencies",
+  ],
+  "squid-vs-v0": [
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-v0-for-design-led-teams",
+  ],
+  "squid-vs-bolt-for-agencies": [
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-lovable-for-startups",
+    "/compare/squid-vs-v0-for-design-led-teams",
+  ],
+  "squid-vs-lovable-for-startups": [
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-bolt-for-agencies",
+    "/compare/squid-vs-v0-for-design-led-teams",
+  ],
+  "squid-vs-v0-for-design-led-teams": [
+    "/compare/squid-vs-v0",
+    "/compare/squid-vs-lovable-for-startups",
+    "/compare/squid-vs-bolt-for-agencies",
+  ],
+  "how-to-evaluate-ai-generated-react-code": [
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-v0",
+  ],
+  "screenshot-to-react-is-table-stakes": [
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-v0",
+  ],
+  "ai-coding-tool-comparison-with-credits": [
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-v0",
+  ],
+  "export-react-app-from-ai": [
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-v0",
+    "/compare/squid-vs-bolt",
+  ],
+  "from-screenshot-to-production-react": [
+    "/compare/squid-vs-v0",
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-lovable",
+  ],
+  "how-we-verify-code": [
+    "/compare/squid-vs-v0",
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-lovable",
+  ],
+  "what-to-check-after-ai-generation": [
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-v0",
+  ],
+};
+
+const getPreferredUseCaseLinks = (page: MarketingPageSeed) => {
+  const hrefs = preferredUseCaseLinksBySlug[page.slug];
+  if (!hrefs) return [];
+
+  return hrefs
+    .map((href) => getCompareLink(href))
+    .filter((link): link is MarketingLink => Boolean(link));
+};
+
+function uniqueByHref(links: MarketingLink[]): MarketingLink[] {
+  const seen = new Set<string>();
+  const result: MarketingLink[] = [];
+
+  for (const link of links) {
+    if (seen.has(link.href)) continue;
+    seen.add(link.href);
+    result.push(link);
+  }
+
+  return result;
+}
+
+function enrichInternalLinks(
+  page: MarketingPageSeed,
+  kind: MarketingPage["kind"],
+): MarketingPage {
+  const links = uniqueByHref(page.internalLinks ?? []);
+  const isUseCase = (href: string) => href.startsWith("/compare/");
+  const demoSet = new Set(marketingDemoLinks.map((link) => link.href));
+  const fallbackUseCases = useCasePageLinks;
+  const preferredUseCases = getPreferredUseCaseLinks(page);
+  const requiredUseCaseCount = kind === "benchmark" ? 0 : 2;
+  const requiredDemoCount = kind === "benchmark" ? 0 : 1;
+
+  let useCaseCount = links.filter((link) => isUseCase(link.href)).length;
+  let demoCount = links.filter((link) => demoSet.has(link.href)).length;
+  const enriched = [...links];
+
+  for (const link of [...preferredUseCases, ...fallbackUseCases]) {
+    if (useCaseCount >= requiredUseCaseCount) break;
+    if (!isUseCase(link.href)) continue;
+    if (enriched.some((item) => item.href === link.href)) continue;
+    enriched.push(link);
+    useCaseCount += 1;
+  }
+
+  if (demoCount < requiredDemoCount) {
+    for (const link of marketingDemoLinks) {
+      if (demoCount >= requiredDemoCount) break;
+      if (enriched.some((item) => item.href === link.href)) continue;
+      enriched.push(link);
+      demoCount += 1;
+    }
+  }
+
+  return { ...page, internalLinks: uniqueByHref(enriched) } as MarketingPage;
+}
+
+export function withMinimumInternalLinks(
+  page: MarketingPage,
+  kind: MarketingPage["kind"] = page.kind,
+): MarketingPage {
+  return enrichInternalLinks(page, kind);
+}
+
+const comparisonPagesSeed: MarketingPageSeed[] = [
   {
     kind: "comparison",
     slug: "squid-vs-lovable",
@@ -577,9 +799,399 @@ export const comparisonPages = [
     internalLinks: sharedComparisonLinks,
     cta: "Generate a React app you can inspect",
   },
-] satisfies MarketingPage[];
+  {
+    kind: "comparison",
+    slug: "squid-vs-bolt-for-agencies",
+    title:
+      "Squid vs Bolt.new for agencies (2026): Deliverables, reviews, and recovery",
+    description:
+      "An agency-specific benchmark for Squid and Bolt.new covering brief handling, stakeholder review loops, restoreability, deployment handoff, cost signaling, and production transfer quality.",
+    h1: "Squid vs Bolt.new for agencies",
+    intro:
+      "Agencies care about stable handoff artifacts and predictable revision loops more than single-shot previews. The meaningful question is which workflow preserves review traceability, makes rollback simple, and keeps exports deployable on the first pass.",
+    summary:
+      "Bolt is useful when teams need broad full-stack capabilities and a single environment for implementation, but Squid is strongest when agencies need an explicit export package with verifiable checkpoints, clear cost signaling, and fast, scoped edit iteration.",
+    publishedAt: "2026-07-15",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    table: {
+      caption: "Agency workflow trade-offs",
+      description:
+        "Used to compare how each system supports review, revision, and handoff requirements in production work.",
+      columns: ["Dimension", "Squid Agent", "Bolt.new"],
+      rows: [
+        [
+          "Best fit",
+          "Rapid React app generation with verifiable export and checkpoints",
+          "Browser-first full-stack delivery with broader platform tooling",
+        ],
+        [
+          "Stakeholder review",
+          "Prompt-to-checklist clarity before build and structured revision traces",
+          "Project history with visual restore flow and preview snapshots",
+        ],
+        [
+          "Cost signal",
+          "Model-based estimate before run plus tracked estimate-versus-actual",
+          "Token growth visible by message context and project state",
+        ],
+        [
+          "Recovery semantics",
+          "Code checkpoints that preserve history while creating a restore version",
+          "Version history bookmarks and restoration inside product editor",
+        ],
+        [
+          "Delivery outputs",
+          "Verified ZIP with manifest, diagnostics, and starter deployment files",
+          "Project export and GitHub workflows with external repository handoff",
+        ],
+      ],
+    },
+    workflow: [
+      {
+        title: "Start from a client-ready brief",
+        body: "Use the same prompt for both tools with explicit approval criteria: brand tone, component reuse, responsive states, delivery deadlines, and what must be editable after launch.",
+      },
+      {
+        title: "Collect cost expectations",
+        body: "Capture Squid's expected credit hold before generation and Bolt's token balance behavior at the same workflow stage.",
+      },
+      {
+        title: "Drive a constrained revision",
+        body: "Request a narrow change after each tool's first draft to compare revision control and unaffected surface preservation.",
+      },
+      {
+        title: "Export, verify, and hand off",
+        body: "Download each project to a clean environment, run checks, and verify that client-ready instructions, scripts, and deployment settings are present before shipping.",
+      },
+    ],
+    sections: [
+      {
+        title: "Agency handoff is often more important than first paint",
+        body: "Agency teams frequently evaluate generators by how reliably they get from draft to sign-off to deployment. Bolt and Squid both generate quickly, but Squid's extra emphasis is around evidentiary output around generation and checkpointed versioning that aligns with review workflows.",
+      },
+      {
+        title: "Predictable spending is part of project planning",
+        body: "Client estimates assume stable cost profiles. Squid publishes an expected estimate up front and records the final ledger, while Bolt's token cost can drift as project context grows. This shifts how you plan budgets in longer agency engagements.",
+      },
+      {
+        title: "Recovery behavior changes how fast agencies iterate",
+        body: "For agencies, a bad revision is not the end of the project; it's a normal part of delivery. Squid keeps restore as a non-destructive checkpoint event so a clean path to previous state is visible and auditable. Bolt's history restoration is also strong; teams should inspect how it interacts with their internal release process.",
+      },
+      {
+        title: "Where Bolt can still be the better fit",
+        body: "If your team needs Bolt-centric full-stack ecosystems, integrated hosting, and established Bolt-specific editor collaboration, it may be the right primary platform. Squid is strongest when the primary decision is a highly portable React output with a strong verification layer around export.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Is Squid suitable for white-label or client-facing deliverables?",
+        answer:
+          "Yes. Squid's verified export output is intended for external handoff with documentation, so teams can deliver clean artifacts to client environments with explicit checks and checkpoints.",
+      },
+      {
+        question: "How does Squid compare on revision complexity for agencies?",
+        answer:
+          "Squid treats each generation as a code checkpoint and records restores explicitly. In practice this can reduce the friction of handling narrow client revisions without rewriting broader context.",
+      },
+      {
+        question: "Can I still use Git after using Squid?",
+        answer:
+          "Yes. Squid exports full project artifacts with Vite configuration and dependency metadata so your team can move into Git workflows after export.",
+      },
+      {
+        question: "How should I compare costs for a long build?",
+        answer:
+          "Track expected credits before work, then track ledger entries after saves and recovery steps. Then measure cost per accepted result, not per request.",
+      },
+      {
+        question: "Which tool is better for early-phase discovery with clients?",
+        answer:
+          "For fast exploration and a complete export check, Squid is often cleaner when teams need explicit artifacts. For full-stack depth and broad native tooling, Bolt remains stronger.",
+      },
+    ],
+    sources: [
+      {
+        href: "https://support.bolt.new/building/using-bolt/rollback-backup",
+        label: "Bolt rollback and backups",
+        description:
+          "Official guidance for restore behavior and version history in Bolt's environment.",
+        external: true,
+      },
+      {
+        href: "https://support.bolt.new/integrations/git",
+        label: "Bolt Git integration",
+        description:
+          "Official path for moving work from Bolt into external Git-based pipelines.",
+        external: true,
+      },
+      {
+        href: "https://support.bolt.new/faqs/account-and-subscription/tokens",
+        label: "Bolt token model",
+        description:
+          "Official usage behavior and token accounting guidance.",
+        external: true,
+      },
+    ],
+    cta: "Review an agency delivery path",
+  },
+  {
+    kind: "comparison",
+    slug: "squid-vs-lovable-for-startups",
+    title:
+      "Squid vs Lovable for startups (2026): shipping speed and ownership trade-offs",
+    description:
+      "A startup lens on Squid and Lovable focused on build confidence, cost visibility, iteration control, and clean ownership of generated code.",
+    h1: "Squid vs Lovable for startups",
+    intro:
+      "Startups often move quickly, then spend more fixing drift. The practical comparison is not only about generation quality, but how each tool supports reliable checkpoints, spend clarity, and code that can be owned outside the platform.",
+    summary:
+      "Lovable can be strong for teams building with managed backend blocks and team collaboration, while Squid favors teams needing a clear, portable React front-end plus explicit cost and verification signals.",
+    publishedAt: "2026-07-15",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    table: {
+      caption: "Startup delivery lens",
+      description:
+        "A side-by-side summary for teams balancing launch speed and product ownership.",
+      columns: ["Dimension", "Squid Agent", "Lovable"],
+      rows: [
+        [
+          "Startup fit",
+          "Fast front-end shipping and portable handoff to your repository",
+          "End-to-end app production with broader managed modules",
+        ],
+        [
+          "Cost visibility",
+          "Expected credits shown before generation and ledger details after",
+          "Workspace credits for actions with separate cloud balance details",
+        ],
+        [
+          "Recovery model",
+          "Checkpoint restore as a new code state with history preserved",
+          "Version history inspection and restore in product workflow",
+        ],
+        [
+          "Ownership handoff",
+          "Verified archive with manifest, diagnostics, and deployment starters",
+          "Project ZIP plus GitHub integration for repository-based handoff",
+        ],
+        [
+          "Revisions",
+          "Scoped post-approval edits can be measured against acceptance criteria",
+          "Revisions inside managed UI with context-aware state restoration",
+        ],
+      ],
+    },
+    workflow: [
+      {
+        title: "Define startup milestones",
+        body: "Use identical milestones for both tools: initial feature set, key interaction points, and minimum production requirements.",
+      },
+      {
+        title: "Benchmark costs through the same milestones",
+        body: "Track model estimate, reserved usage, actual spend, repairs, and the number of iterations required per milestone.",
+      },
+      {
+        title: "Stress test revisions",
+        body: "Add one narrow request at each milestone and ensure unrelated sections remain stable.",
+      },
+      {
+        title: "Finalize and export",
+        body: "Export from a clean directory, run checks, and confirm that startup deployment scripts, env docs, and scripts are present.",
+      },
+    ],
+    sections: [
+      {
+        title: "Speed should include reliability under change",
+        body: "Startups often optimize for velocity, but first-run code quality without resilient revision flow is false speed. Measure the number and impact of follow-up edits before deciding.",
+      },
+      {
+        title: "Choose your ownership boundary early",
+        body: "With an early startup team, cloud convenience can hide integration debt. Squid emphasizes explicit export artifacts to make ownership transparent before you depend on external preview assumptions.",
+      },
+      {
+        title: "Use cost metrics that match startup finance models",
+        body: "A model estimate and final usage ledger give cleaner runway modeling than a single platform credit count. Track all failed and repaired runs before converting to a monthly burn target.",
+      },
+      {
+        title: "Where Lovable can still be the better choice",
+        body: "Lovable may be preferable if your startup needs its managed modules and team-native flow as a primary productivity layer. Squid is better aligned when portability and verifiable export are central from day one.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Do startup teams need a fully managed backend first?",
+        answer:
+          "Some do. If backend complexity is high from launch, Lovable's managed integrations may reduce setup time. If the priority is a clean React front-end and predictable export, Squid is often stronger.",
+      },
+      {
+        question: "Which gives better budget visibility for small teams?",
+        answer:
+          "Squid's pre-run estimate plus post-run ledger and refund behavior is useful when startups are monitoring month-by-month burn and user demand spikes.",
+      },
+      {
+        question: "Can startups restore risky edits safely?",
+        answer:
+          "Yes. Squid checkpoint restore keeps an auditable timeline of changes. This helps during rapid pivots where version confidence matters more than final polish at first run.",
+      },
+      {
+        question: "Which tool is better for long-term ownership?",
+        answer:
+          "Both support export and external workflows. Squid explicitly wraps the exported package with checks and project files that support long-term maintenance.",
+      },
+    ],
+    sources: [
+      {
+        href: "https://docs.lovable.dev/features/code-mode",
+        label: "Lovable code mode",
+        description: "Official capabilities and export references for project portability.",
+        external: true,
+      },
+      {
+        href: "https://docs.lovable.dev/features/workspace-admin-settings",
+        label: "Lovable billing settings",
+        description: "Workspace credit and usage context for operational planning.",
+        external: true,
+      },
+      {
+        href: "https://docs.lovable.dev/features/github",
+        label: "Lovable GitHub support",
+        description: "Official repository sync and integration details.",
+        external: true,
+      },
+    ],
+    cta: "Run a startup-oriented comparison",
+  },
+  {
+    kind: "comparison",
+    slug: "squid-vs-v0-for-design-led-teams",
+    title:
+      "Squid vs v0 for design-led teams (2026): tokens, handoff, and design system consistency",
+    description:
+      "A design leadership view of Squid and v0 for teams that need visual polish, componentized handoff, and disciplined ownership across preview-to-production workflows.",
+    h1: "Squid vs v0 for design-led teams",
+    intro:
+      "Design-led teams need predictable token, design system, and export behavior more than platform breadth. This comparison focuses on whether each tool preserves design intent while creating a reusable, inspectable codebase.",
+    summary:
+      "v0 remains strong in Next.js and Vercel-aligned creative workflows. Squid is a stronger bet when teams need explicit export verification, model-cost transparency, and a portable React artifact with an evidence bundle.",
+    publishedAt: "2026-07-15",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "7 min read",
+    table: {
+      caption: "Design-led decision summary",
+      description:
+        "A practical lens for design teams balancing fidelity, edit control, and deployment handoff.",
+      columns: ["Dimension", "Squid Agent", "v0"],
+      rows: [
+        [
+          "Design system alignment",
+          "Framework output plus verification on imports and component boundaries",
+          "Strong Vite-friendly and Next.js ecosystem patterns via Vercel alignment",
+        ],
+        [
+          "Iteration speed",
+          "Scoped edits with checkpoint visibility",
+          "Full-stack generation with broad context and follow-up edits",
+        ],
+        [
+          "Cost signal",
+          "Model-specific credit estimate before generation and post-build ledger",
+          "Token-aware behavior tied to context and runtime complexity",
+        ],
+        [
+          "Handoff readiness",
+          "Verified archive with manifest, checks, and deployment starters",
+          "Export and bidirectional Git workflows for external code integration",
+        ],
+        [
+          "Recovery for revisions",
+          "Restore via checkpoint history without dropping continuity",
+          "Version and chat history-based recovery with visual previews",
+        ],
+      ],
+    },
+    workflow: [
+      {
+        title: "Define design system constraints",
+        body: "Publish the reusable pattern map: spacing scale, typography, color tokens, interaction states, and breakpoints before generation.",
+      },
+      {
+        title: "Measure first-pass fidelity",
+        body: "Capture source reference quality and inspect whether each design intent category appears in generated component structure.",
+      },
+  {
+    title: "Test narrow revisions",
+    body: "Request one constrained design change and verify component reuse remains stable.",
+  },
+      {
+        title: "Export and validate",
+        body: "Run clean-room local checks and confirm artifact contents before a team handoff.",
+      },
+    ],
+    sections: [
+      {
+        title: "Design fidelity depends on structure, not only visuals",
+        body: "The first render can look close while internal structure drifts. Teams should compare component reuse, semantic HTML, and state boundaries before selecting a tool.",
+      },
+      {
+        title: "Token-based budgets are hard to predict for evolving context",
+        body: "v0's token model and Squid's model-credit model answer different planning questions. If your team works in narrow predictable prompts, either can work; if projects expand across many assets, the difference becomes material.",
+      },
+      {
+        title: "Handoff shape should match your deployment pattern",
+        body: "v0 is very strong when your stack already revolves around Next.js. Squid is strong when team leadership values portable, verified Vite bundles with explicit manifest and run checks.",
+      },
+      {
+        title: "Design-led value is recovery-safe iteration",
+        body: "When a stakeholder requests a narrow copy or spacing adjustment, a good workflow should confine changes. Compare restore and diff behavior just as aggressively as visual output.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Can Squid handle design-driven prompts reliably?",
+        answer:
+          "Yes, when the brief explicitly defines component and state intent. The key is providing enough structure in the prompt and checking the resulting component boundaries.",
+      },
+      {
+        question: "Which is easier for a design-team review loop?",
+        answer:
+          "If your review loop is primarily in Vercel + Next ecosystems, v0 is natural. If your team wants explicit export checks and checkpoints first, Squid can be easier to audit.",
+      },
+      {
+        question: "Do design-led teams benefit from checkpoints?",
+        answer:
+          "Yes. Checkpoints reduce the cost of stakeholder revisions by making rollback precise and auditable.",
+      },
+      {
+        question: "What should we check after either tool completes?",
+        answer:
+          "Install in a clean environment, run lint/type checks/build, verify interactions at all target widths, and inspect diff scope for follow-up edits.",
+      },
+    ],
+    sources: [
+      {
+        href: "https://v0.dev/docs/faqs",
+        label: "v0 official FAQ",
+        description: "Scope, integration, and export-related behavior from v0 documentation.",
+        external: true,
+      },
+      {
+        href: "https://v0.dev/docs/docs/",
+        label: "v0 documentation",
+        description: "Official product behavior and workflow guidance.",
+        external: true,
+      },
+    ],
+    cta: "Compare for design-led teams",
+  },
+];
 
-export const blogPages = [
+export const comparisonPages = comparisonPagesSeed.map((page) =>
+  withMinimumInternalLinks(page, "comparison"),
+);
+
+const blogPagesSeed: MarketingPageSeed[] = [
   {
     kind: "guide",
     slug: "why-ai-app-builders-burn-credits",
@@ -825,7 +1437,7 @@ export const blogPages = [
         description: "Turn this checklist into a reproducible scoring rubric.",
       },
       {
-        href: "/blog/how-to-export-ai-generated-react-app",
+        href: "/blog/export-react-app-from-ai",
         label: "Export a generated React app",
         description: "Follow the clean-room handoff workflow step by step.",
       },
@@ -939,7 +1551,7 @@ export const blogPages = [
           "Get scoring levels, evidence requirements, and a repeatable test protocol.",
       },
       {
-        href: "/blog/from-screenshot-to-production-react",
+        href: "/blog/export-react-app-from-ai",
         label: "Go from screenshot to production React",
         description:
           "Turn the visual reference into explicit product and engineering requirements.",
@@ -1046,7 +1658,7 @@ export const blogPages = [
     ],
     internalLinks: [
       {
-        href: "/blog/how-to-evaluate-ai-generated-react-code",
+        href: "/blog/how-we-verify-code",
         label: "Review the code before export",
         description: "Use the production-minded React acceptance checklist.",
       },
@@ -1166,7 +1778,355 @@ export const blogPages = [
     ],
     cta: "Build from a screenshot",
   },
-] satisfies MarketingPage[];
+  {
+    kind: "guide",
+    slug: "ai-coding-tool-comparison-with-credits",
+    title:
+      "AI Coding Tool Comparison with Credits: Decision Framework for Product Teams",
+    description:
+      "A practical framework for comparing AI coding tools by expected spend, actual cost, revision strategy, portability, and acceptance quality.",
+    h1: "AI coding tool comparison with credits",
+    intro:
+      "Credits and token behavior matter when your team is choosing between AI tools for long-lived projects. Compare on accepted output quality, visible spend signals, and repeatable recovery.",
+    summary:
+      "Use the same acceptance tests across tools: local build quality, revision safety, version rollback behavior, post-export portability, and published usage evidence.",
+    publishedAt: "2026-07-16",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "9 min read",
+    sections: [
+      {
+        title: "Spend comparisons should be outcome-based",
+        body: "A single generation call is not the real unit. Count costs against an accepted, locally runnable result that passed your release-level checks.",
+      },
+      {
+        title: "Demand clear before-run visibility",
+        body: "Tools that show expected usage before execution reduce surprises and make leadership-level forecasting possible before a project starts.",
+      },
+      {
+        title: "Compare what gets charged on retries",
+        body: "A retry or repair may change the actual cost profile significantly, so compare first successful acceptance, failed attempts, and reserve-release behavior.",
+      },
+      {
+        title: "Separate generation spend from infrastructure spend",
+        body: "Hosting, runtime, APIs, and external CI remain separate line items. Keep credit comparisons narrowly scoped to generator outcomes.",
+      },
+      {
+        title: "Check portability and governance together",
+        body: "A strong comparison includes whether the tool helps you export clean checkpoints, verify diffs, and preserve team-ready audit trails.",
+      },
+    ],
+    table: {
+      caption: "Credit comparison checklist",
+      columns: ["Question", "Best practice", "Why it matters"],
+      rows: [
+        [
+          "What is shown before generation?",
+          "Expected usage plus clear unit model",
+          "Supports intentional plan sign-off",
+        ],
+        [
+          "How are retries handled?",
+          "Transparent reserve and refund behavior",
+          "Prevents budget drift under iteration",
+        ],
+        [
+          "What is the rollback story?",
+          "Checkpoint-safe restore with preserved history",
+          "Protects delivery confidence",
+        ],
+      ],
+    },
+    faqs: [
+      {
+        question: "Should I compare token tools to credit tools directly?",
+        answer:
+          "Only when normalized to accepted outcomes. Compare units only as a secondary view.",
+      },
+      {
+        question: "Can previews hide true total project cost?",
+        answer:
+          "Yes. Track post-export deployment and runtime separately from generator spend.",
+      },
+      {
+        question: "What indicates a trustworthy pricing signal?",
+        answer:
+          "Displayed estimate, actual charge, and refund policy on save/resolve events.",
+      },
+    ],
+    cta: "Compare tools with the acceptance ledger",
+  },
+  {
+    kind: "guide",
+    slug: "export-react-app-from-ai",
+    title: "Export React App from AI: What to verify before handoff",
+    description:
+      "A practical exit checklist for AI-generated React projects, from version freeze to local verification and deployment readiness.",
+    h1: "Export React app from AI",
+    intro:
+      "Exporting is the final handoff point for real ownership. The real question is whether the output stays runnable and reviewable after it leaves the generator.",
+    summary:
+      "Use version freeze, manifest review, clean-folder installs, build checks, and diff discipline to protect team ownership.",
+    publishedAt: "2026-07-16",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "8 min read",
+    sections: [
+      {
+        title: "Freeze the version that passed acceptance",
+        body: "Complete your acceptance checks before export and capture the exact checkpoint, prompt revision, and model details with it.",
+      },
+      {
+        title: "Inspect export inventory",
+        body: "Check for source files, package manifest, scripts, runtime configuration, environment guidance, and diagnostics.",
+      },
+      {
+        title: "Move outside the builder quickly",
+        body: "Use a clean directory and avoid existing dependency caches that can hide missing outputs.",
+      },
+      {
+        title: "Run baseline commands",
+        body: "Install, typecheck, lint, and build before merging with your team codebase. Then run core interaction checks.",
+      },
+      {
+        title: "Create a recovery baseline",
+        body: "Commit a no-edit baseline commit after verification so every later modification is auditable.",
+      },
+    ],
+    table: {
+      caption: "Export verification steps",
+      columns: ["Step", "What to verify", "Pass condition"],
+      rows: [
+        [
+          "Version",
+          "Checkpoint identity and prompt context",
+          "Captured and immutable",
+        ],
+        [
+          "Install",
+          "Dependencies and package scripts",
+          "Stable install in clean directory",
+        ],
+        [
+          "Runtime",
+          "Build and route functionality",
+          "Successful local run and interactions",
+        ],
+      ],
+    },
+    faqs: [
+      {
+        question: "Do we need a clean directory?",
+        answer: "Yes. It prevents hidden workspace dependencies from masking real missing outputs.",
+      },
+      {
+        question: "Can export be considered complete without diagnostic files?",
+        answer:
+          "For production planning, include diagnostics and manifest data that explain what passed and what changed.",
+      },
+      {
+        question: "What should an exported app include for teams?",
+        answer:
+          "Source, package config, scripts, README, environment notes, and clear evidence files are minimum.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/how-we-verify-code",
+        label: "How we verify generated code",
+        description:
+          "Align export checks with the verification workflow before final handoff.",
+      },
+      {
+        href: "/benchmarks/screenshot-to-react",
+        label: "Benchmark export portability",
+        description:
+          "Use the benchmark rubric to validate how export quality survives clean-room checks.",
+      },
+      {
+        href: "/compare/squid-vs-lovable",
+        label: "Compare Squid and Lovable export workflows",
+        description:
+          "Check portability, restoration options, and ownership handoff before committing.",
+      },
+    ],
+    cta: "Create a verified export baseline",
+  },
+  {
+    kind: "guide",
+    slug: "how-we-verify-code",
+    title: "How We Verify Code: Squid’s Evidence-first Review Process",
+    description:
+      "A transparent walkthrough of Squid's verification layers from entry checks to accessibility and export readiness.",
+    h1: "How we verify code",
+    intro:
+      "Verification is a sequence, not a single pass. Squid validates file graphs, runtime behavior, interactions, and portability as part of the delivery story.",
+    summary:
+      "Follow this process to know what has passed, what still needs review, and what to test locally before shipping.",
+    publishedAt: "2026-07-16",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "7 min read",
+    sections: [
+      {
+        title: "Source graph checks",
+        body: "Resolved imports, complete file sets, and consistent exports are validated before acceptance claims.",
+      },
+      {
+        title: "Runtime and accessibility checks",
+        body: "Automated verification covers build-level issues and accessibility basics so teams can catch obvious regressions early.",
+      },
+      {
+        title: "Diff-aware verification",
+        body: "Diff scope should be readable and explainable to humans before the next milestone is accepted.",
+      },
+      {
+        title: "Review after each focused edit",
+        body: "Narrow edits are verified against unchanged areas so you can maintain local and product stability.",
+      },
+      {
+        title: "Post-export checks",
+        body: "A local clean install/build and manual interaction pass confirm that verification survives outside preview mode.",
+      },
+    ],
+    faqs: [
+      {
+        question: "What is the difference between pass and warning?",
+        answer:
+          "Warnings are often recoverable. A passed check means the project met explicit acceptance criteria.",
+      },
+      {
+        question: "How long should verification take for each project?",
+        answer:
+          "As fast as your baseline checks but strict enough to prevent silent regressions before shipping.",
+      },
+      {
+        question: "Can verification replace human QA?",
+        answer:
+          "No. It reduces risk and clarifies failure points, but human review is still needed for business logic and edge behavior.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/what-to-check-after-ai-generation",
+        label: "Post-generation acceptance checklist",
+        description:
+          "Run a practical handoff checklist before promoting an exported project.",
+      },
+      {
+        href: "/benchmarks/screenshot-to-react",
+        label: "Run the reproducible benchmark",
+        description:
+          "Validate verification outcomes against an objective, repeatable scoring protocol.",
+      },
+      {
+        href: "/compare/squid-vs-v0",
+        label: "Compare Squid and v0 verification paths",
+        description:
+          "Review how checkpoints, recovery, and export readiness differ between tools.",
+      },
+    ],
+    cta: "Run plan-mode verification",
+  },
+  {
+    kind: "guide",
+    slug: "what-to-check-after-ai-generation",
+    title: "What to Check After AI Generation: A Practical Receipt",
+    description:
+      "A post-generation runbook for accepted outputs, revisions, and safe continuation.",
+    h1: "What to check after AI generation",
+    intro:
+      "You should not move forward until you can replay the output outside the builder and confirm baseline behavior, accessibility, and business logic.",
+    summary:
+      "This guide gives a quick acceptance list that covers file integrity, interaction completeness, recovery confidence, and export quality.",
+    publishedAt: CONTENT_REVIEW_DATE,
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "7 min read",
+    sections: [
+      {
+        title: "Checkpoint and recovery first",
+        body: "Verify the generation checkpoint is saved, labeled, and recoverable before making new edits.",
+      },
+      {
+        title: "Run local validation",
+        body: "Install from exported files in clean context and run your normal build/test commands.",
+      },
+      {
+        title: "Exercise all critical interactions",
+        body: "Test navigation, form submission, filtering, and error states at intended viewport sizes.",
+      },
+      {
+        title: "Review diffs after each edit",
+        body: "A narrow change should not rewrite unrelated components, styling, or routes.",
+      },
+    ],
+    table: {
+      caption: "AI-generation handoff checklist",
+      columns: ["Area", "Required check", "Failure symptom"],
+      rows: [
+        [
+          "Files",
+          "No unresolved imports",
+          "Build errors in local preview",
+        ],
+      [
+        "Checks",
+        "Typecheck/build pass",
+        "Runtime mismatch outside preview",
+      ],
+        [
+          "Diffs",
+          "Unrelated files remain stable",
+          "Unintended side effects",
+        ],
+      ],
+    },
+    faqs: [
+      {
+        question: "How soon should checks run?",
+        answer: "Immediately after a checkpoint is accepted and before any additional user-facing edits.",
+      },
+      {
+        question: "What is the minimum confidence bar before handoff?",
+        answer:
+          "A clean install/build, stable interactions at target paths, and a documented checklist score.",
+      },
+      {
+        question: "Do we need to check export artifacts?",
+        answer:
+          "Yes. Export artifacts are the true proof of ownership once work leaves the builder.",
+      },
+    ],
+    internalLinks: [
+      {
+        href: "/blog/how-we-verify-code",
+        label: "How we verify code",
+        description:
+          "Connect this checklist to Squid&apos;s layered verification workflow.",
+      },
+      {
+        href: "/blog/export-react-app-from-ai",
+        label: "Export and verify a React app",
+        description:
+          "Use the same acceptance tests before sharing or committing an artifact.",
+      },
+      {
+        href: "/benchmarks/screenshot-to-react",
+        label: "Run the benchmark checklist",
+        description:
+          "Apply the same evidence-first protocol before each release handoff.",
+      },
+      {
+        href: "/compare/squid-vs-bolt",
+        label: "Compare Squid and Bolt revision workflows",
+        description:
+          "Evaluate how checkpoints, rollback, and export stability compare in practice.",
+      },
+    ],
+    cta: "Run the post-generation checklist",
+  },
+];
+
+export const blogPages = blogPagesSeed.map((page) =>
+  withMinimumInternalLinks(page, "guide"),
+);
 
 export const benchmarkPage: MarketingPage = {
   kind: "benchmark",
@@ -1365,6 +2325,43 @@ export const marketingPaths = [
   ...blogPages.map((page) => `/blog/${page.slug}`),
   `/benchmarks/${benchmarkPage.slug}`,
 ];
+
+export function getMarketingStarterPrompt(starter: string | null): string | null {
+  if (!starter) return null;
+
+  const cleanStarter = starter.trim();
+  if (!cleanStarter) return null;
+
+  const normalizedStarter = cleanStarter.toLowerCase();
+
+  const compareMatch = normalizedStarter.match(/^compare-(.+)$/);
+  if (compareMatch) {
+    const slug = compareMatch[1];
+    const match = comparisonPages.find((page) => page.slug === slug);
+    if (match) {
+      return `Compare ${match.h1} using Squid's full verification workflow.`;
+    }
+  }
+
+  const guideMatch = normalizedStarter.match(/^blog-(.+)$/);
+  if (guideMatch) {
+    const slug = guideMatch[1];
+    const match = blogPages.find((page) => page.slug === slug);
+    if (match) {
+      return `Explore ${match.h1} and apply this workflow in Squid.`;
+    }
+  }
+
+  const benchmarkMatch = normalizedStarter.match(/^benchmark-(.+)$/);
+  if (benchmarkMatch) {
+    const slug = benchmarkMatch[1];
+    if (benchmarkPage.slug === slug) {
+      return `${benchmarkPage.h1} is your next evaluation benchmark.`;
+    }
+  }
+
+  return null;
+}
 
 export function getMarketingPath(page: MarketingPage) {
   if (page.kind === "comparison") return `/compare/${page.slug}`;

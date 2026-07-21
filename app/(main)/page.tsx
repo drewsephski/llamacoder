@@ -6,6 +6,7 @@ import ArrowRightIcon from "@/components/icons/arrow-right";
 import Spinner from "@/components/spinner";
 import * as Select from "@radix-ui/react-select";
 import assert from "assert";
+import type { Metadata } from "next";
 import {
   Box,
   CheckIcon,
@@ -52,6 +53,7 @@ import { Macbook } from "@/components/ui/animated-3d-mac-book-air";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserCredits, useUserSession, useCreateChat } from "@/lib/queries";
+import { getMarketingStarterPrompt } from "@/lib/marketing-pages";
 import {
   FREE_PROJECT_LIMIT,
   canTierUseModel,
@@ -71,6 +73,46 @@ const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/webp",
 ]);
 const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
+const appBaseUrl = "https://squidagent.app";
+const appOgImage = `${appBaseUrl}/api/og?card=site&v=2`;
+const appHomeTitle = "Squid Agent - Research, Build, Verify, and Ship React Apps";
+const appHomeDescription =
+  "Research live web sources, plan your build, generate React apps, verify quality, recover versions, connect APIs, and export source code you own.";
+
+export const metadata: Metadata = {
+  title: appHomeTitle,
+  description: appHomeDescription,
+  alternates: { canonical: "/" },
+  keywords: [
+    "AI app builder",
+    "React code generator",
+    "React app export",
+    "AI website generator",
+    "research first coding",
+    "plan mode",
+    "AI design system",
+    "preview verification",
+  ],
+  openGraph: {
+    type: "website",
+    url: appBaseUrl,
+    title: appHomeTitle,
+    description: appHomeDescription,
+    images: [
+      {
+        url: appOgImage,
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: appHomeTitle,
+    description: appHomeDescription,
+    images: [appOgImage],
+  },
+};
 
 type BuiltWithSquidProject = {
   name: string;
@@ -381,6 +423,11 @@ const homepageControlPromises = [
     label: "Predictable spend",
     title: "Know the cost.",
     body: "See the expected credit range before a run and the actual charge afterward. Failed initial generations are not charged, and preview repairs are free.",
+  },
+  {
+    label: "Safe rollback + export",
+    title: "Verify before shipping.",
+    body: "Restore checkpoints without losing unrelated work, then export a package with manifest, quality report, and deployment guidance before continuing.",
   },
   {
     label: "Portable by design",
@@ -713,16 +760,41 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     const starter = params.get("starter");
     const importScreenshot = params.get("import") === "screenshot";
-    const suggested = SUGGESTED_PROMPTS.find(
-      (item) => item.title.toLowerCase().replace(/\s+/g, "-") === starter,
-    );
+    const promptFromQuery = params.get("prompt");
+    const planMode = params.get("plan");
+    const shouldEnablePlanMode = (() => {
+      if (!planMode) return false;
+      return ["1", "true", "high", "on", "yes"].includes(
+        planMode.toLowerCase(),
+      );
+    })();
 
-    if (suggested) {
-      setPrompt(suggested.description);
+    if (shouldEnablePlanMode) {
+      setQuality("high");
+    }
+
+    if (promptFromQuery?.trim()) {
+      setPrompt(promptFromQuery.trim());
       promptStartedAtRef.current ??= Date.now();
-      plausible("Activation Starter Selected", {
-        props: { source: "dashboard", starter: suggested.title },
-      });
+    } else if (starter) {
+      const suggested = SUGGESTED_PROMPTS.find(
+        (item) =>
+          item.title.toLowerCase().replace(/\s+/g, "-") === starter,
+      );
+
+      if (suggested) {
+        setPrompt(suggested.description);
+        promptStartedAtRef.current ??= Date.now();
+        plausible("Activation Starter Selected", {
+          props: { source: "dashboard", starter: suggested.title },
+        });
+      } else {
+        const marketingPrompt = getMarketingStarterPrompt(starter);
+        if (marketingPrompt) {
+          setPrompt(marketingPrompt);
+          promptStartedAtRef.current ??= Date.now();
+        }
+      }
     }
     if (importScreenshot) {
       window.requestAnimationFrame(() => fileInputRef.current?.click());
@@ -975,7 +1047,7 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(homepageStructuredData),
+          __html: JSON.stringify(homepageStructuredData).replace(/</g, "\\u003c"),
         }}
       />
       <style>{`
@@ -3189,6 +3261,8 @@ function LoadingMessage({
 }
 
 function HomepageLandingPagesSection() {
+  const landingCaseStudyHref = `/?plan=1&prompt=${encodeURIComponent("Build your version in 90 seconds: choose audience, style, key interactions, and success criteria before generating a verified React landing page.")}&source=${encodeURIComponent("/example")}`;
+
   return (
     <section
       aria-labelledby="homepage-landing-pages-heading"
@@ -3259,6 +3333,18 @@ function HomepageLandingPagesSection() {
               </div>
             </Link>
           ))}
+        </div>
+
+        <div className="mt-10 flex flex-col gap-5 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+            Start with a clear goal, turn on plan mode, and move into generation
+            with checkpoints for restore and export.
+          </p>
+          <Button asChild size="lg" className="whitespace-nowrap rounded-xl">
+            <Link href={landingCaseStudyHref}>
+              Build your version in 90 seconds
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

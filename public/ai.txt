@@ -5,10 +5,21 @@ https://squidagent.app/llms.txt
 
 Primary public pages:
 - https://squidagent.app/
+- https://squidagent.app/compare
+- https://squidagent.app/compare/squid-vs-bolt-for-agencies
+- https://squidagent.app/compare/squid-vs-lovable-for-startups
+- https://squidagent.app/compare/squid-vs-v0-for-design-led-teams
 - https://squidagent.app/compare/squid-vs-lovable
 - https://squidagent.app/compare/squid-vs-bolt
 - https://squidagent.app/compare/squid-vs-v0
 - https://squidagent.app/benchmarks/screenshot-to-react
+- https://squidagent.app/blog/how-to-evaluate-ai-generated-react-code
+- https://squidagent.app/blog/ai-coding-tool-comparison-with-credits
+- https://squidagent.app/blog/export-react-app-from-ai
+- https://squidagent.app/blog/how-we-verify-code
+- https://squidagent.app/blog/what-to-check-after-ai-generation
+- https://squidagent.app/gallery
+- https://squidagent.app/example
 
 Policy and trust pages:
 - https://squidagent.app/privacy

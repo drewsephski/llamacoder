@@ -57,6 +57,25 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
     { label: "Frequently asked questions", id: "faqs" },
   ];
   const structuredData = marketingStructuredData(page);
+  const hasWorkflowSteps = Boolean(page.workflow && page.workflow.length > 0);
+  const workflowStart = page.workflow?.[0];
+  const workflowEnd = page.workflow?.[page.workflow.length - 1];
+  const ctaPrompt = `Use this ${page.kind} strategy in Squid: ${page.h1}.`;
+  const ctaDefaultPrompt = `Run ${page.h1} in Squid with explicit review and verification checkpoints.`;
+  const ctaHref =
+    page.kind === "comparison"
+      ? `/?starter=${encodeURIComponent(`compare-${page.slug}`)}&source=${encodeURIComponent(path)}`
+      : page.kind === "guide"
+        ? `/?plan=1&prompt=${encodeURIComponent(ctaPrompt)}&source=${encodeURIComponent(path)}`
+        : `/?plan=1&prompt=${encodeURIComponent(ctaDefaultPrompt)}&source=${encodeURIComponent(path)}`;
+  const ctaLabel =
+    page.kind === "guide" || page.kind === "benchmark"
+      ? "Start with plan mode and verify"
+      : page.cta;
+  const guideActionBody =
+    page.kind === "guide"
+      ? "Define your acceptance criteria, confirm expected credits, lock the first checkpoint, and run through the checklist before you export."
+      : "See the expected model cost before generation, review the resulting files, and export a verified React project when it is ready.";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -127,6 +146,67 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                 Squid&apos;s implemented behavior. Benchmark and guide pages
                 separate observed product evidence from recommended practice.
               </div>
+              <section className="mt-8 border border-border/70 bg-primary/[0.04] px-6 py-7">
+                <SectionHeading
+                  label="Proof-first funnel"
+                  title="Proof signals for higher-confidence decisions"
+                  description="Use these checkpoints before committing spend."
+                />
+                <div className="mt-8 grid gap-4 md:grid-cols-3">
+                  <article className="rounded-xl border border-border p-4">
+                    <p className="font-mono text-xs uppercase text-primary">
+                      Before / After
+                    </p>
+                    <h3 className="mt-2 font-semibold">
+                      Before/after workflow
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {hasWorkflowSteps
+                        ? `${workflowStart?.title} → ${workflowEnd?.title}`
+                        : "Capture the goal, generate, review, iterate, and verify before export."}
+                    </p>
+                    <ul className="mt-3 space-y-1 text-xs leading-5 text-muted-foreground">
+                      <li>Plan and cost expectations before build</li>
+                      <li>Review checkpoints before each restore</li>
+                      <li>Export only after the acceptance script passes</li>
+                    </ul>
+                  </article>
+                  <article className="rounded-xl border border-border p-4">
+                    <p className="font-mono text-xs uppercase text-primary">
+                      Restore + Export
+                    </p>
+                    <h3 className="mt-2 font-semibold">
+                      Reversible edits and handoff
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Keep checkpoints, require scoped rollbacks, and export with
+                      manifest, quality report, and deployment instructions.
+                    </p>
+                    <ul className="mt-3 space-y-1 text-xs leading-5 text-muted-foreground">
+                      <li>One restore creates one explicit new checkpoint</li>
+                      <li>Restore history stays visible for auditability</li>
+                      <li>Export includes manifest, report, and deployment files</li>
+                    </ul>
+                  </article>
+                  <article className="rounded-xl border border-border p-4">
+                    <p className="font-mono text-xs uppercase text-primary">
+                      Spend + Artifacts
+                    </p>
+                    <h3 className="mt-2 font-semibold">
+                      Cost clarity and output traceability
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Confirm expected credits before run, compare with actual
+                      usage, and review exported files before shipping.
+                    </p>
+                    <ul className="mt-3 space-y-1 text-xs leading-5 text-muted-foreground">
+                      <li>Expected usage shown before generation</li>
+                      <li>Actual usage and refunds after completion</li>
+                      <li>Post-build artifacts checked in a clean environment</li>
+                    </ul>
+                  </article>
+                </div>
+              </section>
             </div>
           </header>
 
@@ -382,14 +462,12 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                   Build an app you can inspect, restore, and keep.
                 </h2>
                 <p className="mt-2 max-w-2xl leading-7 text-muted-foreground">
-                  See the expected model cost before generation, review the
-                  resulting files, and export a verified React project when it
-                  is ready.
+                  {guideActionBody}
                 </p>
               </div>
               <Button asChild size="lg" className="shrink-0 rounded-lg">
-                <Link href={`/?source=${encodeURIComponent(path)}`}>
-                  {page.cta}
+                <Link href={ctaHref}>
+                  {ctaLabel}
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
               </Button>

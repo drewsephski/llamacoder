@@ -17,19 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/squidagent-logo.svg",
         sizes: "any",
         type: "image/svg+xml",
-        purpose: "any",
-      },
-      {
-        src: "/icon.png",
-        sizes: "128x128",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        src: "/icon.png",
-        sizes: "128x128",
-        type: "image/png",
-        purpose: "maskable",
+        purpose: "any maskable",
       },
     ],
   };

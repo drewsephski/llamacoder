@@ -145,7 +145,7 @@ describe("generated file normalization", () => {
     ]);
   });
 
-  it("reports missing App.tsx and minimum source-file diagnostics", () => {
+  it("reports missing App.tsx diagnostics", () => {
     const files = normalizeGeneratedFiles([
       {
         path: "components/Widget.tsx",
@@ -155,7 +155,6 @@ describe("generated file normalization", () => {
 
     expect(validateGeneratedFiles(files)).toEqual([
       { message: "Missing App.tsx entry file." },
-      { message: "Generated app should contain at least 3 source files." },
     ]);
   });
 
