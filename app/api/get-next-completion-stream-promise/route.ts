@@ -278,7 +278,7 @@ const requestSchema = z.object({
 const GENERATION_COMPLETENESS_GUARD = `
 
 Generation completeness requirements:
-- Output a complete React + TypeScript app. One file is fine when sufficient; use additional files as needed.
+- Output a complete React + TypeScript app with App.tsx as a composition root. Prefer componentized structure over a monolithic App.tsx; split substantial UI pieces into supporting files.
 - Output App.tsx and supporting source files using fenced blocks like \`\`\`tsx{path=components/Widget.tsx}.
 - Do not use src/ in generated paths; files run from the sandbox root.
 - Every custom component, hook, utility, or type import must point to a file you output in this response or an existing previous generated file.

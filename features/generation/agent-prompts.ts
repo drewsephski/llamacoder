@@ -55,7 +55,7 @@ export const developerCodeGenPrompt = dedent`
   - If an integration needs secret auth, OAuth, writes, payments, email, webhooks, or private persistence, do not call it from the browser. Build an honest frontend setup state and mark runtime=server.
 
   Sandbox import contract:
-  - Output App.tsx plus at least two supporting source files using fenced blocks like \`\`\`tsx{path=components/Widget.tsx}.
+  - Output App.tsx plus at least one dedicated component file (for example, components/Header.tsx, components/Content.tsx) unless the app is truly trivial.
   - Do not use src/ in generated paths; files run from the sandbox root.
   - Every custom component, hook, utility, or type import must point to a file you output in this response or an existing previous generated file.
   - Every import style must match the target export exactly: use default imports only for default exports, named imports only for named exports.

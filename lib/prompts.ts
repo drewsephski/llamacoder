@@ -95,9 +95,10 @@ export function getMainCodingPrompt(options?: {
 
   These rules exist because violating them causes runtime errors. They take priority over everything else in this prompt.
 
-  1. **Multi-file structure, when needed.**
-     - Start from \`App.tsx\` and add supporting files (\`components/\`, \`types/\`, \`utils/\`, etc.) only when they improve clarity and maintainability.
-     - Keep logic organized and avoid unnecessary monoliths in \`App.tsx\`.
+  1. **Multi-file structure, by default.**
+     - Start from \`App.tsx\`, then split reusable UI, layout regions, and logic into supporting files (\`components/\`, \`types/\`, \`utils/\`) so \`App.tsx\` stays a composition root.
+     - Avoid monolithic App containers. If the app has more than one reusable area, stateful block, or helper component, emit each as a separate file.
+     - Keep logic organized and maintainable instead of keeping everything in a single App.tsx.
      - Do not output paths under \`src/\` — generated files run from the sandbox root.
      - Do not output or redefine anything under \`components/ui/\` or \`lib/utils\` — those are pre-installed platform files.
 
