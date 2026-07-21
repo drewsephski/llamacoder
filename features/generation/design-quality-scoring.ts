@@ -187,7 +187,7 @@ const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
     - Use subject-specific content: real names, real data, real terminology
     - Choose a page archetype that fits this specific content, not a template
     - Pick nav and footer archetypes tied to the actual information architecture
-    - Keep nav in a centered shell (`max-w-*` + `mx-auto`) with equal side gutters at desktop and collapsed/mobile breakpoints
+    - Keep nav in a centered shell (\`max-w-*\` + \`mx-auto\`) with equal side gutters at desktop and collapsed/mobile breakpoints
     - Replace every generic label ("Submit", "Click here") with a concrete action verb
   `,
   restraint: dedent`

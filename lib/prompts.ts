@@ -43,7 +43,7 @@ Guidelines:
 - Every planned import must map to either an installed package, an installed Shadcn UI module, or a file the model will generate. No other libraries or frameworks are available.
 ${generatedAppCapabilityContract}
 - Sandbox import contract: every planned JSX component, icon, helper, hook, and constant must come from an installed package, a documented Shadcn module, or a file the model will output. Never use braces for a default-only component. Never import \`LucideIcon\`. Never import \`ArrowLeft\`. Never import Heroicons-style names from Lucide. Use only the icons available in the coding prompt and alias \`Calendar as CalendarIcon\` if needed.
-  - Include a concise "Design direction" section with:
+  - include a concise "Design direction" section with:
   - Subject/audience/job/tone: identify the audience, the one job this first screen must accomplish, and a decisive tone from editorial, brutalist, soft, utilitarian, luxury, playful, technical, or austere. Fill missing context conservatively from the brief.
   - Pre-flight context: preserve existing stack signals (framework, fonts, spacing rhythm, motion dependencies, component conventions) unless user explicitly asks for a re-theme.
   - Structural archetype: choose the page shape before styling. For products, pick from workbench, split workspace, command surface, canvas + inspector, or focused single-task flow. For landing-style work, pick asymmetric marquee, long-form editorial, catalogue, comparison, quote-led, or showcase composition. Do not default to hero → three-card → CTA.
@@ -56,7 +56,9 @@ ${generatedAppCapabilityContract}
   - ${visualSystemPlanningRule}
   - ${typographyPlanningRule}
   - Contrast contract: define explicit foreground/background pairs for all major surfaces and states. Verify at least WCAG AA (4.5:1 normal text, 3:1 large text/icons/component boundaries). Aim higher where practical.
+  - Normal, helper, and placeholder text must reach 4.5:1.
   - Anti-generic check: identify the highest-entropy templated choice (especially nav/footer chrome) and replace it with one justified by the product's information architecture.
+  - centered hero → three equal feature cards → CTA
   - Content integrity: identify user-supplied facts (proofs, metrics, logos, testimonials, claims). Never invent proof content or replace missing facts with placeholders.
   - Motion/copy notes: name one interaction sequence that carries motion and define tone for labels in action, empty, and error states.
   - Product states: plan realistic loading, empty, error, success, disabled, hover, active, and focus-visible states for the core workflow.
@@ -262,7 +264,11 @@ export function getMainCodingPrompt(options?: {
     - If the brief is loud cultural/editorial, keep Carnival-style options for loud duo-tone and hard shadows when it matches the content domain.
      - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
       - Before coding, confirm whether the structure/nav/footer palette differs from the last generated build when relevant.
-      - Build a centered shell (`max-w-*` + `mx-auto` + symmetric horizontal padding) before styling nav variants; if links are not centered, keep the nav container centered and align items intentionally within it.
+     - Build a centered shell (\`max-w-*\` + \`mx-auto\` + symmetric horizontal padding) before styling nav variants; if links are not centered, keep the nav container centered and align items intentionally within it.
+     - **Nav layout preflight (mandatory before writing JSX):**
+       - Declare: desktop shell max-width class, side padding class, desktop alignment (centered/left/right), mobile collapse rule, and fallback behavior at 320/375/414/768.
+       - Confirm links remain in a single bounded container rather than drifting into unconstrained edge lock.
+       - If the nav has more than four primary items, switch from inline link bar to a safe alternative archetype and keep the first action discoverable.
       - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet. Consider whether a shader background, 3D element, particle effect, or parallax scroll would serve as that signature for this subject.
       - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
      - *Proof policy*: separate user-supplied facts from illustrative interface content. Never invent metrics, customer logos, testimonials, awards, case-study results, or quantitative claims to make a layout look complete.
@@ -276,8 +282,11 @@ export function getMainCodingPrompt(options?: {
      - Every card the same size, same icon-above-heading pattern, repeated in a grid.
      - Rounded card with a thick colored border on one side as a generic accent.
      - Centered promise-copy hero followed by three equal feature cards and a generic CTA strip.
+     - centered hero → three equal feature cards → CTA (or any equivalent repeatable pattern) should be treated as a reusable template default and replaced unless the brief explicitly calls for it.
+     - centered hero → three equal feature cards → CTA
      - Wordmark-left nav with four generic links and a button, or a four-column corporate footer, when the actual information architecture does not require them.
-     - Left-anchored logo + link blocks that sit in an unconstrained full-width header instead of a centered `max-w` + `mx-auto` shell.
+     - Left-anchored logo + link blocks that sit in an unconstrained full-width header instead of a centered \`max-w\` + \`mx-auto\` shell.
+     - Header/nav wrappers that are full-width only, with no shell width clamp, no equal edge gutters, or no responsive breakpoint fallback plan.
      - Eyebrow labels above every section, especially decorative all-caps labels or a label beside a heading.
      - Pills, glass panels, soft shadows, and rounded rectangles applied to nearly every surface.
      - Fake browser, phone, terminal, code-window, or IDE chrome drawn around content that could stand on its own.
@@ -369,6 +378,8 @@ export function getMainCodingPrompt(options?: {
   19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?
   20. Does every meaningful control expose all relevant explicit UI states (hover, active, focus-visible, disabled, loading, success, error), and are any necessary labels kept one-line at mobile widths?
      21. If the selected tone is brutalist, is the page using an edge-forward register (heavy borders/clear rhythm, minimal ornament, restrained rounded corners) with no glow-first motion and no decorative hover choreography across all controls?
+     22. For nav layout, was a preflight recorded before JSX? Specifically: max-width shell, padding class, breakpoints tested, and centered shell behavior preserved on 320/375/414/768 without drifting edge lock?
+     23. Did nav and footer avoid full-width unconstrained patterns with no anti-overflow or no horizontal alignment constraints?
   ${designEmphasis ? `\n${designEmphasis}\n` : ""}
   `;
 
