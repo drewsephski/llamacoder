@@ -94,7 +94,10 @@ import {
   getSelectedProvidersNeedingPurpose,
   enforceRequestedPersistenceProvider,
 } from "@/features/integrations/generation-contract";
-import { buildPlanModeFallbackInterview } from "@/features/generation/mode-policy";
+import {
+  buildPlanModeFallbackInterview,
+  shouldAskPersistenceQuestion,
+} from "@/features/generation/mode-policy";
 import {
   CHAT_URL_SYSTEM_GUARD,
   buildChatUrlContext,
@@ -769,6 +772,50 @@ export async function POST(req: Request) {
           const conversationHasCode = rawMessages.some(
             (candidate) => getStoredGeneratedFiles(candidate).length > 0,
           );
+          const isConfiguredSupabaseValue =
+            (value: unknown): value is string =>
+              typeof value === "string" && value.trim().length > 0;
+          const needsPersistenceBackendForProject =
+            finalSpec.dataPersistence.detected &&
+            finalSpec.dataPersistence.recommendation !== "prototype" &&
+            finalSpec.dataPersistence.status !== "connect_declined";
+          const connectedSupabaseBinding = needsPersistenceBackendForProject
+            ? await prisma.projectIntegration.findFirst({
+                where: {
+                  chatId: message.chatId,
+                  providerId: "supabase",
+                  connection: { userId: session.user.id },
+                },
+                orderBy: { environment: "asc" },
+              })
+            : null;
+          const connectedSupabaseConfig =
+            connectedSupabaseBinding?.config &&
+            typeof connectedSupabaseBinding.config === "object" &&
+            !Array.isArray(connectedSupabaseBinding.config)
+              ? (connectedSupabaseBinding.config as Record<string, unknown>)
+              : null;
+          const isSupabaseProjectProvisioned =
+            connectedSupabaseBinding?.status === "ready" &&
+            isConfiguredSupabaseValue(connectedSupabaseConfig?.supabaseProjectUrl) &&
+            isConfiguredSupabaseValue(connectedSupabaseConfig?.supabaseAnonKey);
+          const needsPersistenceBackend = (state: AppSpec) =>
+            state.dataPersistence.detected &&
+            state.dataPersistence.recommendation !== "prototype" &&
+            state.dataPersistence.status !== "connect_declined";
+          const needsSupabaseProjectSetup =
+            needsPersistenceBackend(finalSpec) &&
+            !isSupabaseProjectProvisioned;
+          const providersNeedingPurpose = getSelectedProvidersNeedingPurpose(
+            finalSpec,
+            connectedIntegrationSelection.providerIds,
+          );
+          const shouldAskPersistencePreflight = shouldAskPersistenceQuestion(
+            finalSpec,
+            {
+              force: needsSupabaseProjectSetup,
+            },
+          );
           const initialPlanInterviewRequired =
             planMode &&
             !conversationHasCode &&
@@ -779,15 +826,13 @@ export async function POST(req: Request) {
             agentMetadata?.kind !== "agent_plan_approval";
 
           let agentAction: AgentAction;
-          const buildFallbackInterview = () => {
+          const buildFallbackInterview = (options?: { force?: boolean }) => {
             const fallback = buildPlanModeFallbackInterview({
               messageId,
               prompt: latestUserContent,
               spec: finalSpec,
-              providersNeedingPurpose: getSelectedProvidersNeedingPurpose(
-                finalSpec,
-                connectedIntegrationSelection.providerIds,
-              ),
+              providersNeedingPurpose,
+              options,
             });
             if (fallback.action === "interview") {
               finalSpec = {
@@ -806,10 +851,6 @@ export async function POST(req: Request) {
           const enforceSelectedApiPurpose = (action: AgentAction) => {
             if (!planMode) return action;
 
-            const providersNeedingPurpose = getSelectedProvidersNeedingPurpose(
-              finalSpec,
-              connectedIntegrationSelection.providerIds,
-            );
             if (
               providersNeedingPurpose.length === 0 ||
               (action.action !== "generate_code" &&
@@ -821,8 +862,20 @@ export async function POST(req: Request) {
 
             return buildFallbackInterview();
           };
-          const enforceModePolicy = (action: AgentAction): AgentAction => {
+          const enforceModePolicy = (
+            action: AgentAction,
+            options?: { allowInterview?: boolean },
+          ): AgentAction => {
+            if (shouldAskPersistencePreflight) {
+              return buildFallbackInterview({
+                force: needsSupabaseProjectSetup,
+              });
+            }
+
             if (!planMode) {
+              if (options?.allowInterview && action.action === "interview") {
+                return action;
+              }
               return action.action === "interview" ||
                 action.action === "clarify" ||
                 action.action === "present_plan"
@@ -831,14 +884,14 @@ export async function POST(req: Request) {
             }
 
             const purposeGuardedAction = enforceSelectedApiPurpose(action);
-            if (
-              (purposeGuardedAction.action === "interview" ||
-                purposeGuardedAction.action === "clarify") &&
-              (purposeGuardedAction.request.steps.length < 3 ||
-                purposeGuardedAction.request.steps.length > 5)
-            ) {
-              return buildFallbackInterview();
-            }
+              if (
+                (purposeGuardedAction.action === "interview" ||
+                  purposeGuardedAction.action === "clarify") &&
+                (purposeGuardedAction.request.steps.length < 3 ||
+                  purposeGuardedAction.request.steps.length > 5)
+              ) {
+                return buildFallbackInterview();
+              }
             if (
               initialPlanInterviewRequired &&
               purposeGuardedAction.action !== "interview"
@@ -888,9 +941,11 @@ export async function POST(req: Request) {
           } else if (shouldAnswerWithoutCode(latestUserContent)) {
             agentAction = { action: "answer" };
           } else if (!planMode) {
-            // Direct mode is deterministic: generate immediately. Selected
-            // APIs are mandatory context and never introduce an interview.
-            agentAction = { action: "generate_code" };
+            // Direct mode is deterministic, except when explicit persistence
+            // intent requires a preflight interview before code generation.
+            agentAction = shouldAskPersistencePreflight
+              ? buildFallbackInterview()
+              : { action: "generate_code" };
           } else {
             const orchestrationModel = FREE_MODEL;
             const orchestrationReasoning = getOpenRouterReasoningSelection(
@@ -919,7 +974,7 @@ export async function POST(req: Request) {
                 6_000,
               );
 
-              const orchestrationResult = await generateText({
+            const orchestrationResult = await generateText({
                 model: createOpenRouterModel(openrouter, orchestrationModel, {
                   maxTokens: 1_200,
                   usage: { include: true },
@@ -1042,6 +1097,9 @@ export async function POST(req: Request) {
 
               agentAction = enforceModePolicy(
                 enforceServerResearchPolicy(agentAction),
+                {
+                  allowInterview: shouldAskPersistencePreflight,
+                },
               );
 
               await orchestrationTelemetry.record({
@@ -1057,14 +1115,19 @@ export async function POST(req: Request) {
                 "Agent routing failed; applying deterministic mode fallback:",
                 getAIErrorMessage(error),
               );
-              agentAction = planMode
-                ? buildFallbackInterview()
+                agentAction = planMode
+                ? buildFallbackInterview({
+                    force: needsSupabaseProjectSetup,
+                  })
                 : { action: "generate_code" };
             }
           }
 
           const modeGuardedAction = enforceModePolicy(
             enforceServerResearchPolicy(agentAction),
+            {
+              allowInterview: shouldAskPersistencePreflight,
+            },
           );
           if (modeGuardedAction !== agentAction) {
             agentAction = modeGuardedAction;

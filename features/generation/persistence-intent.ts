@@ -321,6 +321,19 @@ const NEGATIVE_DECLINE_PATTERNS = [
   /\bdon't need real data\b/i,
 ];
 
+const EXPLICIT_PERSISTENCE_PATTERNS = [
+  /\buse\s+(?:a\s+)?supabase\b/i,
+  /\bconnect\b[^\n]{0,80}\bsupabase\b/i,
+  /\bsupabase\b[^\n]{0,80}\b(project|database|db|auth|authentication|backend|storage)\b/i,
+  /\bpostgres(?:ql)?\b[^\n]{0,80}\b(database|backend|auth|project)\b/i,
+  /\b(database|db)\b[^\n]{0,80}\b(needed|required|persistent|persistence)\b/i,
+];
+
+const EXPLICIT_PERSISTENCE_DECLINE_PATTERNS = [
+  /\b(no|without|do\s*not|don't)\s+(?:a\s+)?(?:supabase|postgres(?:ql)?|database|db)\b/i,
+  /\bkeep\s+(?:it\s+)?(local|mock|prototype)\b/i,
+];
+
 function normalize(value: string) {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -405,6 +418,31 @@ export function detectPersistenceIntentFromText(
     },
   );
 
+  const explicitPersistenceRequest = EXPLICIT_PERSISTENCE_PATTERNS.some((pattern) =>
+    pattern.test(normalized),
+  );
+  const explicitPersistenceDecline = EXPLICIT_PERSISTENCE_DECLINE_PATTERNS.some(
+    (pattern) => pattern.test(normalized),
+  );
+
+  if (explicitPersistenceRequest && !explicitPersistenceDecline) {
+      return dataPersistenceIntentSchema.parse({
+        detected: true,
+        confidence: clampScore(Math.max(84, best.score + 20)),
+        recommendation: "require_database",
+        explicitlyRequested: true,
+        useCase:
+          best.id === "generic"
+            ? "Supabase-backed app flow"
+            : best.label,
+      reason: best.reasons.length
+        ? `Explicit persistence intent detected: ${mergeReasons(best.reasons)}`
+        : "The request explicitly asks for a Supabase/database-backed workflow, so persistence is required.",
+      status: "not_prompted",
+      proposedSchema: best.score > 45 ? best.schema : [],
+    });
+  }
+
   const detected = best.score >= 58;
   const hasLifecycleSignal =
     /\b(track|status|assign|move|close|resolve|publish|task|order|stage)\b/i.test(
@@ -435,14 +473,15 @@ export function detectPersistenceIntentFromText(
       ? "Workflow data tracking"
       : "Prototype data";
 
-  return dataPersistenceIntentSchema.parse({
-    detected: shouldPersist,
-    confidence,
-    recommendation,
-    useCase,
-    reason:
-      shouldPersist && best.reasons.length
-        ? mergeReasons(best.reasons)
+      return dataPersistenceIntentSchema.parse({
+        detected: shouldPersist,
+        confidence,
+        recommendation,
+        explicitlyRequested: false,
+        useCase,
+        reason:
+          shouldPersist && best.reasons.length
+            ? mergeReasons(best.reasons)
         : hasLifecycleSignal
           ? "Lifecycle verbs and state terms were present, but intent confidence is below the persistence threshold."
           : "The request reads like a static or one-off UI/task surface.",

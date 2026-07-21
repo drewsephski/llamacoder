@@ -15,28 +15,44 @@ function summarizePrompt(prompt: string) {
     : `“${normalized.slice(0, 87).trimEnd()}...”`;
 }
 
-function buildPersistenceDecisionStep(
+export function shouldAskPersistenceQuestion(
   spec: AppSpec,
-): ClarificationRequest["steps"] {
+  options?: {
+    force?: boolean;
+  },
+): boolean {
   const intent = spec.dataPersistence;
   const hasAlreadySelectedPersistenceProvider = spec.integrations.some(
     (integration) => integration.providerId === "supabase",
   );
-  const shouldAskPersistenceQuestion =
-    !hasAlreadySelectedPersistenceProvider &&
-    intent.detected &&
-    intent.status === "not_prompted" &&
-    intent.recommendation !== "prototype";
 
-  if (!shouldAskPersistenceQuestion) {
+  return (
+    (options?.force || !hasAlreadySelectedPersistenceProvider) &&
+    intent.detected &&
+    intent.status !== "connect_declined" &&
+    intent.recommendation !== "prototype" &&
+    (options?.force || intent.status === "not_prompted")
+  );
+}
+
+export function buildPersistenceDecisionStep(
+  spec: AppSpec,
+  options?: { force?: boolean },
+): ClarificationRequest["steps"] {
+  const intent = spec.dataPersistence;
+  const shouldAsk = shouldAskPersistenceQuestion(spec, options);
+  if (!shouldAsk) {
     return [];
   }
 
   const appSummary = summarizePrompt(spec.overview.purpose || "this app");
+  const wasExplicitlyRequested = intent.explicitlyRequested === true;
+  const requiresDirectSupabaseAsk =
+    wasExplicitlyRequested || intent.recommendation === "require_database";
   const shouldConnectLabel =
     intent.recommendation === "require_database"
-      ? "Use real database (Recommended)"
-      : "Use real database now (Recommended)";
+      ? "Yes, connect Supabase now"
+      : "Yes, use a real backend now";
 
   const schemaLine =
     intent.proposedSchema.length > 0
@@ -44,32 +60,51 @@ function buildPersistenceDecisionStep(
           .map((entity) => entity.entity)
           .join(", ")}.`
       : "";
+  const requestLine = wasExplicitlyRequested
+    ? `You asked for a backend-capable build for ${appSummary}.`
+    : `This app is likely to need persistence for ${appSummary}.`;
 
   return [
     {
       id: "data-persistence-connect",
-      title: "How should records be persisted?",
-      description:
-        `We detected a recurring data record model for ${appSummary}. ${schemaLine} ${describePersistenceIntent(intent)} Choose the persistence strategy now.`.trim(),
+      title: requiresDirectSupabaseAsk
+        ? "Connect Supabase to continue"
+        : "Backend needed for this request?",
+      description: requiresDirectSupabaseAsk
+        ? `${requestLine} ${schemaLine} ${describePersistenceIntent(intent)} Connect Supabase to keep persistence and auth in-scope.`
+            .trim()
+        : `This app appears to need persisted records for ${appSummary}. ${schemaLine} ${describePersistenceIntent(intent)} Choose the persistence strategy now.`.trim(),
       options: [
         {
           id: "connect-db-now",
           label: shouldConnectLabel,
-          description:
-            "Use a real backend store so records survive refreshes, support multiple users, and enable future query/edit/history patterns.",
+          description: requiresDirectSupabaseAsk
+            ? "Link Supabase and generate the project with live database-backed auth, storage, and project setup guidance."
+            : "Use a real backend store so records survive refreshes, support multiple users, and enable future query/edit/history patterns.",
         },
-        {
-          id: "prototype-local-only",
-          label: "Prototype locally first",
-          description:
-            "Keep local state for v1, but keep a clear upgrade path to a real database in the plan.",
-        },
-        {
-          id: "defer-db-planning",
-          label: "Defer persistence design",
-          description:
-            "Do not add storage assumptions yet; keep the app shape and wire persistence later.",
-        },
+        ...(!requiresDirectSupabaseAsk
+          ? [
+              {
+                id: "prototype-local-only",
+                label: "Prototype locally first",
+                description:
+                  "Keep local state for v1, but keep a clear upgrade path to a real database in the plan.",
+              },
+              {
+                id: "defer-db-planning",
+                label: "Defer persistence design",
+                description:
+                  "Do not add storage assumptions yet; keep the app shape and wire persistence later.",
+              },
+            ]
+          : [
+              {
+                id: "prototype-local-only",
+                label: "Build without backend for now",
+                description:
+                  "Generate a frontend-only MVP and add persistence later with the same prompt. You can connect Supabase in the next pass when you’re ready.",
+              },
+            ]),
       ],
     },
   ];
@@ -80,15 +115,19 @@ export function buildPlanModeFallbackInterview({
   prompt,
   spec,
   providersNeedingPurpose,
+  options,
 }: {
   messageId: string;
   prompt: string;
   spec: AppSpec;
   providersNeedingPurpose: IntegrationProvider[];
+  options?: {
+    force?: boolean;
+  };
 }): AgentAction {
   const appSummary = summarizePrompt(prompt);
   const steps: ClarificationRequest["steps"] = [];
-  steps.push(...buildPersistenceDecisionStep(spec));
+  steps.push(...buildPersistenceDecisionStep(spec, options));
 
   if (providersNeedingPurpose.length > 0) {
     steps.push(

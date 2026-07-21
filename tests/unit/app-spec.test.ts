@@ -104,6 +104,7 @@ describe("mergeSpecUpdate", () => {
         detected: true,
         confidence: 88,
         recommendation: "require_database",
+        explicitlyRequested: true,
         status: "connect_confirmed",
         reason: "Track customers through lifecycle",
         useCase: "CRM / sales pipeline",

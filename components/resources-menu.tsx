@@ -13,49 +13,64 @@ import {
   Info,
   LifeBuoy,
   Scale,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-export const resourceLinks = [
+type ResourceLink = {
+  href: string;
+  label: string;
+  shortLabel?: string;
+  description: string;
+  icon: LucideIcon;
+};
+
+export const resourceLinks: ResourceLink[] = [
   {
     href: "/docs",
     label: "Documentation",
+    shortLabel: "Docs",
     description: "Product guides and reference",
     icon: FileText,
   },
   {
     href: "/blog",
     label: "Blog",
+    shortLabel: "Blog",
     description: "Practical guides for generated React",
     icon: BookOpen,
   },
   {
     href: "/compare",
     label: "Comparisons",
-    description: "Squid and other AI app builders",
+    shortLabel: "Compare",
+    description: "Squid vs other AI app builders",
     icon: Scale,
   },
   {
     href: "/benchmarks",
     label: "Benchmarks",
+    shortLabel: "Benchmarks",
     description: "Transparent screenshot-to-React tests",
     icon: BarChart3,
   },
   {
     href: "/what-is-squid-agent",
     label: "What is Squid Agent?",
+    shortLabel: "About",
     description: "Disambiguation and product identity overview",
     icon: Info,
   },
   {
     href: "/contact",
     label: "Support",
+    shortLabel: "Help",
     description: "Get help or send feedback",
     icon: LifeBuoy,
   },
-] as const;
+];
 
 type ResourcesMenuProps = {
   align?: "center" | "end";
@@ -227,8 +242,8 @@ export function MobileResourcesList({
       <p className="px-2 pb-1 pt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         Resources
       </p>
-      <nav aria-label="Resources">
-        <ul className="grid grid-cols-2 gap-1">
+      <nav aria-label="Mobile resources">
+        <ul className="grid gap-2">
           {resourceLinks.map((link) => {
             const Icon = link.icon;
 
@@ -237,14 +252,15 @@ export function MobileResourcesList({
                 <Link
                   href={link.href}
                   onClick={onNavigate}
-                  className="flex min-h-12 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-foreground transition-[background-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary active:translate-y-px motion-reduce:transition-colors"
+                  className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground transition-[background-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary active:translate-y-px motion-reduce:transition-colors"
+                  aria-label={link.label}
                 >
                   <Icon
                     className="size-4 shrink-0 text-muted-foreground"
                     strokeWidth={1.75}
                     aria-hidden="true"
                   />
-                  {link.label}
+                  <span className="min-w-0 truncate">{link.shortLabel ?? link.label}</span>
                 </Link>
               </li>
             );

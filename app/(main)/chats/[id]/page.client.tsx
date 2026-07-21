@@ -822,6 +822,19 @@ export default function PageClient({ chat }: { chat: Chat }) {
     [chat.id, chat.model, router, streamPromise],
   );
 
+  const openSupabaseConnectFlow = useCallback(() => {
+    const connectUrl =
+      `/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(chat.id)}&environment=development`;
+    const popup = window.open(connectUrl, "_blank", "noopener,noreferrer");
+    if (!popup) {
+      window.location.assign(connectUrl);
+    }
+  }, [chat.id]);
+
+  const handlePersistenceConnectChoice = (answers: ClarificationAnswers) => {
+    return answers["data-persistence-connect"]?.includes("connect-db-now");
+  };
+
   const handleClarificationComplete = useCallback(
     async (request: ClarificationRequest, answers: ClarificationAnswers) => {
       const summary = formatClarificationAnswers(request, answers);
@@ -830,6 +843,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
         ...summary.map((item) => `- ${item.label}: ${item.value}`),
       ].join("\n");
 
+      if (handlePersistenceConnectChoice(answers)) {
+        openSupabaseConnectFlow();
+      }
+
       await continueAgentConversation(content, {
         kind: "agent_clarification_response",
         requestId: request.id,
@@ -837,7 +854,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         summary,
       });
     },
-    [continueAgentConversation],
+    [continueAgentConversation, openSupabaseConnectFlow],
   );
 
   const handleInterviewComplete = useCallback(
@@ -848,6 +865,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
         ...summary.map((item) => `- ${item.label}: ${item.value}`),
       ].join("\n");
 
+      if (handlePersistenceConnectChoice(answers)) {
+        openSupabaseConnectFlow();
+      }
+
       await continueAgentConversation(content, {
         kind: "agent_interview_response",
         requestId: request.id,
@@ -855,7 +876,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         summary,
       });
     },
-    [continueAgentConversation],
+    [continueAgentConversation, openSupabaseConnectFlow],
   );
 
   const handlePlanApprove = useCallback(

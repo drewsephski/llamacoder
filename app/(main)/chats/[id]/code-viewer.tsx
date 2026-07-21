@@ -333,6 +333,7 @@ export default function CodeViewer({
   const [previewTestReport, setPreviewTestReport] =
     useState<RuntimeVerificationReport | null>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [showSupabaseEnvDialog, setShowSupabaseEnvDialog] = useState(false);
 
   useEffect(() => {
     setVerifiedExportStatus(
@@ -465,7 +466,8 @@ export default function CodeViewer({
   const showSupabaseConnectCta =
     !disabledControls &&
     !!chat.userId &&
-    parsedAppSpec?.dataPersistence.recommendation === "require_database";
+    parsedAppSpec?.dataPersistence.detected === true &&
+    parsedAppSpec?.dataPersistence.status !== "connect_declined";
   const integrationWorkspaceQuery = useQuery({
     queryKey: ["project-integrations", chat.id],
     enabled: showSupabaseConnectCta,
@@ -474,6 +476,17 @@ export default function CodeViewer({
         `/api/projects/${chat.id}/integrations`,
         integrationWorkspaceSchema,
       ),
+    refetchInterval: (query) => {
+      const workspace = query.state.data;
+      if (!workspace) return false;
+      return workspace.recentOperations.some(
+        (operation) =>
+          operation.kind === "supabase_provision" &&
+          operation.status === "running",
+      )
+        ? 3_000
+        : false;
+    },
   });
   const supabaseIntegration =
     integrationWorkspaceQuery.data?.integrations.find(
@@ -488,6 +501,19 @@ export default function CodeViewer({
   const isSupabaseProvisioned = supabaseIntegration
     ? isSupabaseProjectProvisioned(supabaseIntegration)
     : false;
+  const isSupabaseProvisioningOperation = useMemo(
+    () =>
+      Boolean(
+        supabaseIntegration &&
+          integrationWorkspaceQuery.data?.recentOperations.some(
+            (operation) =>
+              operation.projectIntegrationId === supabaseIntegration.id &&
+              operation.kind === "supabase_provision" &&
+              operation.status === "running",
+          ),
+      ),
+    [integrationWorkspaceQuery.data?.recentOperations, supabaseIntegration?.id],
+  );
   const supabaseProjectUrl = supabaseIntegration
     ? getIntegrationConfigValue(supabaseIntegration, "supabaseProjectUrl")
     : null;
@@ -524,6 +550,8 @@ export default function CodeViewer({
         description: error instanceof Error ? error.message : undefined,
       }),
   });
+  const isSupabaseProvisioning =
+    supabaseProvisionMutation.isPending || isSupabaseProvisioningOperation;
 
   const copySupabaseEnvVars = async () => {
     if (!supabaseEnvVars) return;
@@ -536,17 +564,33 @@ export default function CodeViewer({
         // fall through to fallback
       }
     }
-    const copied = window.prompt(
-      "Clipboard not available. Copy this and save into .env.local:",
-      supabaseEnvVars,
-    );
-    if (copied !== null) {
-      toast.success("Environment variables are available in the dialog for copy");
-    } else {
-      toast.error("Clipboard unavailable", {
-        description: "Paste values manually from the dialog text.",
-      });
+    toast.error("Clipboard unavailable", {
+      description: "Use the Download button to save these values.",
+    });
+  };
+  const downloadSupabaseEnvVars = () => {
+    if (!supabaseEnvVars) return;
+    const blob = new Blob([supabaseEnvVars], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = ".env.local";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    toast.success("Downloaded Supabase variables", {
+      description: "Saved to .env.local for local development setup.",
+    });
+  };
+  const openSupabaseEnvDialog = () => {
+    if (!supabaseEnvVars) {
+      toast.error("Environment variables are not ready yet");
+      return;
     }
+    setShowSupabaseEnvDialog(true);
   };
   const selectValue = disabledControls
     ? undefined
@@ -834,7 +878,8 @@ export default function CodeViewer({
               !integrationWorkspaceQuery.isError &&
               !integrationWorkspaceQuery.isFetching &&
               isSupabaseReady &&
-              !isSupabaseProvisioned && (
+              !isSupabaseProvisioned &&
+              !isSupabaseProvisioning && (
                 <Button
                   size="sm"
                   variant="secondary"
@@ -852,7 +897,19 @@ export default function CodeViewer({
               !integrationWorkspaceQuery.isError &&
               !integrationWorkspaceQuery.isFetching &&
               isSupabaseReady &&
-              isSupabaseProvisioned && (
+              isSupabaseProvisioning && (
+                <Button size="sm" variant="secondary" disabled>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Provisioning Supabase project
+                </Button>
+              )}
+            {showSupabaseConnectCta &&
+              !integrationWorkspaceQuery.isLoading &&
+              !integrationWorkspaceQuery.isError &&
+              !integrationWorkspaceQuery.isFetching &&
+              isSupabaseReady &&
+              isSupabaseProvisioned &&
+              !isSupabaseProvisioning && (
                 <>
                   {supabaseProjectUrl && (
                     <Button asChild size="sm" variant="secondary">
@@ -868,9 +925,9 @@ export default function CodeViewer({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => void copySupabaseEnvVars()}
+                    onClick={openSupabaseEnvDialog}
                   >
-                    Copy environment variables
+                    Supabase Environment Variables
                   </Button>
                 </>
               )}
@@ -1242,6 +1299,52 @@ export default function CodeViewer({
                 {" · "}Output directory:{" "}
                 <code className="rounded bg-muted px-1.5 py-0.5">dist</code>
               </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showSupabaseEnvDialog}
+        onOpenChange={setShowSupabaseEnvDialog}
+      >
+        <DialogContent size="workspace" className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Supabase environment variables</DialogTitle>
+            <DialogDescription>
+              Add these values to <code>.env.local</code> to connect your
+              generated app to the provisioned project.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label
+              htmlFor="supabase-env-vars"
+              className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              Copy/Paste values
+            </label>
+            <textarea
+              id="supabase-env-vars"
+              readOnly
+              value={supabaseEnvVars ?? ""}
+              className="h-40 min-h-40 w-full resize-none rounded-lg border border-input bg-background p-3 font-mono text-sm text-foreground outline-none"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                size="sm"
+                onClick={() => void copySupabaseEnvVars()}
+                disabled={!supabaseEnvVars}
+              >
+                Copy to clipboard
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={downloadSupabaseEnvVars}
+                disabled={!supabaseEnvVars}
+              >
+                Download .env.local
+              </Button>
             </div>
           </div>
         </DialogContent>

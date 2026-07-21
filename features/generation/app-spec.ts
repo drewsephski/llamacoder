@@ -61,6 +61,7 @@ export const dataPersistenceIntentSchema = z.object({
     .default("prototype"),
   useCase: z.string().optional(),
   reason: z.string().optional(),
+  explicitlyRequested: z.boolean().default(false),
   status: z
     .enum(["not_prompted", "connect_confirmed", "connect_declined"])
     .default("not_prompted"),
