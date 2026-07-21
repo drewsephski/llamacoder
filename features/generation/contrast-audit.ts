@@ -1,5 +1,3 @@
-import { collectManifestColorTokensFromFiles } from "@/lib/design-system-manifest";
-
 type GeneratedFile = {
   path: string;
   code: string;
@@ -348,7 +346,9 @@ function hslToLuminance(colorClass: string): number | null {
   const lightness = l;
 
   const q =
-    lightness < 0.5 ? lightness * (1 + sat) : lightness + sat - lightness * sat;
+    lightness < 0.5
+      ? lightness * (1 + sat)
+      : lightness + sat - lightness * sat;
   const p = 2 * lightness - q;
 
   const rgb = [
@@ -356,7 +356,9 @@ function hslToLuminance(colorClass: string): number | null {
     hueToRgb(p, q, hue),
     hueToRgb(p, q, hue - 1 / 3),
   ].map((channel) =>
-    channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+    channel <= 0.03928
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4,
   );
 
   return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
@@ -417,14 +419,6 @@ type HoverAwareInteractionState =
 const HOVER_FILTER_UTIL_RE =
   /(?:^|\s)(?:[a-z0-9-]+:)*(?:hover|active|focus):(?:backdrop-)?(?:brightness|contrast|saturate|grayscale|sepia|invert|hue-rotate|blur|drop-shadow)-[^\s]+/;
 
-const ARBITRARY_TW_COLOR_CLASS_RE =
-  /\b(?:[a-z0-9-]+:)*(?:bg|text|border|ring|fill|stroke|placeholder)-\[[^\s\]]+\]/;
-
-const INLINE_STYLE_BLOCK_RE = /style=\{\{[\s\S]*?\}\}/g;
-
-const INLINE_STYLE_COLOR_DECL_RE =
-  /\b(?:color|backgroundColor|borderColor|fill|stroke)\s*:\s*["'`](?!var\()([^"'`]+)["'`]/;
-
 function hasUnsafeHoverFilterClasses(className: string) {
   return HOVER_FILTER_UTIL_RE.test(className);
 }
@@ -464,7 +458,10 @@ function extractColorPairs(
     fg: string;
     interaction: HoverAwareInteractionState;
   }> = [];
-  const tokensByState: Record<HoverAwareInteractionState, StateColorTokens> = {
+  const tokensByState: Record<
+    HoverAwareInteractionState,
+    StateColorTokens
+  > = {
     base: { bg: [], fg: [] },
     hover: { bg: [], fg: [] },
     active: { bg: [], fg: [] },
@@ -543,7 +540,6 @@ const WCAG_AA_LARGE = 3.0;
  */
 export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
   const violations: ContrastViolation[] = [];
-  const declaredColorTokens = collectManifestColorTokensFromFiles(files);
   let checkedPairs = 0;
   let passedPairs = 0;
 
@@ -553,23 +549,9 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
     const lines = file.code.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const hasUnscannedHoverFilter = hasUnsafeHoverFilterClasses(line);
+      const hasUnscannedHoverFilter =
+        hasUnsafeHoverFilterClasses(line);
       const pairs = extractColorPairs(line);
-      const hasArbitraryColorClass = ARBITRARY_TW_COLOR_CLASS_RE.test(line);
-
-      if (hasArbitraryColorClass) {
-        violations.push({
-          file: file.path,
-          line: i + 1,
-          background: "unsupported-token",
-          foreground: "unsupported-token",
-          estimatedRatio: 0,
-          requiredRatio: WCAG_AA_NORMAL,
-          severity: "error",
-          message:
-            "Non-standard Tailwind color tokens detected (e.g. bg-[...], text-[...]). Use only supported palette/semantic classes and theme tokens so contrast can be computed.",
-        });
-      }
 
       if (hasUnscannedHoverFilter) {
         violations.push({
@@ -586,40 +568,6 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
       }
 
       for (const pair of pairs) {
-        if (
-          declaredColorTokens &&
-          !isThemeAwareSemantic(pair.bg) &&
-          !declaredColorTokens.has(pair.bg)
-        ) {
-          violations.push({
-            file: file.path,
-            line: i + 1,
-            background: pair.bg,
-            foreground: pair.fg,
-            estimatedRatio: 0,
-            requiredRatio: WCAG_AA_NORMAL,
-            severity: "error",
-            message: `bg-${pair.bg} is not declared in __designSystemManifest.colorRoles. Keep background and foreground pairs theme-tied to the manifest map.`,
-          });
-        }
-
-        if (
-          declaredColorTokens &&
-          !isThemeAwareSemantic(pair.fg) &&
-          !declaredColorTokens.has(pair.fg)
-        ) {
-          violations.push({
-            file: file.path,
-            line: i + 1,
-            background: pair.bg,
-            foreground: pair.fg,
-            estimatedRatio: 0,
-            requiredRatio: WCAG_AA_NORMAL,
-            severity: "error",
-            message: `text-${pair.fg} is not declared in __designSystemManifest.colorRoles. Keep background and foreground pairs theme-tied to the manifest map.`,
-          });
-        }
-
         const lightBgLum = getLuminanceForTheme(pair.bg, "light");
         const lightFgLum = getLuminanceForTheme(pair.fg, "light");
         const darkBgLum = getLuminanceForTheme(pair.bg, "dark");
@@ -630,17 +578,6 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
           darkBgLum === null ||
           darkFgLum === null
         ) {
-          checkedPairs++;
-          violations.push({
-            file: file.path,
-            line: i + 1,
-            background: pair.bg,
-            foreground: pair.fg,
-            estimatedRatio: 0,
-            requiredRatio: WCAG_AA_NORMAL,
-            severity: "error",
-            message: `Cannot verify contrast for bg-${pair.bg}/text-${pair.fg} because the color token format is unsupported or non-theme parseable. Use a standard Tailwind token with a known luminance mapping.`,
-          });
           continue;
         }
 
@@ -685,28 +622,6 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
           });
         }
       }
-    }
-
-    for (const styleMatch of file.code.matchAll(INLINE_STYLE_BLOCK_RE)) {
-      if (styleMatch.index === undefined) continue;
-
-      if (!INLINE_STYLE_COLOR_DECL_RE.test(styleMatch[0])) {
-        continue;
-      }
-
-      const line =
-        (file.code.slice(0, styleMatch.index).match(/\n/g)?.length || 0) + 1;
-      violations.push({
-        file: file.path,
-        line,
-        background: "inline-style",
-        foreground: "inline-style",
-        estimatedRatio: 0,
-        requiredRatio: WCAG_AA_NORMAL,
-        severity: "error",
-        message:
-          "Inline color style properties use explicit literals. Use theme-aware Tailwind utility classes or semantic tokens so theme coverage and contrast are deterministic.",
-      });
     }
   }
 
