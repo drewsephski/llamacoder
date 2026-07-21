@@ -572,7 +572,9 @@ const homepageStructuredData = {
       "@type": "SoftwareApplication",
       "@id": "https://squidagent.app/#software",
       name: "Squid Agent",
-      alternateName: "Squid",
+      alternateName: ["SquidAgent", "Squid Agent App Builder"],
+      disambiguatingDescription:
+        "Squid Agent is not Squid AI (getsquid.ai). It is an AI app builder focused on exportable React applications with plan mode, checkpoints, usage visibility, and verification before handoff.",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web",
       url: "https://squidagent.app/",
@@ -748,8 +750,7 @@ export default function Home() {
       promptStartedAtRef.current ??= Date.now();
     } else if (starter) {
       const suggested = SUGGESTED_PROMPTS.find(
-        (item) =>
-          item.title.toLowerCase().replace(/\s+/g, "-") === starter,
+        (item) => item.title.toLowerCase().replace(/\s+/g, "-") === starter,
       );
 
       if (suggested) {
@@ -1017,7 +1018,10 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(homepageStructuredData).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(homepageStructuredData).replace(
+            /</g,
+            "\\u003c",
+          ),
         }}
       />
       <style>{`
@@ -3036,21 +3040,17 @@ function HomepageFaqSection() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-4">
-            {homepageFaq
-              .slice(0, firstColumnFaqCount)
-              .map((item, index) => (
-                <HomepageFaqAccordionCard
-                  key={item.question}
-                  faq={item}
-                  id={`squid-agent-faq-left-${index}`}
-                  isOpen={leftOpenItem === index}
-                  onToggle={() =>
-                    setLeftOpenItem(
-                      leftOpenItem === index ? null : index,
-                    )
-                  }
-                />
-              ))}
+            {homepageFaq.slice(0, firstColumnFaqCount).map((item, index) => (
+              <HomepageFaqAccordionCard
+                key={item.question}
+                faq={item}
+                id={`squid-agent-faq-left-${index}`}
+                isOpen={leftOpenItem === index}
+                onToggle={() =>
+                  setLeftOpenItem(leftOpenItem === index ? null : index)
+                }
+              />
+            ))}
           </div>
           <div className="grid gap-4">
             {homepageFaq.slice(firstColumnFaqCount).map((item, index) => {
@@ -3064,9 +3064,7 @@ function HomepageFaqSection() {
                   isOpen={rightOpenItem === globalIndex}
                   onToggle={() =>
                     setRightOpenItem(
-                      rightOpenItem === globalIndex
-                        ? null
-                        : globalIndex,
+                      rightOpenItem === globalIndex ? null : globalIndex,
                     )
                   }
                 />

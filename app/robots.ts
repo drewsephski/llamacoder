@@ -11,6 +11,7 @@ export default function robots(): MetadataRoute.Robots {
           "/compare/",
           "/blog/",
           "/benchmarks/",
+          "/what-is-squid-agent",
           "/llms.txt",
           "/ai.txt",
           "/contact",

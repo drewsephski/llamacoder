@@ -10,6 +10,7 @@ import {
   BookOpen,
   ChevronDown,
   FileText,
+  Info,
   LifeBuoy,
   Scale,
 } from "lucide-react";
@@ -41,6 +42,12 @@ export const resourceLinks = [
     label: "Benchmarks",
     description: "Transparent screenshot-to-React tests",
     icon: BarChart3,
+  },
+  {
+    href: "/what-is-squid-agent",
+    label: "What is Squid Agent?",
+    description: "Disambiguation and product identity overview",
+    icon: Info,
   },
   {
     href: "/contact",

@@ -42,6 +42,12 @@ const hubConfig = {
 const hubQuickLinks = {
   comparison: [
     {
+      href: "/what-is-squid-agent",
+      label: "What is Squid Agent?",
+      description:
+        "Understand the product boundaries and how this differs from Squid AI (getsquid.ai).",
+    },
+    {
       href: "/compare/squid-vs-bolt-for-agencies",
       label: "For agencies",
       description:
@@ -67,6 +73,12 @@ const hubQuickLinks = {
     },
   ],
   guide: [
+    {
+      href: "/what-is-squid-agent",
+      label: "What is Squid Agent?",
+      description:
+        "Review identity, workflow intent, and when to use Squid Agent.",
+    },
     {
       href: "/blog/export-react-app-from-ai",
       label: "Export from AI without surprises",

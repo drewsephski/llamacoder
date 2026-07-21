@@ -12,6 +12,7 @@ const landingLinks = [
   { href: "/blog", label: "Blog" },
   { href: "/example", label: "Example" },
   { href: "/docs", label: "Docs" },
+  { href: "/what-is-squid-agent", label: "What is Squid Agent?" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },

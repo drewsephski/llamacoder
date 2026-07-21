@@ -145,10 +145,11 @@ export async function POST(request: NextRequest) {
     activeChatId = chat.id;
 
     // Fetch previous assistant messages with design scores for dynamic emphasis
-    const messageModel =
-      (prisma as {
+    const messageModel = (
+      prisma as {
         message?: { findMany: (args: unknown) => Promise<unknown[]> };
-      }).message;
+      }
+    ).message;
     const previousMessages =
       typeof messageModel?.findMany === "function"
         ? await messageModel.findMany({
@@ -164,9 +165,7 @@ export async function POST(request: NextRequest) {
           | import("@/features/generation/design-quality-scoring").DesignScoreSummary
           | null;
       }>
-    )
-      .find((m) => m.designScores !== null)
-      ?.designScores as
+    ).find((m) => m.designScores !== null)?.designScores as
       | import("@/features/generation/design-quality-scoring").DesignScoreSummary
       | null;
 
@@ -400,17 +399,17 @@ export async function POST(request: NextRequest) {
     });
 
     // Run contrast audit and extract design scores
-    const contrastViolations = auditContrast(generatedFiles);
+    const contrastReport = auditContrast(generatedFiles);
     const designScores = extractDesignScores(generatedText);
-    if (contrastViolations.some((v) => v.severity === "error")) {
-      console.warn(formatContrastReport(contrastViolations));
+    if (contrastReport.violations.some((v) => v.severity === "error")) {
+      console.warn(formatContrastReport(contrastReport));
       await releaseHoldAndResetChat();
       return NextResponse.json(
         {
           error: "CONTRAST_VIOLATION",
           message:
             "Generated app contrast issues are likely to reduce text visibility in a theme. Please regenerate.",
-          violations: contrastViolations,
+          violations: contrastReport.violations,
         },
         { status: 422 },
       );

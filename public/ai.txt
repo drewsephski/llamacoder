@@ -5,6 +5,7 @@ https://squidagent.app/llms.txt
 
 Primary public pages:
 - https://squidagent.app/
+- https://squidagent.app/what-is-squid-agent
 - https://squidagent.app/compare
 - https://squidagent.app/compare/squid-vs-bolt-for-agencies
 - https://squidagent.app/compare/squid-vs-lovable-for-startups

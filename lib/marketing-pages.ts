@@ -130,7 +130,8 @@ export const marketingDemoLinks: MarketingLink[] = [
   {
     href: "/cozypaws",
     label: "CozyPaws case study",
-    description: "Inspect a warm-commerce-style storefront with interactive sections.",
+    description:
+      "Inspect a warm-commerce-style storefront with interactive sections.",
   },
   {
     href: "/sentinel",
@@ -140,7 +141,8 @@ export const marketingDemoLinks: MarketingLink[] = [
   {
     href: "/example",
     label: "Public workspace example",
-    description: "Open an unlisted public demo and review the generated output path.",
+    description:
+      "Open an unlisted public demo and review the generated output path.",
   },
 ];
 
@@ -970,9 +972,17 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
         external: true,
       },
       {
+        href: "https://github.com/drewsephski/llamacoder",
+        label: "Squid Agent public repository",
+        description:
+          "Public source-of-truth implementation snapshot for Squid Agent.",
+        external: true,
+      },
+      {
         href: "https://squidagent.ai/features",
         label: "Squid Agent features",
-        description: "Product capabilities and workflow documentation for Squid Agent.",
+        description:
+          "Product capabilities and workflow documentation for Squid Agent.",
         external: true,
       },
     ],
@@ -984,8 +994,8 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
     slug: "squid-vs-bolt-for-agencies",
     title:
       "Squid vs Bolt.new for agencies (2026): Deliverables, reviews, and recovery",
-      description:
-        "A practical benchmark for Squid vs Bolt.new: brief handling, review loops, restoreability, deployment handoff, and cost signaling in one decision frame.",
+    description:
+      "A practical benchmark for Squid vs Bolt.new: brief handling, review loops, restoreability, deployment handoff, and cost signaling in one decision frame.",
     h1: "Squid vs Bolt.new for agencies",
     intro:
       "Agencies care about stable handoff artifacts and predictable revision loops more than single-shot previews. The meaningful question is which workflow preserves review traceability, makes rollback simple, and keeps exports deployable on the first pass.",
@@ -1069,7 +1079,8 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
     ],
     faqs: [
       {
-        question: "Is Squid suitable for white-label or client-facing deliverables?",
+        question:
+          "Is Squid suitable for white-label or client-facing deliverables?",
         answer:
           "Yes. Squid's verified export output is intended for external handoff with documentation, so teams can deliver clean artifacts to client environments with explicit checks and checkpoints.",
       },
@@ -1089,7 +1100,8 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
           "Track expected credits before work, then track ledger entries after saves and recovery steps. Then measure cost per accepted result, not per request.",
       },
       {
-        question: "Which tool is better for early-phase discovery with clients?",
+        question:
+          "Which tool is better for early-phase discovery with clients?",
         answer:
           "For fast exploration and a complete export check, Squid is often cleaner when teams need explicit artifacts. For full-stack depth and broad native tooling, Bolt remains stronger.",
       },
@@ -1112,8 +1124,7 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
       {
         href: "https://support.bolt.new/faqs/account-and-subscription/tokens",
         label: "Bolt token model",
-        description:
-          "Official usage behavior and token accounting guidance.",
+        description: "Official usage behavior and token accounting guidance.",
         external: true,
       },
     ],
@@ -1233,13 +1244,15 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
       {
         href: "https://docs.lovable.dev/features/code-mode",
         label: "Lovable code mode",
-        description: "Official capabilities and export references for project portability.",
+        description:
+          "Official capabilities and export references for project portability.",
         external: true,
       },
       {
         href: "https://docs.lovable.dev/features/workspace-admin-settings",
         label: "Lovable billing settings",
-        description: "Workspace credit and usage context for operational planning.",
+        description:
+          "Workspace credit and usage context for operational planning.",
         external: true,
       },
       {
@@ -1308,10 +1321,10 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
         title: "Measure first-pass fidelity",
         body: "Capture source reference quality and inspect whether each design intent category appears in generated component structure.",
       },
-  {
-    title: "Test narrow revisions",
-    body: "Request one constrained design change and verify component reuse remains stable.",
-  },
+      {
+        title: "Test narrow revisions",
+        body: "Request one constrained design change and verify component reuse remains stable.",
+      },
       {
         title: "Export and validate",
         body: "Run clean-room local checks and confirm artifact contents before a team handoff.",
@@ -1365,7 +1378,8 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
       {
         href: "https://v0.dev/docs/faqs",
         label: "v0 official FAQ",
-        description: "Scope, integration, and export-related behavior from v0 documentation.",
+        description:
+          "Scope, integration, and export-related behavior from v0 documentation.",
         external: true,
       },
       {
@@ -2112,7 +2126,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
     faqs: [
       {
         question: "Do we need a clean directory?",
-        answer: "Yes. It prevents hidden workspace dependencies from masking real missing outputs.",
+        answer:
+          "Yes. It prevents hidden workspace dependencies from masking real missing outputs.",
       },
       {
         question: "Can export be considered complete without diagnostic files?",
@@ -2272,27 +2287,16 @@ const blogPagesSeed: MarketingPageSeed[] = [
       caption: "AI-generation handoff checklist",
       columns: ["Area", "Required check", "Failure symptom"],
       rows: [
-        [
-          "Files",
-          "No unresolved imports",
-          "Build errors in local preview",
-        ],
-      [
-        "Checks",
-        "Typecheck/build pass",
-        "Runtime mismatch outside preview",
-      ],
-        [
-          "Diffs",
-          "Unrelated files remain stable",
-          "Unintended side effects",
-        ],
+        ["Files", "No unresolved imports", "Build errors in local preview"],
+        ["Checks", "Typecheck/build pass", "Runtime mismatch outside preview"],
+        ["Diffs", "Unrelated files remain stable", "Unintended side effects"],
       ],
     },
     faqs: [
       {
         question: "How soon should checks run?",
-        answer: "Immediately after a checkpoint is accepted and before any additional user-facing edits.",
+        answer:
+          "Immediately after a checkpoint is accepted and before any additional user-facing edits.",
       },
       {
         question: "What is the minimum confidence bar before handoff?",
@@ -2379,9 +2383,21 @@ const blogPagesSeed: MarketingPageSeed[] = [
       caption: "Predictability scorecard",
       columns: ["Signal", "What to verify", "Pass condition"],
       rows: [
-        ["Estimation", "Visible estimate before generation", "Estimate shown and understood"],
-        ["Failure policy", "Reserve/release for failures", "No silent hold with no explanation"],
-        ["Retry behavior", "Attempt-level accounting", "Accepted result cost is predictable"],
+        [
+          "Estimation",
+          "Visible estimate before generation",
+          "Estimate shown and understood",
+        ],
+        [
+          "Failure policy",
+          "Reserve/release for failures",
+          "No silent hold with no explanation",
+        ],
+        [
+          "Retry behavior",
+          "Attempt-level accounting",
+          "Accepted result cost is predictable",
+        ],
         [
           "Export ownership",
           "Manifest, dependencies, and deployment guidance",
@@ -2409,7 +2425,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/terraelix-hero.png",
           alt: "Founders dashboard with spend and export controls",
-          caption: "Generated React app with spending summaries and export links.",
+          caption:
+            "Generated React app with spending summaries and export links.",
         },
         {
           src: "/showcase/velorah-hero.png",
@@ -2420,7 +2437,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
     },
     faqs: [
       {
-        question: "Is predictable pricing possible when models differ by route?",
+        question:
+          "Is predictable pricing possible when models differ by route?",
         answer:
           "Yes, but you should compare normalized outcomes. Ask for explicit estimate plus actual cost and refuse to optimize on only the first attempt.",
       },
@@ -2464,7 +2482,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "A no-charge policy for failed generations is a reliability signal only if it is enforced in the same way across streaming failures, parse errors, validation blocks, and interrupted sessions.",
     summary:
-      "Demand written policy: failure classes, reserve release guarantees, and repeatable testing before selecting the builder.",
+      "Demand written policy: failure classes, reserve release guarantees, and repeatable testing before selecting the builder. This reduces uncertainty before spending by confirming recovery expectations across all fail states.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -2494,10 +2512,26 @@ const blogPagesSeed: MarketingPageSeed[] = [
       caption: "Failure-to-charge verification checklist",
       columns: ["Failure type", "What to expect", "Verification test"],
       rows: [
-        ["Timeout or disconnect", "Release within one retry window", "Repeat after simulated drop"],
-        ["Invalid import graph", "No hidden charge without persistence", "Run build before billing"],
-        ["Repair-only pass", "Transparent repair policy", "Compare first pass and repair pass"],
-        ["Interruption at save", "No final charge without persisted result", "Attempt save boundary recovery"],
+        [
+          "Timeout or disconnect",
+          "Release within one retry window",
+          "Repeat after simulated drop",
+        ],
+        [
+          "Invalid import graph",
+          "No hidden charge without persistence",
+          "Run build before billing",
+        ],
+        [
+          "Repair-only pass",
+          "Transparent repair policy",
+          "Compare first pass and repair pass",
+        ],
+        [
+          "Interruption at save",
+          "No final charge without persisted result",
+          "Attempt save boundary recovery",
+        ],
       ],
     },
     ctaPrompt:
@@ -2560,7 +2594,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         href: "/compare/squid-vs-bolt",
         label: "Review Bolt token behavior",
-        description: "Understand how token growth affects cost during complex retries.",
+        description:
+          "Understand how token growth affects cost during complex retries.",
       },
     ],
   },
@@ -2624,7 +2659,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/cozypaws-hero.png",
           alt: "Diff and route health cards after project rollback",
-          caption: "Recovery controls tied to route checks and export snapshots.",
+          caption:
+            "Recovery controls tied to route checks and export snapshots.",
         },
       ],
     },
@@ -2674,7 +2710,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "Token growth is often tied to context and project scale, not just prompt length. A control plan requires measurement at each edit, not just initial generation assumptions.",
     summary:
-      "Profile context size, edit scope, and restore loops to stop token inflation while preserving iteration speed.",
+      "Profile context size, edit scope, and restore loops to stop token inflation while preserving iteration speed in sustained builds and reducing monthly budget surprises.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "7 min read",
@@ -2704,11 +2740,22 @@ const blogPagesSeed: MarketingPageSeed[] = [
       caption: "Token-burn control worksheet",
       columns: ["Phase", "What to track", "Control action"],
       rows: [
-        ["Initial generation", "Starting token footprint", "Capture baseline",
+        ["Initial generation", "Starting token footprint", "Capture baseline"],
+        [
+          "Growth edit",
+          "Prompt scope and file count",
+          "Limit context sent per edit",
         ],
-        ["Growth edit", "Prompt scope and file count", "Limit context sent per edit"],
-        ["Retry loop", "Retry count and reason", "Stop after acceptable threshold"],
-        ["Export phase", "Local build and checkpoint quality", "Run and archive checkpoints"],
+        [
+          "Retry loop",
+          "Retry count and reason",
+          "Stop after acceptable threshold",
+        ],
+        [
+          "Export phase",
+          "Local build and checkpoint quality",
+          "Run and archive checkpoints",
+        ],
       ],
     },
     ctaPrompt:
@@ -2802,10 +2849,22 @@ const blogPagesSeed: MarketingPageSeed[] = [
       caption: "Exportability decision grid",
       columns: ["Criterion", "Exporter strength", "Why it matters"],
       rows: [
-        ["Diagnostics", "Dependency checks and export manifests", "Reduces integration surprises"],
-        ["Structure", "Stable file graph and entrypoints", "Simplifies local handoff"],
+        [
+          "Diagnostics",
+          "Dependency checks and export manifests",
+          "Reduces integration surprises",
+        ],
+        [
+          "Structure",
+          "Stable file graph and entrypoints",
+          "Simplifies local handoff",
+        ],
         ["Recovery", "Checkpointed restore history", "Protects edit velocity"],
-        ["Deployment", "Starter deployment configs", "Reduces first-mile operations"],
+        [
+          "Deployment",
+          "Starter deployment configs",
+          "Reduces first-mile operations",
+        ],
       ],
     },
     ctaPrompt:
@@ -2828,7 +2887,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/slotflow.webp",
           alt: "Audit dashboard showing manifest and dependency checks",
-          caption: "Export audit evidence with build checks and file inventory.",
+          caption:
+            "Export audit evidence with build checks and file inventory.",
         },
         {
           src: "/showcase/orbital-salvage.webp",
@@ -2863,14 +2923,15 @@ const blogPagesSeed: MarketingPageSeed[] = [
   {
     kind: "guide",
     slug: "ai-app-builder-with-version-recovery",
-    title: "AI App Builder with Version Recovery: What to Look for Beyond Preview",
+    title:
+      "AI App Builder with Version Recovery: What to Look for Beyond Preview",
     description:
       "A recovery-first framework for choosing tools with non-destructive history, stable checkpoints, and predictable rollback outcomes.",
     h1: "AI app builder with version recovery",
     intro:
       "Version recovery is a production requirement, not a convenience. You need predictable restores, clear history, and auditable diffs when prompts miss the target.",
     summary:
-      "Prioritize checkpoint semantics that preserve history and make rollback behavior reproducible in the same edit path.",
+      "Prioritize checkpoint semantics that preserve history and make rollback behavior reproducible in the same edit path for production teams, release managers, and design audit reviews.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -2957,7 +3018,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
   {
     kind: "guide",
     slug: "screenshot-to-responsive-react",
-    title: "Screenshot to Responsive React: Turning One View into Multi-viewport UI",
+    title:
+      "Screenshot to Responsive React: Turning One View into Multi-viewport UI",
     description:
       "Build responsive React interfaces from screenshots by defining viewport behavior, breakpoints, and interaction requirements up front.",
     h1: "Screenshot to responsive React",
@@ -2994,7 +3056,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
       "Build a responsive React app from a screenshot with viewport-specific behavior rules.",
     cta: "Convert one screenshot into responsive production code",
     realExample: {
-      title: "Real example: Responsive landing blocks from a desktop screenshot",
+      title:
+        "Real example: Responsive landing blocks from a desktop screenshot",
       prompt:
         "Convert a provided desktop screenshot of a landing hero into a responsive React page. Define desktop/tablet/mobile behavior for navigation, pricing cards, and call-to-action layout, including keyboard-visible focus states.",
       files: [
@@ -3009,7 +3072,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/axon-hero.png",
           alt: "Landing page mockup used for responsive conversion",
-          caption: "Screenshot reference converted into responsive UI sections.",
+          caption:
+            "Screenshot reference converted into responsive UI sections.",
         },
         {
           src: "/showcase/forma-hero.png",
@@ -3044,7 +3108,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         href: "/blog/from-screenshot-to-production-react",
         label: "Use the production workflow",
-        description: "See a practical screenshot-to-code workflow with verification.",
+        description:
+          "See a practical screenshot-to-code workflow with verification.",
       },
     ],
   },
@@ -3108,7 +3173,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/portfolio-os.webp",
           alt: "Resulting responsive page generated from screenshot",
-          caption: "Converted design with reusable components and responsive controls.",
+          caption:
+            "Converted design with reusable components and responsive controls.",
         },
       ],
     },
@@ -3145,7 +3211,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "An MVP needs more than a strong UI: it needs route structure, pricing logic, onboarding, and maintainable fallback behavior for real users.",
     summary:
-      "Use a staged build sequence with checkpointed milestones and verification gates to keep your AI-assisted MVP on track.",
+      "Use a staged build sequence with checkpointed milestones and verification gates to keep your AI-assisted MVP on track for launch decisions and investor-ready demos.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "9 min read",
@@ -3176,7 +3242,11 @@ const blogPagesSeed: MarketingPageSeed[] = [
       columns: ["Milestone", "Acceptance gate", "Pass criteria"],
       rows: [
         ["Landing", "Visual and content correctness", "No broken interactions"],
-        ["Onboarding", "Flow completion rate", "Core states and errors handled"],
+        [
+          "Onboarding",
+          "Flow completion rate",
+          "Core states and errors handled",
+        ],
         ["Workspace", "Data mutation safety", "No unrelated file drift"],
         ["Export", "Local installation", "Clean build and route test"],
       ],
@@ -3185,8 +3255,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
       "Generate an AI SaaS MVP with staged checkpoints, onboarding flow, and export-ready delivery.",
     cta: "Build your AI SaaS MVP in stages",
     realExample: {
-      title:
-        "Real example: Minimal SaaS MVP with pricing and usage dashboard",
+      title: "Real example: Minimal SaaS MVP with pricing and usage dashboard",
       prompt:
         "Build a lightweight SaaS MVP with landing page, onboarding flow, usage dashboard, team settings, and plan selection surface. Use reusable components and checkpoint comments so each milestone can be exported and validated independently.",
       files: [
@@ -3237,15 +3306,14 @@ const blogPagesSeed: MarketingPageSeed[] = [
   {
     kind: "guide",
     slug: "ai-landing-page-builder-with-code-export",
-    title:
-      "AI Landing-Page Builder with Code Export: Build, Iterate, and Ship",
+    title: "AI Landing-Page Builder with Code Export: Build, Iterate, and Ship",
     description:
       "A hands-on guide to generating landing pages that remain editable and exportable as clean React apps with full handoff artifacts.",
     h1: "AI landing-page builder with code export",
     intro:
       "Landing pages are often treated as disposable mockups; this workflow keeps them production-safe through file-level ownership and export evidence.",
     summary:
-      "Generate sections separately, enforce responsive behavior, then export and test in a clean environment before publish.",
+      "Generate sections separately, enforce responsive behavior, then export and test in a clean environment before publish, with measurable checks before release.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "7 min read",
@@ -3295,7 +3363,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/rivr-hero.png",
           alt: "Desktop and mobile landing layout preview",
-          caption: "Export-ready landing page generated with responsive controls.",
+          caption:
+            "Export-ready landing page generated with responsive controls.",
         },
       ],
     },
@@ -3405,7 +3474,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
       },
       {
         question: "How do I keep regressions manageable?",
-        answer: "Use scoped prompts and module-level checkpoints for each dashboard surface.",
+        answer:
+          "Use scoped prompts and module-level checkpoints for each dashboard surface.",
       },
       {
         question: "What is the key sign the dashboard is production-ready?",
@@ -3463,7 +3533,11 @@ const blogPagesSeed: MarketingPageSeed[] = [
         ["First-pass estimate", "Base cost signal", "1-3 accepted generations"],
         ["Iteration buffer", "Refinement allowance", "20-40% of base"],
         ["Failure buffer", "Retry and repair drift", "10-30% of base"],
-        ["Export and validation", "Review and handoff", "1-2 hours of engineering"],
+        [
+          "Export and validation",
+          "Review and handoff",
+          "1-2 hours of engineering",
+        ],
       ],
     },
     ctaPrompt:
@@ -3539,7 +3613,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "CRM apps demand reliable data structure and predictable behavior, not just a polished list view. Build in modules, recovery safety, and export checkpoints.",
     summary:
-      "Use structured data models and scoped prompts to generate maintainable CRM surfaces that survive edits and exports.",
+      "Use structured data models and scoped prompts to generate maintainable CRM surfaces that survive edits, review cycles, and client handoff under real-world team usage.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -3559,6 +3633,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         title: "Export with full project handoff",
         body: "Use clean export with manifest and build metadata to preserve CRM logic outside the builder.",
+      },
+      {
+        title: "Add performance and filtering safety",
+        body: "Define indexing strategy for list and search operations so generated screens remain fast as data grows and review cycles remain predictable.",
       },
     ],
     ctaPrompt:
@@ -3585,7 +3663,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/terraelix-hero.png",
           alt: "CRM pipeline and notes modules",
-          caption: "Scaffolded client management app generated with checkpoints.",
+          caption:
+            "Scaffolded client management app generated with checkpoints.",
         },
       ],
     },
@@ -3634,7 +3713,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "Client portals need clear navigation, file boundaries, and predictable interaction flow before styling polish.",
     summary:
-      "Generate the portal in layers and tie each release to checkpoints and export artifacts.",
+      "Generate the portal in layers and tie each release to checkpoints and export artifacts, so support, onboarding, and client review stay synchronized.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -3654,6 +3733,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         title: "Use checkpointed exports",
         body: "Tie each client-facing release to a checkpoint and manifest so support issues can be reproduced.",
+      },
+      {
+        title: "Plan moderation and redaction handling",
+        body: "Document what content is editable by clients and what is locked, then encode safe flows for uploaded and public-facing text.",
       },
     ],
     ctaPrompt:
@@ -3710,7 +3793,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
   {
     kind: "guide",
     slug: "ai-booking-app-builder",
-    title: "AI Booking-App Builder: Fast Appointments and Availability Surfaces",
+    title:
+      "AI Booking-App Builder: Fast Appointments and Availability Surfaces",
     description:
       "Generate booking apps with calendar views, availability rules, confirmation states, and exportable React code.",
     h1: "AI booking-app builder",
@@ -3738,6 +3822,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
         title: "Export with test data and scenario checks",
         body: "Verify booking success and failure flows in a clean local environment before sharing.",
       },
+      {
+        title: "Define idempotent recovery checks",
+        body: "Confirm duplicate submit and duplicate slot selection are handled safely so clients can retry without inconsistent state.",
+      },
     ],
     ctaPrompt:
       "Generate a booking app with timezone-safe slots, availability checks, and explicit confirmation states.",
@@ -3758,12 +3846,14 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/slotflow.webp",
           alt: "Calendar grid and availability module",
-          caption: "AI-generated booking surface with timezone and slot controls.",
+          caption:
+            "AI-generated booking surface with timezone and slot controls.",
         },
         {
           src: "/showcase/axion-studio-hero.png",
           alt: "Booking confirmation and failure state screens",
-          caption: "Generated flow includes deterministic success and error handling.",
+          caption:
+            "Generated flow includes deterministic success and error handling.",
         },
       ],
     },
@@ -3800,7 +3890,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "A dashboard is not one view; it is several operational surfaces with strict state expectations and editability requirements.",
     summary:
-      "Generate dashboards in modules, validate interactions, and preserve checkpointed export behavior for team handoff.",
+      "Generate dashboards in modules, validate interactions, and preserve checkpointed export behavior for secure team handoff across support and operations stakeholders.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -3820,6 +3910,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         title: "Track diffs by widget",
         body: "Widget-level file boundaries allow safe edits and reduce scope creep in long-lived dashboards.",
+      },
+      {
+        title: "Define shared utility contracts",
+        body: "Standardize date, filter, and metric formatting utilities so widget behavior stays stable across multiple prompts.",
       },
     ],
     ctaPrompt:
@@ -3846,7 +3940,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/mindloop-hero.png",
           alt: "Dashboard roles and alerts module",
-          caption: "Role-aware dashboard sections rendered from generated code.",
+          caption:
+            "Role-aware dashboard sections rendered from generated code.",
         },
       ],
     },
@@ -3858,8 +3953,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
       },
       {
         question: "How often should widget-level checks run?",
-        answer:
-          "After each change to data schema, filters, or role rules.",
+        answer: "After each change to data schema, filters, or role rules.",
       },
       {
         question: "What makes dashboard output trustworthy?",
@@ -3883,7 +3977,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "Portfolio sites need consistent narrative and layout rhythm more than heavy logic. Use AI to generate structure with clear sections and export discipline.",
     summary:
-      "Create a branded React portfolio in explicit sections and verify responsiveness across key viewports.",
+      "Create a branded React portfolio in explicit sections and verify responsiveness across key viewports so hiring, partners, and clients can review confidently.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "7 min read",
@@ -3903,6 +3997,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         title: "Export with clean metadata",
         body: "Include project structure, dependency file, and deployment notes for handoff.",
+      },
+      {
+        title: "Create reusable content model",
+        body: "Keep portfolio items and achievements as data, not duplicated copy, so updates can be rolled out consistently across screens.",
       },
     ],
     ctaPrompt:
@@ -3929,7 +4027,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/portfolio-os.png",
           alt: "Portfolio project card grid and contact section",
-          caption: "Export-ready portfolio components with responsive behavior.",
+          caption:
+            "Export-ready portfolio components with responsive behavior.",
         },
       ],
     },
@@ -3966,7 +4065,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "Marketplace apps need repeatable item cards, filters, sorting, and stateful detail flows. Define data structure and interaction boundaries first.",
     summary:
-      "Build marketplace surfaces in reusable modules and validate search/filter behavior before handoff.",
+      "Build marketplace surfaces in reusable modules and validate search and filter behavior before handoff to the team, sales, and support for predictable conversion flow.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -3986,6 +4085,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         title: "Export cleanly and test core paths",
         body: "Validate search, filter, detail view, and cart-like interactions from exported code.",
+      },
+      {
+        title: "Add deterministic sort and tie-breaker policy",
+        body: "Specify stable ordering for equal values so users do not see random product jumps after refresh or filter changes.",
       },
     ],
     ctaPrompt:
@@ -4012,7 +4115,8 @@ const blogPagesSeed: MarketingPageSeed[] = [
         {
           src: "/showcase/rivr-hero.png",
           alt: "Product detail and sort interactions",
-          caption: "Responsive marketplace surfaces generated with scoped modules.",
+          caption:
+            "Responsive marketplace surfaces generated with scoped modules.",
         },
       ],
     },
@@ -4049,7 +4153,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     intro:
       "Internal tools need clarity and consistency: task queues, state transitions, role views, and reliable recovery from mistakes.",
     summary:
-      "Create internal surfaces in modules with strong state modeling and export checkpoints for team delivery.",
+      "Create internal surfaces in modules with strong state modeling and export checkpoints for production team delivery, operations, and long-term maintainability.",
     publishedAt: "2026-07-20",
     updatedAt: CONTENT_REVIEW_DATE,
     readingTime: "8 min read",
@@ -4069,6 +4173,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
       {
         title: "Export with manifests and docs",
         body: "Include manifest, quality checks, and run guidance before handing to internal engineering.",
+      },
+      {
+        title: "Define permissions for automation actions",
+        body: "Require explicit role checks for each automatic transition so internal workflows remain auditable and reversible.",
       },
     ],
     ctaPrompt:
@@ -4326,7 +4434,9 @@ export const marketingPaths = [
   `/benchmarks/${benchmarkPage.slug}`,
 ];
 
-export function getMarketingStarterPrompt(starter: string | null): string | null {
+export function getMarketingStarterPrompt(
+  starter: string | null,
+): string | null {
   if (!starter) return null;
 
   const cleanStarter = starter.trim();

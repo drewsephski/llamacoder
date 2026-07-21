@@ -6,6 +6,7 @@ import type { TOCItemType } from "fumadocs-core/toc";
 import { getMDXComponents } from "@/components/mdx";
 import { buildDocsNavigation } from "@/lib/docs/navigation";
 import { docsSource } from "@/lib/docs/source";
+import { BrandIdentityQuickFaq } from "@/components/brand-identity-quick-faq";
 
 type DocsPageProps = {
   params: Promise<{ slug?: string[] }>;
@@ -24,6 +25,7 @@ export default async function DocsPage({ params }: DocsPageProps) {
   const previous = pageIndex > 0 ? navigation[pageIndex - 1] : undefined;
   const next = pageIndex >= 0 ? navigation[pageIndex + 1] : undefined;
   const toc = page.data.toc as TOCItemType[];
+  const isDocsIndex = page.url === "/docs";
 
   return (
     <div className="mx-auto grid max-w-[1180px] gap-12 px-5 py-10 sm:px-8 sm:py-14 xl:grid-cols-[minmax(0,760px)_200px] xl:px-12">
@@ -64,6 +66,7 @@ export default async function DocsPage({ params }: DocsPageProps) {
             </p>
           ) : null}
         </header>
+        {isDocsIndex ? <BrandIdentityQuickFaq className="px-0 py-8" /> : null}
 
         <article className="docs-prose prose prose-zinc max-w-none dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-h2:mt-14 prose-h2:border-t prose-h2:border-border prose-h2:pt-10 prose-h3:mt-9 prose-p:leading-7 prose-a:font-medium prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-code:before:content-none prose-code:after:content-none prose-pre:my-7 prose-pre:overflow-x-auto prose-pre:rounded-xl prose-pre:border prose-pre:border-border prose-pre:bg-zinc-950 prose-pre:p-4 prose-pre:text-zinc-100 prose-li:my-1.5 prose-hr:border-border">
           <MDX components={getMDXComponents()} />

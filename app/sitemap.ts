@@ -29,6 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const highIntentBenchmarkPaths = new Set(["/benchmarks/screenshot-to-react"]);
   const staticPaths = [
     "/",
+    "/what-is-squid-agent",
     ...marketingLandingPaths,
     ...docsSource.getPages().map((page) => page.url),
     ...marketingPaths,
@@ -43,6 +44,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: contentReviewDate,
     changeFrequency:
       path === "/" ||
+      path === "/what-is-squid-agent" ||
       path === "/docs" ||
       path === "/blog" ||
       path === "/compare" ||
@@ -54,24 +56,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority:
       path === "/"
         ? 1
-        : path === "/docs"
-          ? 0.9
-          : path.startsWith("/docs/")
-            ? 0.75
-            : path === "/compare" || path.startsWith("/compare/")
-              ? highIntentComparePaths.has(path)
-                ? 0.9
-                : 0.82
-              : path === "/blog" || path === "/benchmarks"
-                ? 0.8
-                : path.startsWith("/blog/")
-                  ? highIntentGuidePaths.has(path)
-                    ? 0.88
-                    : 0.76
-                  : path.startsWith("/benchmarks/")
-                    ? highIntentBenchmarkPaths.has(path)
-                      ? 0.84
-                      : 0.75
-                  : 0.5,
+        : path === "/what-is-squid-agent"
+          ? 0.92
+          : path === "/docs"
+            ? 0.9
+            : path.startsWith("/docs/")
+              ? 0.75
+              : path === "/compare" || path.startsWith("/compare/")
+                ? highIntentComparePaths.has(path)
+                  ? 0.9
+                  : 0.82
+                : path === "/blog" || path === "/benchmarks"
+                  ? 0.8
+                  : path.startsWith("/blog/")
+                    ? highIntentGuidePaths.has(path)
+                      ? 0.88
+                      : 0.76
+                    : path.startsWith("/benchmarks/")
+                      ? highIntentBenchmarkPaths.has(path)
+                        ? 0.84
+                        : 0.75
+                      : 0.5,
   }));
 }

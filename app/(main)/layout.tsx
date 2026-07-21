@@ -23,8 +23,6 @@ export const metadata: Metadata = {
     "plan mode",
     "AI design system",
     "preview verification",
-    "getsquid.ai",
-    "getsquid alternative",
     "exportable React code",
   ],
   openGraph: {

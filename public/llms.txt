@@ -45,3 +45,9 @@
 - Generated-file checks cover internal imports, export/import compatibility, protected paths, and baseline accessibility warnings.
 - Restoring a prior generated version creates a new checkpoint instead of mutating the historical result.
 - Comparison pages are dated snapshots and link to official competitor documentation.
+
+## Brand Identity
+
+- [What is Squid Agent?](https://squidagent.app/what-is-squid-agent): Clear product identity, workflow boundaries, and what makes this solution distinct.
+- Squid Agent is a separate product from Squid AI (getsquid.ai).
+- Squid Agent is an export-first AI React app builder with plan mode, usage visibility, quality diagnostics, and explicit version checkpoints.
