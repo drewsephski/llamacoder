@@ -17,6 +17,7 @@
 - [Squid vs Lovable for Startups](https://squidagent.app/compare/squid-vs-lovable-for-startups): Startup-focused comparison on speed, ownership, cost, and portability.
 - [Squid vs Bolt.new](https://squidagent.app/compare/squid-vs-bolt): Tokens, project export, GitHub, version history, verification, and product fit.
 - [Squid vs Bolt.new for Agencies](https://squidagent.app/compare/squid-vs-bolt-for-agencies): Agency-focused comparison on deliverables, review loops, and rollback behavior.
+- [Squid vs Squid AI (getsquid.ai)](https://squidagent.app/compare/squid-vs-getsquid-ai): Brand disambiguation and delivery posture for production handoff.
 - [Squid vs v0](https://squidagent.app/compare/squid-vs-v0): React and Next.js workflows, code export, Git, checkpoints, and quality evidence.
 - [Squid vs v0 for Design-led teams](https://squidagent.app/compare/squid-vs-v0-for-design-led-teams): Design-led comparison on design-system fit, edit cadence, and deployment workflows.
 

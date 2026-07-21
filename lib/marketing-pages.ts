@@ -146,6 +146,12 @@ const useCasePageLinks: MarketingLink[] = [
     description: "Decision criteria for framework-first builder workflows.",
   },
   {
+    href: "/compare/squid-vs-getsquid-ai",
+    label: "Compare with Squid AI (getsquid.ai)",
+    description:
+      "Clarify ownership, deliverables, and export behavior between the two similar names.",
+  },
+  {
     href: "/compare/squid-vs-lovable-for-startups",
     label: "Squid vs Lovable for startups",
     description: "A startup-oriented fit comparison with ownership and speed.",
@@ -180,6 +186,11 @@ const preferredUseCaseLinksBySlug: Record<string, string[]> = {
     "/compare/squid-vs-lovable",
     "/compare/squid-vs-bolt",
     "/compare/squid-vs-v0-for-design-led-teams",
+  ],
+  "squid-vs-getsquid-ai": [
+    "/compare/squid-vs-bolt",
+    "/compare/squid-vs-lovable",
+    "/compare/squid-vs-v0",
   ],
   "squid-vs-bolt-for-agencies": [
     "/compare/squid-vs-bolt",
@@ -798,6 +809,154 @@ const comparisonPagesSeed: MarketingPageSeed[] = [
     ],
     internalLinks: sharedComparisonLinks,
     cta: "Generate a React app you can inspect",
+  },
+  {
+    kind: "comparison",
+    slug: "squid-vs-getsquid-ai",
+    title:
+      "Squid vs Squid AI (getsquid.ai): exportability, ownership, and workflow",
+    description:
+      "A practical comparison between Squid Agent and Squid AI (getsquid.ai) focused on cost visibility, ownership, revision behavior, and export-ready output.",
+    h1: "Squid vs Squid AI (getsquid.ai)",
+    intro:
+      "These two names are similar, so teams often use them interchangeably by accident. This comparison separates the practical decision criteria: what you receive, how much ownership stays yours, and how transparent the build and cost signals are.",
+    summary:
+      "Squid Agent is strongest when teams need an export-first React workflow with explicit checkpoints, visible usage signals, and verification artifacts. Squid AI (getsquid.ai) emphasizes rapid UI generation workflows and chatbot-style composition, making it useful for fast ideation where your first concern is a working prototype.",
+    publishedAt: "2026-07-21",
+    updatedAt: CONTENT_REVIEW_DATE,
+    readingTime: "6 min read",
+    table: {
+      caption: "Squid and Squid AI at a glance",
+      description:
+        "The most useful distinction is less brand similarity and more delivery outcome.",
+      columns: ["Decision factor", "Squid Agent", "Squid AI (getsquid.ai)"],
+      rows: [
+        [
+          "Primary outcome",
+          "Exportable React code package with quality and recovery metadata",
+          "Rapid conversational generation and design iteration support",
+        ],
+        [
+          "Cost signal",
+          "Model estimate before generation and post-run usage ledger",
+          "Prompt- and session-based usage model, depending on plan and context",
+        ],
+        [
+          "Revision behavior",
+          "Checkpointed restores and visible scoped file recovery options",
+          "Fast follow-up loop within chat-like interactions",
+        ],
+        [
+          "Deployment path",
+          "Verified archive with manifests, deployment starters, and quality report",
+          "Flexible export paths for follow-up iteration and handoff workflows",
+        ],
+        [
+          "Ownership framing",
+          "Explicit portable output and source inspection as default",
+          "Generated output suitable for prototype and further shaping",
+        ],
+      ],
+    },
+    workflow: [
+      {
+        title: "Clarify the end-of-day handoff format",
+        body: "Before generating, define whether your acceptance condition is a local repository-ready archive, a quick prototype, or a prototype to be heavily rewritten.",
+      },
+      {
+        title: "Track budget expectations separately",
+        body: "Capture Squid Agent's expected credit hold and post-run ledger first. Then compare the full cost for equivalent context and revision count on Squid AI.",
+      },
+      {
+        title: "Test a constrained revision",
+        body: "Run the same narrow edit in both tools and compare how it impacts unrelated routes, dependency integrity, and reviewability.",
+      },
+      {
+        title: "Export and verify outside the builder",
+        body: "For both tools, run a clean-room local check for installs, builds, key interactions, and evidence artifacts before production handoff.",
+      },
+    ],
+    sections: [
+      {
+        title: "Why this comparison is high-signal",
+        body: "Brand-level naming similarity can hide strategy differences. Teams should choose based on delivery outputs, not only prompt velocity. The strongest signal is whether the workflow produces a portable artifact that survives outside the hosted environment.",
+      },
+      {
+        title: "Choose by ownership, not by marketing language",
+        body: "Ask whether each output is designed to become a maintainable local project. Explicit checkpoints, manifest details, and verification artifacts are the practical markers of ownership maturity in production work.",
+      },
+      {
+        title: "Cost visibility as a trust signal",
+        body: "A visible estimate before build and a complete ledger after completion helps teams protect budget confidence. Hidden or opaque cost models increase planning risk during iterative projects.",
+      },
+      {
+        title: "Revision quality beats first draft speed",
+        body: "Fast first drafts are helpful; controllable and low-risk revisions determine delivery confidence. Compare rollback behavior, restore semantics, and whether unintended files change during narrow edits.",
+      },
+      {
+        title: "Where this fits best",
+        body: "Use Squid Agent when export integrity, checkpoint history, and explicit verification are central to your process. Use alternatives when your immediate goal is quick prototyping and your team already has a mature external handoff process.",
+      },
+    ],
+    evidence: [
+      {
+        label: "Naming",
+        title: "Avoid false category matches",
+        body: "Treat brand similarity as a keyword edge case. Use explicit phrases like 'Squid Agent' and 'getsquid.ai' in your own comparison and marketing content.",
+      },
+      {
+        label: "Delivery",
+        title: "Verify artifact contents",
+        body: "Check what each tool delivers after export: dependency graph, install instructions, deployment settings, and any run-time warnings.",
+      },
+      {
+        label: "Recovery",
+        title: "Compare scoped edits",
+        body: "Use identical narrow edits and measure whether unrelated sections are stable after each regeneration or patch pass.",
+      },
+      {
+        label: "Cost",
+        title: "Record equivalent attempts",
+        body: "Compare the cost of the same brief under the same constraints, including retries and required follow-up edits.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Is Squid Agent a replacement for Squid AI (getsquid.ai)?",
+        answer:
+          "They overlap in AI-assisted app-building goals, but the product signals are different. This guide focuses on Squid Agent's export, checkpoint, and verification posture for production handoff.",
+      },
+      {
+        question: "Which is better for first-run prototypes?",
+        answer:
+          "For fast prototypes, Squid AI (getsquid.ai) workflows can be productive. For a handoff-first strategy with explicit artifact validation, Squid Agent is usually a stronger choice.",
+      },
+      {
+        question: "Does Squid Agent support local handoff?",
+        answer:
+          "Yes. Squid Agent is designed to produce portable React artifacts with supporting metadata and setup guidance.",
+      },
+      {
+        question: "How should I compare cost when brands are similar?",
+        answer:
+          "Use the same prompt, scope one constrained follow-up edit, and compare estimate/actual spend plus the cost of revisions needed for an acceptable result.",
+      },
+      {
+        question: "Can I still evaluate both tools fairly on mobile?",
+        answer:
+          "Yes. A fair test includes responsive checks, accessibility checks, and revision stability across at least one major breakpoint.",
+      },
+    ],
+    sources: [
+      {
+        href: "https://getsquid.ai",
+        label: "getsquid.ai home",
+        description: "Official Squid AI product site.",
+        external: true,
+      },
+    ],
+    internalLinks: sharedComparisonLinks,
+    cta: "Compare ownership and handoff posture",
   },
   {
     kind: "comparison",

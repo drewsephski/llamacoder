@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const contentReviewDate = new Date(`${CONTENT_REVIEW_DATE}T00:00:00Z`);
   const highIntentComparePaths = new Set([
     "/compare/squid-vs-bolt-for-agencies",
+    "/compare/squid-vs-getsquid-ai",
     "/compare/squid-vs-lovable-for-startups",
     "/compare/squid-vs-v0-for-design-led-teams",
     "/blog/ai-coding-tool-comparison-with-credits",

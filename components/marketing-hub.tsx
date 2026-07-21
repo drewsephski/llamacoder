@@ -59,6 +59,12 @@ const hubQuickLinks = {
       description:
         "Compare component, interaction, and export expectations across tools.",
     },
+    {
+      href: "/compare/squid-vs-getsquid-ai",
+      label: "Squid vs Squid AI",
+      description:
+        "Disambiguate brand naming and compare ownership and output quality signals.",
+    },
   ],
   guide: [
     {

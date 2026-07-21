@@ -12,6 +12,7 @@ Primary public pages:
 - https://squidagent.app/compare/squid-vs-lovable
 - https://squidagent.app/compare/squid-vs-bolt
 - https://squidagent.app/compare/squid-vs-v0
+- https://squidagent.app/compare/squid-vs-getsquid-ai
 - https://squidagent.app/benchmarks/screenshot-to-react
 - https://squidagent.app/blog/how-to-evaluate-ai-generated-react-code
 - https://squidagent.app/blog/ai-coding-tool-comparison-with-credits

@@ -75,9 +75,9 @@ const ACCEPTED_SCREENSHOT_TYPES = new Set([
 const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
 const appBaseUrl = "https://squidagent.app";
 const appOgImage = `${appBaseUrl}/api/og?card=site&v=2`;
-const appHomeTitle = "Squid Agent - Research, Build, Verify, and Ship React Apps";
+const appHomeTitle = "Squid Agent | AI App Builder for Exportable React Apps";
 const appHomeDescription =
-  "Research live web sources, plan your build, generate React apps, verify quality, recover versions, connect APIs, and export source code you own.";
+  "Research live sources, plan your build, generate exportable React apps, verify quality, recover versions, connect APIs, and keep code ownership and checkpoints clear.";
 
 export const metadata: Metadata = {
   title: appHomeTitle,
@@ -85,13 +85,19 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   keywords: [
     "AI app builder",
+    "Squid Agent",
+    "React app builder",
     "React code generator",
     "React app export",
+    "React code exporter",
     "AI website generator",
     "research first coding",
     "plan mode",
     "AI design system",
     "preview verification",
+    "getsquid.ai",
+    "getsquid alternative",
+    "exportable React code",
   ],
   openGraph: {
     type: "website",
@@ -310,6 +316,11 @@ const HOMEPAGE_LANDING_PAGES: readonly HomepageLandingPage[] = [
 ];
 
 const homepageFaq = [
+  {
+    question: "Is Squid Agent related to Squid AI (getsquid.ai)?",
+    answer:
+      "No. Squid Agent is a separate brand and workflow. Squid Agent is optimized for exportable React applications with explicit checkpoints, usage visibility, and quality verification.",
+  },
   {
     question: "What is Squid Agent?",
     answer:
@@ -647,8 +658,14 @@ const homepageStructuredData = {
       "@id": "https://squidagent.app/#website",
       name: "Squid Agent",
       url: "https://squidagent.app/",
+      inLanguage: "en-US",
       publisher: {
         "@id": "https://squidagent.app/#organization",
+      },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: "https://squidagent.app/?search={search_term_string}",
+        "query-input": "required name=search_term_string",
       },
     },
     {
