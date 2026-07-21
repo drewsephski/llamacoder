@@ -100,7 +100,7 @@ export function getCompressedCodingPrompt(): string {
   - **Lucide React** icons: Heart, Shield, Clock, Users, Play, Home, Search, Menu, User, Settings, Mail, Bell, Calendar, Star, Upload, Download, Trash, Edit, Plus, Minus, Check, X, ArrowRight. No other icons.
   - **Recharts** for dashboards/graphs only.
   - **Framer Motion** for animation.
-  - **GSAP** for timeline-based animation and scroll effects (`gsap`, `gsap/ScrollTrigger`).
+  - **GSAP** for timeline-based animation and scroll effects (\`gsap\`, \`gsap/ScrollTrigger\`).
   - **React DnD** with HTML5Backend for drag-and-drop.
   - **date-fns** for date formatting.
   - React Hook Form + Zod + @hookform/resolvers/zod for forms.

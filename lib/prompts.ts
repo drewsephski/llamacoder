@@ -185,7 +185,7 @@ export function getMainCodingPrompt(options?: {
   - **Icons — Lucide React**, limited to: Heart, Shield, Clock, Users, Play, Home, Search, Menu, User, Settings, Mail, Bell, Calendar, Star, Upload, Download, Trash, Edit, Plus, Minus, Check, X, ArrowRight. If a design calls for an icon outside this list, use a typographic or geometric substitute (a styled letterform, a shape, a rule) instead of importing an icon that doesn't exist here.
   - **Recharts** for dashboards/graphs only.
   - **Framer Motion** for animation.
-  - **GSAP** for timeline-based animation and scroll effects (`gsap`, `gsap/ScrollTrigger`).
+  - **GSAP** for timeline-based animation and scroll effects (\`gsap\`, \`gsap/ScrollTrigger\`).
   - **React DnD** for drag-and-drop interactions: use \`DndProvider\` and hooks from \`react-dnd\`, and \`HTML5Backend\` from \`react-dnd-html5-backend\`.
   - **date-fns** for date formatting (not date-fns-tz).
   ${generatedAppCapabilityContract}
