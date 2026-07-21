@@ -6,7 +6,6 @@ import ArrowRightIcon from "@/components/icons/arrow-right";
 import Spinner from "@/components/spinner";
 import * as Select from "@radix-ui/react-select";
 import assert from "assert";
-import type { Metadata } from "next";
 import {
   Box,
   CheckIcon,
@@ -73,52 +72,6 @@ const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/webp",
 ]);
 const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
-const appBaseUrl = "https://squidagent.app";
-const appOgImage = `${appBaseUrl}/api/og?card=site&v=2`;
-const appHomeTitle = "Squid Agent | AI App Builder for Exportable React Apps";
-const appHomeDescription =
-  "Research live sources, plan your build, generate exportable React apps, verify quality, recover versions, connect APIs, and keep code ownership and checkpoints clear.";
-
-export const metadata: Metadata = {
-  title: appHomeTitle,
-  description: appHomeDescription,
-  alternates: { canonical: "/" },
-  keywords: [
-    "AI app builder",
-    "Squid Agent",
-    "React app builder",
-    "React code generator",
-    "React app export",
-    "React code exporter",
-    "AI website generator",
-    "research first coding",
-    "plan mode",
-    "AI design system",
-    "preview verification",
-    "getsquid.ai",
-    "getsquid alternative",
-    "exportable React code",
-  ],
-  openGraph: {
-    type: "website",
-    url: appBaseUrl,
-    title: appHomeTitle,
-    description: appHomeDescription,
-    images: [
-      {
-        url: appOgImage,
-        width: 1200,
-        height: 630,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: appHomeTitle,
-    description: appHomeDescription,
-    images: [appOgImage],
-  },
-};
 
 type BuiltWithSquidProject = {
   name: string;

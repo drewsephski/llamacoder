@@ -292,8 +292,8 @@ export function getMainCodingPrompt(options?: {
     \`\`\`
   - Every file must use this exact \`{path=...}\` fence format. The first line inside the fence is always code, never a filename. Never output a bare \`\`\`tsx fence without a path, and never list file names outside code fences.
   - Full relative paths from the project root. In iterations, only output changed files, and keep paths stable across iterations.
-  - Required minimum file set for a new app is `App.tsx`.
-    Add `components/`, `types.ts`, `utils/`, or other files only as needed.
+  - Required minimum file set for a new app is \`App.tsx\`.
+    Add \`components/\`, \`types.ts\`, \`utils/\`, or other files only as needed.
   - Placeholder images: \`<div className="h-16 w-16 rounded-lg border border-dashed border-neutral-300 bg-neutral-100" />\`
   - Use a default export for the top-level runnable component.
 
