@@ -262,6 +262,7 @@ export function getMainCodingPrompt(options?: {
     - If the brief is loud cultural/editorial, keep Carnival-style options for loud duo-tone and hard shadows when it matches the content domain.
      - *Navigation & footer*: pick each as a deliberate archetype tied to the information architecture — see the structural diversity contract above for the option set. State which one you picked and why in one line before writing markup; do not reach for the generic wordmark+links+button nav or four-column footer by reflex.
       - Before coding, confirm whether the structure/nav/footer palette differs from the last generated build when relevant.
+      - Build a centered shell (`max-w-*` + `mx-auto` + symmetric horizontal padding) before styling nav variants; if links are not centered, keep the nav container centered and align items intentionally within it.
       - *Signature*: the one deliberate, memorable element this screen will be remembered for. Spend your boldness here — keep everything else disciplined and quiet. Consider whether a shader background, 3D element, particle effect, or parallax scroll would serve as that signature for this subject.
       - *Content voice*: the plain-language vocabulary users will see in controls, empty states, toasts, and errors.
      - *Proof policy*: separate user-supplied facts from illustrative interface content. Never invent metrics, customer logos, testimonials, awards, case-study results, or quantitative claims to make a layout look complete.
@@ -276,6 +277,7 @@ export function getMainCodingPrompt(options?: {
      - Rounded card with a thick colored border on one side as a generic accent.
      - Centered promise-copy hero followed by three equal feature cards and a generic CTA strip.
      - Wordmark-left nav with four generic links and a button, or a four-column corporate footer, when the actual information architecture does not require them.
+     - Left-anchored logo + link blocks that sit in an unconstrained full-width header instead of a centered `max-w` + `mx-auto` shell.
      - Eyebrow labels above every section, especially decorative all-caps labels or a label beside a heading.
      - Pills, glass panels, soft shadows, and rounded rectangles applied to nearly every surface.
      - Fake browser, phone, terminal, code-window, or IDE chrome drawn around content that could stand on its own.
@@ -302,6 +304,7 @@ export function getMainCodingPrompt(options?: {
      - Typography carries personality. Use type scale, weight, casing, width, and spacing intentionally so headings, labels, data, and body copy have distinct jobs. Do not rely on font family alone for personality.
      - Headings and display type stay roman. Never italicize a heading or place an italic emphasis word inside one.
      - Keep the information architecture readable at mobile widths: nav/footer density can simplify, but primary task controls and primary actions remain prominent and single-line clickable at 320, 375, 414, and 768px.
+     - Maintain a centered nav shell on all widths: desktop nav remains in a centered layout container; at tablet/mobile, stack/simplify inside the same centered rhythm to keep spacing and alignment consistent.
      - Structure is information. Dividers, labels, badges, groups, tabs, and numbers must encode real relationships in the content. Numbered markers only belong to sequences where order matters.
      - Spend visual boldness in one justified signature element. It can be an unusual layout rhythm, a tactile control, a subject-specific data visualization, a distinctive empty state, or an orchestrated interaction. Remove decorative flourishes that do not support it.
      - Vary border-radius, spacing, and button treatment intentionally rather than repeating one value everywhere — sharp for one purpose, rounded for another, and let that variation mean something.

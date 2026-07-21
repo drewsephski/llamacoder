@@ -187,6 +187,7 @@ const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
     - Use subject-specific content: real names, real data, real terminology
     - Choose a page archetype that fits this specific content, not a template
     - Pick nav and footer archetypes tied to the actual information architecture
+    - Keep nav in a centered shell (`max-w-*` + `mx-auto`) with equal side gutters at desktop and collapsed/mobile breakpoints
     - Replace every generic label ("Submit", "Click here") with a concrete action verb
   `,
   restraint: dedent`
@@ -203,6 +204,7 @@ const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
     Your previous designs scored low on Variety. This generation, you must:
     - Choose a different page archetype than the last app in this session
     - Vary nav treatment: if the last app used a wordmark+links nav, use something else
+    - Verify the new nav treatment remains centered at desktop and at 320/375/414/768px widths, with no drifting edge lock
     - Pick a different accent hue family from the last generation
     - Mix tight and generous spacing intentionally rather than uniform padding
     - Ensure the section rhythm follows the content, not a reusable template

@@ -119,6 +119,7 @@ export function getCompressedCodingPrompt(): string {
   - State the inferred or confirmed audience and single job-to-be-done when the brief is ambiguous.
 
   Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Pick deliberate nav and footer archetypes.
+  Render header navigation in one centered shell first (`max-w-*` + `mx-auto` + balanced horizontal padding), then map the chosen nav archetype into it; mobile can simplify or stack but must retain centered rhythm and touch-safe spacing.
   If the user does not provide a brand palette, pick one Hallmark-compatible theme family (editorial, modern-minimal, atmospheric, playful) and keep one global luminosity model.
   - Modern-minimal (technical/dev): prefer Cobalt semantics (single signal hue, bordered controls, code/API anchor, compact corners, low ornamentation).
   - Atmospheric (AI-creative): prefer Lumen semantics (dark-first canvas, one engineered apparatus motif, low-chroma rhythm, one controlled reveal).
