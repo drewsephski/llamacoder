@@ -10,18 +10,18 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-blue-500 text-white border-blue-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px]",
+          "bg-primary text-primary-foreground border-primary/80 border-b-[4px] hover:bg-primary/90 hover:-translate-y-[1px] hover:border-b-[6px] active:bg-primary/85 active:border-b-[2px] active:translate-y-[2px]",
         destructive:
-          "bg-red-500 text-white border-red-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px]",
+          "bg-destructive text-destructive-foreground border-destructive/80 border-b-[4px] hover:bg-destructive/90 hover:-translate-y-[1px] hover:border-b-[6px] active:bg-destructive/85 active:border-b-[2px] active:translate-y-[2px]",
         outline:
-          "bg-background text-foreground border-input border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] hover:bg-accent hover:text-accent-foreground active:border-b-[2px] active:brightness-90 active:translate-y-[2px]",
+          "bg-background text-foreground border-input border-b-[4px] hover:bg-accent hover:text-accent-foreground hover:-translate-y-[1px] hover:border-b-[6px] active:bg-accent/85 active:border-b-[2px] active:translate-y-[2px]",
         secondary:
-          "bg-secondary text-secondary-foreground border-secondary/80 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px]",
+          "bg-secondary text-secondary-foreground border-secondary/80 border-b-[4px] hover:bg-secondary/90 hover:text-secondary-foreground hover:-translate-y-[1px] hover:border-b-[6px] active:bg-secondary/85 active:border-b-[2px] active:translate-y-[2px]",
         navCta:
           "bg-nav-button text-foreground border-none hover:bg-nav-button/80 active:scale-[0.97]",
         ghost:
-          "bg-transparent text-foreground border-transparent border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] hover:bg-accent active:border-b-[2px] active:brightness-90 active:translate-y-[2px]",
-        link: "bg-transparent text-primary border-transparent border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px]",
+          "bg-transparent text-foreground border-transparent border-b-[4px] hover:bg-accent/80 hover:text-accent-foreground hover:-translate-y-[1px] hover:border-b-[6px] active:bg-accent/90 active:border-b-[2px] active:translate-y-[2px]",
+        link: "bg-transparent text-primary border-transparent border-b-[4px] hover:text-primary/90 hover:underline hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:translate-y-[2px]",
       },
       size: {
         default: "h-10 px-6",

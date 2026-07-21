@@ -407,31 +407,125 @@ function contrastRatio(l1: number, l2: number): number {
 
 /**
  * Extract background/foreground color pairs from a single line of code.
- * Supports theme tokens, variants (hover:, dark:), and opacity utilities.
+ * Applies interaction-aware fallback so state variants inherit base colors when needed.
  */
-function extractColorPairs(line: string): Array<{ bg: string; fg: string }> {
-  const pairs: Array<{ bg: string; fg: string }> = [];
-  const bgClasses: string[] = [];
-  const textClasses: string[] = [];
+type HoverAwareInteractionState =
+  | "base"
+  | "hover"
+  | "active"
+  | "focus"
+  | "disabled";
+
+const HOVER_FILTER_UTIL_RE =
+  /(?:^|\s)(?:[a-z0-9-]+:)*(?:hover|active|focus):(?:backdrop-)?(?:brightness|contrast|saturate|grayscale|sepia|invert|hue-rotate|blur|drop-shadow)-[^\s]+/;
+
+function hasUnsafeHoverFilterClasses(className: string) {
+  return HOVER_FILTER_UTIL_RE.test(className);
+}
+
+function getInteractionState(variants: string): HoverAwareInteractionState {
+  const states = variants
+    .split(":")
+    .filter(Boolean)
+    .map((value) => value.toLowerCase());
+
+  if (states.some((state) => state.includes("hover"))) {
+    return "hover";
+  }
+  if (states.some((state) => state.includes("active"))) {
+    return "active";
+  }
+  if (states.some((state) => state.includes("focus"))) {
+    return "focus";
+  }
+  if (states.some((state) => state.includes("disabled"))) {
+    return "disabled";
+  }
+
+  return "base";
+}
+
+interface StateColorTokens {
+  bg: string[];
+  fg: string[];
+}
+
+function extractColorPairs(
+  line: string,
+): Array<{ bg: string; fg: string; interaction: HoverAwareInteractionState }> {
+  const pairs: Array<{
+    bg: string;
+    fg: string;
+    interaction: HoverAwareInteractionState;
+  }> = [];
+  const tokensByState: Record<
+    HoverAwareInteractionState,
+    StateColorTokens
+  > = {
+    base: { bg: [], fg: [] },
+    hover: { bg: [], fg: [] },
+    active: { bg: [], fg: [] },
+    focus: { bg: [], fg: [] },
+    disabled: { bg: [], fg: [] },
+  };
+  const seen = new Set<string>();
   const classTokenRegex =
     /\b(?:[a-z0-9-]+:)*(bg|text)-([a-z0-9-]+(?:\/[\d.]+)?)\b/g;
+
+  const addPair = (
+    interaction: HoverAwareInteractionState,
+    bg: string,
+    fg: string,
+  ) => {
+    const key = `${interaction}|${bg}|${fg}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    pairs.push({ bg, fg, interaction });
+  };
+  const addCrossProduct = (
+    interaction: HoverAwareInteractionState,
+    bgValues: string[],
+    fgValues: string[],
+  ) => {
+    for (const bg of bgValues) {
+      for (const fg of fgValues) {
+        addPair(interaction, bg, fg);
+      }
+    }
+  };
 
   for (const match of line.matchAll(classTokenRegex)) {
     const [_, type, rawValue] = match;
     const value = parseColorClass(rawValue);
     if (!type || !value || value === "transparent") continue;
 
+    const full = match[0];
+    const marker = `${type}-`;
+    const markerIndex = full.indexOf(marker);
+    const variants = markerIndex === -1 ? "" : full.slice(0, markerIndex);
+    const interactionState = getInteractionState(variants);
+
     if (type === "bg") {
-      bgClasses.push(value);
+      tokensByState[interactionState].bg.push(value);
     } else {
-      textClasses.push(value);
+      tokensByState[interactionState].fg.push(value);
     }
   }
 
-  for (const bg of bgClasses) {
-    for (const text of textClasses) {
-      pairs.push({ bg, fg: text });
-    }
+  const baseBg = tokensByState.base.bg;
+  const baseFg = tokensByState.base.fg;
+
+  addCrossProduct("base", baseBg, baseFg);
+
+  for (const interaction of ["hover", "active", "focus", "disabled"] as const) {
+    const interactionTokens = tokensByState[interaction];
+    const effectiveBg =
+      interactionTokens.bg.length > 0 ? interactionTokens.bg : baseBg;
+    const effectiveFg =
+      interactionTokens.fg.length > 0 ? interactionTokens.fg : baseFg;
+
+    if (effectiveBg.length === 0 || effectiveFg.length === 0) continue;
+    addCrossProduct(interaction, effectiveBg, effectiveFg);
   }
 
   return pairs;
@@ -455,7 +549,23 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
     const lines = file.code.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      const hasUnscannedHoverFilter =
+        hasUnsafeHoverFilterClasses(line);
       const pairs = extractColorPairs(line);
+
+      if (hasUnscannedHoverFilter) {
+        violations.push({
+          file: file.path,
+          line: i + 1,
+          background: "hover-state",
+          foreground: "hover-state",
+          estimatedRatio: 0,
+          requiredRatio: WCAG_AA_NORMAL,
+          severity: "error",
+          message:
+            "State transitions use filter-style utilities (hover/active/focus brightness/contrast/saturate/hue/etc.). Replace with explicit state-aware color pairs (hover:bg-*/hover:text-*, etc.) so text contrast remains provable in both themes.",
+        });
+      }
 
       for (const pair of pairs) {
         const lightBgLum = getLuminanceForTheme(pair.bg, "light");
@@ -479,12 +589,13 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
         const roundedLightRatio = Math.round(lightRatio * 100) / 100;
         const roundedDarkRatio = Math.round(darkRatio * 100) / 100;
 
+        const isStatefulPair = pair.interaction !== "base";
         if (minRatio >= WCAG_AA_NORMAL) {
           passedPairs++;
           continue;
         }
 
-        if (minRatio >= WCAG_AA_LARGE) {
+        if (!isStatefulPair && minRatio >= WCAG_AA_LARGE) {
           passedPairs++;
           violations.push({
             file: file.path,
@@ -497,6 +608,8 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
             message: `bg-${pair.bg}/text-${pair.fg} passes large text only in dark/light themes at worst (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1.`,
           });
         } else {
+          const stateLabel =
+            pair.interaction === "base" ? "default" : pair.interaction;
           violations.push({
             file: file.path,
             line: i + 1,
@@ -505,7 +618,7 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
             estimatedRatio: roundedMinRatio,
             requiredRatio: WCAG_AA_NORMAL,
             severity: "error",
-            message: `bg-${pair.bg}/text-${pair.fg} fails WCAG AA in at least one theme (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1.`,
+            message: `bg-${pair.bg}/text-${pair.fg} fails ${stateLabel} state contrast in at least one theme (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1. ${pair.interaction === "base" ? `Improve to at least ${WCAG_AA_NORMAL}:1.` : `Interactive states must stay at least ${WCAG_AA_NORMAL}:1.`}`,
           });
         }
       }

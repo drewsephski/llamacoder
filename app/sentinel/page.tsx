@@ -145,7 +145,7 @@ function SentinelHero() {
           style={{ animationDelay: "0.7s" }}
         >
           <button
-            className="pointer-events-auto cursor-pointer rounded-sm bg-primary px-6 py-3 text-sm text-primary-foreground transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-hero-bg active:scale-[0.97] md:px-8 md:py-4"
+            className="pointer-events-auto cursor-pointer rounded-sm bg-primary px-6 py-3 text-sm text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-hero-bg active:bg-primary/80 active:scale-[0.97] md:px-8 md:py-4"
             onClick={() => {
               window.location.href = "/contact";
             }}
@@ -154,7 +154,7 @@ function SentinelHero() {
             Book a Call
           </button>
           <button
-            className="pointer-events-auto cursor-pointer rounded-sm bg-white px-6 py-3 text-sm text-background transition-all hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-hero-bg active:scale-[0.97] md:px-8 md:py-4"
+            className="pointer-events-auto cursor-pointer rounded-sm bg-muted/60 px-6 py-3 text-sm text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-hero-bg active:bg-muted/80 active:scale-[0.97] md:px-8 md:py-4"
             onClick={() => {
               window.location.hash = "projects";
             }}
