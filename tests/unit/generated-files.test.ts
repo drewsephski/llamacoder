@@ -9,7 +9,10 @@ import {
   readGeneratedFilesStats,
   validateGeneratedFiles,
 } from "@/lib/generated-files";
-import { validateSelectedApiUsage } from "@/lib/generated-api";
+import {
+  validateAuthenticatedTasksGeneratedApp,
+  validateSelectedApiUsage,
+} from "@/lib/generated-api";
 
 describe("generated file diagnostics", () => {
   it("formats validation failures as an actionable repair request", () => {
@@ -37,6 +40,8 @@ describe("generated file normalization", () => {
     expect(normalizeGeneratedPath("../secret.ts")).toBeNull();
     expect(normalizeGeneratedPath("components/ui/button.tsx")).toBeNull();
     expect(normalizeGeneratedPath("@/lib/utils.ts")).toBeNull();
+    expect(normalizeGeneratedPath("lib/supabase.ts")).toBeNull();
+    expect(normalizeGeneratedPath("squid-runtime/supabase.ts")).toBeNull();
   });
 
   it("reports protected files stripped during normalization", () => {
@@ -109,6 +114,29 @@ describe("generated file normalization", () => {
           'Unresolved internal import "./Missing". Generate the imported file or remove the import.',
       },
     ]);
+  });
+
+  it("allows the protected Supabase adapter import without persisting it", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { supabase } from "@/lib/supabase";',
+          "export default function App() { return <main>{String(Boolean(supabase))}</main>; }",
+        ].join("\n"),
+      },
+      {
+        path: "lib/supabase.ts",
+        code: 'export const serviceRoleKey = "should-not-persist";',
+      },
+    ]);
+
+    expect(files).toHaveLength(1);
+    expect(files[0].path).toBe("App.tsx");
+    expect(readGeneratedFilesStats(files)).toEqual({
+      protectedPathsBlocked: 1,
+    });
+    expect(validateGeneratedFiles(files)).toEqual([]);
   });
 
   it("diagnoses generated default and named import/export mismatches", () => {
@@ -544,6 +572,80 @@ describe("generated file normalization", () => {
       expect.arrayContaining([
         expect.objectContaining({
           message: expect.stringContaining("outside the reviewed base URL"),
+        }),
+      ]),
+    );
+  });
+
+  it("requires selected Supabase apps to import the protected client adapter", () => {
+    const validFiles = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { supabase } from "@/lib/supabase"; export default function App() { return <main>{String(Boolean(supabase))}</main>; }',
+      },
+      {
+        path: "integrations.ts",
+        code: 'export const integrations = [{ providerId: "supabase" }];',
+      },
+    ]);
+    expect(validateSelectedApiUsage(validFiles, ["supabase"])).toEqual([]);
+
+    const directClientFiles = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { createClient } from "@supabase/supabase-js"; export default function App() { return <main>{String(Boolean(createClient))}</main>; }',
+      },
+      {
+        path: "integrations.ts",
+        code: 'export const integrations = [{ providerId: "supabase" }];',
+      },
+    ]);
+    expect(validateSelectedApiUsage(directClientFiles, ["supabase"])).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining('"@/lib/supabase"'),
+        }),
+      ]),
+    );
+  });
+
+  it("validates the constrained authenticated tasks auth and CRUD surface", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { supabase } from "@/lib/supabase";',
+          "async function auth(email: string, password: string) {",
+          "  await supabase.auth.signUp({ email, password });",
+          "  await supabase.auth.signInWithPassword({ email, password });",
+          "  await supabase.auth.signOut();",
+          "  await supabase.auth.getSession();",
+          "  const { data } = supabase.auth.onAuthStateChange(() => {});",
+          "  data.subscription.unsubscribe();",
+          "}",
+          "async function tasks(user: { id: string }) {",
+          '  await supabase.from("tasks").select("*");',
+          '  await supabase.from("tasks").insert({ title: "Task", user_id: user.id });',
+          '  await supabase.from("tasks").update({ completed: true });',
+          '  await supabase.from("tasks").delete();',
+          "}",
+          'export default function App() { const loading = false; const error = null; return <main>{loading ? "Loading" : error ? "Error" : "Tasks"}</main>; }',
+        ].join("\n"),
+      },
+    ]);
+    expect(validateAuthenticatedTasksGeneratedApp(files)).toEqual([]);
+
+    const incomplete = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { supabase } from "@/lib/supabase"; void supabase;',
+      },
+    ]);
+    expect(validateAuthenticatedTasksGeneratedApp(incomplete)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ message: expect.stringContaining("login") }),
+        expect.objectContaining({
+          message: expect.stringContaining("Load tasks"),
         }),
       ]),
     );

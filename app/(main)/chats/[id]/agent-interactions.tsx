@@ -36,6 +36,7 @@ import type {
 } from "@/features/generation/agent-contracts";
 import { getDeliveryContractLabel } from "@/features/generation/app-spec";
 import type { ResearchActivity } from "@/features/generation/contracts";
+export { ChatSupabaseSetupCard as BackendSetupCard } from "@/features/integrations/components/chat-supabase-setup-card";
 
 export function ClarificationRequestCard({
   content,

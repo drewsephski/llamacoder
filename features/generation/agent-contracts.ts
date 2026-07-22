@@ -10,6 +10,7 @@ export const agentIntentSchema = z.enum([
   "answer",
   "interview",
   "clarify",
+  "request_backend_setup",
   "search",
   "present_plan",
   "generate_code",
@@ -30,6 +31,43 @@ export const clarificationRequestSchema = z.object({
   confirmedDecisions: z.number().int().min(0).default(0),
   remainingDecisions: z.number().int().min(0).default(0),
 });
+
+export const backendSetupRequestSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(120),
+  description: z.string().min(1).max(500),
+  capabilities: z.array(z.string().min(1).max(120)).min(1).max(4),
+  requirements: z
+    .object({
+      database: z.boolean(),
+      authentication: z.boolean(),
+      storage: z.boolean(),
+      realtime: z.boolean(),
+      privilegedServerLogic: z.boolean(),
+      backendTemplate: z.literal("authenticated_tasks").optional(),
+    })
+    .strict(),
+  continuation: z
+    .object({
+      id: z.string().uuid(),
+      originalMessageId: z.string().min(1),
+      originalUserRequest: z.string().min(1).max(8000),
+      mode: z.enum(["direct", "plan"]),
+      status: z.enum([
+        "pending",
+        "resumed",
+        "ui_only",
+        "superseded",
+        "cancelled",
+      ]),
+    })
+    .strict(),
+});
+
+export const backendSetupDecisionSchema = z.enum([
+  "connect_supabase",
+  "build_ui_only",
+]);
 
 const generatedInterviewRequestSchema = clarificationRequestSchema.extend({
   steps: z.array(QuestionFlowStepDefinitionSchema).min(3).max(5),
@@ -85,6 +123,11 @@ export const agentActionSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("clarify"),
     request: generatedInterviewRequestSchema,
+    specUpdate: partialAppSpecUpdateSchema.optional(),
+  }),
+  z.object({
+    action: z.literal("request_backend_setup"),
+    request: backendSetupRequestSchema,
     specUpdate: partialAppSpecUpdateSchema.optional(),
   }),
   z.object({
@@ -156,6 +199,15 @@ export const agentMessageMetadataSchema = z.discriminatedUnion("kind", [
     ),
   }),
   z.object({
+    kind: z.literal("agent_backend_setup_request"),
+    request: backendSetupRequestSchema,
+  }),
+  z.object({
+    kind: z.literal("agent_backend_setup_response"),
+    requestId: z.string().min(1),
+    decision: backendSetupDecisionSchema,
+  }),
+  z.object({
     kind: z.literal("agent_plan_request"),
     request: planSchema,
   }),
@@ -183,6 +235,9 @@ export const agentMessageMetadataSchema = z.discriminatedUnion("kind", [
 export type AgentAction = z.infer<typeof agentActionSchema>;
 export type AgentIntent = z.infer<typeof agentIntentSchema>;
 export type AgentMessageMetadata = z.infer<typeof agentMessageMetadataSchema>;
+export type BackendSetupDecision = z.infer<typeof backendSetupDecisionSchema>;
+export type BackendSetupRequest = z.infer<typeof backendSetupRequestSchema>;
+export type SupabaseSetupRequirements = BackendSetupRequest["requirements"];
 export type ClarificationAnswers = z.infer<typeof clarificationAnswersSchema>;
 export type ClarificationRequest = z.infer<typeof clarificationRequestSchema>;
 export type SearchRequest = z.infer<typeof searchRequestSchema>;

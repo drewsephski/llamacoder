@@ -146,7 +146,9 @@ const CANONICAL_USE_CASES: CanonicalUseCase[] = [
       /\bproject\b/i,
       /\broadmap\b/i,
       /\bsprint\b/i,
+      /\btask manager\b/i,
       /\btask tracker\b/i,
+      /\baccounts?\b/i,
       /\bworkload\b/i,
       /\bteam\b/i,
       /\bkanban\b/i,
@@ -327,6 +329,7 @@ const EXPLICIT_PERSISTENCE_PATTERNS = [
   /\bsupabase\b[^\n]{0,80}\b(project|database|db|auth|authentication|backend|storage)\b/i,
   /\bpostgres(?:ql)?\b[^\n]{0,80}\b(database|backend|auth|project)\b/i,
   /\b(database|db)\b[^\n]{0,80}\b(needed|required|persistent|persistence)\b/i,
+  /\bpersistent\s+(?:tasks?|data|records?)\b/i,
 ];
 
 const EXPLICIT_PERSISTENCE_DECLINE_PATTERNS = [

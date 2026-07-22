@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+import { supabaseBrowserRuntimeStateSchema } from "@/features/integrations/supabase-browser-runtime";
+import {
+  supabaseAuthModeSchema,
+  supabaseBackendPlanSchema,
+  supabaseBackendStateSchema,
+} from "@/features/integrations/supabase-backend";
+import { supabaseManagementCapabilitiesSchema } from "@/features/integrations/supabase-management-capabilities";
+
 export const integrationEnvironmentSchema = z.enum([
   "development",
   "production",
@@ -76,6 +84,10 @@ export const projectIntegrationSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   config: z.record(z.string(), z.unknown()).nullable().default(null),
+  supabaseManagementCapabilities: supabaseManagementCapabilitiesSchema
+    .nullable()
+    .default(null),
+  supabaseBackend: supabaseBackendStateSchema.nullable().default(null),
   connection: z.object({
     id: z.string(),
     displayName: z.string(),
@@ -94,6 +106,7 @@ export const integrationOperationSchema = z.object({
   providerId: z.string(),
   kind: z.string(),
   status: z.string(),
+  phase: z.string().nullable().default(null),
   externalId: z.string().nullable(),
   url: z.string().nullable(),
   commitSha: z.string().nullable(),
@@ -106,6 +119,12 @@ export const integrationWorkspaceSchema = z.object({
   providers: z.array(integrationProviderSummarySchema),
   integrations: z.array(projectIntegrationSchema),
   recentOperations: z.array(integrationOperationSchema).default([]),
+  browserRuntime: z
+    .object({
+      supabase: supabaseBrowserRuntimeStateSchema,
+    })
+    .strict()
+    .default({ supabase: { status: "not_connected" } }),
 });
 
 export const integrationMutationResponseSchema = z.object({
@@ -142,13 +161,50 @@ export const integrationActionInputSchema = z.discriminatedUnion("action", [
     projectId: z.string().optional(),
     target: z.enum(["preview", "production"]).default("preview"),
   }),
-  z.object({
-    action: z.literal("supabase_provision"),
-    messageId: z.string().min(1).optional(),
-    organizationId: z.string().trim().min(1).optional(),
-    projectName: z.string().trim().min(1).max(120).optional(),
-    region: z.string().trim().min(1).max(64).optional(),
-  }),
+  z
+    .object({
+      action: z.literal("supabase_provision"),
+      messageId: z.string().min(1).optional(),
+      organizationId: z.string().trim().min(1).optional(),
+      projectName: z.string().trim().min(1).max(120).optional(),
+      region: z.string().trim().min(1).max(64).optional(),
+      authMode: supabaseAuthModeSchema.optional(),
+      authModeApproval: z
+        .object({ approved: z.literal(true) })
+        .strict()
+        .optional(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("supabase_bind_project"),
+      authMode: supabaseAuthModeSchema.optional(),
+      authModeApproval: z
+        .object({ approved: z.literal(true) })
+        .strict()
+        .optional(),
+      projectRef: z
+        .string()
+        .trim()
+        .min(1)
+        .max(128)
+        .regex(/^[a-zA-Z0-9_-]+$/),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("supabase_apply_backend"),
+      plan: supabaseBackendPlanSchema,
+      approval: z.object({ approved: z.literal(true) }).strict(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("supabase_configure_auth_mode"),
+      mode: supabaseAuthModeSchema,
+      approval: z.object({ approved: z.literal(true) }).strict(),
+    })
+    .strict(),
 ]);
 
 export const integrationActionResponseSchema = z.object({

@@ -5,10 +5,95 @@ import {
   appSpecSchema,
   createEmptyAppSpec,
 } from "@/features/generation/app-spec";
-import { buildPlanModeFallbackInterview } from "@/features/generation/mode-policy";
+import {
+  buildDirectBackendSetupRequest,
+  buildPlanModeFallbackInterview,
+} from "@/features/generation/mode-policy";
+import { detectPersistenceIntentFromText } from "@/features/generation/persistence-intent";
 import { getIntegrationProvider } from "@/features/integrations/registry";
 
 describe("generation mode policy", () => {
+  it("requires a backend for the live task-manager canary prompt", () => {
+    const prompt = "Build a task manager with accounts and persistent tasks.";
+    const intent = detectPersistenceIntentFromText(prompt);
+
+    expect(intent).toMatchObject({
+      detected: true,
+      recommendation: "require_database",
+      explicitlyRequested: true,
+      useCase: "Project tracker",
+    });
+    expect(
+      intent.proposedSchema.some((entity) => entity.entity === "tasks"),
+    ).toBe(true);
+
+    const action = buildDirectBackendSetupRequest({
+      messageId: "message_live_canary",
+      prompt,
+      spec: {
+        ...createEmptyAppSpec(),
+        overview: { purpose: "Task manager with accounts" },
+        dataPersistence: intent,
+      },
+    });
+
+    expect(action).toMatchObject({
+      action: "request_backend_setup",
+      request: {
+        requirements: {
+          database: true,
+          authentication: true,
+          backendTemplate: "authenticated_tasks",
+        },
+      },
+    });
+  });
+
+  it("keeps an explicitly browser-local task manager on the prototype path", () => {
+    const intent = detectPersistenceIntentFromText(
+      "Build a task manager that uses browser-local storage only.",
+    );
+
+    expect(intent.detected).toBe(false);
+    expect(intent.recommendation).toBe("prototype");
+  });
+
+  it("builds a focused backend setup handoff for direct mode", () => {
+    const action = buildDirectBackendSetupRequest({
+      messageId: "message_direct_backend",
+      spec: {
+        ...createEmptyAppSpec(),
+        overview: { purpose: "a shared task manager" },
+        dataPersistence: appSpecSchema.parse({
+          dataPersistence: {
+            detected: true,
+            confidence: 95,
+            recommendation: "require_database",
+            explicitlyRequested: true,
+            reason: "Users need private saved tasks.",
+            proposedSchema: [
+              {
+                entity: "tasks",
+                purpose: "Store each user's tasks.",
+                fields: ["id", "user_id", "title"],
+              },
+            ],
+          },
+        }).dataPersistence,
+      },
+    });
+
+    expect(action).toMatchObject({
+      action: "request_backend_setup",
+      request: {
+        id: "backend-setup-message_direct_backend",
+        title: expect.stringContaining("Connect a backend"),
+        description: expect.stringContaining("tasks"),
+      },
+    });
+    expect(agentActionSchema.safeParse(action).success).toBe(true);
+  });
+
   it("builds a deterministic four-question Plan mode fallback", () => {
     const action = buildPlanModeFallbackInterview({
       messageId: "message_1",

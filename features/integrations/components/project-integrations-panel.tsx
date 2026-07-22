@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ProviderCatalog } from "@/features/integrations/components/provider-catalog";
+import { SupabaseAuthModeSelector } from "@/features/integrations/components/supabase-auth-mode-selector";
 import {
   Select,
   SelectContent,
@@ -42,8 +43,14 @@ import {
   integrationResourcesResponseSchema,
   integrationWorkspaceSchema,
   type IntegrationEnvironment,
+  type IntegrationWorkspace,
   type ProjectIntegrationView,
 } from "@/features/integrations/contracts";
+import {
+  DEFAULT_SUPABASE_AUTH_MODE,
+  readSupabaseAuthState,
+  type SupabaseAuthMode,
+} from "@/features/integrations/supabase-backend";
 import { fetchJson } from "@/features/shared/client/http";
 
 const deleteResponseSchema = z.object({ ok: z.literal(true) });
@@ -65,6 +72,8 @@ function isSupabaseProjectProvisioned(integration: ProjectIntegrationView) {
     integration.providerId === "supabase" &&
     (getIntegrationConfigValue(integration, "supabaseProjectRef") !== null ||
       getIntegrationConfigValue(integration, "supabaseProjectUrl") !== null ||
+      getIntegrationConfigValue(integration, "supabasePublishableKey") !==
+        null ||
       getIntegrationConfigValue(integration, "supabaseAnonKey") !== null)
   );
 }
@@ -103,6 +112,213 @@ function statusPresentation(status: ProjectIntegrationView["status"]) {
     className: "bg-muted text-muted-foreground",
     icon: KeyRound,
   };
+}
+
+function supabaseProvisioningLabel(phase: string | null | undefined) {
+  switch (phase) {
+    case "creating_project":
+      return "Creating project";
+    case "waiting_for_supabase":
+      return "Waiting for Supabase";
+    case "configuring_browser_access":
+      return "Configuring authentication and browser access";
+    case "ready":
+      return "Ready";
+    case "timed_out":
+      return "Timed out";
+    case "failed":
+      return "Failed";
+    default:
+      return "Provisioning";
+  }
+}
+
+function SupabaseManagementAccessStatus({
+  projectId,
+  integration,
+}: {
+  projectId: string;
+  integration: ProjectIntegrationView;
+}) {
+  const capabilities = integration.supabaseManagementCapabilities;
+  const reconnectUrl = `/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(projectId)}&environment=${integration.environment}`;
+  let message = "Management database access has not been checked yet.";
+  let needsReconnect = false;
+  let tone = "text-muted-foreground";
+
+  if (capabilities?.issue === "connection_expired") {
+    message = "Connection expired";
+    needsReconnect = true;
+    tone = "text-destructive";
+  } else if (capabilities?.issue === "insufficient_permissions") {
+    message =
+      capabilities.authWrite === "reauthorization_required"
+        ? "Reconnect to grant Auth Write for instant signup"
+        : "Reconnect to grant database access";
+    needsReconnect = true;
+    tone = "text-amber-700 dark:text-amber-300";
+  } else if (
+    capabilities?.issue === "rate_limited" ||
+    capabilities?.issue === "provider_unavailable"
+  ) {
+    message = "Supabase temporarily unavailable";
+    tone = "text-amber-700 dark:text-amber-300";
+  } else if (
+    capabilities?.databaseRead === "verified" &&
+    capabilities.databaseWrite === "verified"
+  ) {
+    message = "Database access ready";
+    tone = "text-emerald-700 dark:text-emerald-300";
+  } else if (
+    capabilities?.databaseRead === "verified" &&
+    capabilities.databaseWrite === "unverified"
+  ) {
+    message = "Database Write enabled but not yet verified";
+    tone = "text-blue-700 dark:text-blue-300";
+  } else if (
+    capabilities &&
+    (capabilities.databaseRead === "reauthorization_required" ||
+      capabilities.databaseWrite === "reauthorization_required")
+  ) {
+    message = "Reconnect to grant database access";
+    needsReconnect = true;
+    tone = "text-amber-700 dark:text-amber-300";
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-background/70 px-3 py-2 text-xs">
+      <span className={tone}>{message}</span>
+      {needsReconnect && (
+        <a
+          href={reconnectUrl}
+          className="font-semibold text-primary hover:underline"
+        >
+          Reconnect
+        </a>
+      )}
+    </div>
+  );
+}
+
+function SupabaseBackendCard({
+  projectId,
+  integration,
+}: {
+  projectId: string;
+  integration: ProjectIntegrationView;
+}) {
+  const queryClient = useQueryClient();
+  const backend = integration.supabaseBackend;
+  const reconnectUrl = `/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(projectId)}&environment=${integration.environment}`;
+  const applyMutation = useMutation({
+    mutationFn: () => {
+      if (!backend || !("plan" in backend)) {
+        throw new Error("The authenticated tasks backend plan is unavailable.");
+      }
+      return fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/actions`,
+        integrationActionResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "supabase_apply_backend",
+            plan: backend.plan,
+            approval: { approved: true },
+          }),
+        },
+      );
+    },
+    onSuccess: async ({ operation }) => {
+      await queryClient.invalidateQueries({
+        queryKey: integrationQueryKey(projectId),
+      });
+      if (operation.status === "succeeded") {
+        toast.success("Supabase tasks backend is ready");
+      } else {
+        toast.error("Supabase backend verification failed", {
+          description: operation.errorMessage ?? undefined,
+        });
+      }
+    },
+    onError: (error) =>
+      toast.error("Could not apply Supabase backend", {
+        description: error instanceof Error ? error.message : undefined,
+      }),
+  });
+
+  if (!backend || backend.status === "not_connected") {
+    return <p className="text-muted-foreground">Supabase not connected</p>;
+  }
+  if (backend.status === "provisioning") {
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="size-3.5 animate-spin" /> Provisioning
+      </div>
+    );
+  }
+  if (backend.status === "applying" || applyMutation.isPending) {
+    return (
+      <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+        <Loader2 className="size-3.5 animate-spin" /> Applying backend
+      </div>
+    );
+  }
+  if (backend.status === "reauthorization_required") {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2 text-amber-700 dark:text-amber-300">
+        <span>Reauthorization required</span>
+        <Button asChild type="button" size="sm" variant="outline">
+          <a href={reconnectUrl}>Reconnect Supabase</a>
+        </Button>
+      </div>
+    );
+  }
+  if (backend.status === "ready") {
+    return (
+      <div className="flex items-center gap-2 font-medium text-emerald-700 dark:text-emerald-300">
+        <CheckCircle2 className="size-3.5" /> Backend ready
+      </div>
+    );
+  }
+
+  const verificationFailed = backend.status === "verification_failed";
+  return (
+    <div className="grid gap-3 rounded-md border border-border bg-background p-3">
+      <div className="flex items-start gap-2">
+        {verificationFailed ? (
+          <AlertTriangle className="mt-0.5 size-4 text-destructive" />
+        ) : (
+          <ShieldCheck className="mt-0.5 size-4 text-primary" />
+        )}
+        <div className="grid gap-1">
+          <p className="font-semibold">
+            {verificationFailed
+              ? "Verification failed"
+              : "Backend approval required"}
+          </p>
+          {verificationFailed ? (
+            <p className="text-destructive">{backend.message}</p>
+          ) : (
+            <ul className="list-disc space-y-0.5 pl-4 text-muted-foreground">
+              <li>Creates the tasks table</li>
+              <li>Enables row-level security</li>
+              <li>Allows users to access only their own tasks</li>
+              <li>Makes no destructive changes</li>
+            </ul>
+          )}
+        </div>
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        disabled={applyMutation.isPending}
+        onClick={() => applyMutation.mutate()}
+      >
+        {verificationFailed ? "Approve and retry" : "Approve backend"}
+      </Button>
+    </div>
+  );
 }
 
 function ProviderActions({
@@ -234,34 +450,60 @@ function ProviderActions({
 function SupabaseProvisionActions({
   projectId,
   integration,
+  operation,
 }: {
   projectId: string;
   integration: ProjectIntegrationView;
+  operation?: IntegrationWorkspace["recentOperations"][number];
 }) {
   const queryClient = useQueryClient();
-  const [resourceId, setResourceId] = useState("");
+  const [mode, setMode] = useState<"existing" | "create">("existing");
+  const [organizationId, setOrganizationId] = useState("");
+  const [existingProjectRef, setExistingProjectRef] = useState("");
   const [projectName, setProjectName] = useState("");
-  const resourcesQuery = useQuery({
-    queryKey: ["integration-resources", projectId, integration.id],
+  const [authMode, setAuthMode] = useState<SupabaseAuthMode>(
+    DEFAULT_SUPABASE_AUTH_MODE,
+  );
+  const browserConfigured = Boolean(
+    getIntegrationConfigValue(integration, "supabaseProjectUrl") &&
+      (getIntegrationConfigValue(integration, "supabasePublishableKey") ||
+        getIntegrationConfigValue(integration, "supabaseAnonKey")),
+  );
+  const organizationsQuery = useQuery({
+    queryKey: [
+      "integration-resources",
+      projectId,
+      integration.id,
+      "organizations",
+    ],
     queryFn: () =>
       fetchJson(
-        `/api/projects/${projectId}/integrations/${integration.id}/resources`,
+        `/api/projects/${projectId}/integrations/${integration.id}/resources?type=organizations`,
         integrationResourcesResponseSchema,
       ),
+    enabled: integration.status === "ready" && !browserConfigured,
   });
-  const resources = resourcesQuery.data?.resources ?? [];
-  const defaultResourceId =
+  const projectsQuery = useQuery({
+    queryKey: ["integration-resources", projectId, integration.id, "projects"],
+    queryFn: () =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/resources?type=projects`,
+        integrationResourcesResponseSchema,
+      ),
+    enabled: integration.status === "ready" && !browserConfigured,
+  });
+  const organizations = organizationsQuery.data?.resources ?? [];
+  const projects = projectsQuery.data?.resources ?? [];
+  const defaultOrganizationId =
     getIntegrationConfigValue(integration, "supabaseOrganizationId") ??
-    resources[0]?.id ??
+    organizations[0]?.id ??
     "";
-  const selectedResource = resourceId || defaultResourceId;
-  const provisioned = isSupabaseProjectProvisioned(integration);
-
-  useEffect(() => {
-    if (!resourceId && defaultResourceId) {
-      setResourceId(defaultResourceId);
-    }
-  }, [resourceId, defaultResourceId]);
+  const selectedOrganizationId = organizationId || defaultOrganizationId;
+  const selectedProjectRef = existingProjectRef || projects[0]?.id || "";
+  const projectReferenceExists = isSupabaseProjectProvisioned(integration);
+  const operationRunning = operation?.status === "running";
+  const operationTerminal =
+    operation?.status === "failed" || operation?.status === "timed_out";
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -273,7 +515,11 @@ function SupabaseProvisionActions({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "supabase_provision",
-            ...(selectedResource ? { organizationId: selectedResource } : {}),
+            authMode,
+            authModeApproval: { approved: true },
+            ...(selectedOrganizationId
+              ? { organizationId: selectedOrganizationId }
+              : {}),
             ...(projectName.trim() ? { projectName: projectName.trim() } : {}),
           }),
         },
@@ -293,81 +539,329 @@ function SupabaseProvisionActions({
       }),
   });
 
-  const canRun =
-    !createMutation.isPending &&
-    !resourcesQuery.isLoading &&
-    !resourcesQuery.isError &&
-    Boolean(selectedResource);
+  const bindMutation = useMutation({
+    mutationFn: () =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/actions`,
+        integrationActionResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "supabase_bind_project",
+            authMode,
+            authModeApproval: { approved: true },
+            projectRef: selectedProjectRef,
+          }),
+        },
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: integrationQueryKey(projectId),
+      });
+      toast.success("Supabase project connected");
+    },
+    onError: (error) =>
+      toast.error("Supabase connection failed", {
+        description: error instanceof Error ? error.message : undefined,
+      }),
+  });
 
-  if (provisioned) {
-    const projectUrl = getIntegrationConfigValue(integration, "supabaseProjectUrl");
+  const configureAuthModeMutation = useMutation({
+    mutationFn: (mode: SupabaseAuthMode) =>
+      fetchJson(
+        `/api/projects/${projectId}/integrations/${integration.id}/actions`,
+        integrationActionResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "supabase_configure_auth_mode",
+            mode,
+            approval: { approved: true },
+          }),
+        },
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: integrationQueryKey(projectId),
+      });
+      toast.success("Supabase authentication mode updated");
+    },
+    onError: (error) =>
+      toast.error("Could not update Supabase authentication mode", {
+        description: error instanceof Error ? error.message : undefined,
+      }),
+  });
+
+  const canCreate =
+    !createMutation.isPending &&
+    !organizationsQuery.isLoading &&
+    !organizationsQuery.isError &&
+    Boolean(selectedOrganizationId);
+  const canBind =
+    !bindMutation.isPending &&
+    !projectsQuery.isLoading &&
+    !projectsQuery.isError &&
+    Boolean(selectedProjectRef);
+
+  if (browserConfigured) {
+    const projectUrl = getIntegrationConfigValue(
+      integration,
+      "supabaseProjectUrl",
+    );
     const configuredProjectName = getIntegrationConfigValue(
       integration,
       "supabaseProjectName",
     );
+    const configuredAuthMode = readSupabaseAuthState(integration.config)?.mode;
+    const nextAuthMode: SupabaseAuthMode =
+      configuredAuthMode === "prototype_instant_signup"
+        ? "verified_email"
+        : "prototype_instant_signup";
 
     return (
-      <div className="mt-2 rounded-md border border-border/60 bg-muted/30 p-3 text-xs">
-        <p className="font-semibold">
-          {configuredProjectName || "Project configured"}
-        </p>
-        {projectUrl && (
-          <a
-            href={projectUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-primary hover:underline"
-          >
-            Open project <ExternalLink className="size-3" />
-          </a>
-        )}
+      <div className="mt-2 grid gap-2 rounded-md border border-border/60 bg-muted/30 p-3 text-xs">
+        <div>
+          <p className="font-semibold">
+            {configuredProjectName || "Project configured"}
+          </p>
+          {projectUrl && (
+            <a
+              href={projectUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              Open project <ExternalLink className="size-3" />
+            </a>
+          )}
+        </div>
+        <SupabaseManagementAccessStatus
+          projectId={projectId}
+          integration={integration}
+        />
+        <div className="rounded-md border border-border/60 bg-background/70 px-3 py-2">
+          {configuredAuthMode === "verified_email" ? (
+            <div className="grid gap-2">
+              <div>
+                <p className="font-semibold text-emerald-700 dark:text-emerald-300">
+                  Verified email — production mode
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Signup waits for email confirmation. Reliable confirmation and
+                  recovery require custom SMTP.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={configureAuthModeMutation.isPending}
+                onClick={() => configureAuthModeMutation.mutate(nextAuthMode)}
+              >
+                Switch to prototype testing
+              </Button>
+            </div>
+          ) : configuredAuthMode === "prototype_instant_signup" ? (
+            <div className="grid gap-2">
+              <div>
+                <p className="font-semibold text-amber-700 dark:text-amber-300">
+                  Prototype/demo mode — recommended while building
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Email ownership is not verified. Custom SMTP is still needed
+                  for reliable recovery; add CAPTCHA before publishing. This
+                  setting alone does not make the app production-ready.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                disabled={configureAuthModeMutation.isPending}
+                onClick={() => configureAuthModeMutation.mutate(nextAuthMode)}
+              >
+                Switch to production mode
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              <p className="font-semibold">Choose an authentication mode</p>
+              <SupabaseAuthModeSelector
+                value={authMode}
+                onChange={setAuthMode}
+                disabled={configureAuthModeMutation.isPending}
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={configureAuthModeMutation.isPending}
+                onClick={() => configureAuthModeMutation.mutate(authMode)}
+              >
+                {configureAuthModeMutation.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <KeyRound />
+                )}
+                {configureAuthModeMutation.isPending
+                  ? "Applying authentication mode"
+                  : authMode === "verified_email"
+                    ? "Approve verified-email mode"
+                    : "Approve prototype/demo mode"}
+              </Button>
+            </div>
+          )}
+        </div>
+        <SupabaseBackendCard projectId={projectId} integration={integration} />
+      </div>
+    );
+  }
+
+  if (operationRunning) {
+    return (
+      <div className="mt-2 flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 p-3 text-xs">
+        <Loader2 className="size-3.5 animate-spin" />
+        <span className="font-semibold">
+          {supabaseProvisioningLabel(operation.phase)}
+        </span>
       </div>
     );
   }
 
   return (
     <div className="mt-3 grid gap-2 border-t border-border/60 pt-3">
-      <Select value={selectedResource} onValueChange={setResourceId}>
-        <SelectTrigger className="h-9">
-          <SelectValue
-            placeholder={
-              resourcesQuery.isLoading
-                ? "Loading organizations..."
-                : resources.length
-                  ? "Choose organization"
-                  : "No organization found"
-            }
-          />
-        </SelectTrigger>
-        <SelectContent>
-          {resources.map((resource) => (
-            <SelectItem key={resource.id} value={resource.id}>
-              {resource.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Input
-        value={projectName}
-        onChange={(event) => setProjectName(event.target.value)}
-        placeholder="Project name (optional)"
+      <SupabaseManagementAccessStatus
+        projectId={projectId}
+        integration={integration}
       />
-      <Button
-        type="button"
-        size="sm"
-        disabled={!canRun}
-        onClick={() => createMutation.mutate()}
-      >
-        {createMutation.isPending ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          <Rocket />
-        )}
-        Create Supabase project
-      </Button>
-      {resourcesQuery.isError && (
+      <SupabaseBackendCard projectId={projectId} integration={integration} />
+      <div className="grid gap-2 rounded-md border border-border/60 p-3">
+        <p className="text-xs font-semibold">Choose authentication mode</p>
+        <SupabaseAuthModeSelector value={authMode} onChange={setAuthMode} />
+        <p className="text-xs text-muted-foreground">
+          Connecting or creating the project explicitly approves applying the
+          selected mode. Squid never changes email confirmation silently.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={mode === "existing" ? "default" : "outline"}
+          onClick={() => setMode("existing")}
+        >
+          Existing project
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={mode === "create" ? "default" : "outline"}
+          onClick={() => setMode("create")}
+        >
+          New project
+        </Button>
+      </div>
+      {mode === "existing" ? (
+        <>
+          <Select
+            value={selectedProjectRef}
+            onValueChange={setExistingProjectRef}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue
+                placeholder={
+                  projectsQuery.isLoading
+                    ? "Loading projects..."
+                    : projects.length
+                      ? "Choose project"
+                      : "No project found"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!canBind}
+            onClick={() => bindMutation.mutate()}
+          >
+            {bindMutation.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Plug />
+            )}
+            {bindMutation.isPending
+              ? "Connecting project"
+              : "Connect Supabase project"}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Select
+            value={selectedOrganizationId}
+            onValueChange={setOrganizationId}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue
+                placeholder={
+                  organizationsQuery.isLoading
+                    ? "Loading organizations..."
+                    : organizations.length
+                      ? "Choose organization"
+                      : "No organization found"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {organizations.map((organization) => (
+                <SelectItem key={organization.id} value={organization.id}>
+                  {organization.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            value={projectName}
+            onChange={(event) => setProjectName(event.target.value)}
+            placeholder="Project name (optional)"
+          />
+          <Button
+            type="button"
+            size="sm"
+            disabled={!canCreate}
+            onClick={() => createMutation.mutate()}
+          >
+            {createMutation.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Rocket />
+            )}
+            {createMutation.isPending
+              ? "Creating project"
+              : operationTerminal || projectReferenceExists
+                ? "Retry Supabase provisioning"
+                : "Create Supabase project"}
+          </Button>
+        </>
+      )}
+      {operationTerminal && (
         <p className="text-xs text-destructive">
-          Could not load organizations. Make sure the integration is connected.
+          {operation.errorMessage ||
+            (operation.status === "timed_out"
+              ? "Provisioning timed out. Retry or reconnect Supabase."
+              : "Provisioning failed. Retry or reconnect Supabase.")}
+        </p>
+      )}
+      {(organizationsQuery.isError || projectsQuery.isError) && (
+        <p className="text-xs text-destructive">
+          Could not load Supabase projects. Test or reconnect the integration.
         </p>
       )}
     </div>
@@ -395,13 +889,14 @@ function OperationStatusRefresher({
       query.state.data?.operation.status === "running" ? 3_000 : false,
   });
   const refreshedStatus = refreshQuery.data?.operation.status;
+  const refreshedPhase = refreshQuery.data?.operation.phase;
   useEffect(() => {
-    if (refreshedStatus && refreshedStatus !== "running") {
+    if (refreshedStatus) {
       void queryClient.invalidateQueries({
         queryKey: integrationQueryKey(projectId),
       });
     }
-  }, [projectId, queryClient, refreshedStatus]);
+  }, [projectId, queryClient, refreshedPhase, refreshedStatus]);
   return null;
 }
 
@@ -409,10 +904,12 @@ export function ProjectIntegrationsPanel({
   projectId,
   messageId,
   triggerPlacement = "toolbar",
+  initialProviderId,
 }: {
   projectId: string;
   messageId?: string;
-  triggerPlacement?: "toolbar" | "composer";
+  triggerPlacement?: "toolbar" | "composer" | "backend-setup" | "chat-advanced";
+  initialProviderId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [environment, setEnvironment] =
@@ -431,9 +928,12 @@ export function ProjectIntegrationsPanel({
     const url = new URL(window.location.href);
     const result = url.searchParams.get("integration");
     const error = url.searchParams.get("integration_error");
+    const chatInteraction = url.searchParams.get("integration_interaction");
     if (!result && !error) return;
 
-    const openTimer = window.setTimeout(() => setOpen(true), 0);
+    const openTimer = chatInteraction
+      ? null
+      : window.setTimeout(() => setOpen(true), 0);
     if (result === "connected") {
       toast.success("Integration connected", {
         description: "The provider accepted the connection.",
@@ -452,8 +952,11 @@ export function ProjectIntegrationsPanel({
     }
     url.searchParams.delete("integration");
     url.searchParams.delete("integration_error");
+    url.searchParams.delete("integration_interaction");
     window.history.replaceState({}, "", url);
-    return () => window.clearTimeout(openTimer);
+    return () => {
+      if (openTimer !== null) window.clearTimeout(openTimer);
+    };
   }, []);
   const workspaceQuery = useQuery({
     queryKey,
@@ -561,10 +1064,12 @@ export function ProjectIntegrationsPanel({
         { description: integration.connection.lastHealthMessage ?? undefined },
       );
     },
-    onError: (error) =>
+    onError: async (error) => {
+      await queryClient.invalidateQueries({ queryKey });
       toast.error("Connection test failed", {
         description: error instanceof Error ? error.message : undefined,
-      }),
+      });
+    },
   });
 
   const disconnectMutation = useMutation({
@@ -612,6 +1117,9 @@ export function ProjectIntegrationsPanel({
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
+        if (nextOpen && initialProviderId) {
+          setProviderId(initialProviderId);
+        }
         if (!nextOpen) {
           resetForm();
           setDisconnectBindingId(null);
@@ -619,7 +1127,20 @@ export function ProjectIntegrationsPanel({
       }}
     >
       <DialogTrigger asChild>
-        {triggerPlacement === "composer" ? (
+        {triggerPlacement === "chat-advanced" ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs text-muted-foreground"
+          >
+            Open advanced setup
+          </Button>
+        ) : triggerPlacement === "backend-setup" ? (
+          <Button type="button" className="w-full gap-2 sm:w-auto">
+            <Plug className="size-4" /> Set up Supabase
+          </Button>
+        ) : triggerPlacement === "composer" ? (
           <button
             type="button"
             className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -833,13 +1354,18 @@ export function ProjectIntegrationsPanel({
                                 integration={integration}
                               />
                             )}
-                          {integration.status === "ready" &&
-                            integration.providerId === "supabase" && (
-                              <SupabaseProvisionActions
-                                projectId={projectId}
-                                integration={integration}
-                              />
-                            )}
+                          {integration.providerId === "supabase" && (
+                            <SupabaseProvisionActions
+                              projectId={projectId}
+                              integration={integration}
+                              operation={workspace?.recentOperations.find(
+                                (operation) =>
+                                  operation.projectIntegrationId ===
+                                    integration.id &&
+                                  operation.kind === "supabase_provision",
+                              )}
+                            />
+                          )}
                         </div>
                       );
                     })}
@@ -877,10 +1403,18 @@ export function ProjectIntegrationsPanel({
                                 ? "Supabase project provisioning"
                                 : "Integration action"}{" "}
                           · {operation.status}
+                          {operation.phase
+                            ? ` · ${supabaseProvisioningLabel(operation.phase)}`
+                            : ""}
                           {operation.commitSha
                             ? ` · ${operation.commitSha.slice(0, 7)}`
                             : ""}
                         </span>
+                        {operation.errorMessage && (
+                          <span className="text-destructive">
+                            {operation.errorMessage}
+                          </span>
+                        )}
                         {operation.url && (
                           <a
                             href={operation.url}

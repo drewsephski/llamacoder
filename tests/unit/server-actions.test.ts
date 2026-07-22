@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FREE_MODEL } from "@/lib/constants";
 import { buildChat, buildMessage } from "../fixtures/builders";
+import { getAuthenticatedTasksBackendPlan } from "@/features/integrations/supabase-backend";
 
 const {
   checkCreditAvailabilityMock,
@@ -29,7 +30,8 @@ const {
   }),
   saveMessageFollowUpPromptsMock: vi.fn(),
   txMock: {
-    message: { create: vi.fn(), update: vi.fn() },
+    $executeRaw: vi.fn(),
+    message: { create: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     chat: { update: vi.fn() },
     generationLog: { create: vi.fn() },
   },
@@ -114,6 +116,7 @@ describe("server actions", () => {
       "Make the calculator mobile-ready",
     ]);
     txMock.message.create.mockResolvedValue({ id: "assistant_1" });
+    txMock.message.findMany.mockResolvedValue([]);
     txMock.message.update.mockResolvedValue({});
     txMock.generationLog.create.mockResolvedValue({});
     prismaMock.message.create.mockResolvedValue({ id: "user_msg_2" });
@@ -141,14 +144,16 @@ describe("server actions", () => {
   });
 
   it("checks follow-up user credit availability without consuming credits", async () => {
+    const messages = [
+      buildMessage({ position: 0, role: "system" }),
+      buildMessage({ position: 1, role: "user" }),
+    ];
     prismaMock.chat.findUnique.mockResolvedValueOnce(
       buildChat({
-        messages: [
-          buildMessage({ position: 0, role: "system" }),
-          buildMessage({ position: 1, role: "user" }),
-        ],
+        messages,
       }),
     );
+    txMock.message.findMany.mockResolvedValueOnce(messages);
 
     await createMessage("chat_1", "change the colors", "user");
 
@@ -157,11 +162,63 @@ describe("server actions", () => {
       modelId: FREE_MODEL,
     });
     expect(consumeCreditsForGenerationMock).not.toHaveBeenCalled();
-    expect(prismaMock.message.create).toHaveBeenCalledWith({
+    expect(txMock.message.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         role: "user",
         position: 2,
       }),
+    });
+  });
+
+  it("supersedes a pending backend continuation when a newer build replaces it", async () => {
+    const setupMessage = buildMessage({
+      id: "setup_message",
+      position: 2,
+      role: "assistant",
+      files: {
+        kind: "agent_backend_setup_request",
+        request: {
+          id: "setup_1",
+          title: "Connect a backend before Squid builds",
+          description: "This app needs Supabase.",
+          capabilities: ["Persistent data"],
+          requirements: {
+            database: true,
+            authentication: true,
+            storage: false,
+            realtime: false,
+            privilegedServerLogic: false,
+            backendTemplate: "authenticated_tasks",
+          },
+          continuation: {
+            id: "550e8400-e29b-41d4-a716-446655440000",
+            originalMessageId: "user_1",
+            originalUserRequest: "Build a task manager",
+            mode: "direct",
+            status: "pending",
+          },
+        },
+      },
+    });
+    const messages = [
+      buildMessage({ position: 0, role: "system" }),
+      buildMessage({ position: 1, role: "user" }),
+      setupMessage,
+    ];
+    prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat({ messages }));
+    txMock.message.findMany.mockResolvedValueOnce(messages);
+
+    await createMessage("chat_1", "Make it a shared CRM instead", "user");
+
+    expect(txMock.message.update).toHaveBeenCalledWith({
+      where: { id: "setup_message" },
+      data: {
+        files: expect.objectContaining({
+          request: expect.objectContaining({
+            continuation: expect.objectContaining({ status: "superseded" }),
+          }),
+        }),
+      },
     });
   });
 
@@ -254,6 +311,60 @@ describe("server actions", () => {
       ),
     ).rejects.toThrow("SELECTED_API_CONTRACT_VIOLATION");
 
+    expect(releaseCreditHoldMock).toHaveBeenCalledWith({ holdId: "hold_1" });
+    expect(txMock.message.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects incomplete generated apps once authenticated_tasks is verified", async () => {
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        messages: [
+          buildMessage({ position: 0, role: "system" }),
+          buildMessage({ position: 1, role: "user" }),
+        ],
+      }),
+    );
+    prismaMock.projectIntegration.findMany.mockResolvedValueOnce([
+      {
+        providerId: "supabase",
+        config: {
+          supabaseBackend: {
+            status: "ready",
+            plan: getAuthenticatedTasksBackendPlan(),
+            verifiedAt: "2026-07-21T00:00:00.000Z",
+            verification: {
+              table: true,
+              columns: true,
+              rowLevelSecurity: true,
+              authenticatedGrants: true,
+              ownershipPolicies: true,
+              anonAccessRevoked: true,
+            },
+          },
+        },
+      },
+    ]);
+
+    await expect(
+      createMessage(
+        "chat_1",
+        "done",
+        "assistant",
+        [
+          {
+            path: "App.tsx",
+            code: 'import { supabase } from "@/lib/supabase"; export default function App() { return <main>{String(Boolean(supabase))}</main>; }',
+          },
+          {
+            path: "integrations.ts",
+            code: 'export const integrations = [{ providerId: "supabase" }];',
+          },
+        ],
+        { creditHoldId: "hold_1" },
+      ),
+    ).rejects.toThrow(
+      "Verified Supabase authenticated_tasks app is incomplete",
+    );
     expect(releaseCreditHoldMock).toHaveBeenCalledWith({ holdId: "hold_1" });
     expect(txMock.message.create).not.toHaveBeenCalled();
   });

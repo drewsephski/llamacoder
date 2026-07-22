@@ -1,6 +1,7 @@
 import CodeRunnerReact from "./code-runner-react";
 import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
 import type { RuntimeVerificationReport } from "@/features/generation/runtime-verification";
+import type { SupabaseBrowserRuntimeState } from "@/features/integrations/supabase-browser-runtime";
 
 export default function CodeRunner({
   language,
@@ -12,6 +13,7 @@ export default function CodeRunner({
   previewSelectionMode,
   previewTestNonce,
   onPreviewTestReport,
+  supabaseRuntime,
 }: {
   language?: string;
   code?: string;
@@ -24,7 +26,10 @@ export default function CodeRunner({
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
   previewSelectionMode?: boolean;
   previewTestNonce?: number;
-  onPreviewTestReport?: (report: Omit<RuntimeVerificationReport, "messageId">) => void;
+  onPreviewTestReport?: (
+    report: Omit<RuntimeVerificationReport, "messageId">,
+  ) => void;
+  supabaseRuntime?: SupabaseBrowserRuntimeState;
 }) {
   const actualFiles =
     files || (code ? [{ path: "App.tsx", content: code }] : []);
@@ -37,6 +42,7 @@ export default function CodeRunner({
       previewSelectionMode={previewSelectionMode}
       previewTestNonce={previewTestNonce}
       onPreviewTestReport={onPreviewTestReport}
+      supabaseRuntime={supabaseRuntime}
     />
   );
 }

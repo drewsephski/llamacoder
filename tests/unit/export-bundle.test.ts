@@ -140,6 +140,56 @@ describe("export bundle", () => {
     ).toContain("API setup required");
   });
 
+  it("exports the Supabase adapter with placeholder-only Vite configuration", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { supabase } from "@/lib/supabase";',
+          "export default function App() {",
+          '  return <main>{supabase ? "Supabase client ready" : "Setup required"}</main>;',
+          "}",
+        ].join("\n"),
+      },
+      {
+        path: "lib/supabase.ts",
+        code: 'export const leaked = "sb_secret_should-be-stripped";',
+      },
+      {
+        path: "squid-runtime/supabase.ts",
+        code: 'export const leaked = "management-token";',
+      },
+    ]);
+    const bundle = buildExportBundle(files);
+    const byPath = new Map(
+      bundle.files.map((file) => [file.path, file.content]),
+    );
+    const serializedBundle = JSON.stringify(bundle.files);
+
+    expect(byPath.get("lib/supabase.ts")).toContain(
+      'import { createClient } from "@supabase/supabase-js"',
+    );
+    expect(byPath.get("squid-runtime/supabase.ts")).toContain(
+      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY",
+    );
+    expect(byPath.get("vite-env.d.ts")).toBe(
+      '/// <reference types="vite/client" />\n',
+    );
+    expect(byPath.get(".env.example")).toContain("VITE_SUPABASE_URL=\n");
+    expect(byPath.get(".env.example")).toContain(
+      "VITE_SUPABASE_PUBLISHABLE_KEY=\n",
+    );
+    expect(byPath.get(".env.example")).not.toContain("VITE_SUPABASE_ANON_KEY");
+    expect(
+      JSON.parse(byPath.get("package.json")!).dependencies[
+        "@supabase/supabase-js"
+      ],
+    ).toBe("2.110.8");
+    expect(serializedBundle).not.toMatch(
+      /sb_secret_should-be-stripped|management-token/,
+    );
+  });
+
   it("exports only imported capability packages and transitive Shadcn dependencies", () => {
     const files = normalizeGeneratedFiles([
       {

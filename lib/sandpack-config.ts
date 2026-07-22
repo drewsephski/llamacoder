@@ -8,15 +8,32 @@ import {
   buildGeneratedThemeCss,
   serializeGeneratedTailwindThemeExtension,
 } from "@/lib/generated-theme";
+import {
+  buildSupabaseClientAdapterModule,
+  getSupabaseRuntimeSetupMessage,
+  SUPABASE_CLIENT_ADAPTER_PATH,
+  SUPABASE_PREVIEW_RUNTIME_PATH,
+  type SupabaseBrowserRuntimeState,
+} from "@/features/integrations/supabase-browser-runtime";
 
 export const dependencies = generatedAppDependencies;
 
+type SandpackFileValue =
+  | string
+  | {
+      code: string;
+      hidden: true;
+      readOnly: true;
+    };
+
 export function getSandpackConfig(
   files: Array<{ path: string; content: string }>,
+  supabaseRuntime?: SupabaseBrowserRuntimeState,
 ) {
   const normalizedFiles = normalizeGeneratedFiles(files);
-  const sandpackFiles: Record<string, string> =
-    getRequiredShadcnFiles(normalizedFiles);
+  const sandpackFiles: Record<string, SandpackFileValue> = {
+    ...getRequiredShadcnFiles(normalizedFiles),
+  };
 
   // Add tsconfig
   sandpackFiles["/tsconfig.json"] = `{
@@ -32,6 +49,7 @@ export function getSandpackConfig(
       "paths": {
         "@/components/*": ["components/*"],
         "@/lib/*": ["lib/*"],
+        "@/squid-runtime/*": ["squid-runtime/*"],
         "@/utils/*": ["utils/*"],
         "@/types/*": ["types/*"]
       }
@@ -49,6 +67,19 @@ export function getSandpackConfig(
   sandpackFiles["/squid-preview-inspector.tsx"] =
     squidPreviewInspectorComponent;
   sandpackFiles["/squid-preview-theme.ts"] = generatedPreviewThemeRuntime;
+
+  if (supabaseRuntime) {
+    sandpackFiles[SUPABASE_PREVIEW_RUNTIME_PATH] = {
+      code: buildSupabasePreviewRuntimeModule(supabaseRuntime),
+      hidden: true,
+      readOnly: true,
+    };
+    sandpackFiles[SUPABASE_CLIENT_ADAPTER_PATH] = {
+      code: buildSupabaseClientAdapterModule(),
+      hidden: true,
+      readOnly: true,
+    };
+  }
 
   // Ensure App.tsx is the entry point, wrapping it with preview-only tooling.
   if (sandpackFiles["/App.generated.tsx"]) {
@@ -270,8 +301,28 @@ function normalizePath(path: string) {
   return `/${segments.join("/")}`;
 }
 
-function getRequiredDependencies(files: Record<string, string>) {
-  return getRequiredGeneratedAppDependencies(Object.values(files));
+function getRequiredDependencies(files: Record<string, SandpackFileValue>) {
+  return getRequiredGeneratedAppDependencies(
+    Object.values(files).map((file) =>
+      typeof file === "string" ? file : file.code,
+    ),
+  );
+}
+
+function buildSupabasePreviewRuntimeModule(
+  runtime: SupabaseBrowserRuntimeState,
+) {
+  if (runtime.status !== "ready") {
+    return `throw new Error(${JSON.stringify(getSupabaseRuntimeSetupMessage(runtime))});
+
+export const url = "";
+export const publishableKey = "";
+`;
+  }
+
+  return `export const url = ${JSON.stringify(runtime.config.url)};
+export const publishableKey = ${JSON.stringify(runtime.config.publishableKey)};
+`;
 }
 
 const squidPreviewInspectorComponent = `"use client";

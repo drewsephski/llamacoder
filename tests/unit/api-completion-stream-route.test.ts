@@ -6,6 +6,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildMessage } from "../fixtures/builders";
 import { buildResearchQuery } from "@/features/generation/research-intent";
+import { createEmptyAppSpec } from "@/features/generation/app-spec";
 
 const {
   createOpenRouterModelMock,
@@ -66,6 +67,9 @@ const {
     generationRun: {
       create: vi.fn(),
       updateMany: vi.fn(),
+    },
+    projectIntegration: {
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -284,6 +288,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     prismaMock.chat.update.mockResolvedValue({});
     prismaMock.generationRun.create.mockResolvedValue({ id: "run_1" });
     prismaMock.generationRun.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.projectIntegration.findFirst.mockResolvedValue(null);
     loadChatUrlContentMock.mockResolvedValue({
       configured: true,
       requestedUrls: [],
@@ -1595,6 +1600,72 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(streamTextMock.mock.calls[0][0].system).toContain(
       "SELECTED API IMPLEMENTATION GUIDANCE",
     );
+  });
+
+  it("uses a focused backend setup handoff instead of question cards in direct mode", async () => {
+    const content =
+      "Build a task manager with Supabase auth and database-backed tasks";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_direct_backend",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: {
+            ...createEmptyAppSpec(),
+            deliveryContract: "connected_full_stack",
+            overview: { purpose: "a shared task manager" },
+            dataPersistence: {
+              detected: true,
+              confidence: 98,
+              recommendation: "require_database",
+              explicitlyRequested: true,
+              status: "not_prompted",
+              reason: "Accounts and tasks must persist across devices.",
+              useCase: "Authenticated task tracking",
+              proposedSchema: [
+                {
+                  entity: "tasks",
+                  purpose: "Store private user tasks.",
+                  fields: ["id", "user_id", "title"],
+                },
+              ],
+            },
+          },
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+
+    const response = await POST(
+      request({ messageId: "msg_direct_backend", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+    const actionChunk = chunks.find(
+      (chunk) => chunk.type === "data-agent-action",
+    );
+
+    expect(actionChunk).toMatchObject({
+      type: "data-agent-action",
+      data: {
+        action: "request_backend_setup",
+        request: {
+          id: "backend-setup-msg_direct_backend",
+          description: expect.stringContaining("accounts or saved data"),
+        },
+      },
+    });
+    expect(actionChunk).not.toMatchObject({
+      data: { action: expect.stringMatching(/interview|clarify/) },
+    });
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(streamTextMock).not.toHaveBeenCalled();
   });
 
   it("keeps the Plan mode interview ahead of model-suggested research", async () => {

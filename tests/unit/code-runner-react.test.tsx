@@ -10,6 +10,9 @@ const { sandpackState } = vi.hoisted(() => ({
     status: "idle",
   },
 }));
+const { getSandpackConfigMock } = vi.hoisted(() => ({
+  getSandpackConfigMock: vi.fn(() => ({})),
+}));
 
 vi.mock("@codesandbox/sandpack-react/unstyled", () => ({
   SandpackProvider: ({
@@ -27,12 +30,44 @@ vi.mock("@codesandbox/sandpack-react/unstyled", () => ({
 }));
 
 vi.mock("@/lib/sandpack-config", () => ({
-  getSandpackConfig: () => ({}),
+  getSandpackConfig: getSandpackConfigMock,
 }));
 
 import CodeRunnerReact from "@/components/code-runner-react";
 
 describe("CodeRunnerReact", () => {
+  it("passes updated Supabase runtime configuration into Sandpack", () => {
+    const files = [
+      {
+        path: "App.tsx",
+        content: "export default function App() { return null; }",
+      },
+    ];
+    const firstRuntime = {
+      status: "ready" as const,
+      config: {
+        url: "https://project-one.supabase.co",
+        publishableKey: "sb_publishable_one",
+      },
+    };
+    const secondRuntime = {
+      status: "ready" as const,
+      config: {
+        url: "https://project-two.supabase.co",
+        publishableKey: "sb_publishable_two",
+      },
+    };
+    const { rerender } = render(
+      <CodeRunnerReact files={files} supabaseRuntime={firstRuntime} />,
+    );
+    rerender(<CodeRunnerReact files={files} supabaseRuntime={secondRuntime} />);
+
+    expect(getSandpackConfigMock).toHaveBeenLastCalledWith(
+      files,
+      secondRuntime,
+    );
+  });
+
   it("constrains generated content to the height owned by its parent", () => {
     render(
       <CodeRunnerReact

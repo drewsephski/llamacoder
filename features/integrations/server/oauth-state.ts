@@ -15,6 +15,7 @@ const oauthStateSchema = z.object({
   projectId: z.string().min(1),
   providerId: z.enum(["github", "vercel", "supabase"]),
   environment: integrationEnvironmentSchema,
+  interactionId: z.string().min(1).max(200).optional(),
   nonce: z.string().min(32),
   expiresAt: z.number().int(),
 });

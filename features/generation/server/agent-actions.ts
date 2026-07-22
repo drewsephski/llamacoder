@@ -12,6 +12,7 @@ import {
 import { auth } from "@/lib/auth";
 import { consumeCreditsForGeneration, releaseCreditHold } from "@/lib/billing";
 import { getPrisma } from "@/lib/prisma";
+import { getChatSupabaseSetupView } from "@/features/integrations/server/chat-supabase-setup";
 
 type AgentUserResponseMetadata = Extract<
   AgentMessageMetadata,
@@ -19,6 +20,7 @@ type AgentUserResponseMetadata = Extract<
     kind:
       | "agent_clarification_response"
       | "agent_interview_response"
+      | "agent_backend_setup_response"
       | "agent_search_approval_response"
       | "agent_plan_approval";
   }
@@ -30,6 +32,7 @@ type AgentAssistantRequestMetadata = Extract<
     kind:
       | "agent_clarification_request"
       | "agent_interview_request"
+      | "agent_backend_setup_request"
       | "agent_plan_request"
       | "agent_search_approval_request"
       | "agent_response";
@@ -42,6 +45,7 @@ function isAgentUserResponse(
   return (
     metadata.kind === "agent_clarification_response" ||
     metadata.kind === "agent_interview_response" ||
+    metadata.kind === "agent_backend_setup_response" ||
     metadata.kind === "agent_search_approval_response" ||
     metadata.kind === "agent_plan_approval"
   );
@@ -53,6 +57,7 @@ function isAgentAssistantMessage(
   return (
     metadata.kind === "agent_clarification_request" ||
     metadata.kind === "agent_interview_request" ||
+    metadata.kind === "agent_backend_setup_request" ||
     metadata.kind === "agent_plan_request" ||
     metadata.kind === "agent_search_approval_request" ||
     metadata.kind === "agent_response"
@@ -90,12 +95,13 @@ export async function createAgentUserMessage(
   }
   const requestId = metadata.requestId;
 
-  const { chat, prisma } = await getOwnedChatForAgentMessage(chatId);
+  const { chat, prisma, session } = await getOwnedChatForAgentMessage(chatId);
   const hasExistingResponse = chat.messages.some((message) => {
     const candidate = parseAgentMessageMetadata(message.files);
     return (
       (candidate?.kind === "agent_clarification_response" ||
         candidate?.kind === "agent_interview_response" ||
+        candidate?.kind === "agent_backend_setup_response" ||
         candidate?.kind === "agent_search_approval_response" ||
         candidate?.kind === "agent_plan_approval") &&
       candidate.requestId === requestId
@@ -113,6 +119,7 @@ export async function createAgentUserMessage(
       candidate &&
         (candidate.kind === "agent_clarification_request" ||
           candidate.kind === "agent_interview_request" ||
+          candidate.kind === "agent_backend_setup_request" ||
           candidate.kind === "agent_search_approval_request" ||
           candidate.kind === "agent_plan_request") &&
         candidate.request.id === requestId,
@@ -167,6 +174,93 @@ export async function createAgentUserMessage(
         metadata.answers,
       ),
     };
+  } else if (
+    metadata.kind === "agent_backend_setup_response" &&
+    requestMetadata?.kind === "agent_backend_setup_request"
+  ) {
+    const setupView = await getChatSupabaseSetupView({
+      projectId: chatId,
+      interactionId: requestId,
+      userId: session.user.id,
+    });
+    if (setupView.continuationStatus !== "pending") {
+      throw new Error("This setup interaction has already been completed");
+    }
+    if (
+      metadata.decision === "connect_supabase" &&
+      setupView.state !== "ready" &&
+      setupView.state !== "runtime_ready"
+    ) {
+      throw new Error("Supabase setup is not ready for this request yet");
+    }
+    const backendDecision = metadata.decision;
+
+    return prisma.$transaction(async (tx) => {
+      const lockKey = `agent-backend-setup:${chatId}:${requestId}`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
+      const messages = await tx.message.findMany({
+        where: { chatId },
+        orderBy: { position: "asc" },
+      });
+      const alreadyCompleted = messages.some((message) => {
+        const candidate = parseAgentMessageMetadata(message.files);
+        return (
+          candidate?.kind === "agent_backend_setup_response" &&
+          candidate.requestId === requestId
+        );
+      });
+      if (alreadyCompleted) {
+        throw new Error("This setup interaction has already been completed");
+      }
+      const requestMessage = messages.find((message) => {
+        const candidate = parseAgentMessageMetadata(message.files);
+        return (
+          candidate?.kind === "agent_backend_setup_request" &&
+          candidate.request.id === requestId &&
+          candidate.request.continuation.status === "pending"
+        );
+      });
+      if (!requestMessage) {
+        throw new Error("The requested interaction is no longer available");
+      }
+      const persistedRequest = parseAgentMessageMetadata(requestMessage.files);
+      if (persistedRequest?.kind !== "agent_backend_setup_request") {
+        throw new Error("The requested interaction is no longer available");
+      }
+      await tx.message.update({
+        where: { id: requestMessage.id },
+        data: {
+          files: JSON.parse(
+            JSON.stringify({
+              ...persistedRequest,
+              request: {
+                ...persistedRequest.request,
+                continuation: {
+                  ...persistedRequest.request.continuation,
+                  status:
+                    backendDecision === "connect_supabase"
+                      ? "resumed"
+                      : "ui_only",
+                },
+              },
+            }),
+          ),
+        },
+      });
+      const position =
+        messages.length > 0
+          ? Math.max(...messages.map((message) => message.position)) + 1
+          : 0;
+      return tx.message.create({
+        data: {
+          chatId,
+          role: "user",
+          content: content.trim().slice(0, 8000),
+          files: JSON.parse(JSON.stringify(metadata)),
+          position,
+        },
+      });
+    });
   } else if (
     metadata.kind === "agent_search_approval_response" &&
     requestMetadata?.kind === "agent_search_approval_request"

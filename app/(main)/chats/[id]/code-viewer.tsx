@@ -70,6 +70,12 @@ import {
   runtimeVerificationReportSchema,
   type RuntimeVerificationReport,
 } from "@/features/generation/runtime-verification";
+import {
+  getSupabaseRuntimeSetupMessage,
+  resolveSupabaseBrowserRuntimeForPreview,
+  type SupabaseBrowserRuntimeState,
+} from "@/features/integrations/supabase-browser-runtime";
+import { DEFAULT_SUPABASE_AUTH_MODE } from "@/features/integrations/supabase-backend";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -102,15 +108,43 @@ function getIntegrationConfigValue(
   key: string,
 ) {
   const value = integration.config?.[key];
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function isSupabaseProjectProvisioned(integration: ProjectIntegrationView) {
   return (
     getIntegrationConfigValue(integration, "supabaseProjectRef") !== null ||
     getIntegrationConfigValue(integration, "supabaseProjectUrl") !== null ||
+    getIntegrationConfigValue(integration, "supabasePublishableKey") !== null ||
     getIntegrationConfigValue(integration, "supabaseAnonKey") !== null
   );
+}
+
+function generatedFilesUseSupabaseRuntime(files: GeneratedFile[]) {
+  return files.some(
+    (file) =>
+      /["']@\/lib\/supabase["']/.test(file.code) ||
+      /["']@supabase\/supabase-js["']/.test(file.code),
+  );
+}
+
+function supabaseProvisioningLabel(phase: string | null | undefined) {
+  switch (phase) {
+    case "creating_project":
+      return "Creating Supabase project";
+    case "waiting_for_supabase":
+      return "Waiting for Supabase";
+    case "configuring_browser_access":
+      return "Configuring browser access";
+    case "timed_out":
+      return "Supabase provisioning timed out";
+    case "failed":
+      return "Supabase provisioning failed";
+    default:
+      return "Provisioning Supabase project";
+  }
 }
 
 function extractLatestStreamBlock(
@@ -461,32 +495,30 @@ export default function CodeViewer({
 
   const [refresh, setRefresh] = useState(0);
   const disabledControls = !!streamText || files.length === 0;
-  const parsedAppSpec = useMemo(() => parseAppSpec(chat.appSpec), [chat.appSpec]);
+  const parsedAppSpec = useMemo(
+    () => parseAppSpec(chat.appSpec),
+    [chat.appSpec],
+  );
   const queryClient = useQueryClient();
   const showSupabaseConnectCta =
     !disabledControls &&
     !!chat.userId &&
     parsedAppSpec?.dataPersistence.detected === true &&
     parsedAppSpec?.dataPersistence.status !== "connect_declined";
+  const generatedAppUsesSupabase = useMemo(
+    () => generatedFilesUseSupabaseRuntime(files),
+    [files],
+  );
   const integrationWorkspaceQuery = useQuery({
     queryKey: ["project-integrations", chat.id],
-    enabled: showSupabaseConnectCta,
+    enabled:
+      Boolean(chat.userId) &&
+      (showSupabaseConnectCta || generatedAppUsesSupabase),
     queryFn: () =>
       fetchJson(
         `/api/projects/${chat.id}/integrations`,
         integrationWorkspaceSchema,
       ),
-    refetchInterval: (query) => {
-      const workspace = query.state.data;
-      if (!workspace) return false;
-      return workspace.recentOperations.some(
-        (operation) =>
-          operation.kind === "supabase_provision" &&
-          operation.status === "running",
-      )
-        ? 3_000
-        : false;
-    },
   });
   const supabaseIntegration =
     integrationWorkspaceQuery.data?.integrations.find(
@@ -498,31 +530,74 @@ export default function CodeViewer({
       (integration) => integration.providerId === "supabase",
     );
   const isSupabaseReady = supabaseIntegration?.status === "ready";
+  const supabaseIntegrationId = supabaseIntegration?.id;
+  const storedSupabaseProvisioningOperation =
+    integrationWorkspaceQuery.data?.recentOperations.find(
+      (operation) =>
+        operation.projectIntegrationId === supabaseIntegrationId &&
+        operation.kind === "supabase_provision",
+    );
+  const supabaseOperationRefreshQuery = useQuery({
+    queryKey: [
+      "integration-operation",
+      storedSupabaseProvisioningOperation?.id,
+    ],
+    enabled:
+      storedSupabaseProvisioningOperation?.status === "running" &&
+      Boolean(supabaseIntegrationId),
+    queryFn: () =>
+      fetchJson(
+        `/api/projects/${chat.id}/integrations/${supabaseIntegrationId}/actions?operationId=${encodeURIComponent(storedSupabaseProvisioningOperation!.id)}`,
+        integrationActionResponseSchema,
+      ),
+    refetchInterval: (query) =>
+      query.state.data?.operation.status === "running" ? 3_000 : false,
+  });
+  const refreshedSupabaseOperation =
+    supabaseOperationRefreshQuery.data?.operation;
+  const refreshedSupabaseOperationId = refreshedSupabaseOperation?.id;
+  const refreshedSupabaseOperationPhase = refreshedSupabaseOperation?.phase;
+  const refreshedSupabaseOperationStatus = refreshedSupabaseOperation?.status;
+  useEffect(() => {
+    if (!refreshedSupabaseOperationId) return;
+    void queryClient.invalidateQueries({
+      queryKey: ["project-integrations", chat.id],
+    });
+  }, [
+    chat.id,
+    queryClient,
+    refreshedSupabaseOperationId,
+    refreshedSupabaseOperationPhase,
+    refreshedSupabaseOperationStatus,
+  ]);
+  const supabaseProvisioningOperation =
+    refreshedSupabaseOperation ?? storedSupabaseProvisioningOperation;
   const isSupabaseProvisioned = supabaseIntegration
     ? isSupabaseProjectProvisioned(supabaseIntegration)
     : false;
-  const isSupabaseProvisioningOperation = useMemo(
-    () =>
-      Boolean(
-        supabaseIntegration &&
-          integrationWorkspaceQuery.data?.recentOperations.some(
-            (operation) =>
-              operation.projectIntegrationId === supabaseIntegration.id &&
-              operation.kind === "supabase_provision" &&
-              operation.status === "running",
-          ),
-      ),
-    [integrationWorkspaceQuery.data?.recentOperations, supabaseIntegration?.id],
-  );
+  const isSupabaseProvisioningOperation =
+    supabaseProvisioningOperation?.status === "running";
+  const isSupabaseProvisioningTerminal =
+    supabaseProvisioningOperation?.status === "failed" ||
+    supabaseProvisioningOperation?.status === "timed_out";
   const supabaseProjectUrl = supabaseIntegration
     ? getIntegrationConfigValue(supabaseIntegration, "supabaseProjectUrl")
     : null;
-  const supabaseAnonKey = supabaseIntegration
-    ? getIntegrationConfigValue(supabaseIntegration, "supabaseAnonKey")
-    : null;
+  const supabaseRuntime = resolveSupabaseBrowserRuntimeForPreview({
+    runtime: integrationWorkspaceQuery.data?.browserRuntime.supabase,
+    generatedAppUsesSupabase,
+    workspaceResolved:
+      !chat.userId || integrationWorkspaceQuery.isSuccess,
+  });
+  const isSupabaseRuntimePending =
+    generatedAppUsesSupabase && !supabaseRuntime;
+  const supabasePublishableKey =
+    supabaseRuntime?.status === "ready"
+      ? supabaseRuntime.config.publishableKey
+      : null;
   const supabaseEnvVars =
-    supabaseProjectUrl && supabaseAnonKey
-      ? `VITE_SUPABASE_URL=${supabaseProjectUrl}\nVITE_SUPABASE_ANON_KEY=${supabaseAnonKey}`
+    supabaseRuntime?.status === "ready" && supabasePublishableKey
+      ? `VITE_SUPABASE_URL=${supabaseRuntime.config.url}\nVITE_SUPABASE_PUBLISHABLE_KEY=${supabasePublishableKey}`
       : null;
 
   const supabaseProvisionMutation = useMutation({
@@ -533,7 +608,11 @@ export default function CodeViewer({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "supabase_provision" }),
+          body: JSON.stringify({
+            action: "supabase_provision",
+            authMode: DEFAULT_SUPABASE_AUTH_MODE,
+            authModeApproval: { approved: true },
+          }),
         },
       ),
     onSuccess: async ({ operation }) => {
@@ -552,6 +631,12 @@ export default function CodeViewer({
   });
   const isSupabaseProvisioning =
     supabaseProvisionMutation.isPending || isSupabaseProvisioningOperation;
+  const needsSupabaseProvisioningResume =
+    isSupabaseReady &&
+    isSupabaseProvisioned &&
+    supabaseRuntime?.status !== "ready" &&
+    !isSupabaseProvisioning &&
+    !isSupabaseProvisioningTerminal;
 
   const copySupabaseEnvVars = async () => {
     if (!supabaseEnvVars) return;
@@ -846,20 +931,19 @@ export default function CodeViewer({
               integrationWorkspaceQuery.isLoading &&
               !integrationWorkspaceQuery.isError && (
                 <Button size="sm" variant="secondary" disabled>
-                  <Loader2 className="size-3.5 animate-spin" />{" "}
-                  Checking Supabase setup
+                  <Loader2 className="size-3.5 animate-spin" /> Checking
+                  Supabase setup
                 </Button>
               )}
-            {showSupabaseConnectCta &&
-              integrationWorkspaceQuery.isError && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => integrationWorkspaceQuery.refetch()}
-                >
-                  Retry Supabase check
-                </Button>
-              )}
+            {showSupabaseConnectCta && integrationWorkspaceQuery.isError && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => integrationWorkspaceQuery.refetch()}
+              >
+                Retry Supabase check
+              </Button>
+            )}
             {showSupabaseConnectCta &&
               !integrationWorkspaceQuery.isLoading &&
               !integrationWorkspaceQuery.isError &&
@@ -869,7 +953,9 @@ export default function CodeViewer({
                   <Link
                     href={`/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(chat.id)}&environment=development`}
                   >
-                    {supabaseIntegration ? "Reconnect Supabase" : "Connect Supabase"}
+                    {supabaseIntegration
+                      ? "Reconnect Supabase"
+                      : "Connect Supabase"}
                   </Link>
                 </Button>
               )}
@@ -879,7 +965,8 @@ export default function CodeViewer({
               !integrationWorkspaceQuery.isFetching &&
               isSupabaseReady &&
               !isSupabaseProvisioned &&
-              !isSupabaseProvisioning && (
+              !isSupabaseProvisioning &&
+              !isSupabaseProvisioningTerminal && (
                 <Button
                   size="sm"
                   variant="secondary"
@@ -889,7 +976,9 @@ export default function CodeViewer({
                   {supabaseProvisionMutation.isPending ? (
                     <Loader2 className="size-3.5 animate-spin" />
                   ) : null}
-                  Create Supabase project
+                  {supabaseProvisionMutation.isPending
+                    ? "Creating project"
+                    : "Create for instant signup testing"}
                 </Button>
               )}
             {showSupabaseConnectCta &&
@@ -900,7 +989,41 @@ export default function CodeViewer({
               isSupabaseProvisioning && (
                 <Button size="sm" variant="secondary" disabled>
                   <Loader2 className="size-3.5 animate-spin" />
-                  Provisioning Supabase project
+                  {supabaseProvisioningLabel(
+                    supabaseProvisioningOperation?.phase,
+                  )}
+                </Button>
+              )}
+            {showSupabaseConnectCta &&
+              !integrationWorkspaceQuery.isLoading &&
+              !integrationWorkspaceQuery.isError &&
+              !integrationWorkspaceQuery.isFetching &&
+              isSupabaseReady &&
+              isSupabaseProvisioningTerminal && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={supabaseProvisionMutation.isPending}
+                  onClick={() => supabaseProvisionMutation.mutate()}
+                  title={
+                    supabaseProvisioningOperation?.errorMessage ?? undefined
+                  }
+                >
+                  Retry prototype setup
+                </Button>
+              )}
+            {showSupabaseConnectCta &&
+              !integrationWorkspaceQuery.isLoading &&
+              !integrationWorkspaceQuery.isError &&
+              !integrationWorkspaceQuery.isFetching &&
+              needsSupabaseProvisioningResume && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={supabaseProvisionMutation.isPending}
+                  onClick={() => supabaseProvisionMutation.mutate()}
+                >
+                  Resume prototype setup
                 </Button>
               )}
             {showSupabaseConnectCta &&
@@ -909,7 +1032,9 @@ export default function CodeViewer({
               !integrationWorkspaceQuery.isFetching &&
               isSupabaseReady &&
               isSupabaseProvisioned &&
-              !isSupabaseProvisioning && (
+              !isSupabaseProvisioning &&
+              !isSupabaseProvisioningTerminal &&
+              !needsSupabaseProvisioningResume && (
                 <>
                   {supabaseProjectUrl && (
                     <Button asChild size="sm" variant="secondary">
@@ -922,13 +1047,19 @@ export default function CodeViewer({
                       </Link>
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={openSupabaseEnvDialog}
-                  >
-                    Supabase Environment Variables
-                  </Button>
+                  {supabaseRuntime?.status === "ready" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={openSupabaseEnvDialog}
+                    >
+                      Supabase Environment Variables
+                    </Button>
+                  ) : supabaseRuntime ? (
+                    <span className="max-w-72 text-xs text-amber-700 dark:text-amber-300">
+                      {getSupabaseRuntimeSetupMessage(supabaseRuntime)}
+                    </span>
+                  ) : null}
                 </>
               )}
             <Button
@@ -1033,7 +1164,36 @@ export default function CodeViewer({
           </StickToBottom>
         ) : (
           <>
-            {files.length > 0 && (
+            {files.length > 0 && isSupabaseRuntimePending ? (
+              <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
+                <div
+                  className="flex max-w-sm flex-col items-center gap-3 px-6 text-center"
+                  role={integrationWorkspaceQuery.isError ? "alert" : "status"}
+                >
+                  {integrationWorkspaceQuery.isError ? (
+                    <>
+                      <p className="text-sm font-medium text-foreground">
+                        Supabase preview configuration could not be loaded.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => integrationWorkspaceQuery.refetch()}
+                      >
+                        Retry
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Loading Supabase preview configuration…
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : files.length > 0 ? (
               <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
                 <CodeRunner
                   onRequestFix={onRequestFix}
@@ -1050,10 +1210,11 @@ export default function CodeViewer({
                   onPreviewTestReport={handlePreviewTestReport}
                   language={language}
                   files={files.map((f) => ({ path: f.path, content: f.code }))}
+                  supabaseRuntime={supabaseRuntime}
                   key={refresh}
                 />
               </div>
-            )}
+            ) : null}
           </>
         )}
       </div>
@@ -1313,7 +1474,8 @@ export default function CodeViewer({
             <DialogTitle>Supabase environment variables</DialogTitle>
             <DialogDescription>
               Add these values to <code>.env.local</code> to connect your
-              generated app to the provisioned project.
+              exported app to the provisioned project. Squid injects the same
+              browser-safe values into preview memory automatically.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

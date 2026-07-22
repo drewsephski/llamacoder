@@ -14,6 +14,7 @@ import {
   oauthCookieName,
 } from "@/features/integrations/server/oauth-state";
 import { assertIntegrationProjectAccess } from "@/features/integrations/server/service";
+import { getChatSupabaseSetupView } from "@/features/integrations/server/chat-supabase-setup";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { auth } from "@/lib/auth";
 
@@ -36,6 +37,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     );
   }
   const projectId = request.nextUrl.searchParams.get("projectId")?.trim();
+  const interactionId = request.nextUrl.searchParams
+    .get("interactionId")
+    ?.trim();
   const environment = integrationEnvironmentSchema.safeParse(
     request.nextUrl.searchParams.get("environment"),
   );
@@ -70,6 +74,27 @@ export async function GET(request: NextRequest, context: RouteContext) {
       projectId,
       userId: session.user.id,
     });
+    if (providerParam === "supabase" && interactionId) {
+      const setup = await getChatSupabaseSetupView({
+        projectId,
+        interactionId,
+        userId: session.user.id,
+      });
+      if (
+        setup.continuationStatus !== "pending" ||
+        (setup.state !== "connection_required" &&
+          setup.state !== "authorization_required" &&
+          setup.state !== "failed")
+      ) {
+        return NextResponse.json(
+          {
+            error: "SETUP_STATE_CHANGED",
+            message: "Supabase authorization is no longer required.",
+          },
+          { status: 409 },
+        );
+      }
+    }
     const rateLimit = await consumeRateLimit({
       userId: session.user.id,
       operation: "integration",
@@ -94,6 +119,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       projectId,
       providerId: providerParam,
       environment: environment.data,
+      ...(providerParam === "supabase" && interactionId
+        ? { interactionId }
+        : {}),
     });
     const pkce = config.mode === "oauth_app" ? createPkcePair() : null;
     const response = NextResponse.redirect(

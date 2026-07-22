@@ -1,6 +1,9 @@
+import { randomUUID } from "node:crypto";
+
 import type {
   AgentAction,
   ClarificationRequest,
+  SupabaseSetupRequirements,
 } from "@/features/generation/agent-contracts";
 import type { AppSpec } from "@/features/generation/app-spec";
 import { describePersistenceIntent } from "@/features/generation/persistence-intent";
@@ -71,8 +74,7 @@ export function buildPersistenceDecisionStep(
         ? "Connect Supabase to continue"
         : "Backend needed for this request?",
       description: requiresDirectSupabaseAsk
-        ? `${requestLine} ${schemaLine} ${describePersistenceIntent(intent)} Connect Supabase to keep persistence and auth in-scope.`
-            .trim()
+        ? `${requestLine} ${schemaLine} ${describePersistenceIntent(intent)} Connect Supabase to keep persistence and auth in-scope.`.trim()
         : `This app appears to need persisted records for ${appSummary}. ${schemaLine} ${describePersistenceIntent(intent)} Choose the persistence strategy now.`.trim(),
       options: [
         {
@@ -108,6 +110,103 @@ export function buildPersistenceDecisionStep(
       ],
     },
   ];
+}
+
+export function buildDirectBackendSetupRequest({
+  messageId,
+  prompt,
+  spec,
+}: {
+  messageId: string;
+  prompt?: string;
+  spec: AppSpec;
+}): AgentAction {
+  const originalUserRequest = (
+    prompt ||
+    spec.overview.purpose ||
+    "Build this app"
+  )
+    .trim()
+    .slice(0, 8000);
+  const appSummary = summarizePrompt(spec.overview.purpose || "this app");
+  const entities = spec.dataPersistence.proposedSchema
+    .map((entity) => entity.entity.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  const dataDescription = entities.length
+    ? ` The connected project will hold ${entities.join(", ")}.`
+    : "";
+  const requirements = classifySupabaseSetupRequirements({
+    prompt: originalUserRequest,
+    spec,
+  });
+
+  return {
+    action: "request_backend_setup",
+    request: {
+      id: `backend-setup-${messageId}`,
+      title: "Connect a backend before Squid builds",
+      description:
+        `Squid detected accounts or saved data in ${appSummary}. Connect Supabase so the generated app uses a real, secure backend instead of fake persistence.${dataDescription}`.trim(),
+      capabilities: [
+        "Persistent data across refreshes and devices",
+        "Browser-safe Supabase runtime configuration",
+        "Server-approved database and security setup",
+      ],
+      requirements,
+      continuation: {
+        id: randomUUID(),
+        originalMessageId: messageId,
+        originalUserRequest,
+        mode: "direct",
+        status: "pending",
+      },
+    },
+  };
+}
+
+export function classifySupabaseSetupRequirements({
+  prompt,
+  spec,
+}: {
+  prompt: string;
+  spec: AppSpec;
+}): SupabaseSetupRequirements {
+  const normalized = `${prompt} ${spec.overview.purpose ?? ""} ${spec.architecture.authentication ?? ""}`;
+  const database =
+    spec.dataPersistence.detected &&
+    spec.dataPersistence.recommendation !== "prototype";
+  const authentication =
+    Boolean(spec.architecture.authentication?.trim()) ||
+    /\b(?:auth|authentication|sign[ -]?(?:in|up)|log[ -]?in|accounts?|users?\s+can)\b/i.test(
+      normalized,
+    );
+  const storage =
+    /\b(?:supabase\s+storage|file uploads?|image uploads?|storage bucket)\b/i.test(
+      normalized,
+    );
+  const realtime = /\b(?:realtime|real-time|live updates?|presence)\b/i.test(
+    normalized,
+  );
+  const privilegedServerLogic =
+    /\b(?:service[_ -]?role|webhooks?|admin operations?|privileged|server function|secret key)\b/i.test(
+      normalized,
+    );
+  const hasTasksEntity = spec.dataPersistence.proposedSchema.some((entity) =>
+    /\btasks?\b/i.test(entity.entity),
+  );
+  const isTaskApp = /\b(?:task manager|todo|to-do|tasks?)\b/i.test(normalized);
+
+  return {
+    database,
+    authentication,
+    storage,
+    realtime,
+    privilegedServerLogic,
+    ...(database && authentication && (hasTasksEntity || isTaskApp)
+      ? { backendTemplate: "authenticated_tasks" as const }
+      : {}),
+  };
 }
 
 export function buildPlanModeFallbackInterview({

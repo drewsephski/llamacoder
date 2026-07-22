@@ -16,7 +16,14 @@ import {
   type GeneratedFile,
   type RawGeneratedFile,
 } from "@/lib/generated-files";
-import { validateSelectedApiUsage } from "@/lib/generated-api";
+import {
+  validateAuthenticatedTasksGeneratedApp,
+  validateSelectedApiUsage,
+} from "@/lib/generated-api";
+import {
+  getAuthenticatedTasksBackendPlan,
+  readSupabaseBackendState,
+} from "@/features/integrations/supabase-backend";
 import {
   generateFollowUpPrompts,
   saveMessageFollowUpPrompts,
@@ -25,6 +32,8 @@ import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
 import type { RequestModeMetadata } from "@/features/projects/contracts";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { findOwnedProjectWithMessages } from "@/features/projects/server/access";
+import { parseAgentMessageMetadata } from "@/features/generation/agent-contracts";
+import { shouldAnswerWithoutCode } from "@/features/generation/research-intent";
 
 function getAssistantMessageFiles(message: Message) {
   if (message?.role !== "assistant") return [];
@@ -222,7 +231,7 @@ export async function createMessage(
   if (assistantHasFiles) {
     const selectedBindings = await prisma.projectIntegration.findMany({
       where: { chatId },
-      select: { providerId: true },
+      select: { providerId: true, config: true },
     });
     const selectedProviderIds = selectedBindings.map(
       (binding) => binding.providerId,
@@ -231,6 +240,20 @@ export async function createMessage(
       normalizedFiles,
       selectedProviderIds,
     );
+    const authenticatedTasksReady = selectedBindings.some((binding) => {
+      if (binding.providerId !== "supabase") return false;
+      const backend = readSupabaseBackendState(binding.config);
+      return (
+        backend?.status === "ready" &&
+        backend.plan.migrationChecksum ===
+          getAuthenticatedTasksBackendPlan().migrationChecksum
+      );
+    });
+    if (authenticatedTasksReady) {
+      selectedApiDiagnostics.push(
+        ...validateAuthenticatedTasksGeneratedApp(normalizedFiles),
+      );
+    }
 
     if (selectedApiDiagnostics.length > 0) {
       if (options?.creditHoldId) {
@@ -307,7 +330,49 @@ export async function createMessage(
     return newMessage;
   }
 
-  const newMessage = await prisma.message.create({ data: messageData });
+  const newMessage = await prisma.$transaction(async (tx) => {
+    const lockKey = `chat-user-message:${chatId}`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
+    const currentMessages = await tx.message.findMany({
+      where: { chatId },
+      orderBy: { position: "asc" },
+    });
+    for (const candidate of shouldAnswerWithoutCode(text)
+      ? []
+      : currentMessages) {
+      const metadata = parseAgentMessageMetadata(candidate.files);
+      if (
+        metadata?.kind !== "agent_backend_setup_request" ||
+        metadata.request.continuation.status !== "pending"
+      ) {
+        continue;
+      }
+      await tx.message.update({
+        where: { id: candidate.id },
+        data: {
+          files: JSON.parse(
+            JSON.stringify({
+              ...metadata,
+              request: {
+                ...metadata.request,
+                continuation: {
+                  ...metadata.request.continuation,
+                  status: "superseded",
+                },
+              },
+            }),
+          ),
+        },
+      });
+    }
+    const currentMaxPosition =
+      currentMessages.length > 0
+        ? Math.max(...currentMessages.map((message) => message.position))
+        : 0;
+    return tx.message.create({
+      data: { ...messageData, position: currentMaxPosition + 1 },
+    });
+  });
 
   if (followUpPrompts) {
     await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
@@ -629,18 +694,23 @@ export async function restoreSelectedFilesAsCheckpoint({
   const chat = await findOwnedProjectWithMessages(chatId, session.user.id);
   if (!chat) notFound();
 
-  const source = chat.messages.find((message) => message.id === sourceMessageId);
+  const source = chat.messages.find(
+    (message) => message.id === sourceMessageId,
+  );
   const latest = chat.messages
     .filter(
       (message) =>
-        message.role === "assistant" && getMessageGeneratedFiles(message).length > 0,
+        message.role === "assistant" &&
+        getMessageGeneratedFiles(message).length > 0,
     )
     .sort((a, b) => b.position - a.position)[0];
   if (!source || source.role !== "assistant" || !latest) {
     throw new Error("A source and current version are required");
   }
 
-  const requestedPaths = new Set(paths.map((path) => path.trim()).filter(Boolean));
+  const requestedPaths = new Set(
+    paths.map((path) => path.trim()).filter(Boolean),
+  );
   if (requestedPaths.size === 0 || requestedPaths.size > 50) {
     throw new Error("Select between 1 and 50 files to restore");
   }
@@ -657,7 +727,9 @@ export async function restoreSelectedFilesAsCheckpoint({
   }
 
   const files = normalizeGeneratedFiles(Array.from(restoredFiles.values()));
-  const maxPosition = Math.max(...chat.messages.map((message) => message.position));
+  const maxPosition = Math.max(
+    ...chat.messages.map((message) => message.position),
+  );
   const selectedPaths = Array.from(requestedPaths);
   const explanation = `Restored ${selectedPaths.length} file${selectedPaths.length === 1 ? "" : "s"} from an earlier checkpoint without changing other current files.`;
   const content = `${explanation}\n\n${formatGeneratedFilesMarkdown(files)}`;

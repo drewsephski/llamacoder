@@ -213,7 +213,7 @@ export function getMainCodingPrompt(options?: {
   - **Post-processing** (\`@react-three/postprocessing\`): Add Bloom, ChromaticAberration, Noise, or Vignette inside \`<EffectComposer>\` for cinematic depth in 3D scenes.
   - **Particle effects** (\`@tsparticles/react\` + \`@tsparticles/slim\`): Use for celebration moments, ambient backgrounds, or data visualization. Initialize with \`init\` from \`@tsparticles/react\` and load slim bundle.
   - **Parallax** (\`react-parallax\`): Use scroll-driven depth for storytelling pages, long-form content, or immersive product showcases.
-  - **Supabase** (\`@supabase/supabase-js\`, \`@supabase/ssr\`): Use for managed PostgreSQL, authentication, server-safe sessions, and secure client initialization. Keep auth secrets and service-role keys out of generated browser code.
+  - **Supabase** (\`@supabase/supabase-js\`, \`@supabase/ssr\`): Use for managed PostgreSQL, authentication, server-safe sessions, and secure client initialization. In a Squid browser preview, import the protected client with \`import { supabase } from "@/lib/supabase"\`; do not output or overwrite that adapter. Keep auth secrets and service-role keys out of generated browser code. Client initialization does not prove schema, grants, RLS, auth, or CRUD are configured.
   - **Smooth scrolling** (\`lenis\`): Use for buttery-smooth scroll experiences on editorial, portfolio, or showcase sites.
 
   Do not force these into every app. A utilitarian dashboard does not need a shader background. A creative tool, portfolio, gaming app, music player, luxury brand, or interactive showcase should still feel alive by choosing one deliberate signature layer and keeping the rest disciplined.

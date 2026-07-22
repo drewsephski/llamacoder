@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { listIntegrationResources } from "@/features/integrations/server/actions";
@@ -8,7 +9,12 @@ type RouteContext = {
   params: Promise<{ projectId: string; bindingId: string }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+const supabaseResourceQuerySchema = z.object({
+  type: z.enum(["organizations", "projects"]).optional(),
+  organizationId: z.string().trim().min(1).max(128).optional(),
+});
+
+export async function GET(request: Request, context: RouteContext) {
   const session = await getCurrentSession();
   if (!session) {
     return NextResponse.json(
@@ -17,11 +23,22 @@ export async function GET(_request: Request, context: RouteContext) {
     );
   }
   try {
+    const query = supabaseResourceQuerySchema.safeParse(
+      Object.fromEntries(new URL(request.url).searchParams),
+    );
+    if (!query.success) {
+      return NextResponse.json(
+        { error: "INVALID_REQUEST", message: "Invalid resource query." },
+        { status: 400 },
+      );
+    }
     const { projectId, bindingId } = await context.params;
     const resources = await listIntegrationResources({
       projectId,
       bindingId,
       userId: session.user.id,
+      resourceType: query.data.type,
+      organizationId: query.data.organizationId,
     });
     return NextResponse.json({ resources });
   } catch (error) {

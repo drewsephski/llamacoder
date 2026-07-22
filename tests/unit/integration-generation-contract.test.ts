@@ -155,6 +155,7 @@ describe("selected API generation contract", () => {
         }),
       ]),
     );
+    expect(updated.deliveryContract).toBe("browser_frontend");
   });
 
   it("does not add Supabase when persistence is declined", () => {

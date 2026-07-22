@@ -11,6 +11,12 @@ import {
 } from "@/lib/generated-theme";
 import { generateIntelligentFilename, toTitleCase } from "@/lib/utils";
 import { analyzeGeneratedApiIntegration } from "@/lib/generated-api";
+import {
+  buildSupabaseClientAdapterModule,
+  buildSupabaseExportRuntimeModule,
+  SUPABASE_CLIENT_ADAPTER_IMPORT,
+  SUPABASE_EXPORT_ENVIRONMENT_VARIABLES,
+} from "@/features/integrations/supabase-browser-runtime";
 
 export type ExportBundleFile = {
   path: string;
@@ -163,6 +169,20 @@ function assembleExportFiles({
 }) {
   const bundleFiles = new Map<string, string>();
   const apiIntegration = analyzeGeneratedApiIntegration(files);
+  const usesSupabaseAdapter = files.some((file) =>
+    file.code.includes(SUPABASE_CLIENT_ADAPTER_IMPORT),
+  );
+  const exportApiIntegration = usesSupabaseAdapter
+    ? {
+        ...apiIntegration,
+        environmentVariables: Array.from(
+          new Set([
+            ...apiIntegration.environmentVariables,
+            ...SUPABASE_EXPORT_ENVIRONMENT_VARIABLES,
+          ]),
+        ).sort(),
+      }
+    : apiIntegration;
 
   for (const file of files) {
     bundleFiles.set(file.path, file.code);
@@ -176,6 +196,18 @@ function assembleExportFiles({
     if (!bundleFiles.has(exportPath)) {
       bundleFiles.set(exportPath, content);
     }
+  }
+
+  if (usesSupabaseAdapter) {
+    bundleFiles.set("lib/supabase.ts", buildSupabaseClientAdapterModule());
+    bundleFiles.set(
+      "squid-runtime/supabase.ts",
+      buildSupabaseExportRuntimeModule(),
+    );
+    bundleFiles.set(
+      "vite-env.d.ts",
+      '/// <reference types="vite/client" />\n',
+    );
   }
 
   if (!bundleFiles.has("main.tsx")) {
@@ -208,14 +240,14 @@ function assembleExportFiles({
       Array.from(bundleFiles.values(), (code) => ({ code })),
     ),
   );
-  bundleFiles.set("README.md", buildReadme(appTitle, apiIntegration));
+  bundleFiles.set("README.md", buildReadme(appTitle, exportApiIntegration));
   bundleFiles.set(
     ".env.example",
-    buildEnvExample(apiIntegration.environmentVariables),
+    buildEnvExample(exportApiIntegration.environmentVariables),
   );
   bundleFiles.set(
     "squid-integrations.json",
-    JSON.stringify(apiIntegration, null, 2),
+    JSON.stringify(exportApiIntegration, null, 2),
   );
   bundleFiles.set(
     "squid-quality-report.json",

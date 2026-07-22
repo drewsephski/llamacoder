@@ -68,7 +68,8 @@ const chat = {
     {
       id: "follow-up-user",
       role: "user",
-      content: "Give the background a deeper smoky texture and refine the hero spacing.",
+      content:
+        "Give the background a deeper smoky texture and refine the hero spacing.",
       files: null,
       followUpPrompts: null,
       chatId: "chat-panel-qa",
@@ -92,7 +93,8 @@ const chat = {
       ],
       chatId: "chat-panel-qa",
       position: 3,
-      changeSummary: "Refined the smoky hero composition and responsive spacing",
+      changeSummary:
+        "Refined the smoky hero composition and responsive spacing",
       versionKind: "generation",
       versionLabel: "v1",
       isBookmarked: false,
@@ -128,6 +130,7 @@ export default function ChatPanelQaPage() {
           onMessageClickAction={() => {}}
           onClarificationCompleteAction={() => {}}
           onSearchApprovalAction={() => {}}
+          onBackendSetupAction={() => {}}
         />
 
         <ChatBox

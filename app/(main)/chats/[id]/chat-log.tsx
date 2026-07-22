@@ -26,12 +26,15 @@ import { MessageResponse } from "@/components/ai-elements/message";
 import {
   parseAgentMessageMetadata,
   type AgentMessageMetadata,
+  type BackendSetupDecision,
+  type BackendSetupRequest,
   type ClarificationAnswers,
   type ClarificationRequest,
   type SearchRequest,
   type SourceUrl,
 } from "@/features/generation/agent-contracts";
 import {
+  BackendSetupCard,
   ClarificationRequestCard,
   InterviewRequestCard,
   MessageSources,
@@ -58,6 +61,7 @@ export default function ChatLog({
   onClarificationCompleteAction,
   onInterviewCompleteAction,
   onSearchApprovalAction,
+  onBackendSetupAction,
   onPlanApproveAction,
   onPlanRevisionAction,
   previewRecovery,
@@ -91,6 +95,10 @@ export default function ChatLog({
     request: SearchRequest,
     approved: boolean,
   ) => void | Promise<void>;
+  onBackendSetupAction: (
+    request: BackendSetupRequest,
+    decision: BackendSetupDecision,
+  ) => void | Promise<void>;
   onPlanApproveAction?: (plan: Plan) => void | Promise<void>;
   onPlanRevisionAction?: (plan: Plan) => void | Promise<void>;
   previewRecovery?: { error: string; attempts: number } | null;
@@ -114,6 +122,7 @@ export default function ChatLog({
     if (
       metadata?.kind === "agent_clarification_response" ||
       metadata?.kind === "agent_interview_response" ||
+      metadata?.kind === "agent_backend_setup_response" ||
       metadata?.kind === "agent_search_approval_response" ||
       metadata?.kind === "agent_plan_approval"
     ) {
@@ -150,6 +159,7 @@ export default function ChatLog({
               <UserMessage content={message.content} message={message} />
             ) : (
               <AssistantMessage
+                projectId={chat.id}
                 content={message.content}
                 version={
                   (chat.assistantMessagesCountBefore || 0) +
@@ -168,6 +178,7 @@ export default function ChatLog({
                   const metadata = parseAgentMessageMetadata(message.files);
                   return metadata?.kind === "agent_clarification_request" ||
                     metadata?.kind === "agent_interview_request" ||
+                    metadata?.kind === "agent_backend_setup_request" ||
                     metadata?.kind === "agent_search_approval_request" ||
                     metadata?.kind === "agent_plan_request"
                     ? interactionResponses.get(metadata.request.id)
@@ -176,6 +187,7 @@ export default function ChatLog({
                 onClarificationCompleteAction={onClarificationCompleteAction}
                 onInterviewCompleteAction={onInterviewCompleteAction}
                 onSearchApprovalAction={onSearchApprovalAction}
+                onBackendSetupAction={onBackendSetupAction}
                 onPlanApproveAction={onPlanApproveAction}
                 onPlanRevisionAction={onPlanRevisionAction}
               />
@@ -214,6 +226,7 @@ export default function ChatLog({
 
             {streamText && (
               <AssistantMessage
+                projectId={chat.id}
                 content={streamText}
                 version={
                   (chat.assistantMessagesCountBefore || 0) +
@@ -227,6 +240,7 @@ export default function ChatLog({
                 onClarificationCompleteAction={onClarificationCompleteAction}
                 onInterviewCompleteAction={onInterviewCompleteAction}
                 onSearchApprovalAction={onSearchApprovalAction}
+                onBackendSetupAction={onBackendSetupAction}
                 onPlanApproveAction={onPlanApproveAction}
                 onPlanRevisionAction={onPlanRevisionAction}
               />
@@ -311,6 +325,7 @@ function UserMessage({
     metadata?.kind === "agent_clarification_response" ||
     metadata?.kind === "agent_search_approval_response" ||
     metadata?.kind === "agent_interview_response" ||
+    metadata?.kind === "agent_backend_setup_response" ||
     metadata?.kind === "agent_plan_approval"
   ) {
     return null;
@@ -326,6 +341,7 @@ function UserMessage({
 }
 
 function AssistantMessage({
+  projectId,
   content,
   version,
   message,
@@ -338,9 +354,11 @@ function AssistantMessage({
   onClarificationCompleteAction,
   onInterviewCompleteAction,
   onSearchApprovalAction,
+  onBackendSetupAction,
   onPlanApproveAction,
   onPlanRevisionAction,
 }: {
+  projectId: string;
   content: string;
   version: number;
   message?: Message;
@@ -361,6 +379,10 @@ function AssistantMessage({
   onSearchApprovalAction: (
     request: SearchRequest,
     approved: boolean,
+  ) => void | Promise<void>;
+  onBackendSetupAction: (
+    request: BackendSetupRequest,
+    decision: BackendSetupDecision,
   ) => void | Promise<void>;
   onPlanApproveAction?: (plan: Plan) => void | Promise<void>;
   onPlanRevisionAction?: (plan: Plan) => void | Promise<void>;
@@ -393,6 +415,21 @@ function AssistantMessage({
             : undefined
         }
         onComplete={onInterviewCompleteAction ?? onClarificationCompleteAction}
+      />
+    );
+  }
+
+  if (metadata?.kind === "agent_backend_setup_request") {
+    return (
+      <BackendSetupCard
+        projectId={projectId}
+        request={metadata.request}
+        response={
+          interactionResponse?.kind === "agent_backend_setup_response"
+            ? interactionResponse
+            : undefined
+        }
+        onRespond={onBackendSetupAction}
       />
     );
   }

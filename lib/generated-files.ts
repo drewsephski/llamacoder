@@ -98,7 +98,9 @@ const PROTECTED_MODULE_PATHS = new Set([
   "components/ui/tooltip",
   "components/ui/use-toast",
   "components/ui/index",
+  "lib/supabase",
   "lib/utils",
+  "squid-runtime/supabase",
 ]);
 
 const IMPORT_SOURCE_REGEX =
@@ -361,7 +363,7 @@ Rewrite the app as a complete, runnable multi-file React + TypeScript applicatio
 Requirements:
 - Output only complete files in fenced code blocks using \`\`\`tsx{path=App.tsx} format.
 - Include App.tsx plus any supporting source files needed.
-- Every relative or @/ internal import must resolve to a file you output, except installed shadcn imports under "@/components/ui/*" and "@/lib/utils".
+- Every relative or @/ internal import must resolve to a file you output, except installed shadcn imports under "@/components/ui/*", "@/lib/utils", and Squid's protected Supabase adapter at "@/lib/supabase".
 - Every import style must match the target file's exports: named imports require named exports, and default imports require default exports.
 - If a file exports \`export default function Footer()\`, import it as \`import Footer from "./components/Footer"\`; if it exports \`export function Footer()\`, import it as \`import { Footer } from "./components/Footer"\`.
 - Do not import custom hooks/utilities unless you also output their files.

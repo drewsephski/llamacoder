@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { getSandpackConfig } from "@/lib/sandpack-config";
 import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
 import type { RuntimeVerificationReport } from "@/features/generation/runtime-verification";
+import type { SupabaseBrowserRuntimeState } from "@/features/integrations/supabase-browser-runtime";
 
 const PREVIEW_INSPECTOR_SOURCE = "squid-preview-inspector";
 const PREVIEW_PARENT_SOURCE = "squid-preview-parent";
@@ -23,6 +24,7 @@ export default function ReactCodeRunner({
   previewSelectionMode = false,
   previewTestNonce = 0,
   onPreviewTestReport,
+  supabaseRuntime,
 }: {
   files: Array<{ path: string; content: string }>;
   onRequestFix?: (e: string) => void;
@@ -36,13 +38,18 @@ export default function ReactCodeRunner({
   onPreviewTestReport?: (
     report: Omit<RuntimeVerificationReport, "messageId">,
   ) => void;
+  supabaseRuntime?: SupabaseBrowserRuntimeState;
 }) {
-  const filesKey = files.map((f) => f.path + f.content).join("");
+  const runtimeKey =
+    supabaseRuntime?.status === "ready"
+      ? `${supabaseRuntime.status}:${supabaseRuntime.config.url}:${supabaseRuntime.config.publishableKey}`
+      : (supabaseRuntime?.status ?? "none");
+  const filesKey = `${files.map((f) => f.path + f.content).join("")}:${runtimeKey}`;
   return (
     <SandpackProvider
       key={filesKey}
       className="relative h-full min-h-0 w-full min-w-0 overflow-hidden [&_.sp-preview-container]:flex [&_.sp-preview-container]:h-full [&_.sp-preview-container]:min-h-0 [&_.sp-preview-container]:w-full [&_.sp-preview-container]:min-w-0 [&_.sp-preview-container]:grow [&_.sp-preview-container]:flex-col [&_.sp-preview-container]:overflow-hidden [&_.sp-preview-iframe]:h-full [&_.sp-preview-iframe]:min-h-0 [&_.sp-preview-iframe]:w-full [&_.sp-preview-iframe]:min-w-0 [&_.sp-preview-iframe]:grow"
-      {...getSandpackConfig(files)}
+      {...getSandpackConfig(files, supabaseRuntime)}
     >
       <SandpackPreview
         showNavigator={false}
@@ -75,8 +82,12 @@ function PreviewHealthReporter({
 }) {
   const { sandpack } = useSandpack();
   const [isPreviewReady, setIsPreviewReady] = useState(false);
-  const [latchedError, setLatchedError] = useState<string | null>(null);
   const latchedErrorRef = useRef<string | null>(null);
+  const currentError =
+    sandpack.error?.message ??
+    (sandpack.status === "timeout"
+      ? "The preview timed out while compiling."
+      : null);
 
   useEffect(() => {
     let retryTimer: number | undefined;
@@ -120,25 +131,15 @@ function PreviewHealthReporter({
   }, []);
 
   useEffect(() => {
-    const error =
-      sandpack.error?.message ??
-      (sandpack.status === "timeout"
-        ? "The preview timed out while compiling."
-        : null);
-    if (!error) return;
+    if (!currentError) return;
 
-    latchedErrorRef.current = error;
-    setLatchedError(error);
-  }, [sandpack.error, sandpack.status]);
-
-  useEffect(() => {
-    if (!latchedError) return;
-    onChange({ status: "error", error: latchedError });
-  }, [latchedError, onChange]);
+    latchedErrorRef.current = currentError;
+    onChange({ status: "error", error: currentError });
+  }, [currentError, onChange]);
 
   useEffect(() => {
     if (
-      latchedError ||
+      latchedErrorRef.current ||
       sandpack.error ||
       sandpack.status === "timeout" ||
       (!isPreviewReady && sandpack.status !== "done")
@@ -153,7 +154,7 @@ function PreviewHealthReporter({
     }, 1500);
 
     return () => window.clearTimeout(timer);
-  }, [isPreviewReady, latchedError, onChange, sandpack.error, sandpack.status]);
+  }, [currentError, isPreviewReady, onChange, sandpack.error, sandpack.status]);
 
   return null;
 }
@@ -318,9 +319,13 @@ function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (sandpack.error?.message) {
-      setError(sandpack.error.message);
-    }
+    const nextError = sandpack.error?.message;
+    if (!nextError) return;
+
+    // Sandpack may clear a compile error on the next render; retain it
+    // synchronously so the user can still inspect and repair that failure.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setError(nextError);
   }, [sandpack.error]);
 
   if (!error) return null;

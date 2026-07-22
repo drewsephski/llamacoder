@@ -282,6 +282,21 @@ export function validateSelectedApiUsage(
       });
     }
 
+    if (provider.id === "supabase") {
+      const protectedClientImport = files.some((file) =>
+        /\bimport\s*{[^}]*\bsupabase\b[^}]*}\s*from\s*["']@\/lib\/supabase["']/.test(
+          file.code,
+        ),
+      );
+      if (!protectedClientImport) {
+        issues.push({
+          message:
+            'Selected API Supabase [supabase] must import its protected browser client from "@/lib/supabase".',
+        });
+      }
+      continue;
+    }
+
     if (provider.runtime !== "browser" || provider.auth !== "none") {
       continue;
     }
@@ -317,6 +332,65 @@ export function validateSelectedApiUsage(
           message: `${provider.name} endpoint ${endpoint} is outside the reviewed base URL ${provider.baseUrl}. Do not invent or use legacy API versions.`,
         });
       }
+    }
+  }
+
+  return issues;
+}
+
+export function validateAuthenticatedTasksGeneratedApp(
+  files: SourceFile[],
+): ApiIntegrationIssue[] {
+  const source = files
+    .filter((file) => /\.(?:ts|tsx|js|jsx)$/i.test(file.path))
+    .map((file) => file.code)
+    .join("\n");
+  const issues: ApiIntegrationIssue[] = [];
+  const requiredPatterns: Array<[RegExp, string]> = [
+    [
+      /\bimport\s*{[^}]*\bsupabase\b[^}]*}\s*from\s*["']@\/lib\/supabase["']/,
+      'Import the protected Supabase client from "@/lib/supabase".',
+    ],
+    [/\.auth\.signUp\s*\(/, "Implement email/password sign-up."],
+    [/\.auth\.signInWithPassword\s*\(/, "Implement email/password login."],
+    [/\.auth\.signOut\s*\(/, "Implement logout."],
+    [/\.auth\.getSession\s*\(/, "Restore the initial auth session."],
+    [
+      /\.auth\.onAuthStateChange\s*\(/,
+      "Subscribe to Supabase auth-state changes.",
+    ],
+    [
+      /\.unsubscribe\s*\(/,
+      "Unsubscribe the Supabase auth-state listener during cleanup.",
+    ],
+    [/\.from\(\s*["']tasks["']\s*\)[\s\S]*?\.select\s*\(/, "Load tasks."],
+    [/\.from\(\s*["']tasks["']\s*\)[\s\S]*?\.insert\s*\(/, "Create tasks."],
+    [/\.from\(\s*["']tasks["']\s*\)[\s\S]*?\.update\s*\(/, "Update tasks."],
+    [/\.from\(\s*["']tasks["']\s*\)[\s\S]*?\.delete\s*\(/, "Delete tasks."],
+    [
+      /\buser_id\s*:\s*[A-Za-z_$][\w$]*(?:(?:\?\.|\.)[A-Za-z_$][\w$]*)*(?:\?\.|\.)id\b/,
+      "Set task user_id from the authenticated session user.",
+    ],
+    [/\bloading\b/i, "Render loading state."],
+    [/\berror\b/i, "Render actionable error state."],
+  ];
+
+  for (const [pattern, message] of requiredPatterns) {
+    if (!pattern.test(source)) {
+      issues.push({
+        message: `Verified Supabase authenticated_tasks app is incomplete: ${message}`,
+      });
+    }
+  }
+
+  const tableMatches = source.matchAll(/\.from\(\s*["']([^"']+)["']\s*\)/g);
+  for (const match of tableMatches) {
+    if (match[1] !== "tasks") {
+      issues.push({
+        message:
+          "Verified Supabase authenticated_tasks app may access only the public.tasks table.",
+      });
+      break;
     }
   }
 

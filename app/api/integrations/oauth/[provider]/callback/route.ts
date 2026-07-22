@@ -22,6 +22,7 @@ type RouteContext = { params: Promise<{ provider: string }> };
 function projectRedirect(
   projectId: string | null,
   result: "connected" | "attention" | "denied" | "failed",
+  interactionId?: string | null,
 ) {
   const url = new URL(
     projectId ? `/chats/${encodeURIComponent(projectId)}` : "/dashboard",
@@ -29,6 +30,9 @@ function projectRedirect(
   );
   if (result === "connected" || result === "attention") {
     url.searchParams.set("integration", result);
+    if (interactionId) {
+      url.searchParams.set("integration_interaction", interactionId);
+    }
   } else {
     url.searchParams.set("integration_error", result);
   }
@@ -57,11 +61,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   let projectId: string | null = null;
+  let interactionId: string | null = null;
   try {
     const suppliedState = request.nextUrl.searchParams.get("state");
     if (!suppliedState) throw new Error("OAuth state is missing.");
     const state = verifyOAuthState(suppliedState);
     projectId = state.projectId;
+    interactionId = state.interactionId ?? null;
     if (state.providerId !== providerParam) {
       throw new Error("OAuth provider does not match the signed state.");
     }
@@ -80,7 +86,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const providerError = request.nextUrl.searchParams.get("error");
     if (providerError) {
       return clearOAuthCookies(
-        NextResponse.redirect(projectRedirect(projectId, "denied")),
+        NextResponse.redirect(
+          projectRedirect(projectId, "denied", interactionId),
+        ),
         providerParam,
       );
     }
@@ -121,21 +129,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
             vercelUserId: tokenMetadata.vercelUserId ?? null,
           }
         : providerParam === "supabase"
-          ? {
-              supabaseRefreshToken:
-                request.nextUrl.searchParams.get("refresh_token") ??
-                tokenMetadata.supabaseRefreshToken ??
-                null,
-            }
-        : isGitHubAppInstallation
-          ? { installationId: installationId! }
-          : {};
+          ? {}
+          : isGitHubAppInstallation
+            ? { installationId: installationId! }
+            : {};
     const binding = await completeOAuthProjectIntegration({
       projectId: state.projectId,
       userId: state.userId,
       providerId: providerParam,
       environment: state.environment,
       accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+      accessTokenExpiresAt: token.accessTokenExpiresAt,
+      tokenType: token.tokenType,
       scopes: token.scopes,
       metadata: callbackMetadata,
     });
@@ -151,6 +157,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         projectRedirect(
           projectId,
           tested.status === "ready" ? "connected" : "attention",
+          interactionId,
         ),
       ),
       providerParam,
@@ -161,7 +168,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       error instanceof Error ? error.message : "Unknown error",
     );
     return clearOAuthCookies(
-      NextResponse.redirect(projectRedirect(projectId, "failed")),
+      NextResponse.redirect(
+        projectRedirect(projectId, "failed", interactionId),
+      ),
       providerParam,
     );
   }

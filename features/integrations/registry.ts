@@ -212,8 +212,7 @@ const providers = [
       "seismic events",
     ],
     hosts: ["earthquake.usgs.gov"],
-    docsUrl:
-      "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php",
+    docsUrl: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php",
     baseUrl: "https://earthquake.usgs.gov",
     auth: "none",
     runtime: "browser",
@@ -332,8 +331,7 @@ const providers = [
       "proposed rules",
     ],
     hosts: ["federalregister.gov"],
-    docsUrl:
-      "https://www.federalregister.gov/developers/documentation/api/v1",
+    docsUrl: "https://www.federalregister.gov/developers/documentation/api/v1",
     baseUrl: "https://www.federalregister.gov/api/v1",
     auth: "none",
     runtime: "browser",
@@ -537,7 +535,8 @@ const providers = [
     corsCompatible: true,
     policyStatus: "conditional",
     commercialUse: "review_required",
-    attribution: "Identify the U.S. Food and Drug Administration as the source.",
+    attribution:
+      "Identify the U.S. Food and Drug Administration as the source.",
     limits:
       "The no-key tier permits 240 requests per minute and 1,000 requests per day per IP. An API key raises the daily quota but should not be embedded in browser code.",
     guidance:
@@ -714,7 +713,7 @@ const providers = [
     baseUrl: "https://api.supabase.com/v1",
     auth: "oauth",
     runtime: "server",
-    requiredSecrets: ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"],
+    requiredSecrets: ["VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"],
     corsCompatible: null,
     policyStatus: "conditional",
     commercialUse: "allowed",
@@ -724,7 +723,7 @@ const providers = [
       "Provisioning, privileged database operations, migrations, and service-role access must stay server-side. Only publishable project values may reach the browser.",
     exampleEndpoint: "https://api.supabase.com/v1/projects",
     implementationGuidance:
-      "Use the Management API only from Squid's server with OAuth or a PAT. Generated clients may expose only the project URL and sb_publishable_* key, must rely on Row Level Security, and must never expose sb_secret_* or legacy service_role values.",
+      'Use the Management API only from Squid\'s server with OAuth or a PAT. Generated browser apps must import the protected client as `import { supabase } from "@/lib/supabase"`; do not generate or overwrite that adapter. The adapter may expose only the project URL and validated sb_publishable_* or legacy anon key, must rely on Row Level Security, and must never expose sb_secret_* or legacy service_role values. Client initialization alone does not prove auth, schema, grants, RLS, or CRUD are configured.',
     verifiedAt: "2026-07-13",
   },
   {

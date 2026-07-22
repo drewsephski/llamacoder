@@ -4,11 +4,167 @@ import type { Prisma } from "@prisma/client";
 
 import type { IntegrationProvider } from "@/features/integrations/registry";
 import { createGitHubInstallationToken } from "@/features/integrations/server/github-app";
+import { IntegrationServiceError } from "@/features/integrations/server/integration-error";
+import type {
+  SupabaseManagementCapabilities,
+  SupabaseManagementCapabilityStatus,
+} from "@/features/integrations/supabase-management-capabilities";
 
 type ProviderHealthResult = {
   ok: boolean;
   message: string;
 };
+
+type SupabaseCapabilityIssue = SupabaseManagementCapabilities["issue"];
+
+type SupabaseCapabilityProbe = {
+  status: SupabaseManagementCapabilityStatus;
+  issue: SupabaseCapabilityIssue;
+};
+
+function classifySupabaseCapabilityResponse(
+  status: number,
+): SupabaseCapabilityProbe {
+  if (status >= 200 && status < 300) {
+    return { status: "verified", issue: null };
+  }
+  if (status === 401) {
+    return {
+      status: "reauthorization_required",
+      issue: "connection_expired",
+    };
+  }
+  if (status === 403) {
+    return {
+      status: "reauthorization_required",
+      issue: "insufficient_permissions",
+    };
+  }
+  if (status === 404) {
+    return { status: "missing", issue: "project_unavailable" };
+  }
+  if (status === 429) {
+    return { status: "error", issue: "rate_limited" };
+  }
+  return { status: "error", issue: "provider_unavailable" };
+}
+
+async function probeSupabaseManagementCapability({
+  credential,
+  url,
+  fetchImpl,
+  request,
+}: {
+  credential: string;
+  url: string;
+  fetchImpl: typeof fetch;
+  request?: (url: string) => Promise<unknown>;
+}): Promise<SupabaseCapabilityProbe> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+  try {
+    if (request) {
+      await request(url);
+      return { status: "verified", issue: null };
+    }
+    const response = await fetchImpl(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${credential}`,
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    return classifySupabaseCapabilityResponse(response.status);
+  } catch (error) {
+    if (error instanceof IntegrationServiceError) {
+      return classifySupabaseCapabilityResponse(error.status);
+    }
+    return { status: "error", issue: "provider_unavailable" };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function selectSupabaseCapabilityIssue(
+  probes: SupabaseCapabilityProbe[],
+): SupabaseCapabilityIssue {
+  const priorities: Exclude<SupabaseCapabilityIssue, null>[] = [
+    "connection_expired",
+    "insufficient_permissions",
+    "rate_limited",
+    "provider_unavailable",
+    "project_unavailable",
+  ];
+  return (
+    priorities.find((issue) => probes.some((probe) => probe.issue === issue)) ??
+    null
+  );
+}
+
+export async function requestSupabaseManagementCapabilities({
+  credential,
+  projectRef,
+  fetchImpl = fetch,
+  request,
+}: {
+  credential: string;
+  projectRef: string | null;
+  fetchImpl?: typeof fetch;
+  request?: (url: string) => Promise<unknown>;
+}): Promise<SupabaseManagementCapabilities> {
+  const projectBaseUrl = projectRef
+    ? `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}`
+    : "https://api.supabase.com/v1/projects";
+  const projectsReadPromise = probeSupabaseManagementCapability({
+    credential,
+    url: projectBaseUrl,
+    fetchImpl,
+    request,
+  });
+  const [projectsRead, secretsRead, databaseRead] = await Promise.all([
+    projectsReadPromise,
+    projectRef
+      ? probeSupabaseManagementCapability({
+          credential,
+          url: `${projectBaseUrl}/api-keys`,
+          fetchImpl,
+          request,
+        })
+      : Promise.resolve<SupabaseCapabilityProbe>({
+          status: "unverified",
+          issue: null,
+        }),
+    projectRef
+      ? probeSupabaseManagementCapability({
+          credential,
+          url: `${projectBaseUrl}/types/typescript?included_schemas=public`,
+          fetchImpl,
+          request,
+        })
+      : Promise.resolve<SupabaseCapabilityProbe>({
+          status: "unverified",
+          issue: null,
+        }),
+  ]);
+
+  return {
+    projectsRead: projectsRead.status,
+    projectsWrite: "unverified",
+    secretsRead: secretsRead.status,
+    databaseRead: databaseRead.status,
+    databaseWrite: "unverified",
+    authWrite: "unverified",
+    projectRef,
+    checkedAt: new Date().toISOString(),
+    issue: selectSupabaseCapabilityIssue([
+      projectsRead,
+      secretsRead,
+      databaseRead,
+    ]),
+  };
+}
 
 type HealthCheck = {
   url: string;
@@ -274,8 +430,7 @@ function createHealthCheck({
         headers: {
           "User-Agent": "Squid-Agent/1.0 (support@squidagent.app)",
         },
-        successMessage:
-          "Open Food Facts returned a valid v3 product payload.",
+        successMessage: "Open Food Facts returned a valid v3 product payload.",
         validate: (payload) =>
           isRecord(payload) &&
           payload.status === "success" &&

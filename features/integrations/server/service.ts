@@ -26,7 +26,28 @@ import {
   oauthProviderAvailability,
   type OAuthProviderId,
 } from "@/features/integrations/server/oauth-provider";
-import { requestProviderHealth } from "@/features/integrations/server/provider-health";
+import { IntegrationServiceError } from "@/features/integrations/server/integration-error";
+import { providerFetch } from "@/features/integrations/server/provider-client";
+import {
+  requestProviderHealth,
+  requestSupabaseManagementCapabilities,
+} from "@/features/integrations/server/provider-health";
+import {
+  getSupabaseProviderAuthorization,
+  supabaseTokenMetadata,
+} from "@/features/integrations/server/supabase-oauth-tokens";
+import { buildSupabaseBrowserRuntimeState } from "@/features/integrations/supabase-browser-runtime";
+import {
+  buildAuthenticatedTasksGenerationContext,
+  getAuthenticatedTasksBackendPlan,
+  readSupabaseAuthState,
+  readSupabaseBackendState,
+} from "@/features/integrations/supabase-backend";
+import {
+  hasSupabaseCapabilityStatus,
+  preserveVerifiedSupabaseWriteCapabilities,
+  readSupabaseManagementCapabilities,
+} from "@/features/integrations/supabase-management-capabilities";
 import { getPrisma } from "@/lib/prisma";
 
 type CredentialInput = {
@@ -40,16 +61,7 @@ type ProjectBindingWithConnection = Prisma.ProjectIntegrationGetPayload<{
   };
 }>;
 
-export class IntegrationServiceError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = "IntegrationServiceError";
-  }
-}
+export { IntegrationServiceError } from "@/features/integrations/server/integration-error";
 
 function getInitialStatus(
   provider: IntegrationProvider,
@@ -83,6 +95,48 @@ async function requireOwnedProject(
 function serializeBinding(
   binding: ProjectBindingWithConnection,
 ): ProjectIntegrationView {
+  const storedConfig =
+    binding.config &&
+    typeof binding.config === "object" &&
+    !Array.isArray(binding.config)
+      ? (binding.config as Record<string, unknown>)
+      : null;
+  const publicConfig = storedConfig ? { ...storedConfig } : null;
+  if (publicConfig) {
+    delete publicConfig.supabaseManagementCapabilities;
+    delete publicConfig.supabaseBackend;
+  }
+  const capabilities = readSupabaseManagementCapabilities(storedConfig);
+  const storedBackend = readSupabaseBackendState(storedConfig);
+  const currentPlan = getAuthenticatedTasksBackendPlan();
+  const hasCurrentPlan =
+    storedBackend &&
+    "plan" in storedBackend &&
+    storedBackend.plan.migrationChecksum === currentPlan.migrationChecksum;
+  const hasBrowserConfiguration = Boolean(
+    storedConfig?.supabaseProjectRef &&
+      storedConfig?.supabaseProjectUrl &&
+      (storedConfig?.supabasePublishableKey || storedConfig?.supabaseAnonKey),
+  );
+  const supabaseBackend =
+    binding.providerId !== "supabase"
+      ? null
+      : !binding.connection.credentials.length
+        ? ({ status: "not_connected" } as const)
+        : capabilities &&
+            hasSupabaseCapabilityStatus(
+              capabilities,
+              "reauthorization_required",
+            )
+          ? ({
+              status: "reauthorization_required",
+              plan: currentPlan,
+            } as const)
+          : hasCurrentPlan
+            ? storedBackend
+            : hasBrowserConfiguration
+              ? ({ status: "approval_required", plan: currentPlan } as const)
+              : ({ status: "provisioning" } as const);
   return {
     id: binding.id,
     projectId: binding.chatId,
@@ -91,10 +145,10 @@ function serializeBinding(
     status: binding.status as ProjectIntegrationView["status"],
     createdAt: binding.createdAt.toISOString(),
     updatedAt: binding.updatedAt.toISOString(),
-    config:
-      binding.config && typeof binding.config === "object"
-        ? (binding.config as Record<string, unknown>)
-        : null,
+    config: publicConfig,
+    supabaseManagementCapabilities:
+      binding.providerId === "supabase" ? capabilities : null,
+    supabaseBackend,
     connection: {
       id: binding.connection.id,
       displayName: binding.connection.displayName,
@@ -114,6 +168,35 @@ function providerSummaries() {
   return buildIntegrationProviderSummaries({
     oauthAvailability: oauthProviderAvailability(),
   });
+}
+
+function getOperationPhase(metadata: unknown) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+  const phase = (metadata as Record<string, unknown>).phase;
+  return typeof phase === "string" ? phase : null;
+}
+
+function supabaseCapabilityHealthMessage(
+  issue: NonNullable<
+    ReturnType<typeof readSupabaseManagementCapabilities>
+  >["issue"],
+) {
+  switch (issue) {
+    case "connection_expired":
+      return "The Supabase Management connection expired. Reconnect Supabase.";
+    case "insufficient_permissions":
+      return "Reconnect Supabase to grant the required Management API access.";
+    case "rate_limited":
+      return "Supabase temporarily rate-limited the capability check.";
+    case "provider_unavailable":
+      return "Supabase is temporarily unavailable for capability checks.";
+    case "project_unavailable":
+      return "The bound Supabase project is no longer available.";
+    default:
+      return "Supabase Management API access is ready.";
+  }
 }
 
 export async function assertIntegrationProjectAccess({
@@ -139,6 +222,7 @@ export async function getConnectedIntegrationPromptContext({
       providerId: true,
       environment: true,
       status: true,
+      config: true,
       connection: {
         select: {
           displayName: true,
@@ -175,6 +259,23 @@ export async function getConnectedIntegrationPromptContext({
     "Generated browser code must still never contain credentials. Reference the providerId in integrations.ts and keep secret-bearing operations behind a server adapter.",
     "=== END CONNECTED PROJECT INTEGRATIONS ===",
     buildIntegrationProviderGuidance(providerIds),
+    ...bindings.flatMap((binding) => {
+      if (binding.providerId !== "supabase") return [];
+      const backend = readSupabaseBackendState(binding.config);
+      return binding.status === "ready" &&
+        backend?.status === "ready" &&
+        backend.plan.migrationChecksum ===
+          getAuthenticatedTasksBackendPlan().migrationChecksum
+        ? [
+            buildAuthenticatedTasksGenerationContext({
+              authMode: readSupabaseAuthState(binding.config)?.mode ?? null,
+            }),
+          ]
+        : [
+            "Supabase browser runtime may be connected, but the authenticated_tasks backend is not verified ready. Do not claim working task persistence or invent SQL. The user must approve and complete Squid's server-owned backend template first.",
+            `For the exact signed-in personal tasks use case, the model may request only this typed plan and must never provide executable SQL: ${JSON.stringify(getAuthenticatedTasksBackendPlan())}`,
+          ];
+    }),
   ].join("\n");
 
   return {
@@ -182,9 +283,10 @@ export async function getConnectedIntegrationPromptContext({
     providerIds,
     requiresServerRuntime: providers.some(
       (provider) =>
-        provider.runtime === "server" ||
-        provider.auth === "secret" ||
-        provider.auth === "oauth",
+        provider.id !== "supabase" &&
+        (provider.runtime === "server" ||
+          provider.auth === "secret" ||
+          provider.auth === "oauth"),
     ),
   };
 }
@@ -195,6 +297,9 @@ export async function completeOAuthProjectIntegration({
   providerId,
   environment,
   accessToken,
+  refreshToken,
+  accessTokenExpiresAt,
+  tokenType,
   scopes,
   metadata,
 }: {
@@ -203,6 +308,9 @@ export async function completeOAuthProjectIntegration({
   providerId: OAuthProviderId;
   environment: IntegrationEnvironment;
   accessToken?: string;
+  refreshToken?: string;
+  accessTokenExpiresAt?: string;
+  tokenType?: string;
   scopes: string[];
   metadata: Record<string, string | null>;
 }) {
@@ -237,7 +345,31 @@ export async function completeOAuthProjectIntegration({
           kind: "access_token",
         })
       : null;
+    const encryptedRefreshToken = refreshToken
+      ? encryptIntegrationCredential({
+          value: refreshToken,
+          userId,
+          connectionId,
+          kind: "refresh_token",
+        })
+      : null;
+    const sanitizedMetadata: Record<string, string | null> = { ...metadata };
+    delete sanitizedMetadata[supabaseTokenMetadata.legacyRefreshToken];
+    if (providerId === "supabase") {
+      sanitizedMetadata[supabaseTokenMetadata.accessTokenExpiresAt] =
+        accessTokenExpiresAt ?? null;
+      sanitizedMetadata[supabaseTokenMetadata.tokenType] = tokenType ?? null;
+    }
     const connectionStatus = accessToken ? "configured" : "ready";
+    const existingBindingConfig =
+      existing?.config &&
+      typeof existing.config === "object" &&
+      !Array.isArray(existing.config)
+        ? { ...(existing.config as Record<string, unknown>) }
+        : null;
+    if (existingBindingConfig) {
+      delete existingBindingConfig.supabaseManagementCapabilities;
+    }
 
     const connection = existing
       ? await tx.integrationConnection.update({
@@ -245,7 +377,7 @@ export async function completeOAuthProjectIntegration({
           data: {
             status: connectionStatus,
             scopes,
-            metadata: metadata as Prisma.InputJsonValue,
+            metadata: sanitizedMetadata as Prisma.InputJsonValue,
             lastHealthStatus: null,
             lastHealthMessage: null,
             lastHealthCheckAt: null,
@@ -260,7 +392,7 @@ export async function completeOAuthProjectIntegration({
             authType: "oauth",
             status: connectionStatus,
             scopes,
-            metadata: metadata as Prisma.InputJsonValue,
+            metadata: sanitizedMetadata as Prisma.InputJsonValue,
           },
         });
     if (encrypted) {
@@ -276,10 +408,36 @@ export async function completeOAuthProjectIntegration({
         update: encrypted,
       });
     }
+    if (providerId === "supabase" && encryptedRefreshToken) {
+      await tx.integrationCredential.upsert({
+        where: {
+          connectionId_kind: { connectionId, kind: "refresh_token" },
+        },
+        create: {
+          connectionId,
+          kind: "refresh_token",
+          ...encryptedRefreshToken,
+        },
+        update: encryptedRefreshToken,
+      });
+    } else if (providerId === "supabase") {
+      await tx.integrationCredential.deleteMany({
+        where: { connectionId, kind: "refresh_token" },
+      });
+    }
     const binding = existing
       ? await tx.projectIntegration.update({
           where: { id: existing.id },
-          data: { status: connectionStatus },
+          data: {
+            status: connectionStatus,
+            ...(providerId === "supabase"
+              ? {
+                  config: existingBindingConfig
+                    ? (existingBindingConfig as Prisma.InputJsonValue)
+                    : ({} as Prisma.InputJsonValue),
+                }
+              : {}),
+          },
         })
       : await tx.projectIntegration.create({
           data: {
@@ -333,6 +491,21 @@ export async function getIntegrationWorkspace({
     orderBy: { createdAt: "desc" },
     take: 20,
   });
+  const supabaseBinding =
+    bindings.find(
+      (binding) =>
+        binding.providerId === "supabase" &&
+        binding.environment === "development",
+    ) ?? bindings.find((binding) => binding.providerId === "supabase");
+  const isSupabaseProvisioning = Boolean(
+    supabaseBinding &&
+      recentOperations.some(
+        (operation) =>
+          operation.projectIntegrationId === supabaseBinding.id &&
+          operation.kind === "supabase_provision" &&
+          operation.status === "running",
+      ),
+  );
 
   return {
     providers: providerSummaries(),
@@ -343,6 +516,7 @@ export async function getIntegrationWorkspace({
       providerId: operation.providerId,
       kind: operation.kind,
       status: operation.status,
+      phase: getOperationPhase(operation.metadata),
       externalId: operation.externalId,
       url: operation.url,
       commitSha: operation.commitSha,
@@ -350,6 +524,13 @@ export async function getIntegrationWorkspace({
       createdAt: operation.createdAt.toISOString(),
       completedAt: operation.completedAt?.toISOString() ?? null,
     })),
+    browserRuntime: {
+      supabase: buildSupabaseBrowserRuntimeState({
+        integrationConfig: supabaseBinding?.config,
+        hasProjectBinding: Boolean(supabaseBinding),
+        isProvisioning: isSupabaseProvisioning,
+      }),
+    },
   };
 }
 
@@ -623,6 +804,94 @@ export async function testProjectIntegration({
     );
   }
 
+  if (provider.id === "supabase") {
+    const authorization = await getSupabaseProviderAuthorization({
+      connection: binding.connection,
+      fetchImpl,
+    });
+    const existingConfig =
+      binding.config &&
+      typeof binding.config === "object" &&
+      !Array.isArray(binding.config)
+        ? (binding.config as Record<string, unknown>)
+        : {};
+    const projectRefValue = existingConfig.supabaseProjectRef;
+    const projectRef =
+      typeof projectRefValue === "string" && projectRefValue.trim()
+        ? projectRefValue.trim()
+        : null;
+    const observedCapabilities = await requestSupabaseManagementCapabilities({
+      credential: authorization.accessToken,
+      projectRef,
+      fetchImpl,
+      request: (url) =>
+        providerFetch("supabase", authorization, url, {}, fetchImpl),
+    });
+    const capabilities = preserveVerifiedSupabaseWriteCapabilities({
+      existing: readSupabaseManagementCapabilities(existingConfig),
+      observed: observedCapabilities,
+    });
+    const hasBlockingCapability =
+      hasSupabaseCapabilityStatus(capabilities, "reauthorization_required") ||
+      hasSupabaseCapabilityStatus(capabilities, "error") ||
+      hasSupabaseCapabilityStatus(capabilities, "missing");
+    const ready =
+      capabilities.projectsRead === "verified" && !hasBlockingCapability;
+    const now = new Date();
+    const status = ready ? "ready" : "needs_attention";
+    const message = supabaseCapabilityHealthMessage(capabilities.issue);
+
+    await prisma.$transaction([
+      prisma.integrationConnection.update({
+        where: { id: binding.connectionId },
+        data: {
+          status,
+          lastHealthStatus: ready ? "healthy" : "failed",
+          lastHealthMessage: message,
+          lastHealthCheckAt: now,
+        },
+      }),
+      prisma.projectIntegration.update({
+        where: { id: binding.id },
+        data: {
+          status,
+          config: {
+            ...existingConfig,
+            supabaseManagementCapabilities: capabilities,
+          } as Prisma.InputJsonValue,
+        },
+      }),
+      prisma.integrationAuditEvent.create({
+        data: {
+          userId,
+          providerId: binding.providerId,
+          action: ready
+            ? "supabase_capabilities_checked"
+            : "supabase_capabilities_attention_required",
+          environment: binding.environment,
+          connectionId: binding.connectionId,
+          projectIntegrationId: binding.id,
+          metadata: {
+            projectsRead: capabilities.projectsRead,
+            projectsWrite: capabilities.projectsWrite,
+            secretsRead: capabilities.secretsRead,
+            databaseRead: capabilities.databaseRead,
+            databaseWrite: capabilities.databaseWrite,
+            authWrite: capabilities.authWrite,
+            issue: capabilities.issue,
+          },
+        },
+      }),
+    ]);
+
+    const updated = await prisma.projectIntegration.findUniqueOrThrow({
+      where: { id: binding.id },
+      include: {
+        connection: { include: { credentials: { select: { id: true } } } },
+      },
+    });
+    return serializeBinding(updated);
+  }
   const stored = binding.connection.credentials[0] ?? null;
   const credential = stored
     ? decryptIntegrationCredential({

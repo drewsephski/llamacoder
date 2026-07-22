@@ -113,7 +113,6 @@ export function buildOAuthAuthorizationUrl({
     url.searchParams.set("response_type", "code");
     url.searchParams.set("client_id", config.clientId);
     url.searchParams.set("redirect_uri", config.callbackUrl);
-    url.searchParams.set("scope", "all");
     url.searchParams.set("state", state);
     if (codeChallenge) {
       url.searchParams.set("code_challenge", codeChallenge);
@@ -151,9 +150,19 @@ const supabaseTokenSchema = z.object({
   token_type: z.string().optional(),
   scope: z.string().optional(),
   refresh_token: z.string().optional(),
+  expires_in: z.coerce.number().int().positive().optional(),
   error: z.string().optional(),
   error_description: z.string().optional(),
 });
+
+export type OAuthTokenExchangeResult = {
+  accessToken?: string;
+  refreshToken?: string;
+  accessTokenExpiresAt?: string;
+  tokenType?: string;
+  scopes: string[];
+  metadata: Record<string, string | null>;
+};
 
 export async function exchangeOAuthCode({
   config,
@@ -165,7 +174,7 @@ export async function exchangeOAuthCode({
   code: string;
   codeVerifier?: string;
   fetchImpl?: typeof fetch;
-}) {
+}): Promise<OAuthTokenExchangeResult> {
   if (config.providerId === "github") {
     if (config.mode === "github_app") {
       throw new Error("GitHub App installations do not exchange OAuth codes.");
@@ -214,16 +223,19 @@ export async function exchangeOAuthCode({
     const credentials = Buffer.from(
       `${config.clientId}:${config.clientSecret}`,
     ).toString("base64");
-    const response = await fetchImpl("https://api.supabase.com/v1/oauth/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Accept: "application/json",
-        Authorization: `Basic ${credentials}`,
+    const response = await fetchImpl(
+      "https://api.supabase.com/v1/oauth/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+          Authorization: `Basic ${credentials}`,
+        },
+        body,
+        cache: "no-store",
       },
-      body,
-      cache: "no-store",
-    });
+    );
     const responseBody: unknown = await response.json().catch(() => null);
     if (!response.ok) throw new Error("Supabase token exchange failed.");
     const parsed = supabaseTokenSchema.safeParse(responseBody);
@@ -236,12 +248,15 @@ export async function exchangeOAuthCode({
     }
     return {
       accessToken: parsed.data.access_token,
-      scopes: parsed.data.scope ? parsed.data.scope.split(",").filter(Boolean) : [],
-      metadata: {
-        ...(parsed.data.refresh_token
-          ? { supabaseRefreshToken: parsed.data.refresh_token }
-          : {}),
-      },
+      refreshToken: parsed.data.refresh_token,
+      accessTokenExpiresAt: parsed.data.expires_in
+        ? new Date(Date.now() + parsed.data.expires_in * 1_000).toISOString()
+        : undefined,
+      tokenType: parsed.data.token_type,
+      scopes: parsed.data.scope
+        ? parsed.data.scope.split(/[\s,]+/).filter(Boolean)
+        : [],
+      metadata: {},
     };
   }
 

@@ -3,6 +3,92 @@ import { describe, expect, it } from "vitest";
 import { getSandpackConfig } from "@/lib/sandpack-config";
 
 describe("getSandpackConfig", () => {
+  it("injects a protected Supabase runtime and stable client adapter", () => {
+    const config = getSandpackConfig(
+      [
+        {
+          path: "App.tsx",
+          content:
+            'import { supabase } from "@/lib/supabase"; export default function App() { return <main>{supabase ? "Ready" : "Missing"}</main>; }',
+        },
+      ],
+      {
+        status: "ready",
+        config: {
+          url: "https://project-one.supabase.co",
+          publishableKey: "sb_publishable_project-one",
+        },
+      },
+    );
+    const runtime = config.files["/squid-runtime/supabase.ts"];
+    const adapter = config.files["/lib/supabase.ts"];
+
+    expect(runtime).toMatchObject({ hidden: true, readOnly: true });
+    expect(adapter).toMatchObject({ hidden: true, readOnly: true });
+    expect(typeof runtime === "object" ? runtime.code : runtime).toBe(
+      'export const url = "https://project-one.supabase.co";\n' +
+        'export const publishableKey = "sb_publishable_project-one";\n',
+    );
+    expect(typeof adapter === "object" ? adapter.code : adapter).toContain(
+      'import { createClient } from "@supabase/supabase-js"',
+    );
+    expect(config.customSetup.dependencies["@supabase/supabase-js"]).toBe(
+      "2.110.8",
+    );
+  });
+
+  it("fails clearly without serializing rejected Supabase configuration", () => {
+    const config = getSandpackConfig(
+      [
+        {
+          path: "App.tsx",
+          content: 'import { supabase } from "@/lib/supabase"; void supabase;',
+        },
+      ],
+      { status: "invalid_browser_key" },
+    );
+    const runtime = config.files["/squid-runtime/supabase.ts"];
+    const runtimeCode = typeof runtime === "object" ? runtime.code : runtime;
+    const serializedFiles = JSON.stringify(config.files);
+
+    expect(runtimeCode).toContain("invalid or privileged API key was rejected");
+    expect(serializedFiles).not.toMatch(
+      /managementAccessToken|refreshToken|oauthClientSecret|databasePassword|sb_secret_|service_role/,
+    );
+  });
+
+  it("refreshes injected values when the connected project changes", () => {
+    const files = [
+      {
+        path: "App.tsx",
+        content: 'import { supabase } from "@/lib/supabase"; void supabase;',
+      },
+    ];
+    const first = getSandpackConfig(files, {
+      status: "ready",
+      config: {
+        url: "https://project-one.supabase.co",
+        publishableKey: "sb_publishable_one",
+      },
+    });
+    const second = getSandpackConfig(files, {
+      status: "ready",
+      config: {
+        url: "https://project-two.supabase.co",
+        publishableKey: "sb_publishable_two",
+      },
+    });
+    const firstRuntime = first.files["/squid-runtime/supabase.ts"];
+    const secondRuntime = second.files["/squid-runtime/supabase.ts"];
+
+    expect(
+      typeof firstRuntime === "object" ? firstRuntime.code : firstRuntime,
+    ).toContain("project-one");
+    expect(
+      typeof secondRuntime === "object" ? secondRuntime.code : secondRuntime,
+    ).toContain("project-two");
+  });
+
   it("includes only the shadcn files required by generated imports", () => {
     const config = getSandpackConfig([
       {
@@ -54,6 +140,11 @@ export default function App() {
         path.startsWith("/components/ui/"),
       ),
     ).toEqual([]);
+    expect(config.files["/squid-runtime/supabase.ts"]).toBeUndefined();
+    expect(config.files["/lib/supabase.ts"]).toBeUndefined();
+    expect(
+      config.customSetup.dependencies["@supabase/supabase-js"],
+    ).toBeUndefined();
   });
 
   it("keeps announcing readiness for previews that compile slowly", () => {

@@ -65,6 +65,17 @@ function providerCapabilitySummary(provider: IntegrationProvider) {
   return `${provider.name} for ${provider.capabilities.slice(0, 2).join(" and ")}`;
 }
 
+function needsGeneratedServerRuntime(provider: IntegrationProvider) {
+  // Supabase Management OAuth stays on Squid's server, while verified Auth and
+  // Data API flows use the protected publishable-key browser client with RLS.
+  if (provider.id === "supabase") return false;
+  return (
+    provider.runtime === "server" ||
+    provider.auth === "secret" ||
+    provider.auth === "oauth"
+  );
+}
+
 export function buildSelectedApiPurposeStep({
   prompt,
   providers,
@@ -128,12 +139,7 @@ export function enforceSelectedProvidersInAppSpec(
     (provider) =>
       `${provider.name} [${provider.id}] is wired into a user-visible flow using its reviewed API contract.`,
   );
-  const needsServerRuntime = providers.some(
-    (provider) =>
-      provider.runtime === "server" ||
-      provider.auth === "secret" ||
-      provider.auth === "oauth",
-  );
+  const needsServerRuntime = providers.some(needsGeneratedServerRuntime);
 
   return {
     ...spec,
@@ -155,12 +161,7 @@ export function enforceSelectedProvidersInPlan(
   const providers = getSelectedProviders(providerIds);
   if (providers.length === 0) return plan;
 
-  const needsServerRuntime = providers.some(
-    (provider) =>
-      provider.runtime === "server" ||
-      provider.auth === "secret" ||
-      provider.auth === "oauth",
-  );
+  const needsServerRuntime = providers.some(needsGeneratedServerRuntime);
 
   return {
     ...plan,

@@ -64,6 +64,8 @@ import {
   formatClarificationAnswers,
   sourceUrlSchema,
   type AgentAction,
+  type BackendSetupDecision,
+  type BackendSetupRequest,
   type ClarificationAnswers,
   type ClarificationRequest,
   type Plan,
@@ -496,6 +498,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         const isStructuredInteraction =
           completedAgentAction?.action === "clarify" ||
           completedAgentAction?.action === "interview" ||
+          completedAgentAction?.action === "request_backend_setup" ||
           completedAgentAction?.action === "present_plan" ||
           completedAgentAction?.action === "search";
         if (completedAgentAction?.action === "answer" && !fullText.trim()) {
@@ -551,6 +554,16 @@ export default function PageClient({ chat }: { chat: Chat }) {
             completedAgentAction.request.title,
             {
               kind: "agent_interview_request",
+              request: completedAgentAction.request,
+            },
+            { creditHoldId, chargeCredits: false },
+          )) as Message;
+        } else if (completedAgentAction?.action === "request_backend_setup") {
+          message = (await createAgentAssistantMessage(
+            chat.id,
+            completedAgentAction.request.title,
+            {
+              kind: "agent_backend_setup_request",
               request: completedAgentAction.request,
             },
             { creditHoldId, chargeCredits: false },
@@ -785,6 +798,11 @@ export default function PageClient({ chat }: { chat: Chat }) {
             summary: Array<{ label: string; value: string }>;
           }
         | {
+            kind: "agent_backend_setup_response";
+            requestId: string;
+            decision: BackendSetupDecision;
+          }
+        | {
             kind: "agent_search_approval_response";
             requestId: string;
             query: string;
@@ -823,8 +841,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
   );
 
   const openSupabaseConnectFlow = useCallback(() => {
-    const connectUrl =
-      `/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(chat.id)}&environment=development`;
+    const connectUrl = `/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(chat.id)}&environment=development`;
     const popup = window.open(connectUrl, "_blank", "noopener,noreferrer");
     if (!popup) {
       window.location.assign(connectUrl);
@@ -887,6 +904,22 @@ export default function PageClient({ chat }: { chat: Chat }) {
         requestId: plan.id,
         approved: true,
       });
+    },
+    [continueAgentConversation],
+  );
+
+  const handleBackendSetup = useCallback(
+    async (request: BackendSetupRequest, decision: BackendSetupDecision) => {
+      await continueAgentConversation(
+        decision === "connect_supabase"
+          ? "Supabase is ready. Continuing your build with authentication and persistent data."
+          : "Build the interface only for now. Keep data in the browser and do not require a backend.",
+        {
+          kind: "agent_backend_setup_response",
+          requestId: request.id,
+          decision,
+        },
+      );
     },
     [continueAgentConversation],
   );
@@ -1020,6 +1053,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
             onClarificationCompleteAction={handleClarificationComplete}
             onInterviewCompleteAction={handleInterviewComplete}
             onSearchApprovalAction={handleSearchApproval}
+            onBackendSetupAction={handleBackendSetup}
             onPlanApproveAction={handlePlanApprove}
             onPlanRevisionAction={handlePlanRevision}
             previewRecovery={previewRecovery}

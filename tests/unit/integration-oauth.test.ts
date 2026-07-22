@@ -114,7 +114,7 @@ describe("integration OAuth", () => {
     expect(url.searchParams.get("state")).toBe("signed-state");
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");
     expect(url.searchParams.get("response_type")).toBe("code");
-    expect(url.searchParams.get("scope")).toBe("all");
+    expect(url.searchParams.has("scope")).toBe(false);
   });
 
   it("prefers repository-scoped GitHub App installation authorization", () => {
@@ -196,7 +196,8 @@ describe("integration OAuth", () => {
         JSON.stringify({
           access_token: "supabase-access-token",
           refresh_token: "supabase-refresh-token",
-          scope: "",
+          expires_in: 3600,
+          token_type: "bearer",
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );
@@ -209,10 +210,36 @@ describe("integration OAuth", () => {
     });
     expect(result).toEqual({
       accessToken: "supabase-access-token",
+      refreshToken: "supabase-refresh-token",
+      accessTokenExpiresAt: expect.any(String),
+      tokenType: "bearer",
       scopes: [],
-      metadata: {
-        supabaseRefreshToken: "supabase-refresh-token",
-      },
+      metadata: {},
     });
+    expect(JSON.stringify(result.metadata)).not.toContain(
+      "supabase-refresh-token",
+    );
+  });
+
+  it("keeps returned Supabase scopes as optional informational metadata", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        access_token: "supabase-access-token",
+        scope: "projects:read database:read,database:write",
+      }),
+    );
+
+    const result = await exchangeOAuthCode({
+      config: getOAuthProviderConfig("supabase")!,
+      code: "temporary-code",
+      codeVerifier: "verifier",
+      fetchImpl: fetchMock as typeof fetch,
+    });
+
+    expect(result.scopes).toEqual([
+      "projects:read",
+      "database:read",
+      "database:write",
+    ]);
   });
 });
