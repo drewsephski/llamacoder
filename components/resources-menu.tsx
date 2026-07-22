@@ -9,6 +9,7 @@ import {
   BarChart3,
   BookOpen,
   ChevronDown,
+  DatabaseZap,
   FileText,
   Info,
   LifeBuoy,
@@ -55,6 +56,13 @@ export const resourceLinks: ResourceLink[] = [
     shortLabel: "Benchmarks",
     description: "Transparent screenshot-to-React tests",
     icon: BarChart3,
+  },
+  {
+    href: "/supabase",
+    label: "Supabase walkthrough",
+    shortLabel: "Supabase",
+    description: "OAuth, RLS, and backend verification",
+    icon: DatabaseZap,
   },
   {
     href: "/what-is-squid-agent",
@@ -260,7 +268,9 @@ export function MobileResourcesList({
                     strokeWidth={1.75}
                     aria-hidden="true"
                   />
-                  <span className="min-w-0 truncate">{link.shortLabel ?? link.label}</span>
+                  <span className="min-w-0 truncate">
+                    {link.shortLabel ?? link.label}
+                  </span>
                 </Link>
               </li>
             );

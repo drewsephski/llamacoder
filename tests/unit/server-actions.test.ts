@@ -31,9 +31,15 @@ const {
   saveMessageFollowUpPromptsMock: vi.fn(),
   txMock: {
     $executeRaw: vi.fn(),
-    message: { create: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+    message: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+    },
     chat: { update: vi.fn() },
     generationLog: { create: vi.fn() },
+    generationRun: { findFirst: vi.fn(), updateMany: vi.fn() },
   },
   prismaMock: {
     $transaction: vi.fn(),
@@ -46,6 +52,7 @@ const {
     message: { create: vi.fn() },
     projectIntegration: { findMany: vi.fn() },
     creditHold: { findUnique: vi.fn() },
+    generationRun: { updateMany: vi.fn() },
   },
 }));
 
@@ -86,6 +93,7 @@ import {
   createFreeRepairAssistantMessage,
   createMessage,
   createPreviewRepairMessage,
+  createValidationRepairMessage,
   deleteProject,
   duplicateProject,
   renameProject,
@@ -117,10 +125,14 @@ describe("server actions", () => {
     ]);
     txMock.message.create.mockResolvedValue({ id: "assistant_1" });
     txMock.message.findMany.mockResolvedValue([]);
+    txMock.message.findFirst.mockResolvedValue(null);
     txMock.message.update.mockResolvedValue({});
+    txMock.generationRun.findFirst.mockResolvedValue(null);
+    txMock.generationRun.updateMany.mockResolvedValue({ count: 1 });
     txMock.generationLog.create.mockResolvedValue({});
     prismaMock.message.create.mockResolvedValue({ id: "user_msg_2" });
     prismaMock.projectIntegration.findMany.mockResolvedValue([]);
+    prismaMock.generationRun.updateMany.mockResolvedValue({ count: 1 });
     releaseCreditHoldMock.mockResolvedValue({ success: true });
   });
 
@@ -307,11 +319,18 @@ describe("server actions", () => {
             code: "export function One() { return null; }",
           },
         ],
-        { creditHoldId: "hold_1" },
+        { creditHoldId: "hold_1", generationRunId: "run_1" },
       ),
     ).rejects.toThrow("SELECTED_API_CONTRACT_VIOLATION");
 
-    expect(releaseCreditHoldMock).toHaveBeenCalledWith({ holdId: "hold_1" });
+    expect(releaseCreditHoldMock).not.toHaveBeenCalled();
+    expect(prismaMock.generationRun.updateMany).toHaveBeenCalledWith({
+      where: { id: "run_1", chatId: "chat_1", userId: "user_1" },
+      data: expect.objectContaining({
+        status: "recoverable",
+        phase: "validation_repair",
+      }),
+    });
     expect(txMock.message.create).not.toHaveBeenCalled();
   });
 
@@ -360,13 +379,234 @@ describe("server actions", () => {
             code: 'export const integrations = [{ providerId: "supabase" }];',
           },
         ],
-        { creditHoldId: "hold_1" },
+        { creditHoldId: "hold_1", generationRunId: "run_1" },
       ),
     ).rejects.toThrow(
       "Verified Supabase authenticated_tasks app is incomplete",
     );
-    expect(releaseCreditHoldMock).toHaveBeenCalledWith({ holdId: "hold_1" });
+    expect(releaseCreditHoldMock).not.toHaveBeenCalled();
     expect(txMock.message.create).not.toHaveBeenCalled();
+  });
+
+  it("creates one hidden bounded contract repair request without releasing the original hold", async () => {
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        messages: [
+          buildMessage({ id: "system_1", position: 0, role: "system" }),
+          buildMessage({ id: "user_1", position: 1, role: "user" }),
+        ],
+      }),
+    );
+    prismaMock.projectIntegration.findMany.mockResolvedValueOnce([
+      { providerId: "frankfurter", config: {} },
+    ]);
+    txMock.generationRun.findFirst.mockResolvedValueOnce({
+      id: "run_1",
+      messageId: "user_1",
+      creditHoldId: "hold_1",
+      status: "recoverable",
+    });
+    txMock.message.findFirst.mockResolvedValueOnce({ files: null });
+    txMock.message.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ position: 0 }, { position: 1 }]);
+    txMock.message.create.mockResolvedValueOnce({ id: "contract_repair_1" });
+
+    await expect(
+      createValidationRepairMessage("chat_1", "run_1", [
+        {
+          path: "App.tsx",
+          code: "export default function App() { return <main />; }",
+        },
+      ]),
+    ).resolves.toEqual({
+      kind: "created",
+      id: "contract_repair_1",
+      attempt: 1,
+    });
+
+    expect(txMock.message.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        role: "user",
+        content: expect.stringContaining("Attempt 1 of 2"),
+        files: expect.objectContaining({
+          kind: "contract_repair",
+          chargeCredits: false,
+          rootGenerationRunId: "run_1",
+          sourceRunId: "run_1",
+          attempt: 1,
+          maxAttempts: 2,
+          draftFiles: expect.arrayContaining([
+            expect.objectContaining({ path: "App.tsx" }),
+          ]),
+          diagnostics: expect.arrayContaining([expect.any(String)]),
+          usedAt: null,
+        }),
+        position: 2,
+        chatId: "chat_1",
+      }),
+      select: { id: true },
+    });
+    expect(releaseCreditHoldMock).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates a repair source and releases the root hold only after the bounded attempts are exhausted", async () => {
+    const baseChat = buildChat({
+      messages: [buildMessage({ id: "user_1", position: 1, role: "user" })],
+    });
+    prismaMock.chat.findUnique
+      .mockResolvedValueOnce(baseChat)
+      .mockResolvedValueOnce(baseChat);
+    prismaMock.projectIntegration.findMany.mockResolvedValue([
+      { providerId: "frankfurter", config: {} },
+    ]);
+    const existingRepair = {
+      kind: "contract_repair",
+      chargeCredits: false,
+      rootGenerationRunId: "run_source",
+      sourceRunId: "run_source",
+      attempt: 1,
+      maxAttempts: 2,
+      draftFiles: [{ path: "App.tsx", code: "export default 1" }],
+      diagnostics: ["Missing selected API usage"],
+      usedAt: null,
+    };
+
+    txMock.generationRun.findFirst.mockResolvedValueOnce({
+      id: "run_source",
+      messageId: "user_1",
+      creditHoldId: "hold_1",
+      status: "recoverable",
+    });
+    txMock.message.findFirst.mockResolvedValueOnce({ files: null });
+    txMock.message.findMany.mockResolvedValueOnce([
+      { id: "repair_1", position: 2, files: existingRepair },
+    ]);
+
+    await expect(
+      createValidationRepairMessage("chat_1", "run_source", [
+        { path: "App.tsx", code: "export default 1" },
+      ]),
+    ).resolves.toEqual({ kind: "created", id: "repair_1", attempt: 1 });
+    expect(txMock.message.create).not.toHaveBeenCalled();
+
+    const exhaustedRepairOne = {
+      ...existingRepair,
+      rootGenerationRunId: "run_root",
+      sourceRunId: "run_first",
+    };
+    const exhaustedRepairTwo = {
+      ...existingRepair,
+      rootGenerationRunId: "run_root",
+      sourceRunId: "run_second",
+      attempt: 2,
+    };
+    txMock.generationRun.findFirst
+      .mockResolvedValueOnce({
+        id: "run_third",
+        messageId: "repair_2",
+        creditHoldId: null,
+        status: "recoverable",
+      })
+      .mockResolvedValueOnce({
+        id: "run_root",
+        messageId: "user_1",
+        creditHoldId: "hold_1",
+        status: "recoverable",
+      });
+    txMock.message.findFirst.mockResolvedValueOnce({
+      files: exhaustedRepairTwo,
+    });
+    txMock.message.findMany.mockResolvedValueOnce([
+      { id: "repair_1", position: 2, files: exhaustedRepairOne },
+      { id: "repair_2", position: 3, files: exhaustedRepairTwo },
+    ]);
+
+    await expect(
+      createValidationRepairMessage("chat_1", "run_third", [
+        { path: "App.tsx", code: "export default 1" },
+      ]),
+    ).rejects.toThrow("after two attempts");
+    expect(releaseCreditHoldMock).toHaveBeenCalledTimes(1);
+    expect(releaseCreditHoldMock).toHaveBeenCalledWith({ holdId: "hold_1" });
+    expect(txMock.generationRun.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["run_root", "run_third"] } },
+      data: expect.objectContaining({
+        status: "failed",
+        phase: "validation_failed",
+      }),
+    });
+  });
+
+  it("persists a validated contract repair and consumes the original hold exactly once", async () => {
+    const contractMetadata = {
+      kind: "contract_repair",
+      chargeCredits: false,
+      rootGenerationRunId: "run_root",
+      sourceRunId: "run_1",
+      attempt: 1,
+      maxAttempts: 2,
+      draftFiles: [
+        {
+          path: "App.tsx",
+          code: "export default function App() { return null; }",
+        },
+      ],
+      diagnostics: ["Missing required generated behavior"],
+      usedAt: null,
+    };
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        messages: [
+          buildMessage({ position: 0, role: "system" }),
+          buildMessage({
+            id: "contract_repair_1",
+            position: 2,
+            role: "user",
+            files: contractMetadata,
+          }),
+        ],
+      }),
+    );
+    txMock.generationRun.findFirst.mockResolvedValueOnce({
+      id: "run_root",
+      messageId: "user_original",
+      creditHoldId: "hold_1",
+    });
+    txMock.message.findFirst.mockResolvedValueOnce({ files: null });
+    txMock.message.create.mockResolvedValueOnce({ id: "assistant_repaired" });
+
+    await createFreeRepairAssistantMessage(
+      "chat_1",
+      "contract_repair_1",
+      "fixed",
+      [
+        {
+          path: "App.tsx",
+          code: "export default function App() { return <main />; }",
+        },
+      ],
+      { generationRunId: "run_repair" },
+    );
+
+    expect(consumeCreditsForGenerationMock).toHaveBeenCalledTimes(1);
+    expect(consumeCreditsForGenerationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        client: txMock,
+        chatId: "chat_1",
+        messageId: "assistant_repaired",
+        creditHoldId: "hold_1",
+        phase: "validation_repair",
+      }),
+    );
+    expect(txMock.generationLog.create).not.toHaveBeenCalled();
+    expect(txMock.generationRun.updateMany).toHaveBeenCalledWith({
+      where: { id: "run_root", chatId: "chat_1", userId: "user_1" },
+      data: expect.objectContaining({
+        status: "completed",
+        assistantMessageId: "assistant_repaired",
+      }),
+    });
   });
 
   it("creates preview repair messages and saves the matching repair response without charging credits", async () => {

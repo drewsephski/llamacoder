@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   chatSupabaseSetupActionSchema,
+  chatSupabaseSetupActionResponseSchema,
   chatSupabaseSetupViewSchema,
 } from "@/features/integrations/chat-supabase-setup";
 import {
@@ -74,7 +75,14 @@ export async function POST(request: Request, context: RouteContext) {
       userId: session.user.id,
       action: parsed.data,
     });
-    return NextResponse.json({ operation });
+    const view = await getChatSupabaseSetupView({
+      projectId,
+      interactionId,
+      userId: session.user.id,
+    });
+    return NextResponse.json(
+      chatSupabaseSetupActionResponseSchema.parse({ operation, view }),
+    );
   } catch (error) {
     return integrationErrorResponse(error);
   }

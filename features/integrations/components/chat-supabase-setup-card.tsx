@@ -7,12 +7,14 @@ import {
   Check,
   ChevronDown,
   Database,
+  ExternalLink,
   LoaderCircle,
   LockKeyhole,
   Plug,
   RotateCcw,
   ShieldCheck,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,7 @@ import type {
   BackendSetupRequest,
 } from "@/features/generation/agent-contracts";
 import {
+  chatSupabaseSetupActionResponseSchema,
   chatSupabaseSetupViewSchema,
   type ChatSupabaseSetupAction,
   type ChatSupabaseSetupView,
@@ -57,6 +60,8 @@ import { fetchJson } from "@/features/shared/client/http";
 function setupQueryKey(projectId: string, interactionId: string) {
   return ["chat-supabase-setup", projectId, interactionId] as const;
 }
+
+const autoResumedContinuations = new Set<string>();
 
 function SetupProgress({
   state,
@@ -139,17 +144,22 @@ function ProjectSetupDialog({
   view,
   onAction,
   pending,
+  projectCapacityReached = false,
 }: {
   projectId: string;
   view: ChatSupabaseSetupView;
   onAction: (action: ChatSupabaseSetupAction) => void;
   pending: boolean;
+  projectCapacityReached?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"existing" | "create">("existing");
   const [organizationId, setOrganizationId] = useState("");
   const [projectRef, setProjectRef] = useState("");
   const [projectName, setProjectName] = useState("");
+  const [region, setRegion] = useState<"americas" | "emea" | "apac">(
+    "americas",
+  );
   const organizationsQuery = useQuery({
     queryKey: ["chat-supabase-organizations", projectId, view.bindingId],
     enabled: open && Boolean(view.bindingId),
@@ -177,7 +187,9 @@ function ProjectSetupDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" className="w-full sm:w-auto">
-          {view.state === "timed_out" || view.state === "failed"
+          {projectCapacityReached
+            ? "Choose existing project"
+            : view.state === "timed_out" || view.state === "failed"
             ? "Open recovery options"
             : "Choose a Supabase project"}
         </Button>
@@ -190,7 +202,8 @@ function ProjectSetupDialog({
           </DialogDescription>
         </DialogHeader>
         {(view.state === "timed_out" || view.state === "failed") &&
-        view.operation?.kind === "supabase_provision" ? (
+        view.operation?.kind === "supabase_provision" &&
+        !projectCapacityReached ? (
           <Button
             type="button"
             variant="outline"
@@ -281,6 +294,34 @@ function ProjectSetupDialog({
               aria-label="New Supabase project name"
               maxLength={120}
             />
+            <details className="rounded-lg border border-border/60 px-3 py-2 text-sm">
+              <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                Project location
+              </summary>
+              <div className="mt-3 grid gap-2">
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Supabase will choose an available region within this area.
+                  Americas is the default for this setup.
+                </p>
+                <Select
+                  value={region}
+                  onValueChange={(value) =>
+                    setRegion(value as "americas" | "emea" | "apac")
+                  }
+                >
+                  <SelectTrigger aria-label="Supabase project location">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="americas">Americas</SelectItem>
+                    <SelectItem value="emea">
+                      Europe, Middle East, and Africa
+                    </SelectItem>
+                    <SelectItem value="apac">Asia Pacific</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </details>
             <Button
               type="button"
               disabled={pending || !selectedOrganization}
@@ -288,6 +329,7 @@ function ProjectSetupDialog({
                 onAction({
                   action: "create_project",
                   organizationId: selectedOrganization,
+                  region,
                   ...(projectName.trim()
                     ? { projectName: projectName.trim() }
                     : {}),
@@ -323,7 +365,7 @@ function AuthModeStep({
       />
       <details className="text-xs text-muted-foreground">
         <summary className="cursor-pointer rounded-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          More details
+          Security and launch details
         </summary>
         <p className="mt-2 leading-5">
           Instant signup reduces account-security guarantees. Reliable
@@ -376,10 +418,11 @@ export function ChatSupabaseSetupCard({
   const setupQuery = useQuery({
     queryKey,
     enabled: !response,
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       fetchJson(
         `/api/projects/${projectId}/supabase-setup/${encodeURIComponent(request.id)}`,
         chatSupabaseSetupViewSchema,
+        { signal },
       ),
     refetchInterval: (query) =>
       query.state.data?.continuationStatus === "pending" ? 2_000 : false,
@@ -389,15 +432,24 @@ export function ChatSupabaseSetupCard({
     mutationFn: (action: ChatSupabaseSetupAction) =>
       fetchJson(
         `/api/projects/${projectId}/supabase-setup/${encodeURIComponent(request.id)}`,
-        integrationActionResponseSchema,
+        chatSupabaseSetupActionResponseSchema,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(action),
         },
       ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey });
+    },
+    onSuccess: async ({ view: nextView }) => {
+      queryClient.setQueryData(queryKey, nextView);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey, refetchType: "none" }),
+        queryClient.invalidateQueries({
+          queryKey: ["project-integrations", projectId],
+        }),
+      ]);
     },
     onError: (error) =>
       toast.error("Supabase setup could not continue", {
@@ -429,18 +481,24 @@ export function ChatSupabaseSetupCard({
   }, [queryClient, queryKey, refreshOperationQuery.data]);
 
   useEffect(() => {
+    const continuationKey = `${projectId}:${request.continuation.id}`;
     if (
       response ||
       !view ||
       view.continuationStatus !== "pending" ||
       (view.state !== "ready" && view.state !== "runtime_ready") ||
-      autoResumeStarted.current
+      autoResumeStarted.current ||
+      autoResumedContinuations.has(continuationKey)
     ) {
       return;
     }
     autoResumeStarted.current = true;
-    void onRespond(request, "connect_supabase");
-  }, [onRespond, request, response, view]);
+    autoResumedContinuations.add(continuationKey);
+    void Promise.resolve(onRespond(request, "connect_supabase")).catch(() => {
+      autoResumeStarted.current = false;
+      autoResumedContinuations.delete(continuationKey);
+    });
+  }, [onRespond, projectId, request, response, view]);
 
   if (response) {
     const usesSupabase = response.decision === "connect_supabase";
@@ -495,6 +553,11 @@ export function ChatSupabaseSetupCard({
     authorizing && (!view || view.state === "connection_required")
       ? "authorizing"
       : view?.state;
+  const projectCapacityReached = Boolean(
+    state === "failed" &&
+      view?.operation?.kind === "supabase_provision" &&
+      view.operation.errorMessage?.includes("active-project limit"),
+  );
   const isBusy =
     actionMutation.isPending ||
     state === "authorizing" ||
@@ -639,8 +702,21 @@ export function ChatSupabaseSetupCard({
               projectId={projectId}
               view={view!}
               pending={actionMutation.isPending}
+              projectCapacityReached={projectCapacityReached}
               onAction={(action) => actionMutation.mutate(action)}
             />
+            {projectCapacityReached ? (
+              <Button asChild variant="outline">
+                <Link
+                  href="https://supabase.com/dashboard/projects"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open Supabase dashboard
+                  <ExternalLink className="size-3.5" aria-hidden="true" />
+                </Link>
+              </Button>
+            ) : null}
             {request.requirements.backendTemplate ? (
               <Button
                 type="button"

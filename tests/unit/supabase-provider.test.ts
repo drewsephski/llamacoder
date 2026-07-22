@@ -55,7 +55,7 @@ function mockProvisioningResponses(keys: unknown[]) {
       init?: RequestInit,
     ) => {
       if (url.endsWith("/v1/organizations")) {
-        return [{ id: "org_1", name: "Acme" }];
+        return [{ id: "org_1", name: "Acme", slug: "acme" }];
       }
       if (url.endsWith("/v1/projects") && init?.method === "POST") {
         return { id: "project-ref", ref: "project-ref", name: "Tasks" };
@@ -160,7 +160,9 @@ describe("Supabase project provisioning key safety", () => {
         }),
       }),
     );
-    expect(JSON.stringify(mocks.projectIntegrationUpdate.mock.calls)).not.toMatch(
+    expect(
+      JSON.stringify(mocks.projectIntegrationUpdate.mock.calls),
+    ).not.toMatch(
       /smtp_pass|management-token|refresh-token|service_role|sb_secret_/i,
     );
     expect(mocks.auditCreate).toHaveBeenCalledWith({
@@ -341,6 +343,20 @@ describe("Supabase project provisioning key safety", () => {
         String(call[2]).includes("api-keys"),
       ),
     ).toBe(false);
+    const createCall = mocks.providerFetch.mock.calls.find(
+      (call) =>
+        String(call[2]).endsWith("/v1/projects") &&
+        (call[3] as RequestInit | undefined)?.method === "POST",
+    );
+    const createBody = JSON.parse(
+      String((createCall?.[3] as RequestInit | undefined)?.body),
+    ) as Record<string, unknown>;
+    expect(createBody).toMatchObject({
+      organization_slug: "acme",
+      region_selection: { type: "smartGroup", code: "americas" },
+    });
+    expect(createBody).not.toHaveProperty("organization_id");
+    expect(createBody).not.toHaveProperty("region");
 
     mocks.getAuthorized.mockResolvedValue({
       accessToken: "management-token",
@@ -409,11 +425,62 @@ describe("Supabase project provisioning key safety", () => {
     ).toBe(false);
   });
 
+  it("falls back to the documented plain API-key read when reveal is rejected", async () => {
+    mocks.providerFetch.mockImplementation(
+      async (_provider: string, _token: string, url: string) => {
+        if (url.endsWith("/v1/projects/project-ref")) {
+          return {
+            id: "project-ref",
+            ref: "project-ref",
+            name: "Tasks",
+            status: "ACTIVE_HEALTHY",
+            region: "us-east-1",
+          };
+        }
+        if (url.endsWith("/api-keys?reveal=true")) {
+          throw new IntegrationServiceError(
+            "SUPABASE_REQUEST_FAILED",
+            "Supabase request failed with HTTP 400",
+            400,
+          );
+        }
+        if (url.endsWith("/api-keys")) {
+          return [
+            {
+              id: "publishable_1",
+              type: "publishable",
+              name: "default",
+              api_key: "sb_publishable_project",
+            },
+          ];
+        }
+        if (url.includes("/types/typescript")) {
+          return { types: "export type Database = unknown" };
+        }
+        throw new Error(`Unexpected Supabase request: ${url}`);
+      },
+    );
+
+    const result = await getSupabaseProjectBrowserConfiguration({
+      projectId: "squid-project",
+      bindingId: "binding_1",
+      userId: "user_1",
+      projectRef: "project-ref",
+    });
+
+    expect(result.config.supabasePublishableKey).toBe("sb_publishable_project");
+    expect(mocks.providerFetch).toHaveBeenCalledWith(
+      "supabase",
+      "management-token",
+      "https://api.supabase.com/v1/projects/project-ref/api-keys",
+    );
+  });
+
   it("does not verify Projects Write from an incomplete create response", async () => {
     mocks.providerFetch.mockImplementation(
       async (_provider: string, _token: string, url: string) => {
         if (url.endsWith("/v1/organizations")) {
-          return [{ id: "org_1", name: "Acme" }];
+          return [{ id: "org_1", name: "Acme", slug: "acme" }];
         }
         if (url.endsWith("/v1/projects")) {
           return { name: "Tasks", status: "COMING_UP" };

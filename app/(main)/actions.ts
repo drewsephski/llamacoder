@@ -10,6 +10,7 @@ export {
   createFreeRepairAssistantMessage,
   createMessage,
   createPreviewRepairMessage,
+  createValidationRepairMessage,
   releaseReservedCreditHold,
   restoreVersionAsCheckpoint,
 } from "@/features/generation/server/actions";

@@ -125,8 +125,18 @@ function isGeneratedAppRequestMetadata(value: unknown) {
   return (
     kind === "preview_repair_request" ||
     kind === "preview_repair" ||
+    kind === "contract_repair" ||
     kind === "app_edit_request" ||
     kind === "targeted_element_edit"
+  );
+}
+
+function isContractRepairMetadata(value: unknown) {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    (value as { kind?: unknown }).kind === "contract_repair"
   );
 }
 
@@ -253,7 +263,10 @@ Requirements:
 - Do not regenerate unchanged files.
 - Keep existing paths unless a new file is required to fix the error.
 - Every internal import in changed files must resolve to an existing current file or a changed file you return.
-- If the fix requires changing an export/import pair, return every affected file in full.`;
+- If the fix requires changing an export/import pair, return every affected file in full.
+- Satisfy every listed diagnostic literally; do not merely describe the fix.
+- When a task-title input is required, render it as a controlled input with an explicit accessible name such as aria-label="Task title".
+- A title Save action must visibly communicate its loading state and surface a user-facing error when the update fails.`;
 
   return [
     systemContent
@@ -372,12 +385,19 @@ export async function POST(req: Request) {
     const quality = message.chat.quality === "high" ? "high" : "low";
     const planMode = quality === "high";
     const messageMetadata = message.files as
-      | { kind?: string; chargeCredits?: boolean; sourceMessageId?: string }
+      | {
+          kind?: string;
+          chargeCredits?: boolean;
+          sourceMessageId?: string;
+          draftFiles?: unknown;
+          diagnostics?: unknown;
+        }
       | null
       | undefined;
     const isFreeRepairRequest =
       (messageMetadata?.kind === "preview_repair_request" ||
-        messageMetadata?.kind === "preview_repair") &&
+        messageMetadata?.kind === "preview_repair" ||
+        messageMetadata?.kind === "contract_repair") &&
       messageMetadata.chargeCredits === false;
     const appSpec: AppSpec =
       parseAppSpec(message.chat.appSpec) ?? createEmptyAppSpec();
@@ -430,7 +450,9 @@ export async function POST(req: Request) {
       orderBy: { position: "asc" },
     });
 
-    const rawMessages = messagesRes as CompletionMessage[];
+    const rawMessages = (messagesRes as CompletionMessage[]).filter(
+      (candidate) => !isContractRepairMetadata(candidate.files),
+    );
     const getResearchObjective = (candidate: {
       content: string;
       files?: unknown;
@@ -524,7 +546,7 @@ export async function POST(req: Request) {
           content: z.string(),
         }),
       )
-      .parse(messagesRes);
+      .parse(rawMessages);
 
     let guardedMessages: {
       role: "system" | "user" | "assistant";
@@ -532,18 +554,29 @@ export async function POST(req: Request) {
     }[];
 
     if (isFreeRepairRequest) {
-      const sourceFiles = getRepairSourceFiles(
-        rawMessages,
-        messageMetadata.sourceMessageId,
-      );
+      const isContractRepair = messageMetadata.kind === "contract_repair";
+      const sourceFiles = isContractRepair
+        ? normalizeGeneratedFiles(
+            parseStoredGeneratedFiles(messageMetadata.draftFiles),
+          )
+        : getRepairSourceFiles(rawMessages, messageMetadata.sourceMessageId);
 
       if (sourceFiles.length === 0) {
         return new Response("Repair source files not found", { status: 400 });
       }
 
+      const repairRequest = isContractRepair
+        ? Array.isArray(messageMetadata.diagnostics)
+          ? messageMetadata.diagnostics
+              .filter((value): value is string => typeof value === "string")
+              .slice(0, 12)
+              .join("\n")
+          : "Generated app contract validation failed"
+        : message.content;
+
       guardedMessages = buildPreviewRepairMessages({
         systemContent: rawMessages.find((m) => m.role === "system")?.content,
-        repairRequest: message.content,
+        repairRequest,
         sourceFiles,
       });
     } else {

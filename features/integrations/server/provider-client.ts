@@ -11,6 +11,23 @@ import {
 } from "@/features/integrations/server/supabase-oauth-tokens";
 import { getPrisma } from "@/lib/prisma";
 
+function sanitizedProviderErrorText(value: unknown, depth = 0): string {
+  if (depth > 2) return "";
+  if (typeof value === "string") return value.slice(0, 1_000);
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 8)
+      .map((item) => sanitizedProviderErrorText(item, depth + 1))
+      .join(" ");
+  }
+  if (!value || typeof value !== "object") return "";
+  return Object.values(value as Record<string, unknown>)
+    .slice(0, 12)
+    .map((item) => sanitizedProviderErrorText(item, depth + 1))
+    .join(" ")
+    .slice(0, 2_000);
+}
+
 export async function getAuthorizedProjectIntegration({
   projectId,
   bindingId,
@@ -140,6 +157,22 @@ export async function providerFetch(
   }
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
+    const supabaseBodyText =
+      provider === "supabase" ? sanitizedProviderErrorText(body) : "";
+    const isProjectCapacityError =
+      provider === "supabase" &&
+      (init.method ?? "GET").toUpperCase() === "POST" &&
+      /^https:\/\/api\.supabase\.com\/v1\/projects\/?$/.test(input) &&
+      /(?:active[ -]?project|project)[ -]?(?:capacity|limit)|(?:maximum|max)[^\n]{0,80}(?:active[ -]?)?projects?|too many (?:active )?projects?/i.test(
+        supabaseBodyText,
+      );
+    if (isProjectCapacityError) {
+      throw new IntegrationServiceError(
+        "SUPABASE_PROJECT_LIMIT_REACHED",
+        "Supabase project capacity has been reached for this account.",
+        response.status >= 400 && response.status < 500 ? response.status : 502,
+      );
+    }
     const providerMessage =
       provider === "supabase"
         ? response.status === 401 || response.status === 403

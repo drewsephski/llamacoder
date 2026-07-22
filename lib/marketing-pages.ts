@@ -112,6 +112,7 @@ export const marketingLandingPaths = [
   "/terraelix",
   "/velorah",
   "/launch",
+  "/supabase",
   "/gallery",
   "/example",
 ];

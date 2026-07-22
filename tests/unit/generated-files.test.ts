@@ -609,31 +609,44 @@ describe("generated file normalization", () => {
     );
   });
 
-  it("validates the constrained authenticated tasks auth and CRUD surface", () => {
+  it("validates the constrained authenticated tasks auth and CRUD surface", async () => {
     const files = normalizeGeneratedFiles([
       {
         path: "App.tsx",
         code: [
           'import { supabase } from "@/lib/supabase";',
+          'import { Pencil, LogOut } from "lucide-react";',
+          'import { useState } from "react";',
           "async function auth(email: string, password: string) {",
           "  await supabase.auth.signUp({ email, password });",
           "  await supabase.auth.signInWithPassword({ email, password });",
-          "  await supabase.auth.signOut();",
           "  await supabase.auth.getSession();",
           "  const { data } = supabase.auth.onAuthStateChange(() => {});",
           "  data.subscription.unsubscribe();",
           "}",
-          "async function tasks(user: { id: string }) {",
+          "async function createTask(user: { id: string }) {",
           '  await supabase.from("tasks").select("*");',
           '  await supabase.from("tasks").insert({ title: "Task", user_id: user.id });',
-          '  await supabase.from("tasks").update({ completed: true });',
-          '  await supabase.from("tasks").delete();',
+          '  await supabase.from("tasks").update({ completed: true, updated_at: new Date().toISOString() }).eq("id", "task-id");',
+          '  await supabase.from("tasks").delete().eq("id", "task-id");',
           "}",
-          'export default function App() { const loading = false; const error = null; return <main>{loading ? "Loading" : error ? "Error" : "Tasks"}</main>; }',
+          "async function updateTaskTitle(id: string, nextTitle: string) {",
+          '  const { error } = await supabase.from("tasks").update({ title: nextTitle, updated_at: new Date().toISOString() }).eq("id", id);',
+          "  if (error) throw error;",
+          "}",
+          "function TaskItem({ task, onSave }: { task: { id: string; title: string }; onSave: (id: string, title: string) => Promise<void> }) {",
+          "  const [editing, setEditing] = useState(false);",
+          "  const [title, setTitle] = useState(task.title);",
+          "  const [loading, setLoading] = useState(false);",
+          "  const [error, setError] = useState<string | null>(null);",
+          '  async function handleSave() { setLoading(true); setError(null); try { await onSave(task.id, title); setEditing(false); } catch { setError("Could not save title"); } finally { setLoading(false); } }',
+          '  return <article>{editing ? <><input aria-label="Task title" value={title} onChange={(event) => setTitle(event.target.value)} /><button onClick={handleSave} disabled={loading}>{loading ? "Saving title" : "Save"}</button><button onClick={() => { setTitle(task.title); setEditing(false); }}>Cancel</button>{error ? <p>{error}</p> : null}</> : <button aria-label={`Edit task ${task.title}`} onClick={() => setEditing(true)}><Pencil /></button>}</article>;',
+          "}",
+          'export default function App() { const loading = false; const error = null; return <main>{loading ? "Loading" : error ? "Error" : <TaskItem task={{ id: "task-id", title: "Task" }} onSave={updateTaskTitle} />}<button aria-label="Log out" onClick={() => supabase.auth.signOut()}><LogOut /></button></main>; }',
         ].join("\n"),
       },
     ]);
-    expect(validateAuthenticatedTasksGeneratedApp(files)).toEqual([]);
+    expect(await validateAuthenticatedTasksGeneratedApp(files)).toEqual([]);
 
     const incomplete = normalizeGeneratedFiles([
       {
@@ -641,11 +654,74 @@ describe("generated file normalization", () => {
         code: 'import { supabase } from "@/lib/supabase"; void supabase;',
       },
     ]);
-    expect(validateAuthenticatedTasksGeneratedApp(incomplete)).toEqual(
+    expect(await validateAuthenticatedTasksGeneratedApp(incomplete)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ message: expect.stringContaining("login") }),
         expect.objectContaining({
           message: expect.stringContaining("Load tasks"),
+        }),
+      ]),
+    );
+  });
+
+  it("rejects completion-only updates and dead or hidden editing controls", async () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { supabase } from "@/lib/supabase";',
+          "async function unusedTitleUpdate(id: string, title: string) {",
+          '  await supabase.from("tasks").update({ title }).eq("id", id);',
+          "}",
+          'function HiddenEditor() { return <div className="hidden"><button onClick={() => {}}>Edit title</button><input aria-label="Task title" value="" onChange={() => {}} /><button onClick={() => unusedTitleUpdate("id", "title")}>Save</button><button onClick={() => {}}>Cancel</button></div>; }',
+          "async function auth(email: string, password: string, user: { id: string }) {",
+          "  await supabase.auth.signUp({ email, password }); await supabase.auth.signInWithPassword({ email, password }); await supabase.auth.signOut(); await supabase.auth.getSession(); const { data } = supabase.auth.onAuthStateChange(() => {}); data.subscription.unsubscribe();",
+          '  await supabase.from("tasks").select("*"); await supabase.from("tasks").insert({ title: "Task", user_id: user.id }); await supabase.from("tasks").update({ completed: true }).eq("id", "id"); await supabase.from("tasks").delete().eq("id", "id");',
+          "}",
+          'export default function App() { const loading = false; const error = null; const savingTitle = false; return <main>{loading ? "Loading" : error ? "Error" : <HiddenEditor />}<button onClick={() => supabase.auth.signOut()}>Log out</button></main>; }',
+        ].join("\n"),
+      },
+    ]);
+
+    expect(await validateAuthenticatedTasksGeneratedApp(files)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining("stays visible at rest"),
+        }),
+        expect.objectContaining({
+          message: expect.stringContaining("Wire the rendered Save action"),
+        }),
+      ]),
+    );
+  });
+
+  it("rejects user ownership mutation and inaccessible generated controls", async () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { supabase } from "@/lib/supabase";',
+          'import { Pencil, Settings, Search } from "lucide-react";',
+          "async function updateTaskTitle(id: string, title: string, userId: string) {",
+          '  await supabase.from("tasks").update({ title, user_id: userId }).eq("id", id);',
+          "}",
+          'function Editor({ onSave }: { onSave: typeof updateTaskTitle }) { const savingTitle = false; return <><button aria-label="Edit title" onClick={() => {}}><Pencil /></button><input aria-label="Task title" value="Task" onChange={() => {}} /><button onClick={() => onSave("id", "title", "user")}>Save</button><button onClick={() => {}}>Cancel</button></>; }',
+          'async function auth(email: string, password: string, user: { id: string }) { await supabase.auth.signUp({ email, password }); await supabase.auth.signInWithPassword({ email, password }); await supabase.auth.getSession(); const { data } = supabase.auth.onAuthStateChange(() => {}); data.subscription.unsubscribe(); await supabase.from("tasks").select("*"); await supabase.from("tasks").insert({ title: "Task", user_id: user.id }); await supabase.from("tasks").delete().eq("id", "id"); }',
+          'export default function App() { const loading = false; const error = null; return <main>{loading ? "Loading" : error ? "Error" : <Editor onSave={updateTaskTitle} />}<button aria-label="Log out" onClick={() => supabase.auth.signOut()}><Settings /></button><button onClick={() => {}}><Search className="h-5 w-5" /></button></main>; }',
+        ].join("\n"),
+      },
+    ]);
+
+    expect(await validateAuthenticatedTasksGeneratedApp(files)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining("Never include user_id"),
+        }),
+        expect.objectContaining({
+          message: expect.stringContaining("settings icon"),
+        }),
+        expect.objectContaining({
+          message: expect.stringContaining("icon-only button"),
         }),
       ]),
     );

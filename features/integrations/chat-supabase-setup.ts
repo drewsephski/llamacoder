@@ -4,7 +4,10 @@ import type {
   BackendSetupRequest,
   SupabaseSetupRequirements,
 } from "@/features/generation/agent-contracts";
-import type { IntegrationWorkspace } from "@/features/integrations/contracts";
+import {
+  integrationOperationSchema,
+  type IntegrationWorkspace,
+} from "@/features/integrations/contracts";
 import {
   getAuthenticatedTasksBackendPlan,
   readSupabaseAuthState,
@@ -76,13 +79,20 @@ export const chatSupabaseSetupViewSchema = z
 
 export type ChatSupabaseSetupView = z.infer<typeof chatSupabaseSetupViewSchema>;
 
+export const chatSupabaseSetupActionResponseSchema = z
+  .object({
+    operation: integrationOperationSchema,
+    view: chatSupabaseSetupViewSchema,
+  })
+  .strict();
+
 export const chatSupabaseSetupActionSchema = z.discriminatedUnion("action", [
   z
     .object({
       action: z.literal("create_project"),
       organizationId: z.string().trim().min(1),
       projectName: z.string().trim().min(1).max(120).optional(),
-      region: z.string().trim().min(1).max(64).optional(),
+      region: z.enum(["americas", "emea", "apac"]).optional(),
     })
     .strict(),
   z
@@ -130,10 +140,15 @@ function findLatestSupabaseOperation(
   );
 }
 
-function messageForState(state: ChatSupabaseSetupState) {
+function messageForState(
+  state: ChatSupabaseSetupState,
+  requirements: SupabaseSetupRequirements,
+) {
   switch (state) {
     case "connection_required":
-      return "This app needs a backend to securely save data across devices.";
+      return requirements.authentication
+        ? "This app needs user accounts and a backend to securely save persistent data across devices."
+        : "This app needs a backend to securely save data across devices.";
     case "authorizing":
       return "Finish authorizing Supabase in the secure window.";
     case "authorization_required":
@@ -287,6 +302,9 @@ export function deriveChatSupabaseSetupView({
     message:
       state === "ready" || state === "runtime_ready"
         ? readyMessage(request.requirements)
-        : messageForState(state),
+        : (state === "failed" || state === "timed_out") &&
+            operation?.errorMessage
+          ? operation.errorMessage
+        : messageForState(state, request.requirements),
   };
 }

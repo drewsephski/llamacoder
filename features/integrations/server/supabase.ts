@@ -620,6 +620,8 @@ const SUPABASE_TERMINAL_PROJECT_STATUSES = new Set([
   "PAUSED",
 ]);
 
+const SUPABASE_SMART_REGION_GROUPS = new Set(["americas", "emea", "apac"]);
+
 export async function createSupabaseProject(input: {
   projectId: string;
   bindingId: string;
@@ -647,14 +649,33 @@ export async function createSupabaseProject(input: {
   }
   const organization = selectedOrg ?? orgs[0];
   const organizationId = organization.id;
+  const organizationSlug = sanitizeText(organization.owner);
+  if (!organizationSlug) {
+    throw new IntegrationServiceError(
+      "SUPABASE_ORGANIZATION_SLUG_MISSING",
+      "Supabase did not provide the organization identifier required to create a project.",
+      502,
+    );
+  }
   const projectName =
     sanitizeText(input.projectName)?.slice(0, 80) ??
     `squid-project-${Date.now().toString(36)}`;
+  const regionGroup = sanitizeText(input.region) ?? "americas";
+  if (!SUPABASE_SMART_REGION_GROUPS.has(regionGroup)) {
+    throw new IntegrationServiceError(
+      "SUPABASE_REGION_INVALID",
+      "Choose a supported Supabase project location.",
+      400,
+    );
+  }
 
   const createPayload = {
     name: projectName,
-    organization_id: organizationId,
-    region: sanitizeText(input.region) ?? "us-east-1",
+    organization_slug: organizationSlug,
+    region_selection: {
+      type: "smartGroup",
+      code: regionGroup,
+    },
     db_pass: fallbackDbPassword(),
   };
   const createdProjectPayload = await providerFetch(
@@ -681,7 +702,7 @@ export async function createSupabaseProject(input: {
     projectId: createdProject.id,
     projectRef,
     projectName: createdProject.name || projectName,
-    region: createdProject.region ?? createPayload.region,
+    region: createdProject.region ?? regionGroup,
     providerStatus: createdProject.status ?? null,
     url: operationUrl,
   };
@@ -705,7 +726,7 @@ export async function createSupabaseProject(input: {
     supabaseProjectId: createdProject.id,
     supabaseProjectRef: projectRef,
     supabaseProjectName: createdProject.name || projectName,
-    supabaseProjectRegion: createdProject.region ?? createPayload.region,
+    supabaseProjectRegion: createdProject.region ?? regionGroup,
     supabaseProjectUrl: operationUrl,
     supabaseManagementCapabilities: managementCapabilities,
   };
@@ -768,11 +789,25 @@ export async function getSupabaseProjectBrowserConfiguration(input: {
   }
 
   const authorized = await requireProviderIntegration(input);
-  const keysPayload = await providerFetch(
-    "supabase",
-    authorized.providerAuthorization ?? authorized.accessToken,
-    `https://api.supabase.com/v1/projects/${encodeURIComponent(project.projectRef)}/api-keys?reveal=true`,
-  );
+  const apiKeysUrl = `https://api.supabase.com/v1/projects/${encodeURIComponent(project.projectRef)}/api-keys`;
+  const authorization =
+    authorized.providerAuthorization ?? authorized.accessToken;
+  let keysPayload: unknown;
+  try {
+    keysPayload = await providerFetch(
+      "supabase",
+      authorization,
+      `${apiKeysUrl}?reveal=true`,
+    );
+  } catch (error) {
+    // Supabase documents `reveal` as optional, but some project/key
+    // combinations reject it with 400. A plain read remains non-destructive
+    // and still returns browser-safe publishable or legacy anon keys.
+    if (!(error instanceof IntegrationServiceError) || error.status !== 400) {
+      throw error;
+    }
+    keysPayload = await providerFetch("supabase", authorization, apiKeysUrl);
+  }
   const browserKey = selectSupabaseBrowserKey(parseApiKeys(keysPayload));
   if (browserKey.status !== "selected") {
     throw new IntegrationServiceError(

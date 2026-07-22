@@ -826,9 +826,9 @@ export default function CodeViewer({
           }
         }
       `}</style>
-      <div className="code-viewer-toolbar min-h-16 shrink-0 overflow-x-auto border-b border-border px-3 py-2 md:px-4">
-        <div className="flex min-w-max items-center justify-between gap-3">
-          <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
+      <div className="code-viewer-toolbar min-h-16 shrink-0 overflow-x-hidden border-b border-border px-3 py-2 md:px-4">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 sm:min-w-max sm:flex-nowrap sm:gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0 sm:flex-nowrap md:gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -926,7 +926,7 @@ export default function CodeViewer({
               />
             )}
           </div>
-          <div className="flex shrink-0 items-center justify-end gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:shrink-0 sm:flex-nowrap">
             {showSupabaseConnectCta &&
               integrationWorkspaceQuery.isLoading &&
               !integrationWorkspaceQuery.isError && (

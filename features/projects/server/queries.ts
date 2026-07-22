@@ -11,6 +11,15 @@ import type {
 import { getPrisma } from "@/lib/prisma";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 
+function isInternalContractRepairMessage(message: { files: unknown }) {
+  return (
+    Boolean(message.files) &&
+    typeof message.files === "object" &&
+    !Array.isArray(message.files) &&
+    (message.files as { kind?: unknown }).kind === "contract_repair"
+  );
+}
+
 const loadProjectWorkspace = cache(
   async (id: string, userId: string): Promise<ProjectWorkspace | null> => {
     const prisma = getPrisma();
@@ -20,38 +29,63 @@ const loadProjectWorkspace = cache(
 
     if (!chat) return null;
 
-    const [totalMessages, initialMessages, recentMessages, activeRun] =
-      await Promise.all([
-        prisma.message.count({ where: { chatId: id } }),
-        prisma.message.findMany({
-          where: { chatId: id, position: { in: [0, 1] } },
-          orderBy: { position: "asc" },
-        }),
-        prisma.message.findMany({
-          where: { chatId: id, position: { gte: 2 } },
-          orderBy: { position: "desc" },
-          take: 100,
-        }),
-        prisma.generationRun.findFirst({
-          where: {
-            chatId: id,
-            status: { in: ["running", "recoverable"] },
-            partialText: { not: "" },
-          },
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            messageId: true,
-            status: true,
-            phase: true,
-            label: true,
-            partialText: true,
-            createdAt: true,
-          },
-        }),
-      ]);
+    const [
+      rawTotalMessages,
+      initialMessages,
+      recentMessages,
+      activeRun,
+      userMessages,
+    ] = await Promise.all([
+      prisma.message.count({ where: { chatId: id } }),
+      prisma.message.findMany({
+        where: { chatId: id, position: { in: [0, 1] } },
+        orderBy: { position: "asc" },
+      }),
+      prisma.message.findMany({
+        where: { chatId: id, position: { gte: 2 } },
+        orderBy: { position: "desc" },
+        // Contract-repair drafts are private server workflow records. Fetch
+        // enough bounded history to still return 100 user-visible messages
+        // after those internal rows are removed below.
+        take: 300,
+      }),
+      prisma.generationRun.findFirst({
+        where: {
+          chatId: id,
+          status: { in: ["running", "recoverable"] },
+          partialText: { not: "" },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          messageId: true,
+          status: true,
+          phase: true,
+          label: true,
+          partialText: true,
+          createdAt: true,
+        },
+      }),
+      prisma.message.findMany({
+        where: { chatId: id, role: "user" },
+        select: { id: true, files: true },
+      }),
+    ]);
 
-    const allMessages = [...initialMessages, ...recentMessages].sort(
+    const internalMessageIds = new Set(
+      userMessages
+        .filter(isInternalContractRepairMessage)
+        .map((message) => message.id),
+    );
+    const totalMessages = Math.max(
+      0,
+      rawTotalMessages - internalMessageIds.size,
+    );
+
+    const visibleRecentMessages = recentMessages
+      .filter((message) => !internalMessageIds.has(message.id))
+      .slice(0, 100);
+    const allMessages = [...initialMessages, ...visibleRecentMessages].sort(
       (a, b) => a.position - b.position,
     );
     const followUpPromptsByMessageId = await getFollowUpPromptsByMessageId(

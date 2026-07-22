@@ -537,9 +537,31 @@ describe("Supabase provisioning operation lifecycle", () => {
     const result = await executeProvisioning();
 
     expect(result.status).toBe("failed");
+    expect(result.errorMessage).toBe(
+      "Supabase project provisioning could not be completed.",
+    );
     expect(state.binding.config).not.toMatchObject({
       supabaseManagementCapabilities: { projectsWrite: "verified" },
     });
+  });
+
+  it("persists a sanitized project-capacity recovery reason", async () => {
+    mocks.createSupabaseProject.mockRejectedValue(
+      new IntegrationServiceError(
+        "SUPABASE_PROJECT_LIMIT_REACHED",
+        "provider body must not be persisted",
+        400,
+      ),
+    );
+
+    const result = await executeProvisioning();
+
+    expect(result).toMatchObject({
+      status: "failed",
+      errorMessage:
+        "This Supabase account has reached its active-project limit. Choose an existing project or free capacity in Supabase.",
+    });
+    expect(result.errorMessage).not.toContain("provider body");
   });
 
   it("reuses the same operation for repeated and concurrent submissions", async () => {

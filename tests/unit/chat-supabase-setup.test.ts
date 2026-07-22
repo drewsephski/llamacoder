@@ -121,6 +121,67 @@ function workspace(
 }
 
 describe("chat Supabase setup state mapper", () => {
+  it("explains account and persistent-data requirements in plain language", () => {
+    const view = deriveChatSupabaseSetupView({
+      request: request({
+        database: true,
+        authentication: true,
+        storage: false,
+        realtime: false,
+        privilegedServerLogic: false,
+        backendTemplate: "authenticated_tasks",
+      }),
+      workspace: {
+        ...workspace(),
+        integrations: [],
+      },
+    });
+
+    expect(view.state).toBe("connection_required");
+    expect(view.message).toBe(
+      "This app needs user accounts and a backend to securely save persistent data across devices.",
+    );
+  });
+
+  it("surfaces only the persisted sanitized provisioning failure", () => {
+    const base = workspace();
+    const view = deriveChatSupabaseSetupView({
+      request: request({
+        database: true,
+        authentication: true,
+        storage: false,
+        realtime: false,
+        privilegedServerLogic: false,
+        backendTemplate: "authenticated_tasks",
+      }),
+      workspace: {
+        ...base,
+        recentOperations: [
+          {
+            id: "operation_capacity",
+            projectIntegrationId: "binding_1",
+            providerId: "supabase",
+            kind: "supabase_provision",
+            status: "failed",
+            phase: "failed",
+            externalId: null,
+            url: null,
+            commitSha: null,
+            errorMessage:
+              "This Supabase account has reached its active-project limit. Choose an existing project or free capacity in Supabase.",
+            createdAt: new Date(0).toISOString(),
+            completedAt: new Date(0).toISOString(),
+          },
+        ],
+      },
+    });
+
+    expect(view.state).toBe("failed");
+    expect(view.message).toBe(
+      "This Supabase account has reached its active-project limit. Choose an existing project or free capacity in Supabase.",
+    );
+  });
+
   it("completes a runtime-only request at browser runtime readiness", () => {
     const view = deriveChatSupabaseSetupView({
       request: request({

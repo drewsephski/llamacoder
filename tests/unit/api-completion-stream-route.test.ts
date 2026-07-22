@@ -2122,4 +2122,75 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       );
     },
   );
+
+  it("repairs hidden contract drafts on the free repair path without reserving another hold", async () => {
+    const draftFiles = [
+      {
+        path: "App.tsx",
+        language: "tsx",
+        code: "export default function App() { return <main />; }",
+      },
+    ];
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "contract_repair_1",
+        chatId: "chat_1",
+        position: 3,
+        content: "Repair the generated app contract.",
+        files: {
+          kind: "contract_repair",
+          chargeCredits: false,
+          rootGenerationRunId: "run_root",
+          sourceRunId: "run_source",
+          attempt: 1,
+          maxAttempts: 2,
+          draftFiles,
+          diagnostics: ["App.tsx: Render a reachable edit-title action."],
+          usedAt: null,
+        },
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { id: "system_1", role: "system", content: "system prompt" },
+      { id: "user_1", role: "user", content: "build a task app" },
+      {
+        id: "contract_repair_1",
+        role: "user",
+        content: "Repair the generated app contract.",
+        files: {
+          kind: "contract_repair",
+          chargeCredits: false,
+          draftFiles,
+          diagnostics: ["App.tsx: Render a reachable edit-title action."],
+        },
+      },
+    ]);
+    mockGeneration({
+      text: "```tsx{path=App.tsx}\nexport default function App() { return <main><button>Edit</button></main>; }\n```",
+    });
+
+    const response = await POST(
+      request({ messageId: "contract_repair_1", model: "model_1" }),
+    );
+    await collectUIChunks(response);
+
+    expect(response.headers.get("x-credit-hold-id")).toBeNull();
+    expect(reserveCreditHoldMock).not.toHaveBeenCalled();
+    expect(createRequestTelemetryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: "google/gemini-3-flash-preview",
+        requestKind: "free_repair",
+      }),
+    );
+    const prompt = streamTextMock.mock.calls[0][0].messages[0].content;
+    expect(prompt).toContain("Render a reachable edit-title action");
+    expect(prompt).toContain("export default function App");
+    expect(prompt).toContain("Return only complete files that changed");
+  });
 });

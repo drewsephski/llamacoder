@@ -8,6 +8,7 @@ import {
   createFreeRepairAssistantMessage,
   createMessage,
   createPreviewRepairMessage,
+  createValidationRepairMessage,
   releaseReservedCreditHold,
   restoreSelectedFilesAsCheckpoint,
   restoreVersionAsCheckpoint,
@@ -262,6 +263,16 @@ export default function PageClient({ chat }: { chat: Chat }) {
     }
   }, [chat.model, streamError]);
 
+  const handleNewStreamPromise = useCallback(
+    (nextStream: Promise<CompletionStream>) => {
+      setStreamError(null);
+      setRecoverableRun(null);
+      setPreviewRecovery(null);
+      setStreamPromise(nextStream);
+    },
+    [],
+  );
+
   const handleStopGeneration = useCallback(async () => {
     const runId = generationRunId;
     await streamReaderRef.current
@@ -481,9 +492,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
               (msg: Message) => msg.id === repairSourceMessageId,
             )
           : undefined;
-        const pendingRepairSourceFiles = repairSourceMessageId
-          ? freeRepairSourceFilesRef.current
-          : null;
+        const pendingRepairSourceFiles = freeRepairSourceFilesRef.current;
 
         // Repairs are intentionally partial. Merge them onto the version that
         // produced the preview error, not onto an unrelated newer checkpoint.
@@ -534,91 +543,125 @@ export default function PageClient({ chat }: { chat: Chat }) {
         }
 
         const repairMessageId = freeRepairRequestIdRef.current;
-        let message: Message;
+        let message: Message | undefined;
         let shouldOpenPreview = false;
         let queuedRepairStream: Promise<CompletionStream> | undefined;
 
-        if (completedAgentAction?.action === "clarify") {
-          message = (await createAgentAssistantMessage(
-            chat.id,
-            `Before I build, ${completedAgentAction.request.title.toLowerCase()}`,
-            {
-              kind: "agent_clarification_request",
-              request: completedAgentAction.request,
-            },
-            { creditHoldId, chargeCredits: false },
-          )) as Message;
-        } else if (completedAgentAction?.action === "interview") {
-          message = (await createAgentAssistantMessage(
-            chat.id,
-            completedAgentAction.request.title,
-            {
-              kind: "agent_interview_request",
-              request: completedAgentAction.request,
-            },
-            { creditHoldId, chargeCredits: false },
-          )) as Message;
-        } else if (completedAgentAction?.action === "request_backend_setup") {
-          message = (await createAgentAssistantMessage(
-            chat.id,
-            completedAgentAction.request.title,
-            {
-              kind: "agent_backend_setup_request",
-              request: completedAgentAction.request,
-            },
-            { creditHoldId, chargeCredits: false },
-          )) as Message;
-        } else if (completedAgentAction?.action === "present_plan") {
-          const plan = completedAgentAction.plan;
-          message = (await createAgentAssistantMessage(
-            chat.id,
-            plan.title,
-            {
-              kind: "agent_plan_request",
-              request: plan,
-            },
-            { creditHoldId, chargeCredits: false },
-          )) as Message;
-        } else if (completedAgentAction?.action === "search") {
-          message = (await createAgentAssistantMessage(
-            chat.id,
-            `I can search the internet for “${completedAgentAction.request.query}”.`,
-            {
-              kind: "agent_search_approval_request",
-              request: completedAgentAction.request,
-            },
-            { creditHoldId, chargeCredits: false },
-          )) as Message;
-        } else if (completedAgentAction?.action === "answer") {
-          message = (await createAgentAssistantMessage(
-            chat.id,
-            fullText,
-            {
-              kind: "agent_response",
-              sources: Array.from(sourceMap.values()),
-            },
-            { creditHoldId, chargeCredits: true },
-          )) as Message;
-        } else if (repairMessageId) {
-          message = (await createFreeRepairAssistantMessage(
-            chat.id,
-            repairMessageId,
-            fullText,
-            allFiles,
-          )) as Message;
-          shouldOpenPreview = true;
-        } else {
-          message = (await createMessage(
-            chat.id,
-            fullText, // Store original AI response content (only changed files)
-            "assistant",
-            allFiles, // Store cumulative files
-            { creditHoldId },
-          )) as Message;
-          shouldOpenPreview = true;
+        try {
+          if (completedAgentAction?.action === "clarify") {
+            message = (await createAgentAssistantMessage(
+              chat.id,
+              `Before I build, ${completedAgentAction.request.title.toLowerCase()}`,
+              {
+                kind: "agent_clarification_request",
+                request: completedAgentAction.request,
+              },
+              { creditHoldId, chargeCredits: false },
+            )) as Message;
+          } else if (completedAgentAction?.action === "interview") {
+            message = (await createAgentAssistantMessage(
+              chat.id,
+              completedAgentAction.request.title,
+              {
+                kind: "agent_interview_request",
+                request: completedAgentAction.request,
+              },
+              { creditHoldId, chargeCredits: false },
+            )) as Message;
+          } else if (completedAgentAction?.action === "request_backend_setup") {
+            message = (await createAgentAssistantMessage(
+              chat.id,
+              completedAgentAction.request.title,
+              {
+                kind: "agent_backend_setup_request",
+                request: completedAgentAction.request,
+              },
+              { creditHoldId, chargeCredits: false },
+            )) as Message;
+          } else if (completedAgentAction?.action === "present_plan") {
+            const plan = completedAgentAction.plan;
+            message = (await createAgentAssistantMessage(
+              chat.id,
+              plan.title,
+              {
+                kind: "agent_plan_request",
+                request: plan,
+              },
+              { creditHoldId, chargeCredits: false },
+            )) as Message;
+          } else if (completedAgentAction?.action === "search") {
+            message = (await createAgentAssistantMessage(
+              chat.id,
+              `I can search the internet for “${completedAgentAction.request.query}”.`,
+              {
+                kind: "agent_search_approval_request",
+                request: completedAgentAction.request,
+              },
+              { creditHoldId, chargeCredits: false },
+            )) as Message;
+          } else if (completedAgentAction?.action === "answer") {
+            message = (await createAgentAssistantMessage(
+              chat.id,
+              fullText,
+              {
+                kind: "agent_response",
+                sources: Array.from(sourceMap.values()),
+              },
+              { creditHoldId, chargeCredits: true },
+            )) as Message;
+          } else if (repairMessageId) {
+            message = (await createFreeRepairAssistantMessage(
+              chat.id,
+              repairMessageId,
+              fullText,
+              allFiles,
+              { generationRunId: activeStream?.generationRunId },
+            )) as Message;
+            shouldOpenPreview = true;
+          } else {
+            message = (await createMessage(
+              chat.id,
+              fullText, // Store original AI response content (only changed files)
+              "assistant",
+              allFiles, // Store cumulative files
+              {
+                creditHoldId,
+                generationRunId: activeStream?.generationRunId,
+              },
+            )) as Message;
+            shouldOpenPreview = true;
+          }
+        } catch (saveError) {
+          const saveErrorMessage = getErrorMessage(saveError, "");
+          if (
+            saveErrorMessage.startsWith("SELECTED_API_CONTRACT_VIOLATION:") &&
+            activeStream?.generationRunId &&
+            allFiles.length > 0
+          ) {
+            const repairRequest = await createValidationRepairMessage(
+              chat.id,
+              activeStream.generationRunId,
+              allFiles,
+            );
+            freeRepairRequestIdRef.current = repairRequest.id;
+            freeRepairSourceMessageIdRef.current = null;
+            freeRepairSourceFilesRef.current = allFiles;
+            repairRequestInFlightRef.current = true;
+            automaticRepairAttemptsRef.current = repairRequest.attempt;
+            toast.info(
+              `Fixing generated app (${repairRequest.attempt}/${MAX_AUTOMATIC_PREVIEW_REPAIRS})`,
+            );
+            queuedRepairStream = fetchCompletionStream({
+              messageId: repairRequest.id,
+              model: chat.model,
+            });
+            shouldOpenPreview = false;
+          } else {
+            throw saveError;
+          }
         }
 
-        if (shouldOpenPreview && diagnostics.length > 0) {
+        if (shouldOpenPreview && message && diagnostics.length > 0) {
           const validationError = formatGeneratedFileDiagnostics(diagnostics);
 
           if (
@@ -662,7 +705,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
         }
 
-        if (stream.generationRunId) {
+        if (stream.generationRunId && message) {
           await updateGenerationRun(stream.generationRunId, {
             action: "complete",
             assistantMessageId: message.id,
@@ -686,12 +729,17 @@ export default function PageClient({ chat }: { chat: Chat }) {
             setStreamPromise(undefined);
           }
           setGenerationRunId(null);
-          if (shouldOpenPreview) {
+          if (message) {
+            setStreamError(null);
+            setRecoverableRun(null);
+            setPreviewRecovery(null);
+          }
+          if (shouldOpenPreview && message) {
             setActiveMessage(message);
             setIsShowingCodeViewer(true);
             setActiveTab("preview");
           }
-          if (shouldOpenPreview) {
+          if (shouldOpenPreview && message) {
             plausible("First Build Completed", {
               props: {
                 timeToFirstPreviewMs: generationStartedAtRef.current
@@ -830,11 +878,18 @@ export default function PageClient({ chat }: { chat: Chat }) {
         );
         router.refresh();
       } catch (error) {
-        toast.error(
+        const message =
           error instanceof Error
             ? error.message
-            : "Unable to continue the conversation",
-        );
+            : "Unable to continue the conversation";
+        if (
+          metadata.kind === "agent_backend_setup_response" &&
+          message === "This setup interaction has already been completed"
+        ) {
+          router.refresh();
+          return;
+        }
+        toast.error(message);
       }
     },
     [chat.id, chat.model, router, streamPromise],
@@ -1134,7 +1189,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
           <ChatBox
             chat={chat}
-            onNewStreamPromiseAction={setStreamPromise}
+            onNewStreamPromiseAction={handleNewStreamPromise}
             isStreaming={!!streamPromise}
             onStopAction={handleStopGeneration}
           />

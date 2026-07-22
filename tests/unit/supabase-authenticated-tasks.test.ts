@@ -255,6 +255,18 @@ describe("authenticated tasks Supabase backend template", () => {
     expect(context).toContain(
       "task list, create, edit title, toggle completed, and delete",
     );
+    expect(context).toContain("discoverable edit action");
+    expect(context).toContain(
+      "Neither that button nor any ancestor may use hidden, invisible, sr-only, opacity-0, pointer-events-none, or hover-only reveal classes",
+    );
+    expect(context).toContain(
+      'supabase.from("tasks").delete().eq("id", task.id)',
+    );
+    expect(context).toContain("controlled title input");
+    expect(context).toContain("Save and Cancel");
+    expect(context).toContain("Do not include completed, user_id");
+    expect(context).toContain('aria-label="Log out"');
+    expect(context).toContain("never use a Settings or Cog icon for logout");
     expect(context).toContain("set user_id to that user id");
     expect(context).not.toContain("create table");
     expect(context).not.toMatch(/sb_secret_|service_role|management-token/i);

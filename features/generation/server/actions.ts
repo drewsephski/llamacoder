@@ -14,6 +14,7 @@ import {
   formatGeneratedFilesMarkdown,
   normalizeGeneratedFiles,
   type GeneratedFile,
+  type GeneratedFileDiagnostic,
   type RawGeneratedFile,
 } from "@/lib/generated-files";
 import {
@@ -34,6 +35,87 @@ import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { findOwnedProjectWithMessages } from "@/features/projects/server/access";
 import { parseAgentMessageMetadata } from "@/features/generation/agent-contracts";
 import { shouldAnswerWithoutCode } from "@/features/generation/research-intent";
+
+const MAX_CONTRACT_REPAIR_ATTEMPTS = 2;
+
+type ContractRepairMetadata = {
+  kind: "contract_repair";
+  chargeCredits: false;
+  rootGenerationRunId: string;
+  sourceRunId: string;
+  attempt: number;
+  maxAttempts: number;
+  draftFiles: GeneratedFile[];
+  diagnostics: string[];
+  usedAt: string | null;
+};
+
+function readContractRepairMetadata(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const metadata = value as Partial<ContractRepairMetadata>;
+  if (
+    metadata.kind !== "contract_repair" ||
+    metadata.chargeCredits !== false ||
+    typeof metadata.rootGenerationRunId !== "string" ||
+    typeof metadata.sourceRunId !== "string" ||
+    typeof metadata.attempt !== "number" ||
+    typeof metadata.maxAttempts !== "number" ||
+    !Array.isArray(metadata.draftFiles) ||
+    !Array.isArray(metadata.diagnostics)
+  ) {
+    return null;
+  }
+  return metadata as ContractRepairMetadata;
+}
+
+function sanitizeContractDiagnostics(
+  diagnostics: GeneratedFileDiagnostic[],
+): string[] {
+  return diagnostics
+    .slice(0, 12)
+    .map((diagnostic) =>
+      `${diagnostic.path ? `${diagnostic.path}: ` : ""}${diagnostic.message}`
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 600),
+    );
+}
+
+async function getGeneratedAppContractDiagnostics(
+  prisma: ReturnType<typeof getPrisma>,
+  chatId: string,
+  files: GeneratedFile[],
+) {
+  const selectedBindings = await prisma.projectIntegration.findMany({
+    where: { chatId },
+    select: { providerId: true, config: true },
+  });
+  const diagnostics = validateSelectedApiUsage(
+    files,
+    selectedBindings.map((binding) => binding.providerId),
+  );
+  const authenticatedTasksReady = selectedBindings.some((binding) => {
+    if (binding.providerId !== "supabase") return false;
+    const backend = readSupabaseBackendState(binding.config);
+    return (
+      backend?.status === "ready" &&
+      backend.plan.migrationChecksum ===
+        getAuthenticatedTasksBackendPlan().migrationChecksum
+    );
+  });
+  if (authenticatedTasksReady) {
+    diagnostics.push(...(await validateAuthenticatedTasksGeneratedApp(files)));
+  }
+  return diagnostics;
+}
+
+function contractViolationError(diagnostics: GeneratedFileDiagnostic[]) {
+  return new Error(
+    `SELECTED_API_CONTRACT_VIOLATION: ${sanitizeContractDiagnostics(
+      diagnostics,
+    ).join(" ")}`,
+  );
+}
 
 function getAssistantMessageFiles(message: Message) {
   if (message?.role !== "assistant") return [];
@@ -188,7 +270,7 @@ export async function createMessage(
   text: string,
   role: "assistant" | "user",
   files?: RawGeneratedFile[],
-  options?: { creditHoldId?: string },
+  options?: { creditHoldId?: string; generationRunId?: string },
 ) {
   // Check authentication
   const session = await getCurrentSession();
@@ -229,41 +311,29 @@ export async function createMessage(
     : [];
   const assistantHasFiles = role === "assistant" && normalizedFiles.length > 0;
   if (assistantHasFiles) {
-    const selectedBindings = await prisma.projectIntegration.findMany({
-      where: { chatId },
-      select: { providerId: true, config: true },
-    });
-    const selectedProviderIds = selectedBindings.map(
-      (binding) => binding.providerId,
-    );
-    const selectedApiDiagnostics = validateSelectedApiUsage(
+    const selectedApiDiagnostics = await getGeneratedAppContractDiagnostics(
+      prisma,
+      chatId,
       normalizedFiles,
-      selectedProviderIds,
     );
-    const authenticatedTasksReady = selectedBindings.some((binding) => {
-      if (binding.providerId !== "supabase") return false;
-      const backend = readSupabaseBackendState(binding.config);
-      return (
-        backend?.status === "ready" &&
-        backend.plan.migrationChecksum ===
-          getAuthenticatedTasksBackendPlan().migrationChecksum
-      );
-    });
-    if (authenticatedTasksReady) {
-      selectedApiDiagnostics.push(
-        ...validateAuthenticatedTasksGeneratedApp(normalizedFiles),
-      );
-    }
 
     if (selectedApiDiagnostics.length > 0) {
-      if (options?.creditHoldId) {
-        await releaseCreditHold({ holdId: options.creditHoldId });
+      if (options?.generationRunId) {
+        await prisma.generationRun.updateMany({
+          where: {
+            id: options.generationRunId,
+            chatId,
+            userId: session.user.id,
+          },
+          data: {
+            status: "recoverable",
+            phase: "validation_repair",
+            label: "Fixing generated app",
+            errorMessage: "Generated app did not pass its required contract",
+          },
+        });
       }
-      throw new Error(
-        `SELECTED_API_CONTRACT_VIOLATION: ${selectedApiDiagnostics
-          .map((diagnostic) => diagnostic.message)
-          .join(" ")}`,
-      );
+      throw contractViolationError(selectedApiDiagnostics);
     }
   }
   const followUpPrompts =
@@ -504,11 +574,176 @@ export async function createPreviewRepairMessage(
   });
 }
 
+export async function createValidationRepairMessage(
+  chatId: string,
+  generationRunId: string,
+  files: RawGeneratedFile[],
+) {
+  const session = await getCurrentSession();
+  if (!session) {
+    throw new Error("You must be signed in to repair generated code");
+  }
+
+  const prisma = getPrisma();
+  const chat = await findOwnedProjectWithMessages(chatId, session.user.id);
+  if (!chat) notFound();
+
+  const normalizedFiles = normalizeGeneratedFiles(files);
+  const diagnostics = await getGeneratedAppContractDiagnostics(
+    prisma,
+    chatId,
+    normalizedFiles,
+  );
+  if (diagnostics.length === 0) {
+    throw new Error("Generated app no longer requires contract repair");
+  }
+  const sanitizedDiagnostics = sanitizeContractDiagnostics(diagnostics);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const lockKey = `contract-repair:${chatId}`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
+
+    const sourceRun = await tx.generationRun.findFirst({
+      where: { id: generationRunId, chatId, userId: session.user.id },
+      select: {
+        id: true,
+        messageId: true,
+        creditHoldId: true,
+        status: true,
+      },
+    });
+    if (!sourceRun) {
+      throw new Error("Generation run was not found");
+    }
+
+    const sourceMessage = await tx.message.findFirst({
+      where: { id: sourceRun.messageId, chatId, role: "user" },
+      select: { files: true },
+    });
+    const sourceRepair = readContractRepairMetadata(sourceMessage?.files);
+    const rootGenerationRunId =
+      sourceRepair?.rootGenerationRunId ?? sourceRun.id;
+    const rootRun =
+      rootGenerationRunId === sourceRun.id
+        ? sourceRun
+        : await tx.generationRun.findFirst({
+            where: {
+              id: rootGenerationRunId,
+              chatId,
+              userId: session.user.id,
+            },
+            select: {
+              id: true,
+              messageId: true,
+              creditHoldId: true,
+              status: true,
+            },
+          });
+    if (!rootRun) {
+      throw new Error("Original generation run was not found");
+    }
+
+    const messages = await tx.message.findMany({
+      where: { chatId, role: "user" },
+      orderBy: { position: "asc" },
+      select: { id: true, files: true, position: true },
+    });
+    const existingRepairs = messages.flatMap((message) => {
+      const metadata = readContractRepairMetadata(message.files);
+      return metadata?.rootGenerationRunId === rootGenerationRunId
+        ? [{ message, metadata }]
+        : [];
+    });
+    const duplicate = existingRepairs.find(
+      ({ metadata }) => metadata.sourceRunId === sourceRun.id,
+    );
+    if (duplicate) {
+      return {
+        kind: "created" as const,
+        id: duplicate.message.id,
+        attempt: duplicate.metadata.attempt,
+      };
+    }
+
+    if (existingRepairs.length >= MAX_CONTRACT_REPAIR_ATTEMPTS) {
+      const completedAt = new Date();
+      await tx.generationRun.updateMany({
+        where: { id: { in: [rootRun.id, sourceRun.id] } },
+        data: {
+          status: "failed",
+          phase: "validation_failed",
+          label: "Generated app needs manual repair",
+          errorMessage:
+            "Automatic repair could not satisfy the generated app contract",
+          completedAt,
+        },
+      });
+      return {
+        kind: "exhausted" as const,
+        creditHoldId: rootRun.creditHoldId,
+      };
+    }
+
+    const attempt = existingRepairs.length + 1;
+    const metadata: ContractRepairMetadata = {
+      kind: "contract_repair",
+      chargeCredits: false,
+      rootGenerationRunId,
+      sourceRunId: sourceRun.id,
+      attempt,
+      maxAttempts: MAX_CONTRACT_REPAIR_ATTEMPTS,
+      draftFiles: normalizedFiles,
+      diagnostics: sanitizedDiagnostics,
+      usedAt: null,
+    };
+    const allMessages = await tx.message.findMany({
+      where: { chatId },
+      select: { position: true },
+    });
+    const maxPosition = allMessages.reduce(
+      (maximum, message) => Math.max(maximum, message.position),
+      0,
+    );
+    const repairMessage = await tx.message.create({
+      data: {
+        role: "user",
+        content: `Repair the generated app so it satisfies its required behavior and accessibility contract. Attempt ${attempt} of ${MAX_CONTRACT_REPAIR_ATTEMPTS}.`,
+        files: JSON.parse(JSON.stringify(metadata)),
+        position: maxPosition + 1,
+        chatId,
+      },
+      select: { id: true },
+    });
+    await tx.generationRun.updateMany({
+      where: { id: { in: [rootRun.id, sourceRun.id] } },
+      data: {
+        status: "recoverable",
+        phase: "validation_repair",
+        label: `Fixing generated app (${attempt}/${MAX_CONTRACT_REPAIR_ATTEMPTS})`,
+        errorMessage: "Generated app did not pass its required contract",
+      },
+    });
+    return { kind: "created" as const, id: repairMessage.id, attempt };
+  });
+
+  if (result.kind === "exhausted") {
+    if (result.creditHoldId) {
+      await releaseCreditHold({ holdId: result.creditHoldId });
+    }
+    throw new Error(
+      "Automatic repair could not complete this app after two attempts. Retry the build or edit the generated app manually.",
+    );
+  }
+
+  return result;
+}
+
 export async function createFreeRepairAssistantMessage(
   chatId: string,
   repairMessageId: string,
   text: string,
   files: RawGeneratedFile[],
+  options?: { generationRunId?: string },
 ) {
   const session = await getCurrentSession();
 
@@ -524,19 +759,25 @@ export async function createFreeRepairAssistantMessage(
     (message) => message.id === repairMessageId,
   );
   const repairMetadata = repairMessage?.files as
-    | { kind?: string; chargeCredits?: boolean; usedAt?: string | null }
+    | {
+        kind?: string;
+        chargeCredits?: boolean;
+        usedAt?: string | null;
+        rootGenerationRunId?: string;
+      }
     | null
     | undefined;
   const isPreviewRepair =
     repairMetadata?.kind === "preview_repair" ||
     repairMetadata?.kind === "preview_repair_request";
+  const contractRepair = readContractRepairMetadata(repairMessage?.files);
 
   if (
     !repairMessage ||
     repairMessage.role !== "user" ||
-    !isPreviewRepair ||
-    repairMetadata.chargeCredits !== false ||
-    repairMetadata.usedAt
+    (!isPreviewRepair && !contractRepair) ||
+    repairMetadata?.chargeCredits !== false ||
+    repairMetadata?.usedAt
   ) {
     throw new Error("Repair request is not eligible for a free repair");
   }
@@ -547,6 +788,31 @@ export async function createFreeRepairAssistantMessage(
       : 0;
   const normalizedFiles = normalizeGeneratedFiles(files);
   const assistantHasFiles = normalizedFiles.length > 0;
+  if (assistantHasFiles) {
+    const diagnostics = await getGeneratedAppContractDiagnostics(
+      prisma,
+      chatId,
+      normalizedFiles,
+    );
+    if (diagnostics.length > 0) {
+      if (options?.generationRunId) {
+        await prisma.generationRun.updateMany({
+          where: {
+            id: options.generationRunId,
+            chatId,
+            userId: session.user.id,
+          },
+          data: {
+            status: "recoverable",
+            phase: "validation_repair",
+            label: "Fixing generated app",
+            errorMessage: "Generated app did not pass its required contract",
+          },
+        });
+      }
+      throw contractViolationError(diagnostics);
+    }
+  }
   const followUpPrompts = await generateFollowUpPrompts({
     chat,
     assistantContent: text,
@@ -554,6 +820,34 @@ export async function createFreeRepairAssistantMessage(
   });
 
   const newMessage = await prisma.$transaction(async (tx) => {
+    const rootRun = contractRepair
+      ? await tx.generationRun.findFirst({
+          where: {
+            id: contractRepair.rootGenerationRunId,
+            chatId,
+            userId: session.user.id,
+          },
+          select: { id: true, messageId: true, creditHoldId: true },
+        })
+      : null;
+    if (contractRepair && !rootRun) {
+      throw new Error("Original generation run was not found");
+    }
+    const rootMessage = rootRun
+      ? await tx.message.findFirst({
+          where: { id: rootRun.messageId, chatId },
+          select: { files: true },
+        })
+      : null;
+    const rootMessageMetadata = rootMessage?.files as
+      | { kind?: string; chargeCredits?: boolean }
+      | null
+      | undefined;
+    const rootWasFreeRepair =
+      (rootMessageMetadata?.kind === "preview_repair" ||
+        rootMessageMetadata?.kind === "preview_repair_request") &&
+      rootMessageMetadata.chargeCredits === false;
+
     const newMessage = await tx.message.create({
       data: {
         role: "assistant",
@@ -564,7 +858,9 @@ export async function createFreeRepairAssistantMessage(
         position: maxPosition + 1,
         chatId,
         versionKind: "repair",
-        changeSummary: "Repaired preview",
+        changeSummary: contractRepair
+          ? "Completed generated app contract"
+          : "Repaired preview",
       },
     });
 
@@ -585,21 +881,57 @@ export async function createFreeRepairAssistantMessage(
       });
     }
 
-    await tx.generationLog.create({
-      data: {
+    if (contractRepair && !rootWasFreeRepair) {
+      const creditCheck = await consumeCreditsForGeneration({
+        client: tx,
         userId: session.user.id,
         modelId: chat.model,
-        creditsUsed: 0,
-        estimatedCredits: getModelCreditHoldCost(chat.model),
-        actualCredits: 0,
-        refundedCredits: 0,
-        reason: "Free preview repair",
-        phase: "preview_repair",
-        status: "free_repair",
         chatId,
         messageId: newMessage.id,
-      },
-    });
+        description: `AI generation - ${chat.model}`,
+        phase: "validation_repair",
+        status: "completed",
+        creditHoldId: rootRun?.creditHoldId ?? undefined,
+        generatedText: text,
+      });
+      if (!creditCheck.success) {
+        throw new Error(
+          creditCheck.error === "INSUFFICIENT_CREDITS"
+            ? "INSUFFICIENT_CREDITS"
+            : "CREDIT_CHECK_FAILED",
+        );
+      }
+    } else {
+      await tx.generationLog.create({
+        data: {
+          userId: session.user.id,
+          modelId: chat.model,
+          creditsUsed: 0,
+          estimatedCredits: getModelCreditHoldCost(chat.model),
+          actualCredits: 0,
+          refundedCredits: 0,
+          reason: "Free preview repair",
+          phase: "preview_repair",
+          status: "free_repair",
+          chatId,
+          messageId: newMessage.id,
+        },
+      });
+    }
+
+    if (contractRepair && rootRun) {
+      await tx.generationRun.updateMany({
+        where: { id: rootRun.id, chatId, userId: session.user.id },
+        data: {
+          status: "completed",
+          phase: "completed",
+          label: "Generated app ready",
+          assistantMessageId: newMessage.id,
+          errorMessage: null,
+          completedAt: new Date(),
+        },
+      });
+    }
 
     return newMessage;
   });

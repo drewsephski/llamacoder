@@ -193,6 +193,13 @@ function safeSupabaseOperationError(error: unknown) {
         message: "Supabase rate-limited the provisioning check. Retry shortly.",
       };
     }
+    if (error.code === "SUPABASE_PROJECT_LIMIT_REACHED") {
+      return {
+        code: error.code,
+        message:
+          "This Supabase account has reached its active-project limit. Choose an existing project or free capacity in Supabase.",
+      };
+    }
   }
   return {
     code: "SUPABASE_PROVISION_FAILED",
