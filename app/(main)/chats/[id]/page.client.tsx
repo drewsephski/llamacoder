@@ -574,6 +574,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
         let shouldOpenPreview = false;
         let queuedRepairStream: Promise<CompletionStream> | undefined;
         let completedGenerationRun = false;
+        const agentMessageOptions = {
+          creditHoldId,
+          generationRunId: activeStream?.generationRunId,
+        };
 
         try {
           if (completedAgentAction?.action === "clarify") {
@@ -584,7 +588,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 kind: "agent_clarification_request",
                 request: completedAgentAction.request,
               },
-              { creditHoldId, chargeCredits: false },
+              { ...agentMessageOptions, chargeCredits: false },
             )) as Message;
           } else if (completedAgentAction?.action === "interview") {
             message = (await createAgentAssistantMessage(
@@ -594,7 +598,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 kind: "agent_interview_request",
                 request: completedAgentAction.request,
               },
-              { creditHoldId, chargeCredits: false },
+              { ...agentMessageOptions, chargeCredits: false },
             )) as Message;
           } else if (completedAgentAction?.action === "request_backend_setup") {
             message = (await createAgentAssistantMessage(
@@ -604,7 +608,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 kind: "agent_backend_setup_request",
                 request: completedAgentAction.request,
               },
-              { creditHoldId, chargeCredits: false },
+              { ...agentMessageOptions, chargeCredits: false },
             )) as Message;
           } else if (completedAgentAction?.action === "present_plan") {
             const plan = completedAgentAction.plan;
@@ -615,7 +619,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 kind: "agent_plan_request",
                 request: plan,
               },
-              { creditHoldId, chargeCredits: false },
+              { ...agentMessageOptions, chargeCredits: false },
             )) as Message;
           } else if (completedAgentAction?.action === "search") {
             message = (await createAgentAssistantMessage(
@@ -625,7 +629,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 kind: "agent_search_approval_request",
                 request: completedAgentAction.request,
               },
-              { creditHoldId, chargeCredits: false },
+              { ...agentMessageOptions, chargeCredits: false },
             )) as Message;
           } else if (completedAgentAction?.action === "answer") {
             message = (await createAgentAssistantMessage(
@@ -635,7 +639,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 kind: "agent_response",
                 sources: Array.from(sourceMap.values()),
               },
-              { creditHoldId, chargeCredits: true },
+              { ...agentMessageOptions, chargeCredits: true },
             )) as Message;
           } else if (repairMessageId) {
             message = (await createFreeRepairAssistantMessage(
@@ -645,6 +649,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
               allFiles,
               { generationRunId: activeStream?.generationRunId },
             )) as Message;
+            completedGenerationRun = Boolean(activeStream?.generationRunId);
             shouldOpenPreview = true;
           } else {
             message = (await saveStreamedAssistantMessage(
@@ -656,8 +661,12 @@ export default function PageClient({ chat }: { chat: Chat }) {
                 generationRunId: activeStream?.generationRunId,
               },
             )) as Message;
-            completedGenerationRun = true;
+            completedGenerationRun = Boolean(activeStream?.generationRunId);
             shouldOpenPreview = true;
+          }
+
+          if (completedAgentAction && activeStream?.generationRunId) {
+            completedGenerationRun = true;
           }
         } catch (saveError) {
           const saveErrorMessage = getErrorMessage(saveError, "");

@@ -1136,33 +1136,52 @@ export default function Home() {
     setShowPricingModal(true);
   };
 
-  const createProjectAndGoToChat = useCallback(
-    async (input: CreateProjectRequest) => {
+  const verifyCanCreateProject = useCallback(
+    async (modelId: string) => {
       try {
         const checkResponse = await fetch(
-          `/api/user/can-create-project?model=${encodeURIComponent(input.model)}`,
+          `/api/user/can-create-project?model=${encodeURIComponent(modelId)}`,
         );
-        if (checkResponse.ok) {
-          const eligibility = await checkResponse.json();
-          if (!eligibility.canCreate) {
-            if (eligibility.error === "PROJECT_LIMIT_REACHED") {
-              showProjectLimitPricing(
-                eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
-              );
-              return false;
-            }
 
-            const cost =
-              eligibility.modelCost || getModelCreditHoldCost(input.model);
-            toast.error(
-              `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
+        if (!checkResponse.ok) {
+          toast.error(
+            "Unable to verify account eligibility. Please try again.",
+          );
+          return false;
+        }
+
+        const eligibility = await checkResponse.json();
+        if (!eligibility.canCreate) {
+          if (eligibility.error === "PROJECT_LIMIT_REACHED") {
+            showProjectLimitPricing(
+              eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
             );
-            setShowPricingModal(true);
             return false;
           }
+
+          const cost = eligibility.modelCost || getModelCreditHoldCost(modelId);
+          toast.error(
+            `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
+          );
+          setShowPricingModal(true);
+          return false;
         }
+
+        return true;
       } catch (error) {
         console.error("Error checking eligibility:", error);
+        toast.error("Unable to verify account eligibility. Please try again.");
+        return false;
+      }
+    },
+    [setShowPricingModal],
+  );
+
+  const createProjectAndGoToChat = useCallback(
+    async (input: CreateProjectRequest) => {
+      const canCreate = await verifyCanCreateProject(input.model);
+      if (!canCreate) {
+        return false;
       }
 
       const { chatId, lastMessageId } =
@@ -1192,8 +1211,16 @@ export default function Home() {
 
       return true;
     },
-    [createChatMutation, plausible, router, setStreamPromise],
+    [
+      createChatMutation,
+      plausible,
+      router,
+      setStreamPromise,
+      verifyCanCreateProject,
+    ],
   );
+  const createProjectAndGoToChatRef = useRef(createProjectAndGoToChat);
+  createProjectAndGoToChatRef.current = createProjectAndGoToChat;
 
   useEffect(() => {
     if (!session || pendingProjectResumeRef.current) return;
@@ -1205,18 +1232,19 @@ export default function Home() {
 
     void (async () => {
       try {
-        const created = await createProjectAndGoToChat(pendingProject);
+        const created =
+          await createProjectAndGoToChatRef.current(pendingProject);
         if (created) {
           clearPendingProject();
-        } else {
-          pendingProjectResumeRef.current = false;
         }
       } catch (error) {
-        pendingProjectResumeRef.current = false;
+        clearPendingProject();
         toast.error(getErrorMessage(error, "Failed to create project"));
+      } finally {
+        pendingProjectResumeRef.current = false;
       }
     })();
-  }, [session, createProjectAndGoToChat]);
+  }, [session]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -2852,92 +2880,60 @@ export default function Home() {
                 const submittedQuality =
                   formQuality === "high" ? "high" : "low";
 
-                // Require authentication before allowing chat creation
-                const session = await authClient.getSession();
-                if (!session.data) {
-                  if (!submittedPrompt) {
-                    toast.error("Enter a prompt before creating an account");
-                    setIsCheckingEligibility(false);
+                try {
+                  // Require authentication before allowing chat creation
+                  const session = await authClient.getSession();
+                  if (!session.data) {
+                    if (!submittedPrompt) {
+                      toast.error("Enter a prompt before creating an account");
+                      return;
+                    }
+
+                    savePendingProject({
+                      prompt: submittedPrompt,
+                      model: currentModel,
+                      quality: submittedQuality,
+                      screenshotData,
+                      screenshotUrl,
+                      providerIds: selectedProviderIds,
+                    });
+                    toast.info("Create an account to start building");
+                    router.push(
+                      `/sign-up?callbackUrl=${encodeURIComponent("/")}`,
+                    );
                     return;
                   }
 
-                  savePendingProject({
+                  assert.ok(submittedPrompt.length > 0);
+                  assert.ok(typeof currentModel === "string");
+                  assert.ok(
+                    submittedQuality === "high" || submittedQuality === "low",
+                  );
+
+                  const created = await createProjectAndGoToChat({
                     prompt: submittedPrompt,
                     model: currentModel,
                     quality: submittedQuality,
-                    screenshotData,
                     screenshotUrl,
+                    screenshotData,
                     providerIds: selectedProviderIds,
                   });
-                  toast.info("Create an account to start building");
-                  router.push(
-                    `/sign-up?callbackUrl=${encodeURIComponent("/")}`,
+                  if (created) {
+                    clearPendingProject();
+                  }
+                } catch (error: unknown) {
+                  const message = getErrorMessage(
+                    error,
+                    "Failed to create project",
                   );
+                  if (message.includes("free projects")) {
+                    showProjectLimitPricing();
+                    return;
+                  }
+                  toast.error(message);
+                } finally {
                   setIsCheckingEligibility(false);
-                  return;
                 }
-
-                try {
-                  const checkResponse = await fetch(
-                    `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
-                  );
-                  if (checkResponse.ok) {
-                    const eligibility = await checkResponse.json();
-                    if (!eligibility.canCreate) {
-                      if (eligibility.error === "PROJECT_LIMIT_REACHED") {
-                        showProjectLimitPricing(
-                          eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
-                        );
-                        setIsCheckingEligibility(false);
-                        return;
-                      }
-
-                      const cost =
-                        eligibility.modelCost ||
-                        getModelCreditHoldCost(currentModel);
-                      toast.error(
-                        `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
-                      );
-                      setShowPricingModal(true);
-                      setIsCheckingEligibility(false);
-                      return;
-                    }
-                  }
-                } catch (error) {
-                  console.error("Error checking eligibility:", error);
-                }
-                setIsCheckingEligibility(false);
-
-                startTransition(async () => {
-                  try {
-                    const { model, quality } = Object.fromEntries(formData);
-                    assert.ok(submittedPrompt.length > 0);
-                    assert.ok(typeof model === "string");
-                    assert.ok(quality === "high" || quality === "low");
-
-                    const created = await createProjectAndGoToChat({
-                      prompt: submittedPrompt,
-                      model,
-                      quality,
-                      screenshotUrl,
-                      screenshotData,
-                      providerIds: selectedProviderIds,
-                    });
-                    if (created) {
-                      clearPendingProject();
-                    }
-                  } catch (error: unknown) {
-                    const message = getErrorMessage(
-                      error,
-                      "Failed to create project",
-                    );
-                    if (message.includes("free projects")) {
-                      showProjectLimitPricing();
-                      return;
-                    }
-                    toast.error(message);
-                  }
-                });
               }}
             >
               <Fieldset className="min-w-0">

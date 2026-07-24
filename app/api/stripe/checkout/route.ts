@@ -210,17 +210,11 @@ export async function POST(request: NextRequest) {
 
     const origin = getAppOrigin();
 
-    if (isSubscriptionEntitled(user.subscription?.status)) {
-      const activeSubscription = user.subscription;
-      if (!activeSubscription) {
-        return errorResponse(
-          "Subscription record not found",
-          404,
-          request,
-          expectsJson,
-        );
-      }
-
+    const activeSubscription = user.subscription;
+    if (
+      activeSubscription &&
+      isSubscriptionEntitled(activeSubscription.status)
+    ) {
       if (currentTier === tier) {
         return errorResponse(
           `You are already on the ${currentTier === "pro_plus" ? "Pro Plus" : "Pro"} plan`,

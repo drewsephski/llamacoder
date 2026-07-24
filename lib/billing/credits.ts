@@ -773,10 +773,15 @@ export async function reserveCreditHold({
         client: tx,
         userId,
       });
-      await tx.user.updateMany({
+      const updateResult = await tx.user.updateMany({
         where: { id: userId },
         data: { credits: remainingCredits },
       });
+
+      if (updateResult.count === 0) {
+        await incrementCreditGrantAllocations({ client: tx, allocations });
+        return { success: false, error: "USER_NOT_FOUND" } as const;
+      }
 
       const hold = await tx.creditHold.create({
         data: {

@@ -1001,6 +1001,28 @@ export async function createFreeRepairAssistantMessage(
 
   await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
 
+  const completedRootRunId = contractRepair?.rootGenerationRunId ?? null;
+  if (
+    options?.generationRunId &&
+    options.generationRunId !== completedRootRunId
+  ) {
+    await prisma.generationRun.updateMany({
+      where: {
+        id: options.generationRunId,
+        chatId,
+        userId: session.user.id,
+      },
+      data: {
+        status: "completed",
+        assistantMessageId: newMessage.id,
+        completedAt: new Date(),
+        phase: "completed",
+        label: contractRepair ? "Generated app ready" : "Repaired preview",
+        errorMessage: null,
+      },
+    });
+  }
+
   return newMessage;
 }
 

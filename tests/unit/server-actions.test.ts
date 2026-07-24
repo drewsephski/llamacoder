@@ -607,6 +607,76 @@ describe("server actions", () => {
         assistantMessageId: "assistant_repaired",
       }),
     });
+    expect(prismaMock.generationRun.updateMany).toHaveBeenCalledWith({
+      where: { id: "run_repair", chatId: "chat_1", userId: "user_1" },
+      data: expect.objectContaining({
+        status: "completed",
+        assistantMessageId: "assistant_repaired",
+        phase: "completed",
+      }),
+    });
+  });
+
+  it("completes the active generation run when it matches the contract repair root run", async () => {
+    const contractMetadata = {
+      kind: "contract_repair",
+      chargeCredits: false,
+      rootGenerationRunId: "run_root",
+      sourceRunId: "run_root",
+      attempt: 1,
+      maxAttempts: 2,
+      draftFiles: [
+        {
+          path: "App.tsx",
+          code: "export default function App() { return null; }",
+        },
+      ],
+      diagnostics: ["Missing required generated behavior"],
+      usedAt: null,
+    };
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        messages: [
+          buildMessage({ position: 0, role: "system" }),
+          buildMessage({
+            id: "contract_repair_1",
+            position: 2,
+            role: "user",
+            files: contractMetadata,
+          }),
+        ],
+      }),
+    );
+    txMock.generationRun.findFirst.mockResolvedValueOnce({
+      id: "run_root",
+      messageId: "user_original",
+      creditHoldId: "hold_1",
+    });
+    txMock.message.findFirst.mockResolvedValueOnce({ files: null });
+    txMock.message.create.mockResolvedValueOnce({ id: "assistant_repaired" });
+
+    await createFreeRepairAssistantMessage(
+      "chat_1",
+      "contract_repair_1",
+      "fixed",
+      [
+        {
+          path: "App.tsx",
+          code: "export default function App() { return <main />; }",
+        },
+      ],
+      { generationRunId: "run_root" },
+    );
+
+    expect(prismaMock.generationRun.updateMany).not.toHaveBeenCalled();
+    expect(txMock.generationRun.updateMany).toHaveBeenCalledWith({
+      where: { id: "run_root", chatId: "chat_1", userId: "user_1" },
+      data: expect.objectContaining({
+        status: "completed",
+        assistantMessageId: "assistant_repaired",
+        phase: "completed",
+      }),
+    });
   });
 
   it("creates preview repair messages and saves the matching repair response without charging credits", async () => {

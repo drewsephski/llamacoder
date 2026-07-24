@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   fetchCompletionStream,
+  fetchGenerationRun,
   recoverCompletionStream,
   retryCompletionStream,
 } from "@/features/generation/client/completion-stream";
@@ -162,5 +163,27 @@ describe("fetchCompletionStream", () => {
     await expect(recoverCompletionStream("run_1")).rejects.toThrow(
       "Upstream provider rate limited",
     );
+  });
+
+  it("loads the persisted generation run phase for stream finalization", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({
+          id: "run_1",
+          messageId: "message_1",
+          status: "recoverable",
+          phase: "validation_repair",
+          label: "Fixing generated app",
+          partialText:
+            "```tsx{path=App.tsx}\nexport default function App(){}\n```",
+        }),
+      ),
+    );
+
+    const run = await fetchGenerationRun("run_1");
+
+    expect(run.phase).toBe("validation_repair");
+    expect(run.partialText).toContain("App.tsx");
   });
 });

@@ -4,6 +4,10 @@ import { getPrisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 function isAuthorized(request: Request) {
+  if (process.env.NODE_ENV !== "production") {
+    return true;
+  }
+
   const secret = process.env.CRON_SECRET;
   return Boolean(
     secret && request.headers.get("authorization") === `Bearer ${secret}`,

@@ -295,7 +295,11 @@ export async function createAgentAssistantMessage(
   chatId: string,
   content: string,
   metadataInput: AgentMessageMetadata,
-  options?: { creditHoldId?: string; chargeCredits?: boolean },
+  options?: {
+    creditHoldId?: string;
+    chargeCredits?: boolean;
+    generationRunId?: string;
+  },
 ) {
   const metadata = agentMessageMetadataSchema.parse(metadataInput);
   if (!isAgentAssistantMessage(metadata)) {
@@ -315,15 +319,16 @@ export async function createAgentAssistantMessage(
     position,
   };
 
+  let created;
   if (options?.chargeCredits !== false && chat.userId) {
-    return prisma.$transaction(async (tx) => {
-      const created = await tx.message.create({ data: messageData });
+    created = await prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({ data: messageData });
       const creditResult = await consumeCreditsForGeneration({
         client: tx,
         userId: session.user.id,
         modelId: chat.model,
         chatId,
-        messageId: created.id,
+        messageId: message.id,
         description: `AI developer response - ${chat.model}`,
         phase: "follow_up",
         status: "completed",
@@ -339,13 +344,31 @@ export async function createAgentAssistantMessage(
         );
       }
 
-      return created;
+      return message;
     });
+  } else {
+    created = await prisma.message.create({ data: messageData });
+    if (options?.creditHoldId) {
+      await releaseCreditHold({ holdId: options.creditHoldId });
+    }
   }
 
-  const created = await prisma.message.create({ data: messageData });
-  if (options?.creditHoldId) {
-    await releaseCreditHold({ holdId: options.creditHoldId });
+  if (options?.generationRunId) {
+    await prisma.generationRun.updateMany({
+      where: {
+        id: options.generationRunId,
+        chatId,
+        userId: session.user.id,
+      },
+      data: {
+        status: "completed",
+        assistantMessageId: created.id,
+        completedAt: new Date(),
+        phase: "completed",
+        label: "Saved",
+        errorMessage: null,
+      },
+    });
   }
 
   return created;
