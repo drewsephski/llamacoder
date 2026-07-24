@@ -13,12 +13,33 @@ import { getPrisma } from "@/lib/prisma";
 
 export const maxDuration = 120;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const withThumbnails =
+    new URL(request.url).searchParams.get("withThumbnails") === "true";
+
   const { projects } = await getGalleryProjects({
     query: "",
     remixable: false,
     sort: "newest",
   });
+
+  if (withThumbnails) {
+    return NextResponse.json({
+      images: projects
+        .filter(
+          (project) =>
+            project.thumbnailUrl !== null &&
+            project.generationPrompt.trim().length > 0,
+        )
+        .map((project) => ({
+          src: project.thumbnailUrl,
+          alt: `Preview of ${project.title}`,
+          title: project.title,
+          prompt: project.generationPrompt,
+          href: `/gallery/${project.slug}`,
+        })),
+    });
+  }
 
   return NextResponse.json({
     apps: projects.slice(0, 6).map((project) => ({

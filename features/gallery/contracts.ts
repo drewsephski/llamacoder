@@ -24,6 +24,7 @@ export type GalleryProjectSummary = {
   slug: string;
   title: string;
   description: string;
+  generationPrompt: string;
   allowRemixes: boolean;
   publishedAt: Date;
   thumbnailUrl: string | null;

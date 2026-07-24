@@ -20,6 +20,7 @@ const project: GalleryProjectSummary = {
   slug: "focus-day-chat123",
   title: "Focus Day",
   description: "A calmer way to plan focused work.",
+  generationPrompt: "Build me a focused daily planning app",
   allowRemixes: true,
   publishedAt: new Date("2026-07-16T12:00:00.000Z"),
   thumbnailUrl: null,

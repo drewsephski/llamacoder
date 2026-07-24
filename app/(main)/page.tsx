@@ -286,6 +286,13 @@ const HOMEPAGE_LANDING_PAGES: readonly HomepageLandingPage[] = [
   },
 ];
 
+type HeroPopoutImage = {
+  src: string;
+  alt: string;
+  title: string;
+  prompt: string;
+};
+
 const homepageFaq = [
   {
     question: "Is Squid Agent related to Squid AI (getsquid.ai)?",
@@ -668,6 +675,405 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
+type HeroPopout = {
+  id: string;
+  src: string;
+  alt: string;
+  title: string;
+  prompt: string;
+  top: number;
+  left: number;
+  rotate: number;
+  scale: number;
+};
+
+type HeroPopoutExclusionZone = {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
+};
+
+const HERO_POPOUT_MAX_ACTIVE = 6;
+const HERO_POPOUT_LIFETIME_MS = 3600;
+const HERO_POPOUT_EXCLUSION_PADDING_PX = 28;
+
+function randomInRange(min: number, max: number) {
+  return min + Math.random() * (max - min);
+}
+
+function clampPercent(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
+function getHeroPopoutCardSize(layerWidth: number) {
+  const width = Math.min(196, Math.max(120, layerWidth * 0.16));
+  const height = width * (9 / 16);
+  return { width, height };
+}
+
+function measureHeroPopoutExclusionZones(
+  layer: HTMLElement,
+  shell: HTMLElement,
+): HeroPopoutExclusionZone[] {
+  const layerRect = layer.getBoundingClientRect();
+  if (layerRect.width <= 0 || layerRect.height <= 0) return [];
+
+  const zoneNames = ["copy", "compose", "clone"] as const;
+
+  return zoneNames.flatMap((name) => {
+    const element = shell.querySelector<HTMLElement>(
+      `[data-hero-popout-exclude="${name}"]`,
+    );
+    if (!element) return [];
+
+    const rect = element.getBoundingClientRect();
+
+    return [
+      {
+        top: clampPercent(
+          ((rect.top - layerRect.top - HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.height) *
+            100,
+        ),
+        bottom: clampPercent(
+          ((rect.bottom - layerRect.top + HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.height) *
+            100,
+        ),
+        left: clampPercent(
+          ((rect.left - layerRect.left - HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.width) *
+            100,
+        ),
+        right: clampPercent(
+          ((rect.right - layerRect.left + HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.width) *
+            100,
+        ),
+      },
+    ];
+  });
+}
+
+function isInHeroEdgeClipZone(top: number, left: number) {
+  return top < 12 || top > 88 || left < 12 || left > 88;
+}
+
+function heroPopoutOverlapsExclusionZone(
+  top: number,
+  left: number,
+  cardWidth: number,
+  cardHeight: number,
+  layerWidth: number,
+  layerHeight: number,
+  zone: HeroPopoutExclusionZone,
+) {
+  const halfWidthPercent = (cardWidth / layerWidth) * 50;
+  const halfHeightPercent = (cardHeight / layerHeight) * 50;
+
+  const popoutTop = top - halfHeightPercent;
+  const popoutBottom = top + halfHeightPercent;
+  const popoutLeft = left - halfWidthPercent;
+  const popoutRight = left + halfWidthPercent;
+
+  return !(
+    popoutRight < zone.left ||
+    popoutLeft > zone.right ||
+    popoutBottom < zone.top ||
+    popoutTop > zone.bottom
+  );
+}
+
+function heroPopoutOverlapsAnyExclusionZone(
+  top: number,
+  left: number,
+  cardWidth: number,
+  cardHeight: number,
+  layerWidth: number,
+  layerHeight: number,
+  zones: HeroPopoutExclusionZone[],
+) {
+  return zones.some((zone) =>
+    heroPopoutOverlapsExclusionZone(
+      top,
+      left,
+      cardWidth,
+      cardHeight,
+      layerWidth,
+      layerHeight,
+      zone,
+    ),
+  );
+}
+
+function getFallbackHeroPopoutExclusionZones(): HeroPopoutExclusionZone[] {
+  return [
+    { top: 6, bottom: 36, left: 12, right: 88 },
+    { top: 28, bottom: 76, left: 8, right: 92 },
+    { top: 68, bottom: 96, left: 14, right: 86 },
+  ];
+}
+
+function createHeroPopout(
+  layerWidth: number,
+  layerHeight: number,
+  exclusionZones: HeroPopoutExclusionZone[],
+  showcaseImages: readonly HeroPopoutImage[],
+): HeroPopout | null {
+  if (showcaseImages.length === 0) return null;
+
+  const showcase =
+    showcaseImages[Math.floor(Math.random() * showcaseImages.length)]!;
+  const { width: cardWidth, height: cardHeight } =
+    getHeroPopoutCardSize(layerWidth);
+  const zones =
+    exclusionZones.length > 0
+      ? exclusionZones
+      : getFallbackHeroPopoutExclusionZones();
+
+  let top = randomInRange(12, 88);
+  let left = randomInRange(12, 88);
+  let attempts = 0;
+
+  while (
+    (isInHeroEdgeClipZone(top, left) ||
+      heroPopoutOverlapsAnyExclusionZone(
+        top,
+        left,
+        cardWidth,
+        cardHeight,
+        layerWidth,
+        layerHeight,
+        zones,
+      )) &&
+    attempts < 48
+  ) {
+    top = randomInRange(12, 88);
+    left = randomInRange(12, 88);
+    attempts += 1;
+  }
+
+  if (
+    heroPopoutOverlapsAnyExclusionZone(
+      top,
+      left,
+      cardWidth,
+      cardHeight,
+      layerWidth,
+      layerHeight,
+      zones,
+    )
+  ) {
+    top = randomInRange(14, 86);
+    left = Math.random() > 0.5 ? randomInRange(12, 18) : randomInRange(82, 88);
+  }
+
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    src: showcase.src,
+    alt: showcase.alt,
+    title: showcase.title,
+    prompt: showcase.prompt,
+    top,
+    left,
+    rotate: randomInRange(-7, 7),
+    scale: randomInRange(0.94, 1.04),
+  };
+}
+
+function HeroPopoutCard({
+  popout,
+  onRemove,
+  onSelectPrompt,
+}: {
+  popout: HeroPopout;
+  onRemove: (id: string) => void;
+  onSelectPrompt: (prompt: string, title: string) => void;
+}) {
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    if (popout.prompt.trim().length === 0) return;
+    onSelectPrompt(popout.prompt, popout.title);
+  }
+
+  return (
+    <button
+      type="button"
+      className="hero-popout"
+      style={
+        {
+          top: `${popout.top}%`,
+          left: `${popout.left}%`,
+          "--popout-rotate": `${popout.rotate}deg`,
+          "--popout-scale": popout.scale,
+        } as React.CSSProperties
+      }
+      aria-label={`Use the prompt from ${popout.title}`}
+      onClick={handleClick}
+      onAnimationEnd={(event) => {
+        if (event.animationName !== "heroPopoutLife") return;
+        onRemove(popout.id);
+      }}
+    >
+      <div className="hero-popout-image-wrap">
+        <Image
+          src={popout.src}
+          alt=""
+          fill
+          unoptimized
+          sizes="196px"
+          draggable={false}
+          className="hero-popout-image"
+        />
+      </div>
+    </button>
+  );
+}
+
+function HeroPopoutShowcases({
+  onSelectPrompt,
+}: {
+  onSelectPrompt: (prompt: string, title: string) => void;
+}) {
+  const reduceMotion = useReducedMotion();
+  const layerRef = useRef<HTMLDivElement>(null);
+  const exclusionZonesRef = useRef<HeroPopoutExclusionZone[]>([]);
+  const showcaseImagesRef = useRef<HeroPopoutImage[]>([]);
+  const [popouts, setPopouts] = useState<HeroPopout[]>([]);
+  const [showcaseImagesReady, setShowcaseImagesReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/gallery?withThumbnails=true")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Unable to load gallery previews.");
+        }
+        return response.json() as Promise<{ images?: HeroPopoutImage[] }>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+
+        showcaseImagesRef.current = (data.images ?? []).filter(
+          (image): image is HeroPopoutImage =>
+            typeof image.src === "string" &&
+            image.src.length > 0 &&
+            typeof image.alt === "string" &&
+            typeof image.title === "string" &&
+            typeof image.prompt === "string" &&
+            image.prompt.trim().length > 0,
+        );
+        setShowcaseImagesReady(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        showcaseImagesRef.current = [];
+        setShowcaseImagesReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const layer = layerRef.current;
+    const shell = layer?.closest<HTMLElement>('[data-testid="hero-shell"]');
+    if (!layer || !shell) return;
+
+    const syncExclusionZones = () => {
+      exclusionZonesRef.current = measureHeroPopoutExclusionZones(layer, shell);
+    };
+
+    syncExclusionZones();
+
+    const resizeObserver = new ResizeObserver(syncExclusionZones);
+    resizeObserver.observe(shell);
+    resizeObserver.observe(layer);
+    window.addEventListener("resize", syncExclusionZones);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", syncExclusionZones);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || !showcaseImagesReady) return;
+    if (showcaseImagesRef.current.length === 0) return;
+
+    let cancelled = false;
+    let spawnTimeoutId: number | undefined;
+
+    const queuePopout = () => {
+      if (cancelled) return;
+
+      const layer = layerRef.current;
+      if (!layer) {
+        spawnTimeoutId = window.setTimeout(queuePopout, 400);
+        return;
+      }
+
+      const layerRect = layer.getBoundingClientRect();
+      if (layerRect.width <= 0 || layerRect.height <= 0) {
+        spawnTimeoutId = window.setTimeout(queuePopout, 400);
+        return;
+      }
+
+      if (showcaseImagesRef.current.length === 0) {
+        spawnTimeoutId = window.setTimeout(queuePopout, 400);
+        return;
+      }
+
+      setPopouts((current) => {
+        if (current.length >= HERO_POPOUT_MAX_ACTIVE) return current;
+
+        const popout = createHeroPopout(
+          layerRect.width,
+          layerRect.height,
+          exclusionZonesRef.current,
+          showcaseImagesRef.current,
+        );
+        if (!popout) return current;
+
+        return [...current, popout];
+      });
+
+      spawnTimeoutId = window.setTimeout(queuePopout, randomInRange(700, 1700));
+    };
+
+    queuePopout();
+
+    return () => {
+      cancelled = true;
+      if (spawnTimeoutId !== undefined) {
+        window.clearTimeout(spawnTimeoutId);
+      }
+    };
+  }, [reduceMotion, showcaseImagesReady]);
+
+  const handleRemovePopout = useCallback((id: string) => {
+    setPopouts((current) => current.filter((item) => item.id !== id));
+  }, []);
+
+  if (reduceMotion) return null;
+
+  return (
+    <div ref={layerRef} className="hero-popout-layer">
+      {popouts.map((popout) => (
+        <HeroPopoutCard
+          key={popout.id}
+          popout={popout}
+          onRemove={handleRemovePopout}
+          onSelectPrompt={onSelectPrompt}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const { setStreamPromise } = useGenerationHandoff();
   const router = useRouter();
@@ -692,13 +1098,6 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [isPending, startTransition] = useTransition();
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
-  const [smoothMousePosition, setSmoothMousePosition] = useState({
-    x: 50,
-    y: 50,
-  });
-  const [isHoveringRing, setIsHoveringRing] = useState(false);
-  const animationFrameRef = useRef<number | undefined>(undefined);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [showPromptBuilder, setShowPromptBuilder] = useState(false);
@@ -709,7 +1108,6 @@ export default function Home() {
     () => createInitialTemplateValues(PORTFOLIO_PROMPT_TEMPLATE),
   );
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
-  const ringRef = useRef<HTMLDivElement>(null);
   const promptStartedAtRef = useRef<number | null>(null);
   const activationParamsHandledRef = useRef(false);
 
@@ -811,6 +1209,25 @@ export default function Home() {
     [plausible],
   );
 
+  const handleGalleryPromptSelect = useCallback(
+    (value: string, title: string) => {
+      setActiveTemplate(null);
+      setPrompt(value);
+      promptStartedAtRef.current ??= Date.now();
+      plausible("Gallery Prompt Selected", {
+        props: { source: "homepage_hero_popout", title },
+      });
+      window.requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+        if (textareaRef.current) {
+          const end = textareaRef.current.value.length;
+          textareaRef.current.setSelectionRange(end, end);
+        }
+      });
+    },
+    [plausible],
+  );
+
   const handleTemplateCompiledPrompt = useCallback((compiled: string) => {
     setPrompt(compiled);
   }, []);
@@ -833,41 +1250,12 @@ export default function Home() {
     window.requestAnimationFrame(() => textareaRef.current?.focus());
   }, []);
 
-  useEffect(() => {
-    const animate = () => {
-      setSmoothMousePosition((prev) => ({
-        x: prev.x + (mousePosition.x - prev.x) * 0.08,
-        y: prev.y + (mousePosition.y - prev.y) * 0.08,
-      }));
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-    animationFrameRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [mousePosition]);
-
   const handleModelChange = (newModel: string) => {
     if (!canUseModel(newModel)) {
       setShowPricingModal(true);
       return;
     }
     setModel(newModel);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ringRef.current) return;
-    const rect = ringRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePosition({ x, y });
-    setIsHoveringRing(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHoveringRing(false);
   };
 
   const selectedModel = useMemo(
@@ -1068,7 +1456,7 @@ export default function Home() {
       />
       <style>{`
         .font-display {
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+          font-family: 'Aeonik', var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           font-weight: 700;
           letter-spacing: -0.045em;
         }
@@ -1077,7 +1465,7 @@ export default function Home() {
         body[data-scroll-locked] { margin-right: 0 !important; }
 
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(18px); }
+          from { opacity: 0; transform: translateY(22px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes fadeIn {
@@ -1096,12 +1484,12 @@ export default function Home() {
           0%, 100% { border-color: rgba(0,98,255,0.2); }
           50% { border-color: rgba(0,98,255,0.5); }
         }
-        .animate-fade-up { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
-        .animate-fade-up-1 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
-        .animate-fade-up-2 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both; }
-        .animate-fade-up-3 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both; }
-        .animate-fade-up-4 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both; }
-        .animate-fade-in { animation: fadeIn 0.8s ease both 0.4s; }
+        .animate-fade-up { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) both; }
+        .animate-fade-up-1 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.06s both; }
+        .animate-fade-up-2 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.14s both; }
+        .animate-fade-up-3 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.24s both; }
+        .animate-fade-up-4 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.34s both; }
+        .animate-fade-in { animation: fadeIn 0.9s cubic-bezier(0.32, 0.72, 0, 1) both 0.45s; }
 
         @media (prefers-reduced-motion: reduce) {
           .animate-fade-up,
@@ -1114,25 +1502,274 @@ export default function Home() {
             opacity: 1;
             transform: none;
           }
+          .hero-popout {
+            animation: none;
+            opacity: 0;
+          }
         }
 
-        .hero-accent {
+        .hero-shell {
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+        }
+
+        .hero-stage {
+          position: relative;
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          min-height: min(calc(100dvh - 4.5rem), 820px);
+          padding: 1.75rem 1.25rem 2.75rem;
+        }
+        @media (min-width: 640px) {
+          .hero-stage {
+            min-height: min(calc(100dvh - 5.25rem), 860px);
+            padding: 2.75rem 1.5rem 3.75rem;
+          }
+        }
+        @media (min-width: 1024px) {
+          .hero-stage {
+            padding-top: 3.5rem;
+            padding-bottom: 5rem;
+          }
+        }
+
+        .hero-popout-layer {
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          overflow: visible;
+        }
+        .hero-popout {
+          position: absolute;
+          width: clamp(120px, 16vw, 196px);
+          aspect-ratio: 16 / 9;
+          transform: translate(-50%, -50%);
+          border-radius: 14px;
+          border: 1px solid hsl(var(--border) / 0.8);
+          background: hsl(var(--muted) / 0.35);
+          box-shadow:
+            0 16px 40px -22px rgba(15, 23, 42, 0.38),
+            0 0 0 1px hsl(var(--background));
+          overflow: hidden;
+          line-height: 0;
+          pointer-events: auto;
+          cursor: pointer;
+          padding: 0;
+          z-index: 2;
+          animation: heroPopoutLife 3.6s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+          will-change: transform, opacity;
+          transition:
+            box-shadow 180ms ease,
+            border-color 180ms ease;
+        }
+        .hero-popout:hover,
+        .hero-popout:focus-visible {
+          z-index: 4;
+          border-color: hsl(var(--primary) / 0.45);
+          box-shadow:
+            0 20px 44px -18px rgba(15, 23, 42, 0.42),
+            0 0 0 1px hsl(var(--primary) / 0.18);
+        }
+        .dark .hero-popout {
+          box-shadow:
+            0 18px 44px -20px rgba(0, 0, 0, 0.72),
+            0 0 0 1px hsl(var(--border) / 0.45);
+        }
+        .dark .hero-popout:hover,
+        .dark .hero-popout:focus-visible {
+          box-shadow:
+            0 22px 48px -16px rgba(0, 0, 0, 0.82),
+            0 0 0 1px hsl(var(--primary) / 0.28);
+        }
+        .hero-popout-image-wrap {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          border-radius: inherit;
+        }
+        .hero-popout-image {
+          display: block;
+          pointer-events: none;
+          object-fit: cover;
+          object-position: top center;
+        }
+        @keyframes heroPopoutLife {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) translateY(16px) scale(calc(0.8 * var(--popout-scale))) rotate(var(--popout-rotate));
+          }
+          12% {
+            opacity: 0.96;
+            transform: translate(-50%, -50%) translateY(0) scale(var(--popout-scale)) rotate(var(--popout-rotate));
+          }
+          76% {
+            opacity: 0.96;
+            transform: translate(-50%, -50%) translateY(-8px) scale(calc(1.04 * var(--popout-scale))) rotate(var(--popout-rotate));
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) translateY(-18px) scale(calc(0.88 * var(--popout-scale))) rotate(var(--popout-rotate));
+          }
+        }
+
+        .hero-copy {
+          position: relative;
+          z-index: 3;
+          display: flex;
+          width: 100%;
+          max-width: 42rem;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 1rem;
+        }
+        @media (min-width: 640px) {
+          .hero-copy { gap: 1.15rem; }
+        }
+
+        .hero-brand {
+          display: block;
+          font-family: 'Aeonik', var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+          font-weight: 700;
+          font-size: clamp(2.85rem, 8.5vw, 4.75rem);
+          line-height: 0.9;
+          letter-spacing: -0.06em;
+          color: hsl(var(--foreground));
+          text-wrap: balance;
+        }
+
+        .hero-headline {
+          display: block;
+          margin-top: 0.15rem;
+          font-family: 'Aeonik', var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+          font-weight: 500;
+          font-size: clamp(1.45rem, 3.8vw, 2.15rem);
+          line-height: 1.15;
+          letter-spacing: -0.035em;
+          color: hsl(var(--foreground) / 0.9);
+          text-wrap: balance;
+        }
+        .hero-headline em {
+          font-style: italic;
+          font-weight: 500;
           color: #0062FF;
         }
-        .dark .hero-accent {
+        .dark .hero-headline em { color: #0CA8FF; }
+
+        .hero-support {
+          max-width: 38ch;
+          margin-inline: auto;
+          font-size: 0.95rem;
+          line-height: 1.6;
+          letter-spacing: -0.011em;
+          color: hsl(var(--muted-foreground) / 0.82);
+          text-wrap: pretty;
+        }
+        @media (min-width: 640px) {
+          .hero-support {
+            font-size: 1.0625rem;
+            line-height: 1.65;
+          }
+        }
+
+        .starter-rail {
+          display: flex;
+          width: 100%;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 0.3rem 0.1rem;
+          margin-top: 1.25rem;
+        }
+        @media (min-width: 640px) {
+          .starter-rail { margin-top: 1.5rem; }
+        }
+
+        .starter-link {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.45rem 0.8rem;
+          border-radius: 999px;
+          border: 0;
+          background: transparent;
+          color: hsl(var(--muted-foreground) / 0.92);
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+          font-size: 12.5px;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+          cursor: pointer;
+          transition:
+            color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+            background-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+            transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+            box-shadow 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .starter-link:hover {
+          color: hsl(var(--foreground));
+          background: hsl(var(--muted) / 0.6);
+          transform: translateY(-1px);
+        }
+        .starter-link:active { transform: translateY(0) scale(0.98); }
+        .starter-link:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px rgba(0,98,255,0.55);
+        }
+        .starter-link.is-active {
+          color: #0062FF;
+          background: rgba(0,98,255,0.08);
+          box-shadow: inset 0 0 0 1px rgba(0,98,255,0.18);
+        }
+        .dark .starter-link.is-active {
           color: #0CA8FF;
+          background: rgba(12,168,255,0.1);
+          box-shadow: inset 0 0 0 1px rgba(12,168,255,0.22);
+        }
+        .starter-sep {
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: hsl(var(--border) / 0.9);
+          flex-shrink: 0;
+        }
+
+        .compose-shell {
+          position: relative;
+          z-index: 3;
+          width: 100%;
+          max-width: 42rem;
+          border-radius: 24px;
+          padding: 5px;
+          background:
+            linear-gradient(160deg, hsl(var(--border) / 0.55), hsl(var(--border) / 0.15) 45%, hsl(var(--border) / 0.4));
+          box-shadow:
+            0 1px 0 hsl(var(--background) / 0.65) inset,
+            0 28px 60px -36px rgba(0, 98, 255, 0.28),
+            0 14px 36px -20px rgba(15, 23, 42, 0.2);
+        }
+        .dark .compose-shell {
+          background:
+            linear-gradient(160deg, hsl(var(--border) / 0.7), hsl(var(--border) / 0.2) 45%, hsl(var(--border) / 0.45));
+          box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.04) inset,
+            0 28px 60px -32px rgba(0, 98, 255, 0.35),
+            0 14px 36px -18px rgba(0, 0, 0, 0.55);
         }
 
         .compose-box {
           position: relative;
-          border-radius: 20px;
+          border-radius: 19px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .compose-box::before {
           content: '';
           position: absolute;
           inset: -1px;
-          border-radius: 21px;
+          border-radius: 20px;
           padding: 1px;
           background: linear-gradient(135deg, transparent 0%, rgba(0,98,255,0.18) 50%, transparent 100%);
           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -1146,68 +1783,38 @@ export default function Home() {
         .compose-box:focus-within::before { opacity: 1; }
 
         .compose-box-inner {
-          background: hsl(var(--background) / 0.85);
+          background: hsl(var(--background) / 0.9);
           backdrop-filter: blur(20px) saturate(180%);
-          border: 1px solid hsl(var(--border) / 0.6);
-          border-radius: 20px;
+          border: 1px solid hsl(var(--border) / 0.45);
+          border-radius: 19px;
           transition:
             border-color 0.25s ease,
             box-shadow 0.25s ease,
             min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .compose-box-inner:focus-within {
-          border-color: rgba(0,98,255,0.45);
+          border-color: rgba(0,98,255,0.4);
           box-shadow:
-            0 0 0 3px rgba(0,98,255,0.06),
-            0 8px 32px rgba(0,0,0,0.08),
-            0 2px 8px rgba(0,98,255,0.06);
+            0 0 0 3px rgba(0,98,255,0.05),
+            inset 0 1px 0 rgba(255,255,255,0.35);
         }
         .compose-box-inner:hover:not(:focus-within) {
-          border-color: hsl(var(--border) / 0.9);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+          border-color: hsl(var(--border) / 0.75);
         }
 
         .dark .compose-box-inner {
-          background: hsl(var(--card) / 0.75);
+          background: hsl(var(--card) / 0.82);
+        }
+        .dark .compose-box-inner:focus-within {
+          box-shadow:
+            0 0 0 3px rgba(0,98,255,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.06);
         }
 
         .toolbar-divider {
           width: 1px;
           height: 16px;
           background: hsl(var(--border) / 0.6);
-        }
-
-        .pill-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 12px;
-          border-radius: 99px;
-          border: 1px solid hsl(var(--border) / 0.5);
-          background: hsl(var(--background) / 0.5);
-          font-size: 12.5px;
-          color: hsl(var(--muted-foreground));
-          cursor: pointer;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-weight: 400;
-          letter-spacing: -0.01em;
-          backdrop-filter: blur(8px);
-        }
-        .pill-chip:hover {
-          border-color: rgba(0,98,255,0.35);
-          background: rgba(0,98,255,0.04);
-          color: hsl(var(--foreground));
-          transform: translateY(-1px);
-          box-shadow: 0 3px 10px rgba(0,98,255,0.08);
-        }
-
-        .pill-chip.is-active {
-          border-color: rgba(0,98,255,0.45);
-          background: rgba(0,98,255,0.08);
-          color: hsl(var(--foreground));
-          box-shadow: 0 3px 12px rgba(0,98,255,0.12);
         }
 
         .compose-prompt-slot {
@@ -1492,14 +2099,17 @@ export default function Home() {
         }
 
         .url-strip {
-          border-radius: 14px;
-          border: 1px solid hsl(var(--border) / 0.5);
-          background: hsl(var(--background) / 0.6);
+          border-radius: 16px;
+          border: 1px solid hsl(var(--border) / 0.45);
+          background: hsl(var(--background) / 0.55);
           backdrop-filter: blur(12px);
-          transition: all 0.25s ease;
+          transition:
+            border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+            box-shadow 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+            background-color 0.25s cubic-bezier(0.32, 0.72, 0, 1);
         }
         .url-strip:focus-within {
-          border-color: rgba(0,98,255,0.4);
+          border-color: rgba(0,98,255,0.35);
           box-shadow: 0 0 0 3px rgba(0,98,255,0.05);
         }
 
@@ -1567,11 +2177,10 @@ export default function Home() {
           display: flex;
           align-items: center;
           gap: 12px;
-          color: hsl(var(--muted-foreground) / 0.5);
-          font-size: 11.5px;
+          color: hsl(var(--muted-foreground) / 0.55);
+          font-size: 12px;
           font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          letter-spacing: -0.01em;
           font-weight: 500;
         }
         .or-divider::before, .or-divider::after {
@@ -1596,21 +2205,6 @@ export default function Home() {
           background: hsl(var(--muted) / 0.7);
           color: hsl(var(--foreground));
         }
-
-        .info-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 2px 8px;
-          border-radius: 99px;
-          background: rgba(12,168,255,0.08);
-          border: 1px solid rgba(12,168,255,0.2);
-          color: #0095ff;
-          font-size: 11.5px;
-          font-weight: 500;
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-        }
-        .dark .info-pill { color: #0CA8FF; background: rgba(12,168,255,0.06); }
 
         .pro-badge {
           display: inline-flex;
@@ -2123,643 +2717,640 @@ export default function Home() {
       `}</style>
 
       <div className="font-sans-dm relative flex min-h-svh w-full flex-col overflow-x-clip">
-        {/* Background layer */}
-        <div
-          ref={ringRef}
-          className="absolute inset-0 flex justify-center overflow-hidden"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          <div className="relative max-h-[953px] w-full">
-            <Image
-              src="/halo.png"
-              alt="Blue halo background behind the Squid Agent app builder"
-              width={2392}
-              height={1992}
-              className={`object-cover object-top mix-blend-screen transition-[opacity,transform] duration-700 ease-out ${
-                isHoveringRing
-                  ? "scale-[1.01] opacity-70 dark:opacity-15"
-                  : "scale-100 opacity-55 dark:opacity-10"
-              }`}
-              priority
-            />
-            <div
-              className="pointer-events-none absolute inset-0 transition-opacity duration-500"
-              style={{
-                background: isHoveringRing
-                  ? `radial-gradient(circle 500px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(59, 130, 246, 0.07) 0%, transparent 65%),
-                     radial-gradient(circle 250px at ${smoothMousePosition.x}% ${smoothMousePosition.y}%, rgba(99, 102, 241, 0.09) 0%, transparent 55%)`
-                  : "none",
-                opacity: isHoveringRing ? 1 : 0,
-              }}
-            />
-          </div>
-        </div>
+        <div className="hero-shell" data-testid="hero-shell">
+          <div className="relative z-20">
+            <Header onHelpClick={() => setShowHelpPanel(true)} />
 
-        <div className="isolate flex min-h-svh flex-col">
-          <Header onHelpClick={() => setShowHelpPanel(true)} />
+            <div className="hero-stage" data-testid="hero-stage">
+              <HeroPopoutShowcases onSelectPrompt={handleGalleryPromptSelect} />
+              {/* Hero copy */}
+              <div className="hero-copy" data-hero-popout-exclude="copy">
+                <h1 className="animate-fade-up">
+                  <span className="hero-brand">Squid</span>
+                  <span className="hero-headline">
+                    Build React apps you <em>own</em>.
+                  </span>
+                </h1>
 
-          <div className="mt-6 flex flex-1 flex-col items-center px-4 pb-4 pt-4 sm:mt-10 sm:pb-0 lg:mt-12 lg:pt-8">
-            {/* Hero text */}
-            <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
-              <div className="animate-fade-up">
-                <span className="info-pill">
-                  From idea to shipped React app
-                </span>
+                <p className="hero-support animate-fade-up-1">
+                  Research the live web, approve the plan, then generate
+                  verified code you can export.
+                </p>
               </div>
 
-              <h1 className="animate-fade-up-1 w-full text-center font-display tracking-tight text-foreground">
-                <span className="block text-[2.45rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.25rem]">
-                  Turn ideas
-                </span>
-                <span className="hero-accent mt-0.5 block text-[2.45rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.25rem]">
-                  into apps
-                </span>
-              </h1>
+              {/* Main form */}
+              <form
+                id="builder"
+                data-hero-popout-exclude="compose"
+                className="animate-fade-up-2 relative z-[3] w-full max-w-2xl pt-8 sm:pt-10 lg:pt-12"
+                action={async (formData) => {
+                  setIsCheckingEligibility(true);
+                  const currentModel =
+                    (formData.get("model") as string) || model;
 
-              <p className="animate-fade-up-2 max-w-md text-center text-sm leading-relaxed text-muted-foreground/80 sm:text-base">
-                Research the web, approve the plan, then build and ship React
-                code you own.
-              </p>
-            </div>
+                  // Require authentication before allowing chat creation
+                  const session = await authClient.getSession();
+                  if (!session.data) {
+                    toast.error("Please sign in to create a project");
+                    router.push("/sign-in?callbackUrl=/");
+                    setIsCheckingEligibility(false);
+                    return;
+                  }
 
-            {/* Main form */}
-            <form
-              id="builder"
-              className="animate-fade-up-3 relative w-full max-w-2xl pt-6 sm:pt-8 lg:pt-12"
-              action={async (formData) => {
-                setIsCheckingEligibility(true);
-                const currentModel = (formData.get("model") as string) || model;
+                  try {
+                    const checkResponse = await fetch(
+                      `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
+                    );
+                    if (checkResponse.ok) {
+                      const eligibility = await checkResponse.json();
+                      if (!eligibility.canCreate) {
+                        if (eligibility.error === "PROJECT_LIMIT_REACHED") {
+                          showProjectLimitPricing(
+                            eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
+                          );
+                          setIsCheckingEligibility(false);
+                          return;
+                        }
 
-                // Require authentication before allowing chat creation
-                const session = await authClient.getSession();
-                if (!session.data) {
-                  toast.error("Please sign in to create a project");
-                  router.push("/sign-in?callbackUrl=/");
-                  setIsCheckingEligibility(false);
-                  return;
-                }
-
-                try {
-                  const checkResponse = await fetch(
-                    `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
-                  );
-                  if (checkResponse.ok) {
-                    const eligibility = await checkResponse.json();
-                    if (!eligibility.canCreate) {
-                      if (eligibility.error === "PROJECT_LIMIT_REACHED") {
-                        showProjectLimitPricing(
-                          eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
+                        const cost =
+                          eligibility.modelCost ||
+                          getModelCreditHoldCost(currentModel);
+                        toast.error(
+                          `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
                         );
+                        setShowPricingModal(true);
                         setIsCheckingEligibility(false);
                         return;
                       }
-
-                      const cost =
-                        eligibility.modelCost ||
-                        getModelCreditHoldCost(currentModel);
-                      toast.error(
-                        `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
-                      );
-                      setShowPricingModal(true);
-                      setIsCheckingEligibility(false);
-                      return;
                     }
+                  } catch (error) {
+                    console.error("Error checking eligibility:", error);
                   }
-                } catch (error) {
-                  console.error("Error checking eligibility:", error);
-                }
-                setIsCheckingEligibility(false);
+                  setIsCheckingEligibility(false);
 
-                startTransition(async () => {
-                  try {
-                    const { model, quality } = Object.fromEntries(formData);
-                    // Always submit from React state so template mode and
-                    // freeform share one source of truth (no parallel hidden input).
-                    const submittedPrompt = prompt.trim();
-                    assert.ok(submittedPrompt.length > 0);
-                    assert.ok(typeof model === "string");
-                    assert.ok(quality === "high" || quality === "low");
+                  startTransition(async () => {
+                    try {
+                      const { model, quality } = Object.fromEntries(formData);
+                      // Always submit from React state so template mode and
+                      // freeform share one source of truth (no parallel hidden input).
+                      const submittedPrompt = prompt.trim();
+                      assert.ok(submittedPrompt.length > 0);
+                      assert.ok(typeof model === "string");
+                      assert.ok(quality === "high" || quality === "low");
 
-                    const { chatId, lastMessageId } =
-                      await createChatMutation.mutateAsync({
-                        prompt: submittedPrompt,
-                        model,
-                        quality,
-                        screenshotUrl,
-                        screenshotData,
-                        providerIds: selectedProviderIds,
+                      const { chatId, lastMessageId } =
+                        await createChatMutation.mutateAsync({
+                          prompt: submittedPrompt,
+                          model,
+                          quality,
+                          screenshotUrl,
+                          screenshotData,
+                          providerIds: selectedProviderIds,
+                        });
+
+                      plausible("Project Created", {
+                        props: {
+                          source: "homepage",
+                          planMode: quality === "high",
+                          hasScreenshot: Boolean(
+                            screenshotData || screenshotUrl,
+                          ),
+                          timeToFirstPromptMs: promptStartedAtRef.current
+                            ? Date.now() - promptStartedAtRef.current
+                            : 0,
+                        },
                       });
 
-                    plausible("Project Created", {
-                      props: {
-                        source: "homepage",
-                        planMode: quality === "high",
-                        hasScreenshot: Boolean(screenshotData || screenshotUrl),
-                        timeToFirstPromptMs: promptStartedAtRef.current
-                          ? Date.now() - promptStartedAtRef.current
-                          : 0,
-                      },
-                    });
+                      const streamPromise = fetchCompletionStream({
+                        messageId: lastMessageId,
+                        model,
+                        screenshotData,
+                      });
 
-                    const streamPromise = fetchCompletionStream({
-                      messageId: lastMessageId,
-                      model,
-                      screenshotData,
-                    });
-
-                    startTransition(() => {
-                      setStreamPromise(streamPromise);
-                      router.push(`/chats/${chatId}`);
-                    });
-                  } catch (error: unknown) {
-                    const message = getErrorMessage(
-                      error,
-                      "Failed to create project",
-                    );
-                    if (message.includes("free projects")) {
-                      showProjectLimitPricing();
-                      return;
+                      startTransition(() => {
+                        setStreamPromise(streamPromise);
+                        router.push(`/chats/${chatId}`);
+                      });
+                    } catch (error: unknown) {
+                      const message = getErrorMessage(
+                        error,
+                        "Failed to create project",
+                      );
+                      if (message.includes("free projects")) {
+                        showProjectLimitPricing();
+                        return;
+                      }
+                      toast.error(message);
                     }
-                    toast.error(message);
-                  }
-                });
-              }}
-            >
-              <Fieldset className="min-w-0">
-                {/* Compose box */}
-                <div className="compose-box w-full">
-                  <div className="compose-box-inner relative w-full pb-16 shadow-lg shadow-black/5 sm:pb-11">
-                    {/* Screenshot preview */}
-                    {screenshotLoading && (
-                      <div className="mx-3 mt-3">
-                        <div className="flex h-[52px] w-[60px] animate-pulse items-center justify-center rounded-xl bg-muted/60">
-                          <Spinner />
-                        </div>
-                      </div>
-                    )}
-                    {(screenshotUrl || screenshotData) &&
-                      !screenshotLoading && (
-                        <div
-                          className={`${isPending ? "invisible" : ""} relative mx-3 mt-3 inline-block`}
-                        >
-                          <div className="screenshot-thumb">
-                            <img
-                              alt="screenshot"
-                              src={screenshotData ?? screenshotUrl}
-                              className="h-[52px] w-[60px] object-cover"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border/50 transition-colors hover:text-foreground dark:bg-card"
-                            onClick={clearScreenshot}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              className="size-3.5"
-                            >
-                              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-
-                    {/* Prompt input */}
-                    <div
-                      className={`compose-prompt-slot ${activeTemplate ? "is-template" : ""}`}
-                    >
-                      {activeTemplate ? (
-                        <div
-                          key={activeTemplate.id}
-                          className="compose-prompt-enter"
-                        >
-                          <PromptTemplateEditor
-                            template={activeTemplate}
-                            values={templateValues}
-                            onValuesChange={setTemplateValues}
-                            onCompiledPromptChange={
-                              handleTemplateCompiledPrompt
-                            }
-                            onExitTemplate={handleExitTemplate}
-                          />
-                        </div>
-                      ) : (
-                        <div key="freeform" className="compose-prompt-enter">
-                          <Textarea
-                            ref={textareaRef}
-                            placeholder="Build me a budgeting app..."
-                            required
-                            name="prompt"
-                            className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
-                            value={prompt}
-                            onChange={(e) => {
-                              if (
-                                e.target.value &&
-                                promptStartedAtRef.current === null
-                              ) {
-                                promptStartedAtRef.current = Date.now();
-                                plausible("Prompt Started", {
-                                  props: {
-                                    source: "homepage",
-                                    method: "typing",
-                                  },
-                                });
-                              }
-                              setPrompt(e.target.value);
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" && !event.shiftKey) {
-                                event.preventDefault();
-                                const target = event.target;
-                                if (!(target instanceof HTMLTextAreaElement))
-                                  return;
-                                target.closest("form")?.requestSubmit();
-                              }
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Toolbar */}
-                    <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
-                      {/* Left controls */}
-                      <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-                        {/* Model selector: premium trigger */}
-                        <Select.Root
-                          name="model"
-                          open={isModelSelectOpen}
-                          value={model}
-                          onOpenChange={handleModelSelectOpenChange}
-                          onValueChange={handleModelChange}
-                        >
-                          <Select.Trigger className="model-trigger">
-                            <span className="model-status-dot" />
-                            <Select.Value aria-label={model}>
-                              <span className="flex min-w-0 items-center gap-1.5">
-                                <span className="model-trigger-label">
-                                  {currentModelOption?.label ?? "Select model"}
-                                </span>
-                                {currentModelOption?.paid && (
-                                  <span
-                                    className={
-                                      currentModelOption.group === "premium"
-                                        ? "premium-badge"
-                                        : "pro-badge"
-                                    }
-                                  >
-                                    <Sparkles className="size-2.5" />
-                                    {currentModelOption.group === "premium"
-                                      ? "PREMIUM"
-                                      : "PRO"}
-                                  </span>
-                                )}
-                              </span>
-                            </Select.Value>
-                            <Select.Icon>
-                              <ChevronDownIcon className="size-3 opacity-50" />
-                            </Select.Icon>
-                          </Select.Trigger>
-                          <Select.Portal>
-                            <Select.Content
-                              position="popper"
-                              side="top"
-                              align="start"
-                              sideOffset={8}
-                              collisionPadding={12}
-                              className="model-select-content max-w-[calc(100vw-1.5rem)] sm:min-w-[226px]"
-                            >
-                              <div className="model-select-header">
-                                <div className="model-select-header-title">
-                                  Choose a model
-                                </div>
-                                <div className="model-select-header-sub">
-                                  Swap any time - cost updates instantly
-                                </div>
-                              </div>
-                              <Select.Viewport className="p-1">
-                                {[
-                                  ...(modelOptionsByGroup.free.length > 0
-                                    ? [
-                                        {
-                                          label: "Starter Models",
-                                          models: modelOptionsByGroup.free,
-                                        },
-                                      ]
-                                    : []),
-                                  ...(modelOptionsByGroup.paid.length > 0
-                                    ? [
-                                        {
-                                          label: "Efficient & Advanced Models",
-                                          models: modelOptionsByGroup.paid,
-                                        },
-                                      ]
-                                    : []),
-                                  ...(modelOptionsByGroup.premium.length > 0
-                                    ? [
-                                        {
-                                          label: "Premium Models",
-                                          models: modelOptionsByGroup.premium,
-                                        },
-                                      ]
-                                    : []),
-                                ].map((group) => (
-                                  <Select.Group key={group.label}>
-                                    <Select.Label className="px-2 pb-0.5 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
-                                      {group.label}
-                                    </Select.Label>
-                                    {group.models.map((m) => {
-                                      const isLocked = !canUseModel(m.value);
-                                      const creditRange = getModelCreditRange(
-                                        m.value,
-                                      );
-                                      const creditLabel =
-                                        creditRange.min === creditRange.max
-                                          ? `${creditRange.min}`
-                                          : `from ${creditRange.min}`;
-                                      const creditBadgeClass =
-                                        getCreditBadgeClass(m.group);
-                                      const tierDotClass =
-                                        m.group === "premium"
-                                          ? "is-premium"
-                                          : m.group === "free"
-                                            ? "is-free"
-                                            : "is-pro";
-
-                                      return (
-                                        <Select.Item
-                                          key={m.value}
-                                          value={m.value}
-                                          disabled={isLocked}
-                                          onClick={() => {
-                                            if (isLocked)
-                                              setShowPricingModal(true);
-                                          }}
-                                          onFocus={restoreModelSelectScroll}
-                                          className={`model-item ${isLocked ? "opacity-50" : ""}`}
-                                        >
-                                          <div className="flex min-w-0 items-center gap-2">
-                                            <span
-                                              className={`model-item-tier-dot ${tierDotClass}`}
-                                            />
-                                            <Select.ItemText
-                                              className={
-                                                m.free
-                                                  ? "font-medium text-emerald-600 dark:text-emerald-400"
-                                                  : "text-foreground"
-                                              }
-                                            >
-                                              {m.label}
-                                            </Select.ItemText>
-                                            {isLocked && (
-                                              <span
-                                                className={
-                                                  m.group === "premium"
-                                                    ? "premium-badge"
-                                                    : "pro-badge"
-                                                }
-                                              >
-                                                <Sparkles className="size-2" />
-                                                {m.group === "premium"
-                                                  ? "PREMIUM"
-                                                  : "PRO"}
-                                              </span>
-                                            )}
-                                          </div>
-                                          <div className="flex flex-shrink-0 items-center gap-2">
-                                            <span
-                                              className={`model-credit-pill ${creditBadgeClass}`}
-                                            >
-                                              {creditLabel}
-                                              <Coins
-                                                className={`size-2 ${creditBadgeClass}`}
-                                              />
-                                            </span>
-                                            <Select.ItemIndicator>
-                                              <CheckIcon className="size-3.5 text-primary" />
-                                            </Select.ItemIndicator>
-                                          </div>
-                                        </Select.Item>
-                                      );
-                                    })}
-                                  </Select.Group>
-                                ))}
-                              </Select.Viewport>
-                              <Select.Arrow />
-                            </Select.Content>
-                          </Select.Portal>
-                        </Select.Root>
-
-                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                        <ApiSelectionDialog
-                          selectedProviderIds={selectedProviderIds}
-                          onSelectionChange={setSelectedProviderIds}
-                        />
-
-                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                        {/* Plan mode */}
-                        <input type="hidden" name="quality" value={quality} />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setQuality((current) =>
-                              current === "high" ? "low" : "high",
-                            )
-                          }
-                          aria-pressed={quality === "high"}
-                          aria-label="Plan mode"
-                          title="Plan the project structure before building"
-                          className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
-                        >
-                          <Sparkles className="size-3" aria-hidden="true" />
-                          <span className="hidden sm:inline">Plan mode</span>
-                        </button>
-
-                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                        {/* Prompt Builder */}
-                        <button
-                          type="button"
-                          onClick={() => setShowPromptBuilder(true)}
-                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-                          title="Enhance your prompt with AI"
-                        >
-                          <span className="hidden sm:inline">Enhance</span>
-                        </button>
-
-                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                        {/* Upload */}
-                        <div className="flex items-center gap-0.5">
-                          <label
-                            htmlFor="screenshot"
-                            className="upload-btn"
-                            title="Attach image"
-                          >
-                            <UploadIcon className="size-[15px]" />
-                          </label>
-                          <input
-                            id="screenshot"
-                            type="file"
-                            accept="image/png, image/jpeg, image/webp"
-                            onChange={handleScreenshotUpload}
-                            className="hidden"
-                            ref={fileInputRef}
-                          />
-                          <div className="relative hidden sm:block">
-                            <Info className="peer h-3 w-3 cursor-help text-muted-foreground/40 transition-colors hover:text-muted-foreground/70" />
-                            <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
-                              <p className="mb-1 font-semibold">
-                                Supported formats
-                              </p>
-                              <p className="text-muted-foreground">
-                                PNG, JPEG, WebP
-                              </p>
-                              <p className="mt-1 text-muted-foreground/70">
-                                Upload a screenshot to recreate it in code
-                              </p>
-                              <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                  });
+                }}
+              >
+                <Fieldset className="min-w-0">
+                  {/* Compose box */}
+                  <div className="compose-shell">
+                    <div className="compose-box w-full">
+                      <div className="compose-box-inner relative w-full pb-16 sm:pb-11">
+                        {/* Screenshot preview */}
+                        {screenshotLoading && (
+                          <div className="mx-3 mt-3">
+                            <div className="flex h-[52px] w-[60px] animate-pulse items-center justify-center rounded-xl bg-muted/60">
+                              <Spinner />
                             </div>
                           </div>
+                        )}
+                        {(screenshotUrl || screenshotData) &&
+                          !screenshotLoading && (
+                            <div
+                              className={`${isPending ? "invisible" : ""} relative mx-3 mt-3 inline-block`}
+                            >
+                              <div className="screenshot-thumb">
+                                <img
+                                  alt="screenshot"
+                                  src={screenshotData ?? screenshotUrl}
+                                  className="h-[52px] w-[60px] object-cover"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border/50 transition-colors hover:text-foreground dark:bg-card"
+                                onClick={clearScreenshot}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                  className="size-3.5"
+                                >
+                                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+
+                        {/* Prompt input */}
+                        <div
+                          className={`compose-prompt-slot ${activeTemplate ? "is-template" : ""}`}
+                        >
+                          {activeTemplate ? (
+                            <div
+                              key={activeTemplate.id}
+                              className="compose-prompt-enter"
+                            >
+                              <PromptTemplateEditor
+                                template={activeTemplate}
+                                values={templateValues}
+                                onValuesChange={setTemplateValues}
+                                onCompiledPromptChange={
+                                  handleTemplateCompiledPrompt
+                                }
+                                onExitTemplate={handleExitTemplate}
+                              />
+                            </div>
+                          ) : (
+                            <div
+                              key="freeform"
+                              className="compose-prompt-enter"
+                            >
+                              <Textarea
+                                ref={textareaRef}
+                                placeholder="Build me a budgeting app..."
+                                required
+                                name="prompt"
+                                className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
+                                value={prompt}
+                                onChange={(e) => {
+                                  if (
+                                    e.target.value &&
+                                    promptStartedAtRef.current === null
+                                  ) {
+                                    promptStartedAtRef.current = Date.now();
+                                    plausible("Prompt Started", {
+                                      props: {
+                                        source: "homepage",
+                                        method: "typing",
+                                      },
+                                    });
+                                  }
+                                  setPrompt(e.target.value);
+                                }}
+                                onKeyDown={(event) => {
+                                  if (
+                                    event.key === "Enter" &&
+                                    !event.shiftKey
+                                  ) {
+                                    event.preventDefault();
+                                    const target = event.target;
+                                    if (
+                                      !(target instanceof HTMLTextAreaElement)
+                                    )
+                                      return;
+                                    target.closest("form")?.requestSubmit();
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
-                      </div>
 
-                      {/* Submit button */}
-                      <Button
-                        type="submit"
-                        disabled={
-                          screenshotLoading ||
-                          prompt.length === 0 ||
-                          (activeTemplate !== null &&
-                            !isPromptTemplateReady(
-                              activeTemplate,
-                              templateValues,
-                            )) ||
-                          isCheckingEligibility ||
-                          isPending
-                        }
-                        className="build-btn group"
-                      >
-                        Build
-                        <Spinner loading={isCheckingEligibility || isPending}>
-                          <img
-                            src="/image.png"
-                            alt="Build"
-                            className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
+                        {/* Toolbar */}
+                        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
+                          {/* Left controls */}
+                          <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+                            {/* Model selector: premium trigger */}
+                            <Select.Root
+                              name="model"
+                              open={isModelSelectOpen}
+                              value={model}
+                              onOpenChange={handleModelSelectOpenChange}
+                              onValueChange={handleModelChange}
+                            >
+                              <Select.Trigger className="model-trigger">
+                                <span className="model-status-dot" />
+                                <Select.Value aria-label={model}>
+                                  <span className="flex min-w-0 items-center gap-1.5">
+                                    <span className="model-trigger-label">
+                                      {currentModelOption?.label ??
+                                        "Select model"}
+                                    </span>
+                                    {currentModelOption?.paid && (
+                                      <span
+                                        className={
+                                          currentModelOption.group === "premium"
+                                            ? "premium-badge"
+                                            : "pro-badge"
+                                        }
+                                      >
+                                        <Sparkles className="size-2.5" />
+                                        {currentModelOption.group === "premium"
+                                          ? "PREMIUM"
+                                          : "PRO"}
+                                      </span>
+                                    )}
+                                  </span>
+                                </Select.Value>
+                                <Select.Icon>
+                                  <ChevronDownIcon className="size-3 opacity-50" />
+                                </Select.Icon>
+                              </Select.Trigger>
+                              <Select.Portal>
+                                <Select.Content
+                                  position="popper"
+                                  side="top"
+                                  align="start"
+                                  sideOffset={8}
+                                  collisionPadding={12}
+                                  className="model-select-content max-w-[calc(100vw-1.5rem)] sm:min-w-[226px]"
+                                >
+                                  <div className="model-select-header">
+                                    <div className="model-select-header-title">
+                                      Choose a model
+                                    </div>
+                                    <div className="model-select-header-sub">
+                                      Swap any time - cost updates instantly
+                                    </div>
+                                  </div>
+                                  <Select.Viewport className="p-1">
+                                    {[
+                                      ...(modelOptionsByGroup.free.length > 0
+                                        ? [
+                                            {
+                                              label: "Starter Models",
+                                              models: modelOptionsByGroup.free,
+                                            },
+                                          ]
+                                        : []),
+                                      ...(modelOptionsByGroup.paid.length > 0
+                                        ? [
+                                            {
+                                              label:
+                                                "Efficient & Advanced Models",
+                                              models: modelOptionsByGroup.paid,
+                                            },
+                                          ]
+                                        : []),
+                                      ...(modelOptionsByGroup.premium.length > 0
+                                        ? [
+                                            {
+                                              label: "Premium Models",
+                                              models:
+                                                modelOptionsByGroup.premium,
+                                            },
+                                          ]
+                                        : []),
+                                    ].map((group) => (
+                                      <Select.Group key={group.label}>
+                                        <Select.Label className="px-2 pb-0.5 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+                                          {group.label}
+                                        </Select.Label>
+                                        {group.models.map((m) => {
+                                          const isLocked = !canUseModel(
+                                            m.value,
+                                          );
+                                          const creditRange =
+                                            getModelCreditRange(m.value);
+                                          const creditLabel =
+                                            creditRange.min === creditRange.max
+                                              ? `${creditRange.min}`
+                                              : `from ${creditRange.min}`;
+                                          const creditBadgeClass =
+                                            getCreditBadgeClass(m.group);
+                                          const tierDotClass =
+                                            m.group === "premium"
+                                              ? "is-premium"
+                                              : m.group === "free"
+                                                ? "is-free"
+                                                : "is-pro";
+
+                                          return (
+                                            <Select.Item
+                                              key={m.value}
+                                              value={m.value}
+                                              disabled={isLocked}
+                                              onClick={() => {
+                                                if (isLocked)
+                                                  setShowPricingModal(true);
+                                              }}
+                                              onFocus={restoreModelSelectScroll}
+                                              className={`model-item ${isLocked ? "opacity-50" : ""}`}
+                                            >
+                                              <div className="flex min-w-0 items-center gap-2">
+                                                <span
+                                                  className={`model-item-tier-dot ${tierDotClass}`}
+                                                />
+                                                <Select.ItemText
+                                                  className={
+                                                    m.free
+                                                      ? "font-medium text-emerald-600 dark:text-emerald-400"
+                                                      : "text-foreground"
+                                                  }
+                                                >
+                                                  {m.label}
+                                                </Select.ItemText>
+                                                {isLocked && (
+                                                  <span
+                                                    className={
+                                                      m.group === "premium"
+                                                        ? "premium-badge"
+                                                        : "pro-badge"
+                                                    }
+                                                  >
+                                                    <Sparkles className="size-2" />
+                                                    {m.group === "premium"
+                                                      ? "PREMIUM"
+                                                      : "PRO"}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <div className="flex flex-shrink-0 items-center gap-2">
+                                                <span
+                                                  className={`model-credit-pill ${creditBadgeClass}`}
+                                                >
+                                                  {creditLabel}
+                                                  <Coins
+                                                    className={`size-2 ${creditBadgeClass}`}
+                                                  />
+                                                </span>
+                                                <Select.ItemIndicator>
+                                                  <CheckIcon className="size-3.5 text-primary" />
+                                                </Select.ItemIndicator>
+                                              </div>
+                                            </Select.Item>
+                                          );
+                                        })}
+                                      </Select.Group>
+                                    ))}
+                                  </Select.Viewport>
+                                  <Select.Arrow />
+                                </Select.Content>
+                              </Select.Portal>
+                            </Select.Root>
+
+                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
+                            <ApiSelectionDialog
+                              selectedProviderIds={selectedProviderIds}
+                              onSelectionChange={setSelectedProviderIds}
+                            />
+
+                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
+                            {/* Plan mode */}
+                            <input
+                              type="hidden"
+                              name="quality"
+                              value={quality}
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQuality((current) =>
+                                  current === "high" ? "low" : "high",
+                                )
+                              }
+                              aria-pressed={quality === "high"}
+                              aria-label="Plan mode"
+                              title="Plan the project structure before building"
+                              className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
+                            >
+                              <Sparkles className="size-3" aria-hidden="true" />
+                              <span className="hidden sm:inline">
+                                Plan mode
+                              </span>
+                            </button>
+
+                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
+                            {/* Prompt Builder */}
+                            <button
+                              type="button"
+                              onClick={() => setShowPromptBuilder(true)}
+                              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                              title="Enhance your prompt with AI"
+                            >
+                              <span className="hidden sm:inline">Enhance</span>
+                            </button>
+
+                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
+                            {/* Upload */}
+                            <div className="flex items-center gap-0.5">
+                              <label
+                                htmlFor="screenshot"
+                                className="upload-btn"
+                                title="Attach image"
+                              >
+                                <UploadIcon className="size-[15px]" />
+                              </label>
+                              <input
+                                id="screenshot"
+                                type="file"
+                                accept="image/png, image/jpeg, image/webp"
+                                onChange={handleScreenshotUpload}
+                                className="hidden"
+                                ref={fileInputRef}
+                              />
+                              <div className="relative hidden sm:block">
+                                <Info className="peer h-3 w-3 cursor-help text-muted-foreground/40 transition-colors hover:text-muted-foreground/70" />
+                                <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
+                                  <p className="mb-1 font-semibold">
+                                    Supported formats
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    PNG, JPEG, WebP
+                                  </p>
+                                  <p className="mt-1 text-muted-foreground/70">
+                                    Upload a screenshot to recreate it in code
+                                  </p>
+                                  <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Submit button */}
+                          <Button
+                            type="submit"
+                            disabled={
+                              screenshotLoading ||
+                              prompt.length === 0 ||
+                              (activeTemplate !== null &&
+                                !isPromptTemplateReady(
+                                  activeTemplate,
+                                  templateValues,
+                                )) ||
+                              isCheckingEligibility ||
+                              isPending
+                            }
+                            className="build-btn group"
+                          >
+                            Build
+                            <Spinner
+                              loading={isCheckingEligibility || isPending}
+                            >
+                              <img
+                                src="/image.png"
+                                alt="Build"
+                                className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
+                              />
+                            </Spinner>
+                          </Button>
+                        </div>
+
+                        {/* Loading overlay */}
+                        {(isPending || isScrapingUrl) && (
+                          <LoadingMessage
+                            isHighQuality={quality === "high"}
+                            screenshotUrl={screenshotUrl ?? screenshotData}
+                            isScrapingUrl={isScrapingUrl}
                           />
-                        </Spinner>
-                      </Button>
-                    </div>
-
-                    {/* Loading overlay */}
-                    {(isPending || isScrapingUrl) && (
-                      <LoadingMessage
-                        isHighQuality={quality === "high"}
-                        screenshotUrl={screenshotUrl ?? screenshotData}
-                        isScrapingUrl={isScrapingUrl}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Suggested prompts */}
-                <div className="mt-4 flex w-full flex-wrap justify-center gap-2 sm:mt-5">
-                  {PROMPT_TEMPLATES.map((template) => (
-                    <button
-                      key={template.id}
-                      type="button"
-                      onClick={() => activateTemplate(template)}
-                      className={`pill-chip ${activeTemplate?.id === template.id ? "is-active" : ""}`}
-                      aria-pressed={activeTemplate?.id === template.id}
-                    >
-                      {template.shortLabel}
-                    </button>
-                  ))}
-                  {SUGGESTED_PROMPTS.map((v) => (
-                    <button
-                      key={v.title}
-                      type="button"
-                      onClick={() => {
-                        setStarterPrompt(v.description, v.title);
-                      }}
-                      className="pill-chip"
-                    >
-                      {v.title}
-                    </button>
-                  ))}
-                </div>
-                {/* URL section */}
-                <div className="mb-6 mt-6 sm:mb-14 sm:mt-8">
-                  <div className="or-divider mb-5">or clone a site</div>
-
-                  <div className="flex justify-center">
-                    <div
-                      className={`url-strip group flex w-full max-w-[420px] items-center gap-3 px-4 py-2.5 ${
-                        urlInput.trim()
-                          ? "border-blue-500/35 bg-blue-50/20 dark:border-blue-500/25 dark:bg-blue-950/10"
-                          : ""
-                      } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
-                    >
-                      <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,box-shadow] duration-200 ${
-                          isScrapingUrl || urlInput.trim()
-                            ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
-                            : "bg-muted/70 text-muted-foreground/70"
-                        }`}
-                      >
-                        {isScrapingUrl ? (
-                          <Spinner className="size-3.5" />
-                        ) : (
-                          <Link2 className="size-3.5" />
                         )}
                       </div>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com"
-                        value={urlInput}
-                        onChange={(e) => setUrlInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && urlInput.trim()) {
-                            e.preventDefault();
-                            handleUrlScrape();
-                          }
-                        }}
-                        disabled={isScrapingUrl}
-                        className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
-                      />
-                      {urlInput.trim() && !isScrapingUrl && (
-                        <button
-                          type="button"
-                          onClick={handleUrlScrape}
-                          aria-label="Clone website"
-                          className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                        >
-                          <ArrowRightIcon className="size-3" />
-                        </button>
-                      )}
                     </div>
                   </div>
-                </div>
-              </Fieldset>
-            </form>
+
+                  {/* Suggested prompts */}
+                  <div className="starter-rail">
+                    {PROMPT_TEMPLATES.map((template, index) => (
+                      <div key={template.id} className="contents">
+                        {index > 0 ? (
+                          <span className="starter-sep" aria-hidden="true" />
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => activateTemplate(template)}
+                          className={`starter-link ${activeTemplate?.id === template.id ? "is-active" : ""}`}
+                          aria-pressed={activeTemplate?.id === template.id}
+                        >
+                          {template.shortLabel}
+                        </button>
+                      </div>
+                    ))}
+                    {SUGGESTED_PROMPTS.map((v) => (
+                      <div key={v.title} className="contents">
+                        <span className="starter-sep" aria-hidden="true" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStarterPrompt(v.description, v.title);
+                          }}
+                          className="starter-link"
+                        >
+                          {v.title}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {/* URL section */}
+                  <div
+                    className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10"
+                    data-hero-popout-exclude="clone"
+                  >
+                    <div className="or-divider mb-4">or clone a site</div>
+
+                    <div className="flex justify-center">
+                      <div
+                        className={`url-strip group flex w-full max-w-[420px] items-center gap-3 px-4 py-2.5 ${
+                          urlInput.trim()
+                            ? "border-blue-500/35 bg-blue-50/20 dark:border-blue-500/25 dark:bg-blue-950/10"
+                            : ""
+                        } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
+                      >
+                        <div
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,box-shadow] duration-200 ${
+                            isScrapingUrl || urlInput.trim()
+                              ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
+                              : "bg-muted/70 text-muted-foreground/70"
+                          }`}
+                        >
+                          {isScrapingUrl ? (
+                            <Spinner className="size-3.5" />
+                          ) : (
+                            <Link2 className="size-3.5" />
+                          )}
+                        </div>
+                        <Input
+                          type="url"
+                          placeholder="https://example.com"
+                          value={urlInput}
+                          onChange={(e) => setUrlInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && urlInput.trim()) {
+                              e.preventDefault();
+                              handleUrlScrape();
+                            }
+                          }}
+                          disabled={isScrapingUrl}
+                          className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
+                        />
+                        {urlInput.trim() && !isScrapingUrl && (
+                          <button
+                            type="button"
+                            onClick={handleUrlScrape}
+                            aria-label="Clone website"
+                            className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                          >
+                            <ArrowRightIcon className="size-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Fieldset>
+              </form>
+            </div>
           </div>
-
-          <HomepageAnswerSection />
-          <HomepageLandingPagesSection />
-          <AiBuilderFeatureComparison variant="homepage" />
-          <BuiltWithSquidSection />
-          <HomepageFaqSection />
-          <HoverBrandLogo />
-
-          <HomepageFlowSection />
-          <LandingMacbookSection />
-          <Footer showPageLinks />
         </div>
+
+        <HomepageAnswerSection />
+        <HomepageLandingPagesSection />
+        <AiBuilderFeatureComparison variant="homepage" />
+        <BuiltWithSquidSection />
+        <HomepageFaqSection />
+        <HoverBrandLogo />
+
+        <HomepageFlowSection />
+        <LandingMacbookSection />
+        <Footer showPageLinks />
 
         <PricingModal
           open={showPricingModal}

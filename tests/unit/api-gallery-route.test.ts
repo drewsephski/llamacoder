@@ -50,7 +50,9 @@ describe("/api/gallery", () => {
   });
 
   it("only lists durable published gallery records", async () => {
-    const response = await GET();
+    const response = await GET(
+      new Request("http://localhost/api/gallery") as never,
+    );
 
     expect(response.status).toBe(200);
     expect(prismaMock.galleryPublication.findMany).toHaveBeenCalledWith(
@@ -59,6 +61,61 @@ describe("/api/gallery", () => {
       }),
     );
     await expect(response.json()).resolves.toEqual({ apps: [] });
+  });
+
+  it("returns all published gallery thumbnails for hero popouts", async () => {
+    prismaMock.galleryPublication.count.mockResolvedValue(2);
+    prismaMock.galleryPublication.findMany.mockResolvedValue([
+      {
+        id: "publication_1",
+        chatId: "chat_1",
+        userId: "owner_1",
+        slug: "focus-day",
+        title: "Focus Day",
+        description: "A calmer way to plan focused work.",
+        allowRemixes: true,
+        publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+        messageId: "message_1",
+        thumbnailUrl: "https://cdn.example/focus-day.png",
+        thumbnailStatus: "ready",
+        thumbnailCapturedMessageId: "message_1",
+        chat: { prompt: "Build me a focused daily planning app" },
+        user: { name: "Drew", image: null },
+      },
+      {
+        id: "publication_2",
+        chatId: "chat_2",
+        userId: "owner_2",
+        slug: "pending-app",
+        title: "Pending App",
+        description: "Still generating a preview.",
+        allowRemixes: false,
+        publishedAt: new Date("2026-01-02T00:00:00.000Z"),
+        messageId: "message_2",
+        thumbnailUrl: null,
+        thumbnailStatus: "pending",
+        thumbnailCapturedMessageId: null,
+        chat: { prompt: "Build me a pending app" },
+        user: { name: "Alex", image: null },
+      },
+    ]);
+
+    const response = await GET(
+      new Request("http://localhost/api/gallery?withThumbnails=true") as never,
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      images: [
+        {
+          src: "/api/gallery/publication_1/thumbnail?v=message_1",
+          alt: "Preview of Focus Day",
+          title: "Focus Day",
+          prompt: "Build me a focused daily planning app",
+          href: "/gallery/focus-day",
+        },
+      ],
+    });
   });
 
   it("publishes an owned assistant version with a stable project slug", async () => {

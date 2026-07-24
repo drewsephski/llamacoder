@@ -26,6 +26,7 @@ const publication = {
   thumbnailUrl: "https://assets.test/old.jpg",
   thumbnailStatus: "ready",
   thumbnailCapturedMessageId: "message_old",
+  chat: { prompt: "Build me a focused workspace app" },
   user: { name: "Squid creator", image: null },
 };
 
@@ -49,6 +50,7 @@ describe("gallery project thumbnail versions", () => {
       ownerChatId: "chat_1",
       thumbnailUrl: null,
       thumbnailStatus: "pending",
+      generationPrompt: "Build me a focused workspace app",
     });
   });
 

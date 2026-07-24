@@ -59,6 +59,7 @@ export async function getGalleryProjects({
         thumbnailUrl: true,
         thumbnailStatus: true,
         thumbnailCapturedMessageId: true,
+        chat: { select: { prompt: true } },
         user: { select: { name: true, image: true } },
       },
     }),
@@ -76,6 +77,7 @@ export async function getGalleryProjects({
       slug: row.slug,
       title: row.title,
       description: row.description,
+      generationPrompt: row.chat.prompt,
       allowRemixes: row.allowRemixes,
       publishedAt: row.publishedAt,
       thumbnailUrl: hasCurrentThumbnail
