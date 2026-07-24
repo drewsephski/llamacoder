@@ -1,4 +1,6 @@
+import ArrowRightIcon from "@/components/icons/arrow-right";
 import { ArrowRight, Check, ExternalLink, Minus, X } from "lucide-react";
+import Link from "next/link";
 
 type ComparisonVariant = "article" | "hub" | "homepage";
 type ProviderKey = "lovable" | "bolt" | "base44" | "v0" | "squid";
@@ -47,6 +49,88 @@ const providers: readonly Provider[] = [
 ] as const;
 
 const mobileProviders = [providers[4], ...providers.slice(0, 4)];
+
+const homepageSummaryProviders: readonly Provider[] = [
+  { key: "squid", label: "Squid Agent" },
+  {
+    key: "lovable",
+    label: "Lovable",
+    sourceHref: "https://docs.lovable.dev/introduction/credits-and-usage",
+  },
+  {
+    key: "bolt",
+    label: "Bolt.new",
+    sourceHref: "https://support.bolt.new/",
+  },
+  {
+    key: "v0",
+    label: "v0",
+    sourceHref: "https://v0.dev/docs",
+  },
+] as const;
+
+const homepageSummaryRows: readonly ComparisonRow[] = [
+  {
+    stage: "Planning",
+    feature: "Structured product interview",
+    detail: "Turn ambiguity into an approved plan before code generation.",
+    values: {
+      lovable: { status: "no", text: "Prompt-first workflow" },
+      bolt: { status: "no", text: "Prompt-first workflow" },
+      base44: { status: "no", text: "Prompt-first workflow" },
+      v0: { status: "no", text: "Prompt-first workflow" },
+      squid: { status: "yes", text: "Plan mode with approval gate" },
+    },
+  },
+  {
+    stage: "Quality",
+    feature: "Runtime verification",
+    detail: "Check the running preview, not just generated text.",
+    values: {
+      lovable: { status: "limited", text: "Try-to-fix preview errors" },
+      bolt: { status: "limited", text: "Restore-focused recovery" },
+      base44: { status: "limited", text: "Limited built-in verification" },
+      v0: { status: "no", text: "No equivalent workflow documented" },
+      squid: { status: "yes", text: "Checks + free preview repair" },
+    },
+  },
+  {
+    stage: "Ownership",
+    feature: "Full source-code control",
+    detail: "Inspect, edit, and export every project file.",
+    values: {
+      lovable: { status: "yes", text: "Download and Git sync" },
+      bolt: { status: "yes", text: "ZIP and GitHub" },
+      base44: { status: "yes", text: "Eject and GitHub" },
+      v0: { status: "yes", text: "Export and Git workflow" },
+      squid: { status: "yes", text: "Verified ZIP and GitHub publish" },
+    },
+  },
+  {
+    stage: "Models",
+    feature: "Multi-model selection",
+    detail: "Choose the model that fits the task and budget.",
+    values: {
+      lovable: { status: "limited", text: "Platform-managed models" },
+      bolt: { status: "limited", text: "Platform-managed models" },
+      base44: { status: "limited", text: "Platform-managed models" },
+      v0: { status: "limited", text: "Vercel-managed models" },
+      squid: { status: "yes", text: "Broad model catalog" },
+    },
+  },
+  {
+    stage: "Shipping",
+    feature: "Deploy anywhere",
+    detail: "Keep deployment choices outside a single host.",
+    values: {
+      lovable: { status: "limited", text: "Platform hosting focus" },
+      bolt: { status: "yes", text: "Multiple deploy paths" },
+      base44: { status: "limited", text: "Managed platform focus" },
+      v0: { status: "limited", text: "Vercel-centric workflow" },
+      squid: { status: "yes", text: "Export + GitHub + Vercel paths" },
+    },
+  },
+] as const;
 
 const rows: readonly ComparisonRow[] = [
   {
@@ -210,6 +294,11 @@ export function AiBuilderFeatureComparison({
   variant?: ComparisonVariant;
 }) {
   const isHomepage = variant === "homepage";
+  const activeProviders = isHomepage ? homepageSummaryProviders : providers;
+  const activeRows = isHomepage ? homepageSummaryRows : rows;
+  const activeMobileProviders = isHomepage
+    ? homepageSummaryProviders
+    : mobileProviders;
 
   return (
     <section
@@ -255,48 +344,51 @@ export function AiBuilderFeatureComparison({
                 : "max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7"
             }
           >
-            Choose the workflow that stays clear when a build fails, costs more
-            than expected, or needs to leave the platform.
+            {isHomepage
+              ? "Squid’s philosophy is planning first, verification before handoff, and code you can take anywhere."
+              : "Choose the workflow that stays clear when a build fails, costs more than expected, or needs to leave the platform."}
           </p>
         </div>
 
-        <div className="relative mt-8 overflow-hidden rounded-[22px] border border-primary/25 bg-primary/[0.045] p-5 sm:p-6">
-          <div
-            className="pointer-events-none absolute -right-12 -top-24 size-56 rounded-full bg-primary/10 blur-3xl"
-            aria-hidden="true"
-          />
-          <div className="relative grid gap-5 lg:grid-cols-[0.65fr_1.35fr] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-                The Squid handoff
-              </p>
-              <p className="mt-2 max-w-sm text-sm leading-6 text-foreground/75">
-                One visible trail from expected spend to a portable,
-                self-describing project.
-              </p>
+        {!isHomepage ? (
+          <div className="relative mt-8 overflow-hidden rounded-[22px] border border-primary/25 bg-primary/[0.045] p-5 sm:p-6">
+            <div
+              className="pointer-events-none absolute -right-12 -top-24 size-56 rounded-full bg-primary/10 blur-3xl"
+              aria-hidden="true"
+            />
+            <div className="relative grid gap-5 lg:grid-cols-[0.65fr_1.35fr] lg:items-center">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                  The Squid handoff
+                </p>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-foreground/75">
+                  One visible trail from expected spend to a portable,
+                  self-describing project.
+                </p>
+              </div>
+              <ol className="grid gap-3 sm:grid-cols-3 sm:gap-0">
+                {handoffSteps.map((step, index) => (
+                  <li key={step.stage} className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1 rounded-xl border border-primary/20 bg-background/65 px-4 py-3">
+                      <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+                        {step.stage}
+                      </span>
+                      <span className="mt-1 block text-sm font-medium text-foreground">
+                        {step.value}
+                      </span>
+                    </div>
+                    {index < handoffSteps.length - 1 ? (
+                      <ArrowRight
+                        className="hidden size-4 shrink-0 text-primary/60 sm:block"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
             </div>
-            <ol className="grid gap-3 sm:grid-cols-3 sm:gap-0">
-              {handoffSteps.map((step, index) => (
-                <li key={step.stage} className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1 rounded-xl border border-primary/20 bg-background/65 px-4 py-3">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
-                      {step.stage}
-                    </span>
-                    <span className="mt-1 block text-sm font-medium text-foreground">
-                      {step.value}
-                    </span>
-                  </div>
-                  {index < handoffSteps.length - 1 ? (
-                    <ArrowRight
-                      className="hidden size-4 shrink-0 text-primary/60 sm:block"
-                      aria-hidden="true"
-                    />
-                  ) : null}
-                </li>
-              ))}
-            </ol>
           </div>
-        </div>
+        ) : null}
 
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
           {(Object.keys(supportStyles) as SupportLevel[]).map((status) => {
@@ -321,7 +413,9 @@ export function AiBuilderFeatureComparison({
 
         <div className="mt-4 hidden overflow-hidden rounded-[22px] border border-border/80 bg-background shadow-[0_22px_60px_-46px_rgba(0,0,0,0.7)] lg:block">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
+            <table
+              className={`w-full border-collapse text-left text-sm ${isHomepage ? "min-w-[760px]" : "min-w-[1040px]"}`}
+            >
               <caption className="sr-only">
                 Feature comparison of Lovable, Bolt.new, Base44, v0, and Squid
                 Agent
@@ -330,15 +424,15 @@ export function AiBuilderFeatureComparison({
                 <tr className="bg-muted/55">
                   <th
                     scope="col"
-                    className="w-[20%] border-b border-border px-5 py-4 font-semibold"
+                    className={`border-b border-border px-5 py-4 font-semibold ${isHomepage ? "w-[28%]" : "w-[20%]"}`}
                   >
-                    What matters
+                    {isHomepage ? "Capability" : "What matters"}
                   </th>
-                  {providers.map((provider) => (
+                  {activeProviders.map((provider) => (
                     <th
                       key={provider.key}
                       scope="col"
-                      className={`w-[16%] border-b border-border px-4 py-4 font-semibold ${
+                      className={`border-b border-border px-4 py-4 font-semibold ${isHomepage ? "w-[18%]" : "w-[16%]"} ${
                         provider.key === "squid"
                           ? "bg-primary/[0.1] text-primary"
                           : ""
@@ -357,23 +451,29 @@ export function AiBuilderFeatureComparison({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {rows.map((row) => (
+                {activeRows.map((row) => (
                   <tr
                     key={row.feature}
                     className="align-top transition-colors odd:bg-muted/[0.12] hover:bg-muted/[0.22]"
                   >
                     <th scope="row" className="px-5 py-5">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/80">
-                        {row.stage}
-                      </span>
-                      <span className="mt-1.5 block font-semibold leading-5 text-foreground">
+                      {!isHomepage ? (
+                        <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/80">
+                          {row.stage}
+                        </span>
+                      ) : null}
+                      <span
+                        className={`block font-semibold leading-5 text-foreground ${isHomepage ? "" : "mt-1.5"}`}
+                      >
                         {row.feature}
                       </span>
-                      <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">
-                        {row.detail}
-                      </span>
+                      {!isHomepage ? (
+                        <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">
+                          {row.detail}
+                        </span>
+                      ) : null}
                     </th>
-                    {providers.map((provider) => {
+                    {activeProviders.map((provider) => {
                       const value = row.values[provider.key];
                       const isSquid = provider.key === "squid";
                       return (
@@ -390,7 +490,11 @@ export function AiBuilderFeatureComparison({
                               status={value.status}
                               isSquid={isSquid}
                             />
-                            <span>{value.text}</span>
+                            <span
+                              className={isHomepage ? "sr-only" : undefined}
+                            >
+                              {value.text}
+                            </span>
                           </span>
                         </td>
                       );
@@ -403,7 +507,7 @@ export function AiBuilderFeatureComparison({
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:hidden">
-          {mobileProviders.map((provider) => {
+          {activeMobileProviders.map((provider) => {
             const isSquid = provider.key === "squid";
             return (
               <article
@@ -433,7 +537,7 @@ export function AiBuilderFeatureComparison({
                     isSquid ? "sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0" : ""
                   }`}
                 >
-                  {rows.map((row) => {
+                  {activeRows.map((row) => {
                     const value = row.values[provider.key];
                     return (
                       <div
@@ -460,6 +564,18 @@ export function AiBuilderFeatureComparison({
             );
           })}
         </div>
+
+        {isHomepage ? (
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/compare"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border/80 bg-background px-5 text-sm font-semibold text-foreground transition-colors hover:border-blue-500/35 hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              See full comparison
+              <ArrowRightIcon className="size-4" />
+            </Link>
+          </div>
+        ) : null}
 
         <div className="mt-5 flex flex-col gap-3 border-t border-border/60 pt-5 text-xs leading-5 text-muted-foreground sm:flex-row sm:items-start sm:justify-between">
           <p className="max-w-2xl">

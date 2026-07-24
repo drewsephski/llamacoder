@@ -145,9 +145,9 @@ export function buildDirectBackendSetupRequest({
     action: "request_backend_setup",
     request: {
       id: `backend-setup-${messageId}`,
-      title: "Connect a backend before Squid builds",
+      title: "Start with the UI",
       description:
-        `Squid detected accounts or saved data in ${appSummary}. Connect Supabase so the generated app uses a real, secure backend instead of fake persistence.${dataDescription}`.trim(),
+        `Squid detected accounts or saved data in ${appSummary}. Build a UI-only preview first, or connect Supabase when you need a production-ready backend.${dataDescription}`.trim(),
       capabilities: [
         "Persistent data across refreshes and devices",
         "Browser-safe Supabase runtime configuration",

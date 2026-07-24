@@ -54,7 +54,6 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Macbook } from "@/components/ui/animated-3d-mac-book-air";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserCredits, useUserSession, useCreateChat } from "@/lib/queries";
@@ -82,6 +81,12 @@ import {
   type PromptTemplateValues,
 } from "@/lib/prompt-templates";
 import { AiBuilderFeatureComparison } from "@/components/ai-builder-feature-comparison";
+import {
+  ShowcaseProjectCard,
+  type ProjectCapability,
+} from "@/components/homepage/showcase-project-card";
+import { ProductWorkflowDemo } from "@/components/homepage/product-workflow-demo";
+import { HomepageScrollStatement } from "@/components/homepage/scroll-statement";
 import { uploadScreenshot } from "@/lib/s3-upload-client";
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
@@ -100,6 +105,7 @@ type BuiltWithSquidProject = {
   creatorName?: string;
   imageSrc?: string;
   imageAlt?: string;
+  capabilities?: readonly ProjectCapability[];
 };
 
 const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
@@ -113,6 +119,7 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     creatorName: "Drew Sepeczi",
     imageSrc: "/showcase/octagon-rankings.png",
     imageAlt: "Octagon Rankings UFC fighter rankings app built with Squid",
+    capabilities: ["Responsive", "Database", "API"],
   },
   {
     name: "Phoenix Design Lab",
@@ -122,6 +129,7 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     category: "Design agency",
     imageSrc: "/showcase/phoenix-design-lab.webp",
     imageAlt: "Phoenix Design Lab homepage generated with Squid",
+    capabilities: ["Responsive"],
   },
   {
     name: "PortfolioOS",
@@ -131,6 +139,7 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     category: "AI portfolio builder",
     imageSrc: "/showcase/portfolio-os.webp",
     imageAlt: "PortfolioOS homepage generated with Squid",
+    capabilities: ["Responsive", "Auth", "API"],
   },
   {
     name: "Slotflow",
@@ -140,6 +149,7 @@ const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
     category: "Event coordination",
     imageSrc: "/showcase/slotflow.webp",
     imageAlt: "Slotflow homepage generated with Squid",
+    capabilities: ["Responsive", "Database", "Auth"],
   },
 ];
 
@@ -150,6 +160,7 @@ type HomepageLandingPage = {
   description: string;
   imageSrc: string;
   imageAlt: string;
+  capabilities?: readonly ProjectCapability[];
 };
 
 const HOMEPAGE_LANDING_PAGES: readonly HomepageLandingPage[] = [
@@ -286,6 +297,25 @@ const HOMEPAGE_LANDING_PAGES: readonly HomepageLandingPage[] = [
   },
 ];
 
+const landingPageCapabilities: Partial<
+  Record<string, readonly ProjectCapability[]>
+> = {
+  "/axon": ["Responsive", "API"],
+  "/velorah": ["Responsive"],
+  "/mindloop": ["Responsive", "Database"],
+  "/cozypaws": ["Responsive", "Stripe"],
+  "/sentinel": ["Responsive", "Auth", "API"],
+  "/axion-studio": ["Responsive"],
+  "/design-rocket-certificates": ["Responsive"],
+  "/forma": ["Responsive", "API"],
+  "/terraelix": ["Responsive", "Stripe"],
+  "/mentality": ["Responsive", "Database"],
+  "/questly": ["Responsive", "API"],
+  "/rivr": ["Responsive", "Auth", "API"],
+  "/skyelite": ["Responsive"],
+  "/jack": ["Responsive"],
+};
+
 type HeroPopoutImage = {
   src: string;
   alt: string;
@@ -359,71 +389,31 @@ const homepageFaq = [
 const homepageNarrativeBlocks = [
   {
     stage: "01",
-    label: "Research + approve",
+    label: "Define",
     side: "left",
-    question: "Turn a rough idea into a clear plan.",
-    body: "Start with a prompt, screenshot, or URL. We gather source-backed context and ask only the decisions that affect the build.",
-    proofs: [
-      "Source-backed research you can inspect",
-      "Decision checkpoints, not endless questions",
-      "You approve the build plan",
-    ],
+    question: "Define",
+    body: "Squid interviews you and converts an ambiguous idea into a structured product plan.",
   },
   {
     stage: "02",
-    label: "Build + iterate",
+    label: "Build",
     side: "right",
-    question: "Generate real code, then refine quickly.",
-    body: "Create a production-style React project with live preview and file-level context, then make focused follow-up edits by chat or element selection.",
-    proofs: [
-      "React + TypeScript code generation",
-      "Live preview and file tree in one place",
-      "Precise edits without full rewrites",
-    ],
+    question: "Build",
+    body: "Multiple agents generate the interface, application logic, assets, and integrations.",
   },
   {
     stage: "03",
-    label: "Verify + recover",
+    label: "Verify and ship",
     side: "left",
-    question: "Validate continuously, with confidence to recover.",
-    body: "Run checks across files and preview, then get clear status. If needed, automatic recoverable repair fixes issues while preserving your previous state.",
-    proofs: [
-      "Static, accessibility, API, and runtime checks",
-      "Automatic repair attempts for recoverable issues",
-      "Version checkpoints with selective restore",
-    ],
-  },
-  {
-    stage: "04",
-    label: "Connect + ship",
-    side: "right",
-    question: "Ship confidently with full ownership.",
-    body: "Hook up supported services behind safe boundaries, then publish, deploy, or export a verified bundle you can run anywhere.",
-    proofs: [
-      "Safe API setup + health checks",
-      "GitHub publish and Vercel deploy paths",
-      "Portable source bundle with docs",
-    ],
+    question: "Verify and ship",
+    body: "Squid renders, tests, repairs, and prepares the project for deployment.",
   },
 ] as const;
 
-const homepageControlPromises = [
-  {
-    label: "Visible by default",
-    title: "See the evidence.",
-    body: "Inspect research sources, approved decisions, changed files, quality results, version diffs, and the receipt for each saved generation.",
-  },
-  {
-    label: "Predictable spend",
-    title: "Know the cost.",
-    body: "See the expected credit range before a run and the actual charge afterward. Failed initial generations are not charged, and preview repairs are free.",
-  },
-  {
-    label: "Safe rollback + export",
-    title: "Verify before shipping.",
-    body: "Restore checkpoints without losing unrelated work, then export a package with manifest, quality report, and deployment guidance before continuing.",
-  },
-] as const;
+const homepageOwnershipCopy = {
+  title: "Your app never disappears inside a proprietary editor.",
+  body: "Inspect every file, connect your own services, export the code, or deploy it wherever you choose.",
+} as const;
 
 const homepageFlowSteps = [
   {
@@ -1522,17 +1512,17 @@ export default function Home() {
           align-items: center;
           justify-content: flex-start;
           min-height: min(calc(100dvh - 4.5rem), 820px);
-          padding: 1.75rem 1.25rem 2.75rem;
+          padding: 2.5rem 1.25rem 2.75rem;
         }
         @media (min-width: 640px) {
           .hero-stage {
             min-height: min(calc(100dvh - 5.25rem), 860px);
-            padding: 2.75rem 1.5rem 3.75rem;
+            padding: 3.5rem 1.5rem 3.75rem;
           }
         }
         @media (min-width: 1024px) {
           .hero-stage {
-            padding-top: 3.5rem;
+            padding-top: 4.75rem;
             padding-bottom: 5rem;
           }
         }
@@ -1627,6 +1617,7 @@ export default function Home() {
           align-items: center;
           text-align: center;
           gap: 1rem;
+          padding-top: clamp(1rem, 4vh, 2.5rem);
         }
         @media (min-width: 640px) {
           .hero-copy { gap: 1.15rem; }
@@ -2714,633 +2705,629 @@ export default function Home() {
           .flow-node[data-active="true"] .flow-node-ring { animation: none; }
           .flow-artifact { opacity: 1; animation: none; }
         }
+
+        .showcase-rail {
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .showcase-rail::-webkit-scrollbar {
+          display: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .showcase-capabilities {
+            opacity: 1;
+            transform: none;
+          }
+          .showcase-preview-hint {
+            opacity: 0;
+          }
+        }
       `}</style>
 
       <div className="font-sans-dm relative flex min-h-svh w-full flex-col overflow-x-clip">
+        <Header onHelpClick={() => setShowHelpPanel(true)} />
+
         <div className="hero-shell" data-testid="hero-shell">
-          <div className="relative z-20">
-            <Header onHelpClick={() => setShowHelpPanel(true)} />
+          <div className="hero-stage" data-testid="hero-stage">
+            <HeroPopoutShowcases onSelectPrompt={handleGalleryPromptSelect} />
+            {/* Hero copy */}
+            <div className="hero-copy" data-hero-popout-exclude="copy">
+              <h1 className="animate-fade-up">
+                <span className="hero-brand">Squid</span>
+                <span className="hero-headline">
+                  Build React apps you <em>own</em>.
+                </span>
+              </h1>
 
-            <div className="hero-stage" data-testid="hero-stage">
-              <HeroPopoutShowcases onSelectPrompt={handleGalleryPromptSelect} />
-              {/* Hero copy */}
-              <div className="hero-copy" data-hero-popout-exclude="copy">
-                <h1 className="animate-fade-up">
-                  <span className="hero-brand">Squid</span>
-                  <span className="hero-headline">
-                    Build React apps you <em>own</em>.
-                  </span>
-                </h1>
+              <p className="hero-support animate-fade-up-1">
+                Research the live web, approve the plan, then generate verified
+                code you can export.
+              </p>
+            </div>
 
-                <p className="hero-support animate-fade-up-1">
-                  Research the live web, approve the plan, then generate
-                  verified code you can export.
-                </p>
-              </div>
+            {/* Main form */}
+            <form
+              id="builder"
+              data-hero-popout-exclude="compose"
+              className="animate-fade-up-2 relative z-[3] w-full max-w-2xl pt-8 sm:pt-10 lg:pt-12"
+              action={async (formData) => {
+                setIsCheckingEligibility(true);
+                const currentModel = (formData.get("model") as string) || model;
 
-              {/* Main form */}
-              <form
-                id="builder"
-                data-hero-popout-exclude="compose"
-                className="animate-fade-up-2 relative z-[3] w-full max-w-2xl pt-8 sm:pt-10 lg:pt-12"
-                action={async (formData) => {
-                  setIsCheckingEligibility(true);
-                  const currentModel =
-                    (formData.get("model") as string) || model;
+                // Require authentication before allowing chat creation
+                const session = await authClient.getSession();
+                if (!session.data) {
+                  toast.error("Please sign in to create a project");
+                  router.push("/sign-in?callbackUrl=/");
+                  setIsCheckingEligibility(false);
+                  return;
+                }
 
-                  // Require authentication before allowing chat creation
-                  const session = await authClient.getSession();
-                  if (!session.data) {
-                    toast.error("Please sign in to create a project");
-                    router.push("/sign-in?callbackUrl=/");
-                    setIsCheckingEligibility(false);
-                    return;
-                  }
-
-                  try {
-                    const checkResponse = await fetch(
-                      `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
-                    );
-                    if (checkResponse.ok) {
-                      const eligibility = await checkResponse.json();
-                      if (!eligibility.canCreate) {
-                        if (eligibility.error === "PROJECT_LIMIT_REACHED") {
-                          showProjectLimitPricing(
-                            eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
-                          );
-                          setIsCheckingEligibility(false);
-                          return;
-                        }
-
-                        const cost =
-                          eligibility.modelCost ||
-                          getModelCreditHoldCost(currentModel);
-                        toast.error(
-                          `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
+                try {
+                  const checkResponse = await fetch(
+                    `/api/user/can-create-project?model=${encodeURIComponent(currentModel)}`,
+                  );
+                  if (checkResponse.ok) {
+                    const eligibility = await checkResponse.json();
+                    if (!eligibility.canCreate) {
+                      if (eligibility.error === "PROJECT_LIMIT_REACHED") {
+                        showProjectLimitPricing(
+                          eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
                         );
-                        setShowPricingModal(true);
                         setIsCheckingEligibility(false);
                         return;
                       }
-                    }
-                  } catch (error) {
-                    console.error("Error checking eligibility:", error);
-                  }
-                  setIsCheckingEligibility(false);
 
-                  startTransition(async () => {
-                    try {
-                      const { model, quality } = Object.fromEntries(formData);
-                      // Always submit from React state so template mode and
-                      // freeform share one source of truth (no parallel hidden input).
-                      const submittedPrompt = prompt.trim();
-                      assert.ok(submittedPrompt.length > 0);
-                      assert.ok(typeof model === "string");
-                      assert.ok(quality === "high" || quality === "low");
-
-                      const { chatId, lastMessageId } =
-                        await createChatMutation.mutateAsync({
-                          prompt: submittedPrompt,
-                          model,
-                          quality,
-                          screenshotUrl,
-                          screenshotData,
-                          providerIds: selectedProviderIds,
-                        });
-
-                      plausible("Project Created", {
-                        props: {
-                          source: "homepage",
-                          planMode: quality === "high",
-                          hasScreenshot: Boolean(
-                            screenshotData || screenshotUrl,
-                          ),
-                          timeToFirstPromptMs: promptStartedAtRef.current
-                            ? Date.now() - promptStartedAtRef.current
-                            : 0,
-                        },
-                      });
-
-                      const streamPromise = fetchCompletionStream({
-                        messageId: lastMessageId,
-                        model,
-                        screenshotData,
-                      });
-
-                      startTransition(() => {
-                        setStreamPromise(streamPromise);
-                        router.push(`/chats/${chatId}`);
-                      });
-                    } catch (error: unknown) {
-                      const message = getErrorMessage(
-                        error,
-                        "Failed to create project",
+                      const cost =
+                        eligibility.modelCost ||
+                        getModelCreditHoldCost(currentModel);
+                      toast.error(
+                        `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
                       );
-                      if (message.includes("free projects")) {
-                        showProjectLimitPricing();
-                        return;
-                      }
-                      toast.error(message);
+                      setShowPricingModal(true);
+                      setIsCheckingEligibility(false);
+                      return;
                     }
-                  });
-                }}
-              >
-                <Fieldset className="min-w-0">
-                  {/* Compose box */}
-                  <div className="compose-shell">
-                    <div className="compose-box w-full">
-                      <div className="compose-box-inner relative w-full pb-16 sm:pb-11">
-                        {/* Screenshot preview */}
-                        {screenshotLoading && (
-                          <div className="mx-3 mt-3">
-                            <div className="flex h-[52px] w-[60px] animate-pulse items-center justify-center rounded-xl bg-muted/60">
-                              <Spinner />
+                  }
+                } catch (error) {
+                  console.error("Error checking eligibility:", error);
+                }
+                setIsCheckingEligibility(false);
+
+                startTransition(async () => {
+                  try {
+                    const { model, quality } = Object.fromEntries(formData);
+                    // Always submit from React state so template mode and
+                    // freeform share one source of truth (no parallel hidden input).
+                    const submittedPrompt = prompt.trim();
+                    assert.ok(submittedPrompt.length > 0);
+                    assert.ok(typeof model === "string");
+                    assert.ok(quality === "high" || quality === "low");
+
+                    const { chatId, lastMessageId } =
+                      await createChatMutation.mutateAsync({
+                        prompt: submittedPrompt,
+                        model,
+                        quality,
+                        screenshotUrl,
+                        screenshotData,
+                        providerIds: selectedProviderIds,
+                      });
+
+                    plausible("Project Created", {
+                      props: {
+                        source: "homepage",
+                        planMode: quality === "high",
+                        hasScreenshot: Boolean(screenshotData || screenshotUrl),
+                        timeToFirstPromptMs: promptStartedAtRef.current
+                          ? Date.now() - promptStartedAtRef.current
+                          : 0,
+                      },
+                    });
+
+                    const streamPromise = fetchCompletionStream({
+                      messageId: lastMessageId,
+                      model,
+                      screenshotData,
+                    });
+
+                    startTransition(() => {
+                      setStreamPromise(streamPromise);
+                      router.push(`/chats/${chatId}`);
+                    });
+                  } catch (error: unknown) {
+                    const message = getErrorMessage(
+                      error,
+                      "Failed to create project",
+                    );
+                    if (message.includes("free projects")) {
+                      showProjectLimitPricing();
+                      return;
+                    }
+                    toast.error(message);
+                  }
+                });
+              }}
+            >
+              <Fieldset className="min-w-0">
+                {/* Compose box */}
+                <div className="compose-shell">
+                  <div className="compose-box w-full">
+                    <div className="compose-box-inner relative w-full pb-16 sm:pb-11">
+                      {/* Screenshot preview */}
+                      {screenshotLoading && (
+                        <div className="mx-3 mt-3">
+                          <div className="flex h-[52px] w-[60px] animate-pulse items-center justify-center rounded-xl bg-muted/60">
+                            <Spinner />
+                          </div>
+                        </div>
+                      )}
+                      {(screenshotUrl || screenshotData) &&
+                        !screenshotLoading && (
+                          <div
+                            className={`${isPending ? "invisible" : ""} relative mx-3 mt-3 inline-block`}
+                          >
+                            <div className="screenshot-thumb">
+                              <img
+                                alt="screenshot"
+                                src={screenshotData ?? screenshotUrl}
+                                className="h-[52px] w-[60px] object-cover"
+                              />
                             </div>
+                            <button
+                              type="button"
+                              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border/50 transition-colors hover:text-foreground dark:bg-card"
+                              onClick={clearScreenshot}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                                className="size-3.5"
+                              >
+                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                              </svg>
+                            </button>
                           </div>
                         )}
-                        {(screenshotUrl || screenshotData) &&
-                          !screenshotLoading && (
-                            <div
-                              className={`${isPending ? "invisible" : ""} relative mx-3 mt-3 inline-block`}
-                            >
-                              <div className="screenshot-thumb">
-                                <img
-                                  alt="screenshot"
-                                  src={screenshotData ?? screenshotUrl}
-                                  className="h-[52px] w-[60px] object-cover"
-                                />
-                              </div>
-                              <button
-                                type="button"
-                                className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border/50 transition-colors hover:text-foreground dark:bg-card"
-                                onClick={clearScreenshot}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                  className="size-3.5"
-                                >
-                                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                                </svg>
-                              </button>
-                            </div>
-                          )}
 
-                        {/* Prompt input */}
-                        <div
-                          className={`compose-prompt-slot ${activeTemplate ? "is-template" : ""}`}
-                        >
-                          {activeTemplate ? (
-                            <div
-                              key={activeTemplate.id}
-                              className="compose-prompt-enter"
-                            >
-                              <PromptTemplateEditor
-                                template={activeTemplate}
-                                values={templateValues}
-                                onValuesChange={setTemplateValues}
-                                onCompiledPromptChange={
-                                  handleTemplateCompiledPrompt
+                      {/* Prompt input */}
+                      <div
+                        className={`compose-prompt-slot ${activeTemplate ? "is-template" : ""}`}
+                      >
+                        {activeTemplate ? (
+                          <div
+                            key={activeTemplate.id}
+                            className="compose-prompt-enter"
+                          >
+                            <PromptTemplateEditor
+                              template={activeTemplate}
+                              values={templateValues}
+                              onValuesChange={setTemplateValues}
+                              onCompiledPromptChange={
+                                handleTemplateCompiledPrompt
+                              }
+                              onExitTemplate={handleExitTemplate}
+                            />
+                          </div>
+                        ) : (
+                          <div key="freeform" className="compose-prompt-enter">
+                            <Textarea
+                              ref={textareaRef}
+                              placeholder="Build me a budgeting app..."
+                              required
+                              name="prompt"
+                              className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
+                              value={prompt}
+                              onChange={(e) => {
+                                if (
+                                  e.target.value &&
+                                  promptStartedAtRef.current === null
+                                ) {
+                                  promptStartedAtRef.current = Date.now();
+                                  plausible("Prompt Started", {
+                                    props: {
+                                      source: "homepage",
+                                      method: "typing",
+                                    },
+                                  });
                                 }
-                                onExitTemplate={handleExitTemplate}
-                              />
-                            </div>
-                          ) : (
-                            <div
-                              key="freeform"
-                              className="compose-prompt-enter"
-                            >
-                              <Textarea
-                                ref={textareaRef}
-                                placeholder="Build me a budgeting app..."
-                                required
-                                name="prompt"
-                                className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
-                                value={prompt}
-                                onChange={(e) => {
-                                  if (
-                                    e.target.value &&
-                                    promptStartedAtRef.current === null
-                                  ) {
-                                    promptStartedAtRef.current = Date.now();
-                                    plausible("Prompt Started", {
-                                      props: {
-                                        source: "homepage",
-                                        method: "typing",
-                                      },
-                                    });
-                                  }
-                                  setPrompt(e.target.value);
-                                }}
-                                onKeyDown={(event) => {
-                                  if (
-                                    event.key === "Enter" &&
-                                    !event.shiftKey
-                                  ) {
-                                    event.preventDefault();
-                                    const target = event.target;
-                                    if (
-                                      !(target instanceof HTMLTextAreaElement)
-                                    )
-                                      return;
-                                    target.closest("form")?.requestSubmit();
-                                  }
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
+                                setPrompt(e.target.value);
+                              }}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" && !event.shiftKey) {
+                                  event.preventDefault();
+                                  const target = event.target;
+                                  if (!(target instanceof HTMLTextAreaElement))
+                                    return;
+                                  target.closest("form")?.requestSubmit();
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
 
-                        {/* Toolbar */}
-                        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
-                          {/* Left controls */}
-                          <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-                            {/* Model selector: premium trigger */}
-                            <Select.Root
-                              name="model"
-                              open={isModelSelectOpen}
-                              value={model}
-                              onOpenChange={handleModelSelectOpenChange}
-                              onValueChange={handleModelChange}
-                            >
-                              <Select.Trigger className="model-trigger">
-                                <span className="model-status-dot" />
-                                <Select.Value aria-label={model}>
-                                  <span className="flex min-w-0 items-center gap-1.5">
-                                    <span className="model-trigger-label">
-                                      {currentModelOption?.label ??
-                                        "Select model"}
-                                    </span>
-                                    {currentModelOption?.paid && (
-                                      <span
-                                        className={
-                                          currentModelOption.group === "premium"
-                                            ? "premium-badge"
-                                            : "pro-badge"
-                                        }
-                                      >
-                                        <Sparkles className="size-2.5" />
-                                        {currentModelOption.group === "premium"
-                                          ? "PREMIUM"
-                                          : "PRO"}
-                                      </span>
-                                    )}
+                      {/* Toolbar */}
+                      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
+                        {/* Left controls */}
+                        <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+                          {/* Model selector: premium trigger */}
+                          <Select.Root
+                            name="model"
+                            open={isModelSelectOpen}
+                            value={model}
+                            onOpenChange={handleModelSelectOpenChange}
+                            onValueChange={handleModelChange}
+                          >
+                            <Select.Trigger className="model-trigger">
+                              <span className="model-status-dot" />
+                              <Select.Value aria-label={model}>
+                                <span className="flex min-w-0 items-center gap-1.5">
+                                  <span className="model-trigger-label">
+                                    {currentModelOption?.label ??
+                                      "Select model"}
                                   </span>
-                                </Select.Value>
-                                <Select.Icon>
-                                  <ChevronDownIcon className="size-3 opacity-50" />
-                                </Select.Icon>
-                              </Select.Trigger>
-                              <Select.Portal>
-                                <Select.Content
-                                  position="popper"
-                                  side="top"
-                                  align="start"
-                                  sideOffset={8}
-                                  collisionPadding={12}
-                                  className="model-select-content max-w-[calc(100vw-1.5rem)] sm:min-w-[226px]"
-                                >
-                                  <div className="model-select-header">
-                                    <div className="model-select-header-title">
-                                      Choose a model
-                                    </div>
-                                    <div className="model-select-header-sub">
-                                      Swap any time - cost updates instantly
-                                    </div>
+                                  {currentModelOption?.paid && (
+                                    <span
+                                      className={
+                                        currentModelOption.group === "premium"
+                                          ? "premium-badge"
+                                          : "pro-badge"
+                                      }
+                                    >
+                                      <Sparkles className="size-2.5" />
+                                      {currentModelOption.group === "premium"
+                                        ? "PREMIUM"
+                                        : "PRO"}
+                                    </span>
+                                  )}
+                                </span>
+                              </Select.Value>
+                              <Select.Icon>
+                                <ChevronDownIcon className="size-3 opacity-50" />
+                              </Select.Icon>
+                            </Select.Trigger>
+                            <Select.Portal>
+                              <Select.Content
+                                position="popper"
+                                side="top"
+                                align="start"
+                                sideOffset={8}
+                                collisionPadding={12}
+                                className="model-select-content max-w-[calc(100vw-1.5rem)] sm:min-w-[226px]"
+                              >
+                                <div className="model-select-header">
+                                  <div className="model-select-header-title">
+                                    Choose a model
                                   </div>
-                                  <Select.Viewport className="p-1">
-                                    {[
-                                      ...(modelOptionsByGroup.free.length > 0
-                                        ? [
-                                            {
-                                              label: "Starter Models",
-                                              models: modelOptionsByGroup.free,
-                                            },
-                                          ]
-                                        : []),
-                                      ...(modelOptionsByGroup.paid.length > 0
-                                        ? [
-                                            {
-                                              label:
-                                                "Efficient & Advanced Models",
-                                              models: modelOptionsByGroup.paid,
-                                            },
-                                          ]
-                                        : []),
-                                      ...(modelOptionsByGroup.premium.length > 0
-                                        ? [
-                                            {
-                                              label: "Premium Models",
-                                              models:
-                                                modelOptionsByGroup.premium,
-                                            },
-                                          ]
-                                        : []),
-                                    ].map((group) => (
-                                      <Select.Group key={group.label}>
-                                        <Select.Label className="px-2 pb-0.5 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
-                                          {group.label}
-                                        </Select.Label>
-                                        {group.models.map((m) => {
-                                          const isLocked = !canUseModel(
-                                            m.value,
-                                          );
-                                          const creditRange =
-                                            getModelCreditRange(m.value);
-                                          const creditLabel =
-                                            creditRange.min === creditRange.max
-                                              ? `${creditRange.min}`
-                                              : `from ${creditRange.min}`;
-                                          const creditBadgeClass =
-                                            getCreditBadgeClass(m.group);
-                                          const tierDotClass =
-                                            m.group === "premium"
-                                              ? "is-premium"
-                                              : m.group === "free"
-                                                ? "is-free"
-                                                : "is-pro";
+                                  <div className="model-select-header-sub">
+                                    Swap any time - cost updates instantly
+                                  </div>
+                                </div>
+                                <Select.Viewport className="p-1">
+                                  {[
+                                    ...(modelOptionsByGroup.free.length > 0
+                                      ? [
+                                          {
+                                            label: "Starter Models",
+                                            models: modelOptionsByGroup.free,
+                                          },
+                                        ]
+                                      : []),
+                                    ...(modelOptionsByGroup.paid.length > 0
+                                      ? [
+                                          {
+                                            label:
+                                              "Efficient & Advanced Models",
+                                            models: modelOptionsByGroup.paid,
+                                          },
+                                        ]
+                                      : []),
+                                    ...(modelOptionsByGroup.premium.length > 0
+                                      ? [
+                                          {
+                                            label: "Premium Models",
+                                            models: modelOptionsByGroup.premium,
+                                          },
+                                        ]
+                                      : []),
+                                  ].map((group) => (
+                                    <Select.Group key={group.label}>
+                                      <Select.Label className="px-2 pb-0.5 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+                                        {group.label}
+                                      </Select.Label>
+                                      {group.models.map((m) => {
+                                        const isLocked = !canUseModel(m.value);
+                                        const creditRange = getModelCreditRange(
+                                          m.value,
+                                        );
+                                        const creditLabel =
+                                          creditRange.min === creditRange.max
+                                            ? `${creditRange.min}`
+                                            : `from ${creditRange.min}`;
+                                        const creditBadgeClass =
+                                          getCreditBadgeClass(m.group);
+                                        const tierDotClass =
+                                          m.group === "premium"
+                                            ? "is-premium"
+                                            : m.group === "free"
+                                              ? "is-free"
+                                              : "is-pro";
 
-                                          return (
-                                            <Select.Item
-                                              key={m.value}
-                                              value={m.value}
-                                              disabled={isLocked}
-                                              onClick={() => {
-                                                if (isLocked)
-                                                  setShowPricingModal(true);
-                                              }}
-                                              onFocus={restoreModelSelectScroll}
-                                              className={`model-item ${isLocked ? "opacity-50" : ""}`}
-                                            >
-                                              <div className="flex min-w-0 items-center gap-2">
+                                        return (
+                                          <Select.Item
+                                            key={m.value}
+                                            value={m.value}
+                                            disabled={isLocked}
+                                            onClick={() => {
+                                              if (isLocked)
+                                                setShowPricingModal(true);
+                                            }}
+                                            onFocus={restoreModelSelectScroll}
+                                            className={`model-item ${isLocked ? "opacity-50" : ""}`}
+                                          >
+                                            <div className="flex min-w-0 items-center gap-2">
+                                              <span
+                                                className={`model-item-tier-dot ${tierDotClass}`}
+                                              />
+                                              <Select.ItemText
+                                                className={
+                                                  m.free
+                                                    ? "font-medium text-emerald-600 dark:text-emerald-400"
+                                                    : "text-foreground"
+                                                }
+                                              >
+                                                {m.label}
+                                              </Select.ItemText>
+                                              {isLocked && (
                                                 <span
-                                                  className={`model-item-tier-dot ${tierDotClass}`}
-                                                />
-                                                <Select.ItemText
                                                   className={
-                                                    m.free
-                                                      ? "font-medium text-emerald-600 dark:text-emerald-400"
-                                                      : "text-foreground"
+                                                    m.group === "premium"
+                                                      ? "premium-badge"
+                                                      : "pro-badge"
                                                   }
                                                 >
-                                                  {m.label}
-                                                </Select.ItemText>
-                                                {isLocked && (
-                                                  <span
-                                                    className={
-                                                      m.group === "premium"
-                                                        ? "premium-badge"
-                                                        : "pro-badge"
-                                                    }
-                                                  >
-                                                    <Sparkles className="size-2" />
-                                                    {m.group === "premium"
-                                                      ? "PREMIUM"
-                                                      : "PRO"}
-                                                  </span>
-                                                )}
-                                              </div>
-                                              <div className="flex flex-shrink-0 items-center gap-2">
-                                                <span
-                                                  className={`model-credit-pill ${creditBadgeClass}`}
-                                                >
-                                                  {creditLabel}
-                                                  <Coins
-                                                    className={`size-2 ${creditBadgeClass}`}
-                                                  />
+                                                  <Sparkles className="size-2" />
+                                                  {m.group === "premium"
+                                                    ? "PREMIUM"
+                                                    : "PRO"}
                                                 </span>
-                                                <Select.ItemIndicator>
-                                                  <CheckIcon className="size-3.5 text-primary" />
-                                                </Select.ItemIndicator>
-                                              </div>
-                                            </Select.Item>
-                                          );
-                                        })}
-                                      </Select.Group>
-                                    ))}
-                                  </Select.Viewport>
-                                  <Select.Arrow />
-                                </Select.Content>
-                              </Select.Portal>
-                            </Select.Root>
+                                              )}
+                                            </div>
+                                            <div className="flex flex-shrink-0 items-center gap-2">
+                                              <span
+                                                className={`model-credit-pill ${creditBadgeClass}`}
+                                              >
+                                                {creditLabel}
+                                                <Coins
+                                                  className={`size-2 ${creditBadgeClass}`}
+                                                />
+                                              </span>
+                                              <Select.ItemIndicator>
+                                                <CheckIcon className="size-3.5 text-primary" />
+                                              </Select.ItemIndicator>
+                                            </div>
+                                          </Select.Item>
+                                        );
+                                      })}
+                                    </Select.Group>
+                                  ))}
+                                </Select.Viewport>
+                                <Select.Arrow />
+                              </Select.Content>
+                            </Select.Portal>
+                          </Select.Root>
 
-                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
+                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
-                            <ApiSelectionDialog
-                              selectedProviderIds={selectedProviderIds}
-                              onSelectionChange={setSelectedProviderIds}
-                            />
+                          <ApiSelectionDialog
+                            selectedProviderIds={selectedProviderIds}
+                            onSelectionChange={setSelectedProviderIds}
+                          />
 
-                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
+                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
 
-                            {/* Plan mode */}
+                          {/* Plan mode */}
+                          <input type="hidden" name="quality" value={quality} />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setQuality((current) =>
+                                current === "high" ? "low" : "high",
+                              )
+                            }
+                            aria-pressed={quality === "high"}
+                            aria-label="Plan mode"
+                            title="Plan the project structure before building"
+                            className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
+                          >
+                            <Sparkles className="size-3" aria-hidden="true" />
+                            <span className="hidden sm:inline">Plan mode</span>
+                          </button>
+
+                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
+                          {/* Prompt Builder */}
+                          <button
+                            type="button"
+                            onClick={() => setShowPromptBuilder(true)}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                            title="Enhance your prompt with AI"
+                          >
+                            <span className="hidden sm:inline">Enhance</span>
+                          </button>
+
+                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
+                          {/* Upload */}
+                          <div className="flex items-center gap-0.5">
+                            <label
+                              htmlFor="screenshot"
+                              className="upload-btn"
+                              title="Attach image"
+                            >
+                              <UploadIcon className="size-[15px]" />
+                            </label>
                             <input
-                              type="hidden"
-                              name="quality"
-                              value={quality}
+                              id="screenshot"
+                              type="file"
+                              accept="image/png, image/jpeg, image/webp"
+                              onChange={handleScreenshotUpload}
+                              className="hidden"
+                              ref={fileInputRef}
                             />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setQuality((current) =>
-                                  current === "high" ? "low" : "high",
-                                )
-                              }
-                              aria-pressed={quality === "high"}
-                              aria-label="Plan mode"
-                              title="Plan the project structure before building"
-                              className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
-                            >
-                              <Sparkles className="size-3" aria-hidden="true" />
-                              <span className="hidden sm:inline">
-                                Plan mode
-                              </span>
-                            </button>
-
-                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                            {/* Prompt Builder */}
-                            <button
-                              type="button"
-                              onClick={() => setShowPromptBuilder(true)}
-                              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-                              title="Enhance your prompt with AI"
-                            >
-                              <span className="hidden sm:inline">Enhance</span>
-                            </button>
-
-                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                            {/* Upload */}
-                            <div className="flex items-center gap-0.5">
-                              <label
-                                htmlFor="screenshot"
-                                className="upload-btn"
-                                title="Attach image"
-                              >
-                                <UploadIcon className="size-[15px]" />
-                              </label>
-                              <input
-                                id="screenshot"
-                                type="file"
-                                accept="image/png, image/jpeg, image/webp"
-                                onChange={handleScreenshotUpload}
-                                className="hidden"
-                                ref={fileInputRef}
-                              />
-                              <div className="relative hidden sm:block">
-                                <Info className="peer h-3 w-3 cursor-help text-muted-foreground/40 transition-colors hover:text-muted-foreground/70" />
-                                <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
-                                  <p className="mb-1 font-semibold">
-                                    Supported formats
-                                  </p>
-                                  <p className="text-muted-foreground">
-                                    PNG, JPEG, WebP
-                                  </p>
-                                  <p className="mt-1 text-muted-foreground/70">
-                                    Upload a screenshot to recreate it in code
-                                  </p>
-                                  <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
-                                </div>
+                            <div className="relative hidden sm:block">
+                              <Info className="peer h-3 w-3 cursor-help text-muted-foreground/40 transition-colors hover:text-muted-foreground/70" />
+                              <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
+                                <p className="mb-1 font-semibold">
+                                  Supported formats
+                                </p>
+                                <p className="text-muted-foreground">
+                                  PNG, JPEG, WebP
+                                </p>
+                                <p className="mt-1 text-muted-foreground/70">
+                                  Upload a screenshot to recreate it in code
+                                </p>
+                                <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
                               </div>
                             </div>
                           </div>
-
-                          {/* Submit button */}
-                          <Button
-                            type="submit"
-                            disabled={
-                              screenshotLoading ||
-                              prompt.length === 0 ||
-                              (activeTemplate !== null &&
-                                !isPromptTemplateReady(
-                                  activeTemplate,
-                                  templateValues,
-                                )) ||
-                              isCheckingEligibility ||
-                              isPending
-                            }
-                            className="build-btn group"
-                          >
-                            Build
-                            <Spinner
-                              loading={isCheckingEligibility || isPending}
-                            >
-                              <img
-                                src="/image.png"
-                                alt="Build"
-                                className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
-                              />
-                            </Spinner>
-                          </Button>
                         </div>
 
-                        {/* Loading overlay */}
-                        {(isPending || isScrapingUrl) && (
-                          <LoadingMessage
-                            isHighQuality={quality === "high"}
-                            screenshotUrl={screenshotUrl ?? screenshotData}
-                            isScrapingUrl={isScrapingUrl}
-                          />
-                        )}
+                        {/* Submit button */}
+                        <Button
+                          type="submit"
+                          disabled={
+                            screenshotLoading ||
+                            prompt.length === 0 ||
+                            (activeTemplate !== null &&
+                              !isPromptTemplateReady(
+                                activeTemplate,
+                                templateValues,
+                              )) ||
+                            isCheckingEligibility ||
+                            isPending
+                          }
+                          className="build-btn group"
+                        >
+                          Build
+                          <Spinner loading={isCheckingEligibility || isPending}>
+                            <img
+                              src="/image.png"
+                              alt="Build"
+                              className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
+                            />
+                          </Spinner>
+                        </Button>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Suggested prompts */}
-                  <div className="starter-rail">
-                    {PROMPT_TEMPLATES.map((template, index) => (
-                      <div key={template.id} className="contents">
-                        {index > 0 ? (
-                          <span className="starter-sep" aria-hidden="true" />
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => activateTemplate(template)}
-                          className={`starter-link ${activeTemplate?.id === template.id ? "is-active" : ""}`}
-                          aria-pressed={activeTemplate?.id === template.id}
-                        >
-                          {template.shortLabel}
-                        </button>
-                      </div>
-                    ))}
-                    {SUGGESTED_PROMPTS.map((v) => (
-                      <div key={v.title} className="contents">
-                        <span className="starter-sep" aria-hidden="true" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStarterPrompt(v.description, v.title);
-                          }}
-                          className="starter-link"
-                        >
-                          {v.title}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  {/* URL section */}
-                  <div
-                    className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10"
-                    data-hero-popout-exclude="clone"
-                  >
-                    <div className="or-divider mb-4">or clone a site</div>
-
-                    <div className="flex justify-center">
-                      <div
-                        className={`url-strip group flex w-full max-w-[420px] items-center gap-3 px-4 py-2.5 ${
-                          urlInput.trim()
-                            ? "border-blue-500/35 bg-blue-50/20 dark:border-blue-500/25 dark:bg-blue-950/10"
-                            : ""
-                        } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
-                      >
-                        <div
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,box-shadow] duration-200 ${
-                            isScrapingUrl || urlInput.trim()
-                              ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
-                              : "bg-muted/70 text-muted-foreground/70"
-                          }`}
-                        >
-                          {isScrapingUrl ? (
-                            <Spinner className="size-3.5" />
-                          ) : (
-                            <Link2 className="size-3.5" />
-                          )}
-                        </div>
-                        <Input
-                          type="url"
-                          placeholder="https://example.com"
-                          value={urlInput}
-                          onChange={(e) => setUrlInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && urlInput.trim()) {
-                              e.preventDefault();
-                              handleUrlScrape();
-                            }
-                          }}
-                          disabled={isScrapingUrl}
-                          className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
+                      {/* Loading overlay */}
+                      {(isPending || isScrapingUrl) && (
+                        <LoadingMessage
+                          isHighQuality={quality === "high"}
+                          screenshotUrl={screenshotUrl ?? screenshotData}
+                          isScrapingUrl={isScrapingUrl}
                         />
-                        {urlInput.trim() && !isScrapingUrl && (
-                          <button
-                            type="button"
-                            onClick={handleUrlScrape}
-                            aria-label="Clone website"
-                            className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                          >
-                            <ArrowRightIcon className="size-3" />
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-                </Fieldset>
-              </form>
-            </div>
+                </div>
+
+                {/* Suggested prompts */}
+                <div className="starter-rail">
+                  {PROMPT_TEMPLATES.map((template, index) => (
+                    <div key={template.id} className="contents">
+                      {index > 0 ? (
+                        <span className="starter-sep" aria-hidden="true" />
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => activateTemplate(template)}
+                        className={`starter-link ${activeTemplate?.id === template.id ? "is-active" : ""}`}
+                        aria-pressed={activeTemplate?.id === template.id}
+                      >
+                        {template.shortLabel}
+                      </button>
+                    </div>
+                  ))}
+                  {SUGGESTED_PROMPTS.map((v) => (
+                    <div key={v.title} className="contents">
+                      <span className="starter-sep" aria-hidden="true" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStarterPrompt(v.description, v.title);
+                        }}
+                        className="starter-link"
+                      >
+                        {v.title}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {/* URL section */}
+                <div
+                  className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10"
+                  data-hero-popout-exclude="clone"
+                >
+                  <div className="or-divider mb-4">or clone a site</div>
+
+                  <div className="flex justify-center">
+                    <div
+                      className={`url-strip group flex w-full max-w-[420px] items-center gap-3 px-4 py-2.5 ${
+                        urlInput.trim()
+                          ? "border-blue-500/35 bg-blue-50/20 dark:border-blue-500/25 dark:bg-blue-950/10"
+                          : ""
+                      } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
+                    >
+                      <div
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,box-shadow] duration-200 ${
+                          isScrapingUrl || urlInput.trim()
+                            ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
+                            : "bg-muted/70 text-muted-foreground/70"
+                        }`}
+                      >
+                        {isScrapingUrl ? (
+                          <Spinner className="size-3.5" />
+                        ) : (
+                          <Link2 className="size-3.5" />
+                        )}
+                      </div>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com"
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && urlInput.trim()) {
+                            e.preventDefault();
+                            handleUrlScrape();
+                          }
+                        }}
+                        disabled={isScrapingUrl}
+                        className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
+                      />
+                      {urlInput.trim() && !isScrapingUrl && (
+                        <button
+                          type="button"
+                          onClick={handleUrlScrape}
+                          aria-label="Clone website"
+                          className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                        >
+                          <ArrowRightIcon className="size-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Fieldset>
+            </form>
           </div>
         </div>
 
+        <ProductWorkflowDemo />
+        <HomepageScrollStatement />
         <HomepageAnswerSection />
         <HomepageLandingPagesSection />
         <AiBuilderFeatureComparison variant="homepage" />
@@ -3349,7 +3336,6 @@ export default function Home() {
         <HoverBrandLogo />
 
         <HomepageFlowSection />
-        <LandingMacbookSection />
         <Footer showPageLinks />
 
         <PricingModal
@@ -3407,10 +3393,9 @@ function HomepageAnswerSection() {
     () =>
       [
         { progress: 0, offset: 0 },
-        { progress: 0.125, offset: -18 },
-        { progress: 0.375, offset: 18 },
-        { progress: 0.625, offset: -18 },
-        { progress: 0.875, offset: 18 },
+        { progress: 0.2, offset: -18 },
+        { progress: 0.5, offset: 18 },
+        { progress: 0.8, offset: -18 },
         { progress: 1, offset: 0 },
       ] as const,
     [],
@@ -3559,7 +3544,7 @@ function HomepageAnswerSection() {
     <section
       ref={workflowSectionRef}
       aria-labelledby="squid-agent-overview"
-      className="relative z-10 w-full px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-6"
+      className="relative z-10 w-full px-4 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4"
     >
       <div className="mx-auto w-full max-w-6xl border-y border-border/60 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
@@ -3567,13 +3552,11 @@ function HomepageAnswerSection() {
             id="squid-agent-overview"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            From uncertain idea <br />
-            to shipped app.
+            The first prompt is only the beginning.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            Squid Agent brings research, decisions, code, quality, recovery, and
-            deployment into one inspectable workflow. You approve the
-            consequential choices and own every artifact it produces.
+            Squid turns your idea into a plan, builds the system, verifies it in
+            a real runtime, and keeps iterating until it works.
           </p>
         </div>
 
@@ -3631,22 +3614,22 @@ function HomepageAnswerSection() {
               </defs>
               <path
                 className="workflow-rail-glow"
-                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+                d="M24 0 L8 20 L40 50 L8 80 L24 100"
               />
               <path
                 className="workflow-rail-line"
-                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+                d="M24 0 L8 20 L40 50 L8 80 L24 100"
               />
               <path
                 ref={workflowBeamGlowPathRef}
                 className="workflow-beam-path-glow"
-                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+                d="M24 0 L8 20 L40 50 L8 80 L24 100"
                 mask="url(#workflow-beam-mask)"
               />
               <path
                 ref={workflowBeamPathRef}
                 className="workflow-beam-path"
-                d="M24 0 L8 12.5 L40 37.5 L8 62.5 L40 87.5 L24 100"
+                d="M24 0 L8 20 L40 50 L8 80 L24 100"
                 mask="url(#workflow-beam-mask)"
               />
             </svg>
@@ -3695,25 +3678,16 @@ function HomepageAnswerSection() {
           })}
         </div>
 
-        <div className="mx-auto mt-20 max-w-5xl rounded-[28px] border border-blue-500/15 bg-blue-500/[0.035] p-5 sm:p-7">
-          <div className="grid gap-6 md:grid-cols-3 md:gap-0">
-            {homepageControlPromises.map((promise, index) => (
-              <article
-                key={promise.label}
-                className={`px-1 md:px-6 ${index > 0 ? "border-t border-border/60 pt-6 md:border-l md:border-t-0 md:pt-0" : ""}`}
-              >
-                <p className="text-[11px] font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
-                  {promise.label}
-                </p>
-                <h3 className="mt-3 text-lg font-semibold tracking-normal text-foreground">
-                  {promise.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {promise.body}
-                </p>
-              </article>
-            ))}
-          </div>
+        <div className="mx-auto mt-20 max-w-3xl rounded-[28px] border border-blue-500/15 bg-blue-500/[0.035] p-6 text-center sm:p-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0062FF] dark:text-[#0CA8FF]">
+            Code ownership
+          </p>
+          <h3 className="mt-4 font-display text-2xl leading-tight tracking-tight text-foreground sm:text-3xl">
+            {homepageOwnershipCopy.title}
+          </h3>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+            {homepageOwnershipCopy.body}
+          </p>
         </div>
 
         <div className="mt-10 flex justify-center">
@@ -3743,32 +3717,16 @@ function HomepageNarrativeArticle({
     >
       <div className="flex items-center justify-between gap-4">
         <p className="text-[12px] font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
-          {block.label}
+          {block.stage} — {block.label}
         </p>
         <span className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
       </div>
       <h3 className="mt-4 text-2xl font-semibold leading-tight tracking-normal text-foreground">
         {block.question}
       </h3>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+      <p className="mt-3 text-base leading-7 text-muted-foreground">
         {block.body}
       </p>
-      <ul
-        className="mt-5 grid gap-2.5"
-        aria-label={`${block.label} capabilities`}
-      >
-        {block.proofs.map((proof) => (
-          <li
-            key={proof}
-            className="flex items-start gap-2.5 text-sm leading-5 text-foreground/80"
-          >
-            <span className="workflow-card-check mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
-              <CheckIcon className="size-2.5" aria-hidden="true" />
-            </span>
-            {proof}
-          </li>
-        ))}
-      </ul>
     </article>
   );
 }
@@ -4220,11 +4178,11 @@ function BuiltWithSquidSection() {
           </Link>
         </div>
 
-        <div className="mt-12 grid gap-x-6 gap-y-12 lg:grid-cols-12">
+        <div className="showcase-rail -mx-4 mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-12 lg:gap-x-6 lg:gap-y-12 lg:overflow-visible lg:px-0 lg:pb-0">
           {BUILT_WITH_SQUID_PROJECTS.map((project) => (
             <figure
               key={project.href}
-              className="group min-w-0 border-t border-border/70 pt-4 lg:col-span-6"
+              className="group w-[min(85vw,22rem)] min-w-0 shrink-0 snap-center border-t border-border/70 pt-4 lg:col-span-6 lg:w-auto"
             >
               <a
                 href={project.href}
@@ -4233,7 +4191,7 @@ function BuiltWithSquidSection() {
                 aria-label={`View ${project.name}`}
                 className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4"
               >
-                <div className="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-xl border border-border/80 bg-muted/40">
+                <div className="showcase-preview relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-xl border border-border/80 bg-muted/40">
                   {project.imageSrc ? (
                     <Image
                       src={project.imageSrc}
@@ -4242,14 +4200,31 @@ function BuiltWithSquidSection() {
                         `${project.name} project preview built with Squid`
                       }
                       fill
-                      sizes="(min-width: 1024px) 58vw, 100vw"
-                      className="object-cover object-top"
+                      sizes="(min-width: 1024px) 58vw, 85vw"
+                      className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.03] group-focus-visible:scale-[1.03] motion-reduce:transition-none"
                     />
                   ) : (
                     <p className="px-6 text-center text-sm text-muted-foreground">
                       Preview unavailable
                     </p>
                   )}
+                  {(project.capabilities ?? ["Responsive"]).length > 0 ? (
+                    <div
+                      className="showcase-capabilities pointer-events-none absolute inset-x-0 bottom-0 flex translate-y-1 flex-wrap gap-1.5 p-3 opacity-0 transition-[opacity,transform] duration-300 group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:translate-y-0 motion-reduce:opacity-100"
+                      aria-label={`${project.name} capabilities`}
+                    >
+                      {(project.capabilities ?? ["Responsive"]).map(
+                        (capability) => (
+                          <span
+                            key={capability}
+                            className="rounded-full border border-blue-500/25 bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-blue-700 backdrop-blur-sm dark:text-blue-300"
+                          >
+                            {capability}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               </a>
 
@@ -4261,7 +4236,7 @@ function BuiltWithSquidSection() {
                   <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
                     {project.name}
                   </h3>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  <p className="mt-2 max-w-xl text-base leading-7 text-muted-foreground">
                     {project.description}
                   </p>
                   {project.creatorName && (
@@ -4301,47 +4276,6 @@ function BuiltWithSquidSection() {
   );
 }
 
-function LandingMacbookSection() {
-  return (
-    <section
-      aria-labelledby="macbook-example-heading"
-      className="relative z-10 w-full px-4 pb-16 sm:px-6 sm:pb-24"
-    >
-      <div className="mx-auto grid w-full max-w-6xl gap-8 border-t border-border/70 pt-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:pt-16">
-        <div className="max-w-xl">
-          <h2
-            id="macbook-example-heading"
-            className="font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl"
-          >
-            Open the build. Inspect every layer.
-          </h2>
-          <p className="mt-5 text-base leading-7 text-muted-foreground">
-            The public workspace exposes the original prompt, approved plan,
-            interactive preview, generated files, and quality report without
-            requiring an account or credits.
-          </p>
-          <Link
-            href="/example"
-            className="mt-6 inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            Explore the live example
-            <ArrowRightIcon className="size-4" />
-          </Link>
-        </div>
-
-        <div className="relative flex h-[260px] min-w-0 items-center justify-center sm:h-[320px]">
-          <div className="relative h-[220px] w-full max-w-md">
-            <Macbook
-              className="scale-125 sm:scale-150"
-              screenImageSrc="/macbook-squid-home.webp"
-              screenImageAlt="Squid Agent home screen"
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 function LoadingMessage({
   isHighQuality,
   screenshotUrl,
@@ -4387,62 +4321,36 @@ function HomepageLandingPagesSection() {
             id="homepage-landing-pages-heading"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            Pages with a point of view.
+            Apps that do more than look good.
           </h2>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Open the finished pages to experience the hero, motion, and
-            responsive layout in full. Each one is a working example of how a
-            visual idea becomes a real React landing page.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
+            From expressive landing pages to authenticated SaaS products, every
+            project is generated as a real React codebase you can inspect, edit,
+            and own.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <div className="showcase-rail -mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
           {HOMEPAGE_LANDING_PAGES.map((landing) => (
-            <Link
+            <ShowcaseProjectCard
               key={landing.href}
+              name={landing.name}
               href={landing.href}
-              className="group min-w-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4"
-            >
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-border/80 bg-muted/40 shadow-[0_18px_50px_-38px_rgba(0,0,0,0.7)]">
-                <Image
-                  src={landing.imageSrc}
-                  alt={landing.imageAlt}
-                  fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.025]"
-                />
-                <div
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-80"
-                  aria-hidden="true"
-                />
-              </div>
-
-              <div className="pt-5">
-                <p className="text-xs font-medium text-blue-500">
-                  {landing.category}
-                </p>
-                <div className="mt-2 flex items-start justify-between gap-4">
-                  <h3 className="text-xl font-semibold tracking-tight text-foreground">
-                    {landing.name}
-                  </h3>
-                  <span
-                    className="relative mr-2 mt-1 h-5 w-14 shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground motion-reduce:transition-none"
-                    aria-hidden="true"
-                  >
-                    <span className="absolute left-0 top-1/2 h-px w-8 -translate-y-1/2 bg-current transition-[width,height] duration-300 ease-out group-hover:h-0.5 group-hover:w-12 motion-reduce:transition-none" />
-                    <span className="absolute left-6 top-1/2 size-2 -translate-y-1/2 rotate-45 border-r border-t border-current transition-[left,width,height,border-width] duration-300 ease-out group-hover:left-[2.625rem] group-hover:size-2.5 group-hover:border-r-2 group-hover:border-t-2 motion-reduce:transition-none" />
-                  </span>
-                </div>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                  {landing.description}
-                </p>
-              </div>
-            </Link>
+              category={landing.category}
+              description={landing.description}
+              imageSrc={landing.imageSrc}
+              imageAlt={landing.imageAlt}
+              capabilities={
+                landing.capabilities ??
+                landingPageCapabilities[landing.href] ?? ["Responsive"]
+              }
+              layout="rail"
+            />
           ))}
         </div>
 
         <div className="mt-10 flex flex-col gap-5 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground">
             Start with a clear goal, turn on plan mode, and move into generation
             with checkpoints for restore and export.
           </p>

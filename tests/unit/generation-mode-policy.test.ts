@@ -87,7 +87,7 @@ describe("generation mode policy", () => {
       action: "request_backend_setup",
       request: {
         id: "backend-setup-message_direct_backend",
-        title: expect.stringContaining("Connect a backend"),
+        title: expect.stringContaining("Start with the UI"),
         description: expect.stringContaining("tasks"),
       },
     });

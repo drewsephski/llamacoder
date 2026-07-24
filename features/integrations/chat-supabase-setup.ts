@@ -147,8 +147,8 @@ function messageForState(
   switch (state) {
     case "connection_required":
       return requirements.authentication
-        ? "This app needs user accounts and a backend to securely save persistent data across devices."
-        : "This app needs a backend to securely save data across devices.";
+        ? "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices."
+        : "Build a UI-only preview with local data, or connect Supabase for persistence across devices.";
     case "authorizing":
       return "Finish authorizing Supabase in the secure window.";
     case "authorization_required":
@@ -305,6 +305,6 @@ export function deriveChatSupabaseSetupView({
         : (state === "failed" || state === "timed_out") &&
             operation?.errorMessage
           ? operation.errorMessage
-        : messageForState(state, request.requirements),
+          : messageForState(state, request.requirements),
   };
 }

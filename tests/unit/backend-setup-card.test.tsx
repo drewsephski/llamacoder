@@ -18,9 +18,9 @@ vi.mock(
 
 const request: BackendSetupRequest = {
   id: "backend-setup-message_1",
-  title: "Connect a backend before Squid builds",
+  title: "Start with the UI",
   description:
-    "This app needs accounts and saved data. Connect Supabase before code generation.",
+    "Build a UI-only preview first, or connect Supabase when you need a production-ready backend.",
   capabilities: [
     "Persistent data across refreshes and devices",
     "Browser-safe Supabase runtime configuration",
@@ -82,7 +82,7 @@ describe("direct backend setup card", () => {
           authMode: null,
           backendPlan: null,
           message:
-            "This app needs user accounts and a backend to securely save persistent data across devices.",
+            "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices.",
         }),
       ),
     );
@@ -90,15 +90,16 @@ describe("direct backend setup card", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Connect a backend before Squid builds",
+        name: "Start with the UI",
       }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByRole("button", { name: "Set up Supabase" }),
+      await screen.findByRole("button", { name: "Build UI only" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Build UI only" }),
+      screen.getByRole("button", { name: "Set up Supabase" }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/recommended for production/i)).toBeInTheDocument();
     expect(screen.queryByText(/choose the decisions/i)).not.toBeInTheDocument();
 
     await userEvent.click(
@@ -121,7 +122,7 @@ describe("direct backend setup card", () => {
           authMode: null,
           backendPlan: null,
           message:
-            "This app needs user accounts and a backend to securely save persistent data across devices.",
+            "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices.",
         }),
       ),
     );
@@ -400,9 +401,7 @@ describe("direct backend setup card", () => {
       await screen.findByRole("radio", { name: /instant signup/i }),
     ).toHaveAttribute("aria-checked", "true");
     expect(screen.getByText("Recommended for testing")).toBeInTheDocument();
-    expect(
-      screen.getByText("Security and launch details"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Security and launch details")).toBeInTheDocument();
     expect(screen.getByText("More details")).toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "Approve instant signup" }),
@@ -489,7 +488,7 @@ describe("direct backend setup card", () => {
           authMode: null,
           backendPlan: null,
           message:
-            "This app needs user accounts and a backend to securely save persistent data across devices.",
+            "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices.",
         }),
       ),
     );

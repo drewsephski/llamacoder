@@ -85,7 +85,7 @@ function SetupProgress({
     { label: "Ready" },
   ];
   return (
-    <ol className="mt-4 grid gap-2 sm:grid-cols-4" aria-label="Setup progress">
+    <ol className="mt-3 grid gap-2 sm:grid-cols-4" aria-label="Setup progress">
       {steps.map((step, index) => {
         const completed = index < activeIndex || activeIndex === 3;
         const active = index === activeIndex && activeIndex < 3;
@@ -190,8 +190,8 @@ function ProjectSetupDialog({
           {projectCapacityReached
             ? "Choose existing project"
             : view.state === "timed_out" || view.state === "failed"
-            ? "Open recovery options"
-            : "Choose a Supabase project"}
+              ? "Open recovery options"
+              : "Choose a Supabase project"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
@@ -356,7 +356,7 @@ function AuthModeStep({
     DEFAULT_SUPABASE_AUTH_MODE,
   );
   return (
-    <div className="mt-4 grid gap-3">
+    <div className="mt-3 grid gap-3">
       <SupabaseAuthModeSelector
         value={mode}
         onChange={setMode}
@@ -583,52 +583,66 @@ export function ChatSupabaseSetupCard({
     popup.location.replace(url);
   };
 
+  const statusLabel =
+    state === "connection_required"
+      ? "optional"
+      : state
+        ? state.replaceAll("_", " ")
+        : "Checking status";
+  const connectionTitle =
+    state === "ready" || state === "runtime_ready"
+      ? "Supabase is ready"
+      : state === "connection_required"
+        ? "Start with the UI"
+        : request.title;
+  const connectionMessage =
+    state === "authorizing"
+      ? "Finish authorizing Supabase in the secure window. This card will update automatically."
+      : (view?.message ?? request.description);
+
   return (
     <section
       aria-labelledby={`${request.id}-title`}
-      className="overflow-hidden rounded-2xl border border-blue-500/20 bg-card shadow-[0_18px_60px_-42px_rgba(37,99,235,0.65)]"
+      className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-blue-500/[0.035] px-4 py-3 sm:px-5">
-        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-3.5 py-2">
+        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           <span
             className={`size-1.5 rounded-full ${isBusy ? "animate-pulse bg-blue-500" : "bg-emerald-500"}`}
+            aria-hidden="true"
           />
-          Supabase setup
+          Backend setup
         </span>
         <span className="text-[11px] font-medium text-muted-foreground">
-          {state ? state.replaceAll("_", " ") : "Checking status"}
+          {statusLabel}
         </span>
       </div>
-      <div className="p-4 sm:p-5">
-        <div className="flex items-start gap-3.5">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-600">
+      <div className="p-3.5">
+        <div className="flex items-start gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/40 text-muted-foreground">
             {state === "authorization_required" ? (
-              <LockKeyhole className="size-5" />
+              <LockKeyhole className="size-4" />
             ) : state === "failed" || state === "timed_out" ? (
-              <AlertTriangle className="size-5" />
+              <AlertTriangle className="size-4" />
             ) : state === "ready" || state === "runtime_ready" ? (
-              <ShieldCheck className="size-5" />
+              <ShieldCheck className="size-4" />
             ) : (
-              <Database className="size-5" />
+              <Database className="size-4" />
             )}
           </span>
           <div className="min-w-0 flex-1">
             <h3
               id={`${request.id}-title`}
-              className="text-base font-semibold tracking-tight text-foreground"
+              className="text-sm font-semibold tracking-tight text-foreground"
             >
-              {state === "ready" || state === "runtime_ready"
-                ? "Supabase is ready"
-                : request.title}
+              {connectionTitle}
             </h3>
             <p
-              className="mt-1.5 text-sm leading-6 text-muted-foreground"
+              className="mt-1 text-sm leading-5 text-muted-foreground"
               role="status"
               aria-live="polite"
             >
-              {state === "authorizing"
-                ? "Finish authorizing Supabase in the secure window. This card will update automatically."
-                : (view?.message ?? request.description)}
+              {connectionMessage}
             </p>
           </div>
         </div>
@@ -640,34 +654,48 @@ export function ChatSupabaseSetupCard({
         ) : null}
 
         {state === "connection_required" ? (
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-3 grid gap-2">
             <Button
               type="button"
-              onClick={startOAuth}
               className="w-full sm:w-auto"
-            >
-              <Plug className="size-4" /> Set up Supabase
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full text-muted-foreground sm:w-auto"
               onClick={() => void onRespond(request, "build_ui_only")}
             >
               Build UI only
             </Button>
+            <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-foreground">
+                  Set up Supabase
+                </p>
+                <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
+                  Recommended for production — accounts and saved data across
+                  devices
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full shrink-0 sm:w-auto"
+                onClick={startOAuth}
+                aria-label="Set up Supabase"
+              >
+                <Plug className="size-3.5" aria-hidden="true" />
+                Connect
+              </Button>
+            </div>
           </div>
         ) : state === "authorization_required" ? (
           <Button
             type="button"
-            className="mt-4 w-full sm:w-auto"
+            className="mt-3 w-full sm:w-auto"
             onClick={startOAuth}
           >
             Reconnect Supabase
           </Button>
         ) : state === "failed" &&
           view?.operation?.kind === "supabase_backend_migration" ? (
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
               disabled={actionMutation.isPending}
@@ -697,7 +725,7 @@ export function ChatSupabaseSetupCard({
         ) : state === "project_setup_required" ||
           state === "failed" ||
           state === "timed_out" ? (
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
             <ProjectSetupDialog
               projectId={projectId}
               view={view!}
@@ -734,8 +762,8 @@ export function ChatSupabaseSetupCard({
             onAction={(action) => actionMutation.mutate(action)}
           />
         ) : state === "backend_approval_required" ? (
-          <div className="mt-4 grid gap-3">
-            <div className="rounded-xl border border-border/60 bg-muted/25 p-3 text-xs leading-5 text-muted-foreground">
+          <div className="mt-3 grid gap-2.5">
+            <div className="rounded-lg border border-border/60 bg-muted/25 p-2.5 text-xs leading-5 text-muted-foreground">
               <p className="font-medium text-foreground">Backend setup</p>
               <p className="mt-1">
                 Creates the tasks table, enables row-level security, and lets
@@ -778,7 +806,7 @@ export function ChatSupabaseSetupCard({
           </div>
         ) : state === "backend_applying" || state === "backend_verifying" ? (
           <div
-            className="mt-4 grid gap-2 rounded-xl border border-border/60 bg-muted/25 p-3 text-xs"
+            className="mt-3 grid gap-2 rounded-lg border border-border/60 bg-muted/25 p-2.5 text-xs"
             role="status"
           >
             {[
@@ -803,27 +831,35 @@ export function ChatSupabaseSetupCard({
         ) : null}
 
         {state === "connection_required" ? (
-          <details className="group mt-3 text-xs text-muted-foreground">
-            <summary className="cursor-pointer rounded-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              Why is this needed?
-            </summary>
-            <p className="mt-2 leading-5">
-              Browser-only state disappears or stays on one device. Supabase
-              provides the browser-safe runtime, user sessions, and protected
-              persistent data this request needs.
-            </p>
-          </details>
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+            <details className="group">
+              <summary className="cursor-pointer rounded-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                Why is this optional?
+              </summary>
+              <p className="mt-1.5 max-w-md leading-5">
+                UI-only builds use browser-local data so you can iterate fast.
+                Supabase is recommended before production when you need user
+                accounts, sessions, and data that persists across devices.
+              </p>
+            </details>
+            <ProjectIntegrationsPanel
+              projectId={projectId}
+              triggerPlacement="chat-advanced"
+              initialProviderId="supabase"
+            />
+          </div>
         ) : (
-          <TechnicalDetails request={request} />
+          <>
+            <TechnicalDetails request={request} />
+            <div className="mt-2.5 flex justify-end">
+              <ProjectIntegrationsPanel
+                projectId={projectId}
+                triggerPlacement="chat-advanced"
+                initialProviderId="supabase"
+              />
+            </div>
+          </>
         )}
-
-        <div className="mt-3 flex justify-end">
-          <ProjectIntegrationsPanel
-            projectId={projectId}
-            triggerPlacement="chat-advanced"
-            initialProviderId="supabase"
-          />
-        </div>
       </div>
     </section>
   );
