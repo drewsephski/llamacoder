@@ -102,6 +102,13 @@ export default function App() {
     ]);
 
     expect(config.files["/components/ui/button.tsx"]).toBeDefined();
+    const seededButton =
+      typeof config.files["/components/ui/button.tsx"] === "string"
+        ? config.files["/components/ui/button.tsx"]
+        : config.files["/components/ui/button.tsx"]?.code;
+    expect(seededButton).toContain("hover:bg-accent");
+    expect(seededButton).not.toContain("hover:text-gray-900");
+    expect(seededButton).not.toContain("hover:bg-gray-100");
     expect(config.files["/lib/utils.ts"]).toBeDefined();
     expect(config.files["/components/ui/accordion.tsx"]).toBeUndefined();
     expect(config.files["/public/index.html"]).toBeDefined();
@@ -125,6 +132,27 @@ export default function App() {
       "^1.1.0",
     );
     expect(config.customSetup.dependencies.recharts).toBeUndefined();
+  });
+
+  it("lets a generated Button override the seeded shadcn Button", () => {
+    const customButton =
+      "export function Button() { return <button type='button'>Branded</button>; }";
+    const config = getSandpackConfig([
+      {
+        path: "App.tsx",
+        content: `import { Button } from "@/components/ui/button";
+
+export default function App() {
+  return <Button />;
+}`,
+      },
+      {
+        path: "components/ui/button.tsx",
+        content: customButton,
+      },
+    ]);
+
+    expect(config.files["/components/ui/button.tsx"]).toBe(customButton);
   });
 
   it("does not send unused component-library source to Sandpack", () => {

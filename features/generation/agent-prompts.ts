@@ -4,8 +4,10 @@ import type { AppSpec } from "@/features/generation/app-spec";
 import { serializeSpecForPrompt } from "@/features/generation/app-spec";
 import { generatedAppCapabilityContract } from "@/lib/generated-app-capabilities";
 import {
+  designTasteContract,
   functionalInteractionContract,
   neutralThemeDefaultContract,
+  premiumCompositionContract,
   tailwindColorFidelityContract,
   themeToggleContract,
   visualSystemCoherenceContract,
@@ -61,16 +63,17 @@ export const developerCodeGenPrompt = dedent`
   - Every import style must match the target export exactly: use default imports only for default exports, named imports only for named exports.
   - Do not import from a barrel path like ./components unless that exact index file exists and re-exports the requested symbols.
   - Do not invent imports such as "@/lib/hooks/*", "@/hooks/*", or "@/utils/*". Use relative imports for generated files.
-  - Shadcn imports under "@/components/ui/*" and "@/lib/utils" are already installed and should not be redefined.
+  - Shadcn imports under "@/components/ui/*" and "@/lib/utils" are already installed. Prefer the seeded components; you may redefine components/ui/button.tsx, badge.tsx, navigation-menu.tsx, or toggle.tsx when branded hover/state styling requires it.
   - If you call cn(...), import it with import { cn } from "@/lib/utils".
   - For Framer Motion, import lowercase motion: import { motion } from "framer-motion".
   - Use Lucide React for icons (named exports only). Never import \`LucideIcon\` or \`ArrowLeft\`. Use Calendar as CalendarIcon, not CalendarIcon directly. Never import Heroicons-style names from Lucide.
   ${generatedAppCapabilityContract}
   - Build the actual product surface first — real screens, real interactions, real data flow. Avoid placeholder-only UI.
   - Ground the design in the audience, subject matter, single job, and a clear tone. Avoid generic "clean and modern" styling.
+  - When the brief has no theme/palette/aesthetic/reference, lock one Style Pack from the Unspecified-theme Style Pack contract (subject bucket + brief-hash seed), emit STYLE_PACK preflight with dials and SURFACE_MAP, and implement that pack's composition scaffold (hairline mixed-cell bento / instrument board — not three equal icon cards). Do not default to anonymous Vercel-gray SaaS.
   - Choose the structural archetype before styling. Do not default to a centered hero, three equal cards, and a CTA; product and marketing surfaces should use a shape that fits their actual content and workflow.
   - Declare nav and footer archetypes explicitly and avoid the most recognizable defaults unless the IA truly needs them.
-  - Spend visual boldness in one justified, subject-specific signature element; keep the rest restrained.
+  - Spend visual boldness in one justified, subject-specific signature element (prefer the locked Style Pack's signature); keep the rest restrained.
   - State machine requirement: map every meaningful control outcome through visible state transitions (hover, active, focus-visible, disabled, loading, error, and success or equivalent) before implementing the interaction.
   - When the subject calls for visual impact, use the installed creative libraries: shader backgrounds (\`MeshGradient\` or \`DotOrbit\` from \`@paper-design/shaders-react\` — only these two exist), 3D scenes (\`three\` + \`@react-three/fiber\`), post-processing (\`@react-three/postprocessing\`), particles (\`@tsparticles/react\`), or parallax (\`react-parallax\`). A creative, portfolio, gaming, music, or luxury app should feel alive — do not settle for flat color blocks when these tools are available.
   - Lock a small set of semantic Tailwind palette roles and reuse them. Do not improvise unrelated one-off colors midway through the render.
@@ -83,6 +86,8 @@ export const developerCodeGenPrompt = dedent`
   ${visualSystemCoherenceContract}
   ${functionalInteractionContract}
   ${themeToggleContract}
+  ${designTasteContract}
+  ${premiumCompositionContract}
   - Never fabricate metrics, testimonials, customer logos, awards, or quantitative proof. Do not draw fake browser, phone, terminal, code-window, or IDE chrome.
   - Keep headings roman, use decorative numbering only for real sequences, and do not turn every section into a rounded card or pill.
   - Use one containment layer and one icon family. Avoid card-in-card nesting, emoji feature icons, decorative glow, repeated section eyebrows, and generic startup copy such as “Unleash,” “Elevate,” “Seamless,” or “Supercharge.”

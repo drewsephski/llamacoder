@@ -1,4 +1,31 @@
 import dedent from "dedent";
+import {
+  stylePackContract,
+  stylePackPlanningRule,
+} from "@/features/generation/style-packs";
+import {
+  premiumCompositionContract,
+  premiumCompositionPlanningRule,
+} from "@/features/generation/premium-composition-contract";
+
+export { stylePackContract, stylePackPlanningRule };
+export { premiumCompositionContract, premiumCompositionPlanningRule };
+export {
+  selectStylePackId,
+  hasExplicitAestheticDirection,
+  inferSubjectBucket,
+  hashBriefSeed,
+  getStylePack,
+  formatStylePackPreflight,
+  buildActiveStylePackDirective,
+  STYLE_PACKS,
+  STYLE_PACK_IDS,
+} from "@/features/generation/style-packs";
+export type {
+  StylePackId,
+  StylePack,
+  SubjectBucket,
+} from "@/features/generation/style-packs";
 
 export const tailwindColorFidelityContract = dedent`
   **Explicit color fidelity contract (mandatory):**
@@ -15,21 +42,16 @@ export const tailwindColorFidelityContract = dedent`
 export const tailwindColorPlanningRule =
   "Explicit color fidelity: when the user names a color, record the exact standard Tailwind family and whether it is the canvas, surface, primary, or accent role. Preserve that family in implementation; do not substitute a neighboring hue, a semantic token with an unknown value, or a white/gray fallback.";
 
-export const neutralThemeDefaultContract = dedent`
-  **Unspecified-theme default (mandatory):**
-  - Apply this fallback to every new app when the user has not explicitly supplied a theme, palette, named color, visual reference, or aesthetic direction. Explicit user direction always wins. For edits to an existing app, preserve its established theme unless the user asks to restyle or recolor it.
-  - Default to a light-first, Vercel-inspired Tailwind \`neutral\` system: \`bg-neutral-50 text-neutral-950\` for the canvas, \`bg-white\` or \`bg-neutral-100\` for raised surfaces, \`border-neutral-200\` for rules, \`text-neutral-600\` for secondary copy, and \`bg-neutral-950 text-neutral-50\` for the primary action. Use a dark neutral system with \`bg-neutral-950\`, \`bg-neutral-900\`, \`border-neutral-800\`, and \`text-neutral-50\` only when the user requests dark mode or the app includes a complete working theme control.
-  - In this fallback, every portalled overlay surface must be explicitly light: apply \`bg-white text-neutral-950 border-neutral-200\` to \`DialogContent\`, \`AlertDialogContent\`, drawer/sheet content, popovers, menus, and select content. Inputs, textareas, and select triggers inside them must likewise use \`bg-white text-neutral-950 border-neutral-200\`. Do not let an inherited/root \`dark\` class silently turn an otherwise unthemed overlay slate, gray, or near-black. A dark overlay is allowed only when the user requested a dark theme or a working theme control deliberately themes the entire rendered tree.
-  - Use complete literal \`neutral-*\` utilities on theme-defining wrappers and controls so the fallback renders predictably. Semantic Shadcn classes may supplement components only when their resolved values remain neutral and do not reintroduce an unspecified chromatic theme.
-  - Do not default to \`slate-*\`, \`purple-*\`, violet, indigo, blue, chromatic gradients, blurred color blooms, or colored shadow glows. Red and amber remain truthful error/warning colors. One restrained, subject-derived accent family may support the primary action, selected navigation, focus, or a key data series when it adds meaning; if the subject offers no honest cue, stay neutral. Never distribute several decorative accent hues around the interface.
-  - “Vercel-inspired” means restrained product craft, not a clone: high-contrast neutral hierarchy, crisp one-pixel borders, compact \`rounded-md\`/\`rounded-lg\` radii, precise spacing, restrained \`shadow-sm\` elevation, concise copy, and a clear black or near-black primary action. Do not copy Vercel branding or force every product into a marketing-page structure.
-  - Keep structure subject-specific and varied. The neutral fallback must not override the structural diversity, typography, accessibility, or explicit color-fidelity contracts.
-  - Before finalizing an unspecified-theme build, verify that its theme-defining classes use the Tailwind \`neutral\` family and that no slate, purple, or decorative chromatic default slipped into the canvas, primary action, major surfaces, or hero.
-`;
+/**
+ * Unspecified-theme default — Style Pack lock (replaces anonymous Vercel-neutral SaaS).
+ * Full pack catalog and class recipes live in style-packs.ts.
+ */
+export const neutralThemeDefaultContract = stylePackContract;
 
-export const neutralThemePlanningRule =
-  "Unspecified-theme default: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, plan a light-first Vercel-inspired Tailwind neutral system with neutral canvas/surfaces/ink, explicitly white overlay and form-control surfaces with neutral-950 foregrounds, crisp borders, compact radii, restrained shadow, and a near-black primary action; do not default to slate, purple, chromatic gradients, or colored glow.";
+/** @deprecated Prefer stylePackPlanningRule — alias retained for import stability. */
+export const neutralThemePlanningRule = stylePackPlanningRule;
 
+export const unspecifiedThemeStylePackContract = stylePackContract;
 /**
  * Visual-system coherence contract.
  *
@@ -39,16 +61,16 @@ export const neutralThemePlanningRule =
  */
 export const visualSystemCoherenceContract = dedent`
   **Visual system coherence contract (mandatory):**
-  - Before writing JSX, lock a compact surface-role map and reuse it everywhere. For the unspecified light theme, use: canvas = \`bg-neutral-50 text-neutral-950\`; primary surface = \`bg-white text-neutral-950 border-neutral-200\`; subdued surface = \`bg-neutral-100 text-neutral-700 border-neutral-200\`; inverse surface = \`bg-neutral-950 text-neutral-50 border-neutral-800\`; and one optional subject-derived accent role with its own explicit high-contrast foreground. Do not improvise new surface/foreground pairs component by component.
-  - Choose one luminosity model for the screen. The unspecified-theme default is light. Do not create visual drama by dropping a collection of near-black cards into an otherwise white app shell. An inverse surface is an exception reserved for at most one genuinely focal region or primary action area on a screen; it is not the default treatment for metric cards, tables, charts, side panels, or every content section.
+  - Before writing JSX, lock a compact surface-role map and reuse it everywhere. When a Style Pack is locked, use that pack's literal canvas/surface/subdued/inverse/primary/overlay classes — do not invent a parallel map. When the user supplied an explicit theme, derive an equivalent role map from their direction. Do not improvise new surface/foreground pairs component by component.
+  - Choose one luminosity model for the screen (from the locked Style Pack or explicit user direction). Do not create visual drama by dropping a collection of near-black cards into an otherwise light app shell (or the inverse for dark-first packs). An inverse surface is an exception reserved for at most one genuinely focal region or primary action area on a screen; it is not the default treatment for metric cards, tables, charts, side panels, or every content section.
   - Every surface-setting wrapper must set its own foreground, and every nested override must remain compatible. Dark neutral surfaces use \`text-neutral-50\`/\`text-neutral-100\` for primary content and \`text-neutral-300\`/\`text-neutral-400\` for secondary content; light surfaces use \`text-neutral-950\`/\`text-neutral-900\` and \`text-neutral-600\`/\`text-neutral-700\`. Never place \`text-neutral-950\`, \`text-neutral-900\`, or low-opacity black on \`bg-neutral-950\`/\`bg-neutral-900\`; never place white or very pale text on white/neutral-50. Do not use opacity as a substitute for choosing a readable foreground.
   - Build hierarchy with composition before color. Give the screen one dominant work area, then group supporting information with spacing, alignment, dividers, and typography. Do not render a uniform army of same-sized, same-colored cards. Dashboard metrics should normally sit on light surfaces or in one grouped summary band; charts, activity rows, and support content should not all receive the same heavy container treatment.
   - Make information hierarchy readable at a glance: primary values and task titles receive the strongest contrast, supporting labels remain comfortably legible, and metadata recedes without becoming faint. Reserve uppercase plus wide tracking for short tertiary labels only; never use it for essential instructions or as the only distinction between every dashboard section. Use tabular numerals for aligned quantitative data when available.
   - Validate structure at 320, 375, 414, and 768px so the core task lane remains primary, secondary content reflows cleanly, and no clickable action is forced onto two lines.
-  - A neutral foundation is not a lifeless interface. When the subject provides a natural cue, choose exactly one restrained accent family and use it consistently for the most important action, selected state, focus treatment, and/or primary data series. Keep most surface area neutral, keep status colors semantic, and never use weak gray text on the accent.
+  - A monochrome or pack foundation is not a lifeless interface. Prefer the locked Style Pack's primary/accent roles; if the user named a color, honor that family instead. Keep status colors semantic, and never use weak gray text on the accent.
   - Data visualization inherits the screen's luminosity model. Explicitly style every chart title, value, axis label, tick, grid line, legend, tooltip, annotation, and empty/loading state for its actual background; never rely on a chart library's default or inherited text color. Use the accent for the primary series, quieter neutrals for scaffolding, and ensure the data—not the container—is the highest-contrast element.
   - Use elevation sparingly: prefer a one-pixel border and spacing for ordinary grouping, \`shadow-sm\` for truly raised controls or overlays, and no large shadow on every panel. Radius, border, shadow, and padding choices must communicate hierarchy instead of repeating one generic card recipe.
-  - Hover and active states must stay explicit and auditable. Do not use filter-only utilities (such as \`brightness\`, \`contrast\`, \`saturate\`, \`sepia\`, \`grayscale\`, \`invert\`, \`hue-rotate\`, or \`drop-shadow\`) to change state visuals. Emit explicit color pairs like \`hover:bg-*\` and \`hover:text-*\` instead.
+  - Hover and active states must stay coherent with the resting treatment. Prefer design-owned hover recipes (matching bg + text, or bg-only when resting text should persist). Do not inject gray \`hover:text-*\` / \`hover:bg-gray-*\` fallbacks onto branded secondary CTAs, outline/ghost nav Login controls, or other custom-colored actions.
   - Before emitting files, run a surface audit: list each unique \`bg-*\` role used by a major region, identify its direct foreground and muted foreground, and fix any unpaired, mixed-luminosity, duplicate-emphasis, or low-contrast combination. If the screen still looks like disconnected light and dark themes stitched together, revise the whole role map rather than patching one text class.
 `;
 
@@ -119,36 +141,26 @@ export const premiumArchetypeAndThemeContract = dedent`
   - For all screen-level variants, avoid per-section theme changes. Use one theme family and one global luminosity model unless the brief explicitly asks for contrast inversion.
   - Keep motion meaningful: one intentional signature transition for engagement and one confirmation/feedback motion; avoid utility-level effects on every element.
   - Header/nav baseline for all profiles: centered shell, explicit width rhythm, and visible baseline alignment (\`max-w\` + \`mx-auto\` + balanced padding) so nav chrome never drifts toward one edge.
-  - If the user does not provide a brand palette, default to a Hallmark-compatible family:
-    - **Editorial family:** Specimen, Atelier, Brutal, Newsprint, Studio, Manifesto, Almanac, Garden, Riso, Sport, Editorial, Carnival.
-    - **Modern-minimal family:** Coral, Cobalt.
-    - **Atmospheric family:** Bloom, Midnight, Terminal, Aurora, Lumen.
-    - **Playful family:** Hum.
-    - **Custom:** use a custom theme only when the brief explicitly asks for it, provides a specific anchor tone/color, or requires a structural brief that does not fit catalog constraints.
-  - Theme routing:
-    - Creative / portfolio / luxury directions -> ornamental but purposeful visual signature (motion + texture + contrast pivots).
+  - If the user does not provide a brand palette or aesthetic direction, do **not** invent a second theme system here — lock one Style Pack from the Unspecified-theme Style Pack contract (Hallmark names are pack aliases: Cobalt→cobaltMinimal, Lumen→lumenAtmospheric, Specimen→editorialSpecimen, Brutal→swissBrutal, Carnival→kineticAwwwards, Hum→softStructural). Emit the STYLE_PACK preflight and use that pack's literal surface map.
+  - Theme routing when the user IS explicit (or after a pack is locked):
+    - Creative / portfolio / luxury directions -> ornamental but purposeful visual signature (motion + texture + contrast pivots) within the locked pack.
     - Technical / data-heavy / workflows -> utilitarian minimal, high-legibility tones with restrained ornamentation.
     - Editorial / content-led -> rhythm-first hierarchy and low-motion polish.
-    - If the user explicitly states a tone, lock it. If silent, infer one stable tone from subject and audience.
-  - Hallmark style profile selection:
-    - Editorial profile (default for content / portfolio / manifesto / craft / storytelling briefs): asymmetric composition, strong typographic hierarchy, hairline structure, roman headings, restrained motion, and minimal rounded geometry. Prefer one accent and visible white/cream paper contrast. Avoid decorative centered hero + 3-card pattern defaults unless the brief proves they fit.
-    - Modern-minimal profile (technical briefs, API/tools/docs): cool or warm monochrome register, low ornament, high legibility, one signal accent. Prefer a working demonstration anchor (code/API/terminal/command surface), bordered controls, and controlled density. Avoid glassmorphism, decorative shadows, and palette floods.
-    - Atmospheric profile (AI/creative/voice/music tools): dark-to-low-key canvas as the default, one warm accent family, built instrument/focus motif, and strict visual economy. Prefer lower motion, measured reveal, and one focal canvas treatment. Keep paper light only in defined profile drops.
-    - Playful profile (friendly/onboarding/consumer-first with low-stakes tone): rounded sans language, low-chroma accents, friendly but disciplined motion, and a soft tactile rhythm. Avoid saturated generic consumer gradients and decorative emoji-as-icon language.
-    - If the user specifies or the brief clearly implies one of these, lock that profile before styling and keep the screen internally consistent.
-  - Concrete profile-to-theme preferences from Hallmark:
-    - Modern-minimal (technical): prefer **Cobalt** over Coral for dev docs, API demos, and command-heavy flows.
-    - Atmospheric (AI model tools): prefer **Lumen** for instrument-style premium AI pages; keep it distinct from dark "orb" patterns.
-    - Playful (alive/friendly): prefer **Hum** as the only rounded-multi-accent signature theme.
-    - Editorial-with-loud voice: allow **Carnival** when the brief is loud, independent-music-adjacent, DIY cultural, or event-driven; avoid if it would outrun the subject tone.
-  - Brutal tone mechanics (when selected):
+    - If the user explicitly states a tone, lock it. If silent, the Style Pack router already chose; do not override it with anonymous gray SaaS.
+  - Hallmark style profile selection (maps 1:1 to Style Packs — never a competing default):
+    - Editorial / Specimen → editorialSpecimen pack.
+    - Modern-minimal / Cobalt → cobaltMinimal pack.
+    - Atmospheric / Lumen → lumenAtmospheric pack.
+    - Playful / Hum → softStructural pack.
+    - Kinetic / Carnival → kineticAwwwards pack.
+    - Brutal / Swiss Industrial → swissBrutal pack.
+  - Brutal tone mechanics (when swissBrutal or user asks brutalist):
     - Use a raw, edge-driven register: heavy borders, sharp section edges, strong density contrasts, minimal decorative ornament.
     - Prefer slab / condensed display behavior, tracked caps only when they add intent, no unnecessary rounded corners on primary containers.
     - Keep motion strict and explicit: at most three intentional motion primitives on the page, no elastic/bouncy easings by default, and no universal hover choreography.
-    - Require one bold signature element (e.g., one strong shell, one editorial-scale headline treatment, one interaction pivot) and remove all decorative extras.
-  - Reject multi-theme surfaces. One screen should have one primary theme family and one consistent surface map.
+    - Require one bold signature element and remove all decorative extras.
+  - Reject multi-theme surfaces. One screen should have one primary Style Pack / theme family and one consistent surface map.
 `;
-
 export const premiumArchetypeAndThemeCheatSheet = dedent`
   **Premium archetype + component cheat-sheet (plan-ready):**
   - **Bento Grid:** use for comparable modules, service tiles, dashboards with equal priority cards.
@@ -160,25 +172,19 @@ export const premiumArchetypeAndThemeCheatSheet = dedent`
   - **Marquee Hero:** use for one thesis, one narrative, one primary action.
   - **Workbench:** use 'workbench-shell', 'toolbar', 'canvas', 'inspector', and 'activity' regions.
   - **Conversational FAQ:** use question cards, answer progression, and clear next-step affordances.
-  - **Theme families (default behavior):** Creative/portfolio/luxury, technical/workflow, editorial/content. Pick one family and apply it everywhere.
-  - **Hallmark-compatible theme catalog (for tone-rich but disciplined projects):**
-    Editorial: Specimen, Atelier, Brutal, Newsprint, Studio, Manifesto, Almanac, Garden, Riso, Sport, Editorial, Carnival.
-    Modern-minimal: Coral, Cobalt.
-    Atmospheric: Bloom, Midnight, Terminal, Aurora, Lumen.
-    Playful: Hum.
-    Brutal signature: N7 Brutal slab nav; overlap/full-bleed structure cues where they materially improve the brief; one accent system and one clear typographic hierarchy role.
-  - **Hallmark style quick checks (choose exactly one):**
-    - **Editorial:** asymmetric layout first; one-hue accents; hairlines and print-like rhythm; no gradient text; headings stay upright.
-    - **Modern-minimal / Cobalt:** one strong signal color, code-or-terminal hero or live request/response artifact, bordered controls with 6px radii, one dark rhythm section, no rounded pill-heavy language unless explicitly requested.
-    - **Atmospheric / Lumen:** one engineered apparatus motif, lowercase headline + uppercase mono callouts, blueprint-grid support when appropriate, one warm focal accent, motion reduced to reveals.
-    - **Playful / Hum:** rounded sans, three accent roles (primary, secondary, pop), one reacting character/mark, hover lift patterns, and one short celebration sequence only where justified.
-    - **Carnival:** duo-tone alternation, decorative typographic ornaments, hard-offset shadows, poster-like blocks, and no flattened "same-every-surface" radius/spacing.
-    Use one family unless the brief explicitly requests custom tone work; never split theme families in one screen.
+  - **Theme / Style Pack (default when brief is vague):** lock one Style Pack via the Unspecified-theme Style Pack contract — do not invent a parallel Hallmark default.
+  - **Hallmark names → Style Pack aliases:** Specimen→editorialSpecimen; Cobalt→cobaltMinimal; Lumen→lumenAtmospheric; Brutal→swissBrutal; Carnival→kineticAwwwards; Hum→softStructural.
+  - **Quick checks (must match the locked pack):**
+    - **editorialSpecimen:** asymmetric layout first; one-hue accents; hairlines; no gradient text; headings upright.
+    - **cobaltMinimal:** one signal blue, live code/request-response artifact, bordered controls, compact radii, no pill-heavy chrome.
+    - **lumenAtmospheric:** dark instrument canvas, lowercase headline + uppercase mono callouts, one warm amber accent, no purple orbs.
+    - **softStructural:** double-bezel elevated panels, teal primary, soft structural rhythm, no emoji-as-icons.
+    - **kineticAwwwards:** AIDA spine, gapless bento, wide 2–3 line H1, one scroll-craft Desire section.
+    - **swissBrutal:** radius-0, 2px ink borders, hazard red primary, macro CAPS + mono metadata.
+    Never split Style Packs / theme families in one screen.
 `;
-
 export const premiumArchetypeAndThemePlanningRule =
-  "Pick the primary archetype from intent: single-thesis screen = Marquee Hero; multiple entry points / modules = Bento Grid; tool/flow-centric = Workbench; content/docs with question path = Conversational FAQ. State the exact archetype and interaction intent before writing sections; declare 2–4 required user outcomes (create/edit/submit/update/filter/confirm etc.). Commit to one theme family and one luminosity model for the screen unless user explicitly requests change; do not create per-section mini-themes.";
-
+  "Pick the primary archetype from intent: single-thesis screen = Marquee Hero; multiple entry points / modules = Bento Grid; tool/flow-centric = Workbench; content/docs with question path = Conversational FAQ. State the exact archetype and interaction intent before writing sections; declare 2–4 required user outcomes (create/edit/submit/update/filter/confirm etc.). When the brief is vague, lock one Style Pack (Hallmark names are aliases only) and one luminosity model; do not create per-section mini-themes or a second anonymous gray theme.";
 /**
  * Functional interaction contract.
  *
@@ -247,3 +253,85 @@ export const themeToggleContract = dedent`
 
 export const themeTogglePlanningRule =
   "Theme behavior: if the plan includes a theme control, specify one shared light/dark state owner initialized from localStorage with an OS fallback; every control must call the same toggle handler, toggle the dark class on document.documentElement, update document.documentElement.style.colorScheme, persist the choice, expose a keyboard-accessible dynamic state label, and theme portalled overlays, toasts, forms, data visualizations, and every interaction state. If there is no theme control, do not invent a decorative one.";
+
+/**
+ * Design Taste contract.
+ *
+ * Distills distinctive principles from the design-taste / UI skill suite
+ * (anti-slop dials, aesthetic modes, hero discipline, motion motivation,
+ * redesign protocol) into rules compatible with Squid's sandbox:
+ * Lucide-limited icons, framer-motion, and Tailwind v3 without arbitrary values.
+ */
+export const designTasteContract = dedent`
+  **Design Taste contract (mandatory for distinctive UI):**
+
+  ### Brief inference (before classes)
+  - Infer page kind (product surface / landing / portfolio / editorial / redesign), vibe words, audience, and quiet constraints (a11y, regulated, trust-first). Quiet constraints override aesthetic preference.
+  - State one Design Read line in planning: "Reading this as: <kind> for <audience>, with a <vibe> language, leaning <aesthetic/theme family>."
+  - Anti-default: do not reach for AI-purple gradients, dark-mesh centered hero, three equal feature cards, Inter/slate corporate chrome, glass on every surface, or infinite decorative micro-loops.
+
+  ### Taste dials (set once, then obey)
+  - Lock three dials before styling: DESIGN_VARIANCE (1=symmetric … 10=asymmetric), MOTION_INTENSITY (1=static … 10=cinematic), VISUAL_DENSITY (1=airy … 10=cockpit). Baseline for marketing/portfolio: 8 / 6 / 4.
+  - Map from vibe: minimal/calm/Linear → 5-6 / 3-4 / 2-3; premium/Apple-y/luxury → 7-8 / 5-7 / 3-4; playful/Awwwards/agency → 9-10 / 8-10 / 3-4; trust/public-sector → 3-4 / 2-3 / 4-5; product workbench/dashboard → 4-6 / 3-5 / 6-8; redesign-preserve → match existing / +1 motion / match density; redesign-overhaul → +2 variance / +2 motion / match density.
+  - Variance > 4: prefer asymmetric, split, or offset compositions over centered hero stacks. Density > 7: prefer borders, divide-y, and negative space over boxed metric cards; use mono/tabular treatment for numbers. Motion > 4: the page must actually move (entrance, state change, or scroll reveal); if you cannot ship working motion, drop the dial rather than claiming cinematic and shipping static.
+
+  ### Anti-slop tells (hard bans unless the brief explicitly demands them)
+  - Em-dash and en-dash as separators are forbidden in visible UI copy. Use a period, comma, colon, parentheses, or a regular hyphen.
+  - No neon outer glows, pure \`#000\`/\`#fff\` as the only palette, rainbow mesh blobs, gradient display headlines, custom cursors, or decorative status dots on every row/nav item.
+  - No version badges in heroes (\`BETA\`, \`v0.6\`), no scroll cues (\`Scroll to explore\`), no decoration strips (\`TYPE / FORM / MOTION\`), no locale/weather strips, no section-number eyebrows (\`01 / Capabilities\`), no pills/labels overlaid on images, no photo-credit theater on stock imagery.
+  - No div-based fake browser/phone/terminal/IDE chrome. No fabricated metrics, testimonials, customer logos, or awards.
+  - No Jane Doe / Acme / Nexus names; no filler verbs: Unleash, Elevate, Empower, Seamless, Supercharge, Next-Gen, Revolutionize, "Where X meets Y", "Built for the modern team".
+  - Layout family used at most once per page. Zigzag image+text splits: max two consecutive. Eyebrows (small uppercase wide-tracking labels above headlines): at most one per three sections; never on consecutive sections.
+  - Split-header ban: do not put a giant left headline beside a floating right explainer paragraph as the section header; stack headline then body (max ~65ch).
+  - Duplicate CTA intent ban: one label per intent across nav, hero, and footer (do not ship both "Get started" and "Try free" for the same action).
+  - Marquee / kinetic text band: at most one per page. Nested card-in-card wrappers and giant rounded shells around every block are banned.
+
+  ### Typography discipline
+  - Prefer characterful available faces or expressive scale/weight/tracking on an installed stack. Do not default the whole voice to Inter, Roboto, Arial, Open Sans, or Poppins.
+  - Serif display is discouraged by default. Allow serif only when the brief is genuinely editorial / luxury / publication / heritage or the brand names a serif. Never default to Fraunces or Instrument Serif as a creative crutch.
+  - Headings stay roman. Emphasis uses bold/weight of the same family, not a random mixed-family italic word. If italic appears in body copy with descenders (y,g,j,p,q), keep enough line-height so glyphs are not clipped.
+  - H1 discipline: prefer 2 lines, hard max 3 on desktop. Widen measure or reduce scale rather than wrapping into a wall of type. Keep one copy register per page; rewrite cute AI nonsense into plain functional language.
+
+  ### Color and theme locks
+  - Max one accent family; saturation restrained; one gray temperature (warm OR cool) for the whole app. Color Consistency Lock: the accent used in the hero is the accent used in footer, focus, and selected states.
+  - Lila/AI-purple banned unless the user or brand explicitly asks for purple (then execute with intent: coherent family, not neon glow).
+  - Premium-consumer / craft / luxury briefs: do not default to warm cream + brass/clay/oxblood + espresso. Rotate alternatives: Cold Luxury (silver/smoke), Forest (deep green + amber), Black and Tan, Cobalt + Cream, Olive + Brick, or mono + one saturated pop.
+  - Theme Lock: one light-first, dark-first, or system-driven luminosity model for the whole screen. No mid-page accidental light/dark flips. At most one deliberate focal inverse region.
+  - Shape Consistency Lock: one radius system for the page (sharp / soft / documented mixed rule for buttons vs cards). Do not mix pill nav, sharp cards, and fully rounded inputs without a stated rule.
+
+  ### Hero and marketing composition (when the surface is landing/portfolio/promotional)
+  - Hero must fit the first viewport: headline ≤ 2 lines, subtext ≤ 20 words, CTA visible without scroll, top padding not excessive (\`pt-16\`–\`pt-24\` at desktop — never floating content halfway down the screen).
+  - Max four text elements in the hero: optional eyebrow OR brand strip, headline, subtext, and CTAs (1 primary + at most 1 secondary). Ban stats strips, trust logos, pricing teasers, and feature bullets inside the hero — those belong in sections below.
+  - Prefer asymmetric split, editorial type-led, media-as-canvas, or workbench-preview openings over reflexive centered promise + three cards. Product apps still open on the usable surface, not a marketing shell.
+  - Prefer full-viewport hero shells via \`min-h-screen\` (or an equivalent installed full-viewport pattern) rather than brittle height hacks; keep mobile address-bar jump in mind. Prefer CSS Grid over fragile flex percentage math for multi-column sections.
+
+  ### Motion (motivated only)
+  - Animate transform and opacity only. Prefer spring or exponential ease-out (roughly 200–400ms). No bounce/elastic defaults. No \`window\` scroll listeners; use Framer Motion scroll hooks, GSAP ScrollTrigger, or IntersectionObserver.
+  - Each animation must serve hierarchy, storytelling, feedback, or state change — otherwise remove it. Infinite loops belong only on genuinely live product demos, not every card.
+  - Isolate heavy motion in dedicated components. Continuous pointer/scroll values must not thrash React state. Grain/noise overlays stay on fixed, pointer-events-none layers.
+  - Respect \`prefers-reduced-motion\`: collapse non-essential motion when reduced motion is requested. GSAP pin/scrub work (sticky stacks, horizontal pans) must pin at \`start: "top top"\` when used; do not mix GSAP timeline ownership with Framer Motion in the same leaf.
+
+  ### Aesthetic modes (must match locked Style Pack; do not mix conflicting modes)
+  - When a Style Pack is locked for a vague brief, the aesthetic mode is already chosen: swissBrutal→brutalist, cobaltMinimal→minimalist, lumenAtmospheric/softStructural→high-end, editorialSpecimen→editorial, kineticAwwwards→kinetic. Do not pick a conflicting mode.
+  - **Brutalist / industrial (swissBrutal):** Swiss Industrial light paper + hazard red/ink by default (Tactical CRT only if the user asks dark terminal). Radius 0, 1–2px borders, macro CAPS + mono metadata, no soft shadows/glass/gradients. One signature move; remove the rest.
+  - **Minimalist / Linear-calm (cobaltMinimal):** cool monochrome + blue signal, hairline borders, compact radii (\`rounded-md\`/\`rounded-lg\`), no pill-heavy chrome, quiet motion, flat grouping over elevated cards.
+  - **High-end (lumenAtmospheric / softStructural):** instrument dark + amber OR soft double-bezel teal structuralism — not both. Floating/pill nav only when the pack allows; custom easing on entries; one kinetic primary CTA — not effects on every control.
+  - **Editorial (editorialSpecimen):** asymmetric type-led composition, hairlines, stone canvas, one rose accent, restrained motion.
+  - **Awwwards / kinetic (kineticAwwwards):** AIDA spine, gapless dense bento (\`N\` items → \`N\` cells), huge section breathing room, deterministic variety from the brief seed.
+  - **Brandkit discipline:** one metaphor, sparse real copy, accents that recur, mockups that show identity application rather than fake dense dashboards.
+
+  ### Redesign protocol (when editing an existing app or brand)
+  - Detect preserve vs overhaul. Preserve: routes/slugs, primary nav labels, form field names, logo/wordmark, legal/consent copy, analytics IDs, and accessibility wins unless the user asks to change them.
+  - Lever order: typography → spacing rhythm → color recalibration → motion → hero/opening recomposition → unsalvageable block replacement. Do not rewrite the stack for a visual polish request.
+  - Optical craft: align baselines across card groups, keep CTA rows level, sentence-case headers, no "Oops!" or exclamation-mark success copy.
+
+  ### Preflight (fail any → revise before emit)
+  - Design Read + dials stated; theme/color/shape locks held; zero em/en-dash separators in UI copy.
+  - Hero (if marketing) viewport-fit; eyebrow ration; no zigzag×3; no duplicate CTA intent; no mid-page theme flip.
+  - Serif justified or absent; premium palette not cream+brass default; one accent family throughout.
+  - Motion motivated + reduced-motion path; real product content (no fake chrome/proof); section layout families varied.
+  - Buttons/forms meet contrast and 44px targets; CTA labels stay one line at desktop; copy self-audited for AI-cute nonsense.
+`;
+
+export const designTastePlanningRule =
+  "Design Taste: before styling, write one Design Read line and lock DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY (use the Style Pack dials when a pack is locked); pick at most one aesthetic mode matching that pack; enforce anti-slop bans (em-dash, three-card hero template, fake chrome, section-number eyebrows, duplicate CTA intents); for redesigns preserve IA/nav labels/field names and modernize via type→spacing→color→motion→hero; end planning with the Design Taste preflight checklist.";

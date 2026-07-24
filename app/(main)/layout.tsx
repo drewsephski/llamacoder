@@ -8,7 +8,9 @@ const appHomeDescription =
   "Research live sources, plan your build, generate exportable React apps, verify quality, recover versions, connect APIs, and keep code ownership and checkpoints clear.";
 
 export const metadata: Metadata = {
-  title: appHomeTitle,
+  title: {
+    absolute: appHomeTitle,
+  },
   description: appHomeDescription,
   alternates: { canonical: "/" },
   keywords: [

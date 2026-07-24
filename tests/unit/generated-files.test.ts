@@ -38,7 +38,14 @@ describe("generated file normalization", () => {
       "components/Card.tsx",
     );
     expect(normalizeGeneratedPath("../secret.ts")).toBeNull();
-    expect(normalizeGeneratedPath("components/ui/button.tsx")).toBeNull();
+    // Interactive chrome may be customized by the model for coherent hover/state styling.
+    expect(normalizeGeneratedPath("components/ui/button.tsx")).toBe(
+      "components/ui/button.tsx",
+    );
+    expect(normalizeGeneratedPath("components/ui/badge.tsx")).toBe(
+      "components/ui/badge.tsx",
+    );
+    expect(normalizeGeneratedPath("components/ui/dialog.tsx")).toBeNull();
     expect(normalizeGeneratedPath("@/lib/utils.ts")).toBeNull();
     expect(normalizeGeneratedPath("lib/supabase.ts")).toBeNull();
     expect(normalizeGeneratedPath("squid-runtime/supabase.ts")).toBeNull();
@@ -47,8 +54,8 @@ describe("generated file normalization", () => {
   it("reports protected files stripped during normalization", () => {
     const files = normalizeGeneratedFiles([
       {
-        path: "components/ui/button.tsx",
-        code: "export function Button() { return null; }",
+        path: "components/ui/dialog.tsx",
+        code: "export function Dialog() { return null; }",
       },
       {
         path: "App.tsx",
@@ -61,6 +68,27 @@ describe("generated file normalization", () => {
     });
     expect(buildGeneratedFilesQualityReport(files)).toMatchObject({
       protectedPathsBlocked: 1,
+    });
+  });
+
+  it("allows the model to override Button for branded hover styling", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "components/ui/button.tsx",
+        code: "export function Button() { return <button type='button'>Go</button>; }",
+      },
+      {
+        path: "App.tsx",
+        code: 'import { Button } from "@/components/ui/button";\nexport default function App() { return <Button />; }',
+      },
+    ]);
+
+    expect(files.map((file) => file.path).sort()).toEqual([
+      "App.tsx",
+      "components/ui/button.tsx",
+    ]);
+    expect(readGeneratedFilesStats(files)).toEqual({
+      protectedPathsBlocked: 0,
     });
   });
 

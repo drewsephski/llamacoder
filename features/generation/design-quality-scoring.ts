@@ -154,13 +154,13 @@ type EmphasisInstruction = {
 
 const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
   philosophy: dedent`
-    HIERARCHY FOCUS (based on past generations):
-    Your previous designs scored low on Hierarchy. This generation, you must:
-    - Make the primary task and next action obvious within 3 seconds
-    - Give secondary controls strictly less visual weight
-    - Group related controls by proximity, not by wrapping them in identical cards
-    - Use whitespace as the primary structural tool before adding any visual separators
-    - Before emitting files, verify that a new user could identify the main action without reading any labels
+    PHILOSOPHY FOCUS (based on past generations):
+    Your previous designs scored low on Philosophy. This generation, you must:
+    - Write a Design Read first and lock DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY before styling
+    - Pick one aesthetic mode (brutalist, minimalist, high-end, kinetic, editorial, modern-minimal, atmospheric, playful) and stay inside it
+    - Ground the opening in the subject's world — not a generic "modern SaaS" thesis
+    - Spend boldness on one signature element; keep everything else disciplined
+    - Before emitting files, ask whether a human designer with a point of view would make each major choice
   `,
   hierarchy: dedent`
     HIERARCHY FOCUS (based on past generations):
@@ -169,6 +169,7 @@ const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
     - Give secondary controls strictly less visual weight
     - Group related controls by proximity, not by wrapping them in identical cards
     - Use whitespace as the primary structural tool before adding any visual separators
+    - Keep marketing heroes to ≤4 text elements with the CTA above the fold
     - Before emitting files, verify that a new user could identify the main action without reading any labels
   `,
   execution: dedent`
@@ -179,16 +180,18 @@ const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
     - Wire every button to a real handler; no inert controls or empty onClick
     - Use Dialog/AlertDialog/Drawer appropriately for the workflow
     - Add toast feedback for every completed mutation
+    - If MOTION_INTENSITY > 4, ship working motivated motion with a reduced-motion path — do not claim cinematic and emit static
   `,
   specificity: dedent`
     SPECIFICITY FOCUS (based on past generations):
     Your previous designs scored low on Specificity. This generation, you must:
     - Ground every design choice in the subject's world, not in generic SaaS patterns
     - Use subject-specific content: real names, real data, real terminology
-    - Choose a page archetype that fits this specific content, not a template
+    - Choose a page archetype and aesthetic mode that fits this specific content, not a template
     - Pick nav and footer archetypes tied to the actual information architecture
     - Keep nav in a centered shell (\`max-w-*\` + \`mx-auto\`) with equal side gutters at desktop and collapsed/mobile breakpoints
     - Replace every generic label ("Submit", "Click here") with a concrete action verb
+    - Avoid cream+brass premium defaults, Fraunces/Instrument Serif crutches, and fabricated proof
   `,
   restraint: dedent`
     RESTRAINT FOCUS (based on past generations):
@@ -197,6 +200,7 @@ const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
     - Use exactly one containment layer (no card-in-card nesting)
     - Apply gradient, shadow, or glow to at most one surface
     - Keep one icon family throughout; do not mix styles
+    - Ration eyebrows to ≤1 per 3 sections; ban em-dash separators and decorative section numbering
     - Use copy that is functional, not decorative — no "Unleash", "Elevate", "Seamless"
   `,
   variety: dedent`
@@ -205,9 +209,10 @@ const EMPHASIS_INSTRUCTIONS: Record<DesignScoreDimension, string> = {
     - Choose a different page archetype than the last app in this session
     - Vary nav treatment: if the last app used a wordmark+links nav, use something else
     - Verify the new nav treatment remains centered at desktop and at 320/375/414/768px widths, with no drifting edge lock
-    - Pick a different accent hue family from the last generation
+    - Pick a different accent hue family and aesthetic mode from the last generation
     - Mix tight and generous spacing intentionally rather than uniform padding
-    - Ensure the section rhythm follows the content, not a reusable template
+    - Ensure the section rhythm follows the content: no layout family twice, no zigzag image+text more than twice in a row
+    - Use a deterministic seed from the brief (subject length/hash) to force a different hero composition and component set
   `,
 };
 

@@ -358,6 +358,7 @@ export async function POST(req: Request) {
             quality: true,
             userId: true,
             appSpec: true,
+            prompt: true,
           },
         },
       },
@@ -1257,7 +1258,14 @@ export async function POST(req: Request) {
             // System prompts are persisted with chats for reproducibility, but
             // code generation should always use the current safety and design
             // contract so existing projects receive prompt-policy upgrades.
-            systemInstruction = getMainCodingPrompt();
+            const styleBrief =
+              typeof message.chat.prompt === "string" &&
+              message.chat.prompt.trim()
+                ? message.chat.prompt
+                : latestResearchObjective;
+            systemInstruction = getMainCodingPrompt({
+              userPrompt: styleBrief,
+            });
           }
           if (linkedPageContext) {
             const lastUserMessageIndex = guardedMessages.findLastIndex(

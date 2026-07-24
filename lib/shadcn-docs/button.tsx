@@ -11,4 +11,6 @@ export const usageDocs = `
 <Button variant='outline'>Button</Button>
 <Button variant='ghost'>Button</Button>
 <Button variant='link'>Button</Button>
+{/* Branded secondary / nav Login: override hover as a complete recipe, or use a native button/link with full custom classes — never leave a gray hover:text fighting the resting color. */}
+<Button variant='ghost' className='text-foreground hover:bg-muted'>Log in</Button>
 `;

@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
               data: [
                 {
                   role: "system",
-                  content: getMainCodingPrompt(),
+                  content: getMainCodingPrompt({ userPrompt: prompt }),
                   position: 0,
                 },
                 { role: "user", content: prompt, position: 1 },

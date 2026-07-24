@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
             data: [
               {
                 role: "system",
-                content: getMainCodingPrompt(),
+                content: getMainCodingPrompt({ userPrompt }),
                 position: 0,
               },
               {

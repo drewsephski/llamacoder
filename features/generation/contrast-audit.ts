@@ -346,9 +346,7 @@ function hslToLuminance(colorClass: string): number | null {
   const lightness = l;
 
   const q =
-    lightness < 0.5
-      ? lightness * (1 + sat)
-      : lightness + sat - lightness * sat;
+    lightness < 0.5 ? lightness * (1 + sat) : lightness + sat - lightness * sat;
   const p = 2 * lightness - q;
 
   const rgb = [
@@ -356,9 +354,7 @@ function hslToLuminance(colorClass: string): number | null {
     hueToRgb(p, q, hue),
     hueToRgb(p, q, hue - 1 / 3),
   ].map((channel) =>
-    channel <= 0.03928
-      ? channel / 12.92
-      : ((channel + 0.055) / 1.055) ** 2.4,
+    channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
   );
 
   return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
@@ -458,10 +454,7 @@ function extractColorPairs(
     fg: string;
     interaction: HoverAwareInteractionState;
   }> = [];
-  const tokensByState: Record<
-    HoverAwareInteractionState,
-    StateColorTokens
-  > = {
+  const tokensByState: Record<HoverAwareInteractionState, StateColorTokens> = {
     base: { bg: [], fg: [] },
     hover: { bg: [], fg: [] },
     active: { bg: [], fg: [] },
@@ -549,11 +542,13 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
     const lines = file.code.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const hasUnscannedHoverFilter =
-        hasUnsafeHoverFilterClasses(line);
+      const hasUnscannedHoverFilter = hasUnsafeHoverFilterClasses(line);
       const pairs = extractColorPairs(line);
 
       if (hasUnscannedHoverFilter) {
+        // Advisory only: hard-rejecting filter hovers pushed the model to inject
+        // mismatched hover:bg/hover:text pairs (often gray-900) onto secondary
+        // CTAs and nav Login buttons that otherwise matched the design.
         violations.push({
           file: file.path,
           line: i + 1,
@@ -561,9 +556,9 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
           foreground: "hover-state",
           estimatedRatio: 0,
           requiredRatio: WCAG_AA_NORMAL,
-          severity: "error",
+          severity: "warning",
           message:
-            "State transitions use filter-style utilities (hover/active/focus brightness/contrast/saturate/hue/etc.). Replace with explicit state-aware color pairs (hover:bg-*/hover:text-*, etc.) so text contrast remains provable in both themes.",
+            "State transitions use filter-style utilities (hover/active/focus brightness/contrast/saturate/hue/etc.). Prefer cohesive design-owned hover styles; explicit hover:bg-*/hover:text-* pairs are optional when the resting text color should persist.",
         });
       }
 
@@ -595,7 +590,24 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
           continue;
         }
 
-        if (!isStatefulPair && minRatio >= WCAG_AA_LARGE) {
+        // Interactive-state contrast is advisory. Hard-failing hover/active/focus
+        // pairs caused regenerate loops that injected gray hover:text onto
+        // branded secondary CTAs and nav controls.
+        if (isStatefulPair) {
+          violations.push({
+            file: file.path,
+            line: i + 1,
+            background: pair.bg,
+            foreground: pair.fg,
+            estimatedRatio: roundedMinRatio,
+            requiredRatio: WCAG_AA_NORMAL,
+            severity: "warning",
+            message: `bg-${pair.bg}/text-${pair.fg} may be low-contrast in the ${pair.interaction} state (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1. Keep hover styles consistent with the resting treatment rather than forcing a gray fallback.`,
+          });
+          continue;
+        }
+
+        if (minRatio >= WCAG_AA_LARGE) {
           passedPairs++;
           violations.push({
             file: file.path,
@@ -608,8 +620,6 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
             message: `bg-${pair.bg}/text-${pair.fg} passes large text only in dark/light themes at worst (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1.`,
           });
         } else {
-          const stateLabel =
-            pair.interaction === "base" ? "default" : pair.interaction;
           violations.push({
             file: file.path,
             line: i + 1,
@@ -618,7 +628,7 @@ export function auditContrast(files: GeneratedFile[]): ContrastAuditReport {
             estimatedRatio: roundedMinRatio,
             requiredRatio: WCAG_AA_NORMAL,
             severity: "error",
-            message: `bg-${pair.bg}/text-${pair.fg} fails ${stateLabel} state contrast in at least one theme (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1. ${pair.interaction === "base" ? `Improve to at least ${WCAG_AA_NORMAL}:1.` : `Interactive states must stay at least ${WCAG_AA_NORMAL}:1.`}`,
+            message: `bg-${pair.bg}/text-${pair.fg} fails default state contrast in at least one theme (${roundedMinRatio}:1). Ratios: light ${roundedLightRatio}:1, dark ${roundedDarkRatio}:1. Improve to at least ${WCAG_AA_NORMAL}:1.`,
           });
         }
       }

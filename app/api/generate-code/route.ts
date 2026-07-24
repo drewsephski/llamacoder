@@ -252,7 +252,10 @@ export async function POST(request: NextRequest) {
           chat.model,
           chat.quality === "high" ? "high" : "low",
         ),
-        system: getMainCodingPrompt({ designScoreSummary: latestDesignScores }),
+        system: getMainCodingPrompt({
+          designScoreSummary: latestDesignScores,
+          userPrompt: chat.prompt || chat.plan,
+        }),
         messages: [
           {
             role: "user",

@@ -27,7 +27,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePlausible } from "next-plausible";
-import { useMotionValue, useSpring } from "framer-motion";
+import {
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+} from "framer-motion";
 import {
   useState,
   useRef,
@@ -63,6 +69,7 @@ import { fetchCompletionStream } from "@/features/generation/client/completion-s
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 import { getErrorMessage } from "@/features/shared/errors";
 import { ApiSelectionDialog } from "@/features/integrations/components/api-selection-dialog";
+import { PromptBuilderModal } from "@/features/prompt-builder";
 import { AiBuilderFeatureComparison } from "@/components/ai-builder-feature-comparison";
 import { uploadScreenshot } from "@/lib/s3-upload-client";
 
@@ -403,7 +410,6 @@ const homepageControlPromises = [
 const homepageFlowSteps = [
   {
     label: "Idea",
-    eyebrow: "01 · Start anywhere",
     title: "Describe what you want",
     detail:
       "Use a prompt, screenshot, or URL. Squid turns rough intent into a buildable brief.",
@@ -412,7 +418,6 @@ const homepageFlowSteps = [
   },
   {
     label: "Research",
-    eyebrow: "02 · Ground the idea",
     title: "Research the real world",
     detail:
       "Sources, APIs, and constraints become visible context before the first line of code.",
@@ -421,7 +426,6 @@ const homepageFlowSteps = [
   },
   {
     label: "Plan",
-    eyebrow: "03 · Approve the direction",
     title: "See the plan before the build",
     detail:
       "Review consequential choices and steer the architecture while changes are still cheap.",
@@ -430,7 +434,6 @@ const homepageFlowSteps = [
   },
   {
     label: "Build",
-    eyebrow: "04 · Watch it take shape",
     title: "Generate a working app",
     detail:
       "The interface, logic, and files arrive together in an inspectable workspace.",
@@ -439,7 +442,6 @@ const homepageFlowSteps = [
   },
   {
     label: "Refine",
-    eyebrow: "05 · Keep the momentum",
     title: "Refine in conversation",
     detail:
       "Ask for changes in plain language while Squid preserves the parts that already work.",
@@ -448,7 +450,6 @@ const homepageFlowSteps = [
   },
   {
     label: "Verify",
-    eyebrow: "06 · Earn confidence",
     title: "Verify before release",
     detail:
       "Quality checks and repair loops show what passed, what changed, and what still needs attention.",
@@ -457,7 +458,6 @@ const homepageFlowSteps = [
   },
   {
     label: "Ship",
-    eyebrow: "07 · Own the outcome",
     title: "Ship the whole project",
     detail:
       "Deploy when ready, export every file, and keep a transparent record of how it was built.",
@@ -689,6 +689,7 @@ export default function Home() {
   const animationFrameRef = useRef<number | undefined>(undefined);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [showPromptBuilder, setShowPromptBuilder] = useState(false);
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
   const ringRef = useRef<HTMLDivElement>(null);
   const promptStartedAtRef = useRef<number | null>(null);
@@ -1025,11 +1026,13 @@ export default function Home() {
         }}
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap');
-
-        .font-display { font-family: 'Instrument Serif', Georgia, serif; }
-        .font-sans-dm { font-family: 'DM Sans', system-ui, sans-serif; }
-        .font-mono-jb { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+        .font-display {
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+          font-weight: 700;
+          letter-spacing: -0.045em;
+        }
+        .font-sans-dm { font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif; }
+        .font-mono-jb { font-family: ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; }
         body[data-scroll-locked] { margin-right: 0 !important; }
 
         @keyframes fadeUp {
@@ -1040,21 +1043,17 @@ export default function Home() {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
         @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-          50% { box-shadow: 0 0 0 6px rgba(59,130,246,0.06); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(0,98,255,0); }
+          50% { box-shadow: 0 0 0 6px rgba(0,98,255,0.06); }
         }
         @keyframes floatDot {
           0%, 100% { transform: translateY(0px) scale(1); opacity: 0.4; }
           50% { transform: translateY(-8px) scale(1.1); opacity: 0.7; }
         }
         @keyframes borderGlow {
-          0%, 100% { border-color: rgba(59,130,246,0.2); }
-          50% { border-color: rgba(59,130,246,0.5); }
+          0%, 100% { border-color: rgba(0,98,255,0.2); }
+          50% { border-color: rgba(0,98,255,0.5); }
         }
         .animate-fade-up { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-fade-up-1 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
@@ -1063,17 +1062,24 @@ export default function Home() {
         .animate-fade-up-4 { animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both; }
         .animate-fade-in { animation: fadeIn 0.8s ease both 0.4s; }
 
-        .shimmer-text {
-          background: linear-gradient(
-            150deg,
-            hsl(var(--foreground)) 0%,
-            rgba(0, 98, 255, 1) 100%
-          );
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: shimmer-reverse 3s linear infinite;
+        @media (prefers-reduced-motion: reduce) {
+          .animate-fade-up,
+          .animate-fade-up-1,
+          .animate-fade-up-2,
+          .animate-fade-up-3,
+          .animate-fade-up-4,
+          .animate-fade-in {
+            animation: none;
+            opacity: 1;
+            transform: none;
+          }
+        }
+
+        .hero-accent {
+          color: #0062FF;
+        }
+        .dark .hero-accent {
+          color: #0CA8FF;
         }
 
         .compose-box {
@@ -1087,7 +1093,7 @@ export default function Home() {
           inset: -1px;
           border-radius: 21px;
           padding: 1px;
-          background: linear-gradient(135deg, transparent 0%, rgba(59,130,246,0.15) 50%, transparent 100%);
+          background: linear-gradient(135deg, transparent 0%, rgba(0,98,255,0.18) 50%, transparent 100%);
           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           -webkit-mask-composite: xor;
@@ -1106,11 +1112,11 @@ export default function Home() {
           transition: border-color 0.25s ease, box-shadow 0.25s ease;
         }
         .compose-box-inner:focus-within {
-          border-color: rgba(59,130,246,0.45);
+          border-color: rgba(0,98,255,0.45);
           box-shadow:
-            0 0 0 3px rgba(59,130,246,0.06),
+            0 0 0 3px rgba(0,98,255,0.06),
             0 8px 32px rgba(0,0,0,0.08),
-            0 2px 8px rgba(59,130,246,0.06);
+            0 2px 8px rgba(0,98,255,0.06);
         }
         .compose-box-inner:hover:not(:focus-within) {
           border-color: hsl(var(--border) / 0.9);
@@ -1140,17 +1146,17 @@ export default function Home() {
           cursor: pointer;
           transition: all 0.2s ease;
           white-space: nowrap;
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           font-weight: 400;
           letter-spacing: -0.01em;
           backdrop-filter: blur(8px);
         }
         .pill-chip:hover {
-          border-color: rgba(59,130,246,0.35);
-          background: rgba(59,130,246,0.04);
+          border-color: rgba(0,98,255,0.35);
+          background: rgba(0,98,255,0.04);
           color: hsl(var(--foreground));
           transform: translateY(-1px);
-          box-shadow: 0 3px 10px rgba(59,130,246,0.08);
+          box-shadow: 0 3px 10px rgba(0,98,255,0.08);
         }
 
         .url-strip {
@@ -1161,15 +1167,15 @@ export default function Home() {
           transition: all 0.25s ease;
         }
         .url-strip:focus-within {
-          border-color: rgba(59,130,246,0.4);
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.05);
+          border-color: rgba(0,98,255,0.4);
+          box-shadow: 0 0 0 3px rgba(0,98,255,0.05);
         }
 
         .build-btn {
           position: relative;
           overflow: hidden;
           border-radius: 12px;
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           font-weight: 500;
           letter-spacing: -0.01em;
           transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1183,7 +1189,7 @@ export default function Home() {
         }
         .build-btn:hover:not(:disabled) {
           transform: translateY(-1px) scale(1.02);
-          box-shadow: 0 6px 20px rgba(59,130,246,0.3);
+          box-shadow: 0 6px 20px rgba(0,98,255,0.3);
         }
         .build-btn:active:not(:disabled) {
           transform: translateY(0) scale(0.99);
@@ -1198,7 +1204,7 @@ export default function Home() {
           font-size: 13px;
           font-weight: 450;
           color: hsl(var(--muted-foreground));
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           transition: all 0.15s ease;
           cursor: pointer;
           letter-spacing: -0.01em;
@@ -1231,7 +1237,7 @@ export default function Home() {
           gap: 12px;
           color: hsl(var(--muted-foreground) / 0.5);
           font-size: 11.5px;
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           letter-spacing: 0.04em;
           text-transform: uppercase;
           font-weight: 500;
@@ -1270,9 +1276,9 @@ export default function Home() {
           color: #0095ff;
           font-size: 11.5px;
           font-weight: 500;
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
         }
-        .dark .info-pill { color: #0095ff; background: rgba(12,168,255,0.06); }
+        .dark .info-pill { color: #0CA8FF; background: rgba(12,168,255,0.06); }
 
         .pro-badge {
           display: inline-flex;
@@ -1280,15 +1286,15 @@ export default function Home() {
           gap: 2px;
           padding: 1px 5px 1px 3px;
           border-radius: 5px;
-          background: linear-gradient(120deg, rgba(59,130,246,0.16), rgba(99,102,241,0.16));
-          border: 1px solid rgba(59,130,246,0.25);
-          color: #2563eb;
+          background: linear-gradient(120deg, rgba(0,98,255,0.16), rgba(12,168,255,0.14));
+          border: 1px solid rgba(0,98,255,0.25);
+          color: #0062FF;
           font-size: 9px;
           font-weight: 600;
           letter-spacing: 0.03em;
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
         }
-        .dark .pro-badge { background: linear-gradient(120deg, rgba(59,130,246,0.22), rgba(99,102,241,0.22)); color: #93c5fd; border-color: rgba(59,130,246,0.3); }
+        .dark .pro-badge { background: linear-gradient(120deg, rgba(0,98,255,0.22), rgba(12,168,255,0.18)); color: #93c5fd; border-color: rgba(12,168,255,0.3); }
         .premium-badge {
           display: inline-flex;
           align-items: center;
@@ -1301,7 +1307,7 @@ export default function Home() {
           font-size: 9px;
           font-weight: 650;
           letter-spacing: 0.03em;
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
         }
         .dark .premium-badge { background: linear-gradient(120deg, rgba(245,158,11,0.24), rgba(250,204,21,0.18)); color: #facc15; border-color: rgba(250,204,21,0.34); }
 
@@ -1314,7 +1320,7 @@ export default function Home() {
           border-radius: 9px;
           border: 1px solid transparent;
           background: hsl(var(--muted) / 0.45);
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
         }
@@ -1324,8 +1330,8 @@ export default function Home() {
         }
         .model-trigger[data-state="open"] {
           background: hsl(var(--background));
-          border-color: rgba(59,130,246,0.35);
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.07);
+          border-color: rgba(0,98,255,0.35);
+          box-shadow: 0 0 0 3px rgba(0,98,255,0.07);
         }
         .model-status-dot {
           width: 5px;
@@ -1361,16 +1367,16 @@ export default function Home() {
         .model-select-header {
           padding: 8px 10px 7px;
           border-bottom: 1px solid hsl(var(--border) / 0.5);
-          background: linear-gradient(180deg, rgba(59,130,246,0.05), transparent);
+          background: linear-gradient(180deg, rgba(0,98,255,0.05), transparent);
         }
         .model-select-header-title {
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           font-size: 11.5px;
           font-weight: 600;
           color: hsl(var(--foreground));
         }
         .model-select-header-sub {
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           font-size: 9.5px;
           color: hsl(var(--muted-foreground));
           margin-top: 0;
@@ -1390,7 +1396,7 @@ export default function Home() {
           transition: background 0.14s ease;
         }
         .model-item[data-highlighted] {
-          background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(99,102,241,0.03));
+          background: linear-gradient(90deg, rgba(0,98,255,0.08), rgba(12,168,255,0.03));
           outline: none;
         }
 
@@ -1417,8 +1423,8 @@ export default function Home() {
           box-shadow: 0 0 0 2px rgba(34,197,94,0.14);
         }
         .model-item-tier-dot.is-pro {
-          background: linear-gradient(135deg, #3b82f6, #6366f1);
-          box-shadow: 0 0 0 2px rgba(59,130,246,0.14);
+          background: linear-gradient(135deg, #0062FF, #0CA8FF);
+          box-shadow: 0 0 0 2px rgba(0,98,255,0.14);
         }
         .model-item-tier-dot.is-premium {
           background: linear-gradient(135deg, #f59e0b, #facc15);
@@ -1432,7 +1438,7 @@ export default function Home() {
           border-radius: 99px;
           font-size: 9.5px;
           font-weight: 600;
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
+          font-family: ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
           background: hsl(var(--muted) / 0.6);
         }
 
@@ -1445,7 +1451,7 @@ export default function Home() {
           border: 1px solid transparent;
           border-radius: 8px;
           background: hsl(var(--muted) / 0.5);
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
           font-size: 12.5px;
           font-weight: 500;
           letter-spacing: -0.01em;
@@ -1458,10 +1464,13 @@ export default function Home() {
           color: hsl(var(--foreground));
         }
         .plan-mode-toggle.is-active {
-          color: rgb(59 130 246);
-          border-color: rgb(59 130 246 / 0.22);
-          background: rgb(59 130 246 / 0.08);
-          box-shadow: 0 0 0 1px rgb(59 130 246 / 0.04);
+          color: #0062FF;
+          border-color: rgb(0 98 255 / 0.22);
+          background: rgb(0 98 255 / 0.08);
+          box-shadow: 0 0 0 1px rgb(0 98 255 / 0.04);
+        }
+        .dark .plan-mode-toggle.is-active {
+          color: #0CA8FF;
         }
 
         @media (max-width: 639px) {
@@ -1506,31 +1515,31 @@ export default function Home() {
           stroke-width: 1;
         }
         .workflow-rail-glow {
-          stroke: rgba(59, 130, 246, 0.08);
-          stroke-width: 10;
+          stroke: rgba(0, 98, 255, 0.1);
+          stroke-width: 12;
           filter: blur(5px);
         }
         .workflow-beam-path {
           fill: none;
-          stroke: rgba(191, 219, 254, 0.98);
-          stroke-width: 2.4;
+          stroke: rgba(186, 230, 253, 1);
+          stroke-width: 2.8;
           stroke-linecap: round;
           vector-effect: non-scaling-stroke;
           filter:
-            drop-shadow(0 0 3px rgba(255, 255, 255, 0.75))
-            drop-shadow(0 0 7px rgba(96, 165, 250, 0.95))
-            drop-shadow(0 0 18px rgba(59, 130, 246, 0.48));
+            drop-shadow(0 0 3px rgba(255, 255, 255, 0.8))
+            drop-shadow(0 0 8px rgba(12, 168, 255, 0.95))
+            drop-shadow(0 0 22px rgba(0, 98, 255, 0.55));
           opacity: 0;
           pointer-events: none;
           will-change: stroke-width, opacity;
         }
         .workflow-beam-path-glow {
           fill: none;
-          stroke: rgba(59, 130, 246, 0.42);
-          stroke-width: 10;
+          stroke: rgba(0, 98, 255, 0.5);
+          stroke-width: 12;
           stroke-linecap: round;
           vector-effect: non-scaling-stroke;
-          filter: blur(5px) drop-shadow(0 0 24px rgba(59, 130, 246, 0.42));
+          filter: blur(6px) drop-shadow(0 0 28px rgba(0, 98, 255, 0.5));
           opacity: 0;
           pointer-events: none;
           will-change: stroke-width, opacity;
@@ -1544,20 +1553,21 @@ export default function Home() {
           left: calc(50% + var(--beam-offset-x));
           top: var(--beam-position);
           z-index: 2;
-          width: 3px;
-          height: clamp(52px, 7vh, 78px);
-          transform: translate(-50%, -50%) rotate(var(--beam-angle)) scaleY(calc(1 + var(--beam-energy) * 0.42));
+          width: 3.5px;
+          height: clamp(58px, 8vh, 92px);
+          transform: translate(-50%, -50%) rotate(var(--beam-angle)) scaleY(calc(1 + var(--beam-energy) * 0.55));
           transform-origin: center;
           border-radius: 999px;
           background: linear-gradient(
             to bottom,
             transparent 0%,
-            rgba(59, 130, 246, 0.28) 28%,
-            rgba(59, 130, 246, 0.88) 68%,
-            rgba(219, 234, 254, 0.98) 83%,
+            rgba(0, 98, 255, 0.35) 22%,
+            rgba(0, 98, 255, 0.92) 62%,
+            rgba(12, 168, 255, 1) 80%,
+            rgba(219, 234, 254, 0.98) 90%,
             transparent 100%
           );
-          filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.9));
+          filter: drop-shadow(0 0 6px rgba(0, 98, 255, 0.95));
           opacity: 0;
           pointer-events: none;
           will-change: top, left, transform, opacity;
@@ -1566,35 +1576,36 @@ export default function Home() {
           content: '';
           position: absolute;
           inset: 8% 50%;
-          width: 24px;
+          width: 28px;
           transform: translateX(-50%);
           border-radius: 999px;
           background: inherit;
-          filter: blur(11px);
-          opacity: calc(0.3 + var(--beam-energy) * 0.48);
+          filter: blur(12px);
+          opacity: calc(0.35 + var(--beam-energy) * 0.55);
         }
         .workflow-beam::after {
           content: '';
           position: absolute;
           left: 50%;
           top: 82%;
-          width: 7px;
-          height: 7px;
+          width: 8px;
+          height: 8px;
           transform: translate(-50%, -50%);
           border-radius: 999px;
           background: rgba(255, 255, 255, 0.98);
           box-shadow:
-            0 0 5px rgba(255, 255, 255, 0.95),
-            0 0 14px rgba(147, 197, 253, 0.95),
-            0 0 30px rgba(59, 130, 246, 0.72);
+            0 0 6px rgba(255, 255, 255, 0.95),
+            0 0 16px rgba(12, 168, 255, 0.95),
+            0 0 34px rgba(0, 98, 255, 0.8);
         }
         .workflow-beam[data-direction='up'] {
           background: linear-gradient(
             to top,
             transparent 0%,
-            rgba(59, 130, 246, 0.28) 28%,
-            rgba(59, 130, 246, 0.88) 68%,
-            rgba(219, 234, 254, 0.98) 83%,
+            rgba(0, 98, 255, 0.35) 22%,
+            rgba(0, 98, 255, 0.92) 62%,
+            rgba(12, 168, 255, 1) 80%,
+            rgba(219, 234, 254, 0.98) 90%,
             transparent 100%
           );
         }
@@ -1630,22 +1641,22 @@ export default function Home() {
         @media (hover: hover) and (pointer: fine) {
           .workflow-card:hover {
             translate: 0 -3px;
-            border-color: rgba(59, 130, 246, 0.24);
+            border-color: rgba(0, 98, 255, 0.24);
             background-color: hsl(var(--background) / 0.92);
             box-shadow:
               0 24px 58px -38px rgba(0, 0, 0, 0.72),
-              0 0 0 1px rgba(59, 130, 246, 0.035),
-              0 10px 36px -28px rgba(59, 130, 246, 0.42);
+              0 0 0 1px rgba(0, 98, 255, 0.035),
+              0 10px 36px -28px rgba(0, 98, 255, 0.42);
           }
           .workflow-card:hover .workflow-card-check {
-            background-color: rgba(59, 130, 246, 0.16);
-            box-shadow: 0 0 14px rgba(59, 130, 246, 0.18);
+            background-color: rgba(0, 98, 255, 0.16);
+            box-shadow: 0 0 14px rgba(0, 98, 255, 0.18);
           }
           .workflow-step:hover .workflow-node {
-            border-color: rgba(59, 130, 246, 0.48);
+            border-color: rgba(0, 98, 255, 0.48);
             box-shadow:
               0 0 0 6px hsl(var(--background)),
-              0 0 32px rgba(59, 130, 246, 0.34);
+              0 0 32px rgba(0, 98, 255, 0.35);
           }
         }
 
@@ -1653,7 +1664,7 @@ export default function Home() {
           .workflow-beam,
           .workflow-beam-path,
           .workflow-beam-path-glow {
-            display: none;
+            opacity: 0.45 !important;
           }
           .workflow-card,
           .workflow-card-check,
@@ -1788,9 +1799,9 @@ export default function Home() {
         <div className="isolate flex min-h-svh flex-col">
           <Header onHelpClick={() => setShowHelpPanel(true)} />
 
-          <div className="mt-8 flex flex-1 flex-col items-center px-4 pb-4 sm:mt-20 sm:pb-0 lg:mt-24">
+          <div className="mt-6 flex flex-1 flex-col items-center px-4 pb-4 pt-4 sm:mt-10 sm:pb-0 lg:mt-12 lg:pt-8">
             {/* Hero text */}
-            <div className="flex w-full flex-col items-center gap-3 sm:gap-4 lg:gap-5">
+            <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
               <div className="animate-fade-up">
                 <span className="info-pill">
                   From idea to shipped React app
@@ -1798,19 +1809,17 @@ export default function Home() {
               </div>
 
               <h1 className="animate-fade-up-1 w-full text-center font-display tracking-tight text-foreground">
-                <span className="block text-[2.45rem] leading-[1.04] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                <span className="block text-[2.45rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.25rem]">
                   Turn ideas
                 </span>
-                <span className="shimmer-text mt-0.5 block text-[2.45rem] leading-[1.04] sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                <span className="hero-accent mt-0.5 block text-[2.45rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-[4.25rem]">
                   into apps
                 </span>
               </h1>
 
-              <p className="animate-fade-up-2 max-w-lg text-center text-sm leading-relaxed text-muted-foreground/75 sm:text-base">
-                Research the web. Approve the plan. Build and ship. <br />
-                <span className="text-foreground/60">
-                  Ship React code you own.
-                </span>
+              <p className="animate-fade-up-2 max-w-md text-center text-sm leading-relaxed text-muted-foreground/80 sm:text-base">
+                Research the web, approve the plan, then build and ship React
+                code you own.
               </p>
             </div>
 
@@ -1990,7 +1999,7 @@ export default function Home() {
                     <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
                       {/* Left controls */}
                       <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-                        {/* Model selector — premium trigger */}
+                        {/* Model selector: premium trigger */}
                         <Select.Root
                           name="model"
                           open={isModelSelectOpen}
@@ -2039,7 +2048,7 @@ export default function Home() {
                                   Choose a model
                                 </div>
                                 <div className="model-select-header-sub">
-                                  Swap any time — cost updates instantly
+                                  Swap any time - cost updates instantly
                                 </div>
                               </div>
                               <Select.Viewport className="p-1">
@@ -2180,6 +2189,18 @@ export default function Home() {
                         >
                           <Sparkles className="size-3" aria-hidden="true" />
                           <span className="hidden sm:inline">Plan mode</span>
+                        </button>
+
+                        <div className="toolbar-divider mx-0.5 sm:mx-1" />
+
+                        {/* Prompt Builder */}
+                        <button
+                          type="button"
+                          onClick={() => setShowPromptBuilder(true)}
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                          title="Enhance your prompt with AI"
+                        >
+                          <span className="hidden sm:inline">Enhance</span>
                         </button>
 
                         <div className="toolbar-divider mx-0.5 sm:mx-1" />
@@ -2346,6 +2367,16 @@ export default function Home() {
           isOpen={showHelpPanel}
           onClose={() => setShowHelpPanel(false)}
         />
+        <PromptBuilderModal
+          open={showPromptBuilder}
+          onOpenChange={setShowPromptBuilder}
+          onUsePrompt={(enhanced) => {
+            setPrompt(enhanced);
+            if (textareaRef.current) {
+              textareaRef.current.focus();
+            }
+          }}
+        />
       </div>
     </>
   );
@@ -2357,53 +2388,40 @@ function HomepageAnswerSection() {
   const workflowBeamPathRef = useRef<SVGPathElement>(null);
   const workflowBeamGlowPathRef = useRef<SVGPathElement>(null);
   const workflowBeamMaskRef = useRef<SVGRectElement>(null);
+  const lastScrollY = useMotionValue(0);
+  const velocity = useMotionValue(0);
+  const directionRef = useRef<"up" | "down">("down");
+  const reduceMotion = useReducedMotion();
   const momentumTarget = useMotionValue(0);
   const momentumSpring = useSpring(momentumTarget, {
-    stiffness: 240,
-    damping: 26,
-    mass: 0.62,
+    stiffness: 260,
+    damping: 28,
+    mass: 0.55,
     restDelta: 0.04,
     restSpeed: 0.04,
   });
 
-  useEffect(() => {
-    const beam = workflowBeamRef.current;
-    const beamPath = workflowBeamPathRef.current;
-    const beamGlowPath = workflowBeamGlowPathRef.current;
-    const beamMask = workflowBeamMaskRef.current;
-    const rail = beam?.parentElement;
-    if (!beam || !beamPath || !beamGlowPath || !beamMask || !rail) return;
+  const { scrollY } = useScroll();
+  const { scrollYProgress } = useScroll({
+    target: workflowSectionRef,
+    offset: ["start end", "end start"],
+  });
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) return;
+  const zigzagPoints = useMemo(
+    () =>
+      [
+        { progress: 0, offset: 0 },
+        { progress: 0.125, offset: -18 },
+        { progress: 0.375, offset: 18 },
+        { progress: 0.625, offset: -18 },
+        { progress: 0.875, offset: 18 },
+        { progress: 1, offset: 0 },
+      ] as const,
+    [],
+  );
 
-    let animationFrame: number | null = null;
-    let settleTimeout: number | null = null;
-    let lastScrollY = window.scrollY;
-    let velocity = 0;
-    let direction: "up" | "down" = "down";
-    const zigzagPoints = [
-      { progress: 0, offset: 0 },
-      { progress: 0.125, offset: -16 },
-      { progress: 0.375, offset: 16 },
-      { progress: 0.625, offset: -16 },
-      { progress: 0.875, offset: 16 },
-      { progress: 1, offset: 0 },
-    ] as const;
-
-    const getProgress = () => {
-      const railRect = rail.getBoundingClientRect();
-      const viewportCenter = window.innerHeight / 2;
-      return Math.min(
-        Math.max(
-          (viewportCenter - railRect.top) / Math.max(railRect.height, 1),
-          0,
-        ),
-        1,
-      );
-    };
-
-    const getPathMetrics = (progress: number, railHeight: number) => {
+  const getPathMetrics = useCallback(
+    (progress: number, railHeight: number) => {
       const segmentIndex = zigzagPoints.findIndex(
         (point) => point.progress >= progress,
       );
@@ -2429,31 +2447,53 @@ function HomepageAnswerSection() {
         Math.PI;
 
       return { offset, angle };
-    };
+    },
+    [zigzagPoints],
+  );
 
-    let beamProgress = getProgress();
+  const paintBeam = useCallback(
+    (sectionProgress: number) => {
+      const beam = workflowBeamRef.current;
+      const beamPath = workflowBeamPathRef.current;
+      const beamGlowPath = workflowBeamGlowPathRef.current;
+      const beamMask = workflowBeamMaskRef.current;
+      const rail = beam?.parentElement;
+      if (!beam || !beamPath || !beamGlowPath || !beamMask || !rail) return;
 
-    const animateBeam = () => {
       const railRect = rail.getBoundingClientRect();
       const viewportCenter = window.innerHeight / 2;
       const isCenteredOnRail =
         railRect.top <= viewportCenter && railRect.bottom >= viewportCenter;
 
-      velocity *= 0.86;
-      const momentumOffset = momentumSpring.get();
-      beamProgress = Math.min(
+      const railProgress = Math.min(
         Math.max(
-          getProgress() + momentumOffset / Math.max(railRect.height, 1),
+          (viewportCenter - railRect.top) / Math.max(railRect.height, 1),
+          0,
+        ),
+        1,
+      );
+      const momentumOffset = momentumSpring.get();
+      const beamProgress = Math.min(
+        Math.max(
+          railProgress + momentumOffset / Math.max(railRect.height, 1),
           0,
         ),
         1,
       );
 
-      const energy = Math.min(Math.abs(velocity) / 42, 1);
+      const currentVelocity = velocity.get();
+      const energy = reduceMotion
+        ? 0.35
+        : Math.min(Math.abs(currentVelocity) / 38, 1);
       const pathMetrics = getPathMetrics(beamProgress, railRect.height);
-      const beamLength = 10 + energy * 7;
-      const beamOpacity = isCenteredOnRail ? `${0.58 + energy * 0.3}` : "0";
-      const glowOpacity = isCenteredOnRail ? `${0.3 + energy * 0.3}` : "0";
+      const beamLength = reduceMotion ? 14 : 11 + energy * 9;
+      const visible = reduceMotion
+        ? sectionProgress > 0.12 && sectionProgress < 0.92
+        : isCenteredOnRail;
+      const beamOpacity = visible ? `${0.62 + energy * 0.35}` : "0";
+      const glowOpacity = visible ? `${0.34 + energy * 0.4}` : "0";
+      const currentDirection = directionRef.current;
+
       beam.style.setProperty("--beam-position", `${beamProgress * 100}%`);
       beam.style.setProperty(
         "--beam-offset-x",
@@ -2465,7 +2505,7 @@ function HomepageAnswerSection() {
       );
       beam.style.setProperty("--beam-energy", energy.toFixed(3));
       beam.style.opacity = beamOpacity;
-      beam.dataset.direction = direction;
+      beam.dataset.direction = currentDirection;
       beamMask.setAttribute(
         "y",
         `${(beamProgress * 100 - beamLength / 2).toFixed(3)}`,
@@ -2473,68 +2513,51 @@ function HomepageAnswerSection() {
       beamMask.setAttribute("height", beamLength.toFixed(3));
       beamMask.setAttribute(
         "fill",
-        `url(#workflow-beam-mask-gradient-${direction})`,
+        `url(#workflow-beam-mask-gradient-${currentDirection})`,
       );
-      beamPath.style.strokeWidth = `${(2.4 + energy * 1.8).toFixed(3)}px`;
+      beamPath.style.strokeWidth = `${(2.6 + energy * 2.2).toFixed(3)}px`;
       beamPath.style.opacity = beamOpacity;
-      beamGlowPath.style.strokeWidth = `${(10 + energy * 5).toFixed(3)}px`;
+      beamGlowPath.style.strokeWidth = `${(11 + energy * 6).toFixed(3)}px`;
       beamGlowPath.style.opacity = glowOpacity;
+    },
+    [getPathMetrics, momentumSpring, reduceMotion, velocity],
+  );
 
-      if (Math.abs(velocity) > 0.08) {
-        animationFrame = window.requestAnimationFrame(animateBeam);
-      } else {
-        animationFrame = null;
-      }
-    };
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (reduceMotion) return;
 
-    const requestBeamFrame = () => {
-      if (animationFrame === null) {
-        animationFrame = window.requestAnimationFrame(animateBeam);
-      }
-    };
+    const previous = lastScrollY.get();
+    const delta = latest - previous;
+    lastScrollY.set(latest);
 
-    const handleScroll = () => {
-      const nextScrollY = window.scrollY;
-      const delta = nextScrollY - lastScrollY;
-      lastScrollY = nextScrollY;
-      if (Math.abs(delta) > 0.5) {
-        direction = delta < 0 ? "up" : "down";
-      }
-      velocity = Math.min(Math.max(velocity + delta * 0.34, -72), 72);
-      momentumTarget.set(Math.min(Math.max(velocity * 0.24, -17), 17));
-      if (settleTimeout !== null) {
-        window.clearTimeout(settleTimeout);
-      }
-      settleTimeout = window.setTimeout(() => {
-        momentumTarget.set(0);
-      }, 72);
-      requestBeamFrame();
-    };
+    if (Math.abs(delta) > 0.5) {
+      directionRef.current = delta < 0 ? "up" : "down";
+    }
 
-    const handleResize = () => {
-      beamProgress = getProgress();
-      requestBeamFrame();
-    };
+    const nextVelocity = Math.min(
+      Math.max(velocity.get() * 0.72 + delta * 0.38, -80),
+      80,
+    );
+    velocity.set(nextVelocity);
+    momentumTarget.set(Math.min(Math.max(nextVelocity * 0.26, -20), 20));
+  });
 
-    beam.dataset.direction = "down";
-    beam.style.setProperty("--beam-position", `${beamProgress * 100}%`);
-    const unsubscribeMomentum = momentumSpring.on("change", requestBeamFrame);
-    requestBeamFrame();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleResize);
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    velocity.set(velocity.get() * 0.88);
+    if (Math.abs(velocity.get()) < 0.4) {
+      momentumTarget.set(0);
+    }
+    paintBeam(latest);
+  });
 
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-      unsubscribeMomentum();
-      if (settleTimeout !== null) {
-        window.clearTimeout(settleTimeout);
-      }
-      if (animationFrame !== null) {
-        window.cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [momentumSpring, momentumTarget]);
+  useMotionValueEvent(momentumSpring, "change", () => {
+    paintBeam(scrollYProgress.get());
+  });
+
+  useEffect(() => {
+    lastScrollY.set(scrollY.get());
+    paintBeam(scrollYProgress.get());
+  }, [lastScrollY, paintBeam, scrollY, scrollYProgress]);
 
   return (
     <section
@@ -2544,12 +2567,9 @@ function HomepageAnswerSection() {
     >
       <div className="mx-auto w-full max-w-6xl border-y border-border/60 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
-            One connected workflow
-          </p>
           <h2
             id="squid-agent-overview"
-            className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
+            className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
             From uncertain idea to shipped app.
           </h2>
@@ -2685,7 +2705,7 @@ function HomepageAnswerSection() {
                 key={promise.label}
                 className={`px-1 md:px-6 ${index > 0 ? "border-t border-border/60 pt-6 md:border-l md:border-t-0 md:pt-0" : ""}`}
               >
-                <p className="font-mono-jb text-[10px] font-medium uppercase tracking-[0.16em] text-blue-500">
+                <p className="text-[11px] font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
                   {promise.label}
                 </p>
                 <h3 className="mt-3 text-lg font-semibold tracking-normal text-foreground">
@@ -2725,8 +2745,8 @@ function HomepageNarrativeArticle({
       className={`workflow-card relative rounded-[24px] border border-border/70 bg-background/80 p-5 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur sm:p-6 ${className}`}
     >
       <div className="flex items-center justify-between gap-4">
-        <p className="font-mono-jb text-[10px] font-medium uppercase tracking-[0.16em] text-blue-500">
-          {block.stage} / {block.label}
+        <p className="text-[12px] font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
+          {block.label}
         </p>
         <span className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
       </div>
@@ -2839,24 +2859,21 @@ function HomepageFlowSection() {
 
   return (
     <section
-      aria-labelledby="squid-agent-overview"
+      aria-labelledby="squid-agent-stages"
       className="relative z-10 w-full px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-6"
     >
       <div className="mx-auto w-full max-w-6xl border-t border-border/60 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
-            One connected workflow
-          </p>
           <h2
-            id="squid-agent-overview"
-            className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
+            id="squid-agent-stages"
+            className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
             Your idea keeps moving. You stay in control.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             Move from a rough idea to a shipped app without losing the context,
             decisions, or code along the way. Select a stage to see what Squid
-            handles—and where you stay in control.
+            handles and where you stay in control.
           </p>
         </div>
 
@@ -2936,13 +2953,10 @@ function HomepageFlowSection() {
             className="flow-active-card relative z-[2] mx-auto flex min-h-[290px] w-full max-w-md flex-col items-center justify-center rounded-[26px] border border-border/70 bg-background/90 p-6 text-center shadow-[0_28px_80px_-46px_rgba(0,0,0,0.7)] backdrop-blur sm:p-8"
             aria-live="polite"
           >
-            <span className="flex size-11 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg shadow-blue-500/25">
+            <span className="flex size-11 items-center justify-center rounded-full bg-[#0062FF] text-white shadow-lg shadow-blue-500/25">
               <ActiveIcon className="size-5" aria-hidden="true" />
             </span>
-            <p className="font-mono-jb mt-5 text-[10px] font-medium uppercase tracking-[0.16em] text-blue-500">
-              {step.eyebrow}
-            </p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-normal text-foreground">
+            <h3 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
               {step.title}
             </h3>
             <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
@@ -3023,18 +3037,15 @@ function HomepageFaqSection() {
     >
       <div className="mx-auto grid w-full max-w-6xl gap-8 border-t border-border/60 pt-12 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:pt-16">
         <div className="mx-auto max-w-xl text-center lg:sticky lg:top-8 lg:mx-0 lg:self-start lg:text-left">
-          <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
-            FAQ
-          </p>
           <h2
             id="squid-agent-faq"
-            className="mt-4 font-display text-4xl leading-[0.98] tracking-normal text-foreground sm:text-5xl"
+            className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
             Know what happens from prompt to production.
           </h2>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
             Research, planning, iteration, quality, recovery, integrations,
-            deployment, ownership, and credits—without hidden steps.
+            deployment, ownership, and credits, without hidden steps.
           </p>
         </div>
 
@@ -3133,26 +3144,22 @@ function BuiltWithSquidSection() {
       className="relative z-10 w-full px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-8"
     >
       <div className="mx-auto w-full max-w-6xl border-y border-border/70 py-12 sm:py-16">
-        <div className="grid gap-6 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:items-end">
-          <div>
-            <h2 className="max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl">
-              Real projects shipped from prompts.
-            </h2>
-          </div>
-          <div className="max-w-xl">
-            <p className="text-sm leading-6 text-muted-foreground sm:text-base">
-              Explore sites and tools built with Squid. Inspect a complete
-              public workspace, remix the project, or download the source and
-              continue in your own stack.
-            </p>
-            <Link
-              href="/example"
-              className="mt-4 inline-flex min-h-11 items-center gap-2 whitespace-nowrap text-sm font-medium text-blue-500 underline decoration-blue-500/30 underline-offset-4 transition-colors hover:decoration-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            >
-              Open the no-signup example workspace
-              <ArrowRightIcon className="size-4" />
-            </Link>
-          </div>
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl">
+            Real projects shipped from prompts.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+            Explore sites and tools built with Squid. Inspect a complete public
+            workspace, remix the project, or download the source and continue in
+            your own stack.
+          </p>
+          <Link
+            href="/example"
+            className="mt-4 inline-flex min-h-11 items-center gap-2 whitespace-nowrap text-sm font-medium text-[#0062FF] underline decoration-blue-500/30 underline-offset-4 transition-colors hover:decoration-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-[#0CA8FF]"
+          >
+            Open the no-signup example workspace
+            <ArrowRightIcon className="size-4" />
+          </Link>
         </div>
 
         <div className="mt-12 grid gap-x-6 gap-y-12 lg:grid-cols-12">
@@ -3317,19 +3324,14 @@ function HomepageLandingPagesSection() {
       id="homepage-landing-pages"
     >
       <div className="mx-auto w-full max-w-6xl border-y border-border/70 py-12 sm:py-16">
-        <div className="grid gap-6 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:items-end">
-          <div>
-            <p className="font-mono-jb text-[11px] font-medium uppercase tracking-[0.16em] text-blue-500">
-              New landing pages
-            </p>
-            <h2
-              id="homepage-landing-pages-heading"
-              className="mt-4 max-w-2xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl"
-            >
-              Pages with a point of view.
-            </h2>
-          </div>
-          <p className="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2
+            id="homepage-landing-pages-heading"
+            className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
+          >
+            Pages with a point of view.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
             Open the finished pages to experience the hero, motion, and
             responsive layout in full. Each one is a working example of how a
             visual idea becomes a real React landing page.

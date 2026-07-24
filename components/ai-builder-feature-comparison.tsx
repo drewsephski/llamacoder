@@ -224,27 +224,37 @@ export function AiBuilderFeatureComparison({
             : undefined
         }
       >
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-end">
+        <div
+          className={
+            isHomepage
+              ? "mx-auto max-w-3xl text-center"
+              : "grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-end"
+          }
+        >
           <div>
-            <p
-              className={`text-xs font-medium uppercase tracking-[0.16em] text-primary ${
-                isHomepage ? "font-mono-jb" : "font-mono"
-              }`}
-            >
-              Decision guide
-            </p>
+            {!isHomepage ? (
+              <p className="font-mono text-xs font-medium uppercase tracking-[0.16em] text-primary">
+                Decision guide
+              </p>
+            ) : null}
             <h2
               id={`feature-comparison-title-${variant}`}
               className={
                 isHomepage
-                  ? "mt-4 max-w-3xl font-display text-4xl leading-[0.98] tracking-tight text-foreground sm:text-5xl"
+                  ? "font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
                   : "mt-3 max-w-3xl text-balance text-2xl font-semibold tracking-[-0.025em] sm:text-3xl"
               }
             >
               The first prompt is the easy part.
             </h2>
           </div>
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
+          <p
+            className={
+              isHomepage
+                ? "mx-auto mt-5 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7"
+                : "max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7"
+            }
+          >
             Choose the workflow that stays clear when a build fails, costs more
             than expected, or needs to leave the platform.
           </p>

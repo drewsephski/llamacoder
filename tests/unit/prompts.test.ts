@@ -79,6 +79,8 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Contrast may never fail");
     expect(prompt).toContain("at least 4.5:1 contrast");
     expect(prompt).toContain("component boundaries require at least 3:1");
+    expect(prompt).toContain("Hover styles must stay visually coherent");
+    expect(prompt).toContain("components/ui/button.tsx");
     expect(prompt).toContain("run a private contrast audit");
     expect(prompt).toContain("Explicit color fidelity contract (mandatory)");
     expect(prompt).toContain(
@@ -93,18 +95,32 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Composed spatial rhythm");
     expect(prompt).toContain("Surface and voice restraint");
     expect(prompt).toContain("Distribution-default copy");
-    expect(prompt).toContain("Unspecified-theme default (mandatory)");
-    expect(prompt).toContain("light-first, Vercel-inspired Tailwind `neutral`");
     expect(prompt).toContain(
-      "every portalled overlay surface must be explicitly light",
-    );
-    expect(prompt).toContain("`bg-white text-neutral-950 border-neutral-200`");
-    expect(prompt).toContain("Do not default to `slate-*`, `purple-*`");
-    expect(prompt).toContain(
-      "Do not copy Vercel branding or force every product into a marketing-page structure",
+      "Unspecified-theme Style Pack contract (mandatory)",
     );
     expect(prompt).toContain(
+      "Do NOT default every vague brief to anonymous Vercel-gray SaaS",
+    );
+    expect(prompt).toContain("STYLE_PACK: <id>");
+    expect(prompt).toContain("cobaltMinimal");
+    expect(prompt).toContain("lumenAtmospheric");
+    expect(prompt).toContain("editorialSpecimen");
+    expect(prompt).toContain("swissBrutal");
+    expect(prompt).toContain("kineticAwwwards");
+    expect(prompt).toContain("softStructural");
+    expect(prompt).toContain("Still banned as lazy defaults across all packs");
+    expect(prompt).toContain("Active Style Pack directive");
+    expect(prompt).toContain("Premium composition contract (mandatory");
+    expect(prompt).toContain("hairline bento");
+    expect(prompt).toContain("three equal");
+    expect(prompt).toContain("gap-px");
+    expect(prompt).toContain("did you follow the Active Style Pack directive");
+    expect(prompt).toContain("mixed-span hairline bento");
+    expect(prompt).not.toContain(
       "does the app use the Vercel-inspired Tailwind neutral fallback",
+    );
+    expect(prompt).not.toContain(
+      "Default to a light-first, Vercel-inspired Tailwind `neutral` system",
     );
     expect(prompt).toContain("Visual system coherence contract (mandatory)");
     expect(prompt).toContain("Choose one luminosity model for the screen");
@@ -122,12 +138,27 @@ describe("prompt design guidance", () => {
       "Explicitly style every chart title, value, axis label, tick, grid line, legend, tooltip",
     );
     expect(prompt).toContain("one coherent luminosity model");
+    expect(prompt).toContain(
+      "Design Taste contract (mandatory for distinctive UI)",
+    );
+    expect(prompt).toContain("DESIGN_VARIANCE");
+    expect(prompt).toContain("MOTION_INTENSITY");
+    expect(prompt).toContain("VISUAL_DENSITY");
+    expect(prompt).toContain("Reading this as:");
+    expect(prompt).toContain("Em-dash and en-dash as separators are forbidden");
+    expect(prompt).toContain("Aesthetic modes");
+    expect(prompt).toContain("Swiss Industrial");
+    expect(prompt).toContain("Tactical CRT");
+    expect(prompt).toContain("Design Taste preflight");
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
     expect(softwareArchitectPrompt).toContain(
       'include a concise "Design direction" section',
     );
+    expect(softwareArchitectPrompt).toContain("Design Read:");
+    expect(softwareArchitectPrompt).toContain("Taste dials:");
+    expect(softwareArchitectPrompt).toContain("DESIGN_VARIANCE");
     expect(softwareArchitectPrompt).toContain("Subject/audience/job");
     expect(softwareArchitectPrompt).toContain("Structural archetype");
     expect(softwareArchitectPrompt).toContain("Palette/type/signature");
@@ -176,13 +207,14 @@ describe("prompt design guidance", () => {
     expect(softwareArchitectPrompt).toContain(
       "record the exact standard Tailwind family",
     );
-    expect(softwareArchitectPrompt).toContain("Unspecified-theme default:");
+    expect(softwareArchitectPrompt).toContain("Style Pack lock:");
+    expect(softwareArchitectPrompt).toContain("Unspecified-theme Style Pack:");
+    expect(softwareArchitectPrompt).toContain("cobaltMinimal");
     expect(softwareArchitectPrompt).toContain(
-      "plan a light-first Vercel-inspired Tailwind neutral system",
+      "do not default to anonymous Vercel-gray SaaS",
     );
-    expect(softwareArchitectPrompt).toContain(
-      "explicitly white overlay and form-control surfaces",
-    );
+    expect(softwareArchitectPrompt).toContain("Premium composition:");
+    expect(softwareArchitectPrompt).toContain("mixed-cell hairline bento");
     expect(softwareArchitectPrompt).toContain(
       "Normal, helper, and placeholder text must reach 4.5:1",
     );
@@ -226,14 +258,14 @@ describe("prompt design guidance", () => {
       "Avoid card-in-card nesting, emoji feature icons",
     );
     expect(developerCodeGenPrompt).toContain(
-      "Unspecified-theme default (mandatory)",
+      "Unspecified-theme Style Pack contract (mandatory)",
     );
     expect(developerCodeGenPrompt).toContain(
-      "light-first, Vercel-inspired Tailwind `neutral`",
+      "Do NOT default every vague brief to anonymous Vercel-gray SaaS",
     );
-    expect(developerCodeGenPrompt).toContain(
-      "every portalled overlay surface must be explicitly light",
-    );
+    expect(developerCodeGenPrompt).toContain("lock one Style Pack");
+    expect(developerCodeGenPrompt).toContain("STYLE_PACK preflight");
+    expect(developerCodeGenPrompt).toContain("cobaltMinimal");
     expect(developerCodeGenPrompt).toContain(
       "Visual system coherence contract (mandatory)",
     );
@@ -256,5 +288,26 @@ describe("prompt design guidance", () => {
     expect(developerCodeGenPrompt).toContain(
       "Bind every rendered theme button/switch directly to that shared `theme` state",
     );
+    expect(developerCodeGenPrompt).toContain(
+      "Design Taste contract (mandatory for distinctive UI)",
+    );
+    expect(developerCodeGenPrompt).toContain("DESIGN_VARIANCE");
+    expect(developerCodeGenPrompt).toContain("Aesthetic modes");
+    expect(developerCodeGenPrompt).toContain(
+      "Premium composition contract (mandatory",
+    );
+    expect(developerCodeGenPrompt).toContain("hairline bento");
+    expect(developerCodeGenPrompt).toContain("composition scaffold");
+  });
+
+  it("server-locks a Style Pack scaffold into the coding prompt for vague briefs", () => {
+    const prompt = getMainCodingPrompt({
+      userPrompt: "Build an API proxy dashboard for developers",
+    });
+    expect(prompt).toContain("LOCKED for this build");
+    expect(prompt).toContain("Locked composition scaffold");
+    expect(prompt).toMatch(/STYLE_PACK: (cobaltMinimal|swissBrutal)/);
+    expect(prompt).toContain("md:grid-cols-12");
+    expect(prompt).toContain("gap-px");
   });
 });

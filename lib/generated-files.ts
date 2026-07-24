@@ -55,7 +55,12 @@ export function parseStoredGeneratedFiles(value: unknown): RawGeneratedFile[] {
   );
 }
 
-const PROTECTED_MODULE_PATHS = new Set([
+/**
+ * Modules the sandbox always provides. Imports to these resolve even when the
+ * model does not emit the file. A subset may still be overridden (see
+ * PROTECTED_MODULE_PATHS).
+ */
+const PLATFORM_MODULE_PATHS = new Set([
   "components/ui/accordion",
   "components/ui/alert",
   "components/ui/alert-dialog",
@@ -102,6 +107,26 @@ const PROTECTED_MODULE_PATHS = new Set([
   "lib/utils",
   "squid-runtime/supabase",
 ]);
+
+/**
+ * Platform modules the model must not overwrite.
+ * Interactive chrome that carries hover/state styling (button, badge,
+ * navigation-menu, toggle) is intentionally overridable so generated apps
+ * can ship a coherent visual system instead of fighting locked gray defaults.
+ */
+const PROTECTED_MODULE_PATHS = new Set(
+  [...PLATFORM_MODULE_PATHS].filter(
+    (path) =>
+      path !== "components/ui/button" &&
+      path !== "components/ui/badge" &&
+      path !== "components/ui/navigation-menu" &&
+      path !== "components/ui/toggle",
+  ),
+);
+
+function isPlatformModule(pathWithoutExtension: string) {
+  return PLATFORM_MODULE_PATHS.has(pathWithoutExtension);
+}
 
 const IMPORT_SOURCE_REGEX =
   /\b(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
@@ -250,8 +275,7 @@ export function validateGeneratedFiles(
       if (!isInternalGeneratedImport(source)) continue;
 
       const normalizedSource = normalizeModulePath(source);
-      if (PROTECTED_MODULE_PATHS.has(stripExtension(normalizedSource)))
-        continue;
+      if (isPlatformModule(stripExtension(normalizedSource))) continue;
 
       if (!resolveGeneratedImport(file.path, source, files)) {
         diagnostics.push({
@@ -266,8 +290,14 @@ export function validateGeneratedFiles(
       if (!isInternalGeneratedImport(source)) continue;
 
       const normalizedSource = normalizeModulePath(source);
-      if (PROTECTED_MODULE_PATHS.has(stripExtension(normalizedSource)))
+      // Platform seed resolves even when not emitted; if the model overrode the
+      // file, validate bindings against that override.
+      if (
+        isPlatformModule(stripExtension(normalizedSource)) &&
+        !resolveGeneratedImportFile(file.path, source, files)
+      ) {
         continue;
+      }
 
       const targetFile = resolveGeneratedImportFile(file.path, source, files);
       if (!targetFile) continue;
@@ -690,7 +720,7 @@ function countResolvedInternalImports(files: GeneratedFile[]) {
       if (!isInternalGeneratedImport(source)) continue;
 
       const normalizedSource = normalizeModulePath(source);
-      if (PROTECTED_MODULE_PATHS.has(stripExtension(normalizedSource))) {
+      if (isPlatformModule(stripExtension(normalizedSource))) {
         resolved += 1;
         continue;
       }
@@ -802,7 +832,8 @@ function rewriteResolvableAliasImports(
     /(["'])(@\/(?:components|lib|utils|types)\/[^"']+)\1/g,
     (fullMatch, quote: string, source: string) => {
       const normalizedSource = normalizeModulePath(source);
-      if (PROTECTED_MODULE_PATHS.has(stripExtension(normalizedSource))) {
+      // Keep @/ platform imports as-is (seeded or model-overridden).
+      if (isPlatformModule(stripExtension(normalizedSource))) {
         return fullMatch;
       }
 
