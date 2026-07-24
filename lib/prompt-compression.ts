@@ -90,7 +90,7 @@ export function getCompressedCodingPrompt(): string {
   6. **Live API safety:**
      - Native fetch only, never axios. Dedicated typed client.
      - Browser calls: auth=none or publishable key with documented CORS only.
-     - Check \`response.ok\`, AbortController timeout, bounded retry, Zod/type guard validation.
+     - Check \`response.ok\`, AbortController timeout, bounded retry (\`MAX_RETRIES\`/\`attempt\` in the same file as fetch), Zod/type guard validation.
      - No browser-forbidden headers (User-Agent, Origin, Host, Referer, Cookie, Content-Length).
      - Render loading, empty, error, retry, setup-required states. No fake success.
      - Output \`integrations.ts\` with structured metadata.

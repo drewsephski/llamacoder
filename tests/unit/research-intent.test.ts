@@ -2,10 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import {
   assessApiDocumentation,
+  buildPortfolioResearchQuery,
   buildResearchQuery,
+  detectCompanyLandingResearchIntent,
+  detectGuidedTemplateResearchIntent,
+  detectLiveApiDashboardResearchIntent,
+  detectLocalBusinessResearchIntent,
+  detectPortfolioResearchIntent,
+  buildCompanyLandingResearchQuery,
+  buildLiveApiDashboardResearchQuery,
+  buildLocalBusinessResearchQuery,
   detectResearchIntent,
   detectWebsiteReferenceIntent,
   extractResearchObjective,
+  resolveResearchReason,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
 
@@ -70,6 +80,10 @@ GET https://api.example.com/v2/flights — returns current flights.`;
     expect(buildResearchQuery(content)).toBe(
       "Summarize https://example.com/company/about",
     );
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      candidate: true,
+      reason: "informational",
+    });
   });
 
   it("anchors website recreation research to the exact referenced host", () => {
@@ -81,7 +95,7 @@ GET https://api.example.com/v2/flights — returns current flights.`;
       hostname: "squidagent.app",
     });
     expect(buildResearchQuery(content)).toBe(
-      "site:squidagent.app https://squidagent.app/ homepage design layout typography colors sections interactions",
+      "https://squidagent.app/ homepage design layout typography colors sections interactions",
     );
     expect(detectResearchIntent([{ content }])).toMatchObject({
       candidate: false,
@@ -101,15 +115,21 @@ GET https://api.example.com/v2/flights — returns current flights.`;
     "Retry this with web search: get the current official UFC pound-for-pound rankings",
     "Search the internet for the official UFC rankings",
     "Look the fighter records up before building this",
-  ])("honors explicit research requests: %s", (content) => {
-    expect(detectResearchIntent([{ content }])).toMatchObject({
-      candidate: true,
-      explicitlyRequested: true,
-      freshness: expect.any(String),
-      reason: "explicit",
-      query: buildResearchQuery(content),
-    });
-  });
+    "Can you look up the latest React 19 features?",
+    "Search for official Stripe webhook documentation",
+    "Find information about quantum computing on the internet",
+  ])(
+    "marks explicit web lookup requests as research candidates: %s",
+    (content) => {
+      expect(detectResearchIntent([{ content }])).toMatchObject({
+        candidate: true,
+        explicitlyRequested: true,
+        freshness: expect.any(String),
+        reason: "explicit",
+        query: buildResearchQuery(content),
+      });
+    },
+  );
 
   it("reduces preview error output to the relevant diagnostic terms", () => {
     const content = `The code is not working. Can you fix it? Here's the error:
@@ -122,7 +142,7 @@ GET https://api.example.com/v2/flights — returns current flights.`;
       |  ^`;
 
     expect(buildResearchQuery(content)).toBe(
-      "React TypeScript Star is not defined missing import",
+      "React TypeScript Star is not defined missing import or name shadowing",
     );
   });
 
@@ -162,7 +182,9 @@ export default function App() { return <button>Latest results</button>; }
     expect(extractResearchObjective(content)).toBe(
       "make the buttons text always white",
     );
-    expect(buildResearchQuery(content)).toBe("the buttons text always white");
+    expect(buildResearchQuery(content)).toBe(
+      "make the buttons text always white",
+    );
     expect(detectResearchIntent([{ content }])).toEqual({
       candidate: false,
       explicitlyRequested: false,
@@ -172,20 +194,32 @@ export default function App() { return <button>Latest results</button>; }
     });
   });
 
-  it("removes generic search instructions and bounds long queries", () => {
+  it("bounds long suggested research objectives after stripping meta instructions", () => {
     const query = buildResearchQuery(
       `Use web search to get ${"current official lightweight rankings ".repeat(20)}`,
     );
 
-    expect(query).toMatch(/^current official lightweight rankings/);
+    expect(query).toContain("current official lightweight rankings");
+    expect(query).not.toMatch(/use web search/i);
     expect(query.length).toBeLessThanOrEqual(240);
     expect(query.split(" ").length).toBeLessThanOrEqual(32);
   });
 
-  it("removes first-person build phrasing without leaving a malformed query", () => {
+  it("distills chat meta into a semantic Exa search objective", () => {
     expect(buildResearchQuery("Build me a polished analytics dashboard")).toBe(
-      "polished analytics dashboard",
+      "Build me a polished analytics dashboard",
     );
+    expect(
+      buildResearchQuery("Can you look up the latest React 19 features?"),
+    ).toBe("the latest React 19 features?");
+    expect(buildResearchQuery("Use web search to get the UFC rankings")).toBe(
+      "the UFC rankings",
+    );
+    expect(
+      buildResearchQuery(
+        "Find information about quantum computing on the internet",
+      ),
+    ).toBe("quantum computing");
   });
 
   it.each([
@@ -200,12 +234,14 @@ export default function App() { return <button>Latest results</button>; }
   });
 
   it.each([
-    ["Follow Vercel AI SDK tool-calling best practices", "technical-reference"],
-    ["Compare Stripe Checkout versus Elements for this app", "recommendation"],
-    ["Verify this claim and cite the sources", "verification"],
-    ["Summarize https://ai-sdk.dev/docs", "technical-reference"],
+    ["Follow Vercel AI SDK tool-calling best practices", "informational"],
+    ["Compare Stripe Checkout versus Elements for this app", "informational"],
+    ["Verify this claim and cite the sources", "explicit"],
+    ["Summarize https://ai-sdk.dev/docs", "informational"],
+    ["What is the OAuth authorization code flow?", "informational"],
+    ["Explain React server components", "informational"],
   ] as const)(
-    "offers evergreen research when external verification may help: %s",
+    "offers research when external or informational answers may help: %s",
     (content, reason) => {
       expect(detectResearchIntent([{ content }])).toMatchObject({
         candidate: true,
@@ -217,8 +253,6 @@ export default function App() { return <button>Latest results</button>; }
 
   it.each([
     "Build a polished habit tracker app",
-    "What is the OAuth authorization code flow?",
-    "Explain React server components",
     "Design the best layout for this dashboard",
     "Make the primary button blue",
     "Make every button label white",
@@ -243,7 +277,21 @@ export default function App() { return <button>Latest results</button>; }
         { content: "Use web search for old rankings" },
         { content: "Now use web search for the current lightweight rankings" },
       ]).query,
-    ).toBe("Now the current lightweight rankings");
+    ).toBe("the current lightweight rankings");
+  });
+
+  it("does not treat local code lookup as web research", () => {
+    expect(
+      detectResearchIntent([
+        { content: "Look up the component definition in App.tsx" },
+      ]),
+    ).toEqual({
+      candidate: false,
+      explicitlyRequested: false,
+      freshness: "evergreen",
+      reason: null,
+      query: null,
+    });
   });
 
   it.each([
@@ -255,11 +303,167 @@ export default function App() { return <button>Latest results</button>; }
     expect(shouldAnswerWithoutCode(content)).toBe(true);
   });
 
-  it.each([
-    "Build an app with the latest UFC rankings",
-    "Use web search and update the dashboard with current prices",
-    "Add a search bar to this app",
-  ])("preserves concrete code-change requests: %s", (content) => {
-    expect(shouldAnswerWithoutCode(content)).toBe(false);
+  it("builds portfolio research queries from guided template prompts", () => {
+    const content =
+      "Build a distinctive personal portfolio website for Jane Doe, a Product Designer. Before generating any UI, research Jane Doe on the web and read their existing portfolio at https://janedoe.com using fetch_url.";
+
+    expect(detectPortfolioResearchIntent(content)).toEqual({
+      required: true,
+      personName: "Jane Doe",
+      portfolioUrl: "https://janedoe.com",
+      linkedinUrl: null,
+    });
+    expect(buildPortfolioResearchQuery(content)).toBe(
+      "Jane Doe professional portfolio projects experience bio skills https://janedoe.com",
+    );
+    expect(buildResearchQuery(content)).toBe(
+      "Jane Doe professional portfolio projects experience bio skills https://janedoe.com",
+    );
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      candidate: true,
+      reason: "explicit",
+    });
+  });
+
+  it("still researches portfolio builds even when a portfolio URL is present", () => {
+    const content =
+      "Build a portfolio website for Alex Kim at https://alexkim.dev with real projects from the web";
+
+    expect(detectPortfolioResearchIntent(content).required).toBe(true);
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      candidate: true,
+    });
+  });
+
+  it("builds company landing research queries from guided template prompts", () => {
+    const content =
+      "Build a product landing page for Acme's Acme Cloud. Before generating any UI, research Acme on the web and read their product site at https://acme.com using fetch_url. Also review competitor pages at https://competitor.com when available. Do not invent customers, metrics, awards, or capabilities.";
+
+    expect(detectCompanyLandingResearchIntent(content)).toMatchObject({
+      required: true,
+      companyName: "Acme",
+      productUrl: "https://acme.com",
+      competitorUrl: "https://competitor.com",
+    });
+    expect(buildCompanyLandingResearchQuery(content)).toContain("Acme");
+    expect(buildCompanyLandingResearchQuery(content)).toContain(
+      "https://acme.com",
+    );
+    expect(detectGuidedTemplateResearchIntent(content)).toEqual({
+      required: true,
+      kind: "company-landing",
+    });
+    expect(detectResearchIntent([{ content }])).toMatchObject({
+      candidate: true,
+      reason: "explicit",
+    });
+  });
+
+  it("does not force company landing research for ordinary marketing briefs", () => {
+    const content = `Build a product landing page for Relay, a hosted webhook debugging tool for small engineering teams.
+
+The first viewport should explain that Relay captures, inspects, replays, and shares webhook events.`;
+
+    expect(detectCompanyLandingResearchIntent(content).required).toBe(false);
+    expect(detectGuidedTemplateResearchIntent(content).required).toBe(false);
+  });
+
+  it("builds live API dashboard research queries from guided template prompts", () => {
+    const content =
+      "Build a live data dashboard called Orbit Monitor that displays current weather forecasts by city from a public API. Before generating any UI, research the official API documentation on the web and read the docs at https://docs.example.com/api using fetch_url. Do not invent endpoints or mock live data.";
+
+    expect(detectLiveApiDashboardResearchIntent(content)).toMatchObject({
+      required: true,
+      appName: "Orbit Monitor",
+      docsUrl: "https://docs.example.com/api",
+    });
+    expect(buildLiveApiDashboardResearchQuery(content)).toContain(
+      "https://docs.example.com/api",
+    );
+    expect(detectGuidedTemplateResearchIntent(content)).toEqual({
+      required: true,
+      kind: "live-api-dashboard",
+    });
+  });
+
+  it("builds local business research queries from guided template prompts", () => {
+    const content =
+      "Build a website for Rivera Kitchen, a neighborhood Mexican restaurant in Austin, TX. Before generating any UI, research Rivera Kitchen on the web and read their existing site at https://riverakitchen.com using fetch_url. Also review their listing page at https://maps.google.com/?cid=123 when available. Do not invent awards, prices, phone numbers, or testimonials.";
+
+    expect(detectLocalBusinessResearchIntent(content)).toMatchObject({
+      required: true,
+      businessName: "Rivera Kitchen",
+      city: "Austin, TX",
+      websiteUrl: "https://riverakitchen.com",
+      listingUrl: "https://maps.google.com/?cid=123",
+    });
+    expect(buildLocalBusinessResearchQuery(content)).toContain(
+      "Rivera Kitchen",
+    );
+    expect(detectGuidedTemplateResearchIntent(content)).toEqual({
+      required: true,
+      kind: "local-business",
+    });
+  });
+});
+
+describe("resolveResearchReason", () => {
+  const emptyResearchIntent = {
+    candidate: false,
+    explicitlyRequested: false,
+    freshness: "evergreen" as const,
+    reason: null,
+    query: null,
+  };
+
+  it("preserves detectResearchIntent classifications", () => {
+    expect(
+      resolveResearchReason({
+        researchIntent: {
+          ...emptyResearchIntent,
+          candidate: true,
+          reason: "technical-reference",
+        },
+      }),
+    ).toBe("technical-reference");
+  });
+
+  it("uses technical-reference for live API dashboard guided templates", () => {
+    expect(
+      resolveResearchReason({
+        researchIntent: emptyResearchIntent,
+        researchCandidate: true,
+        liveApiDashboardResearchRequired: true,
+      }),
+    ).toBe("technical-reference");
+  });
+
+  it("uses external-facts for other guided template research gates", () => {
+    expect(
+      resolveResearchReason({
+        researchIntent: emptyResearchIntent,
+        researchCandidate: true,
+        guidedTemplateResearchRequired: true,
+      }),
+    ).toBe("external-facts");
+  });
+
+  it("uses explicit when search was approved without intent classification", () => {
+    expect(
+      resolveResearchReason({
+        researchIntent: emptyResearchIntent,
+        searchApproved: true,
+        researchCandidate: true,
+      }),
+    ).toBe("explicit");
+  });
+
+  it("never returns null when research is still a candidate", () => {
+    expect(
+      resolveResearchReason({
+        researchIntent: emptyResearchIntent,
+        researchCandidate: true,
+      }),
+    ).toBe("external-facts");
   });
 });

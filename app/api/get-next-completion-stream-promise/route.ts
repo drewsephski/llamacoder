@@ -3,9 +3,9 @@ import { z } from "zod";
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
-  gateway,
   generateText,
   Output,
+  stepCountIs,
   streamText,
 } from "ai";
 import { auth } from "@/lib/auth";
@@ -66,9 +66,15 @@ import {
 import {
   assessApiDocumentation,
   buildResearchQuery,
+  detectCompanyLandingResearchIntent,
+  detectGuidedTemplateResearchIntent,
+  detectLiveApiDashboardResearchIntent,
+  detectLocalBusinessResearchIntent,
+  detectPortfolioResearchIntent,
   detectResearchIntent,
   detectWebsiteReferenceIntent,
   extractResearchObjective,
+  resolveResearchReason,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
 import {
@@ -81,8 +87,13 @@ import {
 } from "@/features/generation/persistence-intent";
 import {
   createResearchWindow,
-  extractWebSources,
+  extractExaToolSources,
 } from "@/features/generation/research-policy";
+import { buildWebResearchAgentInstructions } from "@/features/generation/research-prompts";
+import {
+  createExaAgentTools,
+  isExaConfigured,
+} from "@/features/generation/server/exa-tools";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
@@ -113,8 +124,6 @@ type CompletionMessage = {
   files?: unknown;
   id?: string;
 };
-
-const WEB_RESEARCH_MODEL = "openai/gpt-5-nano";
 
 function isGeneratedAppRequestMetadata(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -528,6 +537,21 @@ export async function POST(req: Request) {
     );
     const apiDocumentation = assessApiDocumentation(researchMessages);
     const researchIntent = detectResearchIntent(researchMessages);
+    const portfolioResearchIntent = detectPortfolioResearchIntent(
+      latestResearchObjective,
+    );
+    const companyLandingResearchIntent = detectCompanyLandingResearchIntent(
+      latestResearchObjective,
+    );
+    const liveApiDashboardResearchIntent = detectLiveApiDashboardResearchIntent(
+      latestResearchObjective,
+    );
+    const localBusinessResearchIntent = detectLocalBusinessResearchIntent(
+      latestResearchObjective,
+    );
+    const guidedTemplateResearchIntent = detectGuidedTemplateResearchIntent(
+      latestResearchObjective,
+    );
     const liveApiIntent = shouldCarryResearchThroughWorkflow
       ? (rawMessages
           .filter((candidate) => candidate.role === "user")
@@ -1355,7 +1379,7 @@ export async function POST(req: Request) {
             );
           const selectedApiShouldSupplyLiveData =
             !researchIntent.explicitlyRequested &&
-            researchIntent.reason === "time-sensitive" &&
+            researchIntent.freshness === "recent" &&
             selectedApiCoversResearchQuery;
           const hasOnlyReviewedConnectedApiContracts =
             connectedIntegrationSelection.providerIds.length > 0 &&
@@ -1367,8 +1391,9 @@ export async function POST(req: Request) {
             );
           const researchCandidate =
             !isFreeRepairRequest &&
-            chatUrls.length === 0 &&
+            (chatUrls.length === 0 || guidedTemplateResearchIntent.required) &&
             (searchApproved ||
+              guidedTemplateResearchIntent.required ||
               (searchApproval?.approved !== false &&
                 ((researchIntent.candidate &&
                   !selectedApiShouldSupplyLiveData &&
@@ -1393,6 +1418,100 @@ export async function POST(req: Request) {
           const researchFreshness = researchIntent.candidate
             ? researchIntent.freshness
             : "evergreen";
+          const researchWindow =
+            researchFreshness === "recent" ? createResearchWindow() : null;
+          const researchReason = resolveResearchReason({
+            researchIntent,
+            searchApproved,
+            researchCandidate,
+            effectiveLiveApiRequired: effectiveLiveApiIntent.required,
+            hasExplicitCompleteCreativeBrief,
+            portfolioResearchRequired: portfolioResearchIntent.required,
+            companyLandingResearchRequired:
+              companyLandingResearchIntent.required,
+            liveApiDashboardResearchRequired:
+              liveApiDashboardResearchIntent.required,
+            localBusinessResearchRequired: localBusinessResearchIntent.required,
+            guidedTemplateResearchRequired:
+              guidedTemplateResearchIntent.required,
+          });
+          const exaTools =
+            isExaConfigured() && researchCandidate
+              ? createExaAgentTools({
+                  researchWindow,
+                  reason: researchReason,
+                  freshness: researchFreshness,
+                })
+              : null;
+          const forceWebSearch =
+            searchApproved ||
+            researchIntent.explicitlyRequested ||
+            guidedTemplateResearchIntent.required;
+          const forceResearchToolChoice = forceWebSearch && !isCodeGeneration;
+          const researchLabel = researchIntent.explicitlyRequested
+            ? "Searching as requested"
+            : researchIntent.reason === "informational"
+              ? "Checking for relevant sources"
+              : researchIntent.reason === "technical-reference"
+                ? "Checking official documentation"
+                : researchIntent.freshness === "recent"
+                  ? "Checking current information"
+                  : effectiveLiveApiIntent.required
+                    ? "Verifying integration details"
+                    : "Checking external sources";
+          const researchSourceOptions = researchWindow
+            ? { publicationWindow: researchWindow }
+            : {};
+          const emittedResearchSourceUrls = new Set<string>();
+          let webResearchStarted = false;
+          let activeResearchQuery = researchQuery?.trim() ?? "";
+          const markWebResearchStarted = (query: string, label: string) => {
+            if (webResearchStarted) return;
+            webResearchStarted = true;
+            activeResearchQuery = query.slice(0, 500);
+            writeStatus({ phase: "searching", label });
+            writeResearchActivity({
+              phase: "searching",
+              query: activeResearchQuery,
+              label,
+              sourceCount: 0,
+            });
+          };
+          const emitExaToolSources = (
+            toolName: "web_search" | "fetch_url",
+            output: unknown,
+          ) => {
+            const discoveredSources = extractExaToolSources(
+              toolName,
+              output,
+              researchSourceOptions,
+            );
+            let addedSource = false;
+
+            discoveredSources.forEach((source) => {
+              if (emittedResearchSourceUrls.has(source.url)) return;
+              emittedResearchSourceUrls.add(source.url);
+              addedSource = true;
+              writer.write({
+                type: "source-url",
+                sourceId: `research-${messageId}-${emittedResearchSourceUrls.size}`,
+                url: source.url,
+                title: (source.publishedDate
+                  ? `${source.title} (${source.publishedDate.slice(0, 10)})`
+                  : source.title
+                ).slice(0, 300),
+              });
+            });
+
+            if (addedSource) {
+              writeResearchActivity({
+                phase: "searching",
+                query: activeResearchQuery,
+                label: `Found ${emittedResearchSourceUrls.size} ${emittedResearchSourceUrls.size === 1 ? "source" : "sources"}`,
+                sourceCount: emittedResearchSourceUrls.size,
+              });
+            }
+          };
 
           if (isCodeGeneration && !isFreeRepairRequest && planMode) {
             const lastUserMessageIndex = guardedMessages.findLastIndex(
@@ -1446,6 +1565,39 @@ export async function POST(req: Request) {
             }
           }
 
+          if (exaTools) {
+            systemInstruction = [
+              systemInstruction,
+              buildWebResearchAgentInstructions({
+                forceSearch: forceWebSearch,
+                recentOnly: researchFreshness === "recent",
+                researchWindow: researchWindow
+                  ? {
+                      startDate: researchWindow.startDate,
+                      endDate: researchWindow.endDate,
+                    }
+                  : undefined,
+                suggestedQuery: researchQuery,
+                reason: researchReason,
+                liveApiVerificationRequired:
+                  isCodeGeneration &&
+                  (liveApiDashboardResearchIntent.required ||
+                    (effectiveLiveApiIntent.required &&
+                      !hasOnlyReviewedConnectedApiContracts &&
+                      !apiDocumentation.hasCompleteEndpointContract)),
+                portfolioResearchRequired: portfolioResearchIntent.required,
+                companyLandingResearchRequired:
+                  companyLandingResearchIntent.required,
+                liveApiDashboardResearchRequired:
+                  liveApiDashboardResearchIntent.required,
+                localBusinessResearchRequired:
+                  localBusinessResearchIntent.required,
+              }),
+            ]
+              .filter(Boolean)
+              .join("\n\n");
+          }
+
           if (isCodeGeneration && selectedApiShouldSupplyLiveData) {
             const lastUserMessageIndex = guardedMessages.findLastIndex(
               (candidate) => candidate.role === "user",
@@ -1478,249 +1630,6 @@ export async function POST(req: Request) {
             systemInstruction = [systemInstruction, CHAT_URL_SYSTEM_GUARD]
               .filter(Boolean)
               .join("\n\n");
-          }
-
-          if (researchCandidate) {
-            const query = researchQuery?.trim();
-            if (!query) {
-              throw new Error("A web research query could not be determined");
-            }
-            const researchDecisionContext = researchMessages
-              .slice(-4)
-              .map((candidate) => candidate.content.trim())
-              .filter(Boolean)
-              .join("\n\n")
-              .slice(0, 6_000);
-
-            const researchLabel = researchIntent.explicitlyRequested
-              ? "Searching as requested"
-              : researchIntent.reason === "technical-reference"
-                ? "Checking official documentation"
-                : researchIntent.freshness === "recent"
-                  ? "Checking current information"
-                  : effectiveLiveApiIntent.required
-                    ? "Verifying integration details"
-                    : "Checking external sources";
-            const forceWebSearch =
-              searchApproved || researchIntent.explicitlyRequested;
-
-            const researchModel = WEB_RESEARCH_MODEL;
-            const researchWindow =
-              researchFreshness === "recent" ? createResearchWindow() : null;
-            const researchTelemetry = createRequestTelemetry({
-              userId: session.user.id,
-              chatId: message.chatId,
-              messageId,
-              modelId: researchModel,
-              creditHoldId: holdId,
-              requestKind: "search",
-              quality: "low",
-              reasoning: {
-                enabled: false,
-                visible: false,
-                mandatory: false,
-                effort: "none",
-              },
-            });
-
-            try {
-              const researchResult = streamText({
-                model: gateway(researchModel),
-                maxOutputTokens: 4_000,
-                abortSignal: req.signal,
-                timeout: { totalMs: 90_000, chunkMs: 30_000 },
-                providerOptions: {
-                  gateway: {
-                    user: session.user.id,
-                    tags: ["feature:web-search", "request:research"],
-                  },
-                },
-                system:
-                  researchWindow === null
-                    ? `${forceWebSearch ? "The user explicitly requested or approved web research, so call web_search before answering." : "Decide whether web research would materially improve the output before calling web_search. Search only when the request depends on current externally verifiable facts, unavailable external content, or missing API/provider documentation. Skip search for ordinary creative builds, local code or styling work, stable knowledge, subjective choices, and prompts whose supplied context is already sufficient."} Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. When the objective contains an exact URL, inspect that exact page first and treat it as the primary source; do not replace it with remembered knowledge, a similarly named API, or a different documentation version. If you search, prefer official documentation and primary sources, then reputable secondary sources. Distinguish current claims from stable background information, preserve source URLs, and never guess when sources disagree or do not establish a fact.${effectiveLiveApiIntent.required ? " For any API candidate that needs research, verify the official docs URL, base URL, auth model, required credentials, browser CORS support, attribution requirements, rate limits, exact response shape, and unit semantics. Confirm field names and unit codes from an official response example or a live read-only request; distinguish required functional fields from optional metadata. Clearly reject browser use when a secret or server runtime is required, and note any provider header that browsers are not allowed to set. Never recommend mock data as a replacement for the requested live integration." : ""} If web_search is unnecessary, finish without calling it. Do not write application code.`
-                    : `${forceWebSearch ? "The user explicitly requested or approved current web research, so call web_search before answering." : "Decide whether current web research would materially improve the output before calling web_search. Search only when the output depends on volatile or externally verifiable facts that are not already established by the supplied context. Skip search for ordinary creative builds, local code or styling work, stable knowledge, and subjective choices."} Today is ${researchWindow.endDate}. Before invoking web_search, translate the search objective into one or more concise search-engine queries. Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query. If you search, use only sources published from ${researchWindow.startDate} through ${researchWindow.endDate}, inclusive. Ignore undated sources and anything outside that window. Prefer official or primary sources, preserve exact names and ordering, and never describe archived information as current. If qualifying sources do not establish a fact, say it is unavailable rather than guessing. If web_search is unnecessary, finish without calling it. Do not write application code.`,
-                prompt:
-                  researchWindow === null
-                    ? forceWebSearch
-                      ? `User objective:\n${researchDecisionContext}\n\nSearch objective:\n${query}\n\nFind the most authoritative sources that can materially improve the response. Include stable documentation or background sources even when they are undated.`
-                      : `User objective:\n${researchDecisionContext}\n\nPossible search objective:\n${query}\n\nDecide whether external research is necessary to materially improve this output. If the supplied context and stable model knowledge are sufficient, do not call web_search.`
-                    : forceWebSearch
-                      ? `User objective:\n${researchDecisionContext}\n\nSearch objective:\n${query}\n\nRequired publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`
-                      : `User objective:\n${researchDecisionContext}\n\nPossible search objective:\n${query}\n\nDecide whether volatile external facts are necessary for this output. If not, do not call web_search. Any search used must stay within ${researchWindow.startDate} through ${researchWindow.endDate}.`,
-                tools: {
-                  web_search: gateway.tools.exaSearch({
-                    type: "auto",
-                    numResults: 8,
-                    userLocation: "US",
-                    ...(researchWindow
-                      ? {
-                          startPublishedDate: researchWindow.startIso,
-                          endPublishedDate: researchWindow.endIso,
-                        }
-                      : {}),
-                    contents: {
-                      text: {
-                        maxCharacters: 8_000,
-                        includeHtmlTags: false,
-                        verbosity: "standard",
-                      },
-                      highlights: {
-                        query,
-                        maxCharacters: 3_000,
-                      },
-                      maxAgeHours: 1,
-                      livecrawlTimeout: 10_000,
-                    },
-                  }),
-                },
-                toolChoice: forceWebSearch ? "required" : "auto",
-                maxRetries: 1,
-              });
-              const toolOutputs: unknown[] = [];
-              const emittedSourceUrls = new Set<string>();
-              let markedFirstResearchEvent = false;
-              let webSearchCalled = false;
-              const markWebSearchStarted = () => {
-                if (webSearchCalled) return;
-                webSearchCalled = true;
-                writeStatus({ phase: "searching", label: researchLabel });
-                writeResearchActivity({
-                  phase: "searching",
-                  query,
-                  label: researchLabel,
-                  sourceCount: 0,
-                });
-              };
-              const sourceOptions = researchWindow
-                ? { publicationWindow: researchWindow }
-                : {};
-              const emitNewSources = (outputs: unknown[]) => {
-                const discoveredSources = extractWebSources(
-                  outputs,
-                  sourceOptions,
-                );
-                let addedSource = false;
-
-                discoveredSources.forEach((source, index) => {
-                  if (emittedSourceUrls.has(source.url)) return;
-                  emittedSourceUrls.add(source.url);
-                  addedSource = true;
-                  writer.write({
-                    type: "source-url",
-                    sourceId: `research-${messageId}-${index + 1}`,
-                    url: source.url,
-                    title: (source.publishedDate
-                      ? `${source.title} (${source.publishedDate.slice(0, 10)})`
-                      : source.title
-                    ).slice(0, 300),
-                  });
-                });
-
-                if (addedSource) {
-                  writeResearchActivity({
-                    phase: "searching",
-                    query,
-                    label: `Found ${emittedSourceUrls.size} ${emittedSourceUrls.size === 1 ? "source" : "sources"}`,
-                    sourceCount: emittedSourceUrls.size,
-                  });
-                }
-
-                return discoveredSources;
-              };
-
-              for await (const part of researchResult.fullStream) {
-                if (!markedFirstResearchEvent) {
-                  markedFirstResearchEvent = true;
-                  researchTelemetry.markFirstByte();
-                }
-                if (
-                  (part.type === "tool-call" || part.type === "tool-result") &&
-                  part.toolName === "web_search"
-                ) {
-                  markWebSearchStarted();
-                }
-                if (part.type === "tool-result") {
-                  toolOutputs.push(part.output);
-                  emitNewSources(toolOutputs);
-                } else if (part.type === "error") {
-                  throw part.error;
-                }
-              }
-
-              const finalToolResults = await researchResult.toolResults;
-              if (
-                finalToolResults.some(
-                  (result) => result.toolName === "web_search",
-                )
-              ) {
-                markWebSearchStarted();
-              }
-              const webSources = emitNewSources([
-                ...toolOutputs,
-                ...finalToolResults.map(({ output }) => output),
-              ]);
-              if (webSearchCalled && webSources.length === 0) {
-                throw new Error(
-                  researchWindow
-                    ? `Web search returned no dated sources published from ${researchWindow.startDate} through ${researchWindow.endDate}`
-                    : "Web search returned no usable sources",
-                );
-              }
-
-              if (webSearchCalled) {
-                writeResearchActivity({
-                  phase: "complete",
-                  query,
-                  label: `Reviewed ${webSources.length} ${webSources.length === 1 ? "source" : "sources"}`,
-                  sourceCount: webSources.length,
-                });
-
-                const sourceEvidence = webSources.map(
-                  (source, index) =>
-                    `[Source ${index + 1}] ${source.title}\nPublished: ${source.publishedDate?.slice(0, 10) ?? "Not provided"}\nURL: ${source.url}\nExcerpt:\n${source.excerpt || "No excerpt was returned."}`,
-                );
-                const researchBrief = [
-                  "=== VERIFIED WEB RESEARCH ===",
-                  researchWindow
-                    ? `Strict publication window: ${researchWindow.startDate} through ${researchWindow.endDate}.`
-                    : "Research mode: authoritative sources without an artificial publication-date cutoff.",
-                  sourceEvidence.join("\n\n"),
-                  "=== END VERIFIED WEB RESEARCH ===",
-                  researchWindow
-                    ? "Use only this dated research as factual source material. Preserve its publication dates and source URLs in the generated app where attribution is useful. Do not revive facts from older conversation messages or label archived data as current."
-                    : "Use this research to improve factual accuracy, domain fit, and implementation decisions. Prefer primary sources, preserve source URLs where attribution is useful, and do not claim undated material is current.",
-                ].join("\n\n");
-                const lastUserMessageIndex = guardedMessages.findLastIndex(
-                  (candidate) => candidate.role === "user",
-                );
-                if (lastUserMessageIndex !== -1) {
-                  const researchUsageInstruction = isCodeGeneration
-                    ? "Web research was used before generating code. Use the verified brief as the source of truth for factual app content. Do not invent or substitute placeholder data."
-                    : "Web research was used for this answer. Use the verified brief for externally verifiable claims.";
-                  guardedMessages[lastUserMessageIndex] = {
-                    ...guardedMessages[lastUserMessageIndex],
-                    content: `${guardedMessages[lastUserMessageIndex].content}\n\n${researchUsageInstruction}\n\n${researchBrief}`,
-                  };
-                }
-              }
-              const [usage, finishReason, providerMetadata, response] =
-                await Promise.all([
-                  researchResult.usage,
-                  researchResult.finishReason,
-                  researchResult.providerMetadata,
-                  researchResult.response,
-                ]);
-              await researchTelemetry.record({
-                status: "completed",
-                usage,
-                finishReason,
-                providerMetadata,
-                providerRequestId: response?.id,
-              });
-            } catch (error) {
-              await researchTelemetry.record({ status: "error", error });
-              throw error;
-            }
           }
 
           if (screenshotData && isCodeGeneration && !isFreeRepairRequest) {
@@ -1829,6 +1738,61 @@ export async function POST(req: Request) {
             system: systemInstruction,
             messages: clampMessagesToBillingBudget(guardedMessages),
             temperature: 0.4,
+            tools: exaTools ?? undefined,
+            toolChoice:
+              exaTools && forceResearchToolChoice
+                ? { type: "tool", toolName: "web_search" }
+                : exaTools
+                  ? "auto"
+                  : undefined,
+            stopWhen: exaTools ? stepCountIs(5) : undefined,
+            experimental_onToolCallStart: exaTools
+              ? ({ toolCall }) => {
+                  if (toolCall.toolName === "web_search") {
+                    const input = toolCall.input as { query?: string };
+                    markWebResearchStarted(
+                      input.query ?? researchQuery ?? "Web search",
+                      researchLabel,
+                    );
+                    return;
+                  }
+
+                  if (toolCall.toolName === "fetch_url") {
+                    const input = toolCall.input as { urls?: string[] };
+                    markWebResearchStarted(
+                      input.urls?.[0] ?? researchQuery ?? "Reading page",
+                      input.urls?.length === 1
+                        ? "Reading the linked page"
+                        : `Reading ${input.urls?.length ?? 0} linked pages`,
+                    );
+                  }
+                }
+              : undefined,
+            onStepFinish: exaTools
+              ? ({ toolResults }) => {
+                  let handledResearchTool = false;
+                  toolResults.forEach((result) => {
+                    if (
+                      result.toolName !== "web_search" &&
+                      result.toolName !== "fetch_url"
+                    ) {
+                      return;
+                    }
+
+                    handledResearchTool = true;
+                    emitExaToolSources(result.toolName, result.output);
+                  });
+
+                  if (webResearchStarted && handledResearchTool) {
+                    writeResearchActivity({
+                      phase: "complete",
+                      query: activeResearchQuery,
+                      label: `Reviewed ${emittedResearchSourceUrls.size} ${emittedResearchSourceUrls.size === 1 ? "source" : "sources"}`,
+                      sourceCount: emittedResearchSourceUrls.size,
+                    });
+                  }
+                }
+              : undefined,
             onChunk({ chunk }) {
               if (
                 chunk.type === "reasoning-delta" ||

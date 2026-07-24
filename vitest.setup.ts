@@ -16,4 +16,4 @@ process.env.STRIPE_PRO_PRICE_ID ??= "price_pro";
 process.env.STRIPE_PRO_PLUS_PRICE_ID ??= "price_pro_plus";
 process.env.STRIPE_CREDITS_10_PRICE_ID ??= "price_credits_10";
 process.env.STRIPE_CREDITS_25_PRICE_ID ??= "price_credits_25";
-process.env.STRIPE_CREDITS_60_PRICE_ID ??= "price_credits_60";
+process.env.EXA_API_KEY ??= "test-exa-key";

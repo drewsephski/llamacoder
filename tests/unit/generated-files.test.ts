@@ -568,6 +568,81 @@ describe("generated file normalization", () => {
     );
   });
 
+  it("accepts maxAttempts backoff clients and blocks unlabeled fetch loops", () => {
+    const passing = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { load } from "./services/octagon"; export default function App() { return <button onClick={load}>Load</button>; }',
+      },
+      {
+        path: "services/octagon.ts",
+        code: [
+          "function isData(value: unknown): value is { id: string } {",
+          '  return typeof value === "object" && value !== null && typeof (value as { id?: unknown }).id === "string";',
+          "}",
+          "const maxAttempts = 3;",
+          "export async function load(): Promise<{ id: string }> {",
+          "  let lastError: unknown;",
+          "  for (let i = 0; i < maxAttempts; i += 1) {",
+          "    const controller = new AbortController();",
+          "    const timeout = setTimeout(() => controller.abort(), 5000);",
+          "    try {",
+          '      const response = await fetch("https://api.example.com/data", { signal: controller.signal });',
+          '      if (!response.ok) throw new Error("Request failed");',
+          "      const data: unknown = await response.json();",
+          '      if (!isData(data)) throw new Error("Invalid response");',
+          "      return data;",
+          "    } catch (error) {",
+          "      lastError = error;",
+          "      await new Promise((resolve) => setTimeout(resolve, 250 * (i + 1)));",
+          "    } finally { clearTimeout(timeout); }",
+          "  }",
+          "  throw lastError;",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(
+      buildGeneratedFilesQualityReport(passing).apiIntegration.status,
+    ).toBe("verified");
+
+    const failing = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { load } from "./services/octagon"; export default function App() { return <button onClick={load}>Load</button>; }',
+      },
+      {
+        path: "services/octagon.ts",
+        code: [
+          "function isData(value: unknown): value is { id: string } {",
+          '  return typeof value === "object" && value !== null && typeof (value as { id?: unknown }).id === "string";',
+          "}",
+          "export async function load(): Promise<{ id: string }> {",
+          "  const controller = new AbortController();",
+          "  const timeout = setTimeout(() => controller.abort(), 5000);",
+          "  try {",
+          '    const response = await fetch("https://api.example.com/data", { signal: controller.signal });',
+          '    if (!response.ok) throw new Error("Request failed");',
+          "    const data: unknown = await response.json();",
+          '    if (!isData(data)) throw new Error("Invalid response");',
+          "    return data;",
+          "  } finally { clearTimeout(timeout); }",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(validateGeneratedFiles(failing)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "services/octagon.ts",
+          message: "Live API requests must include a bounded retry path.",
+        }),
+      ]),
+    );
+  });
+
   it("requires selected APIs to use their exact provider id and reviewed base URL", () => {
     const validFiles = normalizeGeneratedFiles([
       {

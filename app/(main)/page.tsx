@@ -70,6 +70,17 @@ import { useGenerationHandoff } from "@/features/generation/client/generation-ha
 import { getErrorMessage } from "@/features/shared/errors";
 import { ApiSelectionDialog } from "@/features/integrations/components/api-selection-dialog";
 import { PromptBuilderModal } from "@/features/prompt-builder";
+import {
+  PromptTemplateEditor,
+  createInitialTemplateValues,
+} from "@/components/prompt-template-editor";
+import {
+  PORTFOLIO_PROMPT_TEMPLATE,
+  PROMPT_TEMPLATES,
+  isPromptTemplateReady,
+  type PromptTemplate,
+  type PromptTemplateValues,
+} from "@/lib/prompt-templates";
 import { AiBuilderFeatureComparison } from "@/components/ai-builder-feature-comparison";
 import { uploadScreenshot } from "@/lib/s3-upload-client";
 
@@ -690,6 +701,12 @@ export default function Home() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [showPromptBuilder, setShowPromptBuilder] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<PromptTemplate | null>(
+    null,
+  );
+  const [templateValues, setTemplateValues] = useState<PromptTemplateValues>(
+    () => createInitialTemplateValues(PORTFOLIO_PROMPT_TEMPLATE),
+  );
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
   const ringRef = useRef<HTMLDivElement>(null);
   const promptStartedAtRef = useRef<number | null>(null);
@@ -776,6 +793,7 @@ export default function Home() {
 
   const setStarterPrompt = useCallback(
     (value: string, title: string) => {
+      setActiveTemplate(null);
       setPrompt(value);
       promptStartedAtRef.current ??= Date.now();
       plausible("Activation Starter Selected", {
@@ -791,6 +809,28 @@ export default function Home() {
     },
     [plausible],
   );
+
+  const handleTemplateCompiledPrompt = useCallback((compiled: string) => {
+    setPrompt(compiled);
+  }, []);
+
+  const activateTemplate = useCallback(
+    (template: PromptTemplate) => {
+      setActiveTemplate(template);
+      setTemplateValues(createInitialTemplateValues(template));
+      promptStartedAtRef.current ??= Date.now();
+      plausible("Prompt Template Selected", {
+        props: { source: "homepage", template: template.id },
+      });
+    },
+    [plausible],
+  );
+
+  const handleExitTemplate = useCallback(() => {
+    // Keep the compiled prompt so freeform can edit/submit immediately.
+    setActiveTemplate(null);
+    window.requestAnimationFrame(() => textareaRef.current?.focus());
+  }, []);
 
   useEffect(() => {
     const animate = () => {
@@ -1109,7 +1149,10 @@ export default function Home() {
           backdrop-filter: blur(20px) saturate(180%);
           border: 1px solid hsl(var(--border) / 0.6);
           border-radius: 20px;
-          transition: border-color 0.25s ease, box-shadow 0.25s ease;
+          transition:
+            border-color 0.25s ease,
+            box-shadow 0.25s ease,
+            min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .compose-box-inner:focus-within {
           border-color: rgba(0,98,255,0.45);
@@ -1157,6 +1200,252 @@ export default function Home() {
           color: hsl(var(--foreground));
           transform: translateY(-1px);
           box-shadow: 0 3px 10px rgba(0,98,255,0.08);
+        }
+
+        .pill-chip.is-active {
+          border-color: rgba(0,98,255,0.45);
+          background: rgba(0,98,255,0.08);
+          color: hsl(var(--foreground));
+          box-shadow: 0 3px 12px rgba(0,98,255,0.12);
+        }
+
+        .compose-prompt-slot {
+          min-height: 118px;
+          transition: min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @media (min-width: 640px) {
+          .compose-prompt-slot {
+            min-height: 90px;
+          }
+        }
+        .compose-prompt-slot.is-template {
+          min-height: 220px;
+        }
+        .compose-prompt-enter {
+          animation: compose-prompt-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes compose-prompt-enter {
+          from {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .template-editor {
+          padding: 14px 16px 10px;
+        }
+        .template-editor-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+        .template-editor-heading {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          min-width: 0;
+        }
+        .template-editor-icon {
+          display: flex;
+          height: 28px;
+          width: 28px;
+          flex-shrink: 0;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          background: rgba(0,98,255,0.1);
+          color: #0062FF;
+        }
+        .dark .template-editor-icon {
+          color: #0CA8FF;
+        }
+        .template-editor-title {
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: -0.02em;
+          color: hsl(var(--foreground));
+        }
+        .template-editor-description {
+          margin-top: 2px;
+          font-size: 12px;
+          line-height: 1.45;
+          color: hsl(var(--muted-foreground) / 0.85);
+        }
+        .template-editor-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+        .template-research-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          border-radius: 999px;
+          border: 1px solid rgba(0,98,255,0.22);
+          background: rgba(0,98,255,0.06);
+          padding: 4px 9px;
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          color: #0062FF;
+        }
+        .dark .template-research-badge {
+          color: #0CA8FF;
+        }
+        .template-exit-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          border-radius: 999px;
+          border: 1px solid hsl(var(--border) / 0.65);
+          background: hsl(var(--background) / 0.7);
+          padding: 4px 9px;
+          font-size: 11px;
+          color: hsl(var(--muted-foreground));
+          transition: all 0.18s ease;
+        }
+        .template-exit-btn:hover {
+          color: hsl(var(--foreground));
+          border-color: hsl(var(--border));
+        }
+        .template-editor-body {
+          font-size: 15px;
+          line-height: 1.85;
+          color: hsl(var(--foreground) / 0.92);
+          padding-top: 4px;
+        }
+        .template-editor-text {
+          white-space: pre-wrap;
+        }
+        .template-field {
+          position: relative;
+          display: inline-flex;
+          max-width: 100%;
+          margin: 0 3px;
+          padding-bottom: 2px;
+          vertical-align: baseline;
+          overflow: hidden;
+          transition: padding-bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .template-field.is-focused,
+        .template-field.has-value {
+          padding-bottom: 18px;
+        }
+        .template-field-input {
+          min-width: 6ch;
+          max-width: min(100%, 34ch);
+          border: 0;
+          border-bottom: 1.5px dashed rgba(0,98,255,0.35);
+          background: rgba(0,98,255,0.05);
+          padding: 0 6px 2px;
+          font: inherit;
+          color: hsl(var(--foreground));
+          outline: none;
+          border-radius: 6px 6px 0 0;
+          transition:
+            background-color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .template-field.is-url .template-field-input {
+          max-width: min(100%, 42ch);
+          font-size: 14px;
+        }
+        .template-field-input::placeholder {
+          color: hsl(var(--muted-foreground) / 0.55);
+        }
+        .template-field.is-focused .template-field-input,
+        .template-field-input:focus {
+          border-bottom-style: solid;
+          border-bottom-color: rgba(0,98,255,0.75);
+          background: rgba(0,98,255,0.1);
+          box-shadow: 0 0 0 3px rgba(0,98,255,0.08);
+        }
+        .template-field.has-value .template-field-input {
+          border-bottom-color: rgba(0,98,255,0.55);
+          background: rgba(0,98,255,0.07);
+          font-weight: 500;
+        }
+        .template-field-mirror {
+          display: inline;
+          border-bottom: 1.5px solid rgba(0,98,255,0.28);
+          padding: 0 2px 1px;
+          font-weight: 500;
+          color: hsl(var(--foreground));
+        }
+        .template-field-caption {
+          position: absolute;
+          left: 0;
+          bottom: 1px;
+          z-index: 2;
+          font-size: 9px;
+          font-weight: 600;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+          color: #0062FF;
+          background: hsl(var(--background) / 0.92);
+          border: 1px solid rgba(0,98,255,0.18);
+          border-radius: 5px;
+          padding: 2px 6px;
+          white-space: nowrap;
+          pointer-events: none;
+          box-shadow: 0 4px 12px rgba(0, 98, 255, 0.08);
+          opacity: 0;
+          transform: translateY(6px) scale(0.98);
+          transition:
+            opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+            transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.22s ease;
+        }
+        .template-field-caption.is-visible {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        .dark .template-field-caption {
+          color: #0CA8FF;
+          background: hsl(var(--card) / 0.95);
+        }
+        .template-editor-footer {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-top: 14px;
+          padding-top: 10px;
+          border-top: 1px solid hsl(var(--border) / 0.45);
+        }
+        .template-field-hints {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px 14px;
+        }
+        .template-field-hint {
+          font-size: 11px;
+          line-height: 1.4;
+          color: hsl(var(--muted-foreground) / 0.8);
+        }
+        .template-field-hint strong {
+          color: hsl(var(--foreground) / 0.75);
+          font-weight: 600;
+        }
+        .template-status {
+          font-size: 11px;
+          font-weight: 500;
+        }
+        .template-status.is-pending {
+          color: hsl(var(--muted-foreground) / 0.75);
+        }
+        .template-status.is-ready {
+          color: #0062FF;
+        }
+        .dark .template-status.is-ready {
+          color: #0CA8FF;
         }
 
         .url-strip {
@@ -1873,15 +2162,17 @@ export default function Home() {
 
                 startTransition(async () => {
                   try {
-                    const { prompt, model, quality } =
-                      Object.fromEntries(formData);
-                    assert.ok(typeof prompt === "string");
+                    const { model, quality } = Object.fromEntries(formData);
+                    // Always submit from React state so template mode and
+                    // freeform share one source of truth (no parallel hidden input).
+                    const submittedPrompt = prompt.trim();
+                    assert.ok(submittedPrompt.length > 0);
                     assert.ok(typeof model === "string");
                     assert.ok(quality === "high" || quality === "low");
 
                     const { chatId, lastMessageId } =
                       await createChatMutation.mutateAsync({
-                        prompt,
+                        prompt: submittedPrompt,
                         model,
                         quality,
                         screenshotUrl,
@@ -1965,35 +2256,62 @@ export default function Home() {
                         </div>
                       )}
 
-                    {/* Textarea */}
-                    <Textarea
-                      ref={textareaRef}
-                      placeholder="Build me a budgeting app..."
-                      required
-                      name="prompt"
-                      className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
-                      value={prompt}
-                      onChange={(e) => {
-                        if (
-                          e.target.value &&
-                          promptStartedAtRef.current === null
-                        ) {
-                          promptStartedAtRef.current = Date.now();
-                          plausible("Prompt Started", {
-                            props: { source: "homepage", method: "typing" },
-                          });
-                        }
-                        setPrompt(e.target.value);
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey) {
-                          event.preventDefault();
-                          const target = event.target;
-                          if (!(target instanceof HTMLTextAreaElement)) return;
-                          target.closest("form")?.requestSubmit();
-                        }
-                      }}
-                    />
+                    {/* Prompt input */}
+                    <div
+                      className={`compose-prompt-slot ${activeTemplate ? "is-template" : ""}`}
+                    >
+                      {activeTemplate ? (
+                        <div
+                          key={activeTemplate.id}
+                          className="compose-prompt-enter"
+                        >
+                          <PromptTemplateEditor
+                            template={activeTemplate}
+                            values={templateValues}
+                            onValuesChange={setTemplateValues}
+                            onCompiledPromptChange={
+                              handleTemplateCompiledPrompt
+                            }
+                            onExitTemplate={handleExitTemplate}
+                          />
+                        </div>
+                      ) : (
+                        <div key="freeform" className="compose-prompt-enter">
+                          <Textarea
+                            ref={textareaRef}
+                            placeholder="Build me a budgeting app..."
+                            required
+                            name="prompt"
+                            className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
+                            value={prompt}
+                            onChange={(e) => {
+                              if (
+                                e.target.value &&
+                                promptStartedAtRef.current === null
+                              ) {
+                                promptStartedAtRef.current = Date.now();
+                                plausible("Prompt Started", {
+                                  props: {
+                                    source: "homepage",
+                                    method: "typing",
+                                  },
+                                });
+                              }
+                              setPrompt(e.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" && !event.shiftKey) {
+                                event.preventDefault();
+                                const target = event.target;
+                                if (!(target instanceof HTMLTextAreaElement))
+                                  return;
+                                target.closest("form")?.requestSubmit();
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
 
                     {/* Toolbar */}
                     <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
@@ -2246,6 +2564,11 @@ export default function Home() {
                         disabled={
                           screenshotLoading ||
                           prompt.length === 0 ||
+                          (activeTemplate !== null &&
+                            !isPromptTemplateReady(
+                              activeTemplate,
+                              templateValues,
+                            )) ||
                           isCheckingEligibility ||
                           isPending
                         }
@@ -2275,6 +2598,17 @@ export default function Home() {
 
                 {/* Suggested prompts */}
                 <div className="mt-4 flex w-full flex-wrap justify-center gap-2 sm:mt-5">
+                  {PROMPT_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => activateTemplate(template)}
+                      className={`pill-chip ${activeTemplate?.id === template.id ? "is-active" : ""}`}
+                      aria-pressed={activeTemplate?.id === template.id}
+                    >
+                      {template.shortLabel}
+                    </button>
+                  ))}
                   {SUGGESTED_PROMPTS.map((v) => (
                     <button
                       key={v.title}

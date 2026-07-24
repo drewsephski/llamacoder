@@ -8,10 +8,8 @@ export type ResearchIntent = {
 
 export type ResearchReason =
   | "explicit"
-  | "time-sensitive"
-  | "verification"
+  | "informational"
   | "technical-reference"
-  | "recommendation"
   | "external-facts";
 
 export type ApiDocumentationAssessment = {
@@ -26,52 +24,102 @@ export type WebsiteReferenceIntent = {
   hostname: string | null;
 };
 
-const EXPLICIT_RESEARCH_PATTERNS = [
+export type PortfolioResearchIntent = {
+  required: boolean;
+  personName: string | null;
+  portfolioUrl: string | null;
+  linkedinUrl: string | null;
+};
+
+export type CompanyLandingResearchIntent = {
+  required: boolean;
+  companyName: string | null;
+  productName: string | null;
+  productUrl: string | null;
+  competitorUrl: string | null;
+};
+
+export type LiveApiDashboardResearchIntent = {
+  required: boolean;
+  appName: string | null;
+  docsUrl: string | null;
+  apiBaseUrl: string | null;
+  dataFocus: string | null;
+};
+
+export type LocalBusinessResearchIntent = {
+  required: boolean;
+  businessName: string | null;
+  city: string | null;
+  websiteUrl: string | null;
+  listingUrl: string | null;
+};
+
+export type GuidedTemplateResearchKind =
+  | "portfolio"
+  | "company-landing"
+  | "live-api-dashboard"
+  | "local-business";
+
+export type GuidedTemplateResearchIntent = {
+  required: boolean;
+  kind: GuidedTemplateResearchKind | null;
+};
+
+const PORTFOLIO_BUILD_PATTERNS = [
+  /\b(?:build|create|make|design|generate|rebuild|refresh)\b[\s\S]{0,140}?\b(?:portfolio|personal\s+(?:site|website|page))\b/i,
+  /\bportfolio\s+(?:site|website|page)\b[\s\S]{0,100}?\bfor\b/i,
+];
+
+const COMPANY_LANDING_BUILD_PATTERNS = [
+  /\b(?:build|create|make|design|generate|rebuild|refresh)\b[\s\S]{0,160}?\b(?:product\s+landing\s+page|landing\s+page|marketing\s+(?:site|page)|product\s+page)\b/i,
+  /\b(?:landing\s+page|marketing\s+(?:site|page))\b[\s\S]{0,100}?\bfor\b/i,
+];
+
+const LIVE_API_DASHBOARD_BUILD_PATTERNS = [
+  /\b(?:build|create|make|design|generate|rebuild|refresh)\b[\s\S]{0,160}?\b(?:live\s+data\s+dashboard|live\s+dashboard|data\s+dashboard|api\s+dashboard)\b/i,
+  /\bdashboard\s+called\b/i,
+  /\bdashboard\b[\s\S]{0,140}?\bfrom\s+a\s+public\s+api\b/i,
+];
+
+const LOCAL_BUSINESS_BUILD_PATTERNS = [
+  /\b(?:build|create|make|design|generate|rebuild|refresh)\b[\s\S]{0,160}?\b(?:restaurant|cafe|coffee\s+shop|bakery|bar|salon|local\s+business|store|shop)\b[\s\S]{0,80}?\b(?:website|site|page)\b/i,
+  /\b(?:website|site|page)\b[\s\S]{0,80}?\bfor\b[\s\S]{0,80}?\b(?:restaurant|cafe|coffee\s+shop|bakery|bar|salon|local\s+business|store|shop)\b/i,
+  /\b(?:a|an)\s+[\w\s-]{0,60}?\b(?:restaurant|cafe|coffee\s+shop|bakery|bar|salon|local\s+business)\b[\s\S]{0,40}?\bin\b/i,
+];
+
+const GUIDED_RESEARCH_PATTERNS = [
+  /\bresearch\b/i,
+  /\b(?:on|from)\s+the\s+web\b/i,
+  /\b(?:real|actual|existing|live)\b[\s\S]{0,48}?\b(?:information|content|projects|bio|experience|skills|employers?|features?|positioning|hours|menu|services?)\b/i,
+  /\b(?:scrape|fetch|read)\b[\s\S]{0,80}?\b(?:portfolio|linkedin|profile|site|page|docs?|documentation|listing)\b/i,
+  /\bdo not invent\b/i,
+  /\busing fetch_url\b/i,
+  /\bverify\b[\s\S]{0,60}?\b(?:endpoints?|cors|auth|contract)\b/i,
+];
+
+const PORTFOLIO_RESEARCH_PATTERNS = GUIDED_RESEARCH_PATTERNS;
+
+const LOCAL_LOOKUP_PATTERNS = [
+  /\blook\s+up\s+(?:the\s+)?(?:code|source|file|component|value|variable|function|import|definition|line|error)\b/i,
+  /\b(?:search|find)\s+(?:in|within)\s+(?:the\s+)?(?:code|codebase|project|repo|file|app)\b/i,
+];
+
+const WEB_RESEARCH_CUE_PATTERNS = [
   /\b(?:web|internet|online)\s+(?:search|research)\b/i,
-  /\b(?:use|do|run)\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\b/i,
   /\bsearch\s+(?:the\s+)?(?:web|internet|online)\b/i,
-  /\b(?:browse|research)\s+(?:the\s+)?(?:web|internet|online)\b/i,
-  /\blook\s+(?:it|this|that|them|those|the\s+\w+(?:\s+\w+)?)\s+up\b/i,
+  /\b(?:use|do|run)\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\b/i,
+  /\blook\s+up\b/i,
+  /\blook\s+(?:it|this|that|them|those|the\s+[\w\s]{1,80}?)\s+up\b/i,
+  /\b(?:search|find)\s+(?:for|about|on(?:line)?)\b/i,
+  /\b(?:research|investigate)\b/i,
+  /\b(?:find|get)\s+(?:out|info(?:rmation)?|details)\s+(?:about|on)\b/i,
+  /\b(?:on|from)\s+the\s+(?:web|internet)\b/i,
+  /\b(?:cite|citations?|fact[- ]check|verify|confirm)\b/i,
 ];
 
-const TIME_SENSITIVE_PATTERNS = [
-  /\b(?:current|latest|live|today(?:'s)?|up[- ]to[- ]date|most recent)\s+(?:(?:official|UFC|fighter|team|league|product|API)\s+){0,2}(?:rankings?|standings?|scores?|results?|schedule|roster|lineup|stats?|statistics|records?|prices?|pricing|rates?|odds|news|weather|forecast|laws?|regulations?|rules?|versions?|documentation|docs)\b/i,
-  /\b(?:rankings?|standings?|scores?|results?|schedule|roster|lineup|odds)\s+(?:right now|today|this (?:week|month|season|year)|for\s+20\d{2})\b/i,
-  /\b(?:actual|real|official)\s+(?:UFC\s+)?(?:rankings?|standings?|scores?|results?|schedule|roster|lineup|stats?|records?|prices?|pricing|odds|data)\b/i,
-  /\b(?:stock|share|crypto|bitcoin|ethereum)\s+(?:price|quote|rate)\b/i,
-  /\b(?:exchange|interest|mortgage)\s+rates?\b/i,
-  /\b(?:weather|forecast|breaking news|election results)\b/i,
-  /\b(?:laws?|regulations?|president|prime minister|CEO)\b.{0,60}\b(?:current|currently|latest|today|now|in office|effective)\b/i,
-];
-
-const TEMPORAL_CUE_PATTERNS = [
-  /\b(?:current|currently|latest|live|today(?:'s)?|tonight|now|newest|recent(?:ly)?|up[- ]to[- ]date|most recent|as of|this (?:week|month|quarter|season|year))\b/i,
-];
-
-const VERIFICATION_PATTERNS = [
-  /\b(?:fact[- ]check|source[- ]grounded|with sources|provide sources|cite|citation|evidence|according to official)\b/i,
-  /\b(?:verify|confirm|validate|double[- ]check)\b.{0,80}\b(?:claim|fact|accuracy|information|source|citation|evidence|official|current|latest|external)\b/i,
-  /\b(?:claim|fact|accuracy|information|source|citation|evidence|official|current|latest|external)\b.{0,80}\b(?:verify|confirm|validate|double[- ]check)\b/i,
-];
-
-const TECHNICAL_REFERENCE_PATTERNS = [
-  /\b(?:API|SDK|framework|library|package|dependency|provider|platform|service|model)\b.{0,80}\b(?:docs?|documentation|version|support|compatib(?:le|ility)|integration|migration|upgrade|deprecat(?:ed|ion)|best practices?)\b/i,
-  /\b(?:docs?|documentation|release notes?|changelog)\b.{0,80}\b(?:API|SDK|framework|library|package|dependency|provider|platform|service|model|GitHub|npm|pnpm|Vercel|OpenAI|Anthropic|Supabase|Stripe|Next\.?js|React|Tailwind|shadcn)\b/i,
-  /\b(?:install|configure|integrate|connect|deploy|authenticate|authorize)\b.{0,80}\b(?:API|SDK|package|provider|platform|service|library|framework)\b/i,
-];
-
-const RECOMMENDATION_PATTERNS = [
-  /\b(?:recommend(?:ation|ed)?|alternatives?|compare|comparison|versus|vs\.?|pros? and cons?|tradeoffs?|which should|what should)\b/i,
-];
-
-const EXTERNAL_REFERENCE_PATTERNS = [
-  /https?:\/\/|\bwww\.|\b[a-z0-9-]+\.(?:com|org|net|io|dev|ai)\b/i,
-];
-
-const EXTERNAL_RECOMMENDATION_SUBJECT_PATTERNS = [
-  /\b(?:API|SDK|framework|library|package|dependency|provider|platform|service|model|vendor|tool|database|hosting|payment|auth)\b/i,
-  /\b(?:buy|book|visit|travel|restaurant|hotel|pricing|availability)\b/i,
-  /\b(?:GitHub|npm|pnpm|Vercel|OpenAI|Anthropic|Supabase|Stripe|Next\.?js|React|Tailwind|shadcn)\b/i,
+const RECENT_FACT_CUE_PATTERNS = [
+  /\b(?:current|currently|latest|live|today(?:'s)?|now|recent|up[- ]to[- ]date|most recent|actual|official)\b/i,
 ];
 
 const EXPLICIT_READ_ONLY_PATTERNS = [
@@ -86,7 +134,11 @@ const CODE_CHANGE_PATTERNS = [
 
 const INFORMATION_REQUEST_PATTERNS = [
   /^\s*(?:what|why|when|where|who|which|how|can you explain|could you explain)\b/i,
-  /\b(?:search|research|summarize|explain|review|analyze|look\s+(?:it|this|that|them|those)\s+up|tell me)\b/i,
+  /\b(?:search|research|summarize|explain|review|analyze|look\s+(?:it|this|that|them|those)\s+up|tell me|compare|contrast|follow)\b/i,
+];
+
+const LOCAL_STYLING_PATTERNS = [
+  /\b(?:color|colour|font|spacing|padding|margin|layout|style|theme|contrast|rounded|shadow|hover|italic|bold)\b/i,
 ];
 
 const MAX_RESEARCH_QUERY_CHARACTERS = 240;
@@ -102,7 +154,7 @@ const TARGETED_EDIT_OBJECTIVE_PATTERN =
   /\bUser requested edit:\s*([\s\S]*?)(?=\n\s*\nSelected element context:|$)/i;
 
 const API_CONTEXT_PATTERN =
-  /\b(?:api|endpoint|base url|request|response|fetch|webhook|sdk|authentication|authorization)\b|https?:\/\/(?:api\.|developer\.)[^\s]+|https?:\/\/[^\s]+\/(?:api|docs?|reference|swagger|openapi)(?:[/?#]|$)/i;
+  /\b(?:api|endpoint|base url|request|response|fetch|sdk|authentication|authorization)\b|https?:\/\/(?:api\.|developer\.)[^\s]+|https?:\/\/[^\s]+\/(?:api|docs?|reference|swagger|openapi)(?:[/?#]|$)/i;
 const HTTP_ENDPOINT_PATTERN =
   /\b(?:GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(https?:\/\/[^\s,;)}\]]+|\/[A-Za-z0-9_~!$&'()*+,;=:@%./{}-]+)/i;
 const DESCRIBED_URL_ENDPOINT_PATTERN =
@@ -212,6 +264,13 @@ function matchesAny(value: string, patterns: RegExp[]) {
   return patterns.some((pattern) => pattern.test(value));
 }
 
+function mentionsWebResearch(value: string) {
+  return (
+    matchesAny(value, WEB_RESEARCH_CUE_PATTERNS) &&
+    !matchesAny(value, LOCAL_LOOKUP_PATTERNS)
+  );
+}
+
 function limitQuery(value: string) {
   const normalized = value.replace(/\s+/g, " ").trim();
   const words: string[] = [];
@@ -245,14 +304,14 @@ function extractErrorQuery(value: string) {
     /\b([A-Za-z_$][\w$]*)\s+is not defined\b/i,
   );
   if (undefinedIdentifier) {
-    return `${technology} ${undefinedIdentifier[1]} is not defined missing import`;
+    return `${technology} ${undefinedIdentifier[1]} is not defined missing import or name shadowing`;
   }
 
   const missingName = normalized.match(
     /\b(?:Cannot find name|Unknown identifier)\s+['"`]?([A-Za-z_$][\w$]*)/i,
   );
   if (missingName) {
-    return `${technology} cannot find name ${missingName[1]} missing import`;
+    return `${technology} cannot find name ${missingName[1]} missing import or name shadowing`;
   }
 
   const missingModule = normalized.match(
@@ -313,13 +372,398 @@ function extractErrorQuery(value: string) {
   return null;
 }
 
+function isClearlyLocalWork(content: string) {
+  const objective = extractResearchObjective(content);
+  if (!objective) return true;
+
+  if (matchesAny(objective, LOCAL_LOOKUP_PATTERNS)) {
+    return true;
+  }
+
+  if (
+    matchesAny(objective, LOCAL_STYLING_PATTERNS) &&
+    !mentionsWebResearch(objective) &&
+    extractUrls(objective).length === 0
+  ) {
+    return true;
+  }
+
+  if (
+    /\bfix\b/i.test(objective) &&
+    /\b(?:this chat|already in|existing code|the code|using the code)\b/i.test(
+      objective,
+    ) &&
+    !mentionsWebResearch(objective)
+  ) {
+    return true;
+  }
+
+  if (detectGuidedTemplateResearchIntent(objective).required) {
+    return false;
+  }
+
+  if (
+    matchesAny(objective, CODE_CHANGE_PATTERNS) &&
+    !shouldAnswerWithoutCode(objective) &&
+    !mentionsWebResearch(objective) &&
+    extractUrls(objective).length === 0 &&
+    !assessApiDocumentation([{ content: objective }]).hasApiContext &&
+    !matchesAny(objective, RECENT_FACT_CUE_PATTERNS)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function inferResearchFreshness(content: string): ResearchIntent["freshness"] {
+  return matchesAny(content, RECENT_FACT_CUE_PATTERNS) ? "recent" : "evergreen";
+}
+
+function inferResearchReason(content: string): ResearchReason {
+  if (mentionsWebResearch(content)) {
+    return "explicit";
+  }
+
+  if (shouldAnswerWithoutCode(content)) {
+    return "informational";
+  }
+
+  if (assessApiDocumentation([{ content }]).hasApiContext) {
+    return "technical-reference";
+  }
+
+  return "external-facts";
+}
+
+const RESEARCH_META_STRIP_PATTERNS: Array<RegExp | [RegExp, string]> = [
+  [/```[\s\S]*?```/g, " "],
+  // Polite / directive wrappers anywhere in the objective
+  [/\b(?:can you|could you|please|pls)\s+/gi, " "],
+  [
+    /\b(?:retry\s+this\s+with\s+)?(?:use\s+)?(?:web|internet|online)\s+(?:search|research)(?:\s+to)?\s*(?:for|get|find|look\s+up|verify)?\s*:?\s*/gi,
+    " ",
+  ],
+  [
+    /\b(?:search|find|research|investigate)\s+(?:the\s+)?(?:web|internet|online)\s+(?:for|about)?\s*/gi,
+    " ",
+  ],
+  [
+    /\b(?:look\s+(?:it|this|that|them|those)\s+up|look\s+up|search\s+for|find\s+(?:out|info(?:rmation)?|details))\s+(?:about|on|for)?\s*/gi,
+    " ",
+  ],
+  [/^\s*now\s+/i, ""],
+  [/\s+(?:on|from)\s+the\s+(?:web|internet)\s*[.!]?\s*$/i, ""],
+  [
+    /\s+before\s+(?:building|implementing|creating)(?:\s+this|\s+the\s+app)?\s*[.!]?\s*$/i,
+    "",
+  ],
+  [
+    /\b(?:and\s+)?(?:do not|don't|dont)\s+(?:modify|change|edit|update|build|implement)(?:\s+\w+){0,6}\s*$/i,
+    "",
+  ],
+];
+
 /**
- * Converts a user request into a bounded search objective. Error logs receive
- * special handling so code frames, line numbers, and source snippets never
- * become a search query.
+ * Strips chat meta-instructions so Exa receives a semantic page-intent query
+ * (subject + constraint), not a polite chat message.
+ */
+function distillResearchObjective(value: string) {
+  let distilled = value.replace(/\s+/g, " ").trim();
+
+  for (const pattern of RESEARCH_META_STRIP_PATTERNS) {
+    if (Array.isArray(pattern)) {
+      distilled = distilled
+        .replace(pattern[0], pattern[1])
+        .replace(/\s+/g, " ")
+        .trim();
+      continue;
+    }
+    distilled = distilled.replace(pattern, "").replace(/\s+/g, " ").trim();
+  }
+
+  return distilled.replace(/^[:\-–—,]+\s*/, "").trim() || value.trim();
+}
+
+function extractPortfolioPersonName(value: string) {
+  const patterns = [
+    /\bportfolio\s+(?:site|website|page)\s+for\s+([A-Z][\w''-]*(?:\s+[A-Z][\w''-]*)+)/i,
+    /\bfor\s+([A-Z][\w''-]*(?:\s+[A-Z][\w''-]*)+)(?:,\s*|\s+a\s+)/,
+    /\bfor\s+([A-Z][\w''-]*(?:\s+[A-Z][\w''-]*)+)\b/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = value.match(pattern)?.[1]?.trim();
+    if (match) return match;
+  }
+
+  return null;
+}
+
+function extractNamedEntity(value: string, patterns: RegExp[]): string | null {
+  for (const pattern of patterns) {
+    const match = value.match(pattern)?.[1]?.trim();
+    if (match) return match;
+  }
+  return null;
+}
+
+function pickUrl(
+  urls: string[],
+  predicate: (url: string) => boolean,
+): string | null {
+  return urls.find((url) => predicate(url)) ?? null;
+}
+
+/**
+ * Detects portfolio builds that should trigger person-level web research and
+ * Exa page reads beyond any URLs already linked in the chat.
+ */
+export function detectPortfolioResearchIntent(
+  value: string,
+): PortfolioResearchIntent {
+  const objective = extractResearchObjective(value);
+  const isPortfolioBuild = matchesAny(objective, PORTFOLIO_BUILD_PATTERNS);
+  const urls = extractUrls(objective);
+  const linkedinUrl = urls.find((url) => /linkedin\.com/i.test(url)) ?? null;
+  const portfolioUrl = urls.find((url) => !/linkedin\.com/i.test(url)) ?? null;
+  const needsResearch =
+    isPortfolioBuild &&
+    (matchesAny(objective, PORTFOLIO_RESEARCH_PATTERNS) || urls.length > 0);
+
+  return {
+    required: needsResearch,
+    personName: extractPortfolioPersonName(objective),
+    portfolioUrl,
+    linkedinUrl,
+  };
+}
+
+export function buildPortfolioResearchQuery(value: string) {
+  const intent = detectPortfolioResearchIntent(value);
+  if (!intent.required) return null;
+
+  const parts = [
+    intent.personName,
+    "professional portfolio projects experience bio skills",
+    intent.portfolioUrl,
+    intent.linkedinUrl,
+  ].filter(Boolean);
+
+  return limitQuery(parts.join(" "));
+}
+
+/**
+ * Detects company/product landing builds that should research the brand and
+ * scrape product/competitor pages before generation.
+ */
+export function detectCompanyLandingResearchIntent(
+  value: string,
+): CompanyLandingResearchIntent {
+  const objective = extractResearchObjective(value);
+  const isCompanyLandingBuild = matchesAny(
+    objective,
+    COMPANY_LANDING_BUILD_PATTERNS,
+  );
+  const urls = extractUrls(objective);
+  const productUrl = urls[0] ?? null;
+  const competitorUrl = urls[1] ?? null;
+  const needsResearch =
+    isCompanyLandingBuild &&
+    (matchesAny(objective, GUIDED_RESEARCH_PATTERNS) || urls.length > 0);
+
+  const companyName = extractNamedEntity(objective, [
+    /\blanding\s+page\s+for\s+([A-Z][\w&.-]*)(?:'s)?/i,
+    /\bfor\s+([A-Z][\w&.-]*)(?:'s)\s+/i,
+    /\bresearch\s+([A-Z][\w&.-]*)\s+on\s+the\s+web/i,
+  ]);
+  const productName = extractNamedEntity(objective, [
+    /\bfor\s+[A-Z][\w&.-]*(?:'s)\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*)/,
+    /\bproduct\s+(?:called|named)\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*)/,
+  ]);
+
+  return {
+    required: needsResearch,
+    companyName,
+    productName,
+    productUrl,
+    competitorUrl,
+  };
+}
+
+export function buildCompanyLandingResearchQuery(value: string) {
+  const intent = detectCompanyLandingResearchIntent(value);
+  if (!intent.required) return null;
+
+  const parts = [
+    intent.companyName,
+    intent.productName,
+    "company product landing page features positioning pricing",
+    intent.productUrl,
+    intent.competitorUrl,
+  ].filter(Boolean);
+
+  return limitQuery(parts.join(" "));
+}
+
+/**
+ * Detects live API dashboard builds that should verify docs/contracts via Exa
+ * before wiring fetch clients.
+ */
+export function detectLiveApiDashboardResearchIntent(
+  value: string,
+): LiveApiDashboardResearchIntent {
+  const objective = extractResearchObjective(value);
+  const isDashboardBuild = matchesAny(
+    objective,
+    LIVE_API_DASHBOARD_BUILD_PATTERNS,
+  );
+  const urls = extractUrls(objective);
+  const docsUrl =
+    pickUrl(urls, (url) => /docs?|developer|reference|api\./i.test(url)) ??
+    urls[0] ??
+    null;
+  const apiBaseUrl =
+    pickUrl(
+      urls,
+      (url) =>
+        url !== docsUrl && /(?:^https?:\/\/api\.|\/api(?:[/?#]|$))/i.test(url),
+    ) ?? null;
+  const needsResearch =
+    isDashboardBuild &&
+    (matchesAny(objective, GUIDED_RESEARCH_PATTERNS) || urls.length > 0);
+
+  const appName = extractNamedEntity(objective, [
+    /\bcalled\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*)\s+that\s+displays/i,
+    /\bdashboard\s+called\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*)/,
+  ]);
+  const dataFocus = extractNamedEntity(objective, [
+    /\bdisplays?\s+([\w\s,/-]{3,80}?)\s+from\s+a\s+public\s+api/i,
+    /\blive\s+data\b[\s\S]{0,40}?\b(?:for|about|showing)\s+([\w\s,/-]{3,80})/i,
+  ]);
+
+  return {
+    required: needsResearch,
+    appName,
+    docsUrl,
+    apiBaseUrl,
+    dataFocus,
+  };
+}
+
+export function buildLiveApiDashboardResearchQuery(value: string) {
+  const intent = detectLiveApiDashboardResearchIntent(value);
+  if (!intent.required) return null;
+
+  const parts = [
+    intent.appName,
+    intent.dataFocus,
+    "official API documentation endpoints authentication CORS response schema",
+    intent.docsUrl,
+    intent.apiBaseUrl,
+  ].filter(Boolean);
+
+  return limitQuery(parts.join(" "));
+}
+
+/**
+ * Detects local business / restaurant site builds that should research the
+ * real venue before generation.
+ */
+export function detectLocalBusinessResearchIntent(
+  value: string,
+): LocalBusinessResearchIntent {
+  const objective = extractResearchObjective(value);
+  const isLocalBusinessBuild = matchesAny(
+    objective,
+    LOCAL_BUSINESS_BUILD_PATTERNS,
+  );
+  const urls = extractUrls(objective);
+  const listingUrl =
+    pickUrl(urls, (url) =>
+      /(?:maps\.google|google\.com\/maps|yelp\.com|tripadvisor\.com)/i.test(
+        url,
+      ),
+    ) ?? null;
+  const websiteUrl = urls.find((url) => url !== listingUrl) ?? null;
+  const needsResearch =
+    isLocalBusinessBuild &&
+    (matchesAny(objective, GUIDED_RESEARCH_PATTERNS) || urls.length > 0);
+
+  const businessName = extractNamedEntity(objective, [
+    /\bwebsite\s+for\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*),?\s+a\s+/i,
+    /\bfor\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*),\s+a\s+/i,
+    /\bresearch\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*)\s+on\s+the\s+web/,
+  ]);
+  const city = extractNamedEntity(objective, [
+    /\bin\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*(?:,\s*[A-Z]{2})?)/,
+  ]);
+
+  return {
+    required: needsResearch,
+    businessName,
+    city,
+    websiteUrl,
+    listingUrl,
+  };
+}
+
+export function buildLocalBusinessResearchQuery(value: string) {
+  const intent = detectLocalBusinessResearchIntent(value);
+  if (!intent.required) return null;
+
+  const parts = [
+    intent.businessName,
+    intent.city,
+    "restaurant local business hours menu services location reviews",
+    intent.websiteUrl,
+    intent.listingUrl,
+  ].filter(Boolean);
+
+  return limitQuery(parts.join(" "));
+}
+
+/**
+ * Unified gate for homepage prompt templates that force Exa research even when
+ * chat already has linked URLs attached.
+ */
+export function detectGuidedTemplateResearchIntent(
+  value: string,
+): GuidedTemplateResearchIntent {
+  if (detectPortfolioResearchIntent(value).required) {
+    return { required: true, kind: "portfolio" };
+  }
+  if (detectCompanyLandingResearchIntent(value).required) {
+    return { required: true, kind: "company-landing" };
+  }
+  if (detectLiveApiDashboardResearchIntent(value).required) {
+    return { required: true, kind: "live-api-dashboard" };
+  }
+  if (detectLocalBusinessResearchIntent(value).required) {
+    return { required: true, kind: "local-business" };
+  }
+  return { required: false, kind: null };
+}
+
+/**
+ * Converts a user request into a bounded Exa search objective. Special cases
+ * (errors, visual clones, incomplete API docs) get structured queries; ordinary
+ * lookup requests are distilled into semantic search intent.
  */
 export function buildResearchQuery(value: string) {
   const objective = extractResearchObjective(value);
+  const portfolioQuery = buildPortfolioResearchQuery(objective);
+  if (portfolioQuery) return portfolioQuery;
+
+  const companyLandingQuery = buildCompanyLandingResearchQuery(objective);
+  if (companyLandingQuery) return companyLandingQuery;
+
+  const localBusinessQuery = buildLocalBusinessResearchQuery(objective);
+  if (localBusinessQuery) return localBusinessQuery;
+
+  const liveApiDashboardQuery = buildLiveApiDashboardResearchQuery(objective);
+  if (liveApiDashboardQuery) return liveApiDashboardQuery;
+
   const errorQuery = extractErrorQuery(objective);
   if (errorQuery) return limitQuery(errorQuery);
 
@@ -330,7 +774,7 @@ export function buildResearchQuery(value: string) {
     websiteReference.hostname
   ) {
     return limitQuery(
-      `site:${websiteReference.hostname} ${websiteReference.url} homepage design layout typography colors sections interactions`,
+      `${websiteReference.url} homepage design layout typography colors sections interactions`,
     );
   }
 
@@ -345,101 +789,13 @@ export function buildResearchQuery(value: string) {
     );
   }
 
-  const lookupSubject = objective.match(
-    /\blook\s+(.{2,180}?)\s+up\b(?:\s+before\b.*)?/i,
-  )?.[1];
-  const withoutSearchInstructions = (lookupSubject ?? objective)
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(
-      /^\s*(?:please\s+)?retry\s+this\s+with\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\s*:?\s*/i,
-      "",
-    )
-    .replace(
-      /\b(?:use|do|run)\s+(?:a\s+)?(?:web|internet|online)\s*(?:search|research)?\b\s*(?:to|for)?\s*/gi,
-      " ",
-    )
-    .replace(
-      /\bsearch\s+(?:the\s+)?(?:web|internet|online)\b\s*(?:to|for)?\s*/gi,
-      " ",
-    )
-    .replace(
-      /\b(?:browse|research)\s+(?:the\s+)?(?:web|internet|online)\b\s*(?:to|for)?\s*/gi,
-      " ",
-    )
-    .replace(
-      /^\s*(?:please\s+)?(?:build|create|make|show|find|get|tell me about)\s+(?:me\s+)?(?:an?\s+)?/i,
-      "",
-    )
-    .replace(
-      /\b(?:before|while)\s+(?:building|creating|making|updating)\s+(?:this|the app).*$/i,
-      "",
-    )
-    .replace(/\s+([,.:;!?])/g, "$1");
-
-  return limitQuery(withoutSearchInstructions || objective);
-}
-
-function classifyResearch(content: string): {
-  reason: ResearchReason;
-  freshness: ResearchIntent["freshness"];
-  explicitlyRequested: boolean;
-} | null {
-  const explicitlyRequested = matchesAny(content, EXPLICIT_RESEARCH_PATTERNS);
-  const timeSensitive =
-    matchesAny(content, TIME_SENSITIVE_PATTERNS) ||
-    (matchesAny(content, TEMPORAL_CUE_PATTERNS) &&
-      (matchesAny(content, EXTERNAL_REFERENCE_PATTERNS) ||
-        matchesAny(content, TECHNICAL_REFERENCE_PATTERNS)));
-
-  if (explicitlyRequested) {
-    return {
-      reason: "explicit",
-      freshness: timeSensitive ? "recent" : "evergreen",
-      explicitlyRequested: true,
-    };
-  }
-  if (timeSensitive) {
-    return {
-      reason: "time-sensitive",
-      freshness: "recent",
-      explicitlyRequested: false,
-    };
-  }
-
-  if (matchesAny(content, VERIFICATION_PATTERNS)) {
-    return {
-      reason: "verification",
-      freshness: "evergreen",
-      explicitlyRequested: false,
-    };
-  }
-
-  if (matchesAny(content, TECHNICAL_REFERENCE_PATTERNS)) {
-    return {
-      reason: "technical-reference",
-      freshness: "evergreen",
-      explicitlyRequested: false,
-    };
-  }
-
-  if (
-    matchesAny(content, RECOMMENDATION_PATTERNS) &&
-    matchesAny(content, EXTERNAL_RECOMMENDATION_SUBJECT_PATTERNS)
-  ) {
-    return {
-      reason: "recommendation",
-      freshness: "evergreen",
-      explicitlyRequested: false,
-    };
-  }
-
-  return null;
+  return limitQuery(distillResearchObjective(objective));
 }
 
 /**
- * Detects requests where research may improve factual accuracy. This is only
- * a candidate signal for the research model; it must not force a web search.
- * Ordinary builds, local edits, and stable questions skip the decision call.
+ * Detects requests where Exa tools may help. This is a coarse server-side gate;
+ * when tools are attached, turn-specific prompts decide whether web_search is
+ * necessary and how to phrase the query (unless the user forced search).
  */
 export function detectResearchIntent(
   messages: Array<{ content: string }>,
@@ -448,22 +804,40 @@ export function detectResearchIntent(
 
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const content = extractResearchObjective(messages[index]?.content ?? "");
-    if (!content) continue;
+    if (!content || isClearlyLocalWork(content)) continue;
 
-    const classification = classifyResearch(content);
-    if (classification) {
-      const messageApiDocumentation = assessApiDocumentation([{ content }]);
-      const isApiReferenceOnly =
-        messageApiDocumentation.hasApiContext &&
-        (classification.reason === "technical-reference" ||
-          classification.reason === "external-facts");
-      if (isApiReferenceOnly && apiDocumentation.hasCompleteEndpointContract) {
-        continue;
-      }
+    const messageApiDocumentation = assessApiDocumentation([{ content }]);
+    if (
+      messageApiDocumentation.hasApiContext &&
+      messageApiDocumentation.hasCompleteEndpointContract &&
+      apiDocumentation.hasCompleteEndpointContract &&
+      !mentionsWebResearch(content)
+    ) {
+      continue;
+    }
 
+    if (
+      detectWebsiteReferenceIntent(content).required &&
+      !detectGuidedTemplateResearchIntent(content).required
+    ) {
+      continue;
+    }
+
+    const explicitlyRequested = mentionsWebResearch(content);
+    const informational = shouldAnswerWithoutCode(content);
+
+    if (
+      explicitlyRequested ||
+      informational ||
+      messageApiDocumentation.hasApiContext ||
+      extractUrls(content).length > 0 ||
+      matchesAny(content, RECENT_FACT_CUE_PATTERNS)
+    ) {
       return {
         candidate: true,
-        ...classification,
+        explicitlyRequested,
+        freshness: inferResearchFreshness(content),
+        reason: inferResearchReason(content),
         query: buildResearchQuery(content),
       };
     }
@@ -495,4 +869,57 @@ export function shouldAnswerWithoutCode(content: string) {
     matchesAny(normalized, INFORMATION_REQUEST_PATTERNS) &&
     !matchesAny(normalized, CODE_CHANGE_PATTERNS)
   );
+}
+
+export type ResolveResearchReasonInput = {
+  researchIntent: ResearchIntent;
+  searchApproved?: boolean;
+  researchCandidate?: boolean;
+  effectiveLiveApiRequired?: boolean;
+  hasExplicitCompleteCreativeBrief?: boolean;
+  portfolioResearchRequired?: boolean;
+  companyLandingResearchRequired?: boolean;
+  liveApiDashboardResearchRequired?: boolean;
+  localBusinessResearchRequired?: boolean;
+  guidedTemplateResearchRequired?: boolean;
+};
+
+/**
+ * Derives the research reason for Exa tool config and agent instructions when
+ * detectResearchIntent did not classify the turn (e.g. guided templates or
+ * explicit search approval).
+ */
+export function resolveResearchReason(
+  input: ResolveResearchReasonInput,
+): ResearchReason | null {
+  if (input.researchIntent.reason) {
+    return input.researchIntent.reason;
+  }
+
+  if (
+    input.effectiveLiveApiRequired ||
+    input.liveApiDashboardResearchRequired
+  ) {
+    return "technical-reference";
+  }
+
+  if (
+    input.hasExplicitCompleteCreativeBrief ||
+    input.portfolioResearchRequired ||
+    input.companyLandingResearchRequired ||
+    input.localBusinessResearchRequired ||
+    input.guidedTemplateResearchRequired
+  ) {
+    return "external-facts";
+  }
+
+  if (input.searchApproved || input.researchIntent.explicitlyRequested) {
+    return "explicit";
+  }
+
+  if (input.researchCandidate) {
+    return "external-facts";
+  }
+
+  return null;
 }

@@ -756,7 +756,7 @@ export function buildActiveStylePackDirective(brief: string): string {
     `- Design Read: ${pack.designReadTemplate}`,
     `- Aesthetic mode: ${pack.aestheticMode} | Luminosity: ${pack.luminosity}`,
     "- You MUST implement this pack's SURFACE_MAP classes, signature element, and composition scaffold below. Do not fall back to anonymous gray SaaS or three equal feature cards.",
-    "- Emit the STYLE_PACK preflight line before JSX, then adapt the scaffold's structure to the product's real content.",
+    "- Apply this pack's SURFACE_MAP and composition scaffold in the code. Do not dump STYLE_PACK / DIALS / SURFACE_MAP lines into the user-facing reply — keep that lock private.",
     "",
     "### Locked surface map",
     `- canvas: \`${pack.surfaceMap.canvas}\``,
@@ -790,12 +790,12 @@ export function buildStylePackContract(): string {
   return dedent`
     **Unspecified-theme Style Pack contract (mandatory):**
     - Apply this when the user has NOT explicitly supplied a theme, palette, named color, visual reference, URL moodboard, or aesthetic direction (e.g. brutalist, Linear-style, dark mode, "make it purple"). Explicit user direction always wins over Style Packs. For edits to an existing app, preserve its established theme unless the user asks to restyle or recolor it.
-    - Do NOT default every vague brief to anonymous Vercel-gray SaaS. Vague briefs must lock exactly one Style Pack below and emit from its literal surface map, composition scaffold, and class cheat-sheet. When an Active Style Pack directive is present above, it is authoritative — do not pick a different pack.
-    - Routing (deterministic, private — then declare the result):
+    - Do NOT default every vague brief to anonymous Vercel-gray SaaS. Vague briefs must lock exactly one Style Pack below and build from its literal surface map, composition scaffold, and class cheat-sheet. When an Active Style Pack directive is present above, it is authoritative — do not pick a different pack.
+    - Routing (deterministic, private — never dump the lock into the chat reply):
       1. If explicit aesthetic/color/reference signals exist → skip packs; honor user + color-fidelity contracts.
       2. Else infer a subject bucket: tools/API/docs/dashboard → tools; AI/creative/voice/music → aiCreative; portfolio/agency/editorial → portfolioEditorial; industrial/ops/infra/telemetry → industrialOps; landing/marketing/agency showcase → landingAgency; consumer/health/onboarding/friendly → consumerFriendly; unknown product → tools.
       3. Hash seed = brief character length + first token + last token. Pick among the bucket's allowed packs by \`seed % candidates.length\` so consecutive vague apps can vary.
-      4. Emit this preflight line before JSX (planning and codegen): \`STYLE_PACK: <id> | DIALS: V/M/D | SURFACE_MAP: ...\` using the pack's exact classes.
+      4. Privately lock \`STYLE_PACK: <id> | DIALS: V/M/D | SURFACE_MAP: ...\` using the pack's exact classes, then implement from that map. Do not print the preflight line, Design Read, dials, or surface map in the user-facing reply.
     - After locking a pack: reuse its surface-role classes everywhere; do not improvise a second palette mid-build. Aesthetic mode in the Design Taste contract must match the pack (brutalist ↔ swissBrutal, minimalist ↔ cobaltMinimal, etc.).
     - Hallmark family names (Specimen, Cobalt, Lumen, Brutal, Hum, Carnival, …) are aliases for these packs — not a competing default. Pick the pack, then keep one luminosity model.
     - Overlay safety: for light-first packs, portalled overlays (\`DialogContent\`, menus, popovers, sheets) use the pack's \`overlay\` classes (typically white/light). For dark-first packs (lumenAtmospheric), overlays use the pack's dark overlay pair. Never let an inherited root \`dark\` class silently break contrast on unthemed portals.
@@ -812,7 +812,7 @@ export function buildStylePackContract(): string {
 export const stylePackContract = buildStylePackContract();
 
 export const stylePackPlanningRule =
-  "Unspecified-theme Style Pack: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural) from the subject bucket + brief-hash seed; emit STYLE_PACK preflight with dials and literal SURFACE_MAP classes; do not default to anonymous Vercel-gray SaaS; honor explicit user aesthetic direction over packs.";
+  "Unspecified-theme Style Pack: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural) from the subject bucket + brief-hash seed; privately lock dials and literal SURFACE_MAP classes and apply them in code without dumping STYLE_PACK preflight into the user reply; do not default to anonymous Vercel-gray SaaS; honor explicit user aesthetic direction over packs.";
 
 /** @deprecated Use stylePackContract — kept as alias during migration. */
 export const unspecifiedThemeStylePackContract = stylePackContract;

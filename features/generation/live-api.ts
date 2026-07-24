@@ -109,6 +109,30 @@ This request needs a server-side integration. The generated runtime is browser-o
 - Use native fetch through a typed client in a dedicated api/ or services/ file.
 - Direct browser calls are allowed only when auth is "none" or "publishable_key" and the official docs establish browser CORS support. Never embed a secret.
 - Handle response.ok, an AbortController timeout, bounded retry with backoff, loading, empty, and actionable error states.
+- Every fetch client file must include an explicit bounded retry path that the validator can see. Use a \`retry\`/\`attempt\` parameter or a \`MAX_RETRIES\`/\`maxAttempts\` constant in the same file as \`fetch(\`. Required shape:
+  \`\`\`ts
+  const MAX_RETRIES = 2;
+  export async function loadThing(attempt = 0): Promise<Thing> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) throw new Error(\`Request failed: \${response.status}\`);
+      const data: unknown = await response.json();
+      if (!isThing(data)) throw new Error("Invalid response");
+      return data;
+    } catch (error) {
+      if (attempt < MAX_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+        return loadThing(attempt + 1);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  \`\`\`
+  Do not implement retry only with a silent \`for\` loop that never mentions retry/attempt/MAX_RETRIES — that fails contract validation.
 - Validate unknown response JSON at runtime with explicit type guards before rendering. Do not use unchecked casts.
 - Validate required functional fields, but do not reject an otherwise valid payload because optional metadata is absent. Use exact field names from an official sample or a verified live response.
 - Preserve documented unit metadata and normalize values explicitly before rendering so one screen never mixes Celsius/Fahrenheit, meters/miles, or other incompatible units without labels.

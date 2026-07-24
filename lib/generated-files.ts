@@ -402,6 +402,7 @@ Requirements:
 ${generatedAppRepairCapabilityRules}
 - Replace empty event handlers with a real visible state change. Remove controls that still have no defined outcome.
 - If the app uses fetch, check response.ok, use AbortController timeout, bounded retry, and runtime response validation. Never hard-code API credentials or secret-bearing authorization headers.
+- For bounded retry, put \`MAX_RETRIES\` (or \`maxAttempts\`) and a \`retry\`/\`attempt\` parameter in the same file as \`fetch(\`, with backoff before the next attempt. A silent unlabeled loop fails validation with "Live API requests must include a bounded retry path."
 
 Original response:
 ${originalResponse}`;

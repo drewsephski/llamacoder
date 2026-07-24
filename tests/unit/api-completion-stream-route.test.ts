@@ -6,6 +6,14 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildMessage } from "../fixtures/builders";
 import { buildResearchQuery } from "@/features/generation/research-intent";
+import {
+  COMPANY_LANDING_PROMPT_TEMPLATE,
+  compilePromptTemplate,
+  createEmptyTemplateValues,
+  LIVE_API_DASHBOARD_PROMPT_TEMPLATE,
+  LOCAL_BUSINESS_PROMPT_TEMPLATE,
+  PORTFOLIO_PROMPT_TEMPLATE,
+} from "@/lib/prompt-templates";
 import { createEmptyAppSpec } from "@/features/generation/app-spec";
 
 const {
@@ -181,9 +189,16 @@ function uiStream(events: UIMessageChunk[]) {
 function mockGeneration({
   text,
   reasoning,
+  toolActivity,
 }: {
   text: string;
   reasoning?: string;
+  toolActivity?: {
+    toolName: "web_search" | "fetch_url";
+    query?: string;
+    urls?: string[];
+    outputs: unknown[];
+  };
 }) {
   const events: UIMessageChunk[] = [
     ...(reasoning
@@ -202,7 +217,28 @@ function mockGeneration({
     { type: "text-end", id: "text_1" },
   ];
   const toUIMessageStream = vi.fn(() => uiStream(events));
-  streamTextMock.mockReturnValueOnce({ toUIMessageStream });
+  streamTextMock.mockImplementationOnce((options) => {
+    if (toolActivity) {
+      options.experimental_onToolCallStart?.({
+        toolCall: {
+          toolCallId: "tool_call_1",
+          toolName: toolActivity.toolName,
+          input:
+            toolActivity.toolName === "web_search"
+              ? { query: toolActivity.query ?? "web search" }
+              : { urls: toolActivity.urls ?? ["https://example.com"] },
+        },
+      });
+      options.onStepFinish?.({
+        toolResults: toolActivity.outputs.map((output, index) => ({
+          toolCallId: `tool_call_${index + 1}`,
+          toolName: toolActivity.toolName,
+          output,
+        })),
+      });
+    }
+    return { toUIMessageStream };
+  });
   return toUIMessageStream;
 }
 
@@ -540,20 +576,25 @@ describe("/api/get-next-completion-stream-promise", () => {
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
-    mockResearch([
-      {
-        id: "search_1",
-        results: [
+    mockGeneration({
+      text: "```tsx{path=App.tsx}\nexport default 1\n```",
+      toolActivity: {
+        toolName: "web_search",
+        query: searchQuery,
+        outputs: [
           {
-            url: "https://www.ufc.com/rankings",
-            title: "UFC Rankings",
-            publishedDate: "2026-06-30T10:00:00.000Z",
-            highlights: ["Official current rankings"],
+            results: [
+              {
+                url: "https://www.ufc.com/rankings",
+                title: "UFC Rankings",
+                publishedDate: "2026-06-30T10:00:00.000Z",
+                highlights: ["Official current rankings"],
+              },
+            ],
           },
         ],
       },
-    ]);
-    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+    });
 
     const response = await POST(
       request({ messageId: "msg_search", model: "model_1" }),
@@ -613,68 +654,175 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
     expect(sourceChunkIndex).toBeGreaterThan(-1);
     expect(sourceChunkIndex).toBeLessThan(completedResearchIndex);
-    const researchCall = streamTextMock.mock.calls[0][0];
-    const call = streamTextMock.mock.calls[1][0];
-    expect(researchCall.tools).toEqual({
-      web_search: { type: "provider-tool" },
-    });
-    expect(exaSearchMock).toHaveBeenCalledWith({
-      type: "auto",
-      numResults: 8,
-      userLocation: "US",
-      startPublishedDate: "2026-01-11T12:00:00.000Z",
-      endPublishedDate: "2026-07-11T12:00:00.000Z",
-      contents: {
-        text: {
-          maxCharacters: 8_000,
-          includeHtmlTags: false,
-          verbosity: "standard",
-        },
-        highlights: {
-          query: searchQuery,
-          maxCharacters: 3_000,
-        },
-        maxAgeHours: 1,
-        livecrawlTimeout: 10_000,
-      },
-    });
-    expect(researchCall.toolChoice).toBe("required");
-    expect(researchCall.maxOutputTokens).toBe(4_000);
-    expect(researchCall.system).toContain(
-      "Never send full user prose, error logs, stack traces, code frames, or source snippets as a tool query",
-    );
-    expect(researchCall.providerOptions).toEqual({
-      gateway: {
-        user: "user_1",
-        tags: ["feature:web-search", "request:research"],
-      },
-    });
-    expect(call.tools).toBeUndefined();
-    expect(call.toolChoice).toBeUndefined();
-    expect(call.system).toContain("Premium UI/UX execution contract");
-    expect(call.system).toContain("Structural variety");
-    expect(call.system).not.toBe("system");
+    const generationCall = streamTextMock.mock.calls[0][0];
+    expect(generationCall.tools?.web_search).toBeDefined();
+    expect(generationCall.tools?.fetch_url).toBeDefined();
+    expect(generationCall.toolChoice).toBe("auto");
+    expect(generationCall.stopWhen).toBeDefined();
+    expect(generationCall.system).toContain("web_search");
+    expect(generationCall.system).toContain("fetch_url");
+    expect(generationCall.system).toContain("You MUST call web_search");
+    expect(generationCall.system).toContain("Premium UI/UX execution contract");
+    expect(generationCall.system).toContain("Structural variety");
+    expect(generationCall.system).not.toBe("system");
     expect(
-      call.messages.every(
+      generationCall.messages.every(
         (candidate: { role: string }) => candidate.role !== "system",
       ),
     ).toBe(true);
-    expect(gatewayModelMock).toHaveBeenCalledWith("openai/gpt-5-nano");
-    expect(call.messages.at(-1).content).toContain(
-      "Web research was used before generating code",
-    );
-    expect(call.messages.at(-1).content).toContain(
-      "Do not invent or substitute placeholder data",
-    );
-    expect(call.messages.at(-1).content).toContain("Official current rankings");
-    expect(call.messages.at(-1).content).toContain(
-      "Strict publication window: 2026-01-11 through 2026-07-11",
-    );
-    expect(call.messages.at(-1).content).toContain("Published: 2026-06-30");
-    expect(call.messages.at(-1).content).toContain(
-      "https://www.ufc.com/rankings",
+    expect(generationCall.messages.at(-1).content).not.toContain(
+      "VERIFIED WEB RESEARCH",
     );
   });
+
+  it("keeps portfolio web research on auto tool choice so code generation can continue", async () => {
+    const content = compilePromptTemplate(PORTFOLIO_PROMPT_TEMPLATE, {
+      ...createEmptyTemplateValues(PORTFOLIO_PROMPT_TEMPLATE),
+      fullName: "Jane Doe",
+      role: "Product Designer",
+      portfolioUrl: "https://janedoe.com",
+      linkedinUrl: "https://linkedin.com/in/janedoe",
+      style: "Editorial dark portfolio",
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_portfolio_template",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    mockGeneration({
+      text: "```tsx{path=App.tsx}\nexport default function App(){return null}\n```",
+      toolActivity: {
+        toolName: "web_search",
+        query: buildResearchQuery(content) ?? "Jane Doe portfolio",
+        outputs: [
+          {
+            results: [
+              {
+                url: "https://janedoe.com",
+                title: "Jane Doe",
+                highlights: ["Product designer portfolio"],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_portfolio_template", model: "model_1" }),
+    );
+    await collectUIChunks(response);
+
+    const generationCall = streamTextMock.mock.calls[0][0];
+    expect(generationCall.tools?.web_search).toBeDefined();
+    expect(generationCall.toolChoice).toBe("auto");
+    expect(generationCall.system).toContain("Portfolio research mode");
+    expect(generationCall.system).toContain(
+      "continue this same turn and output the complete requested application code",
+    );
+  });
+
+  it.each([
+    {
+      id: "msg_company_landing_template",
+      template: COMPANY_LANDING_PROMPT_TEMPLATE,
+      values: {
+        companyName: "Acme",
+        productName: "Acme Cloud",
+        productUrl: "https://acme.com",
+        audience: "Startup CTOs",
+        cta: "Start free trial",
+      },
+      modeLabel: "Company landing research mode",
+    },
+    {
+      id: "msg_live_api_dashboard_template",
+      template: LIVE_API_DASHBOARD_PROMPT_TEMPLATE,
+      values: {
+        appName: "Orbit Monitor",
+        docsUrl: "https://docs.example.com/api",
+        dataFocus: "current weather forecasts by city",
+        apiBaseUrl: "https://api.example.com",
+      },
+      modeLabel: "Live API dashboard research mode",
+    },
+    {
+      id: "msg_local_business_template",
+      template: LOCAL_BUSINESS_PROMPT_TEMPLATE,
+      values: {
+        businessName: "Rivera Kitchen",
+        city: "Austin, TX",
+        businessType: "neighborhood Mexican restaurant",
+        websiteUrl: "https://riverakitchen.com",
+        listingUrl: "https://maps.google.com/?cid=123",
+      },
+      modeLabel: "Local business research mode",
+    },
+  ])(
+    "keeps $modeLabel on auto tool choice so code generation can continue",
+    async ({ id, template, values, modeLabel }) => {
+      const content = compilePromptTemplate(template, {
+        ...createEmptyTemplateValues(template),
+        ...values,
+      });
+      prismaMock.message.findUnique.mockResolvedValueOnce(
+        buildMessage({
+          id,
+          content,
+          chat: {
+            id: "chat_1",
+            userId: "user_1",
+            model: "model_1",
+            quality: "low",
+          },
+        }),
+      );
+      prismaMock.message.findMany.mockResolvedValueOnce([
+        { role: "system", content: "system" },
+        { role: "user", content },
+      ]);
+      mockGeneration({
+        text: "```tsx{path=App.tsx}\nexport default function App(){return null}\n```",
+        toolActivity: {
+          toolName: "web_search",
+          query: buildResearchQuery(content) ?? "research",
+          outputs: [
+            {
+              results: [
+                {
+                  url: "https://example.com",
+                  title: "Research",
+                  highlights: ["Verified facts"],
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const response = await POST(request({ messageId: id, model: "model_1" }));
+      await collectUIChunks(response);
+
+      const generationCall = streamTextMock.mock.calls[0][0];
+      expect(generationCall.tools?.web_search).toBeDefined();
+      expect(generationCall.toolChoice).toBe("auto");
+      expect(generationCall.system).toContain(modeLabel);
+      expect(generationCall.system).toContain(
+        "continue this same turn and output the complete requested application code",
+      );
+    },
+  );
 
   it("does not search a complete landing-page brief just because the product mentions webhooks", async () => {
     const content = `Build a product landing page for Relay, a hosted webhook debugging tool for small engineering teams.
@@ -708,6 +856,7 @@ Use a crisp technical design with white and charcoal surfaces, dense monospace d
     expect(exaSearchMock).not.toHaveBeenCalled();
     expect(generateTextMock).not.toHaveBeenCalled();
     expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(streamTextMock.mock.calls[0][0].tools).toBeUndefined();
     expect(
       chunks.some((chunk) => chunk.type === "data-research-activity"),
     ).toBe(false);
@@ -733,7 +882,6 @@ Use the supplied rescue story, adoption steps, donation CTA, contact details, an
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
-    mockResearchSkipped();
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const response = await POST(
@@ -744,13 +892,10 @@ Use the supplied rescue story, adoption steps, donation CTA, contact details, an
     );
     const chunks = await collectUIChunks(response);
 
-    const researchDecisionCall = streamTextMock.mock.calls[0][0];
-    const generationCall = streamTextMock.mock.calls[1][0];
-    expect(researchDecisionCall.toolChoice).toBe("auto");
-    expect(researchDecisionCall.system).toContain(
-      "Decide whether web research would materially improve the output",
-    );
-    expect(streamTextMock).toHaveBeenCalledTimes(2);
+    const generationCall = streamTextMock.mock.calls[0][0];
+    expect(generationCall.toolChoice).toBe("auto");
+    expect(generationCall.tools?.web_search).toBeDefined();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
     expect(
       chunks.some((chunk) => chunk.type === "data-research-activity"),
     ).toBe(false);
@@ -1523,20 +1668,25 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       providerMetadata: undefined,
       response: { id: "orchestration_octagon_explicit_search" },
     });
-    mockResearch([
-      {
-        id: "search_octagon_context",
-        results: [
+    mockGeneration({
+      text: "```tsx{path=App.tsx}\nexport default 1\n```",
+      toolActivity: {
+        toolName: "web_search",
+        query: "UFC rankings official",
+        outputs: [
           {
-            url: "https://www.ufc.com/rankings",
-            title: "UFC Rankings",
-            publishedDate: "2026-07-01T00:00:00.000Z",
-            highlights: ["Official UFC rankings context."],
+            results: [
+              {
+                url: "https://www.ufc.com/rankings",
+                title: "UFC Rankings",
+                publishedDate: "2026-07-01T00:00:00.000Z",
+                highlights: ["Official UFC rankings context."],
+              },
+            ],
           },
         ],
       },
-    ]);
-    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+    });
 
     const response = await POST(
       request({
@@ -1546,12 +1696,9 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
     await collectUIChunks(response);
 
-    expect(exaSearchMock).toHaveBeenCalledOnce();
-    expect(streamTextMock).toHaveBeenCalledTimes(2);
-    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
-      "Official UFC rankings context.",
-    );
-    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(streamTextMock.mock.calls[0][0].tools?.web_search).toBeDefined();
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
       "UFC API [octagon] supplies runtime ranking data",
     );
   });
@@ -1946,19 +2093,24 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
         },
       },
     ]);
-    mockResearch([
-      {
-        id: "search_1",
-        results: [
+    mockGeneration({
+      text: "Checkout is hosted; Elements is composable.",
+      toolActivity: {
+        toolName: "web_search",
+        query: canonicalQuery,
+        outputs: [
           {
-            url: "https://docs.stripe.com/payments/checkout-vs-elements",
-            title: "Checkout versus Elements",
-            highlights: ["Official comparison"],
+            results: [
+              {
+                url: "https://docs.stripe.com/payments/checkout-vs-elements",
+                title: "Checkout versus Elements",
+                highlights: ["Official comparison"],
+              },
+            ],
           },
         ],
       },
-    ]);
-    mockGeneration({ text: "Checkout is hosted; Elements is composable." });
+    });
 
     const response = await POST(
       request({ messageId: "msg_approved_grounded_search", model: "model_1" }),
@@ -1974,9 +2126,11 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       ]),
     );
     expect(canonicalQuery).not.toContain("white");
-    expect(streamTextMock.mock.calls[0][0].prompt).toContain(canonicalQuery);
-    expect(streamTextMock.mock.calls[0][0].prompt).not.toContain("white");
-    expect(streamTextMock).toHaveBeenCalledTimes(2);
+    expect(streamTextMock.mock.calls[0][0].toolChoice).toEqual({
+      type: "tool",
+      toolName: "web_search",
+    });
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
   });
 
   it("uses undated authoritative sources for evergreen technical research", async () => {
@@ -1998,22 +2152,24 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
-    mockResearch(
-      [
-        {
-          id: "search_evergreen",
-          results: [
-            {
-              url: "https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling",
-              title: "AI SDK Tool Calling",
-              highlights: ["Use provider tools through the tools option."],
-            },
-          ],
-        },
-      ],
-      "research_response_evergreen",
-    );
-    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+    mockGeneration({
+      text: "```tsx{path=App.tsx}\nexport default 1\n```",
+      toolActivity: {
+        toolName: "web_search",
+        query: "Vercel AI SDK tool calling best practices",
+        outputs: [
+          {
+            results: [
+              {
+                url: "https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling",
+                title: "AI SDK Tool Calling",
+                highlights: ["Use provider tools through the tools option."],
+              },
+            ],
+          },
+        ],
+      },
+    });
 
     const response = await POST(
       request({ messageId: "msg_evergreen_search", model: "model_1" }),
@@ -2029,19 +2185,9 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
         }),
       ]),
     );
-    expect(exaSearchMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        startPublishedDate: expect.anything(),
-        endPublishedDate: expect.anything(),
-      }),
-    );
     expect(streamTextMock.mock.calls[0][0].toolChoice).toBe("auto");
-    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
-      "authoritative sources without an artificial publication-date cutoff",
-    );
-    expect(streamTextMock.mock.calls[1][0].messages.at(-1).content).toContain(
-      "Use provider tools through the tools option.",
-    );
+    expect(streamTextMock.mock.calls[0][0].tools?.web_search).toBeDefined();
+    expect(streamTextMock).toHaveBeenCalledTimes(1);
   });
 
   it.each(["preview_repair", "preview_repair_request"])(

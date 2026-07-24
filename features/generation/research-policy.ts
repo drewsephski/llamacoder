@@ -157,3 +157,57 @@ export function extractRecentWebSources(
     publicationWindow: window,
   });
 }
+
+export type ExaToolName = "web_search" | "webSearch" | "fetch_url";
+
+export function extractExaToolSources(
+  toolName: ExaToolName,
+  output: unknown,
+  options: {
+    publicationWindow?: ResearchWindow;
+    maxSources?: number;
+    maxExcerptCharacters?: number;
+  } = {},
+): WebSource[] {
+  if (toolName === "web_search" || toolName === "webSearch") {
+    return extractWebSources([output], options);
+  }
+
+  if (!output || typeof output !== "object") return [];
+
+  const pages = (output as { pages?: unknown }).pages;
+  if (!Array.isArray(pages)) return [];
+
+  const maxSources = options.maxSources ?? DEFAULT_MAX_SOURCES;
+  const maxExcerptCharacters =
+    options.maxExcerptCharacters ?? DEFAULT_MAX_EXCERPT_CHARACTERS;
+  const sources: WebSource[] = [];
+
+  for (const page of pages) {
+    if (!page || typeof page !== "object") continue;
+
+    const candidate = page as Record<string, unknown>;
+    const url = getString(candidate.url);
+    if (!url) continue;
+
+    const publishedDate = getString(candidate.publishedDate);
+    let normalizedPublishedDate: string | null = null;
+    if (publishedDate) {
+      const publishedAt = new Date(publishedDate);
+      if (!Number.isNaN(publishedAt.getTime())) {
+        normalizedPublishedDate = publishedAt.toISOString();
+      }
+    }
+
+    sources.push({
+      title: getString(candidate.title) ?? "Source",
+      url,
+      publishedDate: normalizedPublishedDate,
+      excerpt: getString(candidate.text)?.slice(0, maxExcerptCharacters) ?? "",
+    });
+
+    if (sources.length >= maxSources) break;
+  }
+
+  return sources;
+}

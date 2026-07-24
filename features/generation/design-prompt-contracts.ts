@@ -116,7 +116,7 @@ export const structuralDiversityContract = dedent`
     - Nav options: minimal two-item mark (only when there truly are ~2 destinations), dense inline-link bar with a filled primary action, floating pill/chip nav, side-rail nav, a visible search/command trigger for search- or docs-heavy products, an editorial masthead, an edge-aligned nav, an announcement-banner-plus-retracting-nav pairing, or a nav folded directly into a workbench/toolbar for tool-shaped products that have no separate marketing chrome at all.
     - Footer options: a single statement line with minimal links and no sitemap, a compact utility/status bar (version, links, environment) for tools and dashboards, a colophon-style dense block for editorial or documentation contexts, a multi-column index only when the product is genuinely a docs root or hub with that many real destinations, or no separate footer when the product is a full-height application shell where a footer would just push content off-screen.
   - For every nav archetype, define one centered chrome shell first: a predictable max-width container (usually \`max-w-6xl\` to \`max-w-7xl\`) with \`mx-auto\` and symmetric horizontal padding, then place the nav inside it. Centering is the default baseline even when links are left- or right-biased.
-  - Before finalizing any nav, log the shell plan in prose as a preflight: selected max-width, horizontal padding, mobile collapse behavior at 320/375/414/768, and whether links are centered, edge-biased, or split inside that shell.
+  - Before finalizing any nav, privately lock the shell plan (selected max-width, horizontal padding, mobile collapse behavior at 320/375/414/768, and whether links are centered, edge-biased, or split inside that shell). Do not dump that preflight prose into the user-facing reply.
   - Mobile behavior must preserve centered structure, not drift: at 320, 375, 414, and 768px collapse dense navs into safe touch-size layouts, stack when needed, and keep the shell centered with equal side gutters.
   - Default away from "wordmark-left + three or four generic links + button-right" nav and "four-column link grid + social row + tiny copyright" footer. These are the most recognizable templated patterns; reach for them only when the brief's actual information architecture has that many top-level destinations to justify them.
   - Within a single build session, do not repeat the same page archetype, nav treatment, and dominant accent hue as the immediately preceding app generated in this conversation, unless the user is iterating on that same app or explicitly asks to match it. Vary at least one of those three axes so consecutive apps read as distinct products, not reskins of one template.
@@ -135,13 +135,13 @@ export const premiumArchetypeAndThemeContract = dedent`
     - **Workbench / split-workspace**: tool-like, state-heavy, command-driven, create/edit/apply/delete workflows.
     - **Conversational FAQ**: sequential question-answer tasks where interaction is gated by answers.
     - **Long Document / editorial**: one long-form narrative product, policy, or case text is the job.
-  - Pick one primary macrostructure and name it explicitly. Do not switch archetype midway through building the same screen.
+  - Pick one primary macrostructure and lock it privately. Do not switch archetype midway through building the same screen, and do not dump the archetype name or taste dials into the user-facing reply.
   - For work with dense operations, choose a work-first shell ('workbench-shell' + toolbar + canvas/panel + contextual side rail) rather than a hero-first card shell.
   - For **Bento Grid**, use explicit tile spans ('span-2x2', 'span-2x1', 'span-1x2', 'span-1x1') on a 'bento' container so shape is deliberate.
   - For all screen-level variants, avoid per-section theme changes. Use one theme family and one global luminosity model unless the brief explicitly asks for contrast inversion.
   - Keep motion meaningful: one intentional signature transition for engagement and one confirmation/feedback motion; avoid utility-level effects on every element.
   - Header/nav baseline for all profiles: centered shell, explicit width rhythm, and visible baseline alignment (\`max-w\` + \`mx-auto\` + balanced padding) so nav chrome never drifts toward one edge.
-  - If the user does not provide a brand palette or aesthetic direction, do **not** invent a second theme system here — lock one Style Pack from the Unspecified-theme Style Pack contract (Hallmark names are pack aliases: Cobalt→cobaltMinimal, Lumen→lumenAtmospheric, Specimen→editorialSpecimen, Brutal→swissBrutal, Carnival→kineticAwwwards, Hum→softStructural). Emit the STYLE_PACK preflight and use that pack's literal surface map.
+  - If the user does not provide a brand palette or aesthetic direction, do **not** invent a second theme system here — lock one Style Pack from the Unspecified-theme Style Pack contract (Hallmark names are pack aliases: Cobalt→cobaltMinimal, Lumen→lumenAtmospheric, Specimen→editorialSpecimen, Brutal→swissBrutal, Carnival→kineticAwwwards, Hum→softStructural). Privately apply that pack's literal surface map in code; do not print STYLE_PACK / DIALS / SURFACE_MAP in the user-facing reply.
   - Theme routing when the user IS explicit (or after a pack is locked):
     - Creative / portfolio / luxury directions -> ornamental but purposeful visual signature (motion + texture + contrast pivots) within the locked pack.
     - Technical / data-heavy / workflows -> utilitarian minimal, high-legibility tones with restrained ornamentation.
@@ -267,7 +267,7 @@ export const designTasteContract = dedent`
 
   ### Brief inference (before classes)
   - Infer page kind (product surface / landing / portfolio / editorial / redesign), vibe words, audience, and quiet constraints (a11y, regulated, trust-first). Quiet constraints override aesthetic preference.
-  - State one Design Read line in planning: "Reading this as: <kind> for <audience>, with a <vibe> language, leaning <aesthetic/theme family>."
+  - Privately lock one Design Read line in planning (do not print it to the user): "Reading this as: <kind> for <audience>, with a <vibe> language, leaning <aesthetic/theme family>."
   - Anti-default: do not reach for AI-purple gradients, dark-mesh centered hero, three equal feature cards, Inter/slate corporate chrome, glass on every surface, or infinite decorative micro-loops.
 
   ### Taste dials (set once, then obey)
@@ -326,7 +326,7 @@ export const designTasteContract = dedent`
   - Optical craft: align baselines across card groups, keep CTA rows level, sentence-case headers, no "Oops!" or exclamation-mark success copy.
 
   ### Preflight (fail any → revise before emit)
-  - Design Read + dials stated; theme/color/shape locks held; zero em/en-dash separators in UI copy.
+  - Design Read + dials locked privately (not dumped into the chat); theme/color/shape locks held; zero em/en-dash separators in UI copy.
   - Hero (if marketing) viewport-fit; eyebrow ration; no zigzag×3; no duplicate CTA intent; no mid-page theme flip.
   - Serif justified or absent; premium palette not cream+brass default; one accent family throughout.
   - Motion motivated + reduced-motion path; real product content (no fake chrome/proof); section layout families varied.
@@ -334,4 +334,4 @@ export const designTasteContract = dedent`
 `;
 
 export const designTastePlanningRule =
-  "Design Taste: before styling, write one Design Read line and lock DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY (use the Style Pack dials when a pack is locked); pick at most one aesthetic mode matching that pack; enforce anti-slop bans (em-dash, three-card hero template, fake chrome, section-number eyebrows, duplicate CTA intents); for redesigns preserve IA/nav labels/field names and modernize via type→spacing→color→motion→hero; end planning with the Design Taste preflight checklist.";
+  "Design Taste: before styling, privately lock one Design Read line and DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY (use the Style Pack dials when a pack is locked) without dumping them into the user reply; pick at most one aesthetic mode matching that pack; enforce anti-slop bans (em-dash, three-card hero template, fake chrome, section-number eyebrows, duplicate CTA intents); for redesigns preserve IA/nav labels/field names and modernize via type→spacing→color→motion→hero; end planning with the Design Taste preflight checklist.";

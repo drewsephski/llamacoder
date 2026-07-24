@@ -690,7 +690,9 @@ export function analyzeGeneratedApiIntegration(
       });
     }
     if (
-      !/\b(?:retry|retries|attempt|MAX_RETRIES|RETRY_COUNT)\b/i.test(file.code)
+      !/\b(?:retry|retries|attempt|attempts|maxAttempts|MAX_ATTEMPTS|MAX_RETRIES|RETRY_COUNT|backoff|tries)\b/i.test(
+        file.code,
+      )
     ) {
       issues.push({
         path: file.path,
