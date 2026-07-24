@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -29,6 +30,9 @@ interface PromptTemplateEditorProps {
   onExitTemplate?: () => void;
   className?: string;
 }
+
+/** Trailing sentence punctuation that should sit flush against a field. */
+const FLUSH_PUNCTUATION = /^([.,!?;:])(.*)$/s;
 
 function getFieldCaption(label: string) {
   if (/linkedin/i.test(label)) return "LinkedIn";
@@ -62,6 +66,7 @@ function InlineTemplateField({
   value,
   required,
   type = "text",
+  trailingPunctuation,
   onChange,
 }: {
   fieldId: string;
@@ -70,26 +75,43 @@ function InlineTemplateField({
   value: string;
   required?: boolean;
   type?: "text" | "url";
+  trailingPunctuation?: string;
   onChange: (nextValue: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [inputWidth, setInputWidth] = useState<number | null>(null);
   const isUrlField = type === "url";
-  const widthCh = Math.max(
-    placeholder.length,
-    value.length || placeholder.length,
-    isUrlField ? 24 : 8,
-  );
+  const hasValue = Boolean(value.trim());
+  const measureText = value.length > 0 ? value : placeholder;
+
+  useLayoutEffect(() => {
+    const measure = measureRef.current;
+    if (!measure) return;
+
+    // Match the measure node's border-box width; +2px keeps the caret from clipping.
+    const nextWidth = Math.ceil(measure.scrollWidth) + 2;
+    setInputWidth((current) => (current === nextWidth ? current : nextWidth));
+  }, [measureText, isUrlField]);
 
   return (
     <span
       className={cn(
-        "template-field inline-flex max-w-full align-baseline",
+        "template-field",
         isFocused && "is-focused",
-        value.trim() && "has-value",
+        hasValue && "has-value",
         isUrlField && "is-url",
+        trailingPunctuation && "has-trailing-punct",
       )}
     >
+      <span
+        ref={measureRef}
+        className="template-field-measure"
+        aria-hidden="true"
+      >
+        {measureText}
+      </span>
       <input
         ref={inputRef}
         id={`template-field-${fieldId}`}
@@ -103,13 +125,16 @@ function InlineTemplateField({
         required={required}
         spellCheck={isUrlField ? false : undefined}
         autoComplete="off"
-        size={widthCh}
         className="template-field-input"
+        style={inputWidth != null ? { width: inputWidth } : undefined}
       />
+      {trailingPunctuation ? (
+        <span className="template-field-punct">{trailingPunctuation}</span>
+      ) : null}
       <span
         className={cn(
           "template-field-caption",
-          (isFocused || Boolean(value.trim())) && "is-visible",
+          (isFocused || hasValue) && "is-visible",
         )}
         aria-hidden="true"
       >
@@ -216,15 +241,32 @@ export function PromptTemplateEditor({
       >
         {segments.map((segment, index) => {
           if (segment.kind === "text") {
+            // Leading punctuation after a field is rendered flush on the field.
+            const previous = segments[index - 1];
+            const punctMatch =
+              previous?.kind === "field"
+                ? segment.value.match(FLUSH_PUNCTUATION)
+                : null;
+            const textValue = punctMatch
+              ? (punctMatch[2] ?? "")
+              : segment.value;
+            if (!textValue) return null;
+
             return (
               <span key={`text-${index}`} className="template-editor-text">
-                {segment.value}
+                {textValue}
               </span>
             );
           }
 
           const field = fieldMap.get(segment.fieldId);
           if (!field) return null;
+
+          const nextSegment = segments[index + 1];
+          const trailingPunctuation =
+            nextSegment?.kind === "text"
+              ? (nextSegment.value.match(FLUSH_PUNCTUATION)?.[1] ?? undefined)
+              : undefined;
 
           const isPrimaryField =
             firstFieldOccurrenceIndex.get(segment.fieldId) === index;
@@ -234,10 +276,18 @@ export function PromptTemplateEditor({
             return (
               <span
                 key={`mirror-${segment.fieldId}-${index}`}
-                className="template-field-mirror"
+                className={cn(
+                  "template-field-mirror",
+                  trailingPunctuation && "has-trailing-punct",
+                )}
                 aria-label={field.label}
               >
                 {mirroredValue}
+                {trailingPunctuation ? (
+                  <span className="template-field-punct">
+                    {trailingPunctuation}
+                  </span>
+                ) : null}
               </span>
             );
           }
@@ -251,6 +301,7 @@ export function PromptTemplateEditor({
               value={values[field.id] ?? ""}
               required={field.required}
               type={field.type}
+              trailingPunctuation={trailingPunctuation}
               onChange={(nextValue) => handleFieldChange(field.id, nextValue)}
             />
           );

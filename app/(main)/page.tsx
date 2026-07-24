@@ -1327,35 +1327,61 @@ export default function Home() {
         .template-field {
           position: relative;
           display: inline-flex;
+          align-items: baseline;
           max-width: 100%;
-          margin: 0 3px;
+          margin: 0;
           padding-bottom: 2px;
           vertical-align: baseline;
-          overflow: hidden;
           transition: padding-bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .template-field.is-focused,
         .template-field.has-value {
           padding-bottom: 18px;
         }
+        .template-field-measure {
+          position: absolute;
+          top: 0;
+          left: 0;
+          z-index: -1;
+          visibility: hidden;
+          white-space: pre;
+          font: inherit;
+          font-weight: 400;
+          padding: 0 4px 2px;
+          pointer-events: none;
+        }
+        .template-field.has-value .template-field-measure {
+          font-weight: 500;
+        }
+        .template-field.is-url .template-field-measure {
+          font-size: 14px;
+          font-weight: 400;
+        }
         .template-field-input {
-          min-width: 6ch;
-          max-width: min(100%, 34ch);
+          display: inline-block;
+          box-sizing: border-box;
+          min-width: 4ch;
+          max-width: min(100%, 52ch);
+          width: 8ch;
+          vertical-align: baseline;
           border: 0;
           border-bottom: 1.5px dashed rgba(0,98,255,0.35);
           background: rgba(0,98,255,0.05);
-          padding: 0 6px 2px;
+          padding: 0 4px 2px;
+          margin: 0;
           font: inherit;
+          line-height: inherit;
           color: hsl(var(--foreground));
           outline: none;
           border-radius: 6px 6px 0 0;
+          field-sizing: content;
           transition:
             background-color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
             border-color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
             box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .template-field.is-url .template-field-input {
-          max-width: min(100%, 42ch);
+          max-width: min(100%, 56ch);
           font-size: 14px;
         }
         .template-field-input::placeholder {
@@ -1373,12 +1399,28 @@ export default function Home() {
           background: rgba(0,98,255,0.07);
           font-weight: 500;
         }
+        .template-field-punct {
+          display: inline;
+          margin: 0;
+          padding: 0;
+          color: inherit;
+          white-space: nowrap;
+        }
+        .template-field.has-trailing-punct .template-field-input {
+          border-bottom-right-radius: 0;
+          margin-right: 0;
+        }
         .template-field-mirror {
           display: inline;
           border-bottom: 1.5px solid rgba(0,98,255,0.28);
           padding: 0 2px 1px;
+          margin: 0;
           font-weight: 500;
           color: hsl(var(--foreground));
+          white-space: nowrap;
+        }
+        .template-field-mirror.has-trailing-punct {
+          padding-right: 0;
         }
         .template-field-caption {
           position: absolute;
