@@ -11,7 +11,7 @@ import { Fragment, useMemo } from "react";
 import { StickToBottom } from "use-stick-to-bottom";
 import { AppVersionButton } from "@/components/app-version-button";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, LoaderCircle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { normalizeGeneratedFiles } from "@/lib/generated-files";
 import {
   Reasoning,
@@ -212,17 +212,7 @@ export default function ChatLog({
                 <ReasoningTrigger />
                 <ReasoningContent>{reasoningText}</ReasoningContent>
               </Reasoning>
-            ) : researchActivity &&
-              generationStatus.phase === "searching" ? null : (
-              <div
-                className="flex items-center gap-2 text-sm text-muted-foreground"
-                role="status"
-                aria-live="polite"
-              >
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-                <span>{generationStatus.label}</span>
-              </div>
-            )}
+            ) : null}
 
             {streamText && (
               <AssistantMessage
