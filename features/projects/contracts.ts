@@ -1,7 +1,7 @@
 import type { Chat, Message, Prisma } from "@prisma/client";
 import { z } from "zod";
 
-import { previewElementSelectionSchema } from "@/lib/targeted-preview-edit";
+import { previewElementSelectionSchema } from "@/lib/preview-element-selection";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
   MAX_SCREENSHOT_DATA_URL_LENGTH,

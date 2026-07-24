@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { TierKey } from "@/lib/billing";
+import type { TierKey } from "@/lib/billing/config";
 
 type DashboardNavigationProps = {
   credits: number;

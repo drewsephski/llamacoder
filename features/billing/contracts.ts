@@ -1,4 +1,4 @@
-import type { CreditPackKey, TierKey } from "@/lib/billing";
+import type { CreditPackKey, TierKey } from "@/lib/billing/config";
 
 export type PricingTab = "plans" | "credits";
 export type SubscriptionTier = Exclude<TierKey, "free">;

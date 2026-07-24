@@ -64,7 +64,7 @@ import {
   canTierUseModel,
   getModelCreditHoldCost,
   getModelCreditRange,
-} from "@/lib/billing";
+} from "@/lib/billing/config";
 import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 import { getErrorMessage } from "@/features/shared/errors";
