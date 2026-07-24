@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Squid Agent — Idea to Ship",
+    "subtitle": "Seven inspectable stages from uncertain intent to a portable React app",
+    "output": "docs/diagrams/squid-agent-7-step.html",
+    "animation": "trace"
+  },
+  "lanes": [
+    { "id": "you", "label": "Your Control" },
+    { "id": "agent", "label": "Squid Agent" },
+    { "id": "artifacts", "label": "Artifacts You Own" }
+  ],
+  "phases": [
+    { "id": "intent", "label": "01 Intent", "fromCol": 0, "toCol": 1 },
+    { "id": "design", "label": "02 Design + Build", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "release", "label": "03 Verify + Ship", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    {
+      "id": "approval_loop",
+      "label": "Approve before code",
+      "lane": "you",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "quality_loop",
+      "label": "Check + repair",
+      "lane": "agent",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": ["idea", "research", "plan", "build", "refine", "verify", "ship"],
+  "nodes": [
+    {
+      "id": "idea",
+      "lane": "you",
+      "col": 0,
+      "type": "frontend",
+      "label": "Idea",
+      "sublabel": "prompt / shot / URL",
+      "tag": "01"
+    },
+    {
+      "id": "research",
+      "lane": "agent",
+      "col": 1,
+      "type": "backend",
+      "label": "Research",
+      "sublabel": "sources + APIs",
+      "tag": "02"
+    },
+    {
+      "id": "plan",
+      "lane": "you",
+      "col": 2,
+      "type": "security",
+      "label": "Plan",
+      "sublabel": "steer architecture",
+      "tag": "03 approve"
+    },
+    {
+      "id": "build",
+      "lane": "agent",
+      "col": 3,
+      "type": "backend",
+      "label": "Build",
+      "sublabel": "React workspace",
+      "tag": "04"
+    },
+    {
+      "id": "refine",
+      "lane": "you",
+      "col": 4,
+      "type": "frontend",
+      "label": "Refine",
+      "sublabel": "plain-language edits",
+      "tag": "05"
+    },
+    {
+      "id": "verify",
+      "lane": "agent",
+      "col": 5,
+      "type": "cloud",
+      "label": "Verify",
+      "sublabel": "checks + repairs",
+      "tag": "06"
+    },
+    {
+      "id": "ship",
+      "lane": "artifacts",
+      "col": 5,
+      "type": "database",
+      "label": "Ship",
+      "sublabel": "export + deploy",
+      "tag": "07 yours"
+    }
+  ],
+  "edges": [
+    { "from": "idea", "to": "research", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop" },
+    { "from": "research", "to": "plan", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop", "label": "context", "labelAt": [260, 167] },
+    { "from": "plan", "to": "build", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop", "label": "approved", "labelAt": [365, 167] },
+    { "from": "build", "to": "refine", "variant": "default", "fromSide": "bottom", "toSide": "top", "route": "drop" },
+    { "from": "refine", "to": "verify", "variant": "default" },
+    { "from": "verify", "to": "ship", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop", "label": "portable", "labelAt": [625, 291] },
+    { "from": "research", "to": "ship", "variant": "dashed", "role": "branch", "fromSide": "left", "toSide": "left", "route": "return-left", "label": "history kept", "labelDx": -8, "labelDy": 12 }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Main Path",
+      "items": [
+        "Idea → Research → Plan → Build → Refine → Verify → Ship",
+        "You approve consequential choices before generation",
+        "Every stage leaves inspectable artifacts behind"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Control Points",
+      "items": [
+        "Plan is an explicit approval gate",
+        "Refine stays conversational without losing working code",
+        "Verify surfaces checks, repairs, and remaining risk"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What You Own",
+      "items": [
+        "Sources, decisions, React files, and quality reports",
+        "Exportable project bundle with deployment context",
+        "Transparent credit use across the whole run"
+      ]
+    }
+  ]
+}

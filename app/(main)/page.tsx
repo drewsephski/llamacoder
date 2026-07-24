@@ -477,34 +477,35 @@ const homepageFlowSteps = [
   },
 ] as const;
 
-const homepageFlowOrbitPoints = [
-  { x: 40, y: 140 },
-  { x: 112, y: 28 },
-  { x: 360, y: 12 },
-  { x: 608, y: 28 },
-  { x: 680, y: 140 },
-  { x: 608, y: 252 },
-  { x: 112, y: 252 },
+/** Open left→right rail for the 7-step Idea→Ship journey. */
+const HOMEPAGE_FLOW_VIEWBOX = { width: 720, height: 140 } as const;
+const homepageFlowRailPoints = [
+  { x: 48, y: 78 },
+  { x: 152, y: 46 },
+  { x: 256, y: 78 },
+  { x: 360, y: 46 },
+  { x: 464, y: 78 },
+  { x: 568, y: 46 },
+  { x: 672, y: 78 },
 ] as const;
 
-const homepageFlowProgressPath = homepageFlowOrbitPoints
+const homepageFlowRailPath = homepageFlowRailPoints
   .map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`)
   .join(" ");
-const homepageFlowOrbitPath = `${homepageFlowProgressPath} Z`;
-const homepageFlowSegmentLengths = homepageFlowOrbitPoints
+const homepageFlowSegmentLengths = homepageFlowRailPoints
   .slice(0, -1)
   .map((point, index) => {
-    const nextPoint = homepageFlowOrbitPoints[index + 1];
+    const nextPoint = homepageFlowRailPoints[index + 1];
     return Math.hypot(nextPoint.x - point.x, nextPoint.y - point.y);
   });
 const homepageFlowTotalLength = homepageFlowSegmentLengths.reduce(
   (total, length) => total + length,
   0,
 );
-const homepageFlowOrbitProgress = (() => {
+const homepageFlowRailProgress = (() => {
   let traveled = 0;
 
-  return homepageFlowOrbitPoints.map((_, index) => {
+  return homepageFlowRailPoints.map((_, index) => {
     if (index > 0) traveled += homepageFlowSegmentLengths[index - 1];
     return (traveled / homepageFlowTotalLength) * 100;
   });
@@ -516,8 +517,8 @@ function getHomepageFlowPosition(progress: number) {
 
   for (let index = 0; index < homepageFlowSegmentLengths.length; index += 1) {
     const segmentLength = homepageFlowSegmentLengths[index];
-    const start = homepageFlowOrbitPoints[index];
-    const end = homepageFlowOrbitPoints[index + 1];
+    const start = homepageFlowRailPoints[index];
+    const end = homepageFlowRailPoints[index + 1];
 
     if (remainingDistance <= segmentLength) {
       const segmentProgress = remainingDistance / segmentLength;
@@ -530,20 +531,20 @@ function getHomepageFlowPosition(progress: number) {
     remainingDistance -= segmentLength;
   }
 
-  return homepageFlowOrbitPoints.at(-1)!;
+  return homepageFlowRailPoints.at(-1)!;
 }
 
 function getHomepageFlowPartialPath(progress: number) {
   const targetDistance =
     (Math.min(Math.max(progress, 0), 100) / 100) * homepageFlowTotalLength;
   const pathParts = [
-    `M${homepageFlowOrbitPoints[0].x} ${homepageFlowOrbitPoints[0].y}`,
+    `M${homepageFlowRailPoints[0].x} ${homepageFlowRailPoints[0].y}`,
   ];
   let traveled = 0;
 
   for (let index = 0; index < homepageFlowSegmentLengths.length; index += 1) {
     const segmentLength = homepageFlowSegmentLengths[index];
-    const nextPoint = homepageFlowOrbitPoints[index + 1];
+    const nextPoint = homepageFlowRailPoints[index + 1];
 
     if (traveled + segmentLength <= targetDistance) {
       pathParts.push(`L${nextPoint.x} ${nextPoint.y}`);
@@ -551,7 +552,7 @@ function getHomepageFlowPartialPath(progress: number) {
       continue;
     }
 
-    const start = homepageFlowOrbitPoints[index];
+    const start = homepageFlowRailPoints[index];
     const segmentProgress = Math.max(
       0,
       (targetDistance - traveled) / segmentLength,
@@ -2007,47 +2008,63 @@ export default function Home() {
           }
         }
 
-        /* ---------- Interactive product workflow ---------- */
-        .flow-orbit-track,
-        .flow-orbit-progress {
+        /* ---------- Interactive product workflow (Idea → Ship rail) ---------- */
+        .flow-rail-track,
+        .flow-rail-progress,
+        .flow-rail-trace {
           fill: none;
+          stroke-linecap: round;
           stroke-linejoin: round;
           vector-effect: non-scaling-stroke;
         }
-        .flow-orbit-track {
+        .flow-rail-track {
           stroke: hsl(var(--border));
-          stroke-width: 1.25;
+          stroke-width: 1.5;
         }
-        .flow-orbit-progress {
+        .flow-rail-trace {
+          stroke: rgb(59 130 246 / 0.28);
+          stroke-width: 1.5;
+          stroke-dasharray: 10 8;
+          stroke-dashoffset: 54;
+          animation: flow-rail-trace 2.4s linear infinite;
+        }
+        .flow-rail-progress {
           stroke: rgb(59 130 246);
-          stroke-width: 2.5;
-          stroke-linecap: round;
+          stroke-width: 2.75;
         }
-        .flow-orbit-progress-glow {
+        .flow-rail-progress-glow {
           fill: none;
-          stroke: rgb(59 130 246 / 0.16);
-          stroke-width: 9;
+          stroke: rgb(59 130 246 / 0.18);
+          stroke-width: 10;
           stroke-linecap: round;
           stroke-linejoin: round;
           vector-effect: non-scaling-stroke;
         }
-        .flow-orbit-marker {
+        .flow-rail-marker {
           fill: rgb(255 255 255);
           stroke: rgb(59 130 246);
           stroke-width: 3;
-          filter: drop-shadow(0 0 8px rgb(59 130 246 / 0.95));
+          filter: drop-shadow(0 0 10px rgb(59 130 246 / 0.9));
         }
-        .flow-orbit-pulse {
-          fill: rgb(59 130 246 / 0.16);
-          stroke: rgb(59 130 246 / 0.26);
+        .flow-rail-pulse {
+          fill: rgb(59 130 246 / 0.14);
+          stroke: rgb(59 130 246 / 0.28);
           stroke-width: 1;
-          animation: flow-orbit-pulse 2.2s ease-in-out infinite;
+          animation: flow-rail-pulse 2.2s ease-in-out infinite;
           transform-box: fill-box;
           transform-origin: center;
         }
         .flow-node {
           position: absolute;
           transform: translate(-50%, -50%);
+        }
+        .flow-node[data-active="true"] .flow-node-ring {
+          animation: flow-node-pulse 3.2s ease-in-out infinite;
+        }
+        .flow-node[data-complete="true"] .flow-node-dot {
+          background: rgb(59 130 246);
+          color: white;
+          border-color: rgb(59 130 246);
         }
         .flow-active-card {
           animation: flow-card-enter 360ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -2064,9 +2081,16 @@ export default function Home() {
           from { opacity: 0; transform: translateY(4px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes flow-orbit-pulse {
-          0%, 100% { opacity: 0.48; transform: scale(0.82); }
-          50% { opacity: 1; transform: scale(1.18); }
+        @keyframes flow-rail-trace {
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes flow-rail-pulse {
+          0%, 100% { opacity: 0.45; transform: scale(0.82); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes flow-node-pulse {
+          0%, 72%, 100% { box-shadow: 0 0 0 0 rgb(59 130 246 / 0); }
+          18%, 36% { box-shadow: 0 0 0 8px rgb(59 130 246 / 0.12); }
         }
         @media (max-width: 767px) {
           .flow-node,
@@ -2084,11 +2108,16 @@ export default function Home() {
           .flow-nodes::-webkit-scrollbar {
             display: none;
           }
+          .flow-rail-trace {
+            animation: none;
+          }
         }
         @media (prefers-reduced-motion: reduce) {
           .flow-active-card { animation: none; }
-          .flow-orbit-marker,
-          .flow-orbit-pulse { animation: none; }
+          .flow-rail-marker,
+          .flow-rail-pulse,
+          .flow-rail-trace,
+          .flow-node[data-active="true"] .flow-node-ring { animation: none; }
           .flow-artifact { opacity: 1; animation: none; }
         }
       `}</style>
@@ -2947,7 +2976,8 @@ function HomepageAnswerSection() {
             id="squid-agent-overview"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            From uncertain idea to shipped app.
+            From uncertain idea <br />
+            to shipped app.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             Squid Agent brings research, decisions, code, quality, recovery, and
@@ -3154,16 +3184,16 @@ function HomepageNarrativeArticle({
 
 function HomepageFlowSection() {
   const [activeStep, setActiveStep] = useState(0);
-  const orbitProgressRef = useRef(0);
-  const orbitAnimationFrameRef = useRef<number | null>(null);
-  const [orbitAnimation, setOrbitAnimation] = useState<{
+  const railProgressRef = useRef(0);
+  const railAnimationFrameRef = useRef<number | null>(null);
+  const [railAnimation, setRailAnimation] = useState<{
     progress: number;
     x: number;
     y: number;
   }>({
     progress: 0,
-    x: homepageFlowOrbitPoints[0].x,
-    y: homepageFlowOrbitPoints[0].y,
+    x: homepageFlowRailPoints[0].x,
+    y: homepageFlowRailPoints[0].y,
   });
   const step = homepageFlowSteps[activeStep];
   const ActiveIcon = step.icon;
@@ -3186,49 +3216,49 @@ function HomepageFlowSection() {
   }, [activeStep]);
 
   useEffect(() => {
-    if (orbitAnimationFrameRef.current !== null) {
-      window.cancelAnimationFrame(orbitAnimationFrameRef.current);
+    if (railAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(railAnimationFrameRef.current);
     }
 
-    const startProgress = orbitProgressRef.current;
-    const targetProgress = homepageFlowOrbitProgress[activeStep];
+    const startProgress = railProgressRef.current;
+    const targetProgress = homepageFlowRailProgress[activeStep];
     const progressDelta = targetProgress - startProgress;
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
-    const updateOrbit = (progress: number) => {
+    const updateRail = (progress: number) => {
       const point = getHomepageFlowPosition(progress);
-      orbitProgressRef.current = progress;
-      setOrbitAnimation({ progress, x: point.x, y: point.y });
+      railProgressRef.current = progress;
+      setRailAnimation({ progress, x: point.x, y: point.y });
     };
 
     if (reducedMotion || Math.abs(progressDelta) < 0.01) {
-      updateOrbit(targetProgress);
+      updateRail(targetProgress);
       return;
     }
 
     const startedAt = performance.now();
     const duration = Math.min(900, 360 + Math.abs(progressDelta) * 6);
-    const animateOrbit = (now: number) => {
+    const animateRail = (now: number) => {
       const elapsed = Math.min((now - startedAt) / duration, 1);
       const eased = 1 - Math.pow(1 - elapsed, 3);
-      updateOrbit(startProgress + progressDelta * eased);
+      updateRail(startProgress + progressDelta * eased);
 
       if (elapsed < 1) {
-        orbitAnimationFrameRef.current =
-          window.requestAnimationFrame(animateOrbit);
+        railAnimationFrameRef.current =
+          window.requestAnimationFrame(animateRail);
       } else {
-        orbitAnimationFrameRef.current = null;
+        railAnimationFrameRef.current = null;
       }
     };
 
-    orbitAnimationFrameRef.current = window.requestAnimationFrame(animateOrbit);
+    railAnimationFrameRef.current = window.requestAnimationFrame(animateRail);
 
     return () => {
-      if (orbitAnimationFrameRef.current !== null) {
-        window.cancelAnimationFrame(orbitAnimationFrameRef.current);
-        orbitAnimationFrameRef.current = null;
+      if (railAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(railAnimationFrameRef.current);
+        railAnimationFrameRef.current = null;
       }
     };
   }, [activeStep]);
@@ -3244,7 +3274,7 @@ function HomepageFlowSection() {
             id="squid-agent-stages"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            Your idea keeps moving. You stay in control.
+            Your idea keeps moving. <br /> You stay in control.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             Move from a rough idea to a shipped app without losing the context,
@@ -3253,54 +3283,112 @@ function HomepageFlowSection() {
           </p>
         </div>
 
-        <div className="flow-stage relative mx-auto mt-10 min-h-[470px] max-w-5xl overflow-visible px-4 py-10 sm:mt-12 md:grid md:place-items-center md:px-12">
-          <svg
-            className="flow-orbit pointer-events-none absolute inset-[30px_3%_20px] hidden h-[calc(100%-50px)] w-[94%] overflow-visible md:block"
-            viewBox="0 0 720 280"
-            preserveAspectRatio="none"
-            role="img"
-            aria-label={`Workflow progress: step ${activeStep + 1} of ${homepageFlowSteps.length}`}
-          >
-            <path
-              className="flow-orbit-track"
-              pathLength="100"
-              d={homepageFlowOrbitPath}
-            />
-            <path
-              className="flow-orbit-progress-glow"
-              d={getHomepageFlowPartialPath(orbitAnimation.progress)}
-            />
-            <path
-              className="flow-orbit-progress"
-              d={getHomepageFlowPartialPath(orbitAnimation.progress)}
-            />
-            <circle
-              className="flow-orbit-pulse"
-              cx={orbitAnimation.x}
-              cy={orbitAnimation.y}
-              r="11"
-            />
-            <circle
-              className="flow-orbit-marker"
-              cx={orbitAnimation.x}
-              cy={orbitAnimation.y}
-              r="4.5"
-            />
-          </svg>
+        <div className="flow-stage relative mx-auto mt-10 max-w-5xl overflow-visible px-2 sm:mt-12 sm:px-4">
+          <div className="relative mx-auto hidden w-full pb-11 md:block">
+            <div
+              className="relative w-full"
+              style={{
+                aspectRatio: `${HOMEPAGE_FLOW_VIEWBOX.width} / ${HOMEPAGE_FLOW_VIEWBOX.height}`,
+              }}
+            >
+              <svg
+                className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+                viewBox={`0 0 ${HOMEPAGE_FLOW_VIEWBOX.width} ${HOMEPAGE_FLOW_VIEWBOX.height}`}
+                preserveAspectRatio="none"
+                role="img"
+                aria-label={`Workflow progress: step ${activeStep + 1} of ${homepageFlowSteps.length}`}
+              >
+                <path className="flow-rail-track" d={homepageFlowRailPath} />
+                <path className="flow-rail-trace" d={homepageFlowRailPath} />
+                <path
+                  className="flow-rail-progress-glow"
+                  d={getHomepageFlowPartialPath(railAnimation.progress)}
+                />
+                <path
+                  className="flow-rail-progress"
+                  d={getHomepageFlowPartialPath(railAnimation.progress)}
+                />
+                <circle
+                  className="flow-rail-pulse"
+                  cx={railAnimation.x}
+                  cy={railAnimation.y}
+                  r="14"
+                />
+                <circle
+                  className="flow-rail-marker"
+                  cx={railAnimation.x}
+                  cy={railAnimation.y}
+                  r="4.5"
+                />
+              </svg>
+
+              <nav
+                className="flow-nodes absolute inset-0"
+                aria-label="Build stages"
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowRight") {
+                    event.preventDefault();
+                    goToStep(activeStep + 1);
+                  }
+                  if (event.key === "ArrowLeft") {
+                    event.preventDefault();
+                    goToStep(activeStep - 1);
+                  }
+                }}
+              >
+                {homepageFlowSteps.map((flowStep, index) => {
+                  const isActive = index === activeStep;
+                  const isComplete = index < activeStep;
+                  const stepNumber = String(index + 1).padStart(2, "0");
+                  const point = homepageFlowRailPoints[index];
+
+                  return (
+                    <button
+                      key={flowStep.label}
+                      type="button"
+                      className="flow-node group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      data-active={isActive}
+                      data-complete={isComplete}
+                      aria-pressed={isActive}
+                      aria-label={`${flowStep.label}, step ${index + 1} of ${homepageFlowSteps.length}`}
+                      onClick={() => setActiveStep(index)}
+                      style={{
+                        left: `${(point.x / HOMEPAGE_FLOW_VIEWBOX.width) * 100}%`,
+                        top: `${(point.y / HOMEPAGE_FLOW_VIEWBOX.height) * 100}%`,
+                      }}
+                    >
+                      <span
+                        className={`flow-node-ring flex size-11 items-center justify-center rounded-full border bg-background/95 shadow-sm backdrop-blur transition-[border-color,background-color,box-shadow,color] ${
+                          isActive
+                            ? "border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/25"
+                            : isComplete
+                              ? "border-blue-500/40 text-blue-500"
+                              : "border-border/80 text-muted-foreground group-hover:border-blue-500/40 group-hover:text-foreground"
+                        }`}
+                      >
+                        <span className="flow-node-dot flex size-8 items-center justify-center rounded-full border border-transparent text-[11px] font-semibold tracking-wide">
+                          {stepNumber}
+                        </span>
+                      </span>
+                      <span
+                        className={`absolute left-1/2 top-[calc(100%+10px)] w-max max-w-[4.75rem] -translate-x-1/2 text-center text-[11px] font-medium leading-tight transition-colors ${
+                          isActive
+                            ? "text-foreground"
+                            : "text-muted-foreground group-hover:text-foreground"
+                        }`}
+                      >
+                        {flowStep.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
 
           <nav
-            className="flow-nodes relative z-10 mb-4 flex max-w-full flex-wrap justify-center gap-2 md:absolute md:inset-[30px_3%_20px] md:mb-0 md:block md:max-w-none md:overflow-visible"
+            className="flow-nodes mb-5 flex max-w-full flex-wrap justify-center gap-2 md:hidden"
             aria-label="Build stages"
-            onKeyDown={(event) => {
-              if (event.key === "ArrowRight") {
-                event.preventDefault();
-                goToStep(activeStep + 1);
-              }
-              if (event.key === "ArrowLeft") {
-                event.preventDefault();
-                goToStep(activeStep - 1);
-              }
-            }}
           >
             {homepageFlowSteps.map((flowStep, index) => {
               const StepIcon = flowStep.icon;
@@ -3308,14 +3396,10 @@ function HomepageFlowSection() {
                 <button
                   key={flowStep.label}
                   type="button"
-                  className="flow-node inline-flex shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-background/95 px-2.5 py-2 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur transition-[color,border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-foreground hover:shadow-[0_0_22px_-8px_rgba(59,130,246,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 data-[active=true]:border-blue-500/30 data-[active=true]:bg-blue-500 data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-blue-500/20 sm:px-3 sm:text-sm"
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-background/95 px-2.5 py-2 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur transition-[color,border-color,background-color,box-shadow] hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 data-[active=true]:border-blue-500/30 data-[active=true]:bg-blue-500 data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-blue-500/20"
                   data-active={index === activeStep}
                   aria-pressed={index === activeStep}
                   onClick={() => setActiveStep(index)}
-                  style={{
-                    left: `${(homepageFlowOrbitPoints[index].x / 720) * 100}%`,
-                    top: `${(homepageFlowOrbitPoints[index].y / 280) * 100}%`,
-                  }}
                 >
                   <StepIcon className="size-4" aria-hidden="true" />
                   {flowStep.label}
@@ -3326,12 +3410,19 @@ function HomepageFlowSection() {
 
           <article
             key={activeStep}
-            className="flow-active-card relative z-[2] mx-auto flex min-h-[290px] w-full max-w-md flex-col items-center justify-center rounded-[26px] border border-border/70 bg-background/90 p-6 text-center shadow-[0_28px_80px_-46px_rgba(0,0,0,0.7)] backdrop-blur sm:p-8"
+            className="flow-active-card relative z-[2] mx-auto mt-6 flex min-h-[260px] w-full max-w-xl flex-col items-center justify-center rounded-[26px] border border-border/70 bg-background/90 p-6 text-center shadow-[0_28px_80px_-46px_rgba(0,0,0,0.7)] backdrop-blur sm:mt-8 sm:min-h-[280px] sm:p-8"
             aria-live="polite"
           >
-            <span className="flex size-11 items-center justify-center rounded-full bg-[#0062FF] text-white shadow-lg shadow-blue-500/25">
-              <ActiveIcon className="size-5" aria-hidden="true" />
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-semibold tracking-[0.14em] text-[#0062FF] dark:text-[#0CA8FF]">
+                {String(activeStep + 1).padStart(2, "0")} /{" "}
+                {String(homepageFlowSteps.length).padStart(2, "0")}
+              </span>
+              <span className="h-px w-8 bg-gradient-to-r from-blue-500/50 to-transparent" />
+              <span className="flex size-10 items-center justify-center rounded-full bg-[#0062FF] text-white shadow-lg shadow-blue-500/25">
+                <ActiveIcon className="size-5" aria-hidden="true" />
+              </span>
+            </div>
             <h3 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
               {step.title}
             </h3>
