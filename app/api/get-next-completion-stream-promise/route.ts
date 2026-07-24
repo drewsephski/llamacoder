@@ -33,6 +33,7 @@ import {
 } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
 import { getMainCodingPrompt, screenshotToCodePrompt } from "@/lib/prompts";
+import { estimateTokens } from "@/lib/prompt-compression";
 import { generatedAppRepairCapabilityRules } from "@/lib/generated-app-capabilities";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
@@ -40,12 +41,17 @@ import {
   MAX_SCREENSHOT_DATA_URL_LENGTH,
   MAX_SCREENSHOT_SIZE_MB,
 } from "@/lib/constants";
-import { DEFAULT_ESTIMATED_INPUT_TOKENS } from "@/lib/billing/config";
 import type {
   GenerationStatus,
   ResearchActivity,
 } from "@/features/generation/contracts";
 import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
+import {
+  clampMessagesToBillingBudget,
+  optimizeMessagesForTokens,
+  PARTIAL_TEXT_SNAPSHOT_INTERVAL_CHARS,
+} from "@/features/generation/server/message-budget";
+import { getCodeGenerationRunFinalizeState } from "@/features/generation/server/code-generation-pipeline";
 import {
   agentActionSchema,
   parseAgentMessageMetadata,
@@ -98,6 +104,7 @@ import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
 import { getConnectedIntegrationPromptContext } from "@/features/integrations/server/service";
+import { resolvePastMediaCatalogForPrompt } from "@/features/generation/server/past-media-library";
 import { findIntegrationProviders } from "@/features/integrations/registry";
 import {
   enforceSelectedProvidersInAppSpec,
@@ -147,74 +154,6 @@ function isContractRepairMetadata(value: unknown) {
     !Array.isArray(value) &&
     (value as { kind?: unknown }).kind === "contract_repair"
   );
-}
-
-function optimizeMessagesForTokens(
-  messages: { role: "system" | "user" | "assistant"; content: string }[],
-): { role: "system" | "user" | "assistant"; content: string }[] {
-  // Strip code blocks from assistant messages except the last 2 to save tokens
-  const assistantIndices: number[] = [];
-  for (
-    let i = messages.length - 1;
-    i >= 0 && assistantIndices.length < 2;
-    i--
-  ) {
-    if (messages[i].role === "assistant") {
-      assistantIndices.push(i);
-    }
-  }
-  return messages.map((msg, index) => {
-    if (msg.role === "assistant" && !assistantIndices.includes(index)) {
-      const stripped = msg.content.replace(/```[\s\S]*?```/g, "").trim();
-      return {
-        ...msg,
-        content: stripped || "[code omitted]",
-      };
-    }
-    return msg;
-  });
-}
-
-const MAX_INPUT_CHARACTERS = DEFAULT_ESTIMATED_INPUT_TOKENS * 3;
-
-function clampMessagesToBillingBudget(
-  messages: { role: "system" | "user" | "assistant"; content: string }[],
-) {
-  if (
-    messages.reduce((total, message) => total + message.content.length, 0) <=
-    MAX_INPUT_CHARACTERS
-  ) {
-    return messages;
-  }
-
-  const systemMessage = messages.find((message) => message.role === "system");
-  const nonSystemMessages = messages.filter(
-    (message) => message !== systemMessage,
-  );
-  const kept: typeof messages = [];
-  let remaining = Math.max(
-    0,
-    MAX_INPUT_CHARACTERS - (systemMessage?.content.length ?? 0),
-  );
-
-  for (let index = nonSystemMessages.length - 1; index >= 0; index -= 1) {
-    const message = nonSystemMessages[index];
-    if (remaining <= 0) break;
-
-    if (message.content.length <= remaining) {
-      kept.unshift(message);
-      remaining -= message.content.length;
-      continue;
-    }
-
-    kept.unshift({
-      ...message,
-      content: `[Earlier context truncated]\n${message.content.slice(-remaining)}`,
-    });
-    remaining = 0;
-  }
-
-  return systemMessage ? [systemMessage, ...kept] : kept;
 }
 
 function getStoredGeneratedFiles(message: CompletionMessage) {
@@ -1288,8 +1227,16 @@ export async function POST(req: Request) {
               message.chat.prompt.trim()
                 ? message.chat.prompt
                 : latestResearchObjective;
+            const pastMediaCatalog = await resolvePastMediaCatalogForPrompt({
+              prompt: styleBrief,
+            });
             systemInstruction = getMainCodingPrompt({
               userPrompt: styleBrief,
+              pastMediaCatalog,
+              messageCount: guardedMessages.length,
+              estimatedContextTokens: estimateTokens(
+                guardedMessages.map((message) => message.content).join("\n"),
+              ),
             });
           }
           if (linkedPageContext) {
@@ -1809,7 +1756,10 @@ export async function POST(req: Request) {
               }
               if (chunk.type === "text-delta") {
                 persistedPartialText += chunk.text;
-                if (persistedPartialText.length - lastSnapshotLength >= 1_000) {
+                if (
+                  persistedPartialText.length - lastSnapshotLength >=
+                  PARTIAL_TEXT_SNAPSHOT_INTERVAL_CHARS
+                ) {
                   lastSnapshotLength = persistedPartialText.length;
                   void prisma.generationRun.updateMany({
                     where: { id: generationRun.id, status: "running" },
@@ -1833,18 +1783,32 @@ export async function POST(req: Request) {
                 providerRequestId: response?.id,
                 provider: completedModel.provider,
               });
+              const finalizeState = isCodeGeneration
+                ? getCodeGenerationRunFinalizeState(persistedPartialText)
+                : {
+                    status: "recoverable" as const,
+                    phase: "finalizing",
+                    label: "Ready to save",
+                    partialText: persistedPartialText,
+                  };
               await prisma.generationRun.updateMany({
                 where: { id: generationRun.id, status: "running" },
                 data: {
-                  status: "recoverable",
-                  phase: "finalizing",
-                  label: "Ready to save",
-                  partialText: persistedPartialText,
+                  status: finalizeState.status,
+                  phase: finalizeState.phase,
+                  label: finalizeState.label,
+                  partialText: finalizeState.partialText,
+                  errorMessage: finalizeState.errorMessage,
+                  completedAt: finalizeState.completedAt,
                 },
               });
             },
             async onAbort() {
               await telemetry.record({ status: "aborted" });
+              if (holdId && !persistedPartialText.trim()) {
+                await releaseCreditHold({ holdId });
+                holdId = undefined;
+              }
               await prisma.generationRun.updateMany({
                 where: { id: generationRun.id, status: "running" },
                 data: {
@@ -1875,6 +1839,10 @@ export async function POST(req: Request) {
                   model: executionModel,
                 },
               });
+              if (holdId && !persistedPartialText.trim()) {
+                await releaseCreditHold({ holdId });
+                holdId = undefined;
+              }
               await prisma.generationRun.updateMany({
                 where: { id: generationRun.id, status: "running" },
                 data: {

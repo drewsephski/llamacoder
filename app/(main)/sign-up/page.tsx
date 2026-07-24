@@ -1,15 +1,17 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
-import { useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { DEFAULT_MODEL } from "@/lib/constants";
+import { getSafeCallbackUrl } from "@/lib/safe-redirect";
+import { savePendingProject } from "@/lib/pending-project";
 
-export default function SignUpPage() {
+function SignUpForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +21,22 @@ export default function SignUpPage() {
   const captchaContainerRef = useRef<HTMLDivElement>(null);
   const captchaWidgetIdRef = useRef<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrlRef = useRef(
+    getSafeCallbackUrl(searchParams.get("callbackUrl"), "/"),
+  );
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  useEffect(() => {
+    const query = searchParams.get("query")?.trim();
+    if (!query) return;
+
+    savePendingProject({
+      prompt: query,
+      model: DEFAULT_MODEL,
+      quality: "low",
+    });
+  }, [searchParams]);
 
   const renderTurnstile = useCallback(() => {
     if (
@@ -49,24 +66,29 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      const { error } = await authClient.signUp.email(
+      const { error: signUpError } = await authClient.signUp.email(
         {
           email,
           password,
           name,
-          callbackURL: "/dashboard",
+          callbackURL: callbackUrlRef.current,
         },
         captchaToken
           ? { headers: { "x-captcha-response": captchaToken } }
           : undefined,
       );
 
-      if (error) {
-        setError(error.message || "Sign up failed");
+      if (signUpError) {
+        setError(signUpError.message || "Sign up failed");
         return;
       }
 
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      const verifyEmailUrl = new URL("/verify-email", window.location.origin);
+      verifyEmailUrl.searchParams.set("email", email);
+      verifyEmailUrl.searchParams.set("callbackUrl", callbackUrlRef.current);
+      router.push(
+        `${verifyEmailUrl.pathname}${verifyEmailUrl.search}${verifyEmailUrl.hash}`,
+      );
       router.refresh();
     } catch (err) {
       console.error("Sign up error:", err);
@@ -85,7 +107,7 @@ export default function SignUpPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: callbackUrlRef.current,
       });
     } catch (err) {
       console.error("Google sign in error:", err);
@@ -93,6 +115,8 @@ export default function SignUpPage() {
       setLoading(false);
     }
   };
+
+  const signInHref = `/sign-in?callbackUrl=${encodeURIComponent(callbackUrlRef.current)}`;
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -124,7 +148,7 @@ export default function SignUpPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Or{" "}
             <Link
-              href="/sign-in"
+              href={signInHref}
               className="font-medium text-primary hover:underline"
             >
               sign in to your existing account
@@ -248,5 +272,19 @@ export default function SignUpPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+        </div>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
   );
 }

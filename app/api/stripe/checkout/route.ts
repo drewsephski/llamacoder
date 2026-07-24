@@ -9,7 +9,7 @@ import {
   upgradeSubscriptionTier,
 } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
-import { normalizeTier } from "@/lib/billing";
+import { getEntitlementTier, isSubscriptionEntitled } from "@/lib/billing";
 import { syncSubscriptionFromStripe } from "@/lib/billing/stripe-fulfillment";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
@@ -206,14 +206,21 @@ export async function POST(request: NextRequest) {
       name: user.name,
     });
 
-    const currentTier =
-      user.subscription?.status === "active"
-        ? normalizeTier(user.subscription.tier)
-        : "free";
+    const currentTier = getEntitlementTier(user.subscription);
 
     const origin = getAppOrigin();
 
-    if (user.subscription?.status === "active") {
+    if (isSubscriptionEntitled(user.subscription?.status)) {
+      const activeSubscription = user.subscription;
+      if (!activeSubscription) {
+        return errorResponse(
+          "Subscription record not found",
+          404,
+          request,
+          expectsJson,
+        );
+      }
+
       if (currentTier === tier) {
         return errorResponse(
           `You are already on the ${currentTier === "pro_plus" ? "Pro Plus" : "Pro"} plan`,
@@ -232,7 +239,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (!user.subscription.stripeSubscriptionId) {
+      if (!activeSubscription.stripeSubscriptionId) {
         return errorResponse(
           "Your current subscription is missing a Stripe subscription ID",
           409,
@@ -245,7 +252,7 @@ export async function POST(request: NextRequest) {
 
       try {
         updatedSubscription = await upgradeSubscriptionTier({
-          subscriptionId: user.subscription.stripeSubscriptionId,
+          subscriptionId: activeSubscription.stripeSubscriptionId,
           tier: "pro_plus",
           userId: user.id,
         });
@@ -263,7 +270,7 @@ export async function POST(request: NextRequest) {
         });
 
         await prisma.subscription.update({
-          where: { id: user.subscription.id },
+          where: { id: activeSubscription.id },
           data: {
             stripeCustomerId: customerId,
             stripePriceId: finalPriceId,

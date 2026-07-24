@@ -13,6 +13,32 @@ export type CompletionStream = {
   generationRunId?: string;
 };
 
+export type GenerationRunSnapshot = {
+  id: string;
+  messageId: string;
+  status: string;
+  phase: string;
+  label: string;
+  partialText: string;
+  creditHoldId?: string;
+  errorMessage?: string;
+};
+
+export async function fetchGenerationRun(
+  runId: string,
+): Promise<GenerationRunSnapshot> {
+  const response = await fetch(`/api/generation-runs/${runId}`);
+  const run = await response.json().catch(() => null);
+  if (!response.ok || !run?.id) {
+    throw new Error(
+      run?.errorMessage ||
+        run?.message ||
+        "Unable to load the generation run state",
+    );
+  }
+  return run as GenerationRunSnapshot;
+}
+
 export async function fetchCompletionStream({
   messageId,
   model,

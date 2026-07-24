@@ -3,7 +3,7 @@ import { ProjectCardActions } from "@/features/projects/components/project-card-
 import { UpgradeBanner } from "@/features/billing/components/upgrade-banner";
 import { StripeCheckoutButton } from "@/features/billing/components/stripe-checkout-button";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
-import { CREDIT_PACKS, FREE_PROJECT_LIMIT } from "@/lib/billing";
+import { CREDIT_PACKS, FREE_PROJECT_LIMIT, TIERS } from "@/lib/billing";
 import Link from "next/link";
 import {
   Plus,
@@ -23,6 +23,7 @@ import {
   ImagePlus,
   Blocks,
   TriangleAlert,
+  Info,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -73,8 +74,10 @@ export async function DashboardPage({
   const {
     currentPage,
     hasActiveSubscription,
+    monthlyAllowance,
     projects,
     session,
+    subscriptionCredits,
     tier: currentTier,
     totalPages,
     totalProjects,
@@ -102,6 +105,12 @@ export async function DashboardPage({
   }
 
   const userName = session.user.name?.split(" ")[0] || "there";
+  const creditScale = hasActiveSubscription
+    ? Math.max(monthlyAllowance, 1)
+    : TIERS.free.monthlyCredits;
+  const creditBarValue = hasActiveSubscription
+    ? subscriptionCredits
+    : userCredits;
   const hasProjects = projects.length > 0;
 
   return (
@@ -187,9 +196,25 @@ export async function DashboardPage({
             </div>
             <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Available Credits
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm text-muted-foreground">
+                    Available Credits
+                  </span>
+                  <div className="relative hidden sm:block">
+                    <Info className="peer h-3.5 w-3.5 cursor-help text-muted-foreground/60" />
+                    <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-56 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
+                      Free accounts receive {TIERS.free.monthlyCredits} starter
+                      credits after email verification. Generations charge only
+                      after a version saves successfully.{" "}
+                      <Link
+                        href="/dashboard/usage"
+                        className="font-medium underline underline-offset-2"
+                      >
+                        View usage ledger
+                      </Link>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex items-center gap-1.5">
                   <Coins className="h-4 w-4 text-amber-500" />
                   <span className="text-sm font-medium">{userCredits}</span>
@@ -199,7 +224,7 @@ export async function DashboardPage({
                 <div
                   className="h-full bg-amber-500 transition-all"
                   style={{
-                    width: `${hasActiveSubscription ? 100 : Math.min((userCredits / 100) * 100, 100)}%`,
+                    width: `${Math.min((creditBarValue / creditScale) * 100, 100)}%`,
                   }}
                 />
               </div>
@@ -320,11 +345,14 @@ export async function DashboardPage({
                             {getModelLabel(project.model)}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {new Date(project.createdAt).toLocaleDateString(
+                            Updated{" "}
+                            {new Date(project.lastActivityAt).toLocaleString(
                               undefined,
                               {
                                 month: "short",
                                 day: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
                               },
                             )}
                           </span>

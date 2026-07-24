@@ -26,8 +26,15 @@ describe("dashboard verification evidence", () => {
     mocks.getCurrentSession.mockResolvedValue({ user: { id: "user_1" } });
     mocks.getUserCreditInfo.mockResolvedValue({
       credits: 5,
+      creditBreakdown: {
+        totalCredits: 5,
+        subscriptionCredits: 0,
+        purchasedCredits: 0,
+        otherCredits: 5,
+      },
       tier: "free",
       hasActiveSubscription: false,
+      monthlyAllowance: 5,
     });
   });
 

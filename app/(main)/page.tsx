@@ -50,6 +50,7 @@ import { DEFAULT_MODEL, MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { HelpPanel } from "@/components/help-panel";
+import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Footer from "@/components/footer";
@@ -67,6 +68,12 @@ import {
 import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 import { getErrorMessage } from "@/features/shared/errors";
+import type { CreateProjectRequest } from "@/features/projects/contracts";
+import {
+  clearPendingProject,
+  readPendingProject,
+  savePendingProject,
+} from "@/lib/pending-project";
 import { ApiSelectionDialog } from "@/features/integrations/components/api-selection-dialog";
 import { PromptBuilderModal } from "@/features/prompt-builder";
 import {
@@ -1090,6 +1097,7 @@ export default function Home() {
   const [isPending, startTransition] = useTransition();
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [showPromptBuilder, setShowPromptBuilder] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<PromptTemplate | null>(
     null,
@@ -1100,6 +1108,7 @@ export default function Home() {
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
   const promptStartedAtRef = useRef<number | null>(null);
   const activationParamsHandledRef = useRef(false);
+  const pendingProjectResumeRef = useRef(false);
 
   const { data: session } = useUserSession();
   const { data: creditsData } = useUserCredits();
@@ -1126,6 +1135,88 @@ export default function Home() {
     });
     setShowPricingModal(true);
   };
+
+  const createProjectAndGoToChat = useCallback(
+    async (input: CreateProjectRequest) => {
+      try {
+        const checkResponse = await fetch(
+          `/api/user/can-create-project?model=${encodeURIComponent(input.model)}`,
+        );
+        if (checkResponse.ok) {
+          const eligibility = await checkResponse.json();
+          if (!eligibility.canCreate) {
+            if (eligibility.error === "PROJECT_LIMIT_REACHED") {
+              showProjectLimitPricing(
+                eligibility.projectLimit ?? FREE_PROJECT_LIMIT,
+              );
+              return false;
+            }
+
+            const cost =
+              eligibility.modelCost || getModelCreditHoldCost(input.model);
+            toast.error(
+              `This model costs ${cost} credit${cost === 1 ? "" : "s"}. You have ${eligibility.credits}. Buy more credits to continue.`,
+            );
+            setShowPricingModal(true);
+            return false;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking eligibility:", error);
+      }
+
+      const { chatId, lastMessageId } =
+        await createChatMutation.mutateAsync(input);
+
+      plausible("Project Created", {
+        props: {
+          source: "homepage",
+          planMode: input.quality === "high",
+          hasScreenshot: Boolean(input.screenshotData || input.screenshotUrl),
+          timeToFirstPromptMs: promptStartedAtRef.current
+            ? Date.now() - promptStartedAtRef.current
+            : 0,
+        },
+      });
+
+      const streamPromise = fetchCompletionStream({
+        messageId: lastMessageId,
+        model: input.model,
+        screenshotData: input.screenshotData,
+      });
+
+      startTransition(() => {
+        setStreamPromise(streamPromise);
+        router.push(`/chats/${chatId}`);
+      });
+
+      return true;
+    },
+    [createChatMutation, plausible, router, setStreamPromise],
+  );
+
+  useEffect(() => {
+    if (!session || pendingProjectResumeRef.current) return;
+
+    const pendingProject = readPendingProject();
+    if (!pendingProject) return;
+
+    pendingProjectResumeRef.current = true;
+
+    void (async () => {
+      try {
+        const created = await createProjectAndGoToChat(pendingProject);
+        if (created) {
+          clearPendingProject();
+        } else {
+          pendingProjectResumeRef.current = false;
+        }
+      } catch (error) {
+        pendingProjectResumeRef.current = false;
+        toast.error(getErrorMessage(error, "Failed to create project"));
+      }
+    })();
+  }, [session, createProjectAndGoToChat]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -1177,6 +1268,9 @@ export default function Home() {
     if (importScreenshot) {
       window.requestAnimationFrame(() => fileInputRef.current?.click());
       plausible("Screenshot Import Opened", { props: { source: "dashboard" } });
+    }
+    if (params.get("onboarding") === "1") {
+      setShowOnboardingWizard(true);
     }
   }, [plausible]);
 
@@ -2753,12 +2847,32 @@ export default function Home() {
               action={async (formData) => {
                 setIsCheckingEligibility(true);
                 const currentModel = (formData.get("model") as string) || model;
+                const submittedPrompt = prompt.trim();
+                const formQuality = formData.get("quality");
+                const submittedQuality =
+                  formQuality === "high" ? "high" : "low";
 
                 // Require authentication before allowing chat creation
                 const session = await authClient.getSession();
                 if (!session.data) {
-                  toast.error("Please sign in to create a project");
-                  router.push("/sign-in?callbackUrl=/");
+                  if (!submittedPrompt) {
+                    toast.error("Enter a prompt before creating an account");
+                    setIsCheckingEligibility(false);
+                    return;
+                  }
+
+                  savePendingProject({
+                    prompt: submittedPrompt,
+                    model: currentModel,
+                    quality: submittedQuality,
+                    screenshotData,
+                    screenshotUrl,
+                    providerIds: selectedProviderIds,
+                  });
+                  toast.info("Create an account to start building");
+                  router.push(
+                    `/sign-up?callbackUrl=${encodeURIComponent("/")}`,
+                  );
                   setIsCheckingEligibility(false);
                   return;
                 }
@@ -2797,44 +2911,21 @@ export default function Home() {
                 startTransition(async () => {
                   try {
                     const { model, quality } = Object.fromEntries(formData);
-                    // Always submit from React state so template mode and
-                    // freeform share one source of truth (no parallel hidden input).
-                    const submittedPrompt = prompt.trim();
                     assert.ok(submittedPrompt.length > 0);
                     assert.ok(typeof model === "string");
                     assert.ok(quality === "high" || quality === "low");
 
-                    const { chatId, lastMessageId } =
-                      await createChatMutation.mutateAsync({
-                        prompt: submittedPrompt,
-                        model,
-                        quality,
-                        screenshotUrl,
-                        screenshotData,
-                        providerIds: selectedProviderIds,
-                      });
-
-                    plausible("Project Created", {
-                      props: {
-                        source: "homepage",
-                        planMode: quality === "high",
-                        hasScreenshot: Boolean(screenshotData || screenshotUrl),
-                        timeToFirstPromptMs: promptStartedAtRef.current
-                          ? Date.now() - promptStartedAtRef.current
-                          : 0,
-                      },
-                    });
-
-                    const streamPromise = fetchCompletionStream({
-                      messageId: lastMessageId,
+                    const created = await createProjectAndGoToChat({
+                      prompt: submittedPrompt,
                       model,
+                      quality,
+                      screenshotUrl,
                       screenshotData,
+                      providerIds: selectedProviderIds,
                     });
-
-                    startTransition(() => {
-                      setStreamPromise(streamPromise);
-                      router.push(`/chats/${chatId}`);
-                    });
+                    if (created) {
+                      clearPendingProject();
+                    }
                   } catch (error: unknown) {
                     const message = getErrorMessage(
                       error,
@@ -3138,12 +3229,22 @@ export default function Home() {
                               )
                             }
                             aria-pressed={quality === "high"}
-                            aria-label="Plan mode"
-                            title="Plan the project structure before building"
+                            aria-label={
+                              quality === "high"
+                                ? "Plan first mode enabled"
+                                : "Build fast mode enabled"
+                            }
+                            title={
+                              quality === "high"
+                                ? "Ask clarifying questions and approve a plan before code generation (recommended)"
+                                : "Skip planning and generate code immediately"
+                            }
                             className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
                           >
                             <Sparkles className="size-3" aria-hidden="true" />
-                            <span className="hidden sm:inline">Plan mode</span>
+                            <span className="hidden sm:inline">
+                              {quality === "high" ? "Plan first" : "Build fast"}
+                            </span>
                           </button>
 
                           <div className="toolbar-divider mx-0.5 sm:mx-1" />
@@ -3348,6 +3449,15 @@ export default function Home() {
         <HelpPanel
           isOpen={showHelpPanel}
           onClose={() => setShowHelpPanel(false)}
+        />
+        <OnboardingWizard
+          isOpen={showOnboardingWizard}
+          onClose={() => setShowOnboardingWizard(false)}
+          onComplete={() => {
+            window.requestAnimationFrame(() => {
+              textareaRef.current?.focus();
+            });
+          }}
         />
         <PromptBuilderModal
           open={showPromptBuilder}

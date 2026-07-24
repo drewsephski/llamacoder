@@ -35,6 +35,7 @@ import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { findOwnedProjectWithMessages } from "@/features/projects/server/access";
 import { parseAgentMessageMetadata } from "@/features/generation/agent-contracts";
 import { shouldAnswerWithoutCode } from "@/features/generation/research-intent";
+import { finalizeGeneratedCodeFromText } from "@/features/generation/server/code-generation-pipeline";
 
 const MAX_CONTRACT_REPAIR_ATTEMPTS = 2;
 
@@ -310,6 +311,14 @@ export async function createMessage(
     ? normalizeGeneratedFiles(files)
     : [];
   const assistantHasFiles = role === "assistant" && normalizedFiles.length > 0;
+  const finalizedCode =
+    assistantHasFiles && text.trim()
+      ? finalizeGeneratedCodeFromText(text)
+      : null;
+  const designScores =
+    finalizedCode?.ok && finalizedCode.designScores
+      ? finalizedCode.designScores
+      : null;
   if (assistantHasFiles) {
     const selectedApiDiagnostics = await getGeneratedAppContractDiagnostics(
       prisma,
@@ -355,6 +364,9 @@ export async function createMessage(
     position: maxPosition + 1,
     chatId,
     ...(role === "assistant" ? getCheckpointMetadata(chat.messages) : {}),
+    ...(designScores
+      ? { designScores: JSON.parse(JSON.stringify(designScores)) }
+      : {}),
   };
 
   if (role === "assistant") {
@@ -456,6 +468,46 @@ export async function createMessage(
   }
 
   return newMessage;
+}
+
+export async function saveStreamedAssistantMessage(
+  chatId: string,
+  text: string,
+  files: RawGeneratedFile[],
+  options?: { creditHoldId?: string; generationRunId?: string },
+) {
+  const message = await createMessage(
+    chatId,
+    text,
+    "assistant",
+    files,
+    options,
+  );
+
+  if (options?.generationRunId) {
+    const session = await getCurrentSession();
+    if (!session) {
+      throw new Error("You must be signed in to save messages");
+    }
+
+    await getPrisma().generationRun.updateMany({
+      where: {
+        id: options.generationRunId,
+        chatId,
+        userId: session.user.id,
+      },
+      data: {
+        status: "completed",
+        assistantMessageId: message.id,
+        completedAt: new Date(),
+        phase: "completed",
+        label: "Saved",
+        errorMessage: null,
+      },
+    });
+  }
+
+  return message;
 }
 
 export async function releaseReservedCreditHold(holdId: string) {
@@ -788,6 +840,14 @@ export async function createFreeRepairAssistantMessage(
       : 0;
   const normalizedFiles = normalizeGeneratedFiles(files);
   const assistantHasFiles = normalizedFiles.length > 0;
+  const finalizedCode =
+    assistantHasFiles && text.trim()
+      ? finalizeGeneratedCodeFromText(text)
+      : null;
+  const designScores =
+    finalizedCode?.ok && finalizedCode.designScores
+      ? finalizedCode.designScores
+      : null;
   if (assistantHasFiles) {
     const diagnostics = await getGeneratedAppContractDiagnostics(
       prisma,
@@ -861,6 +921,9 @@ export async function createFreeRepairAssistantMessage(
         changeSummary: contractRepair
           ? "Completed generated app contract"
           : "Repaired preview",
+        ...(designScores
+          ? { designScores: JSON.parse(JSON.stringify(designScores)) }
+          : {}),
       },
     });
 

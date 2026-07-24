@@ -30,6 +30,7 @@ const {
   },
   prismaMock: {
     chat: { findUnique: vi.fn(), updateMany: vi.fn() },
+    message: { findMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -80,6 +81,14 @@ vi.mock("@/features/security/server/rate-limit", () => ({
 vi.mock("@/lib/follow-up-prompts", () => ({
   generateFollowUpPrompts: generateFollowUpPromptsMock,
   saveMessageFollowUpPrompts: saveMessageFollowUpPromptsMock,
+}));
+
+vi.mock("@/features/generation/server/past-media-library", () => ({
+  resolvePastMediaCatalogForPrompt: vi.fn().mockResolvedValue(""),
+}));
+
+vi.mock("@/lib/generation-recovery", () => ({
+  recoverStaleGenerationLocks: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { POST } from "@/app/api/generate-code/route";
@@ -144,6 +153,7 @@ describe("/api/generate-code", () => {
       remainingCredits: 4,
     });
     prismaMock.chat.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.message.findMany.mockResolvedValue([]);
     generateFollowUpPromptsMock.mockResolvedValue([
       "Add keyboard shortcuts",
       "Polish the mobile layout",

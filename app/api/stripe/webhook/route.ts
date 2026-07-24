@@ -153,7 +153,10 @@ export async function POST(request: NextRequest) {
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-        await markSubscriptionStatus(subscription.id, "canceled");
+        await syncSubscriptionFromStripe({
+          subscriptionId: subscription.id,
+          fallbackCustomerId: getStripeId(subscription.customer),
+        });
         break;
       }
 

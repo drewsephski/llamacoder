@@ -6,7 +6,22 @@ export const dynamic = "force-dynamic";
 const REQUIRED_OPERATIONAL_MIGRATION =
   "20260714100000_add_operational_incidents";
 
-export async function GET() {
+function isAuthorized(request: Request) {
+  if (process.env.NODE_ENV !== "production") {
+    return true;
+  }
+
+  const secret = process.env.CRON_SECRET;
+  return Boolean(
+    secret && request.headers.get("authorization") === `Bearer ${secret}`,
+  );
+}
+
+export async function GET(request: Request) {
+  if (!isAuthorized(request)) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const checks: Record<string, { ok: boolean; detail?: string }> = {};
   const environment = validateProductionEnvironment();
   checks.environment = environment.valid

@@ -10,6 +10,7 @@ import {
   checkProjectCreationEligibility,
   getModelCreditHoldCost,
 } from "@/lib/billing";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
 
 const remixSchema = z.object({
   messageId: z.string().min(1),
@@ -33,6 +34,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "AUTHENTICATION_REQUIRED", message: "Please sign in to remix" },
       { status: 401 },
+    );
+  }
+
+  const rateLimit = await consumeRateLimit({
+    userId: session.user.id,
+    operation: "remix",
+    limit: 10,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error: "RATE_LIMITED",
+        message: "Too many remix requests. Please try again shortly.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
     );
   }
 

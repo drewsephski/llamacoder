@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 import { getMainCodingPrompt } from "@/lib/prompts";
+import { resolvePastMediaCatalogForPrompt } from "@/features/generation/server/past-media-library";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -213,6 +214,7 @@ export async function POST(request: NextRequest) {
     }
 
     const fallbackTitle = createFallbackTitle(prompt);
+    const pastMediaCatalog = await resolvePastMediaCatalogForPrompt({ prompt });
 
     let chat: {
       id: string;
@@ -233,7 +235,10 @@ export async function POST(request: NextRequest) {
               data: [
                 {
                   role: "system",
-                  content: getMainCodingPrompt({ userPrompt: prompt }),
+                  content: getMainCodingPrompt({
+                    userPrompt: prompt,
+                    pastMediaCatalog,
+                  }),
                   position: 0,
                 },
                 { role: "user", content: prompt, position: 1 },

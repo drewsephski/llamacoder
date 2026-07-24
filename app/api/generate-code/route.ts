@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 import { getMainCodingPrompt } from "@/lib/prompts";
+import { resolvePastMediaCatalogForPrompt } from "@/features/generation/server/past-media-library";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -11,34 +12,28 @@ import {
   releaseCreditHold,
   reserveCreditHold,
 } from "@/lib/billing";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import {
   GENERATED_CODE_MAX_TOKENS,
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
   getOpenRouterProviderOptions,
-  getOpenRouterUsageMetadata,
 } from "@/lib/openrouter";
-import { extractAllCodeBlocks } from "@/lib/utils";
-import {
-  buildGeneratedFilesRepairPrompt,
-  formatGeneratedFilesMarkdown,
-  normalizeGeneratedFiles,
-  validateGeneratedFiles,
-} from "@/lib/generated-files";
 import {
   generateFollowUpPrompts,
   saveMessageFollowUpPrompts,
 } from "@/lib/follow-up-prompts";
 import { recoverStaleGenerationLocks } from "@/lib/generation-recovery";
-import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
-import { extractDesignScores } from "@/features/generation/design-quality-scoring";
-import {
-  auditContrast,
-  formatContrastReport,
-} from "@/features/generation/contrast-audit";
+import { runGeneratedCodePipeline } from "@/features/generation/server/code-generation-pipeline";
+
+import { z } from "zod";
+
+const generateCodeSchema = z.object({
+  chatId: z.string().trim().min(1, "chatId is required"),
+});
 
 class CreditConsumptionError extends Error {
   constructor(
@@ -75,7 +70,21 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    const { chatId } = await request.json();
+    const parsed = generateCodeSchema.safeParse(
+      await request.json().catch(() => null),
+    );
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "INVALID_REQUEST",
+          message: parsed.error.issues[0]?.message || "Invalid request",
+        },
+        { status: 400 },
+      );
+    }
+
+    const { chatId } = parsed.data;
 
     // Check authentication
     const session = await auth.api.getSession({
@@ -145,27 +154,15 @@ export async function POST(request: NextRequest) {
     activeChatId = chat.id;
 
     // Fetch previous assistant messages with design scores for dynamic emphasis
-    const messageModel = (
-      prisma as {
-        message?: { findMany: (args: unknown) => Promise<unknown[]> };
-      }
-    ).message;
-    const previousMessages =
-      typeof messageModel?.findMany === "function"
-        ? await messageModel.findMany({
-            where: { chatId: chat.id, role: "assistant" },
-            select: { designScores: true },
-            orderBy: { position: "desc" },
-            take: 3,
-          })
-        : [];
-    const latestDesignScores = (
-      previousMessages as Array<{
-        designScores:
-          | import("@/features/generation/design-quality-scoring").DesignScoreSummary
-          | null;
-      }>
-    ).find((m) => m.designScores !== null)?.designScores as
+    const previousMessages = await prisma.message.findMany({
+      where: { chatId: chat.id, role: "assistant" },
+      select: { designScores: true },
+      orderBy: { position: "desc" },
+      take: 3,
+    });
+    const latestDesignScores = previousMessages.find(
+      (message) => message.designScores !== null,
+    )?.designScores as
       | import("@/features/generation/design-quality-scoring").DesignScoreSummary
       | null;
 
@@ -241,6 +238,9 @@ export async function POST(request: NextRequest) {
       sessionId: chat.id,
       sessionName: "SquidAgent Code Generation",
     });
+    const pastMediaCatalog = await resolvePastMediaCatalogForPrompt({
+      prompt: chat.prompt?.trim() || "",
+    });
 
     const generateCode = (userContent: string) =>
       generateText({
@@ -255,6 +255,8 @@ export async function POST(request: NextRequest) {
         system: getMainCodingPrompt({
           designScoreSummary: latestDesignScores,
           userPrompt: chat.prompt || chat.plan,
+          pastMediaCatalog,
+          messageCount: 1,
         }),
         messages: [
           {
@@ -264,159 +266,63 @@ export async function POST(request: NextRequest) {
         ],
       });
 
-    // Generate code based on the plan
-    const codeResponse = await generateCode(chat.plan);
-    const usage = (
-      codeResponse as {
-        usage?: {
-          totalTokens?: unknown;
-          inputTokens?: unknown;
-          promptTokens?: unknown;
-          outputTokens?: unknown;
-          completionTokens?: unknown;
-        };
+    const pipelineResult = await runGeneratedCodePipeline({
+      generate: generateCode,
+      userContent: chat.plan,
+    });
+
+    if (!pipelineResult.ok) {
+      if (pipelineResult.error === "CONTRAST_VIOLATION") {
+        console.warn(
+          "Generated code rejected for contrast:",
+          pipelineResult.violations,
+        );
+      } else if (pipelineResult.error === "UNRUNNABLE_GENERATED_CODE") {
+        console.warn(
+          "Generated code rejected with diagnostics:",
+          pipelineResult.diagnostics,
+        );
       }
-    ).usage;
-    let tokensUsed =
-      typeof usage?.totalTokens === "number" ? usage.totalTokens : undefined;
-    let inputTokens =
-      typeof usage?.inputTokens === "number"
-        ? usage.inputTokens
-        : typeof usage?.promptTokens === "number"
-          ? usage.promptTokens
-          : undefined;
-    let outputTokens =
-      typeof usage?.outputTokens === "number"
-        ? usage.outputTokens
-        : typeof usage?.completionTokens === "number"
-          ? usage.completionTokens
-          : undefined;
-    const initialProviderUsage = getOpenRouterUsageMetadata(
-      codeResponse.providerMetadata,
-    );
-    let providerCostUsd = initialProviderUsage?.providerCostUsd;
-    let upstreamInferenceCostUsd =
-      initialProviderUsage?.upstreamInferenceCostUsd;
-    let reasoningTokens = initialProviderUsage?.reasoningTokens;
-    let provider = initialProviderUsage?.provider;
 
-    if (!codeResponse.text.trim()) {
       await releaseHoldAndResetChat();
+
+      const statusByError = {
+        EMPTY_MODEL_RESPONSE: 502,
+        UNRUNNABLE_GENERATED_CODE: 502,
+        CONTRAST_VIOLATION: 422,
+      } as const;
+
       return NextResponse.json(
         {
-          error: "EMPTY_MODEL_RESPONSE",
-          message: "The model returned an empty response. Please retry.",
+          error: pipelineResult.error,
+          message: pipelineResult.message,
+          diagnostics: pipelineResult.diagnostics,
+          violations: pipelineResult.violations,
         },
-        { status: 502 },
+        { status: statusByError[pipelineResult.error] },
       );
     }
 
-    let generatedText = codeResponse.text;
-    let generatedFiles = normalizeGeneratedFiles(
-      extractAllCodeBlocks(generatedText),
-    );
-    let diagnostics = validateGeneratedFiles(generatedFiles);
-
-    if (diagnostics.length > 0) {
-      const repairResponse = await generateCode(
-        buildGeneratedFilesRepairPrompt(
-          generatedText,
-          generatedFiles,
-          diagnostics,
-        ),
-      );
-      const repairProviderUsage = getOpenRouterUsageMetadata(
-        repairResponse.providerMetadata,
-      );
-      providerCostUsd =
-        (providerCostUsd ?? 0) + (repairProviderUsage?.providerCostUsd ?? 0);
-      upstreamInferenceCostUsd =
-        (upstreamInferenceCostUsd ?? 0) +
-        (repairProviderUsage?.upstreamInferenceCostUsd ?? 0);
-      inputTokens =
-        (inputTokens ?? 0) +
-        (repairProviderUsage?.inputTokens ??
-          repairResponse.usage?.inputTokens ??
-          0);
-      outputTokens =
-        (outputTokens ?? 0) +
-        (repairProviderUsage?.outputTokens ??
-          repairResponse.usage?.outputTokens ??
-          0);
-      reasoningTokens =
-        (reasoningTokens ?? 0) +
-        (repairProviderUsage?.reasoningTokens ??
-          repairResponse.usage?.outputTokenDetails.reasoningTokens ??
-          0);
-      tokensUsed =
-        (tokensUsed ?? 0) +
-        (repairProviderUsage?.totalTokens ??
-          repairResponse.usage?.totalTokens ??
-          0);
-      provider = repairProviderUsage?.provider ?? provider;
-      const repairedFiles = normalizeGeneratedFiles(
-        extractAllCodeBlocks(repairResponse.text),
-      );
-      const repairedDiagnostics = validateGeneratedFiles(repairedFiles);
-
-      if (repairResponse.text.trim() && repairedDiagnostics.length === 0) {
-        generatedText = repairResponse.text;
-        generatedFiles = repairedFiles;
-        diagnostics = repairedDiagnostics;
-      }
-    }
-
-    const content = generatedFiles.length
-      ? formatGeneratedFilesMarkdown(generatedFiles)
-      : generatedText;
-
-    if (!content.trim()) {
-      await releaseHoldAndResetChat();
-      return NextResponse.json(
-        {
-          error: "EMPTY_MODEL_RESPONSE",
-          message: "The model returned an empty response. Please retry.",
-        },
-        { status: 502 },
-      );
-    }
-
-    if (diagnostics.length > 0) {
-      console.warn("Generated code rejected with diagnostics:", diagnostics);
-      await releaseHoldAndResetChat();
-      return NextResponse.json(
-        {
-          error: "UNRUNNABLE_GENERATED_CODE",
-          message:
-            "The model returned code with import/export issues that could not be repaired automatically. Please retry generation.",
-          diagnostics,
-        },
-        { status: 502 },
-      );
-    }
+    const {
+      content,
+      generatedFiles,
+      designScores,
+      usage: {
+        tokensUsed,
+        inputTokens,
+        outputTokens,
+        reasoningTokens,
+        providerCostUsd,
+        upstreamInferenceCostUsd,
+        provider,
+      },
+    } = pipelineResult;
 
     const followUpPrompts = await generateFollowUpPrompts({
       chat,
       assistantContent: content,
       files: generatedFiles,
     });
-
-    // Run contrast audit and extract design scores
-    const contrastReport = auditContrast(generatedFiles);
-    const designScores = extractDesignScores(generatedText);
-    if (contrastReport.violations.some((v) => v.severity === "error")) {
-      console.warn(formatContrastReport(contrastReport));
-      await releaseHoldAndResetChat();
-      return NextResponse.json(
-        {
-          error: "CONTRAST_VIOLATION",
-          message:
-            "Generated app contrast issues are likely to reduce text visibility in a theme. Please regenerate.",
-          violations: contrastReport.violations,
-        },
-        { status: 422 },
-      );
-    }
 
     const message = await prisma.$transaction(async (tx) => {
       const createdMessage = await tx.message.create({

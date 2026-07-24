@@ -85,6 +85,7 @@ export function getCompressedCodingPrompt(): string {
      - Framer Motion: \`import { motion, AnimatePresence } from "framer-motion"\`, render \`<motion.div>\`.
      - If you call \`cn(...)\`, import \`{ cn } from "@/lib/utils"\`.
      - \`@/components/ui/select\` has no \`SelectItemText\` — render labels as direct children.
+     - Toasts: \`import { Toaster, toast } from "sonner"\` only. Never \`@/components/ui/sonner\`, \`@/components/ui/toaster\`, or \`@/components/ui/use-toast\`.
      - Never call \`navigator.clipboard.writeText\` without a fallback (use textarea fallback pattern).
 
   6. **Live API safety:**

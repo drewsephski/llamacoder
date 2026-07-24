@@ -113,8 +113,7 @@ export function estimateStripeNetRevenueUsd(grossRevenueUsd: number) {
 
   return Math.max(
     0,
-    grossRevenueUsd * (1 - STRIPE_CARD_PERCENT_FEE) -
-      STRIPE_CARD_FIXED_FEE_USD,
+    grossRevenueUsd * (1 - STRIPE_CARD_PERCENT_FEE) - STRIPE_CARD_FIXED_FEE_USD,
   );
 }
 
@@ -135,10 +134,7 @@ export type ModelTokenPricing = {
   outputPricePerMillion: number;
 };
 
-export const MODEL_TOKEN_PRICING: Record<
-  string,
-  ModelTokenPricing
-> = {
+export const MODEL_TOKEN_PRICING: Record<string, ModelTokenPricing> = {
   [FREE_MODEL]: { inputPricePerMillion: 0.09, outputPricePerMillion: 0.18 },
   [LEGACY_FREE_MODEL]: {
     inputPricePerMillion: 0.09,
@@ -408,4 +404,38 @@ export function normalizeTier(tier: string | null | undefined): TierKey {
   if (tier === "unlimited") return "pro_plus";
   if (tier in TIERS) return tier as TierKey;
   return "free";
+}
+
+/**
+ * Subscription statuses that unlock paid plan entitlements (models, project limit).
+ * Stripe uses `trialing` during trial periods; treat it like active access.
+ */
+export function isSubscriptionEntitled(
+  status: string | null | undefined,
+): boolean {
+  return status === "active" || status === "trialing";
+}
+
+export function getEntitlementTier(
+  subscription:
+    | {
+        status: string;
+        tier: string;
+      }
+    | null
+    | undefined,
+): TierKey {
+  if (!subscription || !isSubscriptionEntitled(subscription.status)) {
+    return "free";
+  }
+
+  return normalizeTier(subscription.tier);
+}
+
+export function hasPremiumModelAccess(
+  tier: TierKey,
+  options?: { hasPurchasedCredits?: boolean },
+): boolean {
+  if (tier === "pro_plus") return true;
+  return Boolean(options?.hasPurchasedCredits);
 }

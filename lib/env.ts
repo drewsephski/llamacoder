@@ -25,7 +25,7 @@ const productionEnvironmentSchema = z.object({
   GOOGLE_CLIENT_ID: optionalSecret,
   GOOGLE_CLIENT_SECRET: optionalSecret,
   HELICONE_API_KEY: z.string().optional(),
-  INTEGRATION_ENCRYPTION_KEY: z.string().optional(),
+  INTEGRATION_ENCRYPTION_KEY: z.string().min(32).optional(),
   INTEGRATION_OAUTH_STATE_SECRET: z.string().optional(),
   S3_UPLOAD_REGION: z.string().optional(),
   S3_UPLOAD_BUCKET: z.string().optional(),
@@ -89,6 +89,10 @@ export function validateProductionEnvironment(
     if (hasPartialGroup(environment, group)) {
       errors.push(`Configure all or none of: ${group.join(", ")}`);
     }
+  }
+
+  if (!environment.INTEGRATION_ENCRYPTION_KEY?.trim()) {
+    errors.push("INTEGRATION_ENCRYPTION_KEY: Required in production");
   }
 
   return errors.length === 0

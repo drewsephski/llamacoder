@@ -126,16 +126,23 @@ describe("/api/stripe/webhook", () => {
 
     await POST(request("{}", "sig"));
 
-    expect(markSubscriptionStatusMock).toHaveBeenCalledWith("sub_1", "past_due");
+    expect(markSubscriptionStatusMock).toHaveBeenCalledWith(
+      "sub_1",
+      "past_due",
+    );
 
     const deletedEvent = buildStripeEvent("customer.subscription.deleted", {
       id: "sub_1",
+      customer: "cus_1",
     });
     stripeMock.webhooks.constructEvent.mockReturnValueOnce(deletedEvent);
 
     await POST(request("{}", "sig"));
 
-    expect(markSubscriptionStatusMock).toHaveBeenCalledWith("sub_1", "canceled");
+    expect(syncSubscriptionFromStripeMock).toHaveBeenCalledWith({
+      subscriptionId: "sub_1",
+      fallbackCustomerId: "cus_1",
+    });
     expect(fulfillPaidInvoiceMock).not.toHaveBeenCalled();
   });
 });

@@ -1,45 +1,93 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
+import { headers } from "next/headers";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
 import { createAppOpenRouter, createOpenRouterModel } from "@/lib/openrouter";
 import { DEFAULT_MODEL } from "@/lib/constants";
 import { promptBuilderSystemPrompt } from "@/lib/prompts";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
+
+const MAX_HISTORY_MESSAGES = 12;
+const MAX_MESSAGE_CHARS = 4_000;
+const MAX_PROMPT_CHARS = 8_000;
+
+const enhancePromptSchema = z.object({
+  prompt: z
+    .string()
+    .trim()
+    .min(1, "A non-empty prompt is required.")
+    .max(MAX_PROMPT_CHARS, "Prompt is too long."),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().trim().min(1).max(MAX_MESSAGE_CHARS),
+      }),
+    )
+    .max(MAX_HISTORY_MESSAGES)
+    .optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { prompt, history } = body as {
-      prompt?: string;
-      history?: Array<{ role: "user" | "assistant"; content: string }>;
-    };
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
+    if (!session) {
       return NextResponse.json(
-        { error: "A non-empty prompt is required." },
+        { error: "AUTHENTICATION_REQUIRED", message: "Please sign in first." },
+        { status: 401 },
+      );
+    }
+
+    const rateLimit = await consumeRateLimit({
+      userId: session.user.id,
+      operation: "enhance_prompt",
+      limit: 12,
+      windowMs: 60_000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          message: "Too many prompt enhancements. Please try again shortly.",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
+    const parsed = enhancePromptSchema.safeParse(
+      await request.json().catch(() => null),
+    );
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "INVALID_REQUEST",
+          message: parsed.error.issues[0]?.message || "Invalid request",
+        },
         { status: 400 },
       );
     }
 
+    const { prompt, history = [] } = parsed.data;
+
     const openrouter = createAppOpenRouter({
-      sessionId: "prompt-builder",
+      sessionId: `prompt-builder:${session.user.id}`,
       sessionName: "Prompt Builder",
     });
 
-    const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
-
-    if (Array.isArray(history)) {
-      for (const msg of history) {
-        if (msg.role === "user" || msg.role === "assistant") {
-          if (
-            typeof msg.content === "string" &&
-            msg.content.trim().length > 0
-          ) {
-            messages.push({ role: msg.role, content: msg.content });
-          }
-        }
-      }
-    }
-
-    messages.push({ role: "user", content: prompt });
+    const messages = history.map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
+    messages.push({ role: "user" as const, content: prompt });
 
     const model = createOpenRouterModel(openrouter, DEFAULT_MODEL, {
       maxTokens: 4096,

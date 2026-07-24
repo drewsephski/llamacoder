@@ -6,6 +6,10 @@
       "schedule": "0 0 * * *"
     },
     {
+      "path": "/api/maintenance/rate-limit-buckets",
+      "schedule": "0 * * * *"
+    },
+    {
       "path": "/api/synthetic/launch",
       "schedule": "0 12 * * *"
     },

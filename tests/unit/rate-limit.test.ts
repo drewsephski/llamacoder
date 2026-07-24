@@ -14,7 +14,10 @@ vi.mock("@/lib/prisma", () => ({
   }),
 }));
 
-import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import {
+  consumeRateLimit,
+  purgeExpiredRateLimitBuckets,
+} from "@/features/security/server/rate-limit";
 
 describe("consumeRateLimit", () => {
   beforeEach(() => {
@@ -54,5 +57,17 @@ describe("consumeRateLimit", () => {
         windowMs: 60_000,
       }),
     ).resolves.toEqual({ allowed: false, retryAfterSeconds: 30 });
+  });
+
+  it("purges expired buckets", async () => {
+    deleteManyMock.mockResolvedValue({ count: 4 });
+
+    await expect(
+      purgeExpiredRateLimitBuckets(new Date("2026-07-11T12:00:30.000Z")),
+    ).resolves.toBe(4);
+
+    expect(deleteManyMock).toHaveBeenCalledWith({
+      where: { expiresAt: { lt: new Date("2026-07-11T12:00:30.000Z") } },
+    });
   });
 });

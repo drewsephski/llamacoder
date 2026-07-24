@@ -1,9 +1,8 @@
-export const name = "Toast notifications";
+export const name = "Toast notifications (sonner)";
 
 export const importDocs = `
-import { Toaster } from "@/components/ui/toaster"
-import { useToast } from "@/components/ui/use-toast"
+import { Toaster, toast } from "sonner"
 `;
 
 export const usageDocs =
-  "Mount one Toaster near the app root and call useToast for transient completion feedback.";
+  "Import Toaster and toast from the sonner package — never from @/components/ui/sonner (that path does not exist). Mount <Toaster /> near the app root and call toast() / toast.promise() for transient completion feedback.";

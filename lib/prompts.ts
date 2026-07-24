@@ -26,6 +26,13 @@ import {
 } from "@/features/generation/design-prompt-contracts";
 import type { DesignScoreSummary } from "@/features/generation/design-quality-scoring";
 import { buildDesignEmphasis } from "@/features/generation/design-quality-scoring";
+import type { PastMediaCatalogEntry } from "@/features/generation/past-media-catalog";
+import { buildPastMediaCatalogPromptSection } from "@/features/generation/past-media-urls";
+import {
+  estimateTokens,
+  getCompressedCodingPrompt,
+  shouldUseCompressedPrompt,
+} from "@/lib/prompt-compression";
 import shadcnDocs from "./shadcn-docs";
 
 export const softwareArchitectPrompt = dedent`
@@ -98,13 +105,41 @@ export function getMainCodingPrompt(options?: {
   designScoreSummary?: DesignScoreSummary | null;
   /** User brief used to server-resolve and lock a Style Pack for this build. */
   userPrompt?: string | null;
+  /** Curated reusable media catalog for underspecified visual briefs. */
+  pastMediaCatalog?: readonly PastMediaCatalogEntry[] | null;
+  /** Conversation length — enables compressed prompt mode when high. */
+  messageCount?: number;
+  /** Approximate tokens in conversation context (excluding system prompt). */
+  estimatedContextTokens?: number;
 }) {
   const designEmphasis = buildDesignEmphasis(
     options?.designScoreSummary ?? null,
   );
+  const pastMediaCatalog = options?.pastMediaCatalog ?? null;
+  const pastMediaPromptSection =
+    buildPastMediaCatalogPromptSection(pastMediaCatalog);
+  const pastMediaChecklistItem = pastMediaCatalog?.length
+    ? "27. Did you embed the required primary catalog video URL in a real `<video autoPlay loop muted playsInline>` element (not a placeholder div or shader substitute)?"
+    : "";
   const activeStylePackDirective = buildActiveStylePackDirective(
     options?.userPrompt?.trim() || "product app",
   );
+
+  const useCompressedPrompt = shouldUseCompressedPrompt(
+    options?.messageCount ?? 0,
+    options?.estimatedContextTokens ?? 0,
+  );
+
+  if (useCompressedPrompt) {
+    return dedent`
+      ${getCompressedCodingPrompt()}
+
+      ${activeStylePackDirective}
+
+      ${designEmphasis ? `\n${designEmphasis}\n` : ""}
+      ${pastMediaPromptSection ? `\n${pastMediaPromptSection}\n` : ""}
+    `;
+  }
 
   let systemPrompt = `
   # SquidAgent
@@ -149,6 +184,7 @@ export function getMainCodingPrompt(options?: {
   - Never introduce horizontal overflow. If a control label risks wrapping into two lines, adjust spacing, width, or copy before reducing content legibility.
   - Hover styles must stay visually coherent with the resting treatment. Prefer one complete hover recipe owned by the design (matching bg + text, or bg-only when resting text should persist). Do not bolt on a gray \`hover:text-*\` / \`hover:bg-gray-*\` fallback that fights a branded secondary CTA, ghost Login, or outline nav control. Native \`<button>\`/\`<a>\` with full custom classes is fine when Shadcn variants would fight the look.
      - Verify resting (default) text/icon contrast in the active luminosity model. Opacity, gradients, background images, and translucent overlays do not excuse unreadable default text. Never emit dark-on-dark, light-on-light, gray-on-color, or an unreadable disabled state.
+     - **Hero CTA pair rule:** the primary CTA and the secondary CTA each need their own explicit \`bg-*\` + \`text-*\` pair that contrasts against the hero surface. Do not let the second button inherit light hero ink while painting a light \`bg-background\`/\`bg-white\` (invisible label). Use the Style Pack Secondary CTA recipe, or \`variant="outline"\` only with an intentional \`className\` that includes \`text-foreground\` (or a literal dark/light ink matching that button's fill). When a theme toggle exists, both CTAs must stay readable in light and dark.
 
   ${tailwindColorFidelityContract}
 
@@ -176,6 +212,7 @@ export function getMainCodingPrompt(options?: {
      - For Framer Motion: \`import { motion, AnimatePresence } from "framer-motion"\`, render \`<motion.div>\` — never a \`Motion\` component.
      - If you call \`cn(...)\`, you must \`import { cn } from "@/lib/utils"\` first.
      - \`@/components/ui/select\` only exports \`Select\`, \`SelectContent\`, \`SelectGroup\`, \`SelectItem\`, \`SelectLabel\`, \`SelectScrollDownButton\`, \`SelectScrollUpButton\`, \`SelectSeparator\`, \`SelectTrigger\`, \`SelectValue\`. There is no \`SelectItemText\` — render labels as direct children of \`SelectItem\`.
+     - Toasts: \`import { Toaster, toast } from "sonner"\` only. Never import \`@/components/ui/sonner\` (unresolved — that Shadcn wrapper is not provided). Never use \`@/components/ui/toaster\` or \`@/components/ui/use-toast\`.
      - Never call \`navigator.clipboard.writeText\` without a fallback. Use:
        \`\`\`
        const copyText = async (text: string) => {
@@ -415,6 +452,7 @@ export function getMainCodingPrompt(options?: {
   17. Did you trace every visible control to a real handler or valid destination and exercise the primary, cancel, invalid, success, and error paths with visible state changes?
   18. If a theme control exists, does it persist preference, update the root HTML dark class and color-scheme, expose its current state accessibly, and visibly theme every surface including dialogs and toasts?
   19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?
+  19b. Does every hero/primary-row CTA (especially the second/outline/secondary button) set an explicit matching \`text-*\` for its own \`bg-*\`, remaining readable against the hero and in both themes when a toggle exists — never relying on parent \`text-white\` inheritance over a light button fill?
   20. Does every meaningful control expose all relevant explicit UI states (hover, active, focus-visible, disabled, loading, success, error), and are any necessary labels kept one-line at mobile widths?
      21. If the selected tone is brutalist, is the page using an edge-forward register (heavy borders/clear rhythm, minimal ornament, restrained rounded corners) with no glow-first motion and no decorative hover choreography across all controls?
      22. For nav layout, did you privately lock max-width shell, padding class, and breakpoints before JSX, with centered shell behavior preserved on 320/375/414/768 without drifting edge lock — without dumping that preflight into the chat?
@@ -422,7 +460,9 @@ export function getMainCodingPrompt(options?: {
      24. Did you privately lock a Design Read and taste dials, hold theme/color/shape locks, ban em/en-dash separators, ration eyebrows (≤1 per 3 sections), avoid zigzag×3 and duplicate CTA intents, and pass the Design Taste preflight?
      25. If an aesthetic mode was selected (brutalist / minimalist / high-end / kinetic), does the implementation stay inside that mode without mixing conflicting recipes (e.g. glass + radius-0 brutalism)?
      26. Is the text before the first code fence a single brief customized acknowledgment — not Design Read, dials, STYLE_PACK, SURFACE_MAP, or nav/footer preflight dumps?
+     ${pastMediaChecklistItem}
   ${designEmphasis ? `\n${designEmphasis}\n` : ""}
+  ${pastMediaPromptSection ? `\n${pastMediaPromptSection}\n` : ""}
   `;
 
   return dedent(systemPrompt);

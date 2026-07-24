@@ -42,6 +42,14 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("@/lib/billing", () => ({
+  getEntitlementTier: (
+    subscription: { status: string; tier: string } | null,
+  ) =>
+    subscription?.status === "active" || subscription?.status === "trialing"
+      ? subscription.tier
+      : "free",
+  isSubscriptionEntitled: (status: string | null | undefined) =>
+    status === "active" || status === "trialing",
   normalizeTier: (tier: string) => tier,
 }));
 

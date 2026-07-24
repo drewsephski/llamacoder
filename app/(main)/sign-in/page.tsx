@@ -103,7 +103,7 @@ function SignInForm() {
           <p className="mt-2 text-sm text-muted-foreground">
             Or{" "}
             <Link
-              href="/sign-up"
+              href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrlRef.current)}`}
               className="inline-flex min-h-[44px] items-center font-medium text-primary hover:underline"
             >
               create a new account

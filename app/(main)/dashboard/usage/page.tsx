@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
-import { normalizeTier, type TierKey } from "@/lib/billing";
+import { getEntitlementTier, type TierKey } from "@/lib/billing";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -73,10 +73,7 @@ export default async function UsagePage() {
       })
     : [];
   const chatTitleById = new Map(chats.map((chat) => [chat.id, chat.title]));
-  const currentTier: TierKey =
-    user?.subscription?.status === "active"
-      ? normalizeTier(user.subscription.tier)
-      : "free";
+  const currentTier: TierKey = getEntitlementTier(user?.subscription ?? null);
 
   return (
     <div className="min-h-screen bg-background">

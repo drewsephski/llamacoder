@@ -891,16 +891,29 @@ function getRelativeImportPath(fromPath: string, toPath: string) {
 function normalizeCommonCodegenMistakes(code: string) {
   return ensureCnImport(
     normalizeSelectCodegenErrors(
-      normalizeClipboardWrites(
-        code
-          .replace(
-            /import\s*{\s*Motion\s*}\s*from\s*["']framer-motion["'];?/g,
-            'import { motion } from "framer-motion";',
-          )
-          .replace(/<Motion(\s|>)/g, "<motion.div$1")
-          .replace(/<\/Motion>/g, "</motion.div>"),
+      normalizeSonnerImports(
+        normalizeClipboardWrites(
+          code
+            .replace(
+              /import\s*{\s*Motion\s*}\s*from\s*["']framer-motion["'];?/g,
+              'import { motion } from "framer-motion";',
+            )
+            .replace(/<Motion(\s|>)/g, "<motion.div$1")
+            .replace(/<\/Motion>/g, "</motion.div>"),
+        ),
       ),
     ),
+  );
+}
+
+/**
+ * Models often invent the Shadcn sonner wrapper path. That file is not seeded;
+ * sonner is installed as a package — rewrite the import before validation.
+ */
+function normalizeSonnerImports(code: string) {
+  return code.replace(
+    /from\s*["']@\/components\/ui\/sonner["']/g,
+    'from "sonner"',
   );
 }
 

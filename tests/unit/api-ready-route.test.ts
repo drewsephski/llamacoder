@@ -39,7 +39,7 @@ describe("readiness route", () => {
       creditHold: { count: vi.fn().mockResolvedValue(0) },
     });
 
-    const response = await GET();
+    const response = await GET(new Request("http://localhost/api/ready"));
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -66,7 +66,7 @@ describe("readiness route", () => {
       creditHold: { count: vi.fn().mockResolvedValue(0) },
     });
 
-    const response = await GET();
+    const response = await GET(new Request("http://localhost/api/ready"));
     const body = await response.json();
 
     expect(response.status).toBe(503);

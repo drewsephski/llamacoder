@@ -55,6 +55,22 @@ lib/
    request telemetry, validates output, persists a version, and captures or
    releases the hold.
 
+### Code generation paths
+
+Squid uses two HTTP entry points that share prompt assembly via
+`getMainCodingPrompt()` and file validation via `lib/generated-files.ts`:
+
+- **`/api/get-next-completion-stream-promise`** — Primary workspace path. Streams
+  agent orchestration, research, planning, and codegen to the chat UI. Used for
+  every follow-up message and plan-mode flows after project creation.
+- **`/api/generate-code`** — Non-streaming batch path used when the user
+  approves a structured plan in `PlanReview`. Runs a single completion, validates
+  output, and persists the first code version.
+
+Both paths must stay aligned on credit holds, prompt contracts, and repair
+logic. Prefer extending shared modules under `features/generation/server/`
+instead of duplicating policy in either route.
+
 ### Project mutations
 
 Client component → feature server action → session/ownership check → Prisma

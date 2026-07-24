@@ -480,18 +480,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Semantic tokens only. Outline/ghost intentionally omit hover:text-* so
-        // custom className text colors (nav Login, secondary CTAs) are not forced
-        // to gray-900/white on hover via twMerge leaving the default hover:text.
+        // Semantic tokens only. Outline/ghost keep resting text-foreground so a
+        // secondary CTA with bg-background stays readable when nested in a dark
+        // hero that inherits light text. They intentionally omit hover:text-* so
+        // custom className text colors (nav Login, branded secondary CTAs) are
+        // not forced to gray-900/white on hover via twMerge leaving hover:text.
         default:
           "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent",
+          "border border-input bg-background text-foreground hover:bg-accent",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent",
+        ghost: "text-foreground hover:bg-accent",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

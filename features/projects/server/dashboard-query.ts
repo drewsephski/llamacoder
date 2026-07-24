@@ -20,13 +20,16 @@ export type ProjectVerificationSummary = {
 
 export type DashboardProject = Chat & {
   verification: ProjectVerificationSummary;
+  lastActivityAt: Date;
 };
 
 export type DashboardData = {
   currentPage: number;
   hasActiveSubscription: boolean;
+  monthlyAllowance: number;
   projects: DashboardProject[];
   session: Awaited<ReturnType<typeof getCurrentSession>>;
+  subscriptionCredits: number;
   tier: TierKey;
   totalPages: number;
   totalProjects: number;
@@ -49,8 +52,10 @@ export async function getDashboardData({
     return {
       currentPage,
       hasActiveSubscription: false,
+      monthlyAllowance: 0,
       projects: [],
       session: null,
+      subscriptionCredits: 0,
       tier: "free",
       totalPages: 0,
       totalProjects: 0,
@@ -82,7 +87,7 @@ export async function getDashboardData({
           where: { role: "assistant" },
           orderBy: { createdAt: "desc" },
           take: 1,
-          select: { id: true, content: true, files: true },
+          select: { id: true, content: true, files: true, createdAt: true },
         },
       },
     }),
@@ -139,6 +144,7 @@ export async function getDashboardData({
 
     return {
       ...chat,
+      lastActivityAt: latestMessage?.createdAt ?? project.createdAt,
       verification: {
         staticChecks:
           warningCount === null
@@ -165,8 +171,10 @@ export async function getDashboardData({
   return {
     currentPage,
     hasActiveSubscription: creditInfo?.hasActiveSubscription ?? false,
+    monthlyAllowance: creditInfo?.monthlyAllowance ?? 0,
     projects,
     session,
+    subscriptionCredits: creditInfo?.creditBreakdown?.subscriptionCredits ?? 0,
     tier: creditInfo?.tier ?? "free",
     totalPages: Math.ceil(totalProjects / PROJECTS_PER_PAGE),
     totalProjects,

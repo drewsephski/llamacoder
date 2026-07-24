@@ -186,7 +186,10 @@ describe("billing credit engine", () => {
         updateMany: vi.fn(),
       },
       creditGrant: {
-        findMany: vi.fn().mockResolvedValue([grant(10)]),
+        findMany: vi
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValue([grant(10)]),
         update: vi.fn(),
       },
       creditHold: { findMany: vi.fn().mockResolvedValue([]) },
@@ -545,6 +548,9 @@ describe("billing credit engine", () => {
       tier: "pro_plus",
       hasActiveSubscription: true,
       hasPurchasedCredits: false,
+      hasPremiumModelAccess: true,
+      monthlyAllowance: 500,
+      subscriptionStatus: "active",
       subscriptionEndsAt: "2026-08-01T00:00:00.000Z",
     });
   });

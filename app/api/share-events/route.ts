@@ -5,6 +5,8 @@ import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 import { z } from "zod";
 
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
+
 const SHARE_VISITOR_COOKIE = "squid_share_visitor";
 
 const shareEventSchema = z.object({
@@ -45,6 +47,35 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  const visitorId =
+    request.cookies.get(SHARE_VISITOR_COOKIE)?.value || crypto.randomUUID();
+  const rateLimitSubject =
+    session?.user.id ??
+    `visitor:${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || visitorId}`;
+
+  const rateLimit = await consumeRateLimit({
+    userId: rateLimitSubject,
+    operation: "share_event",
+    limit: 60,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error: "RATE_LIMITED",
+        message: "Too many share events. Please try again shortly.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
   const prisma = getPrisma();
   const message = await prisma.message.findUnique({
     where: { id: parsed.data.messageId },
@@ -57,12 +88,6 @@ export async function POST(request: NextRequest) {
       { status: 404 },
     );
   }
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  const visitorId =
-    request.cookies.get(SHARE_VISITOR_COOKIE)?.value || crypto.randomUUID();
 
   await prisma.shareEvent.create({
     data: {

@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { getSafeCallbackUrl } from "@/lib/safe-redirect";
 
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string; callbackUrl?: string }>;
 }) {
-  const { email } = await searchParams;
+  const { email, callbackUrl } = await searchParams;
+  const safeCallbackUrl = getSafeCallbackUrl(callbackUrl, "/");
+  const signInHref = `/sign-in?callbackUrl=${encodeURIComponent(safeCallbackUrl)}`;
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
@@ -23,7 +26,7 @@ export default async function VerifyEmailPage({
           After verifying, you can close this page or continue to sign in.
         </p>
         <Link
-          href="/sign-in?callbackUrl=/dashboard"
+          href={signInHref}
           className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
           Continue to sign in

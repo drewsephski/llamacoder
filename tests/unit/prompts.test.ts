@@ -23,7 +23,8 @@ describe("prompt design guidance", () => {
     );
     expect(prompt).toContain("Do not emit inert controls");
     expect(prompt).toContain("Shadcn `Dialog`");
-    expect(prompt).toContain("Shadcn `Toaster`");
+    expect(prompt).toContain('from "sonner"');
+    expect(prompt).toContain("Never import `@/components/ui/sonner`");
     expect(prompt).toContain("Theme behavior contract (mandatory");
     expect(prompt).toContain(
       'window.matchMedia("(prefers-color-scheme: dark)")',
@@ -43,8 +44,8 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("document.documentElement.style.colorScheme");
     expect(prompt).toContain('from "@/components/ui/dialog"');
     expect(prompt).toContain('from "@/components/ui/alert-dialog"');
-    expect(prompt).toContain('from "@/components/ui/toaster"');
-    expect(prompt).toContain('from "@/components/ui/use-toast"');
+    expect(prompt).toContain('import { Toaster, toast } from "sonner"');
+    expect(prompt).not.toContain('from "@/components/ui/sonner"');
     expect(prompt).toContain("Responsive composition");
     expect(prompt).toContain("Structural variety");
     expect(prompt).toContain("Final design critique");
@@ -62,7 +63,9 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Never import `LucideIcon`");
     expect(prompt).toContain("Never import `ArrowLeft`");
     expect(prompt).toContain("Calendar as CalendarIcon");
-    expect(prompt).toContain("Do not import `CalendarIcon` directly");
+    expect(prompt).toContain(
+      "Do not import `UserIcon`/`CalendarIcon`/`MailIcon` as package exports",
+    );
     expect(prompt).toContain(
       "Every JSX component, icon, helper, hook, and constant",
     );
@@ -309,5 +312,16 @@ describe("prompt design guidance", () => {
     expect(prompt).toMatch(/STYLE_PACK: (cobaltMinimal|swissBrutal)/);
     expect(prompt).toContain("md:grid-cols-12");
     expect(prompt).toContain("gap-px");
+  });
+
+  it("uses the compressed coding prompt when conversation context is large", () => {
+    const prompt = getMainCodingPrompt({
+      userPrompt: "Build a dashboard",
+      messageCount: 12,
+      estimatedContextTokens: 0,
+    });
+
+    expect(prompt).toContain("SquidAgent (Compressed Mode)");
+    expect(prompt).not.toContain("Premium UI/UX execution contract");
   });
 });

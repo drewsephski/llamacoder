@@ -12,6 +12,7 @@ import {
   releaseReservedCreditHold,
   restoreSelectedFilesAsCheckpoint,
   restoreVersionAsCheckpoint,
+  saveStreamedAssistantMessage,
 } from "@/features/generation/server/actions";
 import { saveProject } from "@/features/projects/server/actions";
 import LogoSmall from "@/components/icons/logo-small";
@@ -47,6 +48,7 @@ import { SignInModal } from "@/components/sign-in-modal";
 import { toast } from "sonner";
 import {
   fetchCompletionStream,
+  fetchGenerationRun,
   recoverCompletionStream,
   retryCompletionStream,
   updateGenerationRun,
@@ -472,6 +474,31 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
         }
 
+        let serverRunPhase: string | null = null;
+        if (activeStream?.generationRunId) {
+          try {
+            const run = await fetchGenerationRun(activeStream.generationRunId);
+            if (run.partialText.trim()) {
+              fullText = run.partialText;
+              pendingText = fullText;
+              scheduleStreamRender();
+            }
+            serverRunPhase = run.phase;
+            const parsedRunStatus = generationStatusSchema.safeParse({
+              phase: run.phase,
+              label: run.label,
+            });
+            if (parsedRunStatus.success) {
+              setGenerationStatus(parsedRunStatus.data);
+            }
+          } catch (runError) {
+            console.warn(
+              "Unable to sync generation run finalize state:",
+              runError,
+            );
+          }
+        }
+
         if (!fullText.trim() && !completedAgentAction) {
           throw new Error(
             "The model returned an empty response. Please retry.",
@@ -546,6 +573,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         let message: Message | undefined;
         let shouldOpenPreview = false;
         let queuedRepairStream: Promise<CompletionStream> | undefined;
+        let completedGenerationRun = false;
 
         try {
           if (completedAgentAction?.action === "clarify") {
@@ -619,16 +647,16 @@ export default function PageClient({ chat }: { chat: Chat }) {
             )) as Message;
             shouldOpenPreview = true;
           } else {
-            message = (await createMessage(
+            message = (await saveStreamedAssistantMessage(
               chat.id,
-              fullText, // Store original AI response content (only changed files)
-              "assistant",
-              allFiles, // Store cumulative files
+              fullText,
+              allFiles,
               {
                 creditHoldId,
                 generationRunId: activeStream?.generationRunId,
               },
             )) as Message;
+            completedGenerationRun = true;
             shouldOpenPreview = true;
           }
         } catch (saveError) {
@@ -661,8 +689,15 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
         }
 
-        if (shouldOpenPreview && message && diagnostics.length > 0) {
-          const validationError = formatGeneratedFileDiagnostics(diagnostics);
+        if (
+          shouldOpenPreview &&
+          message &&
+          (diagnostics.length > 0 || serverRunPhase === "validation_repair")
+        ) {
+          const validationError =
+            diagnostics.length > 0
+              ? formatGeneratedFileDiagnostics(diagnostics)
+              : "Generated code needs repair before preview can open.";
 
           if (
             automaticRepairAttemptsRef.current < MAX_AUTOMATIC_PREVIEW_REPAIRS
@@ -705,7 +740,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }
         }
 
-        if (stream.generationRunId && message) {
+        if (stream.generationRunId && message && !completedGenerationRun) {
           await updateGenerationRun(stream.generationRunId, {
             action: "complete",
             assistantMessageId: message.id,

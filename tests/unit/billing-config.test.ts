@@ -3,8 +3,10 @@ import {
   TIERS,
   canTierUseModel,
   getCostBasedCreditCharge,
+  getEntitlementTier,
   getModelCreditHoldCost,
   getModelCreditCost,
+  isSubscriptionEntitled,
   normalizeTier,
 } from "@/lib/billing/config";
 import {
@@ -100,5 +102,17 @@ describe("billing config", () => {
     expect(normalizeTier("unlimited")).toBe("pro_plus");
     expect(normalizeTier("pro")).toBe("pro");
     expect(normalizeTier("enterprise")).toBe("free");
+  });
+
+  it("treats trialing subscriptions as entitled to paid tiers", () => {
+    expect(isSubscriptionEntitled("active")).toBe(true);
+    expect(isSubscriptionEntitled("trialing")).toBe(true);
+    expect(isSubscriptionEntitled("past_due")).toBe(false);
+    expect(isSubscriptionEntitled("canceled")).toBe(false);
+
+    expect(getEntitlementTier({ status: "trialing", tier: "pro" })).toBe("pro");
+    expect(getEntitlementTier({ status: "canceled", tier: "pro_plus" })).toBe(
+      "free",
+    );
   });
 });

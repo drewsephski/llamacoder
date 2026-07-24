@@ -107,6 +107,11 @@ export default function App() {
         ? config.files["/components/ui/button.tsx"]
         : config.files["/components/ui/button.tsx"]?.code;
     expect(seededButton).toContain("hover:bg-accent");
+    expect(seededButton).toContain(
+      "bg-background text-foreground hover:bg-accent",
+    );
+    expect(seededButton).toContain('ghost: "text-foreground hover:bg-accent"');
+    expect(seededButton).not.toContain("hover:text-accent-foreground");
     expect(seededButton).not.toContain("hover:text-gray-900");
     expect(seededButton).not.toContain("hover:bg-gray-100");
     expect(config.files["/lib/utils.ts"]).toBeDefined();

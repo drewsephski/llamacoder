@@ -26,6 +26,7 @@ function validEnvironment(): NodeJS.ProcessEnv {
     STRIPE_CREDITS_10_PRICE_ID: "price_credits_10",
     STRIPE_CREDITS_25_PRICE_ID: "price_credits_25",
     STRIPE_CREDITS_60_PRICE_ID: "price_credits_60",
+    INTEGRATION_ENCRYPTION_KEY: "i".repeat(32),
   };
 }
 

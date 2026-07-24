@@ -6,12 +6,16 @@ import {
   estimateOutputTokensFromText,
   estimateModelCostUsd,
   getCostBasedCreditCharge,
+  getEntitlementTier,
   getGenerationSizeBand,
   getModelCreditHoldCost,
   getModelCreditCost,
   hasModelPricing,
+  hasPremiumModelAccess,
+  isSubscriptionEntitled,
   MODEL_COST_OVERHEAD_MULTIPLIER,
   normalizeTier,
+  TIERS,
 } from "./config";
 
 export type CreditCheckResult =
@@ -144,10 +148,7 @@ async function getUsableCreditGrants({
       });
     }
 
-    await client.user.updateMany({
-      where: { id: userId, credits: { gte: expiredTotal } },
-      data: { credits: { decrement: expiredTotal } },
-    });
+    await syncUserCreditCounter({ client, userId });
   }
 
   const grants =
@@ -170,6 +171,31 @@ async function getUsableCreditGrants({
   return sortConsumableGrants(
     grants.filter((candidate) => isGrantUsable(candidate)),
   );
+}
+
+async function syncUserCreditCounter({
+  client,
+  userId,
+}: {
+  client: BillingClient;
+  userId: string;
+}) {
+  const grants = await client.creditGrant.findMany({
+    where: {
+      userId,
+      remainingAmount: { gt: 0 },
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
+    select: { remainingAmount: true },
+  });
+  const total = grants.reduce((sum, grant) => sum + grant.remainingAmount, 0);
+
+  await client.user.updateMany({
+    where: { id: userId },
+    data: { credits: total },
+  });
+
+  return total;
 }
 
 async function getUsableCreditBalance({
@@ -399,10 +425,10 @@ async function checkCreditAccess({
     return { success: false, error: "USER_NOT_FOUND" };
   }
 
-  const hasActiveSubscription = user.subscription?.status === "active";
-  const tier = hasActiveSubscription
-    ? normalizeTier(user.subscription?.tier)
-    : "free";
+  const hasActiveSubscription = isSubscriptionEntitled(
+    user.subscription?.status,
+  );
+  const tier = getEntitlementTier(user.subscription);
 
   const isAllowed = canTierUseModel(tier, modelId, {
     hasPurchasedCredits: getHasPurchasedCredits(user),
@@ -496,7 +522,9 @@ export async function checkProjectCreationEligibility({
       };
     }
 
-    const hasActiveSubscription = user.subscription?.status === "active";
+    const hasActiveSubscription = isSubscriptionEntitled(
+      user.subscription?.status,
+    );
     const projectLimit = hasActiveSubscription ? null : FREE_PROJECT_LIMIT;
     const projectsRemaining =
       projectLimit === null ? null : Math.max(0, projectLimit - projectCount);
@@ -523,9 +551,7 @@ export async function checkProjectCreationEligibility({
       };
     }
 
-    const tier = hasActiveSubscription
-      ? normalizeTier(user.subscription?.tier)
-      : "free";
+    const tier = getEntitlementTier(user.subscription);
     const isAllowed = canTierUseModel(tier, modelId, {
       hasPurchasedCredits: getHasPurchasedCredits(user),
     });
@@ -743,15 +769,14 @@ export async function reserveCreditHold({
         return { success: false, error: "INSUFFICIENT_CREDITS" } as const;
       }
 
-      const updateResult = await tx.user.updateMany({
-        where: { id: userId, credits: { gte: holdAmount } },
-        data: { credits: { decrement: holdAmount } },
+      const remainingCredits = await getUsableCreditBalance({
+        client: tx,
+        userId,
       });
-
-      if (updateResult.count === 0) {
-        await incrementCreditGrantAllocations({ client: tx, allocations });
-        return { success: false, error: "INSUFFICIENT_CREDITS" } as const;
-      }
+      await tx.user.updateMany({
+        where: { id: userId },
+        data: { credits: remainingCredits },
+      });
 
       const hold = await tx.creditHold.create({
         data: {
@@ -767,11 +792,6 @@ export async function reserveCreditHold({
           expiresAt: new Date(Date.now() + CREDIT_HOLD_EXPIRES_AFTER_MS),
         },
         select: { id: true },
-      });
-
-      const remainingCredits = await getUsableCreditBalance({
-        client: tx,
-        userId,
       });
 
       return {
@@ -1424,10 +1444,10 @@ export async function getUserCreditInfo(userId: string) {
 
   if (!user) return null;
 
-  const hasActiveSubscription = user.subscription?.status === "active";
-  const tier = hasActiveSubscription
-    ? normalizeTier(user.subscription?.tier)
-    : "free";
+  const hasActiveSubscription = isSubscriptionEntitled(
+    user.subscription?.status,
+  );
+  const tier = getEntitlementTier(user.subscription);
 
   const creditBreakdown = await getUsableCreditBreakdown({
     client: prisma,
@@ -1440,6 +1460,11 @@ export async function getUserCreditInfo(userId: string) {
     tier,
     hasActiveSubscription,
     hasPurchasedCredits: getHasPurchasedCredits(user),
+    hasPremiumModelAccess: hasPremiumModelAccess(tier, {
+      hasPurchasedCredits: getHasPurchasedCredits(user),
+    }),
+    monthlyAllowance: TIERS[tier].monthlyCredits,
+    subscriptionStatus: user.subscription?.status ?? null,
     subscriptionEndsAt:
       user.subscription?.currentPeriodEnd?.toISOString() || null,
   };

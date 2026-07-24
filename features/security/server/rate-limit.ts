@@ -6,9 +6,12 @@ export type RateLimitOperation =
   | "checkout"
   | "completion"
   | "create_project"
+  | "enhance_prompt"
   | "generate_code"
   | "integration"
+  | "remix"
   | "screenshot"
+  | "share_event"
   | "upload";
 
 type RateLimitOptions = {
@@ -62,4 +65,12 @@ export async function consumeRateLimit({
   }
 
   return { allowed: true, remaining: limit - bucket.count };
+}
+
+export async function purgeExpiredRateLimitBuckets(now = new Date()) {
+  const prisma = getPrisma();
+  const result = await prisma.apiRateLimitBucket.deleteMany({
+    where: { expiresAt: { lt: now } },
+  });
+  return result.count;
 }

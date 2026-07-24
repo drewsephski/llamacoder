@@ -29,9 +29,14 @@ describe("AI builder feature comparison", () => {
     expect(
       screen.getByRole("heading", { name: "Squid Agent", level: 3 }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Per-result cost record")).toHaveLength(6);
-    expect(screen.getAllByText("No bundled reports documented")).toHaveLength(
-      8,
-    );
+    expect(
+      screen.getAllByText("Structured product interview").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Plan mode with approval gate").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("link", { name: /See full comparison/i }),
+    ).toHaveAttribute("href", "/compare");
   });
 });

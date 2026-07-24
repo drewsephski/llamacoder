@@ -4,11 +4,13 @@ import { buildChat, buildMessage, readJson } from "../fixtures/builders";
 
 const {
   checkProjectCreationEligibilityMock,
+  consumeRateLimitMock,
   getSessionMock,
   prismaMock,
   txMock,
 } = vi.hoisted(() => ({
   checkProjectCreationEligibilityMock: vi.fn(),
+  consumeRateLimitMock: vi.fn(),
   getSessionMock: vi.fn(),
   txMock: {
     chat: { create: vi.fn() },
@@ -40,6 +42,10 @@ vi.mock("@/lib/billing", async (importOriginal) => {
     checkProjectCreationEligibility: checkProjectCreationEligibilityMock,
   };
 });
+
+vi.mock("@/features/security/server/rate-limit", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+}));
 
 import { POST } from "@/app/api/remix/route";
 
@@ -81,6 +87,7 @@ function sourceMessage(overrides: Record<string, unknown> = {}) {
 describe("/api/remix", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 9 });
     getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
     checkProjectCreationEligibilityMock.mockResolvedValue({
       success: true,

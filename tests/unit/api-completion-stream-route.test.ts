@@ -13,6 +13,7 @@ import {
   LIVE_API_DASHBOARD_PROMPT_TEMPLATE,
   LOCAL_BUSINESS_PROMPT_TEMPLATE,
   PORTFOLIO_PROMPT_TEMPLATE,
+  type PromptTemplateValues,
 } from "@/lib/prompt-templates";
 import { createEmptyAppSpec } from "@/features/generation/app-spec";
 
@@ -284,7 +285,10 @@ function mockResearchSkipped(responseId = "research_skipped_1") {
   });
 }
 
-async function collectUIChunks(response: Response) {
+async function collectUIChunks(
+  response: Response,
+  options?: { invokeStreamLifecycle?: boolean },
+) {
   if (!response.body) throw new Error("Missing response body");
 
   const parsedStream = parseJsonEventStream({
@@ -299,6 +303,28 @@ async function collectUIChunks(response: Response) {
     if (done) break;
     if (!result.success) throw result.error;
     chunks.push(result.value);
+  }
+
+  if (options?.invokeStreamLifecycle && streamTextMock.mock.calls.length > 0) {
+    const call = streamTextMock.mock.calls.at(-1)?.[0];
+    const streamedText = chunks
+      .filter((chunk) => chunk.type === "text-delta")
+      .map((chunk) => chunk.delta)
+      .join("");
+
+    if (call?.onChunk && streamedText) {
+      call.onChunk({ chunk: { type: "text-delta", text: streamedText } });
+    }
+
+    if (call?.onFinish) {
+      await call.onFinish({
+        usage: {},
+        finishReason: "stop",
+        providerMetadata: undefined,
+        response: { id: "stream_finish_1" },
+        model: { provider: "openrouter" },
+      });
+    }
   }
 
   return chunks;
@@ -775,7 +801,7 @@ describe("/api/get-next-completion-stream-promise", () => {
       const content = compilePromptTemplate(template, {
         ...createEmptyTemplateValues(template),
         ...values,
-      });
+      } as unknown as PromptTemplateValues);
       prismaMock.message.findUnique.mockResolvedValueOnce(
         buildMessage({
           id,
@@ -2380,5 +2406,113 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(prompt).toContain("Render a reachable edit-title action");
     expect(prompt).toContain("export default function App");
     expect(prompt).toContain("Return only complete files that changed");
+  });
+
+  it("finalizes valid code generation runs with normalized partial text", async () => {
+    const validApp = [
+      "```tsx{path=App.tsx}",
+      'import { Header } from "./components/Header";',
+      "export default function App() { return <Header />; }",
+      "```",
+      "```tsx{path=components/Header.tsx}",
+      "export function Header() { return <header />; }",
+      "```",
+    ].join("\n");
+    const content =
+      "Build a travel budget app that converts trip costs from USD into EUR with current Frankfurter rates";
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nFrankfurter [frankfurter]\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["frankfurter"],
+      requiresServerRuntime: false,
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_finalize_valid",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    mockGeneration({ text: validApp });
+
+    const response = await POST(
+      request({ messageId: "msg_finalize_valid", model: "model_1" }),
+    );
+    await collectUIChunks(response, { invokeStreamLifecycle: true });
+
+    expect(prismaMock.generationRun.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "run_1", status: "running" },
+        data: expect.objectContaining({
+          status: "recoverable",
+          phase: "finalizing",
+          label: "Ready to save",
+          partialText: expect.stringContaining("```tsx{path=App.tsx}"),
+        }),
+      }),
+    );
+  });
+
+  it("marks invalid generated code runs for validation repair on finish", async () => {
+    const invalidApp = [
+      "```tsx{path=App.tsx}",
+      'import Header from "./components/Header";',
+      "export default function App() { return <Header />; }",
+      "```",
+      "```tsx{path=components/Header.tsx}",
+      "export function Header() { return <header />; }",
+      "```",
+    ].join("\n");
+    const content =
+      "Build a travel budget app that converts trip costs from USD into EUR with current Frankfurter rates";
+    getConnectedIntegrationPromptContextMock.mockResolvedValueOnce({
+      prompt:
+        "=== SELECTED API IMPLEMENTATION GUIDANCE ===\nFrankfurter [frankfurter]\n=== END SELECTED API IMPLEMENTATION GUIDANCE ===",
+      providerIds: ["frankfurter"],
+      requiresServerRuntime: false,
+    });
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_finalize_invalid",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    mockGeneration({ text: invalidApp });
+
+    const response = await POST(
+      request({ messageId: "msg_finalize_invalid", model: "model_1" }),
+    );
+    await collectUIChunks(response, { invokeStreamLifecycle: true });
+
+    expect(prismaMock.generationRun.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "run_1", status: "running" },
+        data: expect.objectContaining({
+          status: "recoverable",
+          phase: "validation_repair",
+          label: "Fixing generated app",
+          partialText: invalidApp,
+        }),
+      }),
+    );
   });
 });

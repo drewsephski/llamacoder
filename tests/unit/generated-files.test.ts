@@ -384,6 +384,29 @@ describe("generated file normalization", () => {
     expect(file.code).toContain("<SelectItem>System</SelectItem>");
   });
 
+  it("rewrites invented @/components/ui/sonner imports to the sonner package", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import { Toaster, toast } from "@/components/ui/sonner";',
+          "export default function App() {",
+          "  return (",
+          "    <>",
+          "      <Toaster />",
+          '      <button type="button" onClick={() => toast("Saved")}>Save</button>',
+          "    </>",
+          "  );",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(files[0].code).toContain('from "sonner"');
+    expect(files[0].code).not.toContain("@/components/ui/sonner");
+    expect(validateGeneratedFiles(files)).toEqual([]);
+  });
+
   it("adds the platform cn import when generated JSX calls cn", () => {
     const [file] = normalizeGeneratedFiles([
       {
