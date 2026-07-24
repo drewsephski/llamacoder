@@ -32,7 +32,7 @@ interface PromptTemplateEditorProps {
 }
 
 /** Trailing sentence punctuation that should sit flush against a field. */
-const FLUSH_PUNCTUATION = /^([.,!?;:])(.*)$/s;
+const FLUSH_PUNCTUATION = /^([.,!?;:])([\s\S]*)$/;
 
 function getFieldCaption(label: string) {
   if (/linkedin/i.test(label)) return "LinkedIn";
