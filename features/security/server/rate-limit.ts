@@ -9,6 +9,7 @@ export type RateLimitOperation =
   | "enhance_prompt"
   | "generate_code"
   | "integration"
+  | "portal"
   | "remix"
   | "screenshot"
   | "share_event"
