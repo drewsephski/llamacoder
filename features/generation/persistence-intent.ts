@@ -323,6 +323,18 @@ const NEGATIVE_DECLINE_PATTERNS = [
   /\bdon't need real data\b/i,
 ];
 
+const STATIC_SITE_PATTERNS = [
+  /\bportfolio\b/i,
+  /\blanding page\b/i,
+  /\bmarketing site\b/i,
+  /\bbrochure site\b/i,
+  /\bstatic site\b/i,
+  /\bpersonal website\b/i,
+  /\bshowcase site\b/i,
+  /\brecruiter[- ]ready\b/i,
+  /\beditorial portfolio\b/i,
+];
+
 const EXPLICIT_PERSISTENCE_PATTERNS = [
   /\buse\s+(?:a\s+)?supabase\b/i,
   /\bconnect\b[^\n]{0,80}\bsupabase\b/i,
@@ -330,6 +342,50 @@ const EXPLICIT_PERSISTENCE_PATTERNS = [
   /\bpostgres(?:ql)?\b[^\n]{0,80}\b(database|backend|auth|project)\b/i,
   /\b(database|db)\b[^\n]{0,80}\b(needed|required|persistent|persistence)\b/i,
   /\bpersistent\s+(?:tasks?|data|records?)\b/i,
+  /\b(?:want|need|requires?|with|include|using|add)\s+(?:a\s+)?(?:database|db|backend\s+storage)\b/i,
+  /\b(?:database|db)[- ]backed\b/i,
+  /\b(?:store|save|persist)\s+(?:the\s+)?(?:data|records?|information)\b/i,
+  /\b(?:real|live|cloud|remote)\s+(?:database|backend|storage)\b/i,
+  /\buser\s+accounts?\b/i,
+  /\bmulti[- ]user\b/i,
+  /\b(?:sign[- ]?up|log[- ]?in|register)\b[^\n]{0,80}\b(?:save|store|persist|database|backend)\b/i,
+  /\b(?:crud|create\s+read\s+update\s+delete)\b/i,
+];
+
+const GENERIC_PERSISTENCE_SIGNALS = [
+  { pattern: /\b(?:database|db)\b/i, score: 34, reason: "database keyword" },
+  {
+    pattern: /\b(?:persist|persistence|persistent)\b/i,
+    score: 28,
+    reason: "persistence keyword",
+  },
+  {
+    pattern: /\b(?:store|save|saved)\s+(?:data|records?|entries|items)\b/i,
+    score: 24,
+    reason: "save/store data language",
+  },
+  {
+    pattern: /\b(?:backend|server)\s+(?:storage|database|data)\b/i,
+    score: 30,
+    reason: "backend storage language",
+  },
+  {
+    pattern:
+      /\b(?:accounts?|users?)\s+(?:can|with|and)\s+(?:save|store|create|manage)\b/i,
+    score: 22,
+    reason: "account-backed data language",
+  },
+  {
+    pattern:
+      /\b(?:records?|entries|rows?)\s+(?:in|to|from)\s+(?:a\s+)?(?:database|db|table)\b/i,
+    score: 26,
+    reason: "database record language",
+  },
+  {
+    pattern: /\b(?:auth(?:entication)?|login|sign[- ]?up)\b/i,
+    score: 18,
+    reason: "authentication signal",
+  },
 ];
 
 const EXPLICIT_PERSISTENCE_DECLINE_PATTERNS = [
@@ -421,23 +477,27 @@ export function detectPersistenceIntentFromText(
     },
   );
 
-  const explicitPersistenceRequest = EXPLICIT_PERSISTENCE_PATTERNS.some((pattern) =>
-    pattern.test(normalized),
+  for (const signal of GENERIC_PERSISTENCE_SIGNALS) {
+    if (signal.pattern.test(normalized)) {
+      best.score += signal.score;
+      best.reasons.push(`generic persistence signal: ${signal.reason}`);
+    }
+  }
+
+  const explicitPersistenceRequest = EXPLICIT_PERSISTENCE_PATTERNS.some(
+    (pattern) => pattern.test(normalized),
   );
   const explicitPersistenceDecline = EXPLICIT_PERSISTENCE_DECLINE_PATTERNS.some(
     (pattern) => pattern.test(normalized),
   );
 
   if (explicitPersistenceRequest && !explicitPersistenceDecline) {
-      return dataPersistenceIntentSchema.parse({
-        detected: true,
-        confidence: clampScore(Math.max(84, best.score + 20)),
-        recommendation: "require_database",
-        explicitlyRequested: true,
-        useCase:
-          best.id === "generic"
-            ? "Supabase-backed app flow"
-            : best.label,
+    return dataPersistenceIntentSchema.parse({
+      detected: true,
+      confidence: clampScore(Math.max(84, best.score + 20)),
+      recommendation: "require_database",
+      explicitlyRequested: true,
+      useCase: best.id === "generic" ? "Supabase-backed app flow" : best.label,
       reason: best.reasons.length
         ? `Explicit persistence intent detected: ${mergeReasons(best.reasons)}`
         : "The request explicitly asks for a Supabase/database-backed workflow, so persistence is required.",
@@ -446,27 +506,42 @@ export function detectPersistenceIntentFromText(
     });
   }
 
-  const detected = best.score >= 58;
   const hasLifecycleSignal =
-    /\b(track|status|assign|move|close|resolve|publish|task|order|stage)\b/i.test(
+    /\b(track|status|assign|move|close|resolve|publish|task|order|stage|update|delete|create|edit|history|timeline)\b/i.test(
       normalized,
     );
+  const hasGenericDatabaseSignal = GENERIC_PERSISTENCE_SIGNALS.some((signal) =>
+    signal.pattern.test(normalized),
+  );
   const negativeDecline = NEGATIVE_DECLINE_PATTERNS.some((pattern) =>
     pattern.test(normalized),
   );
+  const staticSiteIntent = STATIC_SITE_PATTERNS.some((pattern) =>
+    pattern.test(normalized),
+  );
+  const persistenceThreshold = hasGenericDatabaseSignal ? 44 : 48;
+  const requireDatabaseThreshold = hasGenericDatabaseSignal ? 72 : 78;
+  const detected =
+    !staticSiteIntent &&
+    (best.score >= persistenceThreshold ||
+      (hasGenericDatabaseSignal && hasLifecycleSignal && best.score >= 36));
   const recommendation =
     negativeDecline ||
+    staticSiteIntent ||
     /\bno(?:-| )db\b/i.test(normalized) ||
     /\bno\s+database\b/i.test(normalized)
       ? "prototype"
-      : best.score >= 84
+      : best.score >= requireDatabaseThreshold
         ? "require_database"
-        : best.score >= 58
+        : detected
           ? "suggest_database"
           : "prototype";
 
   const confidence = clampScore(
-    best.score + (hasLifecycleSignal ? 12 : 0) + (negativeDecline ? -25 : 0),
+    best.score +
+      (hasLifecycleSignal ? 12 : 0) +
+      (hasGenericDatabaseSignal ? 10 : 0) +
+      (negativeDecline ? -25 : 0),
   );
 
   const shouldPersist = detected && recommendation !== "prototype";
@@ -476,15 +551,15 @@ export function detectPersistenceIntentFromText(
       ? "Workflow data tracking"
       : "Prototype data";
 
-      return dataPersistenceIntentSchema.parse({
-        detected: shouldPersist,
-        confidence,
-        recommendation,
-        explicitlyRequested: false,
-        useCase,
-        reason:
-          shouldPersist && best.reasons.length
-            ? mergeReasons(best.reasons)
+  return dataPersistenceIntentSchema.parse({
+    detected: shouldPersist,
+    confidence,
+    recommendation,
+    explicitlyRequested: false,
+    useCase,
+    reason:
+      shouldPersist && best.reasons.length
+        ? mergeReasons(best.reasons)
         : hasLifecycleSignal
           ? "Lifecycle verbs and state terms were present, but intent confidence is below the persistence threshold."
           : "The request reads like a static or one-off UI/task surface.",

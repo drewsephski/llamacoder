@@ -8,6 +8,7 @@ import {
 import {
   buildDirectBackendSetupRequest,
   buildPlanModeFallbackInterview,
+  shouldAskPersistenceQuestion,
 } from "@/features/generation/mode-policy";
 import { detectPersistenceIntentFromText } from "@/features/generation/persistence-intent";
 import { getIntegrationProvider } from "@/features/integrations/registry";
@@ -178,55 +179,62 @@ describe("generation mode policy", () => {
     expect(agentActionSchema.safeParse(action).success).toBe(true);
   });
 
-  it("does not ask about persistence if Supabase is already selected", () => {
-    const action = buildPlanModeFallbackInterview({
-      messageId: "message_4",
+  it("still requires backend setup when Supabase is selected but not provisioned", () => {
+    const spec = {
+      ...createEmptyAppSpec(),
+      integrations: [
+        {
+          providerId: "supabase",
+          name: "Supabase",
+          purpose: "Persist lead records.",
+          required: true,
+          docsUrl: "https://supabase.com/docs",
+          baseUrl: "https://api.supabase.com/v1",
+          auth: "oauth",
+          requiredSecrets: [],
+          runtime: "server",
+          corsCompatible: true,
+        },
+      ],
+      dataPersistence: appSpecSchema.parse({
+        dataPersistence: {
+          detected: true,
+          confidence: 72,
+          recommendation: "suggest_database",
+          status: "not_prompted",
+          reason: "Track leads through sales lifecycle.",
+          useCase: "CRM / sales pipeline",
+          proposedSchema: [
+            {
+              entity: "contacts",
+              purpose: "Store customer records.",
+              fields: ["id", "name", "email"],
+            },
+          ],
+        },
+      }).dataPersistence,
+    };
+
+    expect(
+      shouldAskPersistenceQuestion(spec, { supabaseProvisioned: false }),
+    ).toBe(true);
+
+    const action = buildDirectBackendSetupRequest({
+      messageId: "message_supabase_unprovisioned",
       prompt: "Build a CRM to track leads and sales stages",
-      spec: {
-        ...createEmptyAppSpec(),
-        integrations: [
-          {
-            providerId: "supabase",
-            name: "Supabase",
-            purpose: "Persist lead records.",
-            required: true,
-            docsUrl: "https://supabase.com/docs",
-            baseUrl: "https://api.supabase.com/v1",
-            auth: "oauth",
-            requiredSecrets: [],
-            runtime: "server",
-            corsCompatible: true,
-          },
-        ],
-        dataPersistence: appSpecSchema.parse({
-          dataPersistence: {
-            detected: true,
-            confidence: 72,
-            recommendation: "suggest_database",
-            status: "not_prompted",
-            reason: "Track leads through sales lifecycle.",
-            useCase: "CRM / sales pipeline",
-            proposedSchema: [
-              {
-                entity: "contacts",
-                purpose: "Store customer records.",
-                fields: ["id", "name", "email"],
-              },
-            ],
-          },
-        }).dataPersistence,
-      },
-      providersNeedingPurpose: [],
+      spec,
     });
 
-    expect(action.action).toBe("interview");
-    if (action.action !== "interview") throw new Error("Expected interview");
-    expect(action.request.steps).toHaveLength(4);
-    expect(
-      action.request.steps.every(
-        (step) => step.id !== "data-persistence-connect",
-      ),
-    ).toBe(true);
+    expect(action.action).toBe("request_backend_setup");
+  });
+
+  it("detects generic database language even without a canonical use case", () => {
+    const intent = detectPersistenceIntentFromText(
+      "Build a recipe app with a database to save user recipes and accounts.",
+    );
+
+    expect(intent.detected).toBe(true);
+    expect(intent.recommendation).not.toBe("prototype");
   });
 
   it("rejects undersized interview rounds at the structured-output boundary", () => {

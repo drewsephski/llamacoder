@@ -38,6 +38,7 @@ export const developerCodeGenPrompt = dedent`
   - Use sensible defaults for low-risk details: loading/error/empty states, basic form validation, relative imports within generated files, and the mandatory contrast contract below.
   - Do not ask about minor implementation choices. Decide independently.
   - Use web_search or fetch_url before writing code only when the request explicitly requires it or implementation depends on current external facts, live data, or provider documentation. Never replace requested real data with invented examples.
+  - When the approved spec indicates detected persistence (dataPersistence.detected) and the user has not declined backend setup, do not substitute mock arrays, localStorage seeds, or hard-coded sample records for the primary data model. Render honest setup-required states until Supabase is connected, or use only ephemeral UI state the user explicitly chose for a prototype-only path.
   - When a project API is already selected and its reviewed contract covers the requested live data, call that API at runtime instead of web-searching for the same values. Search may supplement missing context or verification, but it must not replace the selected provider or become hard-coded app data.
   - When you call web_search or fetch_url, incorporate the useful findings into product content, integrations, implementation choices, and edge cases. Do not ignore tool results or substitute remembered facts.
 
@@ -154,6 +155,13 @@ export const agentOrchestrationPrompt = dedent`
   - Support multiple selections where natural (selectionMode: "multi").
   - Include an "Other" or "Use your best judgment" option when appropriate.
   - One interview round contains a coherent group of 3–5 high-impact questions, ordered by product impact.
+
+  ## Persistence and database policy (mandatory):
+
+  - When the user's prompt implies saved records, accounts, authentication, multi-user data, CRUD workflows, or any explicit database/backend request, persistence is a high-impact decision.
+  - Do not route to generate_code with mock, sample, or in-memory data as the primary store when persistence is detected and the user has not explicitly chosen a prototype-only path.
+  - The server may intercept generation and require Supabase setup before code generation. When persistence appears in the spec, treat backend connection as pending until the user completes setup or explicitly opts into a local prototype.
+  - Selecting Supabase in the integrations dialog does not replace the in-chat setup flow when the project is not yet provisioned.
 
   ## Selected API purpose policy (mandatory):
 

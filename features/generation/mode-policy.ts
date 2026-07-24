@@ -22,20 +22,56 @@ export function shouldAskPersistenceQuestion(
   spec: AppSpec,
   options?: {
     force?: boolean;
+    supabaseProvisioned?: boolean;
   },
 ): boolean {
   const intent = spec.dataPersistence;
-  const hasAlreadySelectedPersistenceProvider = spec.integrations.some(
-    (integration) => integration.providerId === "supabase",
-  );
 
-  return (
-    (options?.force || !hasAlreadySelectedPersistenceProvider) &&
-    intent.detected &&
-    intent.status !== "connect_declined" &&
-    intent.recommendation !== "prototype" &&
-    (options?.force || intent.status === "not_prompted")
-  );
+  if (!intent.detected) {
+    return false;
+  }
+
+  if (intent.status === "connect_declined") {
+    return false;
+  }
+
+  if (intent.recommendation === "prototype") {
+    return false;
+  }
+
+  if (
+    intent.status === "connect_confirmed" &&
+    options?.supabaseProvisioned === true
+  ) {
+    return false;
+  }
+
+  if (options?.force) {
+    return true;
+  }
+
+  if (
+    intent.status === "connect_confirmed" &&
+    options?.supabaseProvisioned === false
+  ) {
+    return true;
+  }
+
+  return intent.status === "not_prompted";
+}
+
+export function shouldRequireBackendSetupBeforeCodegen(
+  spec: AppSpec,
+  options?: {
+    supabaseProvisioned?: boolean;
+  },
+): boolean {
+  return shouldAskPersistenceQuestion(spec, {
+    force:
+      spec.dataPersistence.status === "connect_confirmed" &&
+      options?.supabaseProvisioned === false,
+    supabaseProvisioned: options?.supabaseProvisioned,
+  });
 }
 
 export function buildPersistenceDecisionStep(

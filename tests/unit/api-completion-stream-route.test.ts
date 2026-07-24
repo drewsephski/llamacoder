@@ -1815,6 +1815,48 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(streamTextMock).not.toHaveBeenCalled();
   });
 
+  it("uses the backend setup handoff in Plan mode when persistence is detected", async () => {
+    const content =
+      "Build a CRM with a database to track leads and sales stages";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_plan_backend",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+          appSpec: createEmptyAppSpec(),
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+
+    const response = await POST(
+      request({ messageId: "msg_plan_backend", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+    const actionChunk = chunks.find(
+      (chunk) => chunk.type === "data-agent-action",
+    );
+
+    expect(actionChunk).toMatchObject({
+      type: "data-agent-action",
+      data: {
+        action: "request_backend_setup",
+        request: {
+          id: "backend-setup-msg_plan_backend",
+        },
+      },
+    });
+    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(streamTextMock).not.toHaveBeenCalled();
+  });
+
   it("keeps the Plan mode interview ahead of model-suggested research", async () => {
     const content = "Build a polished habit tracker app";
     prismaMock.message.findUnique.mockResolvedValueOnce(

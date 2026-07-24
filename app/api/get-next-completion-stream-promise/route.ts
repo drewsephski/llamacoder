@@ -885,6 +885,7 @@ export async function POST(req: Request) {
             finalSpec,
             {
               force: needsSupabaseProjectSetup,
+              supabaseProvisioned: isSupabaseProjectProvisioned,
             },
           );
           const initialPlanInterviewRequired =
@@ -935,15 +936,11 @@ export async function POST(req: Request) {
           };
           const enforceModePolicy = (action: AgentAction): AgentAction => {
             if (shouldAskPersistencePreflight) {
-              return planMode
-                ? buildFallbackInterview({
-                    force: needsSupabaseProjectSetup,
-                  })
-                : buildDirectBackendSetupRequest({
-                    messageId,
-                    prompt: latestUserContent,
-                    spec: finalSpec,
-                  });
+              return buildDirectBackendSetupRequest({
+                messageId,
+                prompt: latestUserContent,
+                spec: finalSpec,
+              });
             }
 
             if (!planMode) {
@@ -956,7 +953,11 @@ export async function POST(req: Request) {
             }
 
             if (action.action === "request_backend_setup") {
-              return buildFallbackInterview();
+              return buildDirectBackendSetupRequest({
+                messageId,
+                prompt: latestUserContent,
+                spec: finalSpec,
+              });
             }
 
             const purposeGuardedAction = enforceSelectedApiPurpose(action);
@@ -1016,16 +1017,16 @@ export async function POST(req: Request) {
             agentAction = { action: "answer" };
           } else if (shouldAnswerWithoutCode(latestUserContent)) {
             agentAction = { action: "answer" };
+          } else if (shouldAskPersistencePreflight) {
+            agentAction = buildDirectBackendSetupRequest({
+              messageId,
+              prompt: latestUserContent,
+              spec: finalSpec,
+            });
           } else if (!planMode) {
             // Direct mode never interviews. Backend-dependent requests use a
             // focused setup handoff instead of borrowing Plan mode questions.
-            agentAction = shouldAskPersistencePreflight
-              ? buildDirectBackendSetupRequest({
-                  messageId,
-                  prompt: latestUserContent,
-                  spec: finalSpec,
-                })
-              : { action: "generate_code" };
+            agentAction = { action: "generate_code" };
           } else {
             const orchestrationModel = FREE_MODEL;
             const orchestrationReasoning = getOpenRouterReasoningSelection(
@@ -1347,7 +1348,13 @@ export async function POST(req: Request) {
           const persistenceContext =
             finalSpec.dataPersistence.detected ||
             finalSpec.dataPersistence.status !== "not_prompted"
-              ? `\n\n=== DATA PERSISTENCE RECOMMENDATION ===\n${describePersistenceIntent(finalSpec.dataPersistence)}\n=== END DATA PERSISTENCE RECOMMENDATION ===`
+              ? `\n\n=== DATA PERSISTENCE RECOMMENDATION ===\n${describePersistenceIntent(finalSpec.dataPersistence)}\n${
+                  finalSpec.dataPersistence.detected &&
+                  finalSpec.dataPersistence.status !== "connect_declined" &&
+                  !isSupabaseProjectProvisioned
+                    ? "Supabase setup is required before generating backend-backed data flows. Do not substitute mock arrays, seeded records, or localStorage as the primary store unless the user explicitly chose a prototype-only path."
+                    : ""
+                }\n=== END DATA PERSISTENCE RECOMMENDATION ===`
               : "";
           const integrationPolicyContext = [
             latestUserContent,
