@@ -114,7 +114,8 @@ async function createSubscriptionCheckoutSession({
     customer: customerId,
     client_reference_id: userId,
     mode: "subscription",
-    payment_method_types: ["card"],
+    allow_promotion_codes: true,
+    integration_identifier: "llamacoder_subscription_k7m2xq9p",
     line_items: [
       {
         price: priceId,

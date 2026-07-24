@@ -2,6 +2,7 @@ import { renameProject } from "@/features/projects/server/actions";
 import { ProjectCardActions } from "@/features/projects/components/project-card-actions";
 import { UpgradeBanner } from "@/features/billing/components/upgrade-banner";
 import { StripeCheckoutButton } from "@/features/billing/components/stripe-checkout-button";
+import { StripePortalButton } from "@/features/billing/components/stripe-portal-button";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { CREDIT_PACKS, FREE_PROJECT_LIMIT, TIERS } from "@/lib/billing";
 import Link from "next/link";
@@ -622,9 +623,9 @@ export async function DashboardPage({
                 </li>
               </ul>
               {currentTier === "pro" ? (
-                <Button disabled className="w-full">
-                  Current Plan
-                </Button>
+                <StripePortalButton variant="outline" className="w-full">
+                  Manage subscription
+                </StripePortalButton>
               ) : currentTier === "pro_plus" ? (
                 <Button disabled variant="outline" className="w-full">
                   Included in Pro Plus
@@ -676,9 +677,9 @@ export async function DashboardPage({
                 </li>
               </ul>
               {currentTier === "pro_plus" ? (
-                <Button disabled variant="outline" className="w-full">
-                  Current Plan
-                </Button>
+                <StripePortalButton variant="outline" className="w-full">
+                  Manage subscription
+                </StripePortalButton>
               ) : (
                 <StripeCheckoutButton
                   checkout={{ plan: "pro_plus" }}

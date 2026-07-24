@@ -118,7 +118,8 @@ export async function createCheckoutSession(
   return stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
-    payment_method_types: ["card"],
+    allow_promotion_codes: true,
+    integration_identifier: "llamacoder_subscription_k7m2xq9p",
     line_items: [
       {
         price: priceId,
@@ -188,7 +189,8 @@ export async function createCreditsCheckoutSession(
     customer: customerId,
     client_reference_id: userId,
     mode: "payment",
-    payment_method_types: ["card"],
+    allow_promotion_codes: true,
+    integration_identifier: "llamacoder_credits_j4n8w2rt",
     line_items: [
       {
         price: pack.priceId,

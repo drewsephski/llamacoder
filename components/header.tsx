@@ -160,6 +160,14 @@ function Header({ onHelpClick }: HeaderProps) {
                   <Link href="/gallery">Gallery</Link>
                 </Button>
                 <Button
+                  onClick={() => openPricingModal("plans")}
+                  variant="ghost"
+                  size="sm"
+                  className="text-foreground hover:bg-accent hover:text-white"
+                >
+                  Pricing
+                </Button>
+                <Button
                   asChild
                   variant="ghost"
                   size="sm"
@@ -319,6 +327,16 @@ function Header({ onHelpClick }: HeaderProps) {
                     className="min-h-12 justify-start"
                   >
                     <Link href="/gallery">Gallery</Link>
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      openPricingModal("plans");
+                      setMobileMenuOpen(false);
+                    }}
+                    variant="default"
+                    className="min-h-12 justify-start"
+                  >
+                    Pricing
                   </Button>
                   <Button
                     asChild

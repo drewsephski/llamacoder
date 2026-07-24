@@ -672,6 +672,19 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
+type HeroPopoutSlot = {
+  top: number;
+  left: number;
+  rotate: number;
+  scale: number;
+  entryX: number;
+  entryY: number;
+  driftX: number;
+  driftY: number;
+  duration: number;
+  zIndex: number;
+};
+
 type HeroPopout = {
   id: string;
   src: string;
@@ -682,6 +695,13 @@ type HeroPopout = {
   left: number;
   rotate: number;
   scale: number;
+  entryX: number;
+  entryY: number;
+  driftX: number;
+  driftY: number;
+  duration: number;
+  zIndex: number;
+  slotIndex: number;
 };
 
 type HeroPopoutExclusionZone = {
@@ -692,8 +712,84 @@ type HeroPopoutExclusionZone = {
 };
 
 const HERO_POPOUT_MAX_ACTIVE = 6;
-const HERO_POPOUT_LIFETIME_MS = 3600;
 const HERO_POPOUT_EXCLUSION_PADDING_PX = 28;
+const HERO_POPOUT_ROW_TOLERANCE_PERCENT = 6;
+const HERO_POPOUT_MIN_VERTICAL_GAP_PERCENT = 11;
+
+const HERO_POPOUT_SLOTS: readonly HeroPopoutSlot[] = [
+  {
+    top: 14,
+    left: 12,
+    rotate: -7,
+    scale: 0.96,
+    entryX: -28,
+    entryY: 20,
+    driftX: -6,
+    driftY: -10,
+    duration: 3.4,
+    zIndex: 2,
+  },
+  {
+    top: 28,
+    left: 88,
+    rotate: 6,
+    scale: 1.03,
+    entryX: 26,
+    entryY: 16,
+    driftX: 8,
+    driftY: -8,
+    duration: 3.7,
+    zIndex: 3,
+  },
+  {
+    top: 42,
+    left: 14,
+    rotate: -4,
+    scale: 0.98,
+    entryX: -22,
+    entryY: 14,
+    driftX: -4,
+    driftY: -12,
+    duration: 3.2,
+    zIndex: 2,
+  },
+  {
+    top: 56,
+    left: 86,
+    rotate: 5,
+    scale: 1.01,
+    entryX: 24,
+    entryY: 12,
+    driftX: 6,
+    driftY: -9,
+    duration: 3.6,
+    zIndex: 4,
+  },
+  {
+    top: 70,
+    left: 12,
+    rotate: -5,
+    scale: 0.95,
+    entryX: -26,
+    entryY: 18,
+    driftX: -8,
+    driftY: -11,
+    duration: 3.5,
+    zIndex: 2,
+  },
+  {
+    top: 84,
+    left: 88,
+    rotate: 7,
+    scale: 1.04,
+    entryX: 28,
+    entryY: 16,
+    driftX: 10,
+    driftY: -13,
+    duration: 3.8,
+    zIndex: 3,
+  },
+];
 
 function randomInRange(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -812,16 +908,61 @@ function getFallbackHeroPopoutExclusionZones(): HeroPopoutExclusionZone[] {
   ];
 }
 
-function createHeroPopout(
+function heroPopoutWouldFormRow(
+  top: number,
+  activePopouts: readonly Pick<HeroPopout, "top">[],
+) {
+  return activePopouts.some(
+    (popout) => Math.abs(popout.top - top) <= HERO_POPOUT_ROW_TOLERANCE_PERCENT,
+  );
+}
+
+function heroPopoutIsTooCloseVertically(
+  top: number,
+  activePopouts: readonly Pick<HeroPopout, "top">[],
+) {
+  return activePopouts.some(
+    (popout) =>
+      Math.abs(popout.top - top) < HERO_POPOUT_MIN_VERTICAL_GAP_PERCENT,
+  );
+}
+
+function isHeroPopoutSlotValid(
+  slot: HeroPopoutSlot,
+  cardWidth: number,
+  cardHeight: number,
   layerWidth: number,
   layerHeight: number,
   exclusionZones: HeroPopoutExclusionZone[],
-  showcaseImages: readonly HeroPopoutImage[],
-): HeroPopout | null {
-  if (showcaseImages.length === 0) return null;
+  activePopouts: readonly HeroPopout[],
+) {
+  if (
+    isInHeroEdgeClipZone(slot.top, slot.left) ||
+    heroPopoutOverlapsAnyExclusionZone(
+      slot.top,
+      slot.left,
+      cardWidth,
+      cardHeight,
+      layerWidth,
+      layerHeight,
+      exclusionZones,
+    ) ||
+    heroPopoutWouldFormRow(slot.top, activePopouts) ||
+    heroPopoutIsTooCloseVertically(slot.top, activePopouts)
+  ) {
+    return false;
+  }
 
-  const showcase =
-    showcaseImages[Math.floor(Math.random() * showcaseImages.length)]!;
+  return true;
+}
+
+function pickHeroPopoutSlot(
+  layerWidth: number,
+  layerHeight: number,
+  exclusionZones: HeroPopoutExclusionZone[],
+  activePopouts: readonly HeroPopout[],
+  startSlotIndex: number,
+): { slot: HeroPopoutSlot; slotIndex: number } | null {
   const { width: cardWidth, height: cardHeight } =
     getHeroPopoutCardSize(layerWidth);
   const zones =
@@ -829,42 +970,35 @@ function createHeroPopout(
       ? exclusionZones
       : getFallbackHeroPopoutExclusionZones();
 
-  let top = randomInRange(12, 88);
-  let left = randomInRange(12, 88);
-  let attempts = 0;
+  for (let offset = 0; offset < HERO_POPOUT_SLOTS.length; offset += 1) {
+    const slotIndex = (startSlotIndex + offset) % HERO_POPOUT_SLOTS.length;
+    const slot = HERO_POPOUT_SLOTS[slotIndex];
+    if (!slot) continue;
 
-  while (
-    (isInHeroEdgeClipZone(top, left) ||
-      heroPopoutOverlapsAnyExclusionZone(
-        top,
-        left,
+    if (
+      isHeroPopoutSlotValid(
+        slot,
         cardWidth,
         cardHeight,
         layerWidth,
         layerHeight,
         zones,
-      )) &&
-    attempts < 48
-  ) {
-    top = randomInRange(12, 88);
-    left = randomInRange(12, 88);
-    attempts += 1;
+        activePopouts,
+      )
+    ) {
+      return { slot, slotIndex };
+    }
   }
 
-  if (
-    heroPopoutOverlapsAnyExclusionZone(
-      top,
-      left,
-      cardWidth,
-      cardHeight,
-      layerWidth,
-      layerHeight,
-      zones,
-    )
-  ) {
-    top = randomInRange(14, 86);
-    left = Math.random() > 0.5 ? randomInRange(12, 18) : randomInRange(82, 88);
-  }
+  return null;
+}
+
+function buildHeroPopoutFromSlot(
+  slot: HeroPopoutSlot,
+  slotIndex: number,
+  showcase: HeroPopoutImage,
+): HeroPopout {
+  const horizontalJitter = randomInRange(-1.8, 1.8);
 
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -872,11 +1006,23 @@ function createHeroPopout(
     alt: showcase.alt,
     title: showcase.title,
     prompt: showcase.prompt,
-    top,
-    left,
-    rotate: randomInRange(-7, 7),
-    scale: randomInRange(0.94, 1.04),
+    top: slot.top,
+    left: clampPercent(slot.left + horizontalJitter),
+    rotate: slot.rotate + randomInRange(-1.5, 1.5),
+    scale: slot.scale + randomInRange(-0.02, 0.02),
+    entryX: slot.entryX,
+    entryY: slot.entryY + randomInRange(-3, 3),
+    driftX: slot.driftX + randomInRange(-2, 2),
+    driftY: slot.driftY + randomInRange(-2, 2),
+    duration: slot.duration + randomInRange(-0.15, 0.2),
+    zIndex: slot.zIndex,
+    slotIndex,
   };
+}
+
+function getHeroPopoutSpawnDelayMs(slotIndex: number) {
+  const rhythm = 760 + (slotIndex % HERO_POPOUT_SLOTS.length) * 140;
+  return rhythm + randomInRange(120, 420);
 }
 
 function HeroPopoutCard({
@@ -902,8 +1048,14 @@ function HeroPopoutCard({
         {
           top: `${popout.top}%`,
           left: `${popout.left}%`,
+          zIndex: popout.zIndex,
+          animationDuration: `${popout.duration}s`,
           "--popout-rotate": `${popout.rotate}deg`,
           "--popout-scale": popout.scale,
+          "--popout-entry-x": `${popout.entryX}px`,
+          "--popout-entry-y": `${popout.entryY}px`,
+          "--popout-drift-x": `${popout.driftX}px`,
+          "--popout-drift-y": `${popout.driftY}px`,
         } as React.CSSProperties
       }
       aria-label={`Use the prompt from ${popout.title}`}
@@ -937,6 +1089,8 @@ function HeroPopoutShowcases({
   const layerRef = useRef<HTMLDivElement>(null);
   const exclusionZonesRef = useRef<HeroPopoutExclusionZone[]>([]);
   const showcaseImagesRef = useRef<HeroPopoutImage[]>([]);
+  const slotIndexRef = useRef(0);
+  const imageIndexRef = useRef(0);
   const [popouts, setPopouts] = useState<HeroPopout[]>([]);
   const [showcaseImagesReady, setShowcaseImagesReady] = useState(false);
 
@@ -1024,21 +1178,47 @@ function HeroPopoutShowcases({
         return;
       }
 
-      setPopouts((current) => {
-        if (current.length >= HERO_POPOUT_MAX_ACTIVE) return current;
+      let delayForNextSpawn = getHeroPopoutSpawnDelayMs(slotIndexRef.current);
 
-        const popout = createHeroPopout(
+      setPopouts((current) => {
+        if (current.length >= HERO_POPOUT_MAX_ACTIVE) {
+          delayForNextSpawn = randomInRange(680, 980);
+          return current;
+        }
+
+        const slotSelection = pickHeroPopoutSlot(
           layerRect.width,
           layerRect.height,
           exclusionZonesRef.current,
-          showcaseImagesRef.current,
+          current,
+          slotIndexRef.current,
         );
-        if (!popout) return current;
+        if (!slotSelection) {
+          delayForNextSpawn = randomInRange(520, 860);
+          return current;
+        }
+
+        const showcase =
+          showcaseImagesRef.current[
+            imageIndexRef.current % showcaseImagesRef.current.length
+          ];
+        if (!showcase) return current;
+
+        slotIndexRef.current =
+          (slotSelection.slotIndex + 1) % HERO_POPOUT_SLOTS.length;
+        imageIndexRef.current += 1;
+        delayForNextSpawn = getHeroPopoutSpawnDelayMs(slotSelection.slotIndex);
+
+        const popout = buildHeroPopoutFromSlot(
+          slotSelection.slot,
+          slotSelection.slotIndex,
+          showcase,
+        );
 
         return [...current, popout];
       });
 
-      spawnTimeoutId = window.setTimeout(queuePopout, randomInRange(700, 1700));
+      spawnTimeoutId = window.setTimeout(queuePopout, delayForNextSpawn);
     };
 
     queuePopout();
@@ -1672,7 +1852,6 @@ export default function Home() {
           pointer-events: auto;
           cursor: pointer;
           padding: 0;
-          z-index: 2;
           animation: heroPopoutLife 3.6s cubic-bezier(0.32, 0.72, 0, 1) forwards;
           will-change: transform, opacity;
           transition:
@@ -1713,19 +1892,46 @@ export default function Home() {
         @keyframes heroPopoutLife {
           0% {
             opacity: 0;
-            transform: translate(-50%, -50%) translateY(16px) scale(calc(0.8 * var(--popout-scale))) rotate(var(--popout-rotate));
+            filter: blur(6px);
+            transform:
+              translate(-50%, -50%)
+              translate(var(--popout-entry-x, 0px), var(--popout-entry-y, 16px))
+              scale(calc(0.76 * var(--popout-scale, 1)))
+              rotate(calc(var(--popout-rotate, 0deg) - 5deg));
           }
-          12% {
-            opacity: 0.96;
-            transform: translate(-50%, -50%) translateY(0) scale(var(--popout-scale)) rotate(var(--popout-rotate));
+          10% {
+            opacity: 0;
+            filter: blur(4px);
           }
-          76% {
-            opacity: 0.96;
-            transform: translate(-50%, -50%) translateY(-8px) scale(calc(1.04 * var(--popout-scale))) rotate(var(--popout-rotate));
+          18% {
+            opacity: 0.98;
+            filter: blur(0);
+            transform:
+              translate(-50%, -50%)
+              translate(0, 0)
+              scale(var(--popout-scale, 1))
+              rotate(var(--popout-rotate, 0deg));
+          }
+          68% {
+            opacity: 0.98;
+            filter: blur(0);
+            transform:
+              translate(-50%, -50%)
+              translate(
+                calc(var(--popout-drift-x, 0px) * 0.55),
+                var(--popout-drift-y, -8px)
+              )
+              scale(calc(1.06 * var(--popout-scale, 1)))
+              rotate(calc(var(--popout-rotate, 0deg) + 1.5deg));
           }
           100% {
             opacity: 0;
-            transform: translate(-50%, -50%) translateY(-18px) scale(calc(0.88 * var(--popout-scale))) rotate(var(--popout-rotate));
+            filter: blur(3px);
+            transform:
+              translate(-50%, -50%)
+              translate(var(--popout-drift-x, 0px), calc(var(--popout-drift-y, -8px) - 12px))
+              scale(calc(0.84 * var(--popout-scale, 1)))
+              rotate(calc(var(--popout-rotate, 0deg) - 2deg));
           }
         }
 

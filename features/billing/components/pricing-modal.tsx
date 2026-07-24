@@ -19,6 +19,7 @@ import {
 } from "@/lib/billing/config";
 import { Button } from "@/components/ui/button";
 import { useStripeCheckout } from "@/features/billing/client/use-stripe-checkout";
+import { StripePortalButton } from "@/features/billing/components/stripe-portal-button";
 import type {
   PricingTab,
   SubscriptionTier,
@@ -270,9 +271,12 @@ export function PricingModal({
               </ul>
 
               {isCurrentTier("pro") ? (
-                <Button disabled className="min-h-10 w-full rounded-xl">
-                  Current Plan
-                </Button>
+                <StripePortalButton
+                  variant="outline"
+                  className="min-h-10 w-full rounded-xl"
+                >
+                  Manage subscription
+                </StripePortalButton>
               ) : currentTier === "pro_plus" ? (
                 <Button
                   disabled
@@ -356,9 +360,12 @@ export function PricingModal({
               </ul>
 
               {isCurrentTier("pro_plus") ? (
-                <Button disabled className="min-h-10 w-full rounded-xl">
-                  Current Plan
-                </Button>
+                <StripePortalButton
+                  variant="outline"
+                  className="min-h-10 w-full rounded-xl"
+                >
+                  Manage subscription
+                </StripePortalButton>
               ) : (
                 <Button
                   onClick={() => handleSubscribe("pro_plus")}
@@ -499,8 +506,9 @@ export function PricingModal({
           </div>
         )}
         <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
-          Cancel anytime. Purchased credits never expire; subscription credits
-          refresh monthly. Powered by Stripe.
+          Cancel anytime. Have a promo code? Enter it at checkout. Purchased
+          credits never expire; subscription credits refresh monthly. Powered by
+          Stripe.
         </p>
       </DialogContent>
     </Dialog>

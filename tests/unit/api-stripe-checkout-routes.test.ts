@@ -125,6 +125,7 @@ describe("Stripe checkout return URLs", () => {
     expect(response.status).toBe(200);
     expect(createSubscriptionCheckoutSessionMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        allow_promotion_codes: true,
         success_url:
           "https://www.squidagent.app/dashboard?subscription_success=true&session_id={CHECKOUT_SESSION_ID}",
         cancel_url:
