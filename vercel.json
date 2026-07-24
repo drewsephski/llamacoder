@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/maintenance/rate-limit-buckets",
-      "schedule": "0 * * * *"
+      "schedule": "15 0 * * *"
     },
     {
       "path": "/api/synthetic/launch",
