@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { scrapeScreenshotRequestSchema } from "@/features/generation/contracts";
 import {
   capturePublicUrlScreenshot,
-  CloudflareScreenshotError,
-  getCloudflareBrowserRenderingConfig,
-} from "@/features/generation/server/cloudflare-screenshot";
+  getScreenshotOneConfig,
+  ScreenshotOneError,
+} from "@/features/generation/server/screenshotone-screenshot";
 import { getCurrentSession } from "@/features/auth/server/session";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { parsePublicHttpUrl } from "@/features/security/server/public-url";
@@ -59,12 +59,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!getCloudflareBrowserRenderingConfig()) {
+    if (!getScreenshotOneConfig()) {
       return NextResponse.json(
         {
-          error: "CLOUDFLARE_BROWSER_RENDERING_NOT_CONFIGURED",
+          error: "SCREENSHOTONE_NOT_CONFIGURED",
           message:
-            "Add CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN to your environment. Create a token with Browser Rendering edit permissions in the Cloudflare dashboard.",
+            "Add SCREENSHOTONE_ACCESS_KEY to your environment. Get it from https://screenshotone.com/",
         },
         { status: 500 },
       );
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("Screenshot scraping error:", error);
 
-    if (error instanceof CloudflareScreenshotError) {
+    if (error instanceof ScreenshotOneError) {
       return NextResponse.json(
         { error: error.message },
         { status: error.status },

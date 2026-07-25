@@ -4,14 +4,14 @@ import { readJson } from "../fixtures/builders";
 const {
   capturePublicUrlScreenshotMock,
   consumeRateLimitMock,
-  getCloudflareBrowserRenderingConfigMock,
   getCurrentSessionMock,
+  getScreenshotOneConfigMock,
   parsePublicHttpUrlMock,
 } = vi.hoisted(() => ({
   capturePublicUrlScreenshotMock: vi.fn(),
   consumeRateLimitMock: vi.fn(),
-  getCloudflareBrowserRenderingConfigMock: vi.fn(),
   getCurrentSessionMock: vi.fn(),
+  getScreenshotOneConfigMock: vi.fn(),
   parsePublicHttpUrlMock: vi.fn(async (input: string) => {
     const url = new URL(input);
     if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -33,20 +33,19 @@ vi.mock("@/features/security/server/public-url", () => ({
   parsePublicHttpUrl: parsePublicHttpUrlMock,
 }));
 
-vi.mock("@/features/generation/server/cloudflare-screenshot", async () => {
+vi.mock("@/features/generation/server/screenshotone-screenshot", async () => {
   const actual = await vi.importActual<
-    typeof import("@/features/generation/server/cloudflare-screenshot")
-  >("@/features/generation/server/cloudflare-screenshot");
+    typeof import("@/features/generation/server/screenshotone-screenshot")
+  >("@/features/generation/server/screenshotone-screenshot");
 
   return {
     ...actual,
     capturePublicUrlScreenshot: capturePublicUrlScreenshotMock,
-    getCloudflareBrowserRenderingConfig:
-      getCloudflareBrowserRenderingConfigMock,
+    getScreenshotOneConfig: getScreenshotOneConfigMock,
   };
 });
 
-import { CloudflareScreenshotError } from "@/features/generation/server/cloudflare-screenshot";
+import { ScreenshotOneError } from "@/features/generation/server/screenshotone-screenshot";
 import { POST } from "@/app/api/scrape-screenshot/route";
 
 function request(body: Record<string, unknown>) {
@@ -61,10 +60,7 @@ describe("/api/scrape-screenshot", () => {
     vi.clearAllMocks();
     getCurrentSessionMock.mockResolvedValue({ user: { id: "user_1" } });
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5 });
-    getCloudflareBrowserRenderingConfigMock.mockReturnValue({
-      accountId: "account_test",
-      apiToken: "token_test",
-    });
+    getScreenshotOneConfigMock.mockReturnValue({ accessKey: "access_test" });
     capturePublicUrlScreenshotMock.mockResolvedValue(Buffer.from("png"));
   });
 
@@ -80,7 +76,7 @@ describe("/api/scrape-screenshot", () => {
     expect(capturePublicUrlScreenshotMock).not.toHaveBeenCalled();
   });
 
-  it("rate limits browser sessions before provider initialization", async () => {
+  it("rate limits screenshot requests before provider initialization", async () => {
     consumeRateLimitMock.mockResolvedValueOnce({
       allowed: false,
       retryAfterSeconds: 30,
@@ -107,14 +103,14 @@ describe("/api/scrape-screenshot", () => {
     });
   });
 
-  it("rejects missing Cloudflare Browser Rendering configuration", async () => {
-    getCloudflareBrowserRenderingConfigMock.mockReturnValueOnce(null);
+  it("rejects missing ScreenshotOne configuration", async () => {
+    getScreenshotOneConfigMock.mockReturnValueOnce(null);
 
     const response = await POST(request({ url: "https://example.com" }));
 
     expect(response.status).toBe(500);
     await expect(readJson(response)).resolves.toMatchObject({
-      error: "CLOUDFLARE_BROWSER_RENDERING_NOT_CONFIGURED",
+      error: "SCREENSHOTONE_NOT_CONFIGURED",
     });
   });
 
@@ -134,9 +130,10 @@ describe("/api/scrape-screenshot", () => {
 
   it("maps DNS and timeout failures to retryable client errors", async () => {
     capturePublicUrlScreenshotMock.mockRejectedValueOnce(
-      new CloudflareScreenshotError(
+      new ScreenshotOneError(
         "Could not resolve the website. Please check the URL and try again.",
         400,
+        "name_not_resolved",
       ),
     );
 
@@ -147,9 +144,10 @@ describe("/api/scrape-screenshot", () => {
     });
 
     capturePublicUrlScreenshotMock.mockRejectedValueOnce(
-      new CloudflareScreenshotError(
+      new ScreenshotOneError(
         "The website took too long to load. Please try again or try a different URL.",
         408,
+        "timeout_error",
       ),
     );
     response = await POST(request({ url: "https://slow.test" }));
