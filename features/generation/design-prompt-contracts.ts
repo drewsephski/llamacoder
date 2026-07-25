@@ -18,12 +18,17 @@ export {
   getStylePack,
   formatStylePackPreflight,
   buildActiveStylePackDirective,
+  buildStyleCommitmentDirective,
   STYLE_PACKS,
   STYLE_PACK_IDS,
+  GENERIC_AI_PALETTE_BANS,
+  PACK_FONT_PAIRINGS,
 } from "@/features/generation/style-packs";
 export type {
   StylePackId,
   StylePack,
+  StylePackWithFonts,
+  StylePackFontPairing,
   SubjectBucket,
 } from "@/features/generation/style-packs";
 
@@ -153,9 +158,16 @@ export const premiumArchetypeAndThemeContract = dedent`
     - Editorial / Specimen → editorialSpecimen pack.
     - Modern-minimal / Cobalt → cobaltMinimal pack.
     - Atmospheric / Lumen → lumenAtmospheric pack.
+    - Cool atmospheric / Midnight / Aurora → midnightCool pack.
     - Playful / Hum → softStructural pack.
     - Kinetic / Carnival → kineticAwwwards pack.
     - Brutal / Swiss Industrial → swissBrutal pack.
+    - Terminal / CRT → terminalPhosphor pack.
+    - Botanical / Garden → gardenBotanical pack.
+    - Manifesto / poster → manifestoGeometric pack.
+    - Newsprint / publication → newsprintEditorial pack.
+    - Riso / print → risoPoster pack.
+  - **Full-style commitment:** when any Style Pack is locked, execute it completely — every surface, font, radius, nav, footer, and motion cue must belong to that one world. Partial adoption reads as generic.
   - Brutal tone mechanics (when swissBrutal or user asks brutalist):
     - Use a raw, edge-driven register: heavy borders, sharp section edges, strong density contrasts, minimal decorative ornament.
     - Prefer slab / condensed display behavior, tracked caps only when they add intent, no unnecessary rounded corners on primary containers.
@@ -279,6 +291,7 @@ export const designTasteContract = dedent`
 
   ### Anti-slop tells (hard bans unless the brief explicitly demands them)
   - Em-dash and en-dash as separators are forbidden in visible UI copy. Use a period, comma, colon, parentheses, or a regular hyphen.
+  - **Yellow/black generic combo:** \`bg-yellow-400\`/\`bg-yellow-500\` primary CTA on \`bg-black\`/\`bg-neutral-950\` canvas is the most common AI slop tell — banned unless the locked Style Pack explicitly specifies it (none do).
   - No neon outer glows, pure \`#000\`/\`#fff\` as the only palette, rainbow mesh blobs, gradient display headlines, custom cursors, or decorative status dots on every row/nav item.
   - No version badges in heroes (\`BETA\`, \`v0.6\`), no scroll cues (\`Scroll to explore\`), no decoration strips (\`TYPE / FORM / MOTION\`), no locale/weather strips, no section-number eyebrows (\`01 / Capabilities\`), no pills/labels overlaid on images, no photo-credit theater on stock imagery.
   - No div-based fake browser/phone/terminal/IDE chrome. No fabricated metrics, testimonials, customer logos, or awards.

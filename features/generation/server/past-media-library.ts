@@ -6,8 +6,8 @@ import {
   type PastMediaCatalogEntry,
 } from "@/features/generation/past-media-catalog";
 import {
-  isDesignBriefUnderspecified,
   selectPastMediaCatalogForPrompt,
+  shouldAttachPastMediaCatalog,
   type PastMediaLibrary,
 } from "@/features/generation/past-media-urls";
 
@@ -22,7 +22,7 @@ export function getHardcodedPastMediaLibrary(): PastMediaLibrary {
 export async function resolvePastMediaCatalogForPrompt(options: {
   prompt: string;
 }): Promise<readonly PastMediaCatalogEntry[] | null> {
-  if (!isDesignBriefUnderspecified(options.prompt)) {
+  if (!shouldAttachPastMediaCatalog(options.prompt)) {
     return null;
   }
 

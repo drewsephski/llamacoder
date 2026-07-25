@@ -2,11 +2,14 @@ import { describe, expect, test } from "vitest";
 import {
   buildPastMediaCatalogPromptSection,
   buildPastMediaPromptSection,
+  buildVisualSignatureDirective,
   extractMediaUrls,
   isDesignBriefUnderspecified,
   mergePastMediaLibraries,
   scorePastMediaCatalogEntry,
   selectPastMediaCatalogForPrompt,
+  selectVisualSignatureMode,
+  shouldAttachPastMediaCatalog,
 } from "@/features/generation/past-media-urls";
 import {
   catalogToPastMediaLibrary,
@@ -61,18 +64,30 @@ describe("past-media-urls", () => {
     ]);
   });
 
-  test("isDesignBriefUnderspecified detects missing visual direction", () => {
-    expect(isDesignBriefUnderspecified("Build a travel planning app")).toBe(
+  test("shouldAttachPastMediaCatalog attaches catalog unless user supplied URLs", () => {
+    expect(shouldAttachPastMediaCatalog("Build a travel planning app")).toBe(
       true,
     );
     expect(
-      isDesignBriefUnderspecified(
+      shouldAttachPastMediaCatalog("Build a landing page for my startup"),
+    ).toBe(true);
+    expect(
+      shouldAttachPastMediaCatalog(
         "Build a travel app with a dark cinematic video background",
       ),
+    ).toBe(true);
+    expect(
+      shouldAttachPastMediaCatalog(
+        "Use this hero asset https://cdn.example.com/hero.mp4 for the landing page",
+      ),
     ).toBe(false);
+  });
+
+  test("isDesignBriefUnderspecified aliases shouldAttachPastMediaCatalog", () => {
+    expect(isDesignBriefUnderspecified("Build a todo app")).toBe(true);
     expect(
       isDesignBriefUnderspecified(
-        "Use this hero asset https://cdn.example.com/hero.mp4 for the landing page",
+        "Use https://cdn.example.com/hero.mp4 as background",
       ),
     ).toBe(false);
   });
@@ -88,7 +103,7 @@ describe("past-media-urls", () => {
     expect(section).toContain("https://cdn.example.com/cover.png");
   });
 
-  test("buildPastMediaCatalogPromptSection includes structured metadata", () => {
+  test("buildPastMediaCatalogPromptSection lists catalog without mandatory video", () => {
     const section = buildPastMediaCatalogPromptSection([
       {
         id: "demo-video",
@@ -97,18 +112,72 @@ describe("past-media-urls", () => {
         description: "Demo loop",
         mood: "calm",
         tags: ["demo", "hero"],
-        useWhen: "Underspecified calm app briefs",
+        useWhen: "Calm app briefs",
         howToUse: "Muted looping hero background",
       },
     ]);
 
     expect(section).toContain("Past media catalog");
     expect(section).toContain("demo-video");
-    expect(section).toContain("Use when:");
-    expect(section).toContain("How to use:");
-    expect(section).toContain("https://cdn.example.com/bg.mp4");
-    expect(section).toContain("REQUIRED PRIMARY VIDEO");
-    expect(section).toContain("MUST embed");
+    expect(section).toContain("optional reference");
+    expect(section).not.toContain("REQUIRED PRIMARY VIDEO");
+    expect(section).not.toContain("MUST embed");
+  });
+
+  test("selectVisualSignatureMode rotates video, mesh, and noise equally", () => {
+    expect(
+      selectVisualSignatureMode("Build a todo app", { hasCatalogVideo: true }),
+    ).toMatch(/catalogVideo|meshGradient|noisePattern/);
+
+    const modes = new Set(
+      Array.from({ length: 48 }, (_, index) =>
+        selectVisualSignatureMode(`Build product variant ${index} dashboard`, {
+          hasCatalogVideo: true,
+        }),
+      ),
+    );
+    expect(modes.has("catalogVideo")).toBe(true);
+    expect(modes.has("meshGradient")).toBe(true);
+    expect(modes.has("noisePattern")).toBe(true);
+  });
+
+  test("selectVisualSignatureMode defers to user when media URLs present", () => {
+    expect(
+      selectVisualSignatureMode(
+        "Use https://cdn.example.com/hero.mp4 as the background",
+        { hasCatalogVideo: true },
+      ),
+    ).toBe("userSpecified");
+  });
+
+  test("buildVisualSignatureDirective locks one mode with implementation steps", () => {
+    const mesh = buildVisualSignatureDirective(
+      "todo app",
+      null,
+      "meshGradient",
+    );
+    expect(mesh).toContain("Visual signature");
+    expect(mesh).toContain("MeshGradient");
+    expect(mesh).toContain("One signature only");
+
+    const video = buildVisualSignatureDirective(
+      "travel app",
+      [
+        {
+          id: "demo-video",
+          kind: "video",
+          url: "https://d8j0ntlcm91z4.cloudfront.net/demo.mp4",
+          description: "Travel loop",
+          mood: "light, airy",
+          tags: ["travel"],
+          useWhen: "Travel",
+          howToUse: "Hero background",
+        },
+      ],
+      "catalogVideo",
+    );
+    expect(video).toContain("d8j0ntlcm91z4.cloudfront.net/demo.mp4");
+    expect(video).toContain("Do NOT also add MeshGradient");
   });
 
   test("selectPastMediaCatalogForPrompt ranks jet membership brief to skyleite video", () => {

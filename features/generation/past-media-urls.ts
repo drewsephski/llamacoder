@@ -1,6 +1,10 @@
 import dedent from "dedent";
 
 import type { PastMediaCatalogEntry } from "@/features/generation/past-media-catalog";
+import {
+  hasExplicitAestheticDirection,
+  hashBriefSeed,
+} from "@/features/generation/style-packs";
 
 export interface PastMediaLibrary {
   images: string[];
@@ -17,9 +21,6 @@ const URL_PATTERN = /https?:\/\/[^\s"'<>)\]]+/gi;
 const IMAGE_EXTENSION =
   /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(\?[^\s"'<>)\]]*)?$/i;
 const VIDEO_EXTENSION = /\.(mp4|webm|mov|m4v|ogv|ogg)(\?[^\s"'<>)\]]*)?$/i;
-
-const DESIGN_DIRECTION_PATTERN =
-  /\b(video|background|hero|visual|design|palette|color|colour|theme|aesthetic|gradient|shader|animation|brand|logo|typography|font|dark mode|light mode|minimal|brutalist|editorial|luxury|portfolio|landing page|image|photo|screenshot|wallpaper|texture|motion|cinematic|atmospheric|vibe|look and feel|ui style)\b/i;
 
 function normalizeMediaUrl(rawUrl: string) {
   return rawUrl.replace(/[),.;]+$/, "").trim();
@@ -77,13 +78,28 @@ export function mergePastMediaLibraries(
   };
 }
 
+/** @deprecated Use shouldAttachPastMediaCatalog — kept for test compatibility. */
 export function isDesignBriefUnderspecified(prompt: string) {
+  return shouldAttachPastMediaCatalog(prompt);
+}
+
+/**
+ * Attach the CloudFront media catalog unless the user already supplied media URLs.
+ * Visual keywords in the brief (landing page, minimal, dark mode, etc.) no longer
+ * suppress the catalog — those briefs were falling back to generic yellow/black slop
+ * instead of using curated showcase assets.
+ */
+export function shouldAttachPastMediaCatalog(prompt: string) {
   const trimmed = prompt.trim();
   if (!trimmed) return true;
-  if (DESIGN_DIRECTION_PATTERN.test(trimmed)) return false;
 
   const currentMedia = extractMediaUrls(trimmed);
   return currentMedia.images.length === 0 && currentMedia.videos.length === 0;
+}
+
+export function promptHasOwnMediaUrls(prompt: string) {
+  const currentMedia = extractMediaUrls(prompt.trim());
+  return currentMedia.images.length > 0 || currentMedia.videos.length > 0;
 }
 
 const PROMPT_STOP_WORDS = new Set([
@@ -185,12 +201,156 @@ export function selectPastMediaCatalogForPrompt(
   for (const item of ranked) {
     if (item.entry.kind !== "image") continue;
     if (selected.some((entry) => entry.id === item.entry.id)) continue;
-    if (item.score <= 0 && selected.length >= 1) continue;
     selected.push(item.entry);
     if (selected.length >= 3) break;
   }
 
-  return selected.slice(0, 3);
+  // Always include at least one supporting image when the catalog has any.
+  if (!selected.some((entry) => entry.kind === "image")) {
+    const fallbackImage = ranked.find((item) => item.entry.kind === "image");
+    if (fallbackImage) selected.push(fallbackImage.entry);
+  }
+
+  return selected.slice(0, 4);
+}
+
+export type VisualSignatureMode =
+  | "catalogVideo"
+  | "meshGradient"
+  | "noisePattern"
+  | "userSpecified";
+
+/**
+ * Pick exactly one hero signature treatment for this build.
+ * Video, mesh gradient, and noise pattern share equal weight (~⅓ each)
+ * when a catalog video exists; otherwise mesh vs noise split 50/50.
+ * User-supplied media or explicit aesthetic direction always wins.
+ */
+export function selectVisualSignatureMode(
+  brief: string,
+  options?: { hasCatalogVideo?: boolean },
+): VisualSignatureMode {
+  const trimmed = brief.trim();
+
+  if (
+    promptHasOwnMediaUrls(trimmed) ||
+    hasExplicitAestheticDirection(trimmed)
+  ) {
+    return "userSpecified";
+  }
+
+  const seed = hashBriefSeed(trimmed);
+  const modes: VisualSignatureMode[] = options?.hasCatalogVideo
+    ? ["catalogVideo", "meshGradient", "noisePattern"]
+    : ["meshGradient", "noisePattern"];
+
+  return modes[seed % modes.length] ?? "meshGradient";
+}
+
+const SIGNATURE_MODE_LABELS: Record<VisualSignatureMode, string> = {
+  catalogVideo: "Catalog video (CloudFront)",
+  meshGradient: "Mesh gradient shader",
+  noisePattern: "Noisy pattern background",
+  userSpecified: "User-specified design",
+};
+
+function buildCatalogVideoInstructions(
+  primaryVideo: PastMediaCatalogEntry,
+  images: PastMediaCatalogEntry[],
+) {
+  const imageHints =
+    images.length > 0
+      ? images
+          .slice(0, 2)
+          .map(
+            (img) =>
+              `- Optional supporting image \`${img.id}\`: \`${img.url}\` — ${img.howToUse}`,
+          )
+          .join("\n")
+      : "";
+
+  return dedent`
+    ### Implement: catalog video
+    - Embed \`${primaryVideo.url}\` in \`<video autoPlay loop muted playsInline />\` per: ${primaryVideo.howToUse}
+    - Comment \`{/* visual-signature: ${primaryVideo.id} */}\` above the element.
+    - Derive scrim, text color, and accent from the video mood (${primaryVideo.mood}).
+    - Do NOT also add MeshGradient, DotOrbit, or a noise overlay as the hero signature.
+    ${imageHints}
+  `;
+}
+
+function buildMeshGradientInstructions() {
+  return dedent`
+    ### Implement: mesh gradient
+    - Import \`MeshGradient\` or \`DotOrbit\` from \`@paper-design/shaders-react\` ONLY — no other shader names exist.
+    - Use as the hero/first-viewport signature: full-bleed behind content with explicit width/height via style props and a tasteful \`colors\` array matched to the subject (not generic AI purple).
+    - Layer readable content above with an intentional scrim or solid panel — never illegible text on raw shader.
+    - Do NOT also embed a catalog video or noise layer as the hero signature for this build.
+  `;
+}
+
+function buildNoisePatternInstructions() {
+  return dedent`
+    ### Implement: noisy pattern background
+    - Use a fixed, \`pointer-events-none\` grain/noise layer on the hero or canvas — CSS \`background-image\` with an SVG feTurbulence data-URI, or a subtle repeating noise texture at low opacity (≈3–8%).
+    - Pair with solid typography and one restrained accent; the texture adds tactility, not chaos.
+    - Keep contrast readable; noise must not replace foreground hierarchy.
+    - Do NOT also embed a catalog video or MeshGradient as the hero signature for this build.
+  `;
+}
+
+function buildUserSpecifiedInstructions() {
+  return dedent`
+    ### Implement: user-specified design
+    - Follow the user's stated palette, aesthetic, media URLs, and references — do not override with catalog video or default shaders.
+    - Still avoid generic yellow/black CTA combos and placeholder dashed boxes when real assets were named.
+  `;
+}
+
+/**
+ * Directive: exactly ONE visual signature for the hero/first viewport.
+ * Replaces the old media-first mandatory-video approach.
+ */
+export function buildVisualSignatureDirective(
+  brief: string,
+  catalog: readonly PastMediaCatalogEntry[] | null | undefined,
+  mode: VisualSignatureMode,
+) {
+  const primaryVideo = catalog?.find((entry) => entry.kind === "video");
+  const images = catalog?.filter((entry) => entry.kind === "image") ?? [];
+
+  let implementation = buildUserSpecifiedInstructions();
+  if (mode === "catalogVideo" && primaryVideo) {
+    implementation = buildCatalogVideoInstructions(primaryVideo, images);
+  } else if (mode === "meshGradient") {
+    implementation = buildMeshGradientInstructions();
+  } else if (mode === "noisePattern") {
+    implementation = buildNoisePatternInstructions();
+  } else if (mode === "catalogVideo" && !primaryVideo) {
+    implementation = buildMeshGradientInstructions();
+  }
+
+  return dedent`
+    ## Visual signature (LOCKED — pick exactly one)
+
+    Mode for this build: **${SIGNATURE_MODE_LABELS[mode]}** (\`${mode}\`)
+    Selected deterministically from the brief — do not switch mid-build or combine signatures.
+
+    ${implementation}
+
+    ### Rules for every mode
+    - **One signature only** — never stack catalog video + mesh gradient + noise pattern in the same hero.
+    - **Banned generic default:** \`bg-yellow-400\`/\`bg-yellow-500\` CTA on \`bg-black\`/\`bg-neutral-950\` unless the user explicitly asked for it.
+    - Dashboard/workbench apps may skip a cinematic hero signature when the product surface IS the hero — still obey the locked mode for any marketing band present.
+    - Catalog images below the fold are optional in all modes; never use dashed placeholder divs when a catalog URL fits the section.
+  `;
+}
+
+/** @deprecated Use buildVisualSignatureDirective */
+export function buildMediaFirstDesignDirective(
+  catalog: readonly PastMediaCatalogEntry[],
+) {
+  return buildVisualSignatureDirective("", catalog, "catalogVideo");
 }
 
 function formatCatalogEntry(entry: PastMediaCatalogEntry) {
@@ -222,25 +382,11 @@ export function buildPastMediaCatalogPromptSection(
       ? images.map(formatCatalogEntry).join("\n\n")
       : "- (none)";
 
-  const primaryVideo = videos[0];
-  const primaryVideoRule = primaryVideo
-    ? dedent`
-      REQUIRED PRIMARY VIDEO:
-      - You MUST embed \`${primaryVideo.url}\` in a real \`<video autoPlay loop muted playsInline>\` element in the first viewport.
-      - Reference it by catalog id \`${primaryVideo.id}\` in a code comment above the video element.
-      - Do NOT substitute shaders, gradients, placeholder divs, or stock imagery for this primary video.
-      - Architect/plan styling notes do NOT override this requirement — the user's original brief lacked media direction.
-    `
-    : "";
-
   return dedent`
-    ## Past media catalog (ACTIVE — mandatory for this build)
+    ## Past media catalog (CloudFront — optional reference)
 
-    The user's original brief did not specify hero media. These ranked matches
-    were selected from Squid's curated showcase library. Use them even if the
-    implementation plan adds separate design direction.
-
-    ${primaryVideoRule}
+    Ranked showcase assets when the locked visual signature is \`catalogVideo\`,
+    or when a section genuinely needs a real image/video. Not mandatory every build.
 
     ### Videos
     ${videoLines}
@@ -248,11 +394,7 @@ export function buildPastMediaCatalogPromptSection(
     ### Images
     ${imageLines}
 
-    Rules:
-    - Treat the first listed video as the primary hero/background asset unless the app is a pure dashboard with no top-of-page media surface.
-    - Optional images may support feature cards or empty states — never replace the required primary video with placeholders.
-    - Use exact catalog URLs in \`src\` attributes. No localhost, no invented CDN links, no dashed placeholder boxes for catalog assets.
-    - Pick supporting images only when their tags match the subject; ignore unrelated decorative assets.
+    Use exact catalog URLs in \`src\` when embedding — no localhost, no invented links, no dashed placeholders.
   `;
 }
 

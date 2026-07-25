@@ -309,9 +309,11 @@ describe("prompt design guidance", () => {
     });
     expect(prompt).toContain("LOCKED for this build");
     expect(prompt).toContain("Locked composition scaffold");
-    expect(prompt).toMatch(/STYLE_PACK: (cobaltMinimal|swissBrutal)/);
-    expect(prompt).toContain("md:grid-cols-12");
-    expect(prompt).toContain("gap-px");
+    expect(prompt).toMatch(
+      /STYLE_PACK: (cobaltMinimal|terminalPhosphor|midnightCool|manifestoGeometric|swissBrutal|newsprintEditorial)/,
+    );
+    expect(prompt).toContain("Visual signature");
+    expect(prompt).toContain("One signature only");
   });
 
   it("uses the compressed coding prompt when conversation context is large", () => {

@@ -1,10 +1,18 @@
 import dedent from "dedent";
+import {
+  getRecentStylePackIds,
+  pickDiversifiedPack,
+  readHallmarkLog,
+  themeNameToStylePackId,
+} from "@/features/generation/hallmark-memory";
 
 /**
  * Subject-routed Style Packs for vague briefs.
  *
- * Distills taste-skill principles into executable Tailwind v3 class recipes
- * (no arbitrary brackets). Explicit user aesthetic direction always wins.
+ * Distills Hallmark taste-skill principles into executable Tailwind v3 class
+ * recipes (no arbitrary brackets). Each pack is a complete aesthetic world —
+ * palette, type, radius, nav, footer, motion, and composition scaffold.
+ * Explicit user aesthetic direction always wins.
  */
 
 export const STYLE_PACK_IDS = [
@@ -14,6 +22,21 @@ export const STYLE_PACK_IDS = [
   "swissBrutal",
   "kineticAwwwards",
   "softStructural",
+  "terminalPhosphor",
+  "gardenBotanical",
+  "midnightCool",
+  "manifestoGeometric",
+  "newsprintEditorial",
+  "risoPoster",
+] as const;
+
+/** Palettes the model reaches for when no Style Pack is locked — hard-ban globally. */
+export const GENERIC_AI_PALETTE_BANS = [
+  "yellow-400/500 primary CTA on black or near-black canvas (the default AI hazard combo)",
+  "amber-on-black as the only identity when the locked pack is not lumenAtmospheric",
+  "Inter / system-ui / Roboto as the sole voice with no display pairing",
+  "purple gradient mesh hero on white or neutral-950",
+  "anonymous Vercel-gray neutral SaaS with no pack signature element",
 ] as const;
 
 export type StylePackId = (typeof STYLE_PACK_IDS)[number];
@@ -67,7 +90,26 @@ export type StylePack = {
   classCheatSheet: string[];
 };
 
-export const STYLE_PACKS: Record<StylePackId, StylePack> = {
+export type StylePackFontPairing = {
+  display: string;
+  body: string;
+  mono?: string;
+  googleFontsUrl: string;
+  /** Semantic CSS classes the model must define in index.html or a global style block. */
+  displayClass: string;
+  bodyClass: string;
+  monoClass?: string;
+};
+
+type StylePackCore = Omit<StylePack, "fontPairing"> & {
+  fontPairing?: StylePackFontPairing;
+};
+
+export type StylePackWithFonts = StylePack & {
+  fontPairing: StylePackFontPairing;
+};
+
+export const STYLE_PACKS: Record<StylePackId, StylePackCore> = {
   cobaltMinimal: {
     id: "cobaltMinimal",
     hallmarkAlias: "Cobalt / modern-minimal",
@@ -593,20 +635,576 @@ Double-bezel elevated modules with generous section rhythm — not flat equal ca
       "Muted: text-neutral-600",
     ],
   },
+
+  terminalPhosphor: {
+    id: "terminalPhosphor",
+    hallmarkAlias: "Terminal / phosphor CRT",
+    aestheticMode: "brutalist",
+    luminosity: "dark-first",
+    dials: { variance: 6, motion: 3, density: 8 },
+    designReadTemplate:
+      "Reading this as: developer tool or ops console for power users, with a phosphor terminal language, leaning Terminal.",
+    surfaceMap: {
+      canvas: "bg-neutral-950 text-emerald-400",
+      surface: "bg-neutral-900 text-emerald-300 border border-emerald-900",
+      subdued:
+        "bg-neutral-900/90 text-emerald-400/80 border border-neutral-800",
+      inverse: "bg-emerald-950 text-emerald-100 border border-emerald-800",
+      primary:
+        "bg-emerald-600 text-neutral-950 hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-none font-mono uppercase tracking-wider text-xs",
+      accent: "text-emerald-400",
+      mutedInk: "text-emerald-700",
+      border: "border-emerald-900",
+      overlay: "bg-neutral-900 text-emerald-300 border-emerald-900",
+    },
+    typography: {
+      display:
+        "font-mono text-2xl md:text-4xl font-bold uppercase tracking-tight text-emerald-400",
+      body: "font-mono text-sm text-emerald-500/90 leading-relaxed",
+      mono: "font-mono text-xs uppercase tracking-widest text-emerald-600",
+    },
+    radiusLock:
+      "rounded-none everywhere — CRT scanline aesthetic, no soft corners",
+    elevationLock:
+      "no shadows; structure via 1px phosphor borders and ASCII brackets",
+    navArchetype:
+      "edge-aligned mono bar with bracket labels [ HOME ] [ DOCS ] and one phosphor primary; max-w-7xl mx-auto px-4",
+    footerArchetype:
+      "mono status line: uptime · version · env — no marketing columns",
+    signatureElement:
+      "ASCII-bracket telemetry frame with blinking cursor block and dense mono log rows",
+    motionRecipe:
+      "near-static; optional single opacity blink on cursor; no bounce; respect prefers-reduced-motion",
+    compositionScaffold: `
+Phosphor terminal board — mono throughout, bracket labels, dense rows:
+\`\`\`tsx
+<section className="py-12 px-4 max-w-7xl mx-auto font-mono">
+  <div className="border border-emerald-900 bg-neutral-900 p-6 space-y-4">
+    <div className="flex items-center justify-between border-b border-emerald-900 pb-3">
+      <span className="text-xs uppercase tracking-widest text-emerald-600">[ LIVE SESSION ]</span>
+      <span className="text-xs text-emerald-700">PID 8842</span>
+    </div>
+    <div className="space-y-1 text-sm text-emerald-400">
+      {/* timestamped log lines — subject-specific */}
+    </div>
+    <div className="flex gap-2 pt-2">
+      <span className="text-emerald-500">&gt;</span>
+      <span className="animate-pulse text-emerald-400">_</span>
+    </div>
+  </div>
+</section>
+\`\`\`
+Never mix Inter sans with this pack. Never use yellow accents.
+`.trim(),
+    hardBans: [
+      "yellow or amber accents",
+      "Inter/system-ui sans body",
+      "rounded-2xl cards",
+      "soft shadows",
+      "purple gradients",
+      "three equal feature cards",
+    ],
+    classCheatSheet: [
+      "Root: min-h-screen bg-neutral-950 text-emerald-400 font-mono",
+      "Panel: bg-neutral-900 border border-emerald-900 p-4 rounded-none",
+      "Primary: bg-emerald-600 text-neutral-950 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-none hover:bg-emerald-500",
+      "Bracket label: text-xs uppercase tracking-widest text-emerald-600",
+      "Log line: text-sm text-emerald-400",
+    ],
+  },
+
+  gardenBotanical: {
+    id: "gardenBotanical",
+    hallmarkAlias: "Garden / botanical craft",
+    aestheticMode: "editorial",
+    luminosity: "light-first",
+    dials: { variance: 7, motion: 4, density: 3 },
+    designReadTemplate:
+      "Reading this as: craft/food/wellness product for design-conscious visitors, with a botanical editorial language, leaning Garden.",
+    surfaceMap: {
+      canvas: "bg-stone-100 text-stone-900",
+      surface: "bg-stone-50 text-stone-900 border border-stone-300",
+      subdued: "bg-emerald-50 text-stone-700 border border-emerald-200",
+      inverse: "bg-emerald-900 text-stone-50 border border-emerald-800",
+      primary:
+        "bg-emerald-800 text-stone-50 hover:bg-emerald-900 focus-visible:ring-2 focus-visible:ring-emerald-600 rounded-md",
+      accent: "text-emerald-700",
+      mutedInk: "text-stone-600",
+      border: "border-stone-300",
+      overlay: "bg-stone-50 text-stone-900 border-stone-300",
+    },
+    typography: {
+      display:
+        "text-3xl md:text-5xl font-semibold tracking-tight text-stone-900 leading-tight",
+      body: "text-base text-stone-600 leading-relaxed max-w-prose",
+    },
+    radiusLock:
+      "rounded-lg panels, rounded-md controls — organic soft, not pill-heavy",
+    elevationLock:
+      "warm borders over shadows; one subtle shadow-sm on elevated cards only",
+    navArchetype:
+      "editorial mark + sparse links in max-w-6xl mx-auto px-4; leaf-green accent on active link",
+    footerArchetype: "colophon block with season/year and sparse links",
+    signatureElement:
+      "asymmetric botanical board: wide specimen column + narrow meta rail with emerald accent marks",
+    motionRecipe:
+      "gentle fade-up on sections (~400ms ease-out); no elastic; respect prefers-reduced-motion",
+    compositionScaffold: `
+Botanical editorial board — stone canvas, emerald accent, asymmetric spans:
+\`\`\`tsx
+<section className="py-24 px-6 max-w-6xl mx-auto">
+  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end border-b border-stone-300 pb-12">
+    <h1 className="md:col-span-7 text-3xl md:text-5xl font-semibold tracking-tight text-stone-900">
+      Subject-specific headline
+    </h1>
+    <p className="md:col-span-5 text-base text-stone-600 leading-relaxed">
+      Supporting copy with <span className="text-emerald-700">botanical</span> accent.
+    </p>
+  </div>
+  <div className="mt-12 grid grid-cols-1 md:grid-cols-12 gap-px bg-stone-300 border border-stone-300">
+    <div className="md:col-span-8 bg-stone-50 p-10">{/* long-form content */}</div>
+    <div className="md:col-span-4 bg-emerald-50 p-10 space-y-4">{/* meta rail */}</div>
+  </div>
+</section>
+\`\`\`
+`.trim(),
+    hardBans: [
+      "yellow/black combo",
+      "purple gradients",
+      "dark-first canvas",
+      "Inter-only typography",
+      "three equal feature cards",
+      "cream+brass luxury cliché",
+    ],
+    classCheatSheet: [
+      "Root: min-h-screen bg-stone-100 text-stone-900",
+      "Surface: bg-stone-50 border border-stone-300 p-6 rounded-lg",
+      "Accent: text-emerald-700",
+      "Primary: bg-emerald-800 text-stone-50 px-5 py-2.5 rounded-md hover:bg-emerald-900",
+      "Section: py-24 md:py-32",
+    ],
+  },
+
+  midnightCool: {
+    id: "midnightCool",
+    hallmarkAlias: "Midnight / Aurora cool atmospheric",
+    aestheticMode: "high-end",
+    luminosity: "dark-first",
+    dials: { variance: 7, motion: 5, density: 4 },
+    designReadTemplate:
+      "Reading this as: AI/data product for technical makers, with a cool midnight instrument language, leaning Midnight/Aurora.",
+    surfaceMap: {
+      canvas: "bg-slate-950 text-slate-50",
+      surface: "bg-slate-900 text-slate-50 border border-slate-800",
+      subdued: "bg-slate-900/80 text-slate-400 border border-slate-800",
+      inverse: "bg-cyan-950 text-cyan-50 border border-cyan-800",
+      primary:
+        "bg-cyan-500 text-slate-950 hover:bg-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-300 rounded-lg",
+      accent: "text-cyan-400",
+      mutedInk: "text-slate-400",
+      border: "border-slate-800",
+      overlay: "bg-slate-900 text-slate-50 border-slate-800",
+    },
+    typography: {
+      display:
+        "text-3xl md:text-6xl font-semibold tracking-tight text-slate-50",
+      body: "text-sm md:text-base text-slate-400 leading-relaxed",
+      mono: "font-mono text-xs uppercase tracking-wider text-cyan-400/90",
+    },
+    radiusLock: "rounded-xl panels, rounded-lg controls — one cool soft system",
+    elevationLock: "hairline slate borders; no colored glow blooms",
+    navArchetype:
+      "floating pill nav on slate-950/80 backdrop-blur OR edge-aligned mark + cyan mono links",
+    footerArchetype: "single statement line + minimal links",
+    signatureElement:
+      "cool instrument canvas with cyan readout panel and slate hairline grid — NOT amber/yellow",
+    motionRecipe:
+      "measured opacity + translate-y reveal; no purple orbs; respect prefers-reduced-motion",
+    compositionScaffold: `
+Cool midnight instrument — slate canvas, cyan accent (never amber/yellow):
+\`\`\`tsx
+<section className="py-24 px-6 max-w-7xl mx-auto">
+  <div className="grid grid-cols-1 md:grid-cols-12 gap-px bg-slate-800 border border-slate-800 rounded-xl overflow-hidden">
+    <div className="md:col-span-7 bg-slate-900 p-8 space-y-4">
+      <span className="font-mono text-xs uppercase tracking-wider text-cyan-400">Signal</span>
+      <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-slate-50">subject headline</h2>
+    </div>
+    <div className="md:col-span-5 bg-slate-900 p-8 border-l border-slate-800">
+      {/* cyan telemetry readouts */}
+    </div>
+  </div>
+</section>
+\`\`\`
+`.trim(),
+    hardBans: [
+      "amber or yellow accents (use cyan/indigo instead)",
+      "yellow/black primary CTA",
+      "purple mesh orbs",
+      "Inter-only voice",
+      "light gray SaaS on dark without contrast pairs",
+      "three equal feature cards",
+    ],
+    classCheatSheet: [
+      "Root: min-h-screen bg-slate-950 text-slate-50",
+      "Panel: rounded-xl border border-slate-800 bg-slate-900 p-6",
+      "Primary: rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400",
+      "Mono callout: font-mono text-xs uppercase tracking-wider text-cyan-400",
+      "Focus: focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
+    ],
+  },
+
+  manifestoGeometric: {
+    id: "manifestoGeometric",
+    hallmarkAlias: "Manifesto / geometric poster",
+    aestheticMode: "kinetic",
+    luminosity: "light-first",
+    dials: { variance: 9, motion: 6, density: 5 },
+    designReadTemplate:
+      "Reading this as: bold statement landing or studio manifesto for design-forward visitors, with a geometric poster language, leaning Manifesto.",
+    surfaceMap: {
+      canvas: "bg-white text-neutral-950",
+      surface: "bg-neutral-50 text-neutral-950 border-2 border-neutral-950",
+      subdued: "bg-neutral-100 text-neutral-800 border border-neutral-950",
+      inverse: "bg-neutral-950 text-white border-2 border-neutral-950",
+      primary:
+        "bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-2 focus-visible:ring-orange-500 rounded-none font-bold uppercase tracking-wide",
+      accent: "text-orange-600",
+      mutedInk: "text-neutral-600",
+      border: "border-neutral-950",
+      overlay: "bg-white text-neutral-950 border-2 border-neutral-950",
+    },
+    typography: {
+      display:
+        "text-4xl md:text-8xl font-black uppercase tracking-tighter text-neutral-950 leading-none",
+      body: "text-base md:text-lg text-neutral-700 leading-snug max-w-xl",
+    },
+    radiusLock: "rounded-none on containers and primary CTAs — poster geometry",
+    elevationLock:
+      "hard 2px ink borders; offset via translate on hover, not soft shadow",
+    navArchetype:
+      "edge-aligned bold mark + uppercase links + orange primary block button",
+    footerArchetype: "massive statement band + sparse links",
+    signatureElement:
+      "oversized geometric headline block with 2px rules and one orange accent stripe",
+    motionRecipe:
+      "one bold entrance (opacity + translate); hover translate on tiles; no bounce",
+    compositionScaffold: `
+Manifesto poster block — radius-0, 2px ink, orange signal:
+\`\`\`tsx
+<section className="min-h-screen flex flex-col justify-center px-4 max-w-7xl mx-auto">
+  <div className="border-b-2 border-neutral-950 pb-6 mb-8">
+    <h1 className="text-4xl md:text-8xl font-black uppercase tracking-tighter leading-none text-neutral-950">
+      Bold<br />Statement
+    </h1>
+  </div>
+  <p className="text-lg text-neutral-700 max-w-xl mb-8">Short manifesto subtext.</p>
+  <a className="inline-flex bg-orange-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white hover:bg-orange-700 rounded-none">
+    Act now
+  </a>
+</section>
+\`\`\`
+Never yellow/black. Never soft rounded SaaS cards.
+`.trim(),
+    hardBans: [
+      "yellow/black combo",
+      "rounded-2xl soft cards",
+      "purple gradients",
+      "Inter/system-ui only",
+      "glassmorphism",
+      "three equal icon cards",
+    ],
+    classCheatSheet: [
+      "Root: min-h-screen bg-white text-neutral-950",
+      "Rule: border-b-2 border-neutral-950",
+      "Display: text-4xl md:text-8xl font-black uppercase tracking-tighter leading-none",
+      "Primary: bg-orange-600 text-white px-6 py-3 font-bold uppercase tracking-wide rounded-none hover:bg-orange-700",
+      "Panel: border-2 border-neutral-950 p-6 rounded-none",
+    ],
+  },
+
+  newsprintEditorial: {
+    id: "newsprintEditorial",
+    hallmarkAlias: "Newsprint / roman editorial",
+    aestheticMode: "editorial",
+    luminosity: "light-first",
+    dials: { variance: 6, motion: 3, density: 5 },
+    designReadTemplate:
+      "Reading this as: publication or content product for readers, with a newsprint editorial language, leaning Newsprint.",
+    surfaceMap: {
+      canvas: "bg-neutral-100 text-neutral-900",
+      surface: "bg-white text-neutral-900 border border-neutral-300",
+      subdued: "bg-neutral-50 text-neutral-700 border border-neutral-200",
+      inverse: "bg-neutral-900 text-neutral-50 border border-neutral-800",
+      primary:
+        "bg-neutral-900 text-neutral-50 hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-neutral-500 rounded-sm",
+      accent: "text-red-800",
+      mutedInk: "text-neutral-600",
+      border: "border-neutral-300",
+      overlay: "bg-white text-neutral-900 border-neutral-300",
+    },
+    typography: {
+      display:
+        "text-3xl md:text-5xl font-serif font-normal tracking-normal text-neutral-900 leading-tight",
+      body: "text-base text-neutral-700 leading-relaxed max-w-prose",
+    },
+    radiusLock: "rounded-sm or rounded-none — print-like, minimal radius",
+    elevationLock: "hairline rules and column dividers; almost no shadow",
+    navArchetype:
+      "masthead: centered publication name + date/edition line + sparse section links",
+    footerArchetype: "colophon with edition, credits, sparse links",
+    signatureElement:
+      "multi-column editorial grid with hairline dividers and one red accent dateline",
+    motionRecipe: "restrained fade only; no scroll gimmicks",
+    compositionScaffold: `
+Newsprint column grid — serif display, hairline rules, red dateline accent:
+\`\`\`tsx
+<section className="py-16 px-6 max-w-5xl mx-auto">
+  <header className="border-b border-neutral-300 pb-4 mb-8 text-center">
+    <p className="text-xs uppercase tracking-widest text-red-800 mb-2">Edition · Subject</p>
+    <h1 className="text-3xl md:text-5xl font-serif text-neutral-900">Headline Here</h1>
+  </header>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-neutral-300 pt-8">
+    <article className="md:col-span-2 space-y-4">{/* lead column */}</article>
+    <aside className="border-l border-neutral-300 pl-8 space-y-4">{/* rail */}</aside>
+  </div>
+</section>
+\`\`\`
+`.trim(),
+    hardBans: [
+      "yellow/black combo",
+      "purple gradients",
+      "pill nav",
+      "Inter-only sans",
+      "dark-first canvas",
+      "three equal feature cards",
+    ],
+    classCheatSheet: [
+      "Root: min-h-screen bg-neutral-100 text-neutral-900",
+      "Display: text-3xl md:text-5xl font-serif text-neutral-900",
+      "Dateline: text-xs uppercase tracking-widest text-red-800",
+      "Rule: border-t border-neutral-300",
+      "Primary: bg-neutral-900 text-neutral-50 px-5 py-2 rounded-sm hover:bg-neutral-800",
+    ],
+  },
+
+  risoPoster: {
+    id: "risoPoster",
+    hallmarkAlias: "Riso / poster print",
+    aestheticMode: "kinetic",
+    luminosity: "light-first",
+    dials: { variance: 9, motion: 5, density: 4 },
+    designReadTemplate:
+      "Reading this as: creative showcase or cultural product for design-forward visitors, with a risograph poster language, leaning Riso.",
+    surfaceMap: {
+      canvas: "bg-amber-50 text-neutral-950",
+      surface: "bg-white text-neutral-950 border-2 border-neutral-950",
+      subdued: "bg-orange-100 text-neutral-800 border-2 border-neutral-950",
+      inverse: "bg-neutral-950 text-amber-50 border-2 border-neutral-950",
+      primary:
+        "bg-neutral-950 text-amber-50 hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-neutral-400 rounded-none font-bold uppercase",
+      accent: "text-orange-700",
+      mutedInk: "text-neutral-700",
+      border: "border-neutral-950",
+      overlay: "bg-white text-neutral-950 border-2 border-neutral-950",
+    },
+    typography: {
+      display:
+        "text-4xl md:text-7xl font-black uppercase tracking-tighter text-neutral-950 leading-none",
+      body: "text-base text-neutral-800 leading-snug",
+    },
+    radiusLock: "rounded-none — risograph print registration, hard edges",
+    elevationLock:
+      "2px ink borders; misregistration feel via overlapping color blocks, not shadows",
+    navArchetype: "bold wordmark + uppercase links + ink primary block",
+    footerArchetype: "poster-style band with bold type + minimal links",
+    signatureElement:
+      "overlapping color-block tiles with 2px ink borders — warm paper, not yellow-on-black",
+    motionRecipe:
+      "one entrance stagger; no elastic; respect prefers-reduced-motion",
+    compositionScaffold: `
+Riso poster tiles — warm amber paper, ink borders, overlapping blocks (NOT yellow/black CTA):
+\`\`\`tsx
+<section className="py-24 px-4 max-w-6xl mx-auto bg-amber-50">
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border-2 border-neutral-950">
+    <div className="col-span-2 row-span-2 bg-orange-200 border-2 border-neutral-950 p-8">
+      <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Subject</h1>
+    </div>
+    <div className="bg-white border-2 border-neutral-950 p-6">{/* tile */}</div>
+    <div className="bg-neutral-950 text-amber-50 border-2 border-neutral-950 p-6">{/* inverse tile */}</div>
+  </div>
+</section>
+\`\`\`
+Warm amber PAPER is allowed; yellow-400 CTA on black canvas is banned.
+`.trim(),
+    hardBans: [
+      "bg-yellow-400/500 primary CTA on black (generic AI combo)",
+      "purple gradients",
+      "soft rounded SaaS cards",
+      "Inter-only typography",
+      "glassmorphism",
+    ],
+    classCheatSheet: [
+      "Root: min-h-screen bg-amber-50 text-neutral-950",
+      "Tile: border-2 border-neutral-950 p-6 rounded-none",
+      "Display: text-4xl md:text-7xl font-black uppercase tracking-tighter",
+      "Primary: bg-neutral-950 text-amber-50 px-5 py-2.5 font-bold uppercase rounded-none",
+      "Accent block: bg-orange-200 border-2 border-neutral-950",
+    ],
+  },
+};
+
+/** Locked font pairings per pack — avoids Inter/system-ui convergence across builds. */
+export const PACK_FONT_PAIRINGS: Record<StylePackId, StylePackFontPairing> = {
+  cobaltMinimal: {
+    display: "Space Grotesk",
+    body: "IBM Plex Sans",
+    mono: "IBM Plex Mono",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+    monoClass: "font-mono-ui",
+  },
+  lumenAtmospheric: {
+    display: "Syne",
+    body: "DM Sans",
+    mono: "JetBrains Mono",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+    monoClass: "font-mono-ui",
+  },
+  editorialSpecimen: {
+    display: "Libre Baskerville",
+    body: "Source Sans 3",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+  },
+  swissBrutal: {
+    display: "Archivo Black",
+    body: "Archivo",
+    mono: "IBM Plex Mono",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+    monoClass: "font-mono-ui",
+  },
+  kineticAwwwards: {
+    display: "Clash Display",
+    body: "Satoshi",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+  },
+  softStructural: {
+    display: "Plus Jakarta Sans",
+    body: "Nunito Sans",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+  },
+  terminalPhosphor: {
+    display: "JetBrains Mono",
+    body: "JetBrains Mono",
+    mono: "JetBrains Mono",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+    monoClass: "font-mono-ui",
+  },
+  gardenBotanical: {
+    display: "Fraunces",
+    body: "Work Sans",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+  },
+  midnightCool: {
+    display: "Outfit",
+    body: "Inter",
+    mono: "JetBrains Mono",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@600;700;800&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+    monoClass: "font-mono-ui",
+  },
+  manifestoGeometric: {
+    display: "Bebas Neue",
+    body: "Barlow",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+  },
+  newsprintEditorial: {
+    display: "Lora",
+    body: "Source Serif 4",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+  },
+  risoPoster: {
+    display: "Anton",
+    body: "Rubik",
+    googleFontsUrl:
+      "https://fonts.googleapis.com/css2?family=Anton&family=Rubik:wght@400;500;600&display=swap",
+    displayClass: "font-display",
+    bodyClass: "font-body",
+  },
 };
 
 const BUCKET_PACKS: Record<SubjectBucket, StylePackId[]> = {
-  // Prefer cobalt for tools/API/dashboards so normal builds match premium instrument craft.
-  tools: ["cobaltMinimal", "cobaltMinimal", "softStructural"],
-  aiCreative: ["lumenAtmospheric", "kineticAwwwards", "cobaltMinimal"],
+  tools: [
+    "cobaltMinimal",
+    "terminalPhosphor",
+    "midnightCool",
+    "manifestoGeometric",
+    "swissBrutal",
+    "newsprintEditorial",
+  ],
+  aiCreative: [
+    "lumenAtmospheric",
+    "midnightCool",
+    "kineticAwwwards",
+    "terminalPhosphor",
+    "risoPoster",
+  ],
   portfolioEditorial: [
     "editorialSpecimen",
+    "newsprintEditorial",
+    "gardenBotanical",
     "kineticAwwwards",
-    "softStructural",
+    "manifestoGeometric",
   ],
-  industrialOps: ["swissBrutal", "swissBrutal", "cobaltMinimal"],
-  landingAgency: ["kineticAwwwards", "editorialSpecimen", "softStructural"],
-  consumerFriendly: ["softStructural", "cobaltMinimal", "editorialSpecimen"],
+  industrialOps: [
+    "swissBrutal",
+    "terminalPhosphor",
+    "cobaltMinimal",
+    "midnightCool",
+  ],
+  landingAgency: [
+    "kineticAwwwards",
+    "manifestoGeometric",
+    "risoPoster",
+    "editorialSpecimen",
+    "midnightCool",
+  ],
+  consumerFriendly: [
+    "softStructural",
+    "gardenBotanical",
+    "newsprintEditorial",
+    "editorialSpecimen",
+  ],
 };
 
 const TOOL_KEYWORDS =
@@ -663,14 +1261,14 @@ export function inferSubjectBucket(brief: string): SubjectBucket {
   return "tools";
 }
 
-/** Deterministic seed from brief length + first/last token. */
+/** Deterministic seed from the full brief (stable for identical input). */
 export function hashBriefSeed(brief: string): number {
   const trimmed = brief.trim();
   const tokens = trimmed.split(/\s+/).filter(Boolean);
   const first = tokens[0] ?? "";
   const last = tokens[tokens.length - 1] ?? "";
   let hash = trimmed.length * 2654435761;
-  const material = `${first}|${last}|${trimmed.length}`;
+  const material = `${first}|${last}|${trimmed}`;
   for (let i = 0; i < material.length; i++) {
     hash = Math.imul(hash ^ material.charCodeAt(i), 16777619);
   }
@@ -679,19 +1277,36 @@ export function hashBriefSeed(brief: string): number {
 
 export function selectStylePackId(
   brief: string,
-  options?: { forcePack?: StylePackId },
+  options?: { forcePack?: StylePackId; recentPacks?: StylePackId[] },
 ): StylePackId | null {
   if (options?.forcePack) return options.forcePack;
+
+  const text = brief.trim();
+
+  // User named a Hallmark theme explicitly — map to pack when possible
+  const hallmarkMatch = text.match(
+    /\b(cobalt|lumen|specimen|brutal|hum|carnival|terminal|garden|midnight|aurora|manifesto|atelier|newsprint|riso)\b/i,
+  );
+  if (hallmarkMatch) {
+    const mapped = themeNameToStylePackId(hallmarkMatch[1]!);
+    if (mapped) return mapped;
+  }
+
   if (hasExplicitAestheticDirection(brief)) return null;
 
   const bucket = inferSubjectBucket(brief);
   const candidates = BUCKET_PACKS[bucket];
+  const recent =
+    options?.recentPacks ?? getRecentStylePackIds(readHallmarkLog(), 3);
   const seed = hashBriefSeed(brief);
-  return candidates[seed % candidates.length] ?? "cobaltMinimal";
+  return pickDiversifiedPack(candidates, recent, seed);
 }
 
-export function getStylePack(id: StylePackId): StylePack {
-  return STYLE_PACKS[id];
+export function getStylePack(id: StylePackId): StylePackWithFonts {
+  return {
+    ...STYLE_PACKS[id],
+    fontPairing: PACK_FONT_PAIRINGS[id],
+  };
 }
 
 export function formatStylePackPreflight(pack: StylePack): string {
@@ -734,6 +1349,57 @@ function formatPackBlock(pack: StylePack): string {
 }
 
 /**
+ * Strong "commit fully to one aesthetic world" directive injected with the active pack.
+ */
+export function buildStyleCommitmentDirective(
+  pack: StylePackWithFonts,
+): string {
+  const bans = GENERIC_AI_PALETTE_BANS.map((b) => `- ${b}`).join("\n");
+  const fonts = pack.fontPairing;
+  const monoLine = fonts.monoClass
+    ? `\`.${fonts.monoClass}\` { font-family: '${fonts.mono ?? fonts.display}', monospace; }`
+    : "";
+
+  return dedent`
+    **Full-style commitment (mandatory — partial adoption = generic output):**
+    You have ONE aesthetic world for this entire app: **${pack.id}** (${pack.hallmarkAlias}).
+    Every surface, font, radius, border weight, nav, footer, motion cue, and CTA must read as the same designed system — not a gray SaaS base with accent-colored buttons sprinkled on top.
+
+    ### Commitment rules
+    - Root \`<main>\` or outer wrapper MUST use the locked canvas classes: \`${pack.surfaceMap.canvas}\`
+    - EVERY section reuses surface/subdued/inverse roles from this pack — no one-off \`bg-zinc-900\` cards in a light pack or random \`bg-white\` panels in a dark pack
+    - EVERY h1–h3 uses the locked display type recipe; EVERY paragraph uses the locked body recipe
+    - Primary AND secondary CTAs use this pack's cheat-sheet recipes — not bare Shadcn defaults
+    - Nav matches: ${pack.navArchetype}
+    - Footer matches: ${pack.footerArchetype}
+    - Radius system: ${pack.radiusLock}
+    - Signature element MUST appear: ${pack.signatureElement}
+    - If luminosity is **${pack.luminosity}**, the ENTIRE app follows that model — no accidental mid-page theme flips
+
+    ### Locked font pairing (load in index.html — never default to Inter alone)
+    Add to \`index.html\` (or a global \`<style>\` block in App.tsx):
+    \`\`\`html
+    <link rel="stylesheet" href="${fonts.googleFontsUrl}" />
+    <style>
+      .${fonts.displayClass} { font-family: '${fonts.display}', sans-serif; }
+      .${fonts.bodyClass} { font-family: '${fonts.body}', sans-serif; }
+      ${monoLine}
+    </style>
+    \`\`\`
+    Apply \`${fonts.displayClass}\` on all headings/display type and \`${fonts.bodyClass}\` on body copy. Append these classes to the locked typography recipes above.
+
+    ### Generic AI defaults — hard-banned for this build
+    ${bans}
+
+    ### Abandonment tells (if any appear, you failed the pack)
+    - Switched to yellow-400/500 + black primary CTA mid-build
+    - Mixed a second palette family (e.g. blue buttons on a locked emerald pack)
+    - Shipped three equal icon+heading+paragraph cards instead of the composition scaffold
+    - Used Inter/system-ui as the only font with no loaded pairing
+  `;
+}
+
+/**
  * Server-resolved directive for the active brief. Inject near the top of
  * codegen prompts so normal builds cannot bury the pack in a long catalog.
  */
@@ -745,23 +1411,34 @@ export function buildActiveStylePackDirective(brief: string): string {
       - The brief supplies explicit aesthetic, palette, color, or reference direction.
       - Honor that direction with the color-fidelity and Design Taste contracts.
       - Still apply the Premium composition contract: mixed-cell craft, motivated motion, no three-equal-card defaults.
+      - Still ban generic AI defaults: yellow/black CTA combo, Inter-only typography, purple mesh heroes.
     `;
   }
 
   const pack = getStylePack(packId);
   const preflight = formatStylePackPreflight(pack);
+  const commitment = buildStyleCommitmentDirective(pack);
   const monoRole = pack.typography.mono
     ? `\n    - mono: \`${pack.typography.mono}\``
     : "";
   const cheat = pack.classCheatSheet.map((line) => `- ${line}`).join("\n");
+  const recent = getRecentStylePackIds(readHallmarkLog(), 3);
+  const diversificationNote =
+    recent.length > 0
+      ? `- Diversification: recent builds used ${recent.join(", ")} — this build locks **${packId}** to avoid palette/font repetition.`
+      : "";
 
   return [
     "**Active Style Pack directive (LOCKED for this build — do not re-route):**",
     `- ${preflight}`,
+    `- Hallmark alias: ${pack.hallmarkAlias}`,
     `- Design Read: ${pack.designReadTemplate}`,
     `- Aesthetic mode: ${pack.aestheticMode} | Luminosity: ${pack.luminosity}`,
-    "- You MUST implement this pack's SURFACE_MAP classes, signature element, and composition scaffold below. Do not fall back to anonymous gray SaaS or three equal feature cards.",
-    "- Apply this pack's SURFACE_MAP and composition scaffold in the code. Do not dump STYLE_PACK / DIALS / SURFACE_MAP lines into the user-facing reply — keep that lock private.",
+    diversificationNote,
+    "- You MUST implement this pack's SURFACE_MAP classes, font pairing, signature element, and composition scaffold below. Do not fall back to anonymous gray SaaS, yellow/black CTAs, or three equal feature cards.",
+    "- Apply this pack completely in the code. Do not dump STYLE_PACK / DIALS / SURFACE_MAP lines into the user-facing reply — keep that lock private.",
+    "",
+    commitment,
     "",
     "### Locked surface map",
     `- canvas: \`${pack.surfaceMap.canvas}\``,
@@ -773,15 +1450,17 @@ export function buildActiveStylePackDirective(brief: string): string {
     `- overlay: \`${pack.surfaceMap.overlay}\``,
     "",
     "### Locked type roles",
-    `- display: \`${pack.typography.display}\``,
-    `- body: \`${pack.typography.body}\`${monoRole}`,
+    `- display: \`${pack.typography.display}\` + class \`.${pack.fontPairing.displayClass}\``,
+    `- body: \`${pack.typography.body}\` + class \`.${pack.fontPairing.bodyClass}\`${monoRole}`,
     "",
     "### Locked composition scaffold",
     pack.compositionScaffold,
     "",
     "### Class cheat-sheet",
     cheat,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /**
@@ -795,14 +1474,18 @@ export function buildStylePackContract(): string {
   return dedent`
     **Unspecified-theme Style Pack contract (mandatory):**
     - Apply this when the user has NOT explicitly supplied a theme, palette, named color, visual reference, URL moodboard, or aesthetic direction (e.g. brutalist, Linear-style, dark mode, "make it purple"). Explicit user direction always wins over Style Packs. For edits to an existing app, preserve its established theme unless the user asks to restyle or recolor it.
-    - Do NOT default every vague brief to anonymous Vercel-gray SaaS. Vague briefs must lock exactly one Style Pack below and build from its literal surface map, composition scaffold, and class cheat-sheet. When an Active Style Pack directive is present above, it is authoritative — do not pick a different pack.
+    - Do NOT default every vague brief to anonymous Vercel-gray SaaS. Vague briefs must lock exactly one Style Pack below and build from its literal surface map, font pairing, composition scaffold, and class cheat-sheet. When an Active Style Pack directive is present above, it is authoritative — do not pick a different pack.
+    - **Full-style commitment:** once a pack is locked, the ENTIRE app must live inside that aesthetic world — canvas, surfaces, type, radius, nav, footer, motion, and signature element. Partial adoption (gray SaaS base + one accent button) reads as generic AI output and fails review.
+    - **Generic AI palette bans (always):** yellow-400/500 primary CTA on black/near-black canvas; Inter/system-ui as the only font; purple mesh hero; three equal icon cards when the scaffold specifies mixed-cell craft.
     - Routing (deterministic, private — never dump the lock into the chat reply):
-      1. If explicit aesthetic/color/reference signals exist → skip packs; honor user + color-fidelity contracts.
-      2. Else infer a subject bucket: tools/API/docs/dashboard → tools; AI/creative/voice/music → aiCreative; portfolio/agency/editorial → portfolioEditorial; industrial/ops/infra/telemetry → industrialOps; landing/marketing/agency showcase → landingAgency; consumer/health/onboarding/friendly → consumerFriendly; unknown product → tools.
-      3. Hash seed = brief character length + first token + last token. Pick among the bucket's allowed packs by \`seed % candidates.length\` so consecutive vague apps can vary.
-      4. Privately lock \`STYLE_PACK: <id> | DIALS: V/M/D | SURFACE_MAP: ...\` using the pack's exact classes, then implement from that map. Do not print the preflight line, Design Read, dials, or surface map in the user-facing reply.
-    - After locking a pack: reuse its surface-role classes everywhere; do not improvise a second palette mid-build. Aesthetic mode in the Design Taste contract must match the pack (brutalist ↔ swissBrutal, minimalist ↔ cobaltMinimal, etc.).
-    - Hallmark family names (Specimen, Cobalt, Lumen, Brutal, Hum, Carnival, …) are aliases for these packs — not a competing default. Pick the pack, then keep one luminosity model.
+      1. If explicit aesthetic/color/reference signals exist (not a Hallmark theme name) → skip packs; honor user + color-fidelity contracts.
+      2. If the user names a Hallmark theme (Cobalt, Lumen, Brutal, Terminal, Garden, …) → map to the matching Style Pack and commit fully.
+      3. Else infer a subject bucket: tools/API/docs/dashboard → tools; AI/creative/voice/music → aiCreative; portfolio/agency/editorial → portfolioEditorial; industrial/ops/infra/telemetry → industrialOps; landing/marketing/agency showcase → landingAgency; consumer/health/onboarding/friendly → consumerFriendly; unknown product → tools.
+      4. Read \`.hallmark/log.json\` when present and avoid repeating the last 2 Style Packs (palette/font diversification).
+      5. Hash seed = brief character length + first token + last token. Pick among the bucket's allowed packs (after diversification filter) by \`seed % pool.length\`.
+      6. Privately lock \`STYLE_PACK: <id> | DIALS: V/M/D | SURFACE_MAP: ...\` using the pack's exact classes, then implement from that map. Do not print the preflight line, Design Read, dials, or surface map in the user-facing reply.
+    - After locking a pack: reuse its surface-role classes AND font pairing everywhere; do not improvise a second palette or font mid-build. Aesthetic mode in the Design Taste contract must match the pack (brutalist ↔ swissBrutal/terminalPhosphor, minimalist ↔ cobaltMinimal, etc.).
+    - Hallmark family names map 1:1 to Style Packs — Cobalt→cobaltMinimal; Lumen→lumenAtmospheric; Specimen→editorialSpecimen; Brutal→swissBrutal; Carnival→kineticAwwwards; Hum→softStructural; Terminal→terminalPhosphor; Garden→gardenBotanical; Midnight/Aurora→midnightCool; Manifesto→manifestoGeometric; Newsprint→newsprintEditorial; Riso→risoPoster. Pick the pack, then keep one luminosity model.
     - Overlay safety: for light-first packs, portalled overlays (\`DialogContent\`, menus, popovers, sheets) use the pack's \`overlay\` classes (typically white/light). For dark-first packs (lumenAtmospheric), overlays use the pack's dark overlay pair. Never let an inherited root \`dark\` class silently break contrast on unthemed portals.
     - Still banned as lazy defaults across all packs: \`slate-*\` corporate chrome, AI-purple gradients, colored glow blooms, rainbow mesh blobs, and cream+brass+oxblood luxury clichés unless the user explicitly asks.
     - Red/amber remain truthful error/warning colors even when the pack accent differs.
@@ -817,7 +1500,7 @@ export function buildStylePackContract(): string {
 export const stylePackContract = buildStylePackContract();
 
 export const stylePackPlanningRule =
-  "Unspecified-theme Style Pack: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural) from the subject bucket + brief-hash seed; privately lock dials and literal SURFACE_MAP classes and apply them in code without dumping STYLE_PACK preflight into the user reply; do not default to anonymous Vercel-gray SaaS; honor explicit user aesthetic direction over packs.";
+  "Unspecified-theme Style Pack: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural, terminalPhosphor, gardenBotanical, midnightCool, manifestoGeometric, newsprintEditorial, risoPoster) from the subject bucket + brief-hash seed + .hallmark/log.json diversification; privately lock dials, literal SURFACE_MAP classes, and font pairing; commit fully to that one aesthetic world; do not default to anonymous Vercel-gray SaaS or yellow/black CTAs; honor explicit user aesthetic direction over packs.";
 
 /** @deprecated Use stylePackContract — kept as alias during migration. */
 export const unspecifiedThemeStylePackContract = stylePackContract;

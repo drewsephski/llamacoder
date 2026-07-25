@@ -17,8 +17,8 @@ import { premiumCompositionContract } from "@/features/generation/premium-compos
 import { parseEnhancedText } from "@/features/prompt-builder/hooks/use-prompt-builder";
 
 describe("style pack router", () => {
-  it("exposes all six packs with literal surface maps and scaffolds", () => {
-    expect(STYLE_PACK_IDS).toHaveLength(6);
+  it("exposes all twelve packs with literal surface maps and scaffolds", () => {
+    expect(STYLE_PACK_IDS).toHaveLength(12);
     for (const id of STYLE_PACK_IDS) {
       const pack = getStylePack(id);
       expect(pack.id).toBe(id);
@@ -37,10 +37,13 @@ describe("style pack router", () => {
       "Build an API proxy dashboard for developers",
     );
     expect(directive).toContain("LOCKED for this build");
+    expect(directive).toContain("Full-style commitment");
     expect(directive).toContain("Locked composition scaffold");
-    expect(directive).toMatch(/STYLE_PACK: (cobaltMinimal|swissBrutal)/);
-    expect(directive).toContain("md:grid-cols-12");
-    expect(directive).toContain("className=");
+    expect(directive).toMatch(
+      /STYLE_PACK: (cobaltMinimal|terminalPhosphor|midnightCool|manifestoGeometric|swissBrutal|newsprintEditorial)/,
+    );
+    expect(directive).toContain("font-display");
+    expect(directive).toMatch(/className=/);
 
     const explicit = buildActiveStylePackDirective("make it purple brutalist");
     expect(explicit).toContain("explicit aesthetic");
@@ -86,8 +89,21 @@ describe("style pack router", () => {
 
     const ai = selectStylePackId("AI music generation studio");
     expect(ai).not.toBeNull();
-    expect(["lumenAtmospheric", "kineticAwwwards", "cobaltMinimal"]).toContain(
-      ai!,
+    expect([
+      "lumenAtmospheric",
+      "midnightCool",
+      "kineticAwwwards",
+      "terminalPhosphor",
+      "risoPoster",
+    ]).toContain(ai!);
+  });
+
+  it("maps Hallmark theme names in briefs to packs", () => {
+    expect(selectStylePackId("build a dashboard with Terminal theme")).toBe(
+      "terminalPhosphor",
+    );
+    expect(selectStylePackId("Garden style landing page")).toBe(
+      "gardenBotanical",
     );
   });
 
@@ -115,6 +131,11 @@ describe("style pack router", () => {
     );
     expect(contract).toContain("cobaltMinimal");
     expect(contract).toContain("lumenAtmospheric");
+    expect(contract).toContain("terminalPhosphor");
+    expect(contract).toContain("gardenBotanical");
+    expect(contract).toContain("midnightCool");
+    expect(contract).toContain("Full-style commitment");
+    expect(contract).toContain("yellow-400/500");
     expect(contract).toContain("editorialSpecimen");
     expect(contract).toContain("swissBrutal");
     expect(contract).toContain("kineticAwwwards");
