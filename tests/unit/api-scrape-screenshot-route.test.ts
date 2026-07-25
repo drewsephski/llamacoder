@@ -1,44 +1,25 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readJson } from "../fixtures/builders";
 
 const {
+  capturePublicUrlScreenshotMock,
   consumeRateLimitMock,
+  getCloudflareBrowserRenderingConfigMock,
   getCurrentSessionMock,
   parsePublicHttpUrlMock,
-  stagehandConstructorMock,
-  stagehandInstance,
-} = vi.hoisted(() => {
-  const page = {
-    goto: vi.fn(),
-    waitForLoadState: vi.fn(),
-    screenshot: vi.fn(),
-  };
-  const instance = {
-    init: vi.fn(),
-    close: vi.fn(),
-    context: {
-      pages: vi.fn(() => [page]),
-      newPage: vi.fn(async () => page),
-    },
-    page,
-  };
-
-  return {
-    consumeRateLimitMock: vi.fn(),
-    getCurrentSessionMock: vi.fn(),
-    parsePublicHttpUrlMock: vi.fn(async (input: string) => {
-      const url = new URL(input);
-      if (url.protocol !== "http:" && url.protocol !== "https:") {
-        throw new Error("Unsupported protocol");
-      }
-      return url;
-    }),
-    stagehandConstructorMock: vi.fn(function Stagehand() {
-      return instance;
-    }),
-    stagehandInstance: instance,
-  };
-});
+} = vi.hoisted(() => ({
+  capturePublicUrlScreenshotMock: vi.fn(),
+  consumeRateLimitMock: vi.fn(),
+  getCloudflareBrowserRenderingConfigMock: vi.fn(),
+  getCurrentSessionMock: vi.fn(),
+  parsePublicHttpUrlMock: vi.fn(async (input: string) => {
+    const url = new URL(input);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error("Unsupported protocol");
+    }
+    return url;
+  }),
+}));
 
 vi.mock("@/features/auth/server/session", () => ({
   getCurrentSession: getCurrentSessionMock,
@@ -52,10 +33,20 @@ vi.mock("@/features/security/server/public-url", () => ({
   parsePublicHttpUrl: parsePublicHttpUrlMock,
 }));
 
-vi.mock("@browserbasehq/stagehand", () => ({
-  Stagehand: stagehandConstructorMock,
-}));
+vi.mock("@/features/generation/server/cloudflare-screenshot", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/features/generation/server/cloudflare-screenshot")
+  >("@/features/generation/server/cloudflare-screenshot");
 
+  return {
+    ...actual,
+    capturePublicUrlScreenshot: capturePublicUrlScreenshotMock,
+    getCloudflareBrowserRenderingConfig:
+      getCloudflareBrowserRenderingConfigMock,
+  };
+});
+
+import { CloudflareScreenshotError } from "@/features/generation/server/cloudflare-screenshot";
 import { POST } from "@/app/api/scrape-screenshot/route";
 
 function request(body: Record<string, unknown>) {
@@ -66,17 +57,15 @@ function request(body: Record<string, unknown>) {
 }
 
 describe("/api/scrape-screenshot", () => {
-  const originalApiKey = process.env.BROWSERBASE_API_KEY;
-  const originalProjectId = process.env.BROWSERBASE_PROJECT_ID;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.BROWSERBASE_API_KEY = "bb_test";
-    process.env.BROWSERBASE_PROJECT_ID = "proj_test";
     getCurrentSessionMock.mockResolvedValue({ user: { id: "user_1" } });
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5 });
-    stagehandInstance.page.screenshot.mockResolvedValue(Buffer.from("png"));
-    stagehandInstance.page.waitForLoadState.mockResolvedValue(undefined);
+    getCloudflareBrowserRenderingConfigMock.mockReturnValue({
+      accountId: "account_test",
+      apiToken: "token_test",
+    });
+    capturePublicUrlScreenshotMock.mockResolvedValue(Buffer.from("png"));
   });
 
   it("requires authentication before starting a browser session", async () => {
@@ -88,7 +77,7 @@ describe("/api/scrape-screenshot", () => {
     await expect(readJson(response)).resolves.toEqual({
       error: "Unauthorized",
     });
-    expect(stagehandConstructorMock).not.toHaveBeenCalled();
+    expect(capturePublicUrlScreenshotMock).not.toHaveBeenCalled();
   });
 
   it("rate limits browser sessions before provider initialization", async () => {
@@ -101,12 +90,7 @@ describe("/api/scrape-screenshot", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("30");
-    expect(stagehandConstructorMock).not.toHaveBeenCalled();
-  });
-
-  afterEach(() => {
-    process.env.BROWSERBASE_API_KEY = originalApiKey;
-    process.env.BROWSERBASE_PROJECT_ID = originalProjectId;
+    expect(capturePublicUrlScreenshotMock).not.toHaveBeenCalled();
   });
 
   it("rejects missing URLs and unsupported protocols", async () => {
@@ -123,14 +107,14 @@ describe("/api/scrape-screenshot", () => {
     });
   });
 
-  it("rejects missing Browserbase configuration", async () => {
-    delete process.env.BROWSERBASE_API_KEY;
+  it("rejects missing Cloudflare Browser Rendering configuration", async () => {
+    getCloudflareBrowserRenderingConfigMock.mockReturnValueOnce(null);
 
     const response = await POST(request({ url: "https://example.com" }));
 
     expect(response.status).toBe(500);
     await expect(readJson(response)).resolves.toMatchObject({
-      error: "BROWSERBASE_API_KEY not configured",
+      error: "CLOUDFLARE_BROWSER_RENDERING_NOT_CONFIGURED",
     });
   });
 
@@ -143,29 +127,17 @@ describe("/api/scrape-screenshot", () => {
       screenshotData: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
       url: "https://example.com/path",
     });
-    expect(stagehandConstructorMock).toHaveBeenCalledWith({
-      apiKey: "bb_test",
-      projectId: "proj_test",
-      env: "BROWSERBASE",
-      disablePino: true,
-    });
-    expect(stagehandInstance.page.goto).toHaveBeenCalledWith(
+    expect(capturePublicUrlScreenshotMock).toHaveBeenCalledWith(
       "https://example.com/path",
-      {
-        waitUntil: "domcontentloaded",
-        timeoutMs: 30000,
-      },
     );
-    expect(stagehandInstance.page.waitForLoadState).toHaveBeenCalledWith(
-      "networkidle",
-      5000,
-    );
-    expect(stagehandInstance.close).toHaveBeenCalled();
   });
 
   it("maps DNS and timeout failures to retryable client errors", async () => {
-    stagehandInstance.page.goto.mockRejectedValueOnce(
-      new Error("net::ERR_NAME_NOT_RESOLVED"),
+    capturePublicUrlScreenshotMock.mockRejectedValueOnce(
+      new CloudflareScreenshotError(
+        "Could not resolve the website. Please check the URL and try again.",
+        400,
+      ),
     );
 
     let response = await POST(request({ url: "https://missing.test" }));
@@ -174,11 +146,13 @@ describe("/api/scrape-screenshot", () => {
       error: expect.stringContaining("Could not resolve"),
     });
 
-    stagehandInstance.page.goto.mockRejectedValueOnce(
-      new Error("Navigation timeout"),
+    capturePublicUrlScreenshotMock.mockRejectedValueOnce(
+      new CloudflareScreenshotError(
+        "The website took too long to load. Please try again or try a different URL.",
+        408,
+      ),
     );
     response = await POST(request({ url: "https://slow.test" }));
     expect(response.status).toBe(408);
-    expect(stagehandInstance.close).toHaveBeenCalledTimes(2);
   });
 });

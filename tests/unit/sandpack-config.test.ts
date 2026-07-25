@@ -195,6 +195,9 @@ export default function App() {
     );
     expect(inspector).toContain('message.type === "ready-ack"');
     expect(inspector).toContain("window.clearInterval(readyAnnouncementTimer)");
+    expect(inspector).toContain('message.type === "capture-screenshot"');
+    expect(inspector).toContain('type: "screenshot"');
+    expect(config.customSetup.dependencies.html2canvas).toBe("1.4.1");
   });
 
   it("keeps dialog and form primitives on theme-aware semantic pairs", () => {

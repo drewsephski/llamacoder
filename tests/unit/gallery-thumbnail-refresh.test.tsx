@@ -24,7 +24,7 @@ describe("GalleryThumbnailRefresh", () => {
   });
 
   it("polls for a newly captured image without requiring an owner session", () => {
-    render(<GalleryThumbnailRefresh canBackfill={false} pending />);
+    render(<GalleryThumbnailRefresh pending />);
 
     act(() => {
       vi.advanceTimersByTime(5_000);
@@ -35,10 +35,8 @@ describe("GalleryThumbnailRefresh", () => {
   });
 
   it("stops polling when the publication no longer has a pending image", () => {
-    const { rerender } = render(
-      <GalleryThumbnailRefresh canBackfill={false} pending />,
-    );
-    rerender(<GalleryThumbnailRefresh canBackfill={false} pending={false} />);
+    const { rerender } = render(<GalleryThumbnailRefresh pending />);
+    rerender(<GalleryThumbnailRefresh pending={false} />);
 
     act(() => {
       vi.advanceTimersByTime(60_000);

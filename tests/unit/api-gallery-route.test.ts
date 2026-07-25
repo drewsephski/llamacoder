@@ -1,14 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  getSessionMock,
-  prismaMock,
-  revalidatePathMock,
-  scheduleThumbnailMock,
-} = vi.hoisted(() => ({
+const { getSessionMock, prismaMock, revalidatePathMock } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
   revalidatePathMock: vi.fn(),
-  scheduleThumbnailMock: vi.fn(),
   prismaMock: {
     galleryPublication: {
       count: vi.fn(),
@@ -21,10 +15,6 @@ const {
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
-
-vi.mock("@/features/gallery/server/thumbnail-jobs", () => ({
-  scheduleGalleryThumbnailCapture: scheduleThumbnailMock,
-}));
 
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: getSessionMock } },
@@ -179,11 +169,6 @@ describe("/api/gallery", () => {
         }),
       }),
     );
-    expect(scheduleThumbnailMock).toHaveBeenCalledWith({
-      publicationId: "publication_1",
-      messageId: "message_1",
-      slug: "focus-day-chat123",
-    });
     await expect(response.json()).resolves.toEqual({
       publication: expect.objectContaining({
         thumbnailStatus: "pending",

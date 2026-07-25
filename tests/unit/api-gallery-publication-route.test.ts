@@ -4,14 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   getSessionMock,
   getThumbnailObjectMock,
+  persistThumbnailMock,
   prismaMock,
   revalidatePathMock,
-  scheduleThumbnailMock,
+  validateUploadMock,
 } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
   getThumbnailObjectMock: vi.fn(),
+  persistThumbnailMock: vi.fn(),
   revalidatePathMock: vi.fn(),
-  scheduleThumbnailMock: vi.fn(),
+  validateUploadMock: vi.fn(),
   prismaMock: {
     galleryPublication: {
       findFirst: vi.fn(),
@@ -22,8 +24,9 @@ const {
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
 
-vi.mock("@/features/gallery/server/thumbnail-jobs", () => ({
-  scheduleGalleryThumbnailCapture: scheduleThumbnailMock,
+vi.mock("@/features/gallery/server/thumbnail", () => ({
+  persistGalleryThumbnail: persistThumbnailMock,
+  validateGalleryThumbnailUpload: validateUploadMock,
 }));
 
 vi.mock("@/features/gallery/server/thumbnail-storage", () => ({
@@ -45,7 +48,7 @@ vi.mock("@/lib/prisma", () => ({
 import { DELETE } from "@/app/api/gallery/[publicationId]/route";
 import {
   GET as getThumbnail,
-  POST as retryThumbnail,
+  PUT as uploadThumbnail,
 } from "@/app/api/gallery/[publicationId]/thumbnail/route";
 import { GET } from "@/app/api/gallery/publication/route";
 
@@ -107,7 +110,7 @@ describe("gallery publication management", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/gallery");
   });
 
-  it("lets the owner retry a failed thumbnail for a published project", async () => {
+  it("lets the owner upload a client-captured thumbnail for a published project", async () => {
     prismaMock.galleryPublication.findFirst.mockResolvedValue({
       id: "publication_1",
       slug: "focus-day-chat123",
@@ -115,10 +118,24 @@ describe("gallery publication management", () => {
       isPublished: true,
     });
     prismaMock.galleryPublication.update.mockResolvedValue({});
+    validateUploadMock.mockImplementation(() => undefined);
+    persistThumbnailMock.mockResolvedValue({
+      status: "ready",
+      url: "https://cdn/thumb.jpg",
+    });
 
-    const response = await retryThumbnail(
+    const formData = new FormData();
+    formData.append(
+      "thumbnail",
+      new File([Uint8Array.from([0xff, 0xd8, 0xff, 0xdb])], "thumbnail.jpg", {
+        type: "image/jpeg",
+      }),
+    );
+
+    const response = await uploadThumbnail(
       new NextRequest("http://localhost/api/gallery/publication_1/thumbnail", {
-        method: "POST",
+        method: "PUT",
+        body: formData,
       }),
       { params: Promise.resolve({ publicationId: "publication_1" }) },
     );
@@ -132,10 +149,17 @@ describe("gallery publication management", () => {
         thumbnailUpdatedAt: expect.any(Date),
       },
     });
-    expect(scheduleThumbnailMock).toHaveBeenCalledWith({
-      publicationId: "publication_1",
-      messageId: "message_1",
-      slug: "focus-day-chat123",
+    expect(persistThumbnailMock).toHaveBeenCalledWith(
+      {
+        publicationId: "publication_1",
+        messageId: "message_1",
+        slug: "focus-day-chat123",
+      },
+      expect.any(Buffer),
+    );
+    await expect(response.json()).resolves.toEqual({
+      thumbnailStatus: "ready",
+      thumbnailError: null,
     });
   });
 

@@ -1,16 +1,13 @@
 import "server-only";
 
-import { Stagehand } from "@browserbasehq/stagehand";
 import { revalidatePath } from "next/cache";
 
 import { uploadGalleryThumbnail } from "@/features/gallery/server/thumbnail-storage";
-import { getAppOrigin } from "@/lib/app-origin";
 import { getPrisma } from "@/lib/prisma";
 
-const THUMBNAIL_WIDTH = 1280;
-const THUMBNAIL_HEIGHT = 720;
-const THUMBNAIL_READY_TIMEOUT_MS = 45_000;
-const THUMBNAIL_READY_POLL_INTERVAL_MS = 250;
+export const THUMBNAIL_WIDTH = 1280;
+export const THUMBNAIL_HEIGHT = 720;
+export const MAX_THUMBNAIL_BYTES = 800_000;
 const MAX_STORED_ERROR_LENGTH = 500;
 
 export type GalleryThumbnailJob = {
@@ -23,89 +20,32 @@ type ThumbnailResult =
   | { status: "ready"; url: string }
   | { status: "failed"; error: string };
 
-function getRequiredEnvironmentValue(name: string) {
-  const value = process.env[name]?.trim();
-  if (!value) throw new Error(`${name} is required for gallery thumbnails.`);
-  return value;
-}
-
-async function captureThumbnail(slug: string) {
-  const origin = getAppOrigin();
-  const isLocalCapture = new URL(origin).hostname === "localhost";
-  const stagehand = isLocalCapture
-    ? new Stagehand({ env: "LOCAL", disablePino: true })
-    : new Stagehand({
-        apiKey: getRequiredEnvironmentValue("BROWSERBASE_API_KEY"),
-        projectId: getRequiredEnvironmentValue("BROWSERBASE_PROJECT_ID"),
-        env: "BROWSERBASE",
-        disablePino: true,
-      });
-
-  try {
-    await stagehand.init();
-    const page =
-      stagehand.context.pages()[0] ?? (await stagehand.context.newPage());
-    await page.setViewportSize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, {
-      deviceScaleFactor: 1,
-    });
-    await page.goto(`${origin}/gallery/${encodeURIComponent(slug)}/preview`, {
-      waitUntil: "domcontentloaded",
-      timeoutMs: 30_000,
-    });
-    await page.waitForSelector(".sp-preview-iframe", {
-      timeout: THUMBNAIL_READY_TIMEOUT_MS,
-    });
-    const readyDeadline = Date.now() + THUMBNAIL_READY_TIMEOUT_MS;
-    let previewStatus: string | null = null;
-    while (Date.now() < readyDeadline) {
-      previewStatus = await page.evaluate(
-        () =>
-          document
-            .querySelector("[data-gallery-preview-status]")
-            ?.getAttribute("data-gallery-preview-status") ?? null,
-      );
-      if (previewStatus === "ready") break;
-      if (previewStatus === "error") {
-        throw new Error("Generated gallery preview failed to compile.");
-      }
-      await page.waitForTimeout(THUMBNAIL_READY_POLL_INTERVAL_MS);
-    }
-    if (previewStatus !== "ready") {
-      throw new Error(
-        "Generated gallery preview did not become ready in time.",
-      );
-    }
-    await page.waitForTimeout(1_000);
-
-    return await page.screenshot({
-      type: "jpeg",
-      quality: 78,
-      fullPage: false,
-      animations: "disabled",
-      caret: "hide",
-      scale: "css",
-    });
-  } finally {
-    await Promise.resolve(stagehand.close()).catch((error: unknown) => {
-      console.warn("Failed to close gallery thumbnail browser session:", error);
-    });
+export function validateGalleryThumbnailUpload(body: Buffer) {
+  if (body.byteLength === 0) {
+    throw new Error("Gallery preview image is empty.");
+  }
+  if (body.byteLength > MAX_THUMBNAIL_BYTES) {
+    throw new Error("Gallery preview image is too large.");
+  }
+  if (body[0] !== 0xff || body[1] !== 0xd8) {
+    throw new Error("Gallery preview image must be a JPEG.");
   }
 }
 
-export async function captureAndPersistGalleryThumbnail(
+export async function persistGalleryThumbnail(
   job: GalleryThumbnailJob,
+  screenshot: Buffer,
 ): Promise<ThumbnailResult> {
   const prisma = getPrisma();
 
   try {
-    const screenshot = await captureThumbnail(job.slug);
+    validateGalleryThumbnailUpload(screenshot);
     const url = await uploadGalleryThumbnail(job, screenshot);
     const updated = await prisma.galleryPublication.updateMany({
       where: {
         id: job.publicationId,
         messageId: job.messageId,
         isPublished: true,
-        thumbnailStatus: "pending",
       },
       data: {
         thumbnailUrl: url,
@@ -120,14 +60,13 @@ export async function captureAndPersistGalleryThumbnail(
     return { status: "ready", url };
   } catch (error: unknown) {
     const message =
-      error instanceof Error ? error.message : "Thumbnail capture failed.";
+      error instanceof Error ? error.message : "Thumbnail upload failed.";
     const storedError = message.slice(0, MAX_STORED_ERROR_LENGTH);
     await prisma.galleryPublication.updateMany({
       where: {
         id: job.publicationId,
         messageId: job.messageId,
         isPublished: true,
-        thumbnailStatus: "pending",
       },
       data: {
         thumbnailStatus: "failed",
@@ -135,7 +74,7 @@ export async function captureAndPersistGalleryThumbnail(
         thumbnailUpdatedAt: new Date(),
       },
     });
-    console.error("Gallery thumbnail capture failed:", {
+    console.error("Gallery thumbnail upload failed:", {
       publicationId: job.publicationId,
       messageId: job.messageId,
       error: storedError,
@@ -145,88 +84,30 @@ export async function captureAndPersistGalleryThumbnail(
   }
 }
 
-export async function processGalleryThumbnailBatch({
-  limit = 3,
-  userId,
+export async function resetStaleGalleryThumbnails({
+  stalePendingMinutes = 60,
 }: {
-  limit?: number;
-  userId?: string;
+  stalePendingMinutes?: number;
 } = {}) {
   const prisma = getPrisma();
-  const stalePendingCutoff = new Date(Date.now() - 5 * 60 * 1000);
-  const failedRetryCutoff = new Date(Date.now() - 15 * 60 * 1000);
-  const publications = await prisma.galleryPublication.findMany({
+  const stalePendingCutoff = new Date(
+    Date.now() - stalePendingMinutes * 60 * 1000,
+  );
+  const result = await prisma.galleryPublication.updateMany({
     where: {
       isPublished: true,
-      ...(userId ? { userId } : {}),
-      OR: [
-        {
-          thumbnailStatus: "failed",
-          thumbnailUpdatedAt: { lt: failedRetryCutoff },
-        },
-        {
-          thumbnailStatus: "pending",
-          thumbnailUpdatedAt: null,
-        },
-        {
-          thumbnailStatus: "pending",
-          thumbnailUpdatedAt: { lt: stalePendingCutoff },
-        },
-      ],
+      thumbnailStatus: "pending",
+      thumbnailUpdatedAt: { lt: stalePendingCutoff },
     },
-    orderBy: [{ thumbnailStatus: "desc" }, { publishedAt: "desc" }],
-    take: Math.max(1, Math.min(limit, 10)),
-    select: { id: true, messageId: true, slug: true },
+    data: {
+      thumbnailStatus: "failed",
+      thumbnailError:
+        "Preview image was not uploaded. Open Publish and retry the preview.",
+      thumbnailUpdatedAt: new Date(),
+    },
   });
 
-  const claimedAt = new Date();
-  const claims = await Promise.all(
-    publications.map((publication) =>
-      prisma.galleryPublication.updateMany({
-        where: {
-          id: publication.id,
-          messageId: publication.messageId,
-          isPublished: true,
-          OR: [
-            {
-              thumbnailStatus: "failed",
-              thumbnailUpdatedAt: { lt: failedRetryCutoff },
-            },
-            {
-              thumbnailStatus: "pending",
-              thumbnailUpdatedAt: null,
-            },
-            {
-              thumbnailStatus: "pending",
-              thumbnailUpdatedAt: { lt: stalePendingCutoff },
-            },
-          ],
-        },
-        data: {
-          thumbnailStatus: "pending",
-          thumbnailError: null,
-          thumbnailUpdatedAt: claimedAt,
-        },
-      }),
-    ),
-  );
-
-  const claimedPublications = publications.filter(
-    (_publication, index) => claims[index]?.count === 1,
-  );
-  const results = await Promise.all(
-    claimedPublications.map((publication) =>
-      captureAndPersistGalleryThumbnail({
-        publicationId: publication.id,
-        messageId: publication.messageId,
-        slug: publication.slug,
-      }),
-    ),
-  );
-
   return {
-    processed: results.length,
-    ready: results.filter((result) => result.status === "ready").length,
-    failed: results.filter((result) => result.status === "failed").length,
+    markedFailed: result.count,
   };
 }

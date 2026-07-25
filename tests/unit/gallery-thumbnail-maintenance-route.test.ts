@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { processBatchMock } = vi.hoisted(() => ({
-  processBatchMock: vi.fn(),
+const { resetStaleMock } = vi.hoisted(() => ({
+  resetStaleMock: vi.fn(),
 }));
 
 vi.mock("@/features/gallery/server/thumbnail", () => ({
-  processGalleryThumbnailBatch: processBatchMock,
+  resetStaleGalleryThumbnails: resetStaleMock,
 }));
 
 import { GET } from "@/app/api/maintenance/gallery-thumbnails/route";
@@ -21,11 +21,11 @@ describe("gallery thumbnail maintenance", () => {
       new Request("http://localhost/api/maintenance/gallery-thumbnails"),
     );
     expect(response.status).toBe(401);
-    expect(processBatchMock).not.toHaveBeenCalled();
+    expect(resetStaleMock).not.toHaveBeenCalled();
   });
 
-  it("processes a bounded recovery batch for Vercel Cron", async () => {
-    processBatchMock.mockResolvedValue({ processed: 2, ready: 2, failed: 0 });
+  it("marks stale pending publications as failed for Vercel Cron", async () => {
+    resetStaleMock.mockResolvedValue({ markedFailed: 2 });
     const response = await GET(
       new Request("http://localhost/api/maintenance/gallery-thumbnails", {
         headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
@@ -33,11 +33,7 @@ describe("gallery thumbnail maintenance", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(processBatchMock).toHaveBeenCalledWith();
-    await expect(response.json()).resolves.toEqual({
-      processed: 2,
-      ready: 2,
-      failed: 0,
-    });
+    expect(resetStaleMock).toHaveBeenCalledWith();
+    await expect(response.json()).resolves.toEqual({ markedFailed: 2 });
   });
 });

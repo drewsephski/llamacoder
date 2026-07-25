@@ -125,7 +125,10 @@ export default function App() {
       externalResources: ["https://cdn.tailwindcss.com"],
     },
     customSetup: {
-      dependencies: getRequiredDependencies(sandpackFiles),
+      dependencies: {
+        ...getRequiredDependencies(sandpackFiles),
+        html2canvas: "1.4.1",
+      },
     },
   };
 }
@@ -445,6 +448,69 @@ export function SquidPreviewInspector() {
       window.parent?.postMessage({ source: PREVIEW_SOURCE, type: "ready" }, "*");
     }
 
+    async function captureScreenshot(message: {
+      requestId?: string;
+      width?: number;
+      height?: number;
+      quality?: number;
+    }) {
+      const requestId = String(message.requestId ?? "");
+      const width = Number(message.width) || 1280;
+      const height = Number(message.height) || 720;
+      const quality = Number(message.quality) || 78;
+
+      try {
+        const html2canvas = (await import("html2canvas")).default;
+        const canvas = await html2canvas(document.documentElement, {
+          width,
+          height,
+          windowWidth: width,
+          windowHeight: height,
+          scale: 1,
+          logging: false,
+          useCORS: true,
+          backgroundColor:
+            getComputedStyle(document.body).backgroundColor || "#ffffff",
+          onclone: (doc) => {
+            doc.querySelector("[data-squid-preview-inspector]")?.remove();
+          },
+        });
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(
+            (result) =>
+              result
+                ? resolve(result)
+                : reject(new Error("Screenshot encoding failed")),
+            "image/jpeg",
+            quality / 100,
+          );
+        });
+        const buffer = await blob.arrayBuffer();
+        window.parent?.postMessage(
+          {
+            source: PREVIEW_SOURCE,
+            type: "screenshot",
+            requestId,
+            buffer,
+            mimeType: "image/jpeg",
+          },
+          "*",
+          [buffer],
+        );
+      } catch (error) {
+        window.parent?.postMessage(
+          {
+            source: PREVIEW_SOURCE,
+            type: "screenshot",
+            requestId,
+            error:
+              error instanceof Error ? error.message : "Screenshot capture failed",
+          },
+          "*",
+        );
+      }
+    }
+
     function runRuntimeTest(requestId: number) {
       const clickableElements = Array.from(
         document.querySelectorAll(
@@ -516,6 +582,10 @@ export function SquidPreviewInspector() {
       if (message.type === "run-runtime-test") {
         runRuntimeTest(Number(message.requestId) || 0);
       }
+
+      if (message.type === "capture-screenshot") {
+        void captureScreenshot(message);
+      }
     }
 
     function onClick(event: MouseEvent) {
@@ -554,6 +624,6 @@ export function SquidPreviewInspector() {
     };
   }, []);
 
-  return null;
+  return <div data-squid-preview-inspector hidden aria-hidden="true" />;
 }
 `;
