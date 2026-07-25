@@ -326,4 +326,17 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("SquidAgent (Compressed Mode)");
     expect(prompt).not.toContain("Premium UI/UX execution contract");
   });
+
+  it("switches to screenshot fidelity mode instead of Style Pack rotation", () => {
+    const prompt = getMainCodingPrompt({
+      userPrompt: "Recreate this landing page",
+      screenshotCloneMode: true,
+    });
+
+    expect(prompt).toContain("Screenshot clone contract (FIDELITY MODE");
+    expect(prompt).toContain("studied: yes");
+    expect(prompt).not.toContain(
+      "Active Style Pack directive (LOCKED for this build",
+    );
+  });
 });

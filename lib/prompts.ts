@@ -38,6 +38,17 @@ import {
   shouldUseCompressedPrompt,
 } from "@/lib/prompt-compression";
 import shadcnDocs from "./shadcn-docs";
+import { buildDesignIntelligenceReference } from "@/features/generation/design-intelligence";
+import {
+  buildScreenshotCloneCodegenDirective,
+  screenshotCloneVisionPrompt,
+  screenshotToCodePrompt,
+} from "@/features/generation/screenshot-clone";
+
+export {
+  screenshotCloneVisionPrompt,
+  screenshotToCodePrompt,
+} from "@/features/generation/screenshot-clone";
 
 export const softwareArchitectPrompt = dedent`
 You are an expert software architect and product lead responsible for taking an idea of an app, analyzing it, and producing an implementation plan for a single page React frontend app. You are describing a plan for a multi-file React + Tailwind CSS + TypeScript app with the installed UI, data, state, form, file, canvas, and content capabilities listed below.
@@ -93,18 +104,6 @@ ${generatedAppCapabilityContract}
 If given a description of a screenshot, produce an implementation plan based on trying to replicate it as closely as possible.
 `;
 
-export const screenshotToCodePrompt = dedent`
-Describe the attached screenshot in detail. I will send what you give me to a developer to recreate the original screenshot of a website that I sent you. Please listen very carefully. It's very important for my job that you follow these instructions:
-
-- Think step by step and describe the UI in great detail.
-- Describe where everything is in the UI so the developer can recreate the layout and alignment.
-- Pay close attention to background color, text color, font size, font family, padding, margin, border, spacing rhythm, and motion cues. Match the colors and sizes exactly.
-- Mention every part of the screenshot including any headers, footers, sidebars, etc.
-- Identify interaction states, form/error flows, one clear user task, and the visual hierarchy (primary action, secondary actions, status/feedback layer).
-- Use the exact text from the screenshot.
-- For reusable generation, include whether responsive behavior is implied at 320, 375, 414, and 768px (or explicitly note if not inferable).
-`;
-
 export function getMainCodingPrompt(options?: {
   designScoreSummary?: DesignScoreSummary | null;
   /** User brief used to server-resolve and lock a Style Pack for this build. */
@@ -115,35 +114,51 @@ export function getMainCodingPrompt(options?: {
   messageCount?: number;
   /** Approximate tokens in conversation context (excluding system prompt). */
   estimatedContextTokens?: number;
+  /** When true, suspend Style Pack rotation and enforce screenshot fidelity rules. */
+  screenshotCloneMode?: boolean;
 }) {
   const designEmphasis = buildDesignEmphasis(
     options?.designScoreSummary ?? null,
   );
   const pastMediaCatalog = options?.pastMediaCatalog ?? null;
+  const catalogEntries = Array.isArray(pastMediaCatalog)
+    ? pastMediaCatalog
+    : [];
   const styleBrief = options?.userPrompt?.trim() || "product app";
-  const hasCatalogVideo = Boolean(
-    pastMediaCatalog?.some((entry) => entry.kind === "video"),
+  const screenshotCloneMode = options?.screenshotCloneMode === true;
+  const hasCatalogVideo = catalogEntries.some(
+    (entry) => entry.kind === "video",
   );
-  const visualSignatureMode = selectVisualSignatureMode(styleBrief, {
-    hasCatalogVideo,
-  });
-  const visualSignatureDirective = buildVisualSignatureDirective(
-    styleBrief,
-    pastMediaCatalog,
-    visualSignatureMode,
-  );
-  const pastMediaPromptSection =
-    buildPastMediaCatalogPromptSection(pastMediaCatalog);
-  const visualSignatureChecklistItem =
-    "27. Did you implement exactly ONE locked visual signature (catalogVideo OR meshGradient OR noisePattern OR userSpecified) — not a stack of video + shader + noise in the same hero?";
-  const activeStylePackDirective =
-    visualSignatureMode === "userSpecified"
+  const visualSignatureMode = screenshotCloneMode
+    ? "userSpecified"
+    : selectVisualSignatureMode(styleBrief, {
+        hasCatalogVideo,
+      });
+  const visualSignatureDirective = screenshotCloneMode
+    ? ""
+    : buildVisualSignatureDirective(
+        styleBrief,
+        catalogEntries,
+        visualSignatureMode,
+      );
+  const pastMediaPromptSection = screenshotCloneMode
+    ? ""
+    : buildPastMediaCatalogPromptSection(catalogEntries);
+  const visualSignatureChecklistItem = screenshotCloneMode
+    ? "27. (Screenshot clone) Did layout, colors, type scale, and verbatim copy match the reference DNA?"
+    : "27. Did you implement exactly ONE locked visual signature (catalogVideo OR meshGradient OR noisePattern OR userSpecified) — not a stack of video + shader + noise in the same hero?";
+  const activeStylePackDirective = screenshotCloneMode
+    ? buildScreenshotCloneCodegenDirective()
+    : visualSignatureMode === "userSpecified"
       ? dedent`
         **Style Pack (deferred — user-specified design):**
         - The user supplied explicit aesthetic, palette, or media direction.
         - Honor their direction; do not override with Style Pack routing.
       `
       : buildActiveStylePackDirective(styleBrief);
+  const designIntelligenceBlock = screenshotCloneMode
+    ? ""
+    : `\n${buildDesignIntelligenceReference({ mode: "original" })}\n`;
 
   const useCompressedPrompt = shouldUseCompressedPrompt(
     options?.messageCount ?? 0,
@@ -157,6 +172,7 @@ export function getMainCodingPrompt(options?: {
       ${visualSignatureDirective}
 
       ${activeStylePackDirective}
+      ${designIntelligenceBlock}
 
       ${designEmphasis ? `\n${designEmphasis}\n` : ""}
       ${pastMediaPromptSection ? `\n${pastMediaPromptSection}\n` : ""}
@@ -170,6 +186,7 @@ export function getMainCodingPrompt(options?: {
 
   ${visualSignatureDirective}
   ${activeStylePackDirective}
+  ${designIntelligenceBlock}
 
   ## Hard technical rules (never violate these)
 

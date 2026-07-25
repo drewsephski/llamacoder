@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { StylePackId } from "@/features/generation/style-packs";
 
@@ -112,4 +112,69 @@ export function pickDiversifiedPack(
   if (pool.length === 0) pool = [...candidates];
 
   return pool[seed % pool.length] ?? candidates[0]!;
+}
+
+const MAX_LOG_ENTRIES = 20;
+
+function hallmarkLogPath(projectRoot: string): string {
+  return join(projectRoot, ".hallmark", "log.json");
+}
+
+/**
+ * Append a generation record for Style Pack / macrostructure diversification.
+ * Creates `.hallmark/log.json` when missing (newest entry first).
+ */
+export function appendHallmarkLogEntry(
+  entry: HallmarkLogEntry,
+  projectRoot = process.cwd(),
+): void {
+  const logPath = hallmarkLogPath(projectRoot);
+  const dir = join(projectRoot, ".hallmark");
+
+  const existing = readHallmarkLog(projectRoot);
+  const next: HallmarkLogEntry[] = [
+    {
+      date: entry.date || new Date().toISOString().slice(0, 10),
+      ...entry,
+    },
+    ...existing,
+  ].slice(0, MAX_LOG_ENTRIES);
+
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+
+  writeFileSync(logPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+}
+
+export type RecordGenerationDesignMemoryInput = {
+  brief: string;
+  stylePackId?: StylePackId | null;
+  macrostructure?: string;
+  nav?: string;
+  footer?: string;
+  enrichment?: string;
+  theme?: string;
+  projectRoot?: string;
+};
+
+/** Record a completed codegen build for diversification on the next run. */
+export function recordGenerationDesignMemory(
+  input: RecordGenerationDesignMemoryInput,
+): void {
+  const briefSummary = input.brief.trim().slice(0, 120) || "Squid generation";
+
+  appendHallmarkLogEntry(
+    {
+      date: new Date().toISOString().slice(0, 10),
+      macrostructure: input.macrostructure,
+      theme: input.theme ?? input.stylePackId ?? "catalog",
+      enrichment: input.enrichment ?? "none",
+      brief: briefSummary,
+      nav: input.nav,
+      footer: input.footer,
+      stylePack: input.stylePackId ?? undefined,
+    },
+    input.projectRoot ?? process.cwd(),
+  );
 }

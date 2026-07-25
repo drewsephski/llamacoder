@@ -12,7 +12,6 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import {
   GENERATED_CODE_MAX_TOKENS,
-  VISION_ANALYSIS_MODEL,
   createAppOpenRouter,
   createOpenRouterModel,
   getAIErrorMessage,
@@ -32,7 +31,7 @@ import {
   type GeneratedFile,
 } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
-import { getMainCodingPrompt, screenshotToCodePrompt } from "@/lib/prompts";
+import { getMainCodingPrompt } from "@/lib/prompts";
 import { estimateTokens } from "@/lib/prompt-compression";
 import { generatedAppRepairCapabilityRules } from "@/lib/generated-app-capabilities";
 import {
@@ -47,9 +46,11 @@ import type {
 } from "@/features/generation/contracts";
 import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
 import {
+  appendTextToMessageContent,
   clampMessagesToBillingBudget,
   optimizeMessagesForTokens,
   PARTIAL_TEXT_SNAPSHOT_INTERVAL_CHARS,
+  type BillingBudgetMessage,
 } from "@/features/generation/server/message-budget";
 import { getCodeGenerationRunFinalizeState } from "@/features/generation/server/code-generation-pipeline";
 import {
@@ -83,6 +84,13 @@ import {
   resolveResearchReason,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
+import { recordGenerationDesignMemory } from "@/features/generation/hallmark-memory";
+import {
+  detectScreenshotCloneIntent,
+  attachScreenshotToUserMessage,
+  resolveVisionCapableCodingModel,
+} from "@/features/generation/screenshot-clone";
+import { selectStylePackId } from "@/features/generation/style-packs";
 import {
   buildLiveApiGenerationContract,
   detectLiveApiIntent,
@@ -357,8 +365,7 @@ export async function POST(req: Request) {
     const executionQuality = isFreeRepairRequest ? "low" : quality;
     const holdAmount = isFreeRepairRequest
       ? 0
-      : getModelCreditHoldCost(chatModel) +
-        (screenshotData ? getModelCreditHoldCost(VISION_ANALYSIS_MODEL) : 0);
+      : getModelCreditHoldCost(chatModel);
 
     if (!isFreeRepairRequest) {
       const hold = await reserveCreditHold({
@@ -419,6 +426,13 @@ export async function POST(req: Request) {
     );
     const hasAttachedWebsiteVisualReference =
       Boolean(screenshotData) && websiteReferenceIntent.required;
+    const screenshotCloneIntent = detectScreenshotCloneIntent(
+      latestResearchObjective,
+      {
+        hasScreenshot: Boolean(screenshotData),
+        websiteReferenceRequired: websiteReferenceIntent.required,
+      },
+    );
     const shouldCarryResearchThroughWorkflow =
       agentMetadata?.kind === "agent_plan_approval" ||
       agentMetadata?.kind === "agent_search_approval_response";
@@ -512,10 +526,7 @@ export async function POST(req: Request) {
       )
       .parse(rawMessages);
 
-    let guardedMessages: {
-      role: "system" | "user" | "assistant";
-      content: string;
-    }[];
+    let guardedMessages: BillingBudgetMessage[];
 
     if (isFreeRepairRequest) {
       const isContractRepair = messageMetadata.kind === "contract_repair";
@@ -590,6 +601,7 @@ export async function POST(req: Request) {
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
         let persistedPartialText = "";
+        let codegenModel = executionModel;
         let lastSnapshotLength = 0;
         const writeStatus = (status: GenerationStatus) => {
           writer.write({
@@ -1237,6 +1249,7 @@ export async function POST(req: Request) {
               estimatedContextTokens: estimateTokens(
                 guardedMessages.map((message) => message.content).join("\n"),
               ),
+              screenshotCloneMode: screenshotCloneIntent.fidelityLocked,
             });
           }
           if (linkedPageContext) {
@@ -1246,7 +1259,10 @@ export async function POST(req: Request) {
             if (lastUserMessageIndex !== -1) {
               guardedMessages[lastUserMessageIndex] = {
                 ...guardedMessages[lastUserMessageIndex],
-                content: `${guardedMessages[lastUserMessageIndex].content}\n\n${linkedPageContext}`,
+                content: appendTextToMessageContent(
+                  guardedMessages[lastUserMessageIndex].content,
+                  `\n\n${linkedPageContext}`,
+                ),
               };
             }
           }
@@ -1475,18 +1491,19 @@ export async function POST(req: Request) {
               const specBlock = buildCodeGenSpecBlock(finalSpec);
               guardedMessages[lastUserMessageIndex] = {
                 ...guardedMessages[lastUserMessageIndex],
-                content:
-                  guardedMessages[lastUserMessageIndex].content +
+                content: appendTextToMessageContent(
+                  guardedMessages[lastUserMessageIndex].content,
                   persistenceContext +
-                  specBlock +
-                  (connectedIntegrationContext
-                    ? `\n\n${connectedIntegrationContext}`
-                    : "") +
-                  GENERATION_COMPLETENESS_GUARD +
-                  buildLiveApiGenerationContract(
-                    effectiveLiveApiIntent,
-                    integrationPolicyContext,
-                  ),
+                    specBlock +
+                    (connectedIntegrationContext
+                      ? `\n\n${connectedIntegrationContext}`
+                      : "") +
+                    GENERATION_COMPLETENESS_GUARD +
+                    buildLiveApiGenerationContract(
+                      effectiveLiveApiIntent,
+                      integrationPolicyContext,
+                    ),
+                ),
               };
             }
           } else if (isCodeGeneration && !isFreeRepairRequest) {
@@ -1496,16 +1513,17 @@ export async function POST(req: Request) {
             if (lastUserMessageIndex !== -1) {
               guardedMessages[lastUserMessageIndex] = {
                 ...guardedMessages[lastUserMessageIndex],
-                content:
-                  guardedMessages[lastUserMessageIndex].content +
+                content: appendTextToMessageContent(
+                  guardedMessages[lastUserMessageIndex].content,
                   persistenceContext +
-                  (connectedIntegrationContext
-                    ? `\n\n${connectedIntegrationContext}`
-                    : "") +
-                  buildLiveApiGenerationContract(
-                    effectiveLiveApiIntent,
-                    integrationPolicyContext,
-                  ),
+                    (connectedIntegrationContext
+                      ? `\n\n${connectedIntegrationContext}`
+                      : "") +
+                    buildLiveApiGenerationContract(
+                      effectiveLiveApiIntent,
+                      integrationPolicyContext,
+                    ),
+                ),
               };
             }
           } else if (!isCodeGeneration) {
@@ -1559,7 +1577,10 @@ export async function POST(req: Request) {
             if (lastUserMessageIndex !== -1) {
               guardedMessages[lastUserMessageIndex] = {
                 ...guardedMessages[lastUserMessageIndex],
-                content: `${guardedMessages[lastUserMessageIndex].content}\n\nThe selected project API covers the requested current data. Fetch those values from that API at runtime and treat its response as the product data source. Do not web-search for the same values, copy a search-result snapshot into the app, hard-code current data, or substitute another provider.`,
+                content: appendTextToMessageContent(
+                  guardedMessages[lastUserMessageIndex].content,
+                  "\n\nThe selected project API covers the requested current data. Fetch those values from that API at runtime and treat its response as the product data source. Do not web-search for the same values, copy a search-result snapshot into the app, hard-code current data, or substitute another provider.",
+                ),
               };
             }
           }
@@ -1575,7 +1596,10 @@ export async function POST(req: Request) {
             if (lastUserMessageIndex !== -1) {
               guardedMessages[lastUserMessageIndex] = {
                 ...guardedMessages[lastUserMessageIndex],
-                content: `${guardedMessages[lastUserMessageIndex].content}\n\nThe conversation already contains a complete user-supplied API endpoint contract. Use those exact methods, URLs, and stated behaviors as the source of truth. Do not run redundant API discovery, substitute another provider or version, invent undocumented contract details, or replace live requests with mock data.`,
+                content: appendTextToMessageContent(
+                  guardedMessages[lastUserMessageIndex].content,
+                  "\n\nThe conversation already contains a complete user-supplied API endpoint contract. Use those exact methods, URLs, and stated behaviors as the source of truth. Do not run redundant API discovery, substitute another provider or version, invent undocumented contract details, or replace live requests with mock data.",
+                ),
               };
             }
           }
@@ -1589,83 +1613,22 @@ export async function POST(req: Request) {
           if (screenshotData && isCodeGeneration && !isFreeRepairRequest) {
             writeStatus({
               phase: "analyzing-reference",
-              label: "Analyzing your reference image",
+              label: "Attaching your reference image",
             });
 
-            try {
-              const screenshotTelemetry = createRequestTelemetry({
-                userId: session.user.id,
-                chatId: message.chatId,
-                messageId,
-                modelId: VISION_ANALYSIS_MODEL,
-                creditHoldId: holdId,
-                requestKind: "screenshot",
-                quality: "low",
-                reasoning: getOpenRouterReasoningSelection(
-                  VISION_ANALYSIS_MODEL,
-                  "low",
-                ),
-              });
-              const screenshotResponse = await generateText({
-                model: createOpenRouterModel(
-                  openrouter,
-                  VISION_ANALYSIS_MODEL,
-                  {
-                    maxTokens: 1000,
-                    usage: { include: true },
-                  },
-                ),
-                providerOptions: getOpenRouterProviderOptions(
-                  VISION_ANALYSIS_MODEL,
-                  "low",
-                ),
-                abortSignal: req.signal,
-                timeout: { totalMs: 90_000 },
-                temperature: 0.4,
-                messages: [
-                  {
-                    role: "user",
-                    content: [
-                      { type: "text", text: screenshotToCodePrompt },
-                      { type: "image", image: screenshotData },
-                    ],
-                  },
-                ],
-              });
+            codegenModel = resolveVisionCapableCodingModel(executionModel);
 
-              await screenshotTelemetry.record({
-                status: "completed",
-                usage: screenshotResponse.usage,
-                finishReason: screenshotResponse.finishReason,
-                providerMetadata: screenshotResponse.providerMetadata,
-                providerRequestId: screenshotResponse.response?.id,
-              });
+            const lastUserMessageIndex = guardedMessages.findLastIndex(
+              (candidate) => candidate.role === "user",
+            );
 
-              if (screenshotResponse.text) {
-                const screenshotContext = `\n\nRECREATE THIS APP AS CLOSELY AS POSSIBLE:\n${screenshotResponse.text}`;
-                const lastUserMessageIndex = guardedMessages.findLastIndex(
-                  (candidate) => candidate.role === "user",
+            if (lastUserMessageIndex !== -1) {
+              guardedMessages[lastUserMessageIndex] =
+                attachScreenshotToUserMessage(
+                  guardedMessages[lastUserMessageIndex],
+                  screenshotData,
+                  screenshotCloneIntent,
                 );
-
-                if (lastUserMessageIndex !== -1) {
-                  guardedMessages[lastUserMessageIndex] = {
-                    ...guardedMessages[lastUserMessageIndex],
-                    content:
-                      guardedMessages[lastUserMessageIndex].content +
-                      screenshotContext,
-                  };
-                }
-
-                await prisma.message.update({
-                  where: { id: messageId },
-                  data: { content: message.content + screenshotContext },
-                });
-              }
-            } catch (error) {
-              console.warn(
-                "Screenshot processing failed, continuing without it:",
-                getAIErrorMessage(error),
-              );
             }
           }
 
@@ -1678,7 +1641,7 @@ export async function POST(req: Request) {
           );
 
           const result = streamText({
-            model: createOpenRouterModel(openrouter, executionModel, {
+            model: createOpenRouterModel(openrouter, codegenModel, {
               maxTokens: isFreeRepairRequest
                 ? 4_000
                 : isCodeGeneration
@@ -1802,6 +1765,33 @@ export async function POST(req: Request) {
                   completedAt: finalizeState.completedAt,
                 },
               });
+
+              if (
+                isCodeGeneration &&
+                finishReason !== "error" &&
+                persistedPartialText.trim().length > 0
+              ) {
+                const styleBriefForMemory =
+                  typeof message.chat.prompt === "string" &&
+                  message.chat.prompt.trim()
+                    ? message.chat.prompt
+                    : latestResearchObjective;
+
+                if (screenshotData && screenshotCloneIntent.fidelityLocked) {
+                  recordGenerationDesignMemory({
+                    brief: styleBriefForMemory,
+                    theme: "studied-DNA (screenshot-direct)",
+                    enrichment: "screenshot-clone-direct",
+                  });
+                } else {
+                  recordGenerationDesignMemory({
+                    brief: styleBriefForMemory,
+                    stylePackId: selectStylePackId(styleBriefForMemory),
+                    theme:
+                      selectStylePackId(styleBriefForMemory) ?? "user-directed",
+                  });
+                }
+              }
             },
             async onAbort() {
               await telemetry.record({ status: "aborted" });

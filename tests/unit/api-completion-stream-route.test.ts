@@ -542,9 +542,6 @@ describe("/api/get-next-completion-stream-promise", () => {
       { role: "system", content: "system" },
       { role: "user", content: "Build this" },
     ]);
-    generateTextMock.mockResolvedValueOnce({
-      text: "A kanban board with three columns.",
-    });
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const screenshotData = `data:image/png;base64,${Buffer.from("png").toString("base64")}`;
@@ -558,7 +555,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     const chunks = await collectUIChunks(response);
 
     expect(reserveCreditHoldMock).toHaveBeenCalledWith(
-      expect.objectContaining({ amount: 16 }),
+      expect.objectContaining({ amount: 10 }),
     );
 
     expect(chunks).toEqual(
@@ -569,14 +566,16 @@ describe("/api/get-next-completion-stream-promise", () => {
         }),
       ]),
     );
-    expect(prismaMock.message.update).toHaveBeenCalledWith({
-      where: { id: "msg_1" },
-      data: {
-        content: expect.stringContaining("A kanban board with three columns."),
-      },
-    });
-    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
-      "A kanban board with three columns.",
+    expect(generateTextMock).not.toHaveBeenCalled();
+    const lastMessage = streamTextMock.mock.calls[0][0].messages.at(-1);
+    expect(lastMessage.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "text",
+          text: expect.stringContaining("reference screenshot is attached"),
+        }),
+        expect.objectContaining({ type: "image", image: screenshotData }),
+      ]),
     );
   });
 
@@ -1151,9 +1150,6 @@ export default function App() { return <button>Latest results</button>; }
       { role: "user", content },
     ]);
     loadChatUrlContentMock.mockRejectedValueOnce(new Error("Exa unavailable"));
-    generateTextMock.mockResolvedValueOnce({
-      text: "A dark app-builder interface with a centered generation canvas.",
-    });
     mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
 
     const screenshotData = `data:image/png;base64,${Buffer.from("png").toString("base64")}`;
@@ -1171,8 +1167,13 @@ export default function App() { return <button>Latest results</button>; }
       query: content,
     });
     expect(exaSearchMock).not.toHaveBeenCalled();
-    expect(generateTextMock).toHaveBeenCalledTimes(1);
+    expect(generateTextMock).not.toHaveBeenCalled();
     expect(streamTextMock).toHaveBeenCalledTimes(1);
+    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "image", image: screenshotData }),
+      ]),
+    );
     expect(chunks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -1183,9 +1184,10 @@ export default function App() { return <button>Latest results</button>; }
         }),
       ]),
     );
-    expect(streamTextMock.mock.calls[0][0].messages.at(-1).content).toContain(
-      "A dark app-builder interface with a centered generation canvas.",
-    );
+    const textPart = streamTextMock.mock.calls[0][0].messages
+      .at(-1)
+      .content.find((part: { type: string }) => part.type === "text");
+    expect(textPart?.text).toContain(content);
   });
 
   it("answers from a fully read evergreen URL without adding generic external-facts search", async () => {

@@ -24,6 +24,17 @@ export {
   GENERIC_AI_PALETTE_BANS,
   PACK_FONT_PAIRINGS,
 } from "@/features/generation/style-packs";
+export {
+  buildDesignIntelligenceReference,
+  PRE_EMIT_CRITIQUE_AXES,
+  HALLMARK_MACROSTRUCTURES,
+} from "@/features/generation/design-intelligence";
+export {
+  detectScreenshotCloneIntent,
+  screenshotCloneVisionPrompt,
+  buildScreenshotCloneCodegenDirective,
+} from "@/features/generation/screenshot-clone";
+export { recordGenerationDesignMemory } from "@/features/generation/hallmark-memory";
 export type {
   StylePackId,
   StylePack,

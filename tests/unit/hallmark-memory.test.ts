@@ -3,7 +3,12 @@ import {
   getRecentStylePackIds,
   pickDiversifiedPack,
   themeNameToStylePackId,
+  appendHallmarkLogEntry,
+  readHallmarkLog,
 } from "@/features/generation/hallmark-memory";
+import { mkdtempSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 describe("hallmark memory", () => {
   it("maps Hallmark theme names to Style Pack ids", () => {
@@ -40,5 +45,36 @@ describe("hallmark memory", () => {
     const pick = pickDiversifiedPack(candidates, ["cobaltMinimal"], 7);
     expect(pick).not.toBe("cobaltMinimal");
     expect(candidates).toContain(pick);
+  });
+
+  it("appends log entries newest-first and trims to 20", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hallmark-log-"));
+    try {
+      appendHallmarkLogEntry(
+        {
+          date: "2026-07-25",
+          theme: "cobaltMinimal",
+          brief: "first",
+          stylePack: "cobaltMinimal",
+        },
+        dir,
+      );
+      appendHallmarkLogEntry(
+        {
+          date: "2026-07-26",
+          theme: "lumenAtmospheric",
+          brief: "second",
+          stylePack: "lumenAtmospheric",
+        },
+        dir,
+      );
+
+      const log = readHallmarkLog(dir);
+      expect(log).toHaveLength(2);
+      expect(log[0]?.brief).toBe("second");
+      expect(log[1]?.brief).toBe("first");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
