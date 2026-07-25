@@ -1,3 +1,4 @@
+import type { ModelMessage } from "ai";
 import { DEFAULT_ESTIMATED_INPUT_TOKENS } from "@/lib/billing/config";
 
 export type TextMessagePart = { type: "text"; text: string };
@@ -53,6 +54,39 @@ export function appendTextToMessageContent(
     parts[textPartIndex] = { type: "text", text: textPart.text + appendix };
   }
   return parts;
+}
+
+export function toModelMessages(
+  messages: BillingBudgetMessage[],
+): ModelMessage[] {
+  return messages.map((message): ModelMessage => {
+    if (message.role === "user") {
+      if (typeof message.content === "string") {
+        return { role: "user", content: message.content };
+      }
+
+      return {
+        role: "user",
+        content: message.content.map((part) =>
+          part.type === "text"
+            ? { type: "text" as const, text: part.text }
+            : { type: "image" as const, image: part.image },
+        ),
+      };
+    }
+
+    if (message.role === "assistant") {
+      return {
+        role: "assistant",
+        content: getMessageTextContent(message.content),
+      };
+    }
+
+    return {
+      role: "system",
+      content: getMessageTextContent(message.content),
+    };
+  });
 }
 
 export function optimizeMessagesForTokens(

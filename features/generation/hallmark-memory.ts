@@ -134,8 +134,8 @@ export function appendHallmarkLogEntry(
   const existing = readHallmarkLog(projectRoot);
   const next: HallmarkLogEntry[] = [
     {
-      date: entry.date || new Date().toISOString().slice(0, 10),
       ...entry,
+      date: entry.date || new Date().toISOString().slice(0, 10),
     },
     ...existing,
   ].slice(0, MAX_LOG_ENTRIES);

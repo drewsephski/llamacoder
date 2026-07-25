@@ -48,8 +48,10 @@ import { createRequestTelemetry } from "@/features/generation/server/request-tel
 import {
   appendTextToMessageContent,
   clampMessagesToBillingBudget,
+  getMessageTextContent,
   optimizeMessagesForTokens,
   PARTIAL_TEXT_SNAPSHOT_INTERVAL_CHARS,
+  toModelMessages,
   type BillingBudgetMessage,
 } from "@/features/generation/server/message-budget";
 import { getCodeGenerationRunFinalizeState } from "@/features/generation/server/code-generation-pipeline";
@@ -517,15 +519,6 @@ export async function POST(req: Request) {
         detectLiveApiIntent(latestResearchObjective))
       : detectLiveApiIntent(latestResearchObjective);
 
-    let messages = z
-      .array(
-        z.object({
-          role: z.enum(["system", "user", "assistant"]),
-          content: z.string(),
-        }),
-      )
-      .parse(rawMessages);
-
     let guardedMessages: BillingBudgetMessage[];
 
     if (isFreeRepairRequest) {
@@ -555,6 +548,15 @@ export async function POST(req: Request) {
         sourceFiles,
       });
     } else {
+      let messages: BillingBudgetMessage[] = z
+        .array(
+          z.object({
+            role: z.enum(["system", "user", "assistant"]),
+            content: z.string(),
+          }),
+        )
+        .parse(rawMessages);
+
       messages = optimizeMessagesForTokens(messages);
 
       if (messages.length > 10) {
@@ -566,15 +568,15 @@ export async function POST(req: Request) {
         ];
       }
 
-      guardedMessages = messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
+      guardedMessages = messages;
     }
 
-    let systemInstruction = guardedMessages.find(
+    const systemMessageContent = guardedMessages.find(
       (candidate) => candidate.role === "system",
     )?.content;
+    let systemInstruction = systemMessageContent
+      ? getMessageTextContent(systemMessageContent)
+      : undefined;
     guardedMessages = guardedMessages.filter(
       (candidate) => candidate.role !== "system",
     );
@@ -1247,7 +1249,9 @@ export async function POST(req: Request) {
               pastMediaCatalog,
               messageCount: guardedMessages.length,
               estimatedContextTokens: estimateTokens(
-                guardedMessages.map((message) => message.content).join("\n"),
+                guardedMessages
+                  .map((message) => getMessageTextContent(message.content))
+                  .join("\n"),
               ),
               screenshotCloneMode: screenshotCloneIntent.fidelityLocked,
             });
@@ -1653,7 +1657,9 @@ export async function POST(req: Request) {
             abortSignal: req.signal,
             timeout: { totalMs: 270_000, chunkMs: 60_000 },
             system: systemInstruction,
-            messages: clampMessagesToBillingBudget(guardedMessages),
+            messages: toModelMessages(
+              clampMessagesToBillingBudget(guardedMessages),
+            ),
             temperature: 0.4,
             tools: exaTools ?? undefined,
             toolChoice:
