@@ -121,6 +121,7 @@ model User {
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   credits                Int                     @default(0)
+  stripeCustomerId       String?                 @unique
   chats                  Chat[]
   creditHistory          CreditHistory[]
   creditGrants           CreditGrant[]

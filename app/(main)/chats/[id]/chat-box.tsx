@@ -15,6 +15,7 @@ import { createMessage } from "@/features/generation/server/actions";
 import { MODELS } from "@/lib/constants";
 import { toast } from "sonner";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
+import { CreditsLoadError } from "@/features/billing/components/credits-load-error";
 import { UpgradeBanner } from "@/features/billing/components/upgrade-banner";
 import { useUserCredits } from "@/features/user/client/queries";
 import { useSession } from "@/lib/auth-client";
@@ -57,10 +58,16 @@ export default function ChatBox({
   const disabled = isStreaming || isCheckingCredits;
   const didFocusOnce = useRef(false);
 
-  const { data: creditsData } = useUserCredits();
+  const {
+    data: creditsData,
+    isError: creditsError,
+    refetch: refetchCredits,
+  } = useUserCredits();
   const { data: session } = useSession();
-  const credits = creditsData?.credits ?? 0;
-  const hasActiveSubscription = creditsData?.hasActiveSubscription ?? false;
+  const credits = creditsError ? 0 : (creditsData?.credits ?? 0);
+  const hasActiveSubscription = creditsError
+    ? false
+    : (creditsData?.hasActiveSubscription ?? false);
   const isAuthenticated = !!session;
   const latestFollowUpPrompts = getLatestFollowUpPrompts(chat.messages);
 
@@ -124,14 +131,20 @@ export default function ChatBox({
     const isFollowUp = chat.messages.length > 2;
 
     if (isFollowUp) {
-      setIsCheckingCredits(true);
-      // Check credits using cached data from TanStack Query
-      if (credits <= 0 && !hasActiveSubscription) {
-        setShowPricingModal(true);
-        setIsCheckingCredits(false);
+      if (creditsError) {
+        toast.error("Couldn't verify credits. Please retry.");
         return;
       }
-      setIsCheckingCredits(false);
+
+      setIsCheckingCredits(true);
+      try {
+        if (credits <= 0 && !hasActiveSubscription) {
+          setShowPricingModal(true);
+          return;
+        }
+      } finally {
+        setIsCheckingCredits(false);
+      }
     }
 
     startTransition(async () => {
@@ -306,6 +319,12 @@ export default function ChatBox({
       `}</style>
 
       <div className="chatbox-wrap mx-auto mb-3 flex w-full min-w-0 max-w-[42rem] shrink-0 flex-col overflow-x-hidden px-4 sm:px-5">
+        {creditsError && (
+          <CreditsLoadError
+            className="mb-3"
+            onRetryAction={() => void refetchCredits()}
+          />
+        )}
         {!hasActiveSubscription && (
           <UpgradeBanner
             variant={isPaidModel ? "model-locked" : "chat"}
@@ -314,7 +333,7 @@ export default function ChatBox({
         )}
 
         {!isStreaming && latestFollowUpPrompts.length > 0 && (
-              <div
+          <div
             className="follow-up-prompts-scroll mb-2.5 flex w-full snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1"
             role="group"
             aria-label="Suggested follow-up prompts"
@@ -325,7 +344,7 @@ export default function ChatBox({
                 type="button"
                 disabled={disabled}
                 onClick={() => handleFollowUpPromptSelect(followUpPrompt)}
-                className="max-w-[min(22rem,85vw)] shrink-0 snap-start rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-left text-[11px] leading-tight font-medium text-muted-foreground transition hover:border-blue-400/50 hover:bg-blue-50/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card/70 dark:hover:bg-blue-950/30"
+                className="max-w-[min(22rem,85vw)] shrink-0 snap-start rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-left text-[11px] font-medium leading-tight text-muted-foreground transition hover:border-blue-400/50 hover:bg-blue-50/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card/70 dark:hover:bg-blue-950/30"
               >
                 {followUpPrompt}
               </button>
@@ -349,7 +368,7 @@ export default function ChatBox({
                 onChange={(e) => setPrompt(e.target.value)}
                 required
                 name="prompt"
-                className="chatbox-textarea min-h-[4.5rem] resize-none overflow-y-auto border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed placeholder:text-muted-foreground/55 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="chatbox-textarea min-h-[4.5rem] resize-none overflow-y-auto border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed outline-none placeholder:text-muted-foreground/55 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     if (disabled || event.nativeEvent.isComposing) return;

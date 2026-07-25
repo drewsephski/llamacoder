@@ -2,12 +2,11 @@
 
 import { useState, type ComponentProps, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useStripeCheckout } from "@/features/billing/client/use-stripe-checkout";
+import { executeStripeRedirect } from "@/features/billing/client/stripe-redirect";
 import type { CheckoutInput } from "@/features/billing/contracts";
-import { getErrorMessage } from "@/features/shared/errors";
 
 type StripeCheckoutButtonProps = Omit<
   ComponentProps<typeof Button>,
@@ -27,18 +26,11 @@ export function StripeCheckoutButton({
   const checkoutMutation = useStripeCheckout();
 
   const handleCheckout = async () => {
-    setIsRedirecting(true);
-
-    try {
-      const { url } = await checkoutMutation.mutateAsync(checkout);
-      window.location.assign(url);
-    } catch (error: unknown) {
-      console.error("Checkout error:", error);
-      toast.error(
-        getErrorMessage(error, "Something went wrong. Please try again."),
-      );
-      setIsRedirecting(false);
-    }
+    await executeStripeRedirect({
+      execute: () => checkoutMutation.mutateAsync(checkout),
+      setIsRedirecting,
+      fallbackErrorMessage: "Something went wrong. Please try again.",
+    });
   };
 
   return (

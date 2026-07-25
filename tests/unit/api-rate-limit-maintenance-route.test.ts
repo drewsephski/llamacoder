@@ -38,7 +38,8 @@ describe("expired rate-limit bucket maintenance", () => {
     expect(mocks.purgeExpiredRateLimitBuckets).not.toHaveBeenCalled();
   });
 
-  it("allows unauthenticated requests outside production", async () => {
+  it("allows unauthenticated requests outside production when CRON_SECRET is unset", async () => {
+    vi.stubEnv("CRON_SECRET", "");
     vi.stubEnv("NODE_ENV", "development");
     mocks.purgeExpiredRateLimitBuckets.mockResolvedValue(0);
     mocks.count.mockResolvedValue(0);
@@ -51,6 +52,19 @@ describe("expired rate-limit bucket maintenance", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.purgeExpiredRateLimitBuckets).toHaveBeenCalled();
+  });
+
+  it("requires auth outside production when CRON_SECRET is set", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+
+    const response = await GET(
+      new Request(
+        "https://www.squidagent.app/api/maintenance/rate-limit-buckets",
+      ),
+    );
+
+    expect(response.status).toBe(401);
+    expect(mocks.purgeExpiredRateLimitBuckets).not.toHaveBeenCalled();
   });
 
   it("purges expired buckets and confirms the backlog is empty", async () => {

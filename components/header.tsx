@@ -32,11 +32,18 @@ function Header({ onHelpClick }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
 
   const { data: session, isPending: sessionLoading } = useSession();
-  const { data: creditsData, isLoading: creditsLoading } = useUserCredits();
+  const {
+    data: creditsData,
+    isLoading: creditsLoading,
+    isError: creditsError,
+    refetch: refetchCredits,
+  } = useUserCredits();
 
-  const credits = creditsData?.credits ?? null;
-  const hasSubscription = creditsData?.hasActiveSubscription ?? false;
-  const currentTier = creditsData?.tier ?? "free";
+  const credits = creditsError ? null : (creditsData?.credits ?? null);
+  const hasSubscription = creditsError
+    ? false
+    : (creditsData?.hasActiveSubscription ?? false);
+  const currentTier = creditsError ? "free" : (creditsData?.tier ?? "free");
   const loading = sessionLoading || creditsLoading;
 
   useEffect(() => {
@@ -134,7 +141,16 @@ function Header({ onHelpClick }: HeaderProps) {
               <span className="text-sm text-muted-foreground">Loading…</span>
             ) : session ? (
               <>
-                {hasSubscription ? (
+                {creditsError ? (
+                  <Button
+                    onClick={() => void refetchCredits()}
+                    variant="ghost"
+                    size="sm"
+                    className="text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
+                  >
+                    Retry billing
+                  </Button>
+                ) : hasSubscription ? (
                   <Button
                     onClick={() => openPricingModal("credits")}
                     variant="ghost"

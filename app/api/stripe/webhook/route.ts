@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { stripe, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe";
+import { stripe, getStripeWebhookSecret } from "@/lib/stripe";
 import {
   fulfillCheckoutSession,
   fulfillPaidInvoice,
@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET === "whsec_...") {
+  const webhookSecret = getStripeWebhookSecret();
+  if (!webhookSecret || webhookSecret === "whsec_...") {
     console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured");
     return NextResponse.json(
       { error: "Webhook secret not configured" },
@@ -52,11 +53,7 @@ export async function POST(request: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      payload,
-      signature,
-      STRIPE_WEBHOOK_SECRET,
-    );
+    event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown signature error";
@@ -79,7 +76,16 @@ export async function POST(request: NextRequest) {
           event.data.object as Stripe.Checkout.Session,
           event.id,
         );
-        console.log("[Stripe Webhook] Fulfilled checkout session:", result);
+        await recordOperationalEvent({
+          name: "stripe_checkout_fulfilled",
+          level: "info",
+          operation: event.type,
+          status: "success",
+          metadata: {
+            eventId: event.id,
+            summary: JSON.stringify(result).slice(0, 500),
+          },
+        });
         break;
       }
 
@@ -89,7 +95,16 @@ export async function POST(request: NextRequest) {
           event.data.object as Stripe.Invoice,
           event.id,
         );
-        console.log("[Stripe Webhook] Fulfilled paid invoice:", result);
+        await recordOperationalEvent({
+          name: "stripe_invoice_fulfilled",
+          level: "info",
+          operation: event.type,
+          status: "success",
+          metadata: {
+            eventId: event.id,
+            summary: JSON.stringify(result).slice(0, 500),
+          },
+        });
         break;
       }
 
@@ -99,7 +114,16 @@ export async function POST(request: NextRequest) {
         );
         if (invoice) {
           const result = await fulfillPaidInvoice(invoice, event.id);
-          console.log("[Stripe Webhook] Fulfilled invoice payment:", result);
+          await recordOperationalEvent({
+            name: "stripe_invoice_payment_fulfilled",
+            level: "info",
+            operation: event.type,
+            status: "success",
+            metadata: {
+              eventId: event.id,
+              summary: JSON.stringify(result).slice(0, 500),
+            },
+          });
         }
         break;
       }
@@ -111,7 +135,16 @@ export async function POST(request: NextRequest) {
           subscriptionId: subscription.id,
           fallbackCustomerId: getStripeId(subscription.customer),
         });
-        console.log("[Stripe Webhook] Synced subscription:", result);
+        await recordOperationalEvent({
+          name: "stripe_subscription_synced",
+          level: "info",
+          operation: event.type,
+          status: "success",
+          metadata: {
+            eventId: event.id,
+            summary: JSON.stringify(result).slice(0, 500),
+          },
+        });
         break;
       }
 
@@ -161,7 +194,13 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        console.log("[Stripe Webhook] Unhandled event type:", event.type);
+        await recordOperationalEvent({
+          name: "stripe_webhook_unhandled",
+          level: "info",
+          operation: event.type,
+          status: "ignored",
+          metadata: { eventId: event.id },
+        });
     }
 
     await recordProcessedStripeEvent(event);

@@ -9,7 +9,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import ShareIcon from "@/components/icons/share-icon";
@@ -26,6 +26,13 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
+import {
+  capturePreviewScreenshot,
+  GALLERY_THUMBNAIL_SETTLE_MS,
+  sleep,
+  waitForPreviewScreenshot,
+} from "@/features/gallery/client/preview-screenshot";
+import { uploadGalleryThumbnail } from "@/features/gallery/client/upload-gallery-thumbnail";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -66,6 +73,15 @@ export function Share({
   const [isSaving, setIsSaving] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isRetryingThumbnail, setIsRetryingThumbnail] = useState(false);
+  const [previewStatus, setPreviewStatus] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
+  const previewStatusRef = useRef(previewStatus);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+
+  useEffect(() => {
+    previewStatusRef.current = previewStatus;
+  }, [previewStatus]);
   const previewFiles = useMemo(
     () =>
       message
@@ -81,7 +97,49 @@ export function Share({
     setTitle(normalizeTitle(projectTitle));
     setDescription(normalizeDescription(projectDescription));
     setPublication(null);
+    setPreviewStatus("loading");
   }, [message?.id, projectDescription, projectTitle]);
+
+  async function captureAndUploadThumbnail(publicationId: string) {
+    await waitForPreviewScreenshot({
+      isReady: () => previewStatusRef.current === "ready",
+    });
+    await sleep(GALLERY_THUMBNAIL_SETTLE_MS);
+    const thumbnail = await capturePreviewScreenshot();
+    return uploadGalleryThumbnail(publicationId, thumbnail);
+  }
+
+  async function uploadPublicationThumbnail(publication: Publication) {
+    setIsUploadingThumbnail(true);
+    try {
+      const result = await captureAndUploadThumbnail(publication.id);
+      setPublication({
+        ...publication,
+        thumbnailStatus: result.thumbnailStatus,
+        thumbnailError: result.thumbnailError,
+      });
+      if (result.thumbnailStatus === "ready") {
+        toast.success("Gallery preview image is ready");
+      }
+    } catch (error) {
+      console.error("Failed to upload gallery preview image:", error);
+      setPublication({
+        ...publication,
+        thumbnailStatus: "failed",
+        thumbnailError:
+          error instanceof Error
+            ? error.message
+            : "Gallery preview image could not be created.",
+      });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Gallery preview image could not be created.",
+      );
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  }
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -133,6 +191,9 @@ export function Share({
       }
       setPublication(data.publication);
       toast.success("Project published to the gallery");
+      if (previewFiles.length > 0) {
+        void uploadPublicationThumbnail(data.publication);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -168,20 +229,12 @@ export function Share({
     if (!publication) return;
     setIsRetryingThumbnail(true);
     try {
-      const response = await fetch(`/api/gallery/${publication.id}/thumbnail`, {
-        method: "POST",
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        toast.error(data?.message ?? "Unable to retry the preview image");
-        return;
-      }
       setPublication({
         ...publication,
         thumbnailStatus: "pending",
         thumbnailError: null,
       });
-      toast.success("Preview image queued");
+      await uploadPublicationThumbnail(publication);
     } finally {
       setIsRetryingThumbnail(false);
     }
@@ -212,7 +265,14 @@ export function Share({
           {previewFiles.length > 0 && (
             <div className="h-56 overflow-hidden rounded-xl border border-border bg-muted/30 sm:h-60">
               <div className="size-full">
-                <CodeRunner files={previewFiles} />
+                <CodeRunner
+                  files={previewFiles}
+                  onPreviewHealthChange={(health) => {
+                    setPreviewStatus(
+                      health.status === "working" ? "ready" : "error",
+                    );
+                  }}
+                />
               </div>
             </div>
           )}
@@ -280,11 +340,13 @@ export function Share({
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
                     <span>
-                      {publication.thumbnailStatus === "ready"
-                        ? "Gallery preview image is ready."
-                        : publication.thumbnailStatus === "failed"
-                          ? "Gallery preview image could not be created."
-                          : "Gallery preview image is being prepared."}
+                      {isUploadingThumbnail
+                        ? "Uploading gallery preview image…"
+                        : publication.thumbnailStatus === "ready"
+                          ? "Gallery preview image is ready."
+                          : publication.thumbnailStatus === "failed"
+                            ? "Gallery preview image could not be created."
+                            : "Gallery preview image is being prepared."}
                     </span>
                     {publication.thumbnailStatus === "failed" && (
                       <Button
@@ -292,9 +354,11 @@ export function Share({
                         size="sm"
                         variant="ghost"
                         onClick={retryThumbnail}
-                        disabled={isRetryingThumbnail}
+                        disabled={isRetryingThumbnail || isUploadingThumbnail}
                       >
-                        {isRetryingThumbnail ? "Retrying…" : "Retry preview"}
+                        {isRetryingThumbnail || isUploadingThumbnail
+                          ? "Retrying…"
+                          : "Retry preview"}
                       </Button>
                     )}
                   </div>

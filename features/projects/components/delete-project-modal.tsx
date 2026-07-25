@@ -50,26 +50,34 @@ export function DeleteProjectModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Project</DialogTitle>
+          <DialogTitle>Delete project?</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this project? This action cannot be
-            undone.
+            This permanently removes the project, chat history, and generated
+            versions. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-3 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
-          <div className="flex-1 overflow-hidden rounded-lg border border-border bg-muted/50 p-3">
-            <p className="break-words text-sm font-medium text-foreground">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Project
+            </p>
+            <p className="mt-1 break-words text-sm font-medium text-foreground">
               {projectTitle}
             </p>
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button onClick={onClose} disabled={isDeleting} variant="outline">
+          <Button
+            autoFocus
+            onClick={onClose}
+            disabled={isDeleting}
+            variant="outline"
+          >
             Cancel
           </Button>
           <Button
@@ -85,7 +93,7 @@ export function DeleteProjectModal({
             ) : (
               <>
                 <Trash2 className="h-4 w-4" />
-                Delete Project
+                Delete project
               </>
             )}
           </Button>

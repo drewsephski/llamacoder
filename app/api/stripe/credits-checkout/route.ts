@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import {
@@ -11,6 +11,15 @@ import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { getErrorMessage } from "@/features/shared/errors";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getAppOrigin } from "@/lib/app-origin";
+import {
+  checkoutErrorResponse,
+  checkoutSuccessResponse,
+  getCheckoutString,
+} from "@/features/billing/server/checkout-responses";
+import {
+  persistStripeCustomerId,
+  resolveExistingStripeCustomerId,
+} from "@/features/billing/server/stripe-customer";
 
 type CreditPack = keyof typeof CREDIT_PACKS;
 
@@ -18,10 +27,6 @@ type CreditsCheckoutRequestBody = {
   pack?: string;
   expectsJson: boolean;
 };
-
-function getString(value: unknown): string | undefined {
-  return typeof value === "string" && value.length > 0 ? value : undefined;
-}
 
 function isCreditPack(value: string): value is CreditPack {
   return Object.hasOwn(CREDIT_PACKS, value);
@@ -36,7 +41,7 @@ async function parseCreditsCheckoutRequest(
     const body = (await request.json()) as Record<string, unknown>;
 
     return {
-      pack: getString(body.pack),
+      pack: getCheckoutString(body.pack),
       expectsJson: true,
     };
   }
@@ -48,7 +53,7 @@ async function parseCreditsCheckoutRequest(
     const formData = await request.formData();
 
     return {
-      pack: getString(formData.get("pack")),
+      pack: getCheckoutString(formData.get("pack")),
       expectsJson: false,
     };
   }
@@ -57,22 +62,6 @@ async function parseCreditsCheckoutRequest(
     expectsJson:
       request.headers.get("accept")?.includes("application/json") ?? false,
   };
-}
-
-function errorResponse(
-  message: string,
-  status: number,
-  request: NextRequest,
-  expectsJson: boolean,
-) {
-  if (expectsJson) {
-    return NextResponse.json({ error: message }, { status });
-  }
-
-  const redirectUrl = new URL("/dashboard", request.url);
-  redirectUrl.searchParams.set("checkout_error", message);
-
-  return NextResponse.redirect(redirectUrl, 303);
 }
 
 export async function POST(request: NextRequest) {
@@ -88,7 +77,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session) {
-      return errorResponse(
+      return checkoutErrorResponse(
         "You must be signed in to purchase credits",
         401,
         request,
@@ -103,7 +92,7 @@ export async function POST(request: NextRequest) {
       windowMs: 10 * 60 * 1000,
     });
     if (!rateLimit.allowed) {
-      return errorResponse(
+      return checkoutErrorResponse(
         "Too many checkout requests. Please try again shortly.",
         429,
         request,
@@ -111,9 +100,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate the pack type
     if (!pack || !isCreditPack(pack)) {
-      return errorResponse("Invalid credit pack", 400, request, expectsJson);
+      return checkoutErrorResponse(
+        "Invalid credit pack",
+        400,
+        request,
+        expectsJson,
+      );
     }
 
     const prisma = getPrisma();
@@ -123,28 +116,22 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return errorResponse("User not found", 404, request, expectsJson);
+      return checkoutErrorResponse("User not found", 404, request, expectsJson);
     }
 
     const customerId = await getOrCreateStripeCustomerId({
-      existingCustomerId: user.subscription?.stripeCustomerId,
+      existingCustomerId: resolveExistingStripeCustomerId(user),
       email: user.email,
       name: user.name,
     });
 
-    if (
-      user.subscription &&
-      user.subscription.stripeCustomerId !== customerId
-    ) {
-      await prisma.subscription.update({
-        where: { id: user.subscription.id },
-        data: { stripeCustomerId: customerId },
-      });
-    }
+    await persistStripeCustomerId({
+      userId: user.id,
+      customerId,
+      subscriptionId: user.subscription?.id,
+    });
 
     const origin = getAppOrigin();
-
-    // Create checkout session for credits
     const checkoutSession = await createCreditsCheckoutSession(
       customerId,
       `${origin}/dashboard?credits_success=true`,
@@ -154,7 +141,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!checkoutSession.url) {
-      return errorResponse(
+      return checkoutErrorResponse(
         "Stripe did not return a checkout URL",
         502,
         request,
@@ -163,10 +150,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!expectsJson) {
-      return NextResponse.redirect(checkoutSession.url, 303);
+      return checkoutSuccessResponse(checkoutSession.url, expectsJson);
     }
 
-    return NextResponse.json({ url: checkoutSession.url });
+    return checkoutSuccessResponse(checkoutSession.url, expectsJson);
   } catch (error: unknown) {
     await recordOperationalEvent({
       name: "checkout_session_failed",
@@ -175,7 +162,7 @@ export async function POST(request: NextRequest) {
       status: "error",
       error,
     });
-    return errorResponse(
+    return checkoutErrorResponse(
       getErrorMessage(error, "Failed to create checkout session"),
       500,
       request,

@@ -14,40 +14,100 @@ function getRequiredEnv(name: string) {
   return value;
 }
 
-// Validate required environment variables at module load time
-const STRIPE_SECRET_KEY = getRequiredEnv("STRIPE_SECRET_KEY");
+let stripeClient: Stripe | undefined;
 
-export const stripe = new Stripe(STRIPE_SECRET_KEY, {
-  apiVersion: "2026-04-22.dahlia",
+export function getStripeClient(): Stripe {
+  if (!stripeClient) {
+    stripeClient = new Stripe(getRequiredEnv("STRIPE_SECRET_KEY"), {
+      apiVersion: "2026-04-22.dahlia",
+    });
+  }
+
+  return stripeClient;
+}
+
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    const client = getStripeClient();
+    const value = client[prop as keyof Stripe];
+
+    if (typeof value === "function") {
+      return value.bind(client);
+    }
+
+    return value;
+  },
 });
 
-export const STRIPE_WEBHOOK_SECRET = getRequiredEnv("STRIPE_WEBHOOK_SECRET");
+export function getStripeWebhookSecret() {
+  return getRequiredEnv("STRIPE_WEBHOOK_SECRET");
+}
 
-// Subscription tier configurations
-// These must be configured per Stripe account; do not fall back to stale prices.
-export const STRIPE_PRICE_IDS = {
-  pro: getRequiredEnv("STRIPE_PRO_PRICE_ID"),
-  pro_plus: getRequiredEnv("STRIPE_PRO_PLUS_PRICE_ID"),
-};
+let stripePriceIds: { pro: string; pro_plus: string } | undefined;
 
-// Credit pack configurations with Stripe Price IDs
-export const CREDIT_PACK_CONFIGS = {
-  small: {
-    priceId: getRequiredEnv("STRIPE_CREDITS_10_PRICE_ID"),
-    credits: CREDIT_PACKS.small.credits,
-    price: CREDIT_PACKS.small.price,
+export function getStripePriceIds() {
+  if (!stripePriceIds) {
+    stripePriceIds = {
+      pro: getRequiredEnv("STRIPE_PRO_PRICE_ID"),
+      pro_plus: getRequiredEnv("STRIPE_PRO_PLUS_PRICE_ID"),
+    };
+  }
+
+  return stripePriceIds;
+}
+
+export const STRIPE_PRICE_IDS = new Proxy(
+  {} as { pro: string; pro_plus: string },
+  {
+    get(_target, prop) {
+      return getStripePriceIds()[
+        prop as keyof ReturnType<typeof getStripePriceIds>
+      ];
+    },
   },
-  medium: {
-    priceId: getRequiredEnv("STRIPE_CREDITS_25_PRICE_ID"),
-    credits: CREDIT_PACKS.medium.credits,
-    price: CREDIT_PACKS.medium.price,
+);
+
+let creditPackConfigs: typeof import("./billing/config").CREDIT_PACKS extends infer _T
+  ? Record<
+      "small" | "medium" | "large",
+      { priceId: string; credits: number; price: number }
+    >
+  : never;
+
+export function getCreditPackConfigs() {
+  if (!creditPackConfigs) {
+    creditPackConfigs = {
+      small: {
+        priceId: getRequiredEnv("STRIPE_CREDITS_10_PRICE_ID"),
+        credits: CREDIT_PACKS.small.credits,
+        price: CREDIT_PACKS.small.price,
+      },
+      medium: {
+        priceId: getRequiredEnv("STRIPE_CREDITS_25_PRICE_ID"),
+        credits: CREDIT_PACKS.medium.credits,
+        price: CREDIT_PACKS.medium.price,
+      },
+      large: {
+        priceId: getRequiredEnv("STRIPE_CREDITS_60_PRICE_ID"),
+        credits: CREDIT_PACKS.large.credits,
+        price: CREDIT_PACKS.large.price,
+      },
+    };
+  }
+
+  return creditPackConfigs;
+}
+
+export const CREDIT_PACK_CONFIGS = new Proxy(
+  {} as ReturnType<typeof getCreditPackConfigs>,
+  {
+    get(_target, prop) {
+      return getCreditPackConfigs()[
+        prop as keyof ReturnType<typeof getCreditPackConfigs>
+      ];
+    },
   },
-  large: {
-    priceId: getRequiredEnv("STRIPE_CREDITS_60_PRICE_ID"),
-    credits: CREDIT_PACKS.large.credits,
-    price: CREDIT_PACKS.large.price,
-  },
-};
+);
 
 function addCheckoutSessionId(url: string) {
   const separator = url.includes("?") ? "&" : "?";
@@ -100,6 +160,20 @@ export async function getOrCreateStripeCustomerId({
   const customer = await createStripeCustomer(email, name || undefined);
 
   return customer.id;
+}
+
+export async function cancelStripeSubscriptionIfPresent(
+  subscriptionId?: string | null,
+) {
+  if (!subscriptionId) return;
+
+  try {
+    await stripe.subscriptions.cancel(subscriptionId);
+  } catch (error) {
+    if (!isMissingStripeResourceError(error, "subscription")) {
+      throw error;
+    }
+  }
 }
 
 export async function createCheckoutSession(
@@ -175,15 +249,14 @@ export async function upgradeSubscriptionTier({
   });
 }
 
-// Create a checkout session for one-time credit purchases
 export async function createCreditsCheckoutSession(
   customerId: string,
   successUrl: string,
   cancelUrl: string,
-  creditPack: keyof typeof CREDIT_PACK_CONFIGS,
+  creditPack: keyof ReturnType<typeof getCreditPackConfigs>,
   userId: string,
 ) {
-  const pack = CREDIT_PACK_CONFIGS[creditPack];
+  const pack = getCreditPackConfigs()[creditPack];
 
   return stripe.checkout.sessions.create({
     customer: customerId,
@@ -215,5 +288,46 @@ export async function createCustomerPortalSession(
   return stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
+  });
+}
+
+export async function createSubscriptionCheckoutSession({
+  customerId,
+  userId,
+  tier,
+  priceId,
+  origin,
+}: {
+  customerId: string;
+  userId: string;
+  tier: "pro" | "pro_plus";
+  priceId: string;
+  origin: string;
+}) {
+  return stripe.checkout.sessions.create({
+    customer: customerId,
+    client_reference_id: userId,
+    mode: "subscription",
+    allow_promotion_codes: true,
+    integration_identifier: "llamacoder_subscription_k7m2xq9p",
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    success_url: `${origin}/dashboard?subscription_success=true&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/dashboard?subscription_canceled=true`,
+    metadata: {
+      type: "subscription",
+      tier,
+      userId,
+    },
+    subscription_data: {
+      metadata: {
+        tier,
+        userId,
+      },
+    },
   });
 }

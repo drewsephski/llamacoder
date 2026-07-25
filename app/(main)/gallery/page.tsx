@@ -60,10 +60,7 @@ export default async function GalleryPage({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <GalleryThumbnailRefresh
-        canBackfill={Boolean(session) && process.env.NODE_ENV === "production"}
-        pending={hasPendingThumbnails}
-      />
+      <GalleryThumbnailRefresh pending={hasPendingThumbnails} />
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
           <Link
@@ -208,9 +205,9 @@ export default async function GalleryPage({
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-6 text-muted-foreground sm:text-right">
-                Three complete React landing pages built with distinct structures,
-                premium interaction systems, and reusable build prompts for your
-                next generation.
+                Three complete React landing pages built with distinct
+                structures, premium interaction systems, and reusable build
+                prompts for your next generation.
               </p>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

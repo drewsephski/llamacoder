@@ -1,12 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import type Stripe from "stripe";
 import {
   stripe,
   getOrCreateStripeCustomerId,
   isMissingStripeResourceError,
   STRIPE_PRICE_IDS,
   upgradeSubscriptionTier,
+  cancelStripeSubscriptionIfPresent,
+  createSubscriptionCheckoutSession,
 } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
 import { getEntitlementTier, isSubscriptionEntitled } from "@/lib/billing";
@@ -14,6 +17,15 @@ import { syncSubscriptionFromStripe } from "@/lib/billing/stripe-fulfillment";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getAppOrigin } from "@/lib/app-origin";
+import {
+  checkoutErrorResponse,
+  checkoutSuccessResponse,
+  getCheckoutString,
+} from "@/features/billing/server/checkout-responses";
+import {
+  persistStripeCustomerId,
+  resolveExistingStripeCustomerId,
+} from "@/features/billing/server/stripe-customer";
 
 type SubscriptionTier = keyof typeof STRIPE_PRICE_IDS;
 
@@ -22,10 +34,6 @@ type CheckoutRequestBody = {
   priceId?: string;
   expectsJson: boolean;
 };
-
-function getString(value: unknown): string | undefined {
-  return typeof value === "string" && value.length > 0 ? value : undefined;
-}
 
 function isSubscriptionTier(value: string): value is SubscriptionTier {
   return Object.hasOwn(STRIPE_PRICE_IDS, value);
@@ -48,8 +56,8 @@ async function parseCheckoutRequest(
     const body = (await request.json()) as Record<string, unknown>;
 
     return {
-      plan: getString(body.plan),
-      priceId: getString(body.priceId),
+      plan: getCheckoutString(body.plan),
+      priceId: getCheckoutString(body.priceId),
       expectsJson: true,
     };
   }
@@ -61,8 +69,8 @@ async function parseCheckoutRequest(
     const formData = await request.formData();
 
     return {
-      plan: getString(formData.get("plan")),
-      priceId: getString(formData.get("priceId")),
+      plan: getCheckoutString(formData.get("plan")),
+      priceId: getCheckoutString(formData.get("priceId")),
       expectsJson: false,
     };
   }
@@ -71,71 +79,6 @@ async function parseCheckoutRequest(
     expectsJson:
       request.headers.get("accept")?.includes("application/json") ?? false,
   };
-}
-
-function errorResponse(
-  message: string,
-  status: number,
-  request: NextRequest,
-  expectsJson: boolean,
-) {
-  if (expectsJson) {
-    return NextResponse.json({ error: message }, { status });
-  }
-
-  const redirectUrl = new URL("/dashboard", request.url);
-  redirectUrl.searchParams.set("checkout_error", message);
-
-  return NextResponse.redirect(redirectUrl, 303);
-}
-
-function successResponse(url: string, expectsJson: boolean) {
-  if (expectsJson) {
-    return NextResponse.json({ url });
-  }
-
-  return NextResponse.redirect(url, 303);
-}
-
-async function createSubscriptionCheckoutSession({
-  customerId,
-  userId,
-  tier,
-  priceId,
-  origin,
-}: {
-  customerId: string;
-  userId: string;
-  tier: SubscriptionTier;
-  priceId: string;
-  origin: string;
-}) {
-  return stripe.checkout.sessions.create({
-    customer: customerId,
-    client_reference_id: userId,
-    mode: "subscription",
-    allow_promotion_codes: true,
-    integration_identifier: "llamacoder_subscription_k7m2xq9p",
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
-    success_url: `${origin}/dashboard?subscription_success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/dashboard?subscription_canceled=true`,
-    metadata: {
-      type: "subscription",
-      tier,
-      userId,
-    },
-    subscription_data: {
-      metadata: {
-        tier,
-        userId,
-      },
-    },
-  });
 }
 
 export async function POST(request: NextRequest) {
@@ -148,7 +91,7 @@ export async function POST(request: NextRequest) {
     const requestedPlan = body.plan ?? "pro";
 
     if (!priceTier && !isSubscriptionTier(requestedPlan)) {
-      return errorResponse(
+      return checkoutErrorResponse(
         "Invalid subscription plan",
         400,
         request,
@@ -160,7 +103,12 @@ export async function POST(request: NextRequest) {
     const finalPriceId = body.priceId || STRIPE_PRICE_IDS[tier];
 
     if (!finalPriceId) {
-      return errorResponse("Invalid price ID", 400, request, expectsJson);
+      return checkoutErrorResponse(
+        "Invalid price ID",
+        400,
+        request,
+        expectsJson,
+      );
     }
 
     const session = await auth.api.getSession({
@@ -168,7 +116,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session) {
-      return errorResponse(
+      return checkoutErrorResponse(
         "You must be signed in to subscribe",
         401,
         request,
@@ -183,7 +131,7 @@ export async function POST(request: NextRequest) {
       windowMs: 10 * 60 * 1000,
     });
     if (!rateLimit.allowed) {
-      return errorResponse(
+      return checkoutErrorResponse(
         "Too many checkout requests. Please try again shortly.",
         429,
         request,
@@ -198,26 +146,31 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return errorResponse("User not found", 404, request, expectsJson);
+      return checkoutErrorResponse("User not found", 404, request, expectsJson);
     }
 
     const customerId = await getOrCreateStripeCustomerId({
-      existingCustomerId: user.subscription?.stripeCustomerId,
+      existingCustomerId: resolveExistingStripeCustomerId(user),
       email: user.email,
       name: user.name,
     });
 
+    await persistStripeCustomerId({
+      userId: user.id,
+      customerId,
+      subscriptionId: user.subscription?.id,
+    });
+
     const currentTier = getEntitlementTier(user.subscription);
-
     const origin = getAppOrigin();
-
     const activeSubscription = user.subscription;
+
     if (
       activeSubscription &&
       isSubscriptionEntitled(activeSubscription.status)
     ) {
       if (currentTier === tier) {
-        return errorResponse(
+        return checkoutErrorResponse(
           `You are already on the ${currentTier === "pro_plus" ? "Pro Plus" : "Pro"} plan`,
           400,
           request,
@@ -226,7 +179,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (currentTier === "pro_plus" || tier !== "pro_plus") {
-        return errorResponse(
+        return checkoutErrorResponse(
           "Plan downgrades are not supported from checkout",
           400,
           request,
@@ -235,7 +188,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (!activeSubscription.stripeSubscriptionId) {
-        return errorResponse(
+        return checkoutErrorResponse(
           "Your current subscription is missing a Stripe subscription ID",
           409,
           request,
@@ -243,7 +196,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      let updatedSubscription;
+      let updatedSubscription: Stripe.Subscription;
 
       try {
         updatedSubscription = await upgradeSubscriptionTier({
@@ -276,7 +229,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!checkoutSession.url) {
-          return errorResponse(
+          return checkoutErrorResponse(
             "Stripe did not return a checkout URL",
             502,
             request,
@@ -284,7 +237,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        return successResponse(checkoutSession.url, expectsJson);
+        return checkoutSuccessResponse(checkoutSession.url, expectsJson);
       }
 
       await syncSubscriptionFromStripe({
@@ -293,9 +246,18 @@ export async function POST(request: NextRequest) {
         fallbackUserId: user.id,
       });
 
-      return successResponse(
+      return checkoutSuccessResponse(
         `${origin}/dashboard?subscription_updated=true`,
         expectsJson,
+      );
+    }
+
+    if (
+      activeSubscription?.stripeSubscriptionId &&
+      !isSubscriptionEntitled(activeSubscription.status)
+    ) {
+      await cancelStripeSubscriptionIfPresent(
+        activeSubscription.stripeSubscriptionId,
       );
     }
 
@@ -307,9 +269,7 @@ export async function POST(request: NextRequest) {
       origin,
     });
 
-    // Create or update subscription record in database before checkout
     if (user.subscription) {
-      // Update existing subscription
       await prisma.subscription.update({
         where: { id: user.subscription.id },
         data: {
@@ -320,7 +280,6 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      // Create new subscription record
       await prisma.subscription.create({
         data: {
           user: {
@@ -331,13 +290,13 @@ export async function POST(request: NextRequest) {
           status: "incomplete",
           tier,
           currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
       });
     }
 
     if (!checkoutSession.url) {
-      return errorResponse(
+      return checkoutErrorResponse(
         "Stripe did not return a checkout URL",
         502,
         request,
@@ -345,7 +304,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return successResponse(checkoutSession.url, expectsJson);
+    return checkoutSuccessResponse(checkoutSession.url, expectsJson);
   } catch (error: unknown) {
     await recordOperationalEvent({
       name: "checkout_session_failed",
@@ -359,6 +318,6 @@ export async function POST(request: NextRequest) {
         ? error.message
         : "Failed to create checkout session";
 
-    return errorResponse(message, 500, request, expectsJson);
+    return checkoutErrorResponse(message, 500, request, expectsJson);
   }
 }

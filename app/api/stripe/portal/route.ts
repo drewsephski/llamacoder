@@ -6,11 +6,14 @@ import {
   getOrCreateStripeCustomerId,
 } from "@/lib/stripe";
 import { getPrisma } from "@/lib/prisma";
-import { isSubscriptionEntitled } from "@/lib/billing";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getAppOrigin } from "@/lib/app-origin";
 import { getErrorMessage } from "@/features/shared/errors";
+import {
+  persistStripeCustomerId,
+  resolveExistingStripeCustomerId,
+} from "@/features/billing/server/stripe-customer";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,30 +51,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const subscription = user.subscription;
-    if (
-      !subscription ||
-      !isSubscriptionEntitled(subscription.status) ||
-      !subscription.stripeSubscriptionId
-    ) {
+    const existingCustomerId = resolveExistingStripeCustomerId(user);
+    if (!existingCustomerId) {
       return NextResponse.json(
-        { error: "No active subscription to manage" },
+        { error: "No billing account found for this user" },
         { status: 400 },
       );
     }
 
     const customerId = await getOrCreateStripeCustomerId({
-      existingCustomerId: subscription.stripeCustomerId,
+      existingCustomerId,
       email: user.email,
       name: user.name,
     });
 
-    if (subscription.stripeCustomerId !== customerId) {
-      await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: { stripeCustomerId: customerId },
-      });
-    }
+    await persistStripeCustomerId({
+      userId: user.id,
+      customerId,
+      subscriptionId: user.subscription?.id,
+    });
 
     const origin = getAppOrigin();
     const returnUrl =

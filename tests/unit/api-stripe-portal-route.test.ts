@@ -6,12 +6,14 @@ const {
   consumeRateLimitMock,
   createCustomerPortalSessionMock,
   getOrCreateStripeCustomerIdMock,
+  persistStripeCustomerIdMock,
   prismaMock,
 } = vi.hoisted(() => ({
   authGetSessionMock: vi.fn(),
   consumeRateLimitMock: vi.fn(),
   createCustomerPortalSessionMock: vi.fn(),
   getOrCreateStripeCustomerIdMock: vi.fn(),
+  persistStripeCustomerIdMock: vi.fn(),
   prismaMock: {
     subscription: {
       update: vi.fn(),
@@ -38,13 +40,16 @@ vi.mock("@/lib/prisma", () => ({
   getPrisma: () => prismaMock,
 }));
 
-vi.mock("@/lib/billing", () => ({
-  isSubscriptionEntitled: (status: string | null | undefined) =>
-    status === "active" || status === "trialing",
-}));
-
 vi.mock("@/lib/observability", () => ({
   recordOperationalEvent: vi.fn(),
+}));
+
+vi.mock("@/features/billing/server/stripe-customer", () => ({
+  persistStripeCustomerId: persistStripeCustomerIdMock,
+  resolveExistingStripeCustomerId: (user: {
+    stripeCustomerId?: string | null;
+    subscription?: { stripeCustomerId?: string | null } | null;
+  }) => user.stripeCustomerId ?? user.subscription?.stripeCustomerId ?? null,
 }));
 
 vi.mock("@/lib/stripe", () => ({
@@ -83,6 +88,7 @@ describe("Stripe customer portal route", () => {
       id: "user_1",
       email: "user@example.com",
       name: "User",
+      stripeCustomerId: "cus_1",
       subscription: {
         id: "sub_row_1",
         status: "active",
@@ -115,11 +121,12 @@ describe("Stripe customer portal route", () => {
     );
   });
 
-  it("rejects users without an active subscription", async () => {
+  it("rejects users without a billing account", async () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "user_1",
       email: "user@example.com",
       name: "User",
+      stripeCustomerId: null,
       subscription: null,
     });
 
@@ -127,8 +134,23 @@ describe("Stripe customer portal route", () => {
     const body = await response.json();
 
     expect(response.status).toBe(400);
-    expect(body.error).toMatch(/active subscription/i);
+    expect(body.error).toMatch(/billing account/i);
     expect(createCustomerPortalSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("allows portal access when only user stripeCustomerId exists", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "user_1",
+      email: "user@example.com",
+      name: "User",
+      stripeCustomerId: "cus_1",
+      subscription: null,
+    });
+
+    const response = await createPortalSession(portalRequest());
+
+    expect(response.status).toBe(200);
+    expect(createCustomerPortalSessionMock).toHaveBeenCalled();
   });
 
   it("requires authentication", async () => {

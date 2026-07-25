@@ -5,6 +5,7 @@ import {
   FREE_PROJECT_LIMIT,
   checkProjectCreationEligibility,
   getModelCreditHoldCost,
+  hasModelPricing,
 } from "@/lib/billing";
 import { FREE_MODEL } from "@/lib/constants";
 
@@ -14,12 +15,21 @@ export async function GET(request: NextRequest) {
       headers: await headers(),
     });
 
-    // Extract model from query params to check model-specific credit cost
     const { searchParams } = new URL(request.url);
     const selectedModel = searchParams.get("model") || FREE_MODEL;
+
+    if (!hasModelPricing(selectedModel)) {
+      return NextResponse.json(
+        {
+          error: "INVALID_MODEL",
+          message: "Unknown or unsupported model selected.",
+        },
+        { status: 400 },
+      );
+    }
+
     const modelCost = getModelCreditHoldCost(selectedModel);
 
-    // If not signed in, allow creation (anonymous users can create one project)
     if (!session) {
       return NextResponse.json({
         canCreate: true,

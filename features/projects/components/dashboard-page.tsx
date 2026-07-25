@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { renameProject } from "@/features/projects/server/actions";
 import { ProjectCardActions } from "@/features/projects/components/project-card-actions";
 import { UpgradeBanner } from "@/features/billing/components/upgrade-banner";
 import { StripeCheckoutButton } from "@/features/billing/components/stripe-checkout-button";
 import { StripePortalButton } from "@/features/billing/components/stripe-portal-button";
+import { CheckoutFeedback } from "@/features/billing/components/checkout-feedback";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { CREDIT_PACKS, FREE_PROJECT_LIMIT, TIERS } from "@/lib/billing";
 import Link from "next/link";
@@ -116,6 +118,9 @@ export async function DashboardPage({
 
   return (
     <div className="min-h-screen bg-background">
+      <Suspense fallback={null}>
+        <CheckoutFeedback />
+      </Suspense>
       <DashboardNavigation
         credits={userCredits}
         currentPage="Dashboard"

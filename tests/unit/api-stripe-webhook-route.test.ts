@@ -24,7 +24,7 @@ const {
 
 vi.mock("@/lib/stripe", () => ({
   stripe: stripeMock,
-  STRIPE_WEBHOOK_SECRET: "whsec_unit",
+  getStripeWebhookSecret: () => "whsec_unit",
 }));
 
 vi.mock("@/lib/billing/stripe-fulfillment", () => ({

@@ -12,6 +12,7 @@ export {
   estimateOutputTokensFromText,
   estimateModelCostUsd,
   getModelTier,
+  hasModelPricing,
   canTierUseModel,
   normalizeTier,
   isSubscriptionEntitled,

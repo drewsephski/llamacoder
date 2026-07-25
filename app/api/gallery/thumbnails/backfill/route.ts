@@ -1,24 +1,26 @@
 import { NextResponse } from "next/server";
 
-import { getCurrentSession } from "@/features/auth/server/session";
-import { processGalleryThumbnailBatch } from "@/features/gallery/server/thumbnail";
+import { resetStaleGalleryThumbnails } from "@/features/gallery/server/thumbnail";
 
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export async function POST() {
-  const session = await getCurrentSession();
-  if (!session) {
-    return NextResponse.json(
-      { error: "AUTHENTICATION_REQUIRED" },
-      { status: 401 },
-    );
-  }
+  return NextResponse.json(
+    {
+      error: "DEPRECATED",
+      message:
+        "Gallery thumbnails are captured in the browser when you publish. Open Publish and retry the preview image instead.",
+    },
+    { status: 410 },
+  );
+}
 
-  const result = await processGalleryThumbnailBatch({
-    limit: 1,
-    userId: session.user.id,
-  });
-  return NextResponse.json(result, {
-    headers: { "Cache-Control": "no-store" },
-  });
+export async function GET() {
+  return NextResponse.json(
+    {
+      error: "METHOD_NOT_ALLOWED",
+      message: "Use POST from the publish dialog to upload gallery previews.",
+    },
+    { status: 405 },
+  );
 }

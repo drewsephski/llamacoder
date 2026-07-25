@@ -2,11 +2,10 @@
 
 import { useState, type ComponentProps, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useStripePortal } from "@/features/billing/client/use-stripe-portal";
-import { getErrorMessage } from "@/features/shared/errors";
+import { executeStripeRedirect } from "@/features/billing/client/stripe-redirect";
 
 type StripePortalButtonProps = Omit<
   ComponentProps<typeof Button>,
@@ -24,18 +23,11 @@ export function StripePortalButton({
   const portalMutation = useStripePortal();
 
   const handleOpenPortal = async () => {
-    setIsRedirecting(true);
-
-    try {
-      const { url } = await portalMutation.mutateAsync();
-      window.location.assign(url);
-    } catch (error: unknown) {
-      console.error("Portal error:", error);
-      toast.error(
-        getErrorMessage(error, "Unable to open subscription management."),
-      );
-      setIsRedirecting(false);
-    }
+    await executeStripeRedirect({
+      execute: () => portalMutation.mutateAsync(),
+      setIsRedirecting,
+      fallbackErrorMessage: "Unable to open subscription management.",
+    });
   };
 
   return (

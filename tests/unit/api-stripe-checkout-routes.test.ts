@@ -7,6 +7,7 @@ const {
   createCreditsCheckoutSessionMock,
   createSubscriptionCheckoutSessionMock,
   getOrCreateStripeCustomerIdMock,
+  persistStripeCustomerIdMock,
   prismaMock,
 } = vi.hoisted(() => ({
   authGetSessionMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   createCreditsCheckoutSessionMock: vi.fn(),
   createSubscriptionCheckoutSessionMock: vi.fn(),
   getOrCreateStripeCustomerIdMock: vi.fn(),
+  persistStripeCustomerIdMock: vi.fn(),
   prismaMock: {
     subscription: {
       create: vi.fn(),
@@ -61,6 +63,14 @@ vi.mock("@/lib/observability", () => ({
   recordOperationalEvent: vi.fn(),
 }));
 
+vi.mock("@/features/billing/server/stripe-customer", () => ({
+  persistStripeCustomerId: persistStripeCustomerIdMock,
+  resolveExistingStripeCustomerId: (user: {
+    stripeCustomerId?: string | null;
+    subscription?: { stripeCustomerId?: string | null } | null;
+  }) => user.stripeCustomerId ?? user.subscription?.stripeCustomerId ?? null,
+}));
+
 vi.mock("@/lib/stripe", () => ({
   CREDIT_PACKS: {
     small: { credits: 10, price: 5 },
@@ -71,14 +81,11 @@ vi.mock("@/lib/stripe", () => ({
     pro: "price_pro",
     pro_plus: "price_pro_plus",
   },
+  cancelStripeSubscriptionIfPresent: vi.fn(),
   createCreditsCheckoutSession: createCreditsCheckoutSessionMock,
+  createSubscriptionCheckoutSession: createSubscriptionCheckoutSessionMock,
   getOrCreateStripeCustomerId: getOrCreateStripeCustomerIdMock,
   isMissingStripeResourceError: vi.fn().mockReturnValue(false),
-  stripe: {
-    checkout: {
-      sessions: { create: createSubscriptionCheckoutSessionMock },
-    },
-  },
   upgradeSubscriptionTier: vi.fn(),
 }));
 
@@ -125,13 +132,15 @@ describe("Stripe checkout return URLs", () => {
     expect(response.status).toBe(200);
     expect(createSubscriptionCheckoutSessionMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        allow_promotion_codes: true,
-        success_url:
-          "https://www.squidagent.app/dashboard?subscription_success=true&session_id={CHECKOUT_SESSION_ID}",
-        cancel_url:
-          "https://www.squidagent.app/dashboard?subscription_canceled=true",
+        origin: "https://www.squidagent.app",
+        tier: "pro",
       }),
     );
+    expect(persistStripeCustomerIdMock).toHaveBeenCalledWith({
+      userId: "user_1",
+      customerId: "cus_1",
+      subscriptionId: undefined,
+    });
   });
 
   it("uses the configured app origin for credit checkout", async () => {

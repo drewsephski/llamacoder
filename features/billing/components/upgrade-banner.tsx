@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { Crown, Lock, X, Sparkles } from "lucide-react";
-import { useUserCredits } from "@/features/user/client/queries";
+import { useUserCredits, useUserSession } from "@/features/user/client/queries";
 
 interface UpgradeBannerProps {
   variant?: "dashboard" | "model-locked" | "chat" | "limit-reached";
@@ -18,11 +18,12 @@ export function UpgradeBanner({
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
+  const { data: session } = useUserSession();
   const { data: creditsData } = useUserCredits();
   const hasSubscription = creditsData?.hasActiveSubscription ?? false;
   const credits = creditsData?.credits ?? 0;
+  const currentTier = creditsData?.tier ?? "free";
 
-  // Don't show if user has subscription
   if (hasSubscription === true) return null;
   if (!isVisible) return null;
 
@@ -122,7 +123,8 @@ export function UpgradeBanner({
         open={showPricingModal}
         onOpenChange={setShowPricingModal}
         remainingCredits={credits}
-        isAuthenticated={hasSubscription !== null}
+        isAuthenticated={Boolean(session)}
+        currentTier={currentTier}
       />
     </>
   );

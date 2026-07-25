@@ -1,22 +1,33 @@
-import { processGalleryThumbnailBatch } from "@/features/gallery/server/thumbnail";
+import { resetStaleGalleryThumbnails } from "@/features/gallery/server/thumbnail";
+import { isCronAuthorized } from "@/features/security/server/cron-auth";
+import { recordOperationalEvent } from "@/lib/observability";
+import { getErrorMessage } from "@/features/shared/errors";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
-
-function isAuthorized(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  return Boolean(
-    secret && request.headers.get("authorization") === `Bearer ${secret}`,
-  );
-}
+export const maxDuration = 60;
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(request)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await processGalleryThumbnailBatch();
-  return Response.json(result, {
-    headers: { "Cache-Control": "no-store" },
-  });
+  try {
+    const result = await resetStaleGalleryThumbnails();
+    return Response.json(result, {
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch (error: unknown) {
+    await recordOperationalEvent({
+      name: "maintenance_gallery_thumbnails_failed",
+      level: "error",
+      operation: "gallery_thumbnail_maintenance",
+      status: "error",
+      error,
+    });
+
+    return Response.json(
+      { error: getErrorMessage(error, "Gallery thumbnail maintenance failed") },
+      { status: 500 },
+    );
+  }
 }

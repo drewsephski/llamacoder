@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { getGalleryThumbnailObject } from "@/features/gallery/server/thumbnail-storage";
-import { scheduleGalleryThumbnailCapture } from "@/features/gallery/server/thumbnail-jobs";
+import {
+  persistGalleryThumbnail,
+  validateGalleryThumbnailUpload,
+} from "@/features/gallery/server/thumbnail";
 import { getPrisma } from "@/lib/prisma";
+import { getErrorMessage } from "@/features/shared/errors";
 
 export const maxDuration = 120;
 
@@ -73,8 +78,8 @@ export async function GET(
   }
 }
 
-export async function POST(
-  _request: NextRequest,
+export async function PUT(
+  request: NextRequest,
   { params }: { params: Promise<{ publicationId: string }> },
 ) {
   const session = await getCurrentSession();
@@ -109,6 +114,37 @@ export async function POST(
     );
   }
 
+  const formData = await request.formData().catch(() => null);
+  const thumbnail = formData?.get("thumbnail");
+  if (!(thumbnail instanceof File)) {
+    return NextResponse.json(
+      { error: "INVALID_REQUEST", message: "A JPEG preview image is required" },
+      { status: 400 },
+    );
+  }
+  if (thumbnail.type !== "image/jpeg") {
+    return NextResponse.json(
+      {
+        error: "INVALID_REQUEST",
+        message: "Gallery preview images must be JPEG",
+      },
+      { status: 400 },
+    );
+  }
+
+  const screenshot = Buffer.from(await thumbnail.arrayBuffer());
+  try {
+    validateGalleryThumbnailUpload(screenshot);
+  } catch (error: unknown) {
+    return NextResponse.json(
+      {
+        error: "INVALID_REQUEST",
+        message: getErrorMessage(error, "Invalid gallery preview image"),
+      },
+      { status: 400 },
+    );
+  }
+
   const now = new Date();
   await prisma.galleryPublication.update({
     where: { id: publication.id },
@@ -118,11 +154,30 @@ export async function POST(
       thumbnailUpdatedAt: now,
     },
   });
-  scheduleGalleryThumbnailCapture({
-    publicationId: publication.id,
-    messageId: publication.messageId,
-    slug: publication.slug,
-  });
 
-  return NextResponse.json({ thumbnailStatus: "pending" });
+  const result = await persistGalleryThumbnail(
+    {
+      publicationId: publication.id,
+      messageId: publication.messageId,
+      slug: publication.slug,
+    },
+    screenshot,
+  );
+
+  if (result.status === "failed") {
+    return NextResponse.json(
+      {
+        thumbnailStatus: "failed",
+        thumbnailError: result.error,
+        message: result.error,
+      },
+      { status: 500 },
+    );
+  }
+
+  revalidatePath("/gallery");
+  return NextResponse.json({
+    thumbnailStatus: "ready",
+    thumbnailError: null,
+  });
 }

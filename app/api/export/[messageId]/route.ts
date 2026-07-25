@@ -5,6 +5,9 @@ import { buildExportBundle, getExportFilename } from "@/lib/export-bundle";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getPrisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { recordOperationalEvent } from "@/lib/observability";
+import { getErrorMessage } from "@/features/shared/errors";
 
 type RouteContext = {
   params: Promise<{ messageId: string }>;
@@ -46,36 +49,67 @@ async function assertExportAccess(chatUserId: string | null) {
 }
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
-  const { messageId } = await params;
-  const exportable = await getExportableMessage(messageId);
+  try {
+    const { messageId } = await params;
+    const exportable = await getExportableMessage(messageId);
 
-  if (!exportable) {
+    if (!exportable) {
+      return NextResponse.json(
+        { error: "NOT_FOUND", message: "Exportable generated app not found" },
+        { status: 404 },
+      );
+    }
+
+    const access = await assertExportAccess(exportable.message.chat.userId);
+    if (!access.ok) return access.response;
+
+    if (access.session?.user.id) {
+      const rateLimit = await consumeRateLimit({
+        userId: access.session.user.id,
+        operation: "export",
+        limit: 20,
+        windowMs: 10 * 60 * 1000,
+      });
+
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: "Too many export requests. Please try again shortly." },
+          { status: 429 },
+        );
+      }
+    }
+
+    const requestUrl = new URL(_request.url);
+    const isStarterDownload = requestUrl.searchParams.get("starter") === "1";
+
+    if (isStarterDownload) {
+      return createZipResponse(
+        buildStarterBundle({
+          appTitle: exportable.message.chat.title,
+          prompt: exportable.message.chat.prompt,
+          messageId: exportable.message.id,
+          requestUrl,
+        }),
+        `${exportable.message.chat.title.replace(/[^a-zA-Z0-9]/g, "-")}-squid-starter.zip`,
+      );
+    }
+
+    const bundle = buildExportBundle(exportable.files);
+    return createZipResponse(bundle.files, getExportFilename(bundle.appTitle));
+  } catch (error: unknown) {
+    await recordOperationalEvent({
+      name: "export_failed",
+      level: "error",
+      operation: "export_download",
+      status: "error",
+      error,
+    });
+
     return NextResponse.json(
-      { error: "NOT_FOUND", message: "Exportable generated app not found" },
-      { status: 404 },
+      { error: getErrorMessage(error, "Failed to export project") },
+      { status: 500 },
     );
   }
-
-  const requestUrl = new URL(_request.url);
-  const isStarterDownload = requestUrl.searchParams.get("starter") === "1";
-
-  if (isStarterDownload) {
-    return createZipResponse(
-      buildStarterBundle({
-        appTitle: exportable.message.chat.title,
-        prompt: exportable.message.chat.prompt,
-        messageId: exportable.message.id,
-        requestUrl,
-      }),
-      `${exportable.message.chat.title.replace(/[^a-zA-Z0-9]/g, "-")}-squid-starter.zip`,
-    );
-  }
-
-  const access = await assertExportAccess(exportable.message.chat.userId);
-  if (!access.ok) return access.response;
-
-  const bundle = buildExportBundle(exportable.files);
-  return createZipResponse(bundle.files, getExportFilename(bundle.appTitle));
 }
 
 async function createZipResponse(
@@ -147,40 +181,71 @@ function buildStarterBundle({
 }
 
 export async function POST(_request: NextRequest, { params }: RouteContext) {
-  const { messageId } = await params;
-  const exportable = await getExportableMessage(messageId);
+  try {
+    const { messageId } = await params;
+    const exportable = await getExportableMessage(messageId);
 
-  if (!exportable) {
-    return NextResponse.json(
-      { error: "NOT_FOUND", message: "Exportable generated app not found" },
-      { status: 404 },
-    );
-  }
+    if (!exportable) {
+      return NextResponse.json(
+        { error: "NOT_FOUND", message: "Exportable generated app not found" },
+        { status: 404 },
+      );
+    }
 
-  const access = await assertExportAccess(exportable.message.chat.userId);
-  if (!access.ok) return access.response;
+    const access = await assertExportAccess(exportable.message.chat.userId);
+    if (!access.ok) return access.response;
 
-  const prisma = getPrisma();
-  const bundle = buildExportBundle(exportable.files);
-  const artifact = await prisma.exportArtifact.create({
-    data: {
-      messageId: exportable.message.id,
-      chatId: exportable.message.chatId,
-      userId: access.session?.user.id ?? exportable.message.chat.userId,
+    if (access.session?.user.id) {
+      const rateLimit = await consumeRateLimit({
+        userId: access.session.user.id,
+        operation: "export",
+        limit: 20,
+        windowMs: 10 * 60 * 1000,
+      });
+
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: "Too many export requests. Please try again shortly." },
+          { status: 429 },
+        );
+      }
+    }
+
+    const prisma = getPrisma();
+    const bundle = buildExportBundle(exportable.files);
+    const artifact = await prisma.exportArtifact.create({
+      data: {
+        messageId: exportable.message.id,
+        chatId: exportable.message.chatId,
+        userId: access.session?.user.id ?? exportable.message.chat.userId,
+        appTitle: bundle.appTitle,
+        status: bundle.verificationReport.status,
+        fileCount: bundle.manifest.files.length,
+        manifest: bundle.manifest,
+        report: bundle.verificationReport,
+      },
+    });
+
+    return NextResponse.json({
+      artifactId: artifact.id,
       appTitle: bundle.appTitle,
       status: bundle.verificationReport.status,
-      fileCount: bundle.manifest.files.length,
       manifest: bundle.manifest,
       report: bundle.verificationReport,
-    },
-  });
+      downloadUrl: `/api/export/${messageId}`,
+    });
+  } catch (error: unknown) {
+    await recordOperationalEvent({
+      name: "export_failed",
+      level: "error",
+      operation: "export_artifact",
+      status: "error",
+      error,
+    });
 
-  return NextResponse.json({
-    artifactId: artifact.id,
-    appTitle: bundle.appTitle,
-    status: bundle.verificationReport.status,
-    manifest: bundle.manifest,
-    report: bundle.verificationReport,
-    downloadUrl: `/api/export/${messageId}`,
-  });
+    return NextResponse.json(
+      { error: getErrorMessage(error, "Failed to create export artifact") },
+      { status: 500 },
+    );
+  }
 }

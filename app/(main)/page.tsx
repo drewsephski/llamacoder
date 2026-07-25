@@ -49,6 +49,7 @@ import UploadIcon from "@/components/icons/upload-icon";
 import { DEFAULT_MODEL, MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
+import { CreditsLoadError } from "@/features/billing/components/credits-load-error";
 import { HelpPanel } from "@/components/help-panel";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { authClient } from "@/lib/auth-client";
@@ -1291,18 +1292,26 @@ export default function Home() {
   const pendingProjectResumeRef = useRef(false);
 
   const { data: session } = useUserSession();
-  const { data: creditsData } = useUserCredits();
+  const {
+    data: creditsData,
+    isError: creditsError,
+    refetch: refetchCredits,
+  } = useUserCredits();
   const createChatMutation = useCreateChat();
 
   const isAuthenticated = !!session;
-  const currentTier = creditsData?.tier ?? "free";
-  const hasPurchasedCredits = creditsData?.hasPurchasedCredits ?? false;
-  const userCredits = creditsData?.credits ?? 0;
+  const currentTier = creditsError ? null : (creditsData?.tier ?? "free");
+  const hasPurchasedCredits = creditsError
+    ? false
+    : (creditsData?.hasPurchasedCredits ?? false);
+  const userCredits = creditsError ? 0 : (creditsData?.credits ?? 0);
   const canUseModel = useCallback(
     (modelId: string) =>
       isAuthenticated &&
+      !creditsError &&
+      currentTier !== null &&
       canTierUseModel(currentTier, modelId, { hasPurchasedCredits }),
-    [currentTier, hasPurchasedCredits, isAuthenticated],
+    [currentTier, creditsError, hasPurchasedCredits, isAuthenticated],
   );
 
   const showProjectLimitPricing = (limit = FREE_PROJECT_LIMIT) => {
@@ -3143,6 +3152,12 @@ export default function Home() {
               }}
             >
               <Fieldset className="min-w-0">
+                {isAuthenticated && creditsError && (
+                  <CreditsLoadError
+                    className="mb-3"
+                    onRetryAction={() => void refetchCredits()}
+                  />
+                )}
                 {/* Compose box */}
                 <div className="compose-shell">
                   <div className="compose-box w-full">
@@ -3646,7 +3661,7 @@ export default function Home() {
           onOpenChange={setShowPricingModal}
           remainingCredits={userCredits}
           isAuthenticated={isAuthenticated}
-          currentTier={currentTier}
+          currentTier={currentTier ?? "free"}
         />
         <HelpPanel
           isOpen={showHelpPanel}
