@@ -39,20 +39,48 @@ const normalizeUrl = (value?: string) => {
   }
 };
 
+function getRelatedOrigins(origin: string) {
+  try {
+    const url = new URL(origin);
+    const variants = [origin];
+
+    if (url.hostname.startsWith("www.")) {
+      variants.push(`${url.protocol}//${url.hostname.slice(4)}`);
+    } else {
+      variants.push(`${url.protocol}//www.${url.hostname}`);
+    }
+
+    return variants;
+  } catch {
+    return [origin];
+  }
+}
+
 function getBaseUrl() {
   const explicitBaseUrl = normalizeUrl(process.env.BETTER_AUTH_URL);
   if (explicitBaseUrl) {
     return explicitBaseUrl;
   }
-  // Vercel production deployment
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+
+  const publicAppUrl = normalizeUrl(process.env.NEXT_PUBLIC_APP_URL);
+  if (publicAppUrl) {
+    return publicAppUrl;
   }
-  // Vercel production custom domain
+
+  const publicAuthUrl = normalizeUrl(process.env.NEXT_PUBLIC_BETTER_AUTH_URL);
+  if (publicAuthUrl) {
+    return publicAuthUrl;
+  }
+
+  // Prefer the stable production domain over per-deployment URLs.
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   }
-  // Default to localhost
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
   return "http://localhost:3000";
 }
 
@@ -69,7 +97,20 @@ const getTrustedOrigins = () => {
         .filter(Boolean),
     );
 
-  return [...new Set(envTrustedOrigins)];
+  if (envTrustedOrigins.length > 0) {
+    return [...new Set(envTrustedOrigins)];
+  }
+
+  const fallbackOrigin =
+    normalizeUrl(process.env.NEXT_PUBLIC_APP_URL) ||
+    normalizeUrl(process.env.BETTER_AUTH_URL) ||
+    normalizeUrl(process.env.NEXT_PUBLIC_BETTER_AUTH_URL);
+
+  if (!fallbackOrigin) {
+    return [];
+  }
+
+  return [...new Set(getRelatedOrigins(fallbackOrigin))];
 };
 
 const resolvedBaseURL = getBaseUrl();
