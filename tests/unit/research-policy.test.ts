@@ -4,47 +4,9 @@ import {
   createResearchWindow,
   extractRecentWebSources,
   extractWebSources,
-  getResearchToolChoiceForStep,
-  RESEARCH_TOOL_LOOP_MAX_STEPS,
 } from "@/features/generation/research-policy";
 
 describe("research policy", () => {
-  it("forces only the first requested search and reserves the last step for synthesis", () => {
-    expect(
-      getResearchToolChoiceForStep({
-        forceInitialSearch: true,
-        stepNumber: 0,
-      }),
-    ).toEqual({ type: "tool", toolName: "web_search" });
-    expect(
-      getResearchToolChoiceForStep({
-        forceInitialSearch: true,
-        stepNumber: 1,
-      }),
-    ).toBe("auto");
-    expect(
-      getResearchToolChoiceForStep({
-        forceInitialSearch: true,
-        stepNumber: RESEARCH_TOOL_LOOP_MAX_STEPS - 1,
-      }),
-    ).toBe("none");
-  });
-
-  it("allows optional research until the final synthesis step", () => {
-    expect(
-      getResearchToolChoiceForStep({
-        forceInitialSearch: false,
-        stepNumber: 0,
-      }),
-    ).toBe("auto");
-    expect(
-      getResearchToolChoiceForStep({
-        forceInitialSearch: false,
-        stepNumber: RESEARCH_TOOL_LOOP_MAX_STEPS - 1,
-      }),
-    ).toBe("none");
-  });
-
   it("creates an exact rolling six-month UTC window", () => {
     expect(
       createResearchWindow(new Date("2026-07-31T12:30:00.000Z")),

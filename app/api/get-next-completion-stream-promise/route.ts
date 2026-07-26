@@ -104,8 +104,6 @@ import {
 import {
   createResearchWindow,
   extractExaToolSources,
-  getResearchToolChoiceForStep,
-  RESEARCH_TOOL_LOOP_MAX_STEPS,
 } from "@/features/generation/research-policy";
 import { buildWebResearchAgentInstructions } from "@/features/generation/research-prompts";
 import {
@@ -1411,19 +1409,19 @@ export async function POST(req: Request) {
             guidedTemplateResearchRequired:
               guidedTemplateResearchIntent.required,
           });
+          // Exa is an optional model capability, not a deterministic routing
+          // outcome. Give it to normal answer/build turns and let the model
+          // decide from the full conversation whether research adds value.
           const exaTools =
-            isExaConfigured() && researchCandidate
+            isExaConfigured() &&
+            !isFreeRepairRequest &&
+            searchApproval?.approved !== false
               ? createExaAgentTools({
                   researchWindow,
                   reason: researchReason,
                   freshness: researchFreshness,
                 })
               : null;
-          const forceWebSearch =
-            searchApproved ||
-            researchIntent.explicitlyRequested ||
-            guidedTemplateResearchIntent.required;
-          const forceResearchToolChoice = forceWebSearch && !isCodeGeneration;
           const researchLabel = researchIntent.explicitlyRequested
             ? "Searching as requested"
             : researchIntent.reason === "informational"
@@ -1547,7 +1545,6 @@ export async function POST(req: Request) {
             systemInstruction = [
               systemInstruction,
               buildWebResearchAgentInstructions({
-                forceSearch: forceWebSearch,
                 recentOnly: researchFreshness === "recent",
                 researchWindow: researchWindow
                   ? {
@@ -1665,17 +1662,7 @@ export async function POST(req: Request) {
             temperature: 0.4,
             tools: exaTools ?? undefined,
             toolChoice: exaTools ? "auto" : undefined,
-            prepareStep: exaTools
-              ? ({ stepNumber }) => ({
-                  toolChoice: getResearchToolChoiceForStep({
-                    forceInitialSearch: forceResearchToolChoice,
-                    stepNumber,
-                  }),
-                })
-              : undefined,
-            stopWhen: exaTools
-              ? stepCountIs(RESEARCH_TOOL_LOOP_MAX_STEPS)
-              : undefined,
+            stopWhen: exaTools ? stepCountIs(5) : undefined,
             experimental_onToolCallStart: exaTools
               ? ({ toolCall }) => {
                   if (toolCall.toolName === "web_search") {

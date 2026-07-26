@@ -3,9 +3,8 @@ import { describe, expect, test } from "vitest";
 import { buildWebResearchAgentInstructions } from "@/features/generation/research-prompts";
 
 describe("buildWebResearchAgentInstructions", () => {
-  test("forces a search call when the user explicitly requested research", () => {
+  test("keeps explicit lookup intent model-decided", () => {
     const prompt = buildWebResearchAgentInstructions({
-      forceSearch: true,
       recentOnly: true,
       researchWindow: {
         startDate: "2026-01-11",
@@ -15,15 +14,17 @@ describe("buildWebResearchAgentInstructions", () => {
       reason: "explicit",
     });
 
-    expect(prompt).toContain("You MUST call web_search");
+    expect(prompt).toContain(
+      "Decide whether web_search or fetch_url is needed",
+    );
     expect(prompt).toContain("current official UFC rankings");
     expect(prompt).toContain("2026-01-11");
     expect(prompt).toContain("semantic intent");
+    expect(prompt).not.toContain("MUST call web_search");
   });
 
   test("keeps optional search guidance for technical reference turns", () => {
     const prompt = buildWebResearchAgentInstructions({
-      forceSearch: false,
       recentOnly: false,
       reason: "technical-reference",
       liveApiVerificationRequired: true,
@@ -37,7 +38,6 @@ describe("buildWebResearchAgentInstructions", () => {
 
   test("includes guided template research modes when required", () => {
     const prompt = buildWebResearchAgentInstructions({
-      forceSearch: true,
       recentOnly: false,
       companyLandingResearchRequired: true,
       liveApiDashboardResearchRequired: true,
@@ -50,5 +50,6 @@ describe("buildWebResearchAgentInstructions", () => {
     expect(prompt).toContain(
       "continue this same turn and output the complete requested application code",
     );
+    expect(prompt).not.toContain("Call web_search once");
   });
 });

@@ -686,7 +686,10 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(generationCall.stopWhen).toBeDefined();
     expect(generationCall.system).toContain("web_search");
     expect(generationCall.system).toContain("fetch_url");
-    expect(generationCall.system).toContain("You MUST call web_search");
+    expect(generationCall.system).toContain(
+      "Decide whether web_search or fetch_url is needed",
+    );
+    expect(generationCall.system).not.toContain("MUST call web_search");
     expect(generationCall.system).toContain("Premium UI/UX execution contract");
     expect(generationCall.system).toContain("Structural variety");
     expect(generationCall.system).not.toBe("system");
@@ -881,7 +884,8 @@ Use a crisp technical design with white and charcoal surfaces, dense monospace d
     expect(exaSearchMock).not.toHaveBeenCalled();
     expect(generateTextMock).not.toHaveBeenCalled();
     expect(streamTextMock).toHaveBeenCalledTimes(1);
-    expect(streamTextMock.mock.calls[0][0].tools).toBeUndefined();
+    expect(streamTextMock.mock.calls[0][0].tools?.web_search).toBeDefined();
+    expect(streamTextMock.mock.calls[0][0].toolChoice).toBe("auto");
     expect(
       chunks.some((chunk) => chunk.type === "data-research-activity"),
     ).toBe(false);
@@ -2198,18 +2202,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(canonicalQuery).not.toContain("white");
     const generationCall = streamTextMock.mock.calls[0][0];
     expect(generationCall.toolChoice).toBe("auto");
-    expect(generationCall.prepareStep({ stepNumber: 0 })).toEqual({
-      toolChoice: {
-        type: "tool",
-        toolName: "web_search",
-      },
-    });
-    expect(generationCall.prepareStep({ stepNumber: 1 })).toEqual({
-      toolChoice: "auto",
-    });
-    expect(generationCall.prepareStep({ stepNumber: 4 })).toEqual({
-      toolChoice: "none",
-    });
+    expect(generationCall.prepareStep).toBeUndefined();
     expect(streamTextMock).toHaveBeenCalledTimes(1);
   });
 
