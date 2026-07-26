@@ -528,6 +528,8 @@ export const orbitalSalvage: ShowcaseGame = {
   category: "Canvas arcade",
   accent: "#7df9ff",
   thumbnailUrl: "/showcase/orbital-salvage.webp",
+  thumbnailWidth: 960,
+  thumbnailHeight: 600,
   controls: [
     "Steer with WASD or the arrow keys.",
     "Hold Space or Shift to burn boost energy.",

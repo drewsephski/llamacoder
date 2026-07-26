@@ -61,7 +61,15 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    images: [ogimage],
+    images: [
+      {
+        url: ogimage,
+        width: 1200,
+        height: 630,
+        alt: "Squid Agent AI React app builder workflow",
+        type: "image/png",
+      },
+    ],
     title,
     description,
     url: url,
@@ -71,7 +79,15 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    images: [ogimage],
+    images: [
+      {
+        url: ogimage,
+        width: 1200,
+        height: 630,
+        alt: "Squid Agent AI React app builder workflow",
+        type: "image/png",
+      },
+    ],
     title,
     description,
   },

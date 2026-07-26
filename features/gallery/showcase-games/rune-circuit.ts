@@ -286,6 +286,8 @@ export const runeCircuit: ShowcaseGame = {
   category: "Logic puzzle",
   accent: "#b3422d",
   thumbnailUrl: "/showcase/rune-circuit.webp",
+  thumbnailWidth: 960,
+  thumbnailHeight: 600,
   controls: [
     "Click a rune to rotate it clockwise.",
     "Right-click a rune to rotate it counterclockwise.",

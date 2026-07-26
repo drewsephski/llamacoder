@@ -27,7 +27,7 @@ export function getShowcaseLandingSummaries(query = "") {
       );
     })
     .map<ShowcaseLandingSummary>(
-      ({ id, slug, title, description, category, accent, thumbnailUrl }) => ({
+      ({
         id,
         slug,
         title,
@@ -35,6 +35,18 @@ export function getShowcaseLandingSummaries(query = "") {
         category,
         accent,
         thumbnailUrl,
+        thumbnailWidth,
+        thumbnailHeight,
+      }) => ({
+        id,
+        slug,
+        title,
+        description,
+        category,
+        accent,
+        thumbnailUrl,
+        thumbnailWidth,
+        thumbnailHeight,
       }),
     );
 }

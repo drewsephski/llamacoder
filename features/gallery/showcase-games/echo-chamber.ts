@@ -266,6 +266,8 @@ export const echoChamber: ShowcaseGame = {
   category: "Audio memory",
   accent: "#ffcd66",
   thumbnailUrl: "/showcase/echo-chamber.webp",
+  thumbnailWidth: 960,
+  thumbnailHeight: 600,
   controls: [
     "Listen and watch while the chamber performs the sequence.",
     "Repeat it with the six pads or number keys 1–6.",

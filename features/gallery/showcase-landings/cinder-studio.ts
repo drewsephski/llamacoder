@@ -395,6 +395,8 @@ export const cinderStudio: ShowcaseLanding = {
   category: "Atmospheric luxury studio",
   accent: "oklch(76% 0.17 50)",
   thumbnailUrl: "/showcase/cinder-studio.webp",
+  thumbnailWidth: 1440,
+  thumbnailHeight: 900,
   highlights: [
     "Atmospheric studio layout without a generic hero-only pattern",
     "Interactive light chamber with fixture presets and temperature tuning",

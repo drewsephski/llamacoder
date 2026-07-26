@@ -7,6 +7,8 @@ export type ShowcaseGame = {
   category: string;
   accent: string;
   thumbnailUrl: string;
+  thumbnailWidth: number;
+  thumbnailHeight: number;
   controls: readonly string[];
   files: Array<{ path: string; content: string }>;
 };

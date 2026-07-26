@@ -3,6 +3,10 @@ import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import {
+  buildGallerySocialMetadata,
+  getPublishedGallerySocialImage,
+} from "@/features/gallery/social-metadata";
 import { SharePageClient } from "./share-page-client";
 
 export async function generateMetadata({
@@ -16,22 +20,18 @@ export async function generateMetadata({
     notFound();
   }
 
-  let title = message.chat.title;
-  let searchParams = new URLSearchParams();
-  searchParams.set("prompt", title);
+  const title = message.chat.title;
+  const description = `An app generated on Squid Agent.app: ${title}`;
 
-  return {
+  return buildGallerySocialMetadata({
     title,
-    description: `An app generated on Squid Agent.app: ${title}`,
-    openGraph: {
-      images: [`/api/og?${searchParams}`],
-    },
-    twitter: {
-      card: "summary_large_image",
-      images: [`/api/og?${searchParams}`],
+    description,
+    canonicalPath: `/share/v2/${encodeURIComponent(messageId)}`,
+    image: getPublishedGallerySocialImage({
+      publication: message.galleryPublication,
       title,
-    },
-  };
+    }),
+  });
 }
 
 export default async function SharePage({
@@ -41,24 +41,7 @@ export default async function SharePage({
 }) {
   const { messageId } = await params;
 
-  const prisma = getPrisma();
-  const message = await prisma.message.findUnique({
-    where: { id: messageId },
-    include: {
-      galleryPublication: {
-        select: { allowRemixes: true, isPublished: true },
-      },
-      chat: {
-        include: {
-          user: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const message = await getMessage(messageId);
   if (!message) {
     notFound();
   }
@@ -92,7 +75,25 @@ const getMessage = cache(async (messageId: string) => {
       id: messageId,
     },
     include: {
-      chat: true,
+      galleryPublication: {
+        select: {
+          id: true,
+          slug: true,
+          messageId: true,
+          allowRemixes: true,
+          isPublished: true,
+          thumbnailUrl: true,
+          thumbnailStatus: true,
+          thumbnailCapturedMessageId: true,
+        },
+      },
+      chat: {
+        include: {
+          user: {
+            select: { name: true },
+          },
+        },
+      },
     },
   });
 });

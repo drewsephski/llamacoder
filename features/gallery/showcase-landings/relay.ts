@@ -548,6 +548,8 @@ export const relay: ShowcaseLanding = {
   category: "Developer tooling",
   accent: "oklch(58% 0.2 256)",
   thumbnailUrl: "/showcase/relay-release-evidence.webp",
+  thumbnailWidth: 1440,
+  thumbnailHeight: 900,
   highlights: [
     "Workbench-first layout built from the product surface itself",
     "Keyboard-first command search and file-context switching",

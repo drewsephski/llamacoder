@@ -7,6 +7,8 @@ export type ShowcaseLanding = {
   category: string;
   accent: string;
   thumbnailUrl: string;
+  thumbnailWidth: number;
+  thumbnailHeight: number;
   highlights: readonly string[];
   files: Array<{ path: string; content: string }>;
 };

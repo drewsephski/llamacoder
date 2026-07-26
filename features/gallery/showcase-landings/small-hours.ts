@@ -300,6 +300,8 @@ export const smallHours: ShowcaseLanding = {
   category: "Hospitality",
   accent: "oklch(86% 0.18 95)",
   thumbnailUrl: "/showcase/small-hours-table.webp",
+  thumbnailWidth: 1440,
+  thumbnailHeight: 900,
   highlights: [
     "Letter-first narrative flow with a clear community-first tone",
     "Noticeboard cards and tactile states that feel handcrafted",
