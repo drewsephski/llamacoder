@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -14,22 +13,17 @@ import {
   MarketingFooter,
   MarketingHeader,
 } from "@/components/marketing-chrome";
+import { SITE_URL, createPageMetadata } from "@/lib/seo";
 
 const contactEmail = "support@squidagent.app";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Contact and Support",
   description:
     "Contact Squid Agent for product support, billing and credit questions, privacy requests, security reports, legal notices, and React export feedback.",
-  alternates: { canonical: "/contact" },
-  openGraph: {
-    title: "Contact Squid Agent",
-    description:
-      "Get help with projects, exports, billing, privacy, security, or product feedback.",
-    url: "/contact",
-    type: "website",
-  },
-};
+  path: "/contact",
+  keywords: ["Squid Agent support", "AI app builder support"],
+});
 
 const supportTopics = [
   {
@@ -59,12 +53,12 @@ export default function ContactPage() {
     "@context": "https://schema.org",
     "@type": "ContactPage",
     name: "Contact Squid Agent",
-    url: "https://squidagent.app/contact",
+    url: `${SITE_URL}/contact`,
     mainEntity: {
       "@type": "Organization",
       name: "Squid Agent",
       email: contactEmail,
-      url: "https://squidagent.app",
+      url: SITE_URL,
     },
   };
 

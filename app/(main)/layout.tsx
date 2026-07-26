@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Providers from "@/app/(main)/providers";
 import { Toaster } from "sonner";
+import { DEFAULT_OG_IMAGE, SITE_URL } from "@/lib/seo";
 
-const appBaseUrl = "https://squidagent.app";
+import "./homepage.css";
+
+const appBaseUrl = SITE_URL;
 const appHomeTitle = "AI React App Builder with Exportable Code";
 const appHomeSocialTitle = `${appHomeTitle} | Squid Agent`;
 const appHomeDescription =
@@ -37,7 +40,7 @@ export const metadata: Metadata = {
     description: appHomeDescription,
     images: [
       {
-        url: `${appBaseUrl}/api/og?card=site&v=3`,
+        url: `${appBaseUrl}${DEFAULT_OG_IMAGE}`,
         width: 1200,
         height: 630,
         alt: "Squid Agent AI React app builder workflow",
@@ -48,7 +51,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: appHomeSocialTitle,
     description: appHomeDescription,
-    images: [`${appBaseUrl}/api/og?card=site&v=3`],
+    images: [`${appBaseUrl}${DEFAULT_OG_IMAGE}`],
   },
 };
 

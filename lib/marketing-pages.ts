@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { publicShowcasePaths } from "@/lib/public-pages";
 
-export const SITE_URL = "https://squidagent.app";
-export const SITE_NAME = "Squid Agent";
-export const CONTENT_REVIEW_DATE = "2026-07-10";
+export { SITE_NAME, SITE_URL };
+export const CONTENT_REVIEW_DATE = "2026-07-26";
 
 type MarketingSection = {
   title: string;
@@ -96,22 +97,7 @@ type MarketingPageSeed = Omit<MarketingPage, "internalLinks"> & {
 };
 
 export const marketingLandingPaths = [
-  "/axon",
-  "/axion-studio",
-  "/cozypaws",
-  "/design-rocket-certificates",
-  "/forma",
-  "/jack",
-  "/mindloop",
-  "/mentality",
-  "/prisma",
-  "/questly",
-  "/rivr",
-  "/sentinel",
-  "/skyelite",
-  "/terraelix",
-  "/velorah",
-  "/launch",
+  ...publicShowcasePaths,
   "/supabase",
   "/gallery",
   "/example",
@@ -4604,6 +4590,11 @@ export function marketingMetadata(page: MarketingPage): Metadata {
       title: page.title,
       description: page.description,
       images: [ogImagePath],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true },
     },
   };
 }

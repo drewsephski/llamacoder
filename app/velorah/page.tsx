@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,11 +15,7 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Velorah — Where dreams rise through the silence",
-  description:
-    "Velorah designs digital spaces for deep thinkers, bold creators, and quiet rebels.",
-};
+export const metadata = publicShowcaseMetadata("/velorah");
 
 const navigation = ["Home", "Studio", "About", "Journal", "Reach Us"] as const;
 
@@ -64,7 +60,7 @@ export default function VelorahPage() {
       >
         <a
           className="shrink-0 text-3xl tracking-tight text-foreground transition-opacity hover:opacity-80 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/70"
-          href="https://squidagent.app"
+          href="https://www.squidagent.app"
           style={{ fontFamily: "var(--font-display)" }}
         >
           Velorah<sup className="text-xs">®</sup>

@@ -1,5 +1,13 @@
 import Link from "next/link";
 import { getSafeCallbackUrl } from "@/lib/safe-redirect";
+import { createNoIndexMetadata } from "@/lib/seo";
+
+export const metadata = createNoIndexMetadata({
+  title: "Verify Your Email",
+  description:
+    "Verify your email address to activate your Squid Agent account.",
+  path: "/verify-email",
+});
 
 export default async function VerifyEmailPage({
   searchParams,

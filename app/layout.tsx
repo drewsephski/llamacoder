@@ -3,6 +3,12 @@ import PlausibleProvider from "next-plausible";
 import { DM_Sans } from "next/font/google";
 
 import { ForSaleBanner } from "@/features/for-sale/components/for-sale-banner";
+import {
+  DEFAULT_OG_IMAGE,
+  DEFAULT_OG_IMAGE_ALT,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/seo";
 
 import "./globals.css";
 
@@ -16,9 +22,8 @@ const dmSans = DM_Sans({
 const title = "Squid Agent - Research, Build, Verify, and Ship React Apps";
 const description =
   "Research the live web, approve a plan, build and verify React apps, restore versions, connect APIs, deploy to Vercel, and export code you own.";
-const url = "https://squidagent.app/";
-const ogimage = "https://squidagent.app/api/og?card=site&v=3";
-const sitename = "Squid Agent";
+const url = `${SITE_URL}/`;
+const ogimage = `${SITE_URL}${DEFAULT_OG_IMAGE}`;
 const browserIconPng192 = "/squidagent-logo-192.png";
 const browserIconPng512 = "/squidagent-logo-512.png";
 
@@ -34,7 +39,7 @@ export const metadata: Metadata = {
     template: "%s | Squid Agent",
   },
   description,
-  applicationName: "Squid Agent",
+  applicationName: SITE_NAME,
   alternates: {
     canonical: url,
   },
@@ -66,14 +71,14 @@ export const metadata: Metadata = {
         url: ogimage,
         width: 1200,
         height: 630,
-        alt: "Squid Agent AI React app builder workflow",
+        alt: DEFAULT_OG_IMAGE_ALT,
         type: "image/png",
       },
     ],
     title,
     description,
     url: url,
-    siteName: sitename,
+    siteName: SITE_NAME,
     locale: "en_US",
     type: "website",
   },
@@ -84,7 +89,7 @@ export const metadata: Metadata = {
         url: ogimage,
         width: 1200,
         height: 630,
-        alt: "Squid Agent AI React app builder workflow",
+        alt: DEFAULT_OG_IMAGE_ALT,
         type: "image/png",
       },
     ],

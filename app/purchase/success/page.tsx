@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { getForSaleProductByKey } from "@/features/for-sale/products";
 import { reconcilePagePurchase } from "@/features/for-sale/server/purchases";
 import { auth } from "@/lib/auth";
+import { createNoIndexMetadata } from "@/lib/seo";
+
+export const metadata = createNoIndexMetadata({
+  title: "Purchase Complete",
+  description:
+    "Download a purchased React landing-page package from Squid Agent.",
+  path: "/purchase/success",
+});
 
 export default async function PurchaseSuccessPage({
   searchParams,

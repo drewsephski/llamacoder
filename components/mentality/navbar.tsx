@@ -64,7 +64,7 @@ export default function Navbar() {
         <a
           aria-label="mėntality home"
           className="col-span-7 flex min-w-0 items-center gap-2.5 text-[#1a1a1a] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a1a]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edeef5]/80 md:col-span-3"
-          href="https://squidagent.app"
+          href="https://www.squidagent.app"
           onClick={closeMenu}
         >
           <CloverMark />

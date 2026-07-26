@@ -1,38 +1,29 @@
-import type { Metadata } from "next";
 import {
   MarketingFooter,
   MarketingHeader,
 } from "@/components/marketing-chrome";
 import { SupabaseTechnicalWalkthrough } from "@/components/supabase-technical-walkthrough";
+import { SITE_URL, createPageMetadata } from "@/lib/seo";
 
 const path = "/supabase";
 const title = "How Squid Verifies Supabase Backends";
 const description =
   "A technical walkthrough of Squid's Supabase control plane: OAuth, project provisioning, explicit database approval, RLS verification, and browser-safe generated apps.";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title,
   description,
-  alternates: { canonical: path },
-  openGraph: {
-    type: "article",
-    url: path,
-    title: `${title} | Squid Agent`,
-    description,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${title} | Squid Agent`,
-    description,
-  },
-};
+  path,
+  type: "article",
+  keywords: ["Supabase AI app builder", "AI app builder with database"],
+});
 
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "TechArticle",
   headline: title,
   description,
-  url: "https://squidagent.app/supabase",
+  url: `${SITE_URL}/supabase`,
   author: {
     "@type": "Person",
     name: "Drew Sepeczi",
@@ -40,7 +31,7 @@ const structuredData = {
   publisher: {
     "@type": "Organization",
     name: "Squid Agent",
-    url: "https://squidagent.app",
+    url: SITE_URL,
   },
   about: [
     "Supabase",

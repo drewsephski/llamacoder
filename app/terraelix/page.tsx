@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import { DM_Sans, Inter } from "next/font/google";
 
 import TerraElixPage from "@/components/terraelix-page";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -17,11 +17,7 @@ const inter = Inter({
   weight: ["400", "500"],
 });
 
-export const metadata: Metadata = {
-  title: "TerraElix — The power of nature in every capsule",
-  description:
-    "Plant-based supplements for daily balance, clean energy, and a more grounded wellness ritual.",
-};
+export const metadata = publicShowcaseMetadata("/terraelix");
 
 export default function TerraElixRoute() {
   return (

@@ -141,7 +141,7 @@ export function SharePageClient({
 
         <a
           className="mt-auto inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          href={`https://squidagent.app/?ref=${messageId}`}
+          href={`https://www.squidagent.app/?ref=${messageId}`}
           target="_blank"
           rel="noopener noreferrer"
         >

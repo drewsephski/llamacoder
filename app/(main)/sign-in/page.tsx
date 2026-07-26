@@ -1,7 +1,7 @@
 "use client";
 
 import { authClient, useSession } from "@/lib/auth-client";
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -11,7 +11,7 @@ import { getSafeCallbackUrl } from "@/lib/safe-redirect";
 function SignInForm() {
   const { data: session, isPending } = useSession();
   const searchParams = useSearchParams();
-  const callbackUrlRef = useRef(
+  const [callbackUrl] = useState(() =>
     getSafeCallbackUrl(searchParams.get("callbackUrl")),
   );
 
@@ -23,9 +23,9 @@ function SignInForm() {
   // Redirect authenticated users away from sign-in page
   useEffect(() => {
     if (session && !isPending) {
-      window.location.href = callbackUrlRef.current;
+      window.location.href = callbackUrl;
     }
-  }, [session, isPending]);
+  }, [callbackUrl, session, isPending]);
 
   // Show loading while checking session
   if (isPending) {
@@ -50,7 +50,7 @@ function SignInForm() {
       const { error: signInError } = await authClient.signIn.email({
         email,
         password,
-        callbackURL: callbackUrlRef.current,
+        callbackURL: callbackUrl,
       });
 
       if (signInError) {
@@ -60,7 +60,7 @@ function SignInForm() {
       }
 
       // Immediate redirect on successful sign-in
-      window.location.href = callbackUrlRef.current;
+      window.location.href = callbackUrl;
     } catch (err) {
       console.error("Sign in error:", err);
       setError("An error occurred. Please try again.");
@@ -73,7 +73,7 @@ function SignInForm() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: callbackUrlRef.current,
+        callbackURL: callbackUrl,
       });
     } catch (err) {
       console.error("Google sign in error:", err);
@@ -99,11 +99,11 @@ function SignInForm() {
               className="h-16 w-auto"
             />
           </Link>
-          <h2 className="text-3xl font-bold tracking-tight">Sign in</h2>
+          <h1 className="text-3xl font-bold tracking-tight">Sign in</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Or{" "}
             <Link
-              href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrlRef.current)}`}
+              href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`}
               className="inline-flex min-h-[44px] items-center font-medium text-primary hover:underline"
             >
               create a new account

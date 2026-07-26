@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import { Almarai, Instrument_Serif } from "next/font/google";
 
 import PrismaPage from "@/components/prisma-page";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
 const almarai = Almarai({
   subsets: ["latin"],
@@ -18,11 +18,7 @@ const instrumentSerif = Instrument_Serif({
   weight: "400",
 });
 
-export const metadata: Metadata = {
-  title: "Prisma — Visual arts for visionary creators",
-  description:
-    "Prisma is a worldwide network of visual artists, filmmakers, and storytellers.",
-};
+export const metadata = publicShowcaseMetadata("/prisma");
 
 export default function PrismaRoute() {
   return (

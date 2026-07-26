@@ -39,13 +39,24 @@ describe("gallery social metadata", () => {
     });
 
     expect(metadata.openGraph).toMatchObject({
-      url: "/gallery/focus-day",
+      url: "https://www.squidagent.app/gallery/focus-day",
       images: [image],
     });
     expect(metadata.twitter).toMatchObject({
       card: "summary_large_image",
       images: [image],
     });
+  });
+
+  it("marks legacy or duplicate share pages as noindex", () => {
+    const metadata = buildGallerySocialMetadata({
+      title: "Focus Day",
+      description: "A focused workspace.",
+      canonicalPath: "/share/v2/message_current",
+      index: false,
+    });
+
+    expect(metadata.robots).toMatchObject({ index: false, follow: false });
   });
 
   it.each([

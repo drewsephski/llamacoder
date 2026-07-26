@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,12 +13,40 @@ import { gallerySearchSchema } from "@/features/gallery/contracts";
 import { getGalleryProjects } from "@/features/gallery/server/queries";
 import { getShowcaseGameSummaries } from "@/features/gallery/showcase-games";
 import { getShowcaseLandingSummaries } from "@/features/gallery/showcase-landings";
+import { SITE_URL, createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Made with Squid",
+export const metadata = createPageMetadata({
+  title: "AI-Built React App Gallery",
   description:
-    "Explore real apps published by the Squid community and remix projects their creators have opened up.",
-};
+    "Explore real React apps, games, and landing pages built with Squid Agent, then inspect or remix public projects their creators have opened up.",
+  path: "/gallery",
+  keywords: ["AI app builder examples", "AI built React apps"],
+});
+
+const galleryStructuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "AI-built React app gallery",
+    description:
+      "Public React apps, games, and landing pages built with Squid Agent.",
+    url: `${SITE_URL}/gallery`,
+    isPartOf: { "@type": "WebSite", name: "Squid Agent", url: SITE_URL },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Gallery",
+        item: `${SITE_URL}/gallery`,
+      },
+    ],
+  },
+];
 
 export default async function GalleryPage({
   searchParams,
@@ -60,6 +87,15 @@ export default async function GalleryPage({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(galleryStructuredData).replace(
+            /</g,
+            "\\u003c",
+          ),
+        }}
+      />
       <GalleryThumbnailRefresh pending={hasPendingThumbnails} />
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
@@ -69,7 +105,7 @@ export default async function GalleryPage({
           >
             <Image
               src="/squidagent-logo.svg"
-              alt="Squid"
+              alt="Squid Agent"
               width={30}
               height={30}
               className="size-8 object-contain"

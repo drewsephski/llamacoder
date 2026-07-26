@@ -1,14 +1,13 @@
-import type { Metadata } from "next";
 import { LegalPage } from "@/app/(main)/legal-page";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Terms of Service",
   description:
     "Terms of service for using Squid Agent to generate exportable React apps.",
-  alternates: {
-    canonical: "/terms",
-  },
-};
+  path: "/terms",
+  keywords: ["Squid Agent terms", "AI app builder terms"],
+});
 
 export default function TermsPage() {
   return (

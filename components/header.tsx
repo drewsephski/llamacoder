@@ -58,7 +58,7 @@ function Header({ onHelpClick }: HeaderProps) {
     isLoading: creditsLoading,
     isError: creditsError,
     refetch: refetchCredits,
-  } = useUserCredits();
+  } = useUserCredits(Boolean(session));
 
   const credits = creditsError ? null : (creditsData?.credits ?? null);
   const hasSubscription = creditsError

@@ -17,7 +17,9 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     if (!token) {
-      setError("Invalid or missing reset token. Please request a new reset link.");
+      setError(
+        "Invalid or missing reset token. Please request a new reset link.",
+      );
     }
   }, [token]);
 
@@ -78,13 +80,8 @@ function ResetPasswordForm() {
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
-        <Button
-          asChild
-          className="w-full"
-        >
-          <Link href="/forgot-password">
-            Request new reset link
-          </Link>
+        <Button asChild className="w-full">
+          <Link href="/forgot-password">Request new reset link</Link>
         </Button>
       </div>
     );
@@ -124,7 +121,7 @@ function ResetPasswordForm() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+            className="mt-1 block min-h-[48px] w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             placeholder="••••••••"
             minLength={8}
           />
@@ -134,7 +131,10 @@ function ResetPasswordForm() {
         </div>
 
         <div>
-          <label htmlFor="confirm-password" className="block text-sm font-medium">
+          <label
+            htmlFor="confirm-password"
+            className="block text-sm font-medium"
+          >
             Confirm new password
           </label>
           <input
@@ -145,24 +145,20 @@ function ResetPasswordForm() {
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+            className="mt-1 block min-h-[48px] w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             placeholder="••••••••"
           />
         </div>
       </div>
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full"
-      >
+      <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Resetting..." : "Reset password"}
       </Button>
 
       <p className="text-center text-sm">
         <Link
           href="/sign-in"
-          className="font-medium text-primary hover:underline min-h-[44px] inline-flex items-center"
+          className="inline-flex min-h-[44px] items-center font-medium text-primary hover:underline"
         >
           Back to sign in
         </Link>
@@ -176,13 +172,19 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8 p-6 sm:p-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Reset password</h2>
+          <h1 className="text-3xl font-bold tracking-tight">Reset password</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Enter your new password below
           </p>
         </div>
 
-        <Suspense fallback={<div className="mt-8 text-center text-sm text-muted-foreground">Loading...</div>}>
+        <Suspense
+          fallback={
+            <div className="mt-8 text-center text-sm text-muted-foreground">
+              Loading...
+            </div>
+          }
+        >
           <ResetPasswordForm />
         </Suspense>
       </div>

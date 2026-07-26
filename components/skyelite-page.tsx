@@ -39,7 +39,7 @@ export function SkyElitePage({ fontClassName }: SkyElitePageProps) {
           >
             <a
               className="text-2xl font-semibold text-gray-900 transition-colors hover:text-gray-700 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/50 focus-visible:ring-offset-2"
-              href="https://squidagent.app"
+              href="https://www.squidagent.app"
               onClick={closeMenu}
             >
               SkyElite

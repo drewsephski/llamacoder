@@ -3,6 +3,19 @@ import type { NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 export async function proxy(req: NextRequest) {
+  const forwardedHost = req.headers.get("x-forwarded-host")?.split(",")[0];
+  const requestHost = (forwardedHost ?? req.headers.get("host") ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (requestHost === "squidagent.app") {
+    const canonicalUrl = req.nextUrl.clone();
+    canonicalUrl.protocol = "https:";
+    canonicalUrl.hostname = "www.squidagent.app";
+    canonicalUrl.port = "";
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
   const isDashboardPage = req.nextUrl.pathname.startsWith("/dashboard");
   const isChatPage = req.nextUrl.pathname.startsWith("/chats");
 

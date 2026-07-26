@@ -26,21 +26,30 @@ export async function GET(request: NextRequest) {
     });
 
     if (withThumbnails) {
-      return NextResponse.json({
-        images: projects
-          .filter(
-            (project) =>
-              project.thumbnailUrl !== null &&
-              project.generationPrompt.trim().length > 0,
-          )
-          .map((project) => ({
-            src: project.thumbnailUrl,
-            alt: `Preview of ${project.title}`,
-            title: project.title,
-            prompt: project.generationPrompt,
-            href: `/gallery/${project.slug}`,
-          })),
-      });
+      return NextResponse.json(
+        {
+          images: projects
+            .filter(
+              (project) =>
+                project.thumbnailUrl !== null &&
+                project.generationPrompt.trim().length > 0,
+            )
+            .slice(0, 6)
+            .map((project) => ({
+              src: project.thumbnailUrl,
+              alt: `Preview of ${project.title}`,
+              title: project.title,
+              prompt: project.generationPrompt.slice(0, 6000),
+              href: `/gallery/${project.slug}`,
+            })),
+        },
+        {
+          headers: {
+            "Cache-Control":
+              "public, s-maxage=300, stale-while-revalidate=3600",
+          },
+        },
+      );
     }
 
     return NextResponse.json({

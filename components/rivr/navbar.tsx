@@ -41,7 +41,7 @@ export default function Navbar() {
         <a
           aria-label="Back to Squid Agent"
           className="text-xl font-normal tracking-tighter text-[rgba(30,50,90,0.9)] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(30,50,90,0.4)]"
-          href="https://squidagent.app"
+          href="https://www.squidagent.app"
         >
           RIVR
         </a>

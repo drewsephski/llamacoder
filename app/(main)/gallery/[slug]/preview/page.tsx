@@ -4,6 +4,23 @@ import { GalleryPreviewRunner } from "@/features/gallery/components/gallery-prev
 import { getPublicGalleryProject } from "@/features/gallery/server/queries";
 import { getShowcaseGame } from "@/features/gallery/showcase-games";
 import { getShowcaseLanding } from "@/features/gallery/showcase-landings";
+import { createNoIndexMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const readableTitle = slug.replaceAll("-", " ");
+
+  return createNoIndexMetadata({
+    title: `Interactive preview: ${readableTitle}`,
+    description:
+      "An isolated interactive preview for a React project published in the Squid Agent gallery.",
+    path: `/gallery/${encodeURIComponent(slug)}/preview`,
+  });
+}
 
 export default async function GalleryPreviewPage({
   params,

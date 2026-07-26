@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { DEFAULT_OG_IMAGE, createPageMetadata } from "@/lib/seo";
 
 import {
   THUMBNAIL_HEIGHT,
   THUMBNAIL_WIDTH,
 } from "@/features/gallery/server/thumbnail";
 
-export const DEFAULT_SOCIAL_IMAGE_URL = "/api/og?card=site&v=3";
+export const DEFAULT_SOCIAL_IMAGE_URL = DEFAULT_OG_IMAGE;
 export const DEFAULT_SOCIAL_IMAGE_WIDTH = 1200;
 export const DEFAULT_SOCIAL_IMAGE_HEIGHT = 630;
 
@@ -79,11 +80,13 @@ export function buildGallerySocialMetadata({
   canonicalPath,
   description,
   image,
+  index = true,
   title,
 }: {
   canonicalPath: string;
   description: string;
   image?: SocialImage | null;
+  index?: boolean;
   title: string;
 }): Metadata {
   const socialImage: SocialImage = image ?? {
@@ -94,24 +97,11 @@ export function buildGallerySocialMetadata({
     type: "image/png",
   };
 
-  return {
+  return createPageMetadata({
     title,
     description,
-    alternates: { canonical: canonicalPath },
-    openGraph: {
-      type: "website",
-      url: canonicalPath,
-      title,
-      description,
-      siteName: "Squid Agent",
-      locale: "en_US",
-      images: [socialImage],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [socialImage],
-    },
-  };
+    path: canonicalPath,
+    image: socialImage,
+    index,
+  });
 }

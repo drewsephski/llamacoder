@@ -1,21 +1,15 @@
-import type { Metadata } from "next";
 import { BrandIdentityQuickFaq } from "@/components/brand-identity-quick-faq";
 import { MarketingHub } from "@/components/marketing-hub";
 import { blogPages } from "@/lib/marketing-pages";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "AI App Builder Guides for React Apps",
   description:
     "Practical AI app builder guides for choosing tools, controlling credits, turning screenshots into React, verifying generated code, recovering versions, and exporting cleanly.",
-  alternates: { canonical: "/blog" },
-  openGraph: {
-    title: "AI App Builder Guides for React Apps | Squid Agent",
-    description:
-      "Choose an AI builder, generate responsive React, verify the code, recover safely, and export a project your team can run.",
-    url: "/blog",
-    type: "website",
-  },
-};
+  path: "/blog",
+  keywords: ["AI app builder guides", "AI React app builder"],
+});
 
 export default function BlogIndexPage() {
   return (

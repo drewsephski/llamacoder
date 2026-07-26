@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/marketing-pages";
+import { SITE_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,6 +11,9 @@ export default function robots(): MetadataRoute.Robots {
           "/compare/",
           "/blog/",
           "/benchmarks/",
+          "/docs/",
+          "/gallery/",
+          "/search",
           "/what-is-squid-agent",
           "/llms.txt",
           "/ai.txt",
@@ -19,16 +22,21 @@ export default function robots(): MetadataRoute.Robots {
           "/terms",
           "/cookies",
           "/sitemap.xml",
-          "/api/og/",
+          "/api/og",
         ],
         disallow: [
           "/api/",
+          "/__chat-panel-qa",
           "/dashboard",
           "/chats/",
           "/sign-in",
           "/sign-up",
           "/reset-password",
           "/forgot-password",
+          "/verify-email",
+          "/purchase/",
+          "/share/",
+          "/gallery/*/preview",
         ],
       },
     ],

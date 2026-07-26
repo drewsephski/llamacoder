@@ -4,8 +4,6 @@
 @import "@fontsource/inter/700.css";
 @import "@fontsource/instrument-serif/400.css";
 @import "@fontsource/instrument-serif/400-italic.css";
-@import url("https://db.onlinewebfonts.com/c/bb5de19d87c09a95216dc6ccd96e37c6?family=Nimbus+Sans+TW01");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,6 +13,7 @@
   src: url("/Aeonik/Aeonik-Regular.ttf");
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -22,6 +21,7 @@
   src: url("/Aeonik/Aeonik-Medium.ttf");
   font-weight: 500;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -29,6 +29,7 @@
   src: url("/Aeonik/Aeonik-Bold.ttf");
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -36,22 +37,7 @@
   src: url("/Aeonik/AeonikMono-Regular.otf");
   font-weight: 400;
   font-style: normal;
-}
-
-@font-face {
-  font-family: "Helvetica Regular";
-  src: url("https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.eot");
-  src:
-    url("https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.eot?#iefix")
-      format("embedded-opentype"),
-    url("https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.woff2")
-      format("woff2"),
-    url("https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.woff")
-      format("woff"),
-    url("https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.ttf")
-      format("truetype"),
-    url("https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.svg#Helvetica Regular")
-      format("svg");
+  font-display: swap;
 }
 
 @layer base {
@@ -149,7 +135,8 @@
   }
 
   .rivr-page {
-    --font-helvetica: "Helvetica Regular", ui-sans-serif, system-ui, sans-serif;
+    --font-helvetica:
+      "Helvetica Neue", Helvetica, Arial, ui-sans-serif, system-ui, sans-serif;
     font-family: var(--font-helvetica);
   }
 
@@ -1002,8 +989,8 @@ html[data-magicui-theme-vt="active"]::view-transition-group(root) {
 
 /* CozyPaws showcase hero */
 .cozypaws-page {
-  --cozypaws-body: "Inter", sans-serif;
-  --cozypaws-serif: "DM Serif Display", serif;
+  --cozypaws-body: var(--font-cozypaws-body), sans-serif;
+  --cozypaws-serif: var(--font-cozypaws-serif), serif;
   font-family: var(--cozypaws-body);
 }
 

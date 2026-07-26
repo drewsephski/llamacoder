@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import { createNoIndexMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createNoIndexMetadata({
   title: "Forgot Password",
-  robots: { index: false, follow: false },
-};
+  description: "Request a password-reset link for your Squid Agent account.",
+  path: "/forgot-password",
+});
 
 export default function ForgotPasswordLayout({
   children,

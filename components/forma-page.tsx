@@ -139,7 +139,7 @@ export default function FormaPage() {
             <a
               aria-label="Forma home"
               className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-              href="https://squidagent.app"
+              href="https://www.squidagent.app"
             >
               <FormaLogo />
             </a>

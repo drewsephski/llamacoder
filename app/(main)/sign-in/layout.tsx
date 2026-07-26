@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import { createNoIndexMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createNoIndexMetadata({
   title: "Sign In",
-  robots: { index: false, follow: false },
-};
+  description: "Sign in to manage your private Squid Agent projects.",
+  path: "/sign-in",
+});
 
 export default function SignInLayout({
   children,

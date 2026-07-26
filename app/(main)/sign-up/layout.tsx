@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import { createNoIndexMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createNoIndexMetadata({
   title: "Create Account",
-  robots: { index: false, follow: false },
-};
+  description: "Create a Squid Agent account to build and export React apps.",
+  path: "/sign-up",
+});
 
 export default function SignUpLayout({
   children,

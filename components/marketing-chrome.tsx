@@ -106,6 +106,7 @@ export function MarketingFooter() {
             { href: "/", label: "Build an app" },
             { href: "/gallery", label: "Gallery" },
             { href: "/docs", label: "Documentation" },
+            { href: "/search", label: "Search resources" },
             { href: "/what-is-squid-agent", label: "What is Squid Agent?" },
             { href: "/dashboard", label: "Dashboard" },
             { href: "/dashboard/usage", label: "Usage ledger" },

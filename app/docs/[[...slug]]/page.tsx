@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
@@ -7,6 +6,7 @@ import { getMDXComponents } from "@/components/mdx";
 import { buildDocsNavigation } from "@/lib/docs/navigation";
 import { docsSource } from "@/lib/docs/source";
 import { BrandIdentityQuickFaq } from "@/components/brand-identity-quick-faq";
+import { SITE_URL, createPageMetadata } from "@/lib/seo";
 
 type DocsPageProps = {
   params: Promise<{ slug?: string[] }>;
@@ -26,9 +26,47 @@ export default async function DocsPage({ params }: DocsPageProps) {
   const next = pageIndex >= 0 ? navigation[pageIndex + 1] : undefined;
   const toc = page.data.toc as TOCItemType[];
   const isDocsIndex = page.url === "/docs";
+  const breadcrumbItems = [
+    { name: "Home", item: `${SITE_URL}/` },
+    { name: "Documentation", item: `${SITE_URL}/docs` },
+    ...(isDocsIndex
+      ? []
+      : [{ name: page.data.title, item: `${SITE_URL}${page.url}` }]),
+  ];
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      headline: page.data.title,
+      description: page.data.description,
+      url: `${SITE_URL}${page.url}`,
+      inLanguage: "en-US",
+      author: { "@type": "Organization", name: "Squid Agent", url: SITE_URL },
+      publisher: {
+        "@type": "Organization",
+        name: "Squid Agent",
+        url: SITE_URL,
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbItems.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        ...item,
+      })),
+    },
+  ];
 
   return (
     <div className="mx-auto grid max-w-[1180px] gap-12 px-5 py-10 sm:px-8 sm:py-14 xl:grid-cols-[minmax(0,760px)_200px] xl:px-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <main className="min-w-0">
         <nav
           aria-label="Breadcrumb"
@@ -143,24 +181,18 @@ export function generateStaticParams() {
   return docsSource.generateParams();
 }
 
-export async function generateMetadata({
-  params,
-}: DocsPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: DocsPageProps) {
   const { slug } = await params;
   const page = docsSource.getPage(slug);
   if (!page) notFound();
 
-  return {
+  return createPageMetadata({
     title: page.data.title,
-    description: page.data.description,
-    alternates: {
-      canonical: page.url,
-    },
-    openGraph: {
-      title: `${page.data.title} | Squid Agent Docs`,
-      description: page.data.description,
-      url: page.url,
-      type: "article",
-    },
-  };
+    description:
+      page.data.description ??
+      "Squid Agent documentation for building and exporting React apps.",
+    path: page.url,
+    type: "article",
+    keywords: ["Squid Agent documentation", "AI React app builder"],
+  });
 }

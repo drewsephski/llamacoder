@@ -188,7 +188,7 @@ export default function TerraElixPage({
       <nav className="terra-animate-fade-in relative z-20 flex items-center justify-between px-5 py-4 sm:px-8 lg:px-10 lg:py-5">
         <a
           className="terra-animate-slide-left text-[30px] font-medium leading-none tracking-[-0.05em] text-white focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          href="https://squidagent.app"
+          href="https://www.squidagent.app"
           style={{ animationDelay: "0.2s" }}
         >
           TerraElix

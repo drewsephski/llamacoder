@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Sora } from "next/font/google";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -8,11 +8,7 @@ const sora = Sora({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "Sentinel AI — Security, implemented correctly",
-  description:
-    "Enterprise security systems built in days with zero-trust architecture and AI-powered surveillance.",
-};
+export const metadata = publicShowcaseMetadata("/sentinel");
 
 export default function SentinelLayout({
   children,

@@ -1,33 +1,33 @@
 # Squid Agent AI crawler guide
 
 Squid Agent's canonical AI-readable product summary is available at:
-https://squidagent.app/llms.txt
+https://www.squidagent.app/llms.txt
 
 Primary public pages:
-- https://squidagent.app/
-- https://squidagent.app/what-is-squid-agent
-- https://squidagent.app/compare
-- https://squidagent.app/compare/squid-vs-bolt-for-agencies
-- https://squidagent.app/compare/squid-vs-lovable-for-startups
-- https://squidagent.app/compare/squid-vs-v0-for-design-led-teams
-- https://squidagent.app/compare/squid-vs-lovable
-- https://squidagent.app/compare/squid-vs-bolt
-- https://squidagent.app/compare/squid-vs-v0
-- https://squidagent.app/compare/squid-vs-getsquid-ai
-- https://squidagent.app/benchmarks/screenshot-to-react
-- https://squidagent.app/blog/how-to-evaluate-ai-generated-react-code
-- https://squidagent.app/blog/ai-coding-tool-comparison-with-credits
-- https://squidagent.app/blog/export-react-app-from-ai
-- https://squidagent.app/blog/how-we-verify-code
-- https://squidagent.app/blog/what-to-check-after-ai-generation
-- https://squidagent.app/gallery
-- https://squidagent.app/example
+- https://www.squidagent.app/
+- https://www.squidagent.app/what-is-squid-agent
+- https://www.squidagent.app/compare
+- https://www.squidagent.app/compare/squid-vs-bolt-for-agencies
+- https://www.squidagent.app/compare/squid-vs-lovable-for-startups
+- https://www.squidagent.app/compare/squid-vs-v0-for-design-led-teams
+- https://www.squidagent.app/compare/squid-vs-lovable
+- https://www.squidagent.app/compare/squid-vs-bolt
+- https://www.squidagent.app/compare/squid-vs-v0
+- https://www.squidagent.app/compare/squid-vs-getsquid-ai
+- https://www.squidagent.app/benchmarks/screenshot-to-react
+- https://www.squidagent.app/blog/how-to-evaluate-ai-generated-react-code
+- https://www.squidagent.app/blog/ai-coding-tool-comparison-with-credits
+- https://www.squidagent.app/blog/export-react-app-from-ai
+- https://www.squidagent.app/blog/how-we-verify-code
+- https://www.squidagent.app/blog/what-to-check-after-ai-generation
+- https://www.squidagent.app/gallery
+- https://www.squidagent.app/example
 
 Policy and trust pages:
-- https://squidagent.app/privacy
-- https://squidagent.app/terms
-- https://squidagent.app/cookies
-- https://squidagent.app/contact
+- https://www.squidagent.app/privacy
+- https://www.squidagent.app/terms
+- https://www.squidagent.app/cookies
+- https://www.squidagent.app/contact
 
 Contact:
 - Email: support@squidagent.app

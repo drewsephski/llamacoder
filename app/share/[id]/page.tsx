@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import CodeRunner from "@/components/code-runner";
 import { getPrisma } from "@/lib/prisma";
+import { createNoIndexMetadata } from "@/lib/seo";
 
 /*
   This is the Share page for v1 apps, before the chat interface was added.
@@ -21,21 +22,22 @@ export async function generateMetadata({
     notFound();
   }
 
-  let searchParams = new URLSearchParams();
+  const searchParams = new URLSearchParams();
   searchParams.set("prompt", prompt);
+  const concisePrompt = prompt.replaceAll(/\s+/g, " ").trim();
+  const title = concisePrompt.slice(0, 64) || "Generated React app";
 
-  return {
-    title: "An app generated on Squid Agent.app",
-    description: `Prompt: ${generatedApp?.prompt}`,
-    openGraph: {
-      images: [`/api/og?${searchParams}`],
+  return createNoIndexMetadata({
+    title: `${title}${concisePrompt.length > 64 ? "…" : ""}`,
+    description: `A legacy React app preview generated with Squid Agent from this prompt: ${concisePrompt.slice(0, 120)}`,
+    path: `/share/${encodeURIComponent((await params).id)}`,
+    image: {
+      url: `/api/og?${searchParams}`,
+      width: 1200,
+      height: 630,
+      alt: "Generated React app preview",
     },
-    twitter: {
-      title: "An app generated on Squid Agent.app",
-      card: "summary_large_image",
-      images: [`/api/og?${searchParams}`],
-    },
-  };
+  });
 }
 
 export default async function Page({

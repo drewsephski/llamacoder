@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import { SkyElitePage } from "@/components/skyelite-page";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -9,10 +9,7 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "SkyElite — Premium Private Jets",
-  description: "Your dedication deserves recognition.",
-};
+export const metadata = publicShowcaseMetadata("/skyelite");
 
 export default function SkyEliteRoute() {
   return <SkyElitePage fontClassName={inter.className} />;

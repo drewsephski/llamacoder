@@ -26,6 +26,7 @@ function createContentSecurityPolicy(frameAncestors) {
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  trailingSlash: false,
   outputFileTracingIncludes: {
     "/api/page-purchases/[sessionId]/download": [
       "./app/globals.css",
@@ -92,6 +93,7 @@ const nextConfig = {
     ];
   },
   images: {
+    localPatterns: [{ pathname: "/**" }],
     remotePatterns: [{ protocol: "https", hostname: "svgl.app" }],
   },
   turbopack: {

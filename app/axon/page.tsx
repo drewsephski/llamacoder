@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,11 +16,7 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Axon — Digital Workers for Mundane Workflows",
-  description:
-    "Deploy intelligent digital workers on tedious browser workflows and give your team more capacity.",
-};
+export const metadata = publicShowcaseMetadata("/axon");
 
 const navigation = ["Features", "Plans", "Security", "About"] as const;
 
@@ -65,7 +61,7 @@ export default function AxonPage() {
           <a
             aria-label="Back to Squid Agent"
             className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B133C]/40 focus-visible:ring-offset-2"
-            href="https://squidagent.app"
+            href="https://www.squidagent.app"
           >
             <AxonLogo />
           </a>

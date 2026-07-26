@@ -6,6 +6,7 @@ import type {
   ProjectWorkspace,
 } from "@/features/projects/contracts";
 import { getAuthorizedProjectWorkspace } from "@/features/projects/server/queries";
+import { createNoIndexMetadata } from "@/lib/seo";
 
 import PageClient from "./page.client";
 
@@ -18,21 +19,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const chat = await getAuthorizedProjectWorkspace(id);
 
   if (!chat) {
-    return {
+    return createNoIndexMetadata({
       title: "Project not found",
       description: "The requested project could not be found.",
-    };
+      path: `/chats/${encodeURIComponent(id)}`,
+    });
   }
 
-  return {
+  return createNoIndexMetadata({
     title: `App: ${chat.title}`,
     description: `Building an app for ${chat.title} with ${chat.model}`,
-    openGraph: {
-      title: `App: ${chat.title}`,
-      description: `Building an app for ${chat.title} with ${chat.model}`,
-      type: "website",
-    },
-  };
+    path: `/chats/${encodeURIComponent(id)}`,
+  });
 }
 
 export default async function ProjectPage({ params }: Props) {

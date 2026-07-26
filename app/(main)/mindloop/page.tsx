@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-
 import MindloopPage from "@/components/mindloop-page";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
-export const metadata: Metadata = {
-  title: "Mindloop — Meaningful content, made to last",
-  description:
-    "A calmer home for curious readers, thoughtful writers, and meaningful conversations.",
-};
+export const metadata = publicShowcaseMetadata("/mindloop");
 
 export default function Page() {
   return <MindloopPage />;

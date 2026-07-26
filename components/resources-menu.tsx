@@ -13,6 +13,7 @@ import {
   FileText,
   Info,
   LifeBuoy,
+  Search,
   Scale,
   type LucideIcon,
 } from "lucide-react";
@@ -29,6 +30,13 @@ type ResourceLink = {
 };
 
 export const resourceLinks: ResourceLink[] = [
+  {
+    href: "/search",
+    label: "Search",
+    shortLabel: "Search",
+    description: "Find guides, docs, comparisons, and examples",
+    icon: Search,
+  },
   {
     href: "/docs",
     label: "Documentation",

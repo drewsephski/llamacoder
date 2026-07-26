@@ -2,13 +2,28 @@ import type { MetadataRoute } from "next";
 import {
   CONTENT_REVIEW_DATE,
   SITE_URL,
+  benchmarkPage,
+  blogPages,
+  comparisonPages,
+  getMarketingPath,
   marketingLandingPaths,
   marketingPaths,
 } from "@/lib/marketing-pages";
 import { docsSource } from "@/lib/docs/source";
+import { getShowcaseGameSummaries } from "@/features/gallery/showcase-games";
+import { getShowcaseLandingSummaries } from "@/features/gallery/showcase-landings";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const buildDate = new Date();
   const contentReviewDate = new Date(`${CONTENT_REVIEW_DATE}T00:00:00Z`);
+  const marketingLastModified = new Map(
+    [...comparisonPages, ...blogPages, benchmarkPage].map((page) => [
+      getMarketingPath(page),
+      new Date(`${page.updatedAt}T00:00:00Z`),
+    ]),
+  );
   const highIntentComparePaths = new Set([
     "/compare/squid-vs-bolt-for-agencies",
     "/compare/squid-vs-getsquid-ai",
@@ -39,43 +54,59 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/cookies",
   ];
 
-  return staticPaths.map((path) => ({
-    url: `${SITE_URL}${path}`,
+  const staticEntries: MetadataRoute.Sitemap = [...new Set(staticPaths)].map(
+    (path) => ({
+      url: `${SITE_URL}${path}`,
+      lastModified:
+        marketingLastModified.get(path) ??
+        (path === "/" || path === "/what-is-squid-agent"
+          ? contentReviewDate
+          : buildDate),
+      changeFrequency:
+        path === "/" ||
+        path === "/what-is-squid-agent" ||
+        path === "/docs" ||
+        path === "/blog" ||
+        path === "/compare" ||
+        path.startsWith("/compare/squid-vs-") ||
+        highIntentGuidePaths.has(path) ||
+        highIntentBenchmarkPaths.has(path)
+          ? "weekly"
+          : "monthly",
+      priority:
+        path === "/"
+          ? 1
+          : path === "/what-is-squid-agent"
+            ? 0.92
+            : path === "/docs"
+              ? 0.9
+              : path.startsWith("/docs/")
+                ? 0.75
+                : path === "/compare" || path.startsWith("/compare/")
+                  ? highIntentComparePaths.has(path)
+                    ? 0.9
+                    : 0.82
+                  : path === "/blog" || path === "/benchmarks"
+                    ? 0.8
+                    : path.startsWith("/blog/")
+                      ? highIntentGuidePaths.has(path)
+                        ? 0.88
+                        : 0.76
+                      : path.startsWith("/benchmarks/")
+                        ? highIntentBenchmarkPaths.has(path)
+                          ? 0.84
+                          : 0.75
+                        : 0.5,
+    }),
+  );
+  const showcaseEntries: MetadataRoute.Sitemap = [
+    ...getShowcaseGameSummaries(""),
+    ...getShowcaseLandingSummaries(""),
+  ].map((showcase) => ({
+    url: `${SITE_URL}/gallery/${encodeURIComponent(showcase.slug)}`,
     lastModified: contentReviewDate,
-    changeFrequency:
-      path === "/" ||
-      path === "/what-is-squid-agent" ||
-      path === "/docs" ||
-      path === "/blog" ||
-      path === "/compare" ||
-      path.startsWith("/compare/squid-vs-") ||
-      highIntentGuidePaths.has(path) ||
-      highIntentBenchmarkPaths.has(path)
-        ? "weekly"
-        : "monthly",
-    priority:
-      path === "/"
-        ? 1
-        : path === "/what-is-squid-agent"
-          ? 0.92
-          : path === "/docs"
-            ? 0.9
-            : path.startsWith("/docs/")
-              ? 0.75
-              : path === "/compare" || path.startsWith("/compare/")
-                ? highIntentComparePaths.has(path)
-                  ? 0.9
-                  : 0.82
-                : path === "/blog" || path === "/benchmarks"
-                  ? 0.8
-                  : path.startsWith("/blog/")
-                    ? highIntentGuidePaths.has(path)
-                      ? 0.88
-                      : 0.76
-                    : path.startsWith("/benchmarks/")
-                      ? highIntentBenchmarkPaths.has(path)
-                        ? 0.84
-                        : 0.75
-                      : 0.5,
+    changeFrequency: "monthly",
+    priority: 0.72,
   }));
+  return [...staticEntries, ...showcaseEntries];
 }

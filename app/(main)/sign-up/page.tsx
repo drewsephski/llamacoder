@@ -142,9 +142,9 @@ function SignUpForm() {
               className="h-16 w-auto"
             />
           </Link>
-          <h2 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight">
             Create an account
-          </h2>
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Or{" "}
             <Link

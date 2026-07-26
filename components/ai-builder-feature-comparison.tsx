@@ -434,7 +434,7 @@ export function AiBuilderFeatureComparison({
                       scope="col"
                       className={`border-b border-border px-4 py-4 font-semibold ${isHomepage ? "w-[18%]" : "w-[16%]"} ${
                         provider.key === "squid"
-                          ? "bg-primary/[0.1] text-primary"
+                          ? "bg-primary/[0.1] text-blue-700 dark:text-blue-300"
                           : ""
                       }`}
                     >

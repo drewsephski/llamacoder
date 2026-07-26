@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, Code2, Download, FlaskConical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { createNoIndexMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Build, verify, and own your app | Squid Agent",
+export const metadata = createNoIndexMetadata({
+  title: "Build, Verify, and Own Your React App",
   description:
     "A launch-day path for seeing Squid Agent's complete prompt-to-portable-source workflow before creating an account.",
-};
+  path: "/launch",
+});
 
 const proof = [
   {

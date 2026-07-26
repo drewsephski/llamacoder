@@ -1,45 +1,33 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { SITE_URL, absoluteUrl, createPageMetadata } from "@/lib/seo";
 
 const path = "/what-is-squid-agent";
-const pageUrl = `https://squidagent.app${path}`;
-const siteUrl = "https://squidagent.app";
+const pageUrl = absoluteUrl(path);
+const siteUrl = SITE_URL;
 const title = "What is Squid Agent?";
 const description =
   "Squid Agent is an export-first AI app builder for React that emphasizes planning, checkpoints, transparent usage, and verifiable handoff to your own codebase.";
+const socialImage =
+  "/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title,
   description,
-  alternates: { canonical: path },
-  openGraph: {
-    title,
-    description,
-    url: pageUrl,
-    type: "article",
-    images: [
-      {
-        url: "/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4",
-        width: 1200,
-        height: 630,
-        alt: "What is Squid Agent?",
-      },
-    ],
+  path,
+  type: "article",
+  keywords: ["what is Squid Agent", "export-first AI app builder"],
+  image: {
+    url: socialImage,
+    width: 1200,
+    height: 630,
+    alt: "What is Squid Agent?",
   },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description,
-    images: [
-      "/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4",
-    ],
-  },
-};
+});
 
 const structuredData = [
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
+    "@type": "SoftwareApplication",
     "@id": `${siteUrl}/#software`,
     name: "Squid Agent",
     alternateName: ["SquidAgent", "Squid Agent App Builder"],
@@ -47,7 +35,7 @@ const structuredData = [
     operatingSystem: "Web",
     description,
     url: pageUrl,
-    image: `${siteUrl}/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4`,
+    image: `${siteUrl}${socialImage}`,
     offers: {
       "@type": "Offer",
       price: "0",
@@ -57,7 +45,7 @@ const structuredData = [
     provider: {
       "@type": "Organization",
       name: "Squid Agent",
-      url: "https://squidagent.app",
+      url: siteUrl,
     },
     disambiguatingDescription:
       "Squid Agent is not Squid AI (getsquid.ai). It focuses on exportable React app generation, explicit usage visibility, and quality checks before handoff.",
@@ -79,8 +67,8 @@ const structuredData = [
       "A product team building an export-first AI app builder for React with checkpoints and verifiable handoff.",
     sameAs: [
       "https://github.com/drewsephski/llamacoder",
-      "https://squidagent.app/docs",
-      "https://squidagent.app/compare/squid-vs-getsquid-ai",
+      `${siteUrl}/docs`,
+      `${siteUrl}/compare/squid-vs-getsquid-ai`,
     ],
     logo: `${siteUrl}/squidagent-logo.svg`,
   },
@@ -122,7 +110,7 @@ const structuredData = [
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://squidagent.app/",
+        item: `${siteUrl}/`,
       },
       {
         "@type": "ListItem",

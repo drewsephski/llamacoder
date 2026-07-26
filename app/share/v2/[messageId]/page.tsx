@@ -31,6 +31,7 @@ export async function generateMetadata({
       publication: message.galleryPublication,
       title,
     }),
+    index: false,
   });
 }
 

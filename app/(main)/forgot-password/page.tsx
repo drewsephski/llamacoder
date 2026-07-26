@@ -46,7 +46,9 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8 p-6 sm:p-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Forgot password?</h2>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Forgot password?
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Enter your email and we&apos;ll send you a reset link
           </p>
@@ -57,16 +59,12 @@ export default function ForgotPasswordPage() {
             <div className="rounded-md bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-200">
               <p className="font-medium">Check your email</p>
               <p className="mt-1">
-                We&apos;ve sent a password reset link to {email}. The link will expire in 1 hour.
+                We&apos;ve sent a password reset link to {email}. The link will
+                expire in 1 hour.
               </p>
             </div>
-            <Button
-              asChild
-              className="w-full"
-            >
-              <Link href="/sign-in">
-                Back to sign in
-              </Link>
+            <Button asChild className="w-full">
+              <Link href="/sign-in">Back to sign in</Link>
             </Button>
           </div>
         ) : (
@@ -89,23 +87,19 @@ export default function ForgotPasswordPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+                className="mt-1 block min-h-[48px] w-full rounded-lg border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 placeholder="you@example.com"
               />
             </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full"
-            >
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Sending..." : "Send reset link"}
             </Button>
 
             <p className="text-center text-sm">
               <Link
                 href="/sign-in"
-                className="font-medium text-primary hover:underline min-h-[44px] inline-flex items-center"
+                className="inline-flex min-h-[44px] items-center font-medium text-primary hover:underline"
               >
                 Back to sign in
               </Link>

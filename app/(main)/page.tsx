@@ -22,9 +22,11 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  WandSparkles,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { usePlausible } from "next-plausible";
 import {
@@ -48,10 +50,7 @@ import Header from "@/components/header";
 import UploadIcon from "@/components/icons/upload-icon";
 import { DEFAULT_MODEL, MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
-import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { CreditsLoadError } from "@/features/billing/components/credits-load-error";
-import { HelpPanel } from "@/components/help-panel";
-import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Footer from "@/components/footer";
@@ -60,6 +59,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserCredits, useUserSession, useCreateChat } from "@/lib/queries";
 import { getMarketingStarterPrompt } from "@/lib/marketing-pages";
+import { DEFAULT_OG_IMAGE, SITE_URL } from "@/lib/seo";
 import {
   FREE_PROJECT_LIMIT,
   canTierUseModel,
@@ -75,12 +75,7 @@ import {
   readPendingProject,
   savePendingProject,
 } from "@/lib/pending-project";
-import { ApiSelectionDialog } from "@/features/integrations/components/api-selection-dialog";
-import { PromptBuilderModal } from "@/features/prompt-builder";
-import {
-  PromptTemplateEditor,
-  createInitialTemplateValues,
-} from "@/components/prompt-template-editor";
+import { createInitialTemplateValues } from "@/components/prompt-template-editor";
 import {
   PORTFOLIO_PROMPT_TEMPLATE,
   PROMPT_TEMPLATES,
@@ -96,6 +91,44 @@ import {
 import { ProductWorkflowDemo } from "@/components/homepage/product-workflow-demo";
 import { HomepageScrollStatement } from "@/components/homepage/scroll-statement";
 import { uploadScreenshot } from "@/lib/s3-upload-client";
+
+const ApiSelectionDialog = dynamic(() =>
+  import("@/features/integrations/components/api-selection-dialog").then(
+    (module) => module.ApiSelectionDialog,
+  ),
+);
+const HelpPanel = dynamic(
+  () => import("@/components/help-panel").then((module) => module.HelpPanel),
+  { ssr: false },
+);
+const OnboardingWizard = dynamic(
+  () =>
+    import("@/components/onboarding-wizard").then(
+      (module) => module.OnboardingWizard,
+    ),
+  { ssr: false },
+);
+const PricingModal = dynamic(
+  () =>
+    import("@/features/billing/components/pricing-modal").then(
+      (module) => module.PricingModal,
+    ),
+  { ssr: false },
+);
+const PromptBuilderModal = dynamic(
+  () =>
+    import("@/features/prompt-builder").then(
+      (module) => module.PromptBuilderModal,
+    ),
+  { ssr: false },
+);
+const PromptTemplateEditor = dynamic(
+  () =>
+    import("@/components/prompt-template-editor").then(
+      (module) => module.PromptTemplateEditor,
+    ),
+  { ssr: false },
+);
 
 const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/png",
@@ -621,31 +654,31 @@ const homepageStructuredData = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://squidagent.app/#organization",
+      "@id": `${SITE_URL}/#organization`,
       name: "Squid Agent",
-      url: "https://squidagent.app/",
-      logo: "https://squidagent.app/squidagent-logo-512.png",
+      url: `${SITE_URL}/`,
+      logo: `${SITE_URL}/squidagent-logo-512.png`,
       sameAs: [
         "https://www.instagram.com/drew.sepeczi",
         "https://github.com/drewsephski",
       ],
     },
     {
-      "@type": "WebApplication",
-      "@id": "https://squidagent.app/#software",
+      "@type": "SoftwareApplication",
+      "@id": `${SITE_URL}/#software`,
       name: "Squid Agent",
       alternateName: ["SquidAgent", "Squid Agent App Builder"],
       disambiguatingDescription:
         "Squid Agent is not Squid AI (getsquid.ai). It is an AI app builder focused on exportable React applications with plan mode, checkpoints, usage visibility, and verification before handoff.",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web",
-      url: "https://squidagent.app/",
-      image: "https://squidagent.app/api/og?card=site&v=3",
-      screenshot: "https://squidagent.app/api/og?card=site&v=3",
+      url: `${SITE_URL}/`,
+      image: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
+      screenshot: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
       description:
         "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
       creator: {
-        "@id": "https://squidagent.app/#organization",
+        "@id": `${SITE_URL}/#organization`,
       },
       offers: {
         "@type": "Offer",
@@ -673,17 +706,25 @@ const homepageStructuredData = {
     },
     {
       "@type": "WebSite",
-      "@id": "https://squidagent.app/#website",
+      "@id": `${SITE_URL}/#website`,
       name: "Squid Agent",
-      url: "https://squidagent.app/",
+      url: `${SITE_URL}/`,
       inLanguage: "en-US",
       publisher: {
-        "@id": "https://squidagent.app/#organization",
+        "@id": `${SITE_URL}/#organization`,
+      },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
       },
     },
     {
       "@type": "FAQPage",
-      "@id": "https://squidagent.app/#faq",
+      "@id": `${SITE_URL}/#faq`,
       mainEntity: homepageFaq.map((item) => ({
         "@type": "Question",
         name: item.question,
@@ -1112,7 +1153,6 @@ function HeroPopoutCard({
           src={popout.src}
           alt=""
           fill
-          unoptimized
           sizes="196px"
           draggable={false}
           className="hero-popout-image"
@@ -1337,7 +1377,7 @@ export default function Home() {
     data: creditsData,
     isError: creditsError,
     refetch: refetchCredits,
-  } = useUserCredits();
+  } = useUserCredits(Boolean(session));
   const createChatMutation = useCreateChat();
 
   const isAuthenticated = !!session;
@@ -1796,1938 +1836,657 @@ export default function Home() {
           ),
         }}
       />
-      <style>{`
-        .font-display {
-          font-family: 'Aeonik', var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-weight: 700;
-          letter-spacing: -0.045em;
-        }
-        .font-sans-dm { font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif; }
-        .font-mono-jb { font-family: ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; }
-        body[data-scroll-locked] { margin-right: 0 !important; }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(22px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(0,98,255,0); }
-          50% { box-shadow: 0 0 0 6px rgba(0,98,255,0.06); }
-        }
-        @keyframes floatDot {
-          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.4; }
-          50% { transform: translateY(-8px) scale(1.1); opacity: 0.7; }
-        }
-        @keyframes borderGlow {
-          0%, 100% { border-color: rgba(0,98,255,0.2); }
-          50% { border-color: rgba(0,98,255,0.5); }
-        }
-        .animate-fade-up { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) both; }
-        .animate-fade-up-1 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.06s both; }
-        .animate-fade-up-2 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.14s both; }
-        .animate-fade-up-3 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.24s both; }
-        .animate-fade-up-4 { animation: fadeUp 0.75s cubic-bezier(0.32, 0.72, 0, 1) 0.34s both; }
-        .animate-fade-in { animation: fadeIn 0.9s cubic-bezier(0.32, 0.72, 0, 1) both 0.45s; }
-
-        @media (prefers-reduced-motion: reduce) {
-          .animate-fade-up,
-          .animate-fade-up-1,
-          .animate-fade-up-2,
-          .animate-fade-up-3,
-          .animate-fade-up-4,
-          .animate-fade-in {
-            animation: none;
-            opacity: 1;
-            transform: none;
-          }
-          .hero-popout {
-            animation: none;
-            opacity: 0;
-          }
-        }
-
-        .hero-shell {
-          position: relative;
-          isolation: isolate;
-          overflow: hidden;
-        }
-
-        .hero-stage {
-          position: relative;
-          display: flex;
-          flex: 1;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          min-height: min(calc(100dvh - 4.5rem), 820px);
-          padding: 2.5rem 1.25rem 2.75rem;
-        }
-        @media (min-width: 640px) {
-          .hero-stage {
-            min-height: min(calc(100dvh - 5.25rem), 860px);
-            padding: 3.5rem 1.5rem 3.75rem;
-          }
-        }
-        @media (min-width: 1024px) {
-          .hero-stage {
-            padding-top: 4.75rem;
-            padding-bottom: 5rem;
-          }
-        }
-
-        .hero-popout-layer {
-          pointer-events: none;
-          position: absolute;
-          inset: 0;
-          z-index: 2;
-          overflow: visible;
-        }
-        .hero-popout {
-          position: absolute;
-          width: clamp(120px, 16vw, 196px);
-          aspect-ratio: 16 / 9;
-          transform: translate(-50%, -50%);
-          border-radius: 14px;
-          border: 1px solid hsl(var(--border) / 0.8);
-          background: hsl(var(--muted) / 0.35);
-          box-shadow:
-            0 16px 40px -22px rgba(15, 23, 42, 0.38),
-            0 0 0 1px hsl(var(--background));
-          overflow: hidden;
-          line-height: 0;
-          pointer-events: auto;
-          cursor: pointer;
-          padding: 0;
-          animation: heroPopoutLife 3.6s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-          will-change: transform, opacity;
-          transition:
-            box-shadow 180ms ease,
-            border-color 180ms ease;
-        }
-        .hero-popout:hover,
-        .hero-popout:focus-visible {
-          z-index: 4;
-          border-color: hsl(var(--primary) / 0.45);
-          box-shadow:
-            0 20px 44px -18px rgba(15, 23, 42, 0.42),
-            0 0 0 1px hsl(var(--primary) / 0.18);
-        }
-        .dark .hero-popout {
-          box-shadow:
-            0 18px 44px -20px rgba(0, 0, 0, 0.72),
-            0 0 0 1px hsl(var(--border) / 0.45);
-        }
-        .dark .hero-popout:hover,
-        .dark .hero-popout:focus-visible {
-          box-shadow:
-            0 22px 48px -16px rgba(0, 0, 0, 0.82),
-            0 0 0 1px hsl(var(--primary) / 0.28);
-        }
-        .hero-popout-image-wrap {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-          border-radius: inherit;
-        }
-        .hero-popout-image {
-          display: block;
-          pointer-events: none;
-          object-fit: cover;
-          object-position: top center;
-        }
-        @keyframes heroPopoutLife {
-          0% {
-            opacity: 0;
-            filter: blur(6px);
-            transform:
-              translate(-50%, -50%)
-              translate(var(--popout-entry-x, 0px), var(--popout-entry-y, 16px))
-              scale(calc(0.76 * var(--popout-scale, 1)))
-              rotate(calc(var(--popout-rotate, 0deg) - 5deg));
-          }
-          10% {
-            opacity: 0;
-            filter: blur(4px);
-          }
-          18% {
-            opacity: 0.98;
-            filter: blur(0);
-            transform:
-              translate(-50%, -50%)
-              translate(0, 0)
-              scale(var(--popout-scale, 1))
-              rotate(var(--popout-rotate, 0deg));
-          }
-          68% {
-            opacity: 0.98;
-            filter: blur(0);
-            transform:
-              translate(-50%, -50%)
-              translate(
-                calc(var(--popout-drift-x, 0px) * 0.55),
-                var(--popout-drift-y, -8px)
-              )
-              scale(calc(1.06 * var(--popout-scale, 1)))
-              rotate(calc(var(--popout-rotate, 0deg) + 1.5deg));
-          }
-          100% {
-            opacity: 0;
-            filter: blur(3px);
-            transform:
-              translate(-50%, -50%)
-              translate(var(--popout-drift-x, 0px), calc(var(--popout-drift-y, -8px) - 12px))
-              scale(calc(0.84 * var(--popout-scale, 1)))
-              rotate(calc(var(--popout-rotate, 0deg) - 2deg));
-          }
-        }
-
-        .hero-copy {
-          position: relative;
-          z-index: 3;
-          display: flex;
-          width: 100%;
-          max-width: 42rem;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 1rem;
-          padding-top: clamp(1rem, 4vh, 2.5rem);
-        }
-        @media (min-width: 640px) {
-          .hero-copy { gap: 1.15rem; }
-        }
-
-        .hero-brand {
-          display: block;
-          font-family: 'Aeonik', var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-weight: 700;
-          font-size: clamp(2.85rem, 8.5vw, 4.75rem);
-          line-height: 0.9;
-          letter-spacing: -0.06em;
-          color: hsl(var(--foreground));
-          text-wrap: balance;
-        }
-
-        .hero-headline {
-          display: block;
-          margin-top: 0.15rem;
-          font-family: 'Aeonik', var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-weight: 500;
-          font-size: clamp(1.45rem, 3.8vw, 2.15rem);
-          line-height: 1.15;
-          letter-spacing: -0.035em;
-          color: hsl(var(--foreground) / 0.9);
-          text-wrap: balance;
-        }
-        .hero-headline em {
-          font-style: italic;
-          font-weight: 500;
-          color: #0062FF;
-        }
-        .dark .hero-headline em { color: #0CA8FF; }
-
-        .hero-support {
-          max-width: 38ch;
-          margin-inline: auto;
-          font-size: 0.95rem;
-          line-height: 1.6;
-          letter-spacing: -0.011em;
-          color: hsl(var(--muted-foreground) / 0.82);
-          text-wrap: pretty;
-        }
-        @media (min-width: 640px) {
-          .hero-support {
-            font-size: 1.0625rem;
-            line-height: 1.65;
-          }
-        }
-
-        .starter-rail {
-          display: flex;
-          width: 100%;
-          flex-wrap: wrap;
-          align-items: center;
-          justify-content: center;
-          gap: 0.3rem 0.1rem;
-          margin-top: 1.25rem;
-        }
-        @media (min-width: 640px) {
-          .starter-rail { margin-top: 1.5rem; }
-        }
-
-        .starter-link {
-          display: inline-flex;
-          align-items: center;
-          padding: 0.45rem 0.8rem;
-          border-radius: 999px;
-          border: 0;
-          background: transparent;
-          color: hsl(var(--muted-foreground) / 0.92);
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-size: 12.5px;
-          font-weight: 500;
-          letter-spacing: -0.01em;
-          cursor: pointer;
-          transition:
-            color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-            background-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-            transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-            box-shadow 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        .starter-link:hover {
-          color: hsl(var(--foreground));
-          background: hsl(var(--muted) / 0.6);
-          transform: translateY(-1px);
-        }
-        .starter-link:active { transform: translateY(0) scale(0.98); }
-        .starter-link:focus-visible {
-          outline: none;
-          box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px rgba(0,98,255,0.55);
-        }
-        .starter-link.is-active {
-          color: #0062FF;
-          background: rgba(0,98,255,0.08);
-          box-shadow: inset 0 0 0 1px rgba(0,98,255,0.18);
-        }
-        .dark .starter-link.is-active {
-          color: #0CA8FF;
-          background: rgba(12,168,255,0.1);
-          box-shadow: inset 0 0 0 1px rgba(12,168,255,0.22);
-        }
-        .starter-sep {
-          width: 3px;
-          height: 3px;
-          border-radius: 50%;
-          background: hsl(var(--border) / 0.9);
-          flex-shrink: 0;
-        }
-
-        .compose-shell {
-          position: relative;
-          z-index: 3;
-          width: 100%;
-          max-width: 42rem;
-          border-radius: 24px;
-          padding: 5px;
-          background:
-            linear-gradient(160deg, hsl(var(--border) / 0.55), hsl(var(--border) / 0.15) 45%, hsl(var(--border) / 0.4));
-          box-shadow:
-            0 1px 0 hsl(var(--background) / 0.65) inset,
-            0 28px 60px -36px rgba(0, 98, 255, 0.28),
-            0 14px 36px -20px rgba(15, 23, 42, 0.2);
-        }
-        .dark .compose-shell {
-          background:
-            linear-gradient(160deg, hsl(var(--border) / 0.7), hsl(var(--border) / 0.2) 45%, hsl(var(--border) / 0.45));
-          box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.04) inset,
-            0 28px 60px -32px rgba(0, 98, 255, 0.35),
-            0 14px 36px -18px rgba(0, 0, 0, 0.55);
-        }
-
-        .compose-box {
-          position: relative;
-          border-radius: 19px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .compose-box::before {
-          content: '';
-          position: absolute;
-          inset: -1px;
-          border-radius: 20px;
-          padding: 1px;
-          background: linear-gradient(135deg, transparent 0%, rgba(0,98,255,0.18) 50%, transparent 100%);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        .compose-box:focus-within::before { opacity: 1; }
-
-        .compose-box-inner {
-          background: hsl(var(--background) / 0.9);
-          backdrop-filter: blur(20px) saturate(180%);
-          border: 1px solid hsl(var(--border) / 0.45);
-          border-radius: 19px;
-          transition:
-            border-color 0.25s ease,
-            box-shadow 0.25s ease,
-            min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .compose-box-inner:focus-within {
-          border-color: rgba(0,98,255,0.4);
-          box-shadow:
-            0 0 0 3px rgba(0,98,255,0.05),
-            inset 0 1px 0 rgba(255,255,255,0.35);
-        }
-        .compose-box-inner:hover:not(:focus-within) {
-          border-color: hsl(var(--border) / 0.75);
-        }
-
-        .dark .compose-box-inner {
-          background: hsl(var(--card) / 0.82);
-        }
-        .dark .compose-box-inner:focus-within {
-          box-shadow:
-            0 0 0 3px rgba(0,98,255,0.08),
-            inset 0 1px 0 rgba(255,255,255,0.06);
-        }
-
-        .toolbar-divider {
-          width: 1px;
-          height: 16px;
-          background: hsl(var(--border) / 0.6);
-        }
-
-        .compose-prompt-slot {
-          min-height: 118px;
-          transition: min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        @media (min-width: 640px) {
-          .compose-prompt-slot {
-            min-height: 90px;
-          }
-        }
-        .compose-prompt-slot.is-template {
-          min-height: 220px;
-        }
-        .compose-prompt-enter {
-          animation: compose-prompt-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        @keyframes compose-prompt-enter {
-          from {
-            opacity: 0;
-            transform: translateY(6px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .template-editor {
-          padding: 14px 16px 10px;
-        }
-        .template-editor-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-        .template-editor-heading {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          min-width: 0;
-        }
-        .template-editor-icon {
-          display: flex;
-          height: 28px;
-          width: 28px;
-          flex-shrink: 0;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          background: rgba(0,98,255,0.1);
-          color: #0062FF;
-        }
-        .dark .template-editor-icon {
-          color: #0CA8FF;
-        }
-        .template-editor-title {
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: -0.02em;
-          color: hsl(var(--foreground));
-        }
-        .template-editor-description {
-          margin-top: 2px;
-          font-size: 12px;
-          line-height: 1.45;
-          color: hsl(var(--muted-foreground) / 0.85);
-        }
-        .template-editor-actions {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-shrink: 0;
-        }
-        .template-research-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          border-radius: 999px;
-          border: 1px solid rgba(0,98,255,0.22);
-          background: rgba(0,98,255,0.06);
-          padding: 4px 9px;
-          font-size: 10.5px;
-          font-weight: 600;
-          letter-spacing: 0.02em;
-          color: #0062FF;
-        }
-        .dark .template-research-badge {
-          color: #0CA8FF;
-        }
-        .template-exit-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          border-radius: 999px;
-          border: 1px solid hsl(var(--border) / 0.65);
-          background: hsl(var(--background) / 0.7);
-          padding: 4px 9px;
-          font-size: 11px;
-          color: hsl(var(--muted-foreground));
-          transition: all 0.18s ease;
-        }
-        .template-exit-btn:hover {
-          color: hsl(var(--foreground));
-          border-color: hsl(var(--border));
-        }
-        .template-editor-body {
-          font-size: 15px;
-          line-height: 1.85;
-          color: hsl(var(--foreground) / 0.92);
-          padding-top: 4px;
-        }
-        .template-editor-text {
-          white-space: pre-wrap;
-        }
-        .template-field {
-          position: relative;
-          display: inline-flex;
-          align-items: baseline;
-          max-width: 100%;
-          margin: 0;
-          padding-bottom: 2px;
-          vertical-align: baseline;
-          transition: padding-bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .template-field.is-focused,
-        .template-field.has-value {
-          padding-bottom: 18px;
-        }
-        .template-field-measure {
-          position: absolute;
-          top: 0;
-          left: 0;
-          z-index: -1;
-          visibility: hidden;
-          white-space: pre;
-          font: inherit;
-          font-weight: 400;
-          padding: 0 4px 2px;
-          pointer-events: none;
-        }
-        .template-field.has-value .template-field-measure {
-          font-weight: 500;
-        }
-        .template-field.is-url .template-field-measure {
-          font-size: 14px;
-          font-weight: 400;
-        }
-        .template-field-input {
-          display: inline-block;
-          box-sizing: border-box;
-          min-width: 4ch;
-          max-width: min(100%, 52ch);
-          width: 8ch;
-          vertical-align: baseline;
-          border: 0;
-          border-bottom: 1.5px dashed rgba(0,98,255,0.35);
-          background: rgba(0,98,255,0.05);
-          padding: 0 4px 2px;
-          margin: 0;
-          font: inherit;
-          line-height: inherit;
-          color: hsl(var(--foreground));
-          outline: none;
-          border-radius: 6px 6px 0 0;
-          field-sizing: content;
-          transition:
-            background-color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-            box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .template-field.is-url .template-field-input {
-          max-width: min(100%, 56ch);
-          font-size: 14px;
-        }
-        .template-field-input::placeholder {
-          color: hsl(var(--muted-foreground) / 0.55);
-        }
-        .template-field.is-focused .template-field-input,
-        .template-field-input:focus {
-          border-bottom-style: solid;
-          border-bottom-color: rgba(0,98,255,0.75);
-          background: rgba(0,98,255,0.1);
-          box-shadow: 0 0 0 3px rgba(0,98,255,0.08);
-        }
-        .template-field.has-value .template-field-input {
-          border-bottom-color: rgba(0,98,255,0.55);
-          background: rgba(0,98,255,0.07);
-          font-weight: 500;
-        }
-        .template-field-punct {
-          display: inline;
-          margin: 0;
-          padding: 0;
-          color: inherit;
-          white-space: nowrap;
-        }
-        .template-field.has-trailing-punct .template-field-input {
-          border-bottom-right-radius: 0;
-          margin-right: 0;
-        }
-        .template-field-mirror {
-          display: inline;
-          border-bottom: 1.5px solid rgba(0,98,255,0.28);
-          padding: 0 2px 1px;
-          margin: 0;
-          font-weight: 500;
-          color: hsl(var(--foreground));
-          white-space: nowrap;
-        }
-        .template-field-mirror.has-trailing-punct {
-          padding-right: 0;
-        }
-        .template-field-caption {
-          position: absolute;
-          left: 0;
-          bottom: 1px;
-          z-index: 2;
-          font-size: 9px;
-          font-weight: 600;
-          letter-spacing: 0.07em;
-          text-transform: uppercase;
-          color: #0062FF;
-          background: hsl(var(--background) / 0.92);
-          border: 1px solid rgba(0,98,255,0.18);
-          border-radius: 5px;
-          padding: 2px 6px;
-          white-space: nowrap;
-          pointer-events: none;
-          box-shadow: 0 4px 12px rgba(0, 98, 255, 0.08);
-          opacity: 0;
-          transform: translateY(6px) scale(0.98);
-          transition:
-            opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-            transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-            box-shadow 0.22s ease;
-        }
-        .template-field-caption.is-visible {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-        .dark .template-field-caption {
-          color: #0CA8FF;
-          background: hsl(var(--card) / 0.95);
-        }
-        .template-editor-footer {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          margin-top: 14px;
-          padding-top: 10px;
-          border-top: 1px solid hsl(var(--border) / 0.45);
-        }
-        .template-field-hints {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px 14px;
-        }
-        .template-field-hint {
-          font-size: 11px;
-          line-height: 1.4;
-          color: hsl(var(--muted-foreground) / 0.8);
-        }
-        .template-field-hint strong {
-          color: hsl(var(--foreground) / 0.75);
-          font-weight: 600;
-        }
-        .template-status {
-          font-size: 11px;
-          font-weight: 500;
-        }
-        .template-status.is-pending {
-          color: hsl(var(--muted-foreground) / 0.75);
-        }
-        .template-status.is-ready {
-          color: #0062FF;
-        }
-        .dark .template-status.is-ready {
-          color: #0CA8FF;
-        }
-
-        .url-strip {
-          border-radius: 16px;
-          border: 1px solid hsl(var(--border) / 0.45);
-          background: hsl(var(--background) / 0.55);
-          backdrop-filter: blur(12px);
-          transition:
-            border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-            box-shadow 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-            background-color 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        .url-strip:focus-within {
-          border-color: rgba(0,98,255,0.35);
-          box-shadow: 0 0 0 3px rgba(0,98,255,0.05);
-        }
-
-        .build-btn {
-          position: relative;
-          overflow: hidden;
-          border-radius: 12px;
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-weight: 500;
-          letter-spacing: -0.01em;
-          transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .build-btn::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
-          pointer-events: none;
-        }
-        .build-btn:hover:not(:disabled) {
-          transform: translateY(-1px) scale(1.02);
-          box-shadow: 0 6px 20px rgba(0,98,255,0.3);
-        }
-        .build-btn:active:not(:disabled) {
-          transform: translateY(0) scale(0.99);
-        }
-
-        .select-trigger-custom {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 4px 8px;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 450;
-          color: hsl(var(--muted-foreground));
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          transition: all 0.15s ease;
-          cursor: pointer;
-          letter-spacing: -0.01em;
-        }
-        .select-trigger-custom:hover {
-          background: hsl(var(--muted) / 0.7);
-          color: hsl(var(--foreground));
-        }
-
-        .stat-dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: #22c55e;
-          animation: floatDot 2.4s ease-in-out infinite;
-          box-shadow: 0 0 6px rgba(34,197,94,0.5);
-        }
-
-        .screenshot-thumb {
-          border-radius: 10px;
-          overflow: hidden;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-          transition: transform 0.2s ease;
-        }
-        .screenshot-thumb:hover { transform: scale(1.03); }
-
-        .or-divider {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: hsl(var(--muted-foreground) / 0.55);
-          font-size: 12px;
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          letter-spacing: -0.01em;
-          font-weight: 500;
-        }
-        .or-divider::before, .or-divider::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: hsl(var(--border) / 0.4);
-        }
-
-        .upload-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 30px;
-          height: 30px;
-          border-radius: 8px;
-          color: hsl(var(--muted-foreground));
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-        .upload-btn:hover {
-          background: hsl(var(--muted) / 0.7);
-          color: hsl(var(--foreground));
-        }
-
-        .pro-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 2px;
-          padding: 1px 5px 1px 3px;
-          border-radius: 5px;
-          background: linear-gradient(120deg, rgba(0,98,255,0.16), rgba(12,168,255,0.14));
-          border: 1px solid rgba(0,98,255,0.25);
-          color: #0062FF;
-          font-size: 9px;
-          font-weight: 600;
-          letter-spacing: 0.03em;
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-        }
-        .dark .pro-badge { background: linear-gradient(120deg, rgba(0,98,255,0.22), rgba(12,168,255,0.18)); color: #93c5fd; border-color: rgba(12,168,255,0.3); }
-        .premium-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 2px;
-          padding: 1px 5px 1px 3px;
-          border-radius: 5px;
-          background: linear-gradient(120deg, rgba(245,158,11,0.18), rgba(250,204,21,0.18));
-          border: 1px solid rgba(245,158,11,0.32);
-          color: #b45309;
-          font-size: 9px;
-          font-weight: 650;
-          letter-spacing: 0.03em;
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-        }
-        .dark .premium-badge { background: linear-gradient(120deg, rgba(245,158,11,0.24), rgba(250,204,21,0.18)); color: #facc15; border-color: rgba(250,204,21,0.34); }
-
-        /* ---------- Premium model selector ---------- */
-        .model-trigger {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 4px 8px 4px 7px;
-          border-radius: 9px;
-          border: 1px solid transparent;
-          background: hsl(var(--muted) / 0.45);
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-          cursor: pointer;
-        }
-        .model-trigger:hover {
-          background: hsl(var(--muted) / 0.75);
-          border-color: hsl(var(--border) / 0.7);
-        }
-        .model-trigger[data-state="open"] {
-          background: hsl(var(--background));
-          border-color: rgba(0,98,255,0.35);
-          box-shadow: 0 0 0 3px rgba(0,98,255,0.07);
-        }
-        .model-status-dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: #22c55e;
-          box-shadow: 0 0 0 2px rgba(34,197,94,0.18);
-          flex-shrink: 0;
-        }
-        .model-trigger-label {
-          font-size: 11.5px;
-          font-weight: 500;
-          color: hsl(var(--foreground));
-          max-width: 88px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .model-select-content {
-          border-radius: 12px;
-          overflow: hidden;
-          background: hsl(var(--popover));
-          box-shadow: 0 16px 36px -14px rgba(0,0,0,0.28), 0 3px 12px rgba(0,0,0,0.06);
-          border: 1px solid hsl(var(--border) / 0.6);
-          transform-origin: var(--radix-select-content-transform-origin);
-          animation: selectContentIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
-          will-change: transform, opacity;
-        }
-        .model-select-content[data-state="closed"] {
-          animation: selectContentOut 0.12s ease-in;
-        }
-        .model-select-header {
-          padding: 8px 10px 7px;
-          border-bottom: 1px solid hsl(var(--border) / 0.5);
-          background: linear-gradient(180deg, rgba(0,98,255,0.05), transparent);
-        }
-        .model-select-header-title {
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-size: 11.5px;
-          font-weight: 600;
-          color: hsl(var(--foreground));
-        }
-        .model-select-header-sub {
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-size: 9.5px;
-          color: hsl(var(--muted-foreground));
-          margin-top: 0;
-        }
-
-        .model-item {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          padding: 6px 8px 6px 7px;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 12px;
-          line-height: 1.2;
-          transition: background 0.14s ease;
-        }
-        .model-item[data-highlighted] {
-          background: linear-gradient(90deg, rgba(0,98,255,0.08), rgba(12,168,255,0.03));
-          outline: none;
-        }
-
-        @keyframes selectContentIn {
-          from { opacity: 0; transform: translateY(4px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes selectContentOut {
-          from { opacity: 1; transform: translateY(0) scale(1); }
-          to { opacity: 0; transform: translateY(4px) scale(0.98); }
-        }
-        .model-item[data-disabled] {
-          opacity: 0.45;
-          cursor: not-allowed;
-        }
-        .model-item-tier-dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-        .model-item-tier-dot.is-free {
-          background: #22c55e;
-          box-shadow: 0 0 0 2px rgba(34,197,94,0.14);
-        }
-        .model-item-tier-dot.is-pro {
-          background: linear-gradient(135deg, #0062FF, #0CA8FF);
-          box-shadow: 0 0 0 2px rgba(0,98,255,0.14);
-        }
-        .model-item-tier-dot.is-premium {
-          background: linear-gradient(135deg, #f59e0b, #facc15);
-          box-shadow: 0 0 0 2px rgba(245,158,11,0.18);
-        }
-        .model-credit-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 2px;
-          padding: 1px 5px;
-          border-radius: 99px;
-          font-size: 9.5px;
-          font-weight: 600;
-          font-family: ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
-          background: hsl(var(--muted) / 0.6);
-        }
-
-        /* ---------- Plan mode toggle ---------- */
-        .plan-mode-toggle {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 7px 9px;
-          border: 1px solid transparent;
-          border-radius: 8px;
-          background: hsl(var(--muted) / 0.5);
-          font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
-          font-size: 12.5px;
-          font-weight: 500;
-          letter-spacing: -0.01em;
-          color: hsl(var(--muted-foreground));
-          cursor: pointer;
-          transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-          white-space: nowrap;
-        }
-        .plan-mode-toggle:hover {
-          color: hsl(var(--foreground));
-        }
-        .plan-mode-toggle.is-active {
-          color: #0062FF;
-          border-color: rgb(0 98 255 / 0.22);
-          background: rgb(0 98 255 / 0.08);
-          box-shadow: 0 0 0 1px rgb(0 98 255 / 0.04);
-        }
-        .dark .plan-mode-toggle.is-active {
-          color: #0CA8FF;
-        }
-
-        @media (max-width: 639px) {
-          .select-trigger-custom {
-            min-height: 34px;
-            padding: 6px 8px;
-          }
-
-          .upload-btn {
-            width: 34px;
-            height: 34px;
-          }
-
-          .build-btn {
-            min-height: 42px;
-            min-width: 88px;
-          }
-
-          .model-trigger-label { max-width: 60px; }
-        }
-
-        /* ---------- Research-to-ship workflow ---------- */
-        .workflow-rail {
-          overflow: visible;
-          background: none;
-        }
-        .workflow-rail-path {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          overflow: visible;
-          pointer-events: none;
-        }
-        .workflow-rail-line,
-        .workflow-rail-glow {
-          fill: none;
-          vector-effect: non-scaling-stroke;
-        }
-        .workflow-rail-line {
-          stroke: hsl(var(--border));
-          stroke-width: 1;
-        }
-        .workflow-rail-glow {
-          stroke: rgba(0, 98, 255, 0.1);
-          stroke-width: 12;
-          filter: blur(5px);
-        }
-        .workflow-beam-path {
-          fill: none;
-          stroke: rgba(186, 230, 253, 1);
-          stroke-width: 2.8;
-          stroke-linecap: round;
-          vector-effect: non-scaling-stroke;
-          filter:
-            drop-shadow(0 0 3px rgba(255, 255, 255, 0.8))
-            drop-shadow(0 0 8px rgba(12, 168, 255, 0.95))
-            drop-shadow(0 0 22px rgba(0, 98, 255, 0.55));
-          opacity: 0;
-          pointer-events: none;
-          will-change: stroke-width, opacity;
-        }
-        .workflow-beam-path-glow {
-          fill: none;
-          stroke: rgba(0, 98, 255, 0.5);
-          stroke-width: 12;
-          stroke-linecap: round;
-          vector-effect: non-scaling-stroke;
-          filter: blur(6px) drop-shadow(0 0 28px rgba(0, 98, 255, 0.5));
-          opacity: 0;
-          pointer-events: none;
-          will-change: stroke-width, opacity;
-        }
-        .workflow-beam {
-          --beam-energy: 0;
-          --beam-position: 0%;
-          --beam-offset-x: 0px;
-          --beam-angle: 0deg;
-          position: absolute;
-          left: calc(50% + var(--beam-offset-x));
-          top: var(--beam-position);
-          z-index: 2;
-          width: 3.5px;
-          height: clamp(58px, 8vh, 92px);
-          transform: translate(-50%, -50%) rotate(var(--beam-angle)) scaleY(calc(1 + var(--beam-energy) * 0.55));
-          transform-origin: center;
-          border-radius: 999px;
-          background: linear-gradient(
-            to bottom,
-            transparent 0%,
-            rgba(0, 98, 255, 0.35) 22%,
-            rgba(0, 98, 255, 0.92) 62%,
-            rgba(12, 168, 255, 1) 80%,
-            rgba(219, 234, 254, 0.98) 90%,
-            transparent 100%
-          );
-          filter: drop-shadow(0 0 6px rgba(0, 98, 255, 0.95));
-          opacity: 0;
-          pointer-events: none;
-          will-change: top, left, transform, opacity;
-        }
-        .workflow-beam::before {
-          content: '';
-          position: absolute;
-          inset: 8% 50%;
-          width: 28px;
-          transform: translateX(-50%);
-          border-radius: 999px;
-          background: inherit;
-          filter: blur(12px);
-          opacity: calc(0.35 + var(--beam-energy) * 0.55);
-        }
-        .workflow-beam::after {
-          content: '';
-          position: absolute;
-          left: 50%;
-          top: 82%;
-          width: 8px;
-          height: 8px;
-          transform: translate(-50%, -50%);
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.98);
-          box-shadow:
-            0 0 6px rgba(255, 255, 255, 0.95),
-            0 0 16px rgba(12, 168, 255, 0.95),
-            0 0 34px rgba(0, 98, 255, 0.8);
-        }
-        .workflow-beam[data-direction='up'] {
-          background: linear-gradient(
-            to top,
-            transparent 0%,
-            rgba(0, 98, 255, 0.35) 22%,
-            rgba(0, 98, 255, 0.92) 62%,
-            rgba(12, 168, 255, 1) 80%,
-            rgba(219, 234, 254, 0.98) 90%,
-            transparent 100%
-          );
-        }
-        .workflow-beam[data-direction='up']::after {
-          top: 18%;
-        }
-        .workflow-card {
-          transition:
-            translate 280ms cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 280ms ease,
-            background-color 280ms ease,
-            box-shadow 280ms ease;
-        }
-        .workflow-card-check {
-          transition:
-            background-color 240ms ease,
-            box-shadow 240ms ease,
-            color 240ms ease;
-        }
-        .workflow-node {
-          transition:
-            translate 260ms cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 260ms ease,
-            box-shadow 260ms ease;
-        }
-        .workflow-node[data-zigzag-side='left'] {
-          translate: -16px 0;
-        }
-        .workflow-node[data-zigzag-side='right'] {
-          translate: 16px 0;
-        }
-
-        @media (hover: hover) and (pointer: fine) {
-          .workflow-card:hover {
-            translate: 0 -3px;
-            border-color: rgba(0, 98, 255, 0.24);
-            background-color: hsl(var(--background) / 0.92);
-            box-shadow:
-              0 24px 58px -38px rgba(0, 0, 0, 0.72),
-              0 0 0 1px rgba(0, 98, 255, 0.035),
-              0 10px 36px -28px rgba(0, 98, 255, 0.42);
-          }
-          .workflow-card:hover .workflow-card-check {
-            background-color: rgba(0, 98, 255, 0.16);
-            box-shadow: 0 0 14px rgba(0, 98, 255, 0.18);
-          }
-          .workflow-step:hover .workflow-node {
-            border-color: rgba(0, 98, 255, 0.48);
-            box-shadow:
-              0 0 0 6px hsl(var(--background)),
-              0 0 32px rgba(0, 98, 255, 0.35);
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .workflow-beam,
-          .workflow-beam-path,
-          .workflow-beam-path-glow {
-            opacity: 0.45 !important;
-          }
-          .workflow-card,
-          .workflow-card-check,
-          .workflow-node {
-            transition: none;
-          }
-          .workflow-card:hover {
-            translate: none;
-          }
-        }
-
-        /* ---------- Interactive product workflow (Idea → Ship rail) ---------- */
-        .flow-rail-track,
-        .flow-rail-progress,
-        .flow-rail-trace {
-          fill: none;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-          vector-effect: non-scaling-stroke;
-        }
-        .flow-rail-track {
-          stroke: hsl(var(--border));
-          stroke-width: 1.5;
-        }
-        .flow-rail-trace {
-          stroke: rgb(59 130 246 / 0.28);
-          stroke-width: 1.5;
-          stroke-dasharray: 10 8;
-          stroke-dashoffset: 54;
-          animation: flow-rail-trace 2.4s linear infinite;
-        }
-        .flow-rail-progress {
-          stroke: rgb(59 130 246);
-          stroke-width: 2.75;
-        }
-        .flow-rail-progress-glow {
-          fill: none;
-          stroke: rgb(59 130 246 / 0.18);
-          stroke-width: 10;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-          vector-effect: non-scaling-stroke;
-        }
-        .flow-rail-marker {
-          fill: rgb(255 255 255);
-          stroke: rgb(59 130 246);
-          stroke-width: 3;
-          filter: drop-shadow(0 0 10px rgb(59 130 246 / 0.9));
-        }
-        .flow-rail-pulse {
-          fill: rgb(59 130 246 / 0.14);
-          stroke: rgb(59 130 246 / 0.28);
-          stroke-width: 1;
-          animation: flow-rail-pulse 2.2s ease-in-out infinite;
-          transform-box: fill-box;
-          transform-origin: center;
-        }
-        .flow-node {
-          position: absolute;
-          transform: translate(-50%, -50%);
-        }
-        .flow-node[data-active="true"] .flow-node-ring {
-          animation: flow-node-pulse 3.2s ease-in-out infinite;
-        }
-        .flow-node[data-complete="true"] .flow-node-dot {
-          background: rgb(59 130 246);
-          color: white;
-          border-color: rgb(59 130 246);
-        }
-        .flow-active-card {
-          animation: flow-card-enter 360ms cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .flow-artifact {
-          opacity: 0;
-          animation: flow-artifact-enter 320ms ease forwards;
-        }
-        @keyframes flow-card-enter {
-          from { opacity: 0.45; transform: translateY(7px) scale(0.985); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes flow-artifact-enter {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes flow-rail-trace {
-          to { stroke-dashoffset: 0; }
-        }
-        @keyframes flow-rail-pulse {
-          0%, 100% { opacity: 0.45; transform: scale(0.82); }
-          50% { opacity: 1; transform: scale(1.2); }
-        }
-        @keyframes flow-node-pulse {
-          0%, 72%, 100% { box-shadow: 0 0 0 0 rgb(59 130 246 / 0); }
-          18%, 36% { box-shadow: 0 0 0 8px rgb(59 130 246 / 0.12); }
-        }
-        @media (max-width: 767px) {
-          .flow-node,
-          .flow-node:nth-child(n) {
-            position: static;
-            transform: none;
-          }
-          .flow-stage {
-            min-height: auto;
-            overflow: visible;
-          }
-          .flow-nodes {
-            scrollbar-width: none;
-          }
-          .flow-nodes::-webkit-scrollbar {
-            display: none;
-          }
-          .flow-rail-trace {
-            animation: none;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .flow-active-card { animation: none; }
-          .flow-rail-marker,
-          .flow-rail-pulse,
-          .flow-rail-trace,
-          .flow-node[data-active="true"] .flow-node-ring { animation: none; }
-          .flow-artifact { opacity: 1; animation: none; }
-        }
-
-        .showcase-rail {
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-        }
-        .showcase-rail::-webkit-scrollbar {
-          display: none;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .showcase-capabilities {
-            opacity: 1;
-            transform: none;
-          }
-          .showcase-preview-hint {
-            opacity: 0;
-          }
-        }
-      `}</style>
 
       <div className="font-sans-dm relative flex min-h-svh w-full flex-col overflow-x-clip">
         <Header onHelpClick={() => setShowHelpPanel(true)} />
 
-        <div className="hero-shell" data-testid="hero-shell">
-          <div className="hero-stage" data-testid="hero-stage">
-            <HeroPopoutShowcases onSelectPrompt={handleGalleryPromptSelect} />
-            {/* Hero copy */}
-            <div className="hero-copy" data-hero-popout-exclude="copy">
-              <h1 className="animate-fade-up">
-                <span className="hero-brand">Squid Agent</span>
-                <span className="hero-headline">
-                  The AI app builder for React apps you <em>own</em>.
-                </span>
-              </h1>
+        <main>
+          <div className="hero-shell" data-testid="hero-shell">
+            <div className="hero-stage" data-testid="hero-stage">
+              <HeroPopoutShowcases onSelectPrompt={handleGalleryPromptSelect} />
+              {/* Hero copy */}
+              <div className="hero-copy" data-hero-popout-exclude="copy">
+                <h1 className="animate-fade-up">
+                  <span className="hero-brand">Squid Agent</span>
+                  <span className="hero-headline">
+                    The AI app builder for React apps you <em>own</em>.
+                  </span>
+                </h1>
 
-              <p className="hero-support animate-fade-up-1">
-                Research live sources, approve the plan, then generate, verify,
-                and export production-ready React code.
-              </p>
-            </div>
+                <p className="hero-support animate-fade-up-1">
+                  Research live sources, approve the plan, then generate,
+                  verify, and export production-ready React code.
+                </p>
+              </div>
 
-            {/* Main form */}
-            <form
-              id="builder"
-              data-hero-popout-exclude="compose"
-              className="animate-fade-up-2 relative z-[3] w-full max-w-2xl pt-8 sm:pt-10 lg:pt-12"
-              action={async (formData) => {
-                setIsCheckingEligibility(true);
-                const currentModel = (formData.get("model") as string) || model;
-                const submittedPrompt = prompt.trim();
-                const formQuality = formData.get("quality");
-                const submittedQuality =
-                  formQuality === "high" ? "high" : "low";
+              {/* Main form */}
+              <form
+                id="builder"
+                data-hero-popout-exclude="compose"
+                className="animate-fade-up-2 relative z-[3] w-full max-w-2xl pt-8 sm:pt-10 lg:pt-12"
+                action={async (formData) => {
+                  setIsCheckingEligibility(true);
+                  const currentModel =
+                    (formData.get("model") as string) || model;
+                  const submittedPrompt = prompt.trim();
+                  const formQuality = formData.get("quality");
+                  const submittedQuality =
+                    formQuality === "high" ? "high" : "low";
 
-                try {
-                  // Require authentication before allowing chat creation
-                  const session = await authClient.getSession();
-                  if (!session.data) {
-                    if (!submittedPrompt) {
-                      toast.error("Enter a prompt before creating an account");
+                  try {
+                    // Require authentication before allowing chat creation
+                    const session = await authClient.getSession();
+                    if (!session.data) {
+                      if (!submittedPrompt) {
+                        toast.error(
+                          "Enter a prompt before creating an account",
+                        );
+                        return;
+                      }
+
+                      savePendingProject({
+                        prompt: submittedPrompt,
+                        model: currentModel,
+                        quality: submittedQuality,
+                        screenshotData,
+                        screenshotUrl,
+                        providerIds: selectedProviderIds,
+                      });
+                      toast.info("Create an account to start building");
+                      router.push(
+                        `/sign-up?callbackUrl=${encodeURIComponent("/")}`,
+                      );
                       return;
                     }
 
-                    savePendingProject({
+                    assert.ok(submittedPrompt.length > 0);
+                    assert.ok(typeof currentModel === "string");
+                    assert.ok(
+                      submittedQuality === "high" || submittedQuality === "low",
+                    );
+
+                    const created = await createProjectAndGoToChat({
                       prompt: submittedPrompt,
                       model: currentModel,
                       quality: submittedQuality,
-                      screenshotData,
                       screenshotUrl,
+                      screenshotData,
                       providerIds: selectedProviderIds,
                     });
-                    toast.info("Create an account to start building");
-                    router.push(
-                      `/sign-up?callbackUrl=${encodeURIComponent("/")}`,
+                    if (created) {
+                      clearPendingProject();
+                    }
+                  } catch (error: unknown) {
+                    const message = getErrorMessage(
+                      error,
+                      "Failed to create project",
                     );
-                    return;
+                    if (message.includes("free projects")) {
+                      showProjectLimitPricing();
+                      return;
+                    }
+                    toast.error(message);
+                  } finally {
+                    setIsCheckingEligibility(false);
                   }
-
-                  assert.ok(submittedPrompt.length > 0);
-                  assert.ok(typeof currentModel === "string");
-                  assert.ok(
-                    submittedQuality === "high" || submittedQuality === "low",
-                  );
-
-                  const created = await createProjectAndGoToChat({
-                    prompt: submittedPrompt,
-                    model: currentModel,
-                    quality: submittedQuality,
-                    screenshotUrl,
-                    screenshotData,
-                    providerIds: selectedProviderIds,
-                  });
-                  if (created) {
-                    clearPendingProject();
-                  }
-                } catch (error: unknown) {
-                  const message = getErrorMessage(
-                    error,
-                    "Failed to create project",
-                  );
-                  if (message.includes("free projects")) {
-                    showProjectLimitPricing();
-                    return;
-                  }
-                  toast.error(message);
-                } finally {
-                  setIsCheckingEligibility(false);
-                }
-              }}
-            >
-              <Fieldset className="min-w-0">
-                {isAuthenticated && creditsError && (
-                  <CreditsLoadError
-                    className="mb-3"
-                    onRetryAction={() => void refetchCredits()}
-                  />
-                )}
-                {/* Compose box */}
-                <div className="compose-shell">
-                  <div className="compose-box w-full">
-                    <div className="compose-box-inner relative w-full pb-16 sm:pb-11">
-                      {/* Screenshot preview */}
-                      {screenshotLoading && (
-                        <div className="mx-3 mt-3">
-                          <div className="flex h-[52px] w-[60px] animate-pulse items-center justify-center rounded-xl bg-muted/60">
-                            <Spinner />
+                }}
+              >
+                <Fieldset className="min-w-0">
+                  {isAuthenticated && creditsError && (
+                    <CreditsLoadError
+                      className="mb-3"
+                      onRetryAction={() => void refetchCredits()}
+                    />
+                  )}
+                  {/* Compose box */}
+                  <div className="compose-shell">
+                    <div className="compose-box w-full">
+                      <div className="compose-box-inner relative w-full sm:pb-11">
+                        {/* Screenshot preview */}
+                        {screenshotLoading && (
+                          <div className="mx-3 mt-3">
+                            <div className="flex h-[52px] w-[60px] animate-pulse items-center justify-center rounded-xl bg-muted/60">
+                              <Spinner />
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {(screenshotUrl || screenshotData) &&
-                        !screenshotLoading && (
-                          <div
-                            className={`${isPending ? "invisible" : ""} relative mx-3 mt-3 inline-block`}
-                          >
-                            <div className="screenshot-thumb">
-                              <img
-                                alt="screenshot"
-                                src={screenshotData ?? screenshotUrl}
-                                className="h-[52px] w-[60px] object-cover"
+                        )}
+                        {(screenshotUrl || screenshotData) &&
+                          !screenshotLoading && (
+                            <div
+                              className={`${isPending ? "invisible" : ""} relative mx-3 mt-3 inline-block`}
+                            >
+                              <div className="screenshot-thumb">
+                                <img
+                                  alt="Uploaded app design reference"
+                                  src={screenshotData ?? screenshotUrl}
+                                  className="h-[52px] w-[60px] object-cover"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border/50 transition-colors hover:text-foreground dark:bg-card"
+                                onClick={clearScreenshot}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                  className="size-3.5"
+                                >
+                                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+
+                        {/* Prompt input */}
+                        <div
+                          className={`compose-prompt-slot ${activeTemplate ? "is-template" : ""}`}
+                        >
+                          {activeTemplate ? (
+                            <div
+                              key={activeTemplate.id}
+                              className="compose-prompt-enter"
+                            >
+                              <PromptTemplateEditor
+                                template={activeTemplate}
+                                values={templateValues}
+                                onValuesChange={setTemplateValues}
+                                onCompiledPromptChange={
+                                  handleTemplateCompiledPrompt
+                                }
+                                onExitTemplate={handleExitTemplate}
                               />
                             </div>
-                            <button
-                              type="button"
-                              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-background text-muted-foreground shadow ring-1 ring-border/50 transition-colors hover:text-foreground dark:bg-card"
-                              onClick={clearScreenshot}
+                          ) : (
+                            <div
+                              key="freeform"
+                              className="compose-prompt-enter"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                                className="size-3.5"
+                              <Textarea
+                                ref={textareaRef}
+                                placeholder="Build me a budgeting app..."
+                                required
+                                name="prompt"
+                                className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
+                                value={prompt}
+                                onChange={(e) => {
+                                  if (
+                                    e.target.value &&
+                                    promptStartedAtRef.current === null
+                                  ) {
+                                    promptStartedAtRef.current = Date.now();
+                                    plausible("Prompt Started", {
+                                      props: {
+                                        source: "homepage",
+                                        method: "typing",
+                                      },
+                                    });
+                                  }
+                                  setPrompt(e.target.value);
+                                }}
+                                onKeyDown={(event) => {
+                                  if (
+                                    event.key === "Enter" &&
+                                    !event.shiftKey
+                                  ) {
+                                    event.preventDefault();
+                                    const target = event.target;
+                                    if (
+                                      !(target instanceof HTMLTextAreaElement)
+                                    )
+                                      return;
+                                    target.closest("form")?.requestSubmit();
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Toolbar */}
+                        <div className="compose-toolbar">
+                          {/* Left controls */}
+                          <div className="compose-toolbar-leading">
+                            {/* Model selector: premium trigger */}
+                            <Select.Root
+                              name="model"
+                              open={isModelSelectOpen}
+                              value={model}
+                              onOpenChange={handleModelSelectOpenChange}
+                              onValueChange={handleModelChange}
+                            >
+                              <Select.Trigger
+                                aria-label="Select AI model"
+                                className="model-trigger"
                               >
-                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-
-                      {/* Prompt input */}
-                      <div
-                        className={`compose-prompt-slot ${activeTemplate ? "is-template" : ""}`}
-                      >
-                        {activeTemplate ? (
-                          <div
-                            key={activeTemplate.id}
-                            className="compose-prompt-enter"
-                          >
-                            <PromptTemplateEditor
-                              template={activeTemplate}
-                              values={templateValues}
-                              onValuesChange={setTemplateValues}
-                              onCompiledPromptChange={
-                                handleTemplateCompiledPrompt
-                              }
-                              onExitTemplate={handleExitTemplate}
-                            />
-                          </div>
-                        ) : (
-                          <div key="freeform" className="compose-prompt-enter">
-                            <Textarea
-                              ref={textareaRef}
-                              placeholder="Build me a budgeting app..."
-                              required
-                              name="prompt"
-                              className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
-                              value={prompt}
-                              onChange={(e) => {
-                                if (
-                                  e.target.value &&
-                                  promptStartedAtRef.current === null
-                                ) {
-                                  promptStartedAtRef.current = Date.now();
-                                  plausible("Prompt Started", {
-                                    props: {
-                                      source: "homepage",
-                                      method: "typing",
-                                    },
-                                  });
-                                }
-                                setPrompt(e.target.value);
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" && !event.shiftKey) {
-                                  event.preventDefault();
-                                  const target = event.target;
-                                  if (!(target instanceof HTMLTextAreaElement))
-                                    return;
-                                  target.closest("form")?.requestSubmit();
-                                }
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Toolbar */}
-                      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-3 pb-3 pt-1">
-                        {/* Left controls */}
-                        <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-                          {/* Model selector: premium trigger */}
-                          <Select.Root
-                            name="model"
-                            open={isModelSelectOpen}
-                            value={model}
-                            onOpenChange={handleModelSelectOpenChange}
-                            onValueChange={handleModelChange}
-                          >
-                            <Select.Trigger className="model-trigger">
-                              <span className="model-status-dot" />
-                              <Select.Value aria-label={model}>
-                                <span className="flex min-w-0 items-center gap-1.5">
-                                  <span className="model-trigger-label">
-                                    {currentModelOption?.label ??
-                                      "Select model"}
-                                  </span>
-                                  {currentModelOption?.paid && (
-                                    <span
-                                      className={
-                                        currentModelOption.group === "premium"
-                                          ? "premium-badge"
-                                          : "pro-badge"
-                                      }
-                                    >
-                                      <Sparkles className="size-2.5" />
-                                      {currentModelOption.group === "premium"
-                                        ? "PREMIUM"
-                                        : "PRO"}
+                                <span className="model-status-dot" />
+                                <Select.Value aria-label={model} asChild>
+                                  <span className="model-trigger-value flex min-w-0 items-center gap-1.5">
+                                    <span className="model-trigger-label">
+                                      {currentModelOption?.label ??
+                                        "Select model"}
                                     </span>
-                                  )}
-                                </span>
-                              </Select.Value>
-                              <Select.Icon>
-                                <ChevronDownIcon className="size-3 opacity-50" />
-                              </Select.Icon>
-                            </Select.Trigger>
-                            <Select.Portal>
-                              <Select.Content
-                                position="popper"
-                                side="top"
-                                align="start"
-                                sideOffset={8}
-                                collisionPadding={12}
-                                className="model-select-content max-w-[calc(100vw-1.5rem)] sm:min-w-[226px]"
-                              >
-                                <div className="model-select-header">
-                                  <div className="model-select-header-title">
-                                    Choose a model
+                                    {currentModelOption?.paid && (
+                                      <span
+                                        className={
+                                          currentModelOption.group === "premium"
+                                            ? "premium-badge"
+                                            : "pro-badge"
+                                        }
+                                      >
+                                        <Sparkles className="size-2.5" />
+                                        {currentModelOption.group === "premium"
+                                          ? "PREMIUM"
+                                          : "PRO"}
+                                      </span>
+                                    )}
+                                  </span>
+                                </Select.Value>
+                                <Select.Icon>
+                                  <ChevronDownIcon className="size-3 opacity-50" />
+                                </Select.Icon>
+                              </Select.Trigger>
+                              <Select.Portal>
+                                <Select.Content
+                                  position="popper"
+                                  side="top"
+                                  align="start"
+                                  sideOffset={8}
+                                  collisionPadding={12}
+                                  className="model-select-content max-w-[calc(100vw-1.5rem)] sm:min-w-[226px]"
+                                >
+                                  <div className="model-select-header">
+                                    <div className="model-select-header-title">
+                                      Choose a model
+                                    </div>
+                                    <div className="model-select-header-sub">
+                                      Swap any time - cost updates instantly
+                                    </div>
                                   </div>
-                                  <div className="model-select-header-sub">
-                                    Swap any time - cost updates instantly
-                                  </div>
-                                </div>
-                                <Select.Viewport className="p-1">
-                                  {[
-                                    ...(modelOptionsByGroup.free.length > 0
-                                      ? [
-                                          {
-                                            label: "Starter Models",
-                                            models: modelOptionsByGroup.free,
-                                          },
-                                        ]
-                                      : []),
-                                    ...(modelOptionsByGroup.paid.length > 0
-                                      ? [
-                                          {
-                                            label:
-                                              "Efficient & Advanced Models",
-                                            models: modelOptionsByGroup.paid,
-                                          },
-                                        ]
-                                      : []),
-                                    ...(modelOptionsByGroup.premium.length > 0
-                                      ? [
-                                          {
-                                            label: "Premium Models",
-                                            models: modelOptionsByGroup.premium,
-                                          },
-                                        ]
-                                      : []),
-                                  ].map((group) => (
-                                    <Select.Group key={group.label}>
-                                      <Select.Label className="px-2 pb-0.5 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
-                                        {group.label}
-                                      </Select.Label>
-                                      {group.models.map((m) => {
-                                        const isLocked = !canUseModel(m.value);
-                                        const creditRange = getModelCreditRange(
-                                          m.value,
-                                        );
-                                        const creditLabel =
-                                          creditRange.min === creditRange.max
-                                            ? `${creditRange.min}`
-                                            : `from ${creditRange.min}`;
-                                        const creditBadgeClass =
-                                          getCreditBadgeClass(m.group);
-                                        const tierDotClass =
-                                          m.group === "premium"
-                                            ? "is-premium"
-                                            : m.group === "free"
-                                              ? "is-free"
-                                              : "is-pro";
+                                  <Select.Viewport className="p-1">
+                                    {[
+                                      ...(modelOptionsByGroup.free.length > 0
+                                        ? [
+                                            {
+                                              label: "Starter Models",
+                                              models: modelOptionsByGroup.free,
+                                            },
+                                          ]
+                                        : []),
+                                      ...(modelOptionsByGroup.paid.length > 0
+                                        ? [
+                                            {
+                                              label:
+                                                "Efficient & Advanced Models",
+                                              models: modelOptionsByGroup.paid,
+                                            },
+                                          ]
+                                        : []),
+                                      ...(modelOptionsByGroup.premium.length > 0
+                                        ? [
+                                            {
+                                              label: "Premium Models",
+                                              models:
+                                                modelOptionsByGroup.premium,
+                                            },
+                                          ]
+                                        : []),
+                                    ].map((group) => (
+                                      <Select.Group key={group.label}>
+                                        <Select.Label className="px-2 pb-0.5 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+                                          {group.label}
+                                        </Select.Label>
+                                        {group.models.map((m) => {
+                                          const isLocked = !canUseModel(
+                                            m.value,
+                                          );
+                                          const creditRange =
+                                            getModelCreditRange(m.value);
+                                          const creditLabel =
+                                            creditRange.min === creditRange.max
+                                              ? `${creditRange.min}`
+                                              : `from ${creditRange.min}`;
+                                          const creditBadgeClass =
+                                            getCreditBadgeClass(m.group);
+                                          const tierDotClass =
+                                            m.group === "premium"
+                                              ? "is-premium"
+                                              : m.group === "free"
+                                                ? "is-free"
+                                                : "is-pro";
 
-                                        return (
-                                          <Select.Item
-                                            key={m.value}
-                                            value={m.value}
-                                            disabled={isLocked}
-                                            onClick={() => {
-                                              if (isLocked)
-                                                setShowPricingModal(true);
-                                            }}
-                                            onFocus={restoreModelSelectScroll}
-                                            className={`model-item ${isLocked ? "opacity-50" : ""}`}
-                                          >
-                                            <div className="flex min-w-0 items-center gap-2">
-                                              <span
-                                                className={`model-item-tier-dot ${tierDotClass}`}
-                                              />
-                                              <Select.ItemText
-                                                className={
-                                                  m.free
-                                                    ? "font-medium text-emerald-600 dark:text-emerald-400"
-                                                    : "text-foreground"
-                                                }
-                                              >
-                                                {m.label}
-                                              </Select.ItemText>
-                                              {isLocked && (
+                                          return (
+                                            <Select.Item
+                                              key={m.value}
+                                              value={m.value}
+                                              disabled={isLocked}
+                                              onClick={() => {
+                                                if (isLocked)
+                                                  setShowPricingModal(true);
+                                              }}
+                                              onFocus={restoreModelSelectScroll}
+                                              className={`model-item ${isLocked ? "opacity-50" : ""}`}
+                                            >
+                                              <div className="flex min-w-0 items-center gap-2">
                                                 <span
+                                                  className={`model-item-tier-dot ${tierDotClass}`}
+                                                />
+                                                <Select.ItemText
                                                   className={
-                                                    m.group === "premium"
-                                                      ? "premium-badge"
-                                                      : "pro-badge"
+                                                    m.free
+                                                      ? "font-medium text-emerald-600 dark:text-emerald-400"
+                                                      : "text-foreground"
                                                   }
                                                 >
-                                                  <Sparkles className="size-2" />
-                                                  {m.group === "premium"
-                                                    ? "PREMIUM"
-                                                    : "PRO"}
+                                                  {m.label}
+                                                </Select.ItemText>
+                                                {isLocked && (
+                                                  <span
+                                                    className={
+                                                      m.group === "premium"
+                                                        ? "premium-badge"
+                                                        : "pro-badge"
+                                                    }
+                                                  >
+                                                    <Sparkles className="size-2" />
+                                                    {m.group === "premium"
+                                                      ? "PREMIUM"
+                                                      : "PRO"}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <div className="flex flex-shrink-0 items-center gap-2">
+                                                <span
+                                                  className={`model-credit-pill ${creditBadgeClass}`}
+                                                >
+                                                  {creditLabel}
+                                                  <Coins
+                                                    className={`size-2 ${creditBadgeClass}`}
+                                                  />
                                                 </span>
-                                              )}
-                                            </div>
-                                            <div className="flex flex-shrink-0 items-center gap-2">
-                                              <span
-                                                className={`model-credit-pill ${creditBadgeClass}`}
-                                              >
-                                                {creditLabel}
-                                                <Coins
-                                                  className={`size-2 ${creditBadgeClass}`}
-                                                />
-                                              </span>
-                                              <Select.ItemIndicator>
-                                                <CheckIcon className="size-3.5 text-primary" />
-                                              </Select.ItemIndicator>
-                                            </div>
-                                          </Select.Item>
-                                        );
-                                      })}
-                                    </Select.Group>
-                                  ))}
-                                </Select.Viewport>
-                                <Select.Arrow />
-                              </Select.Content>
-                            </Select.Portal>
-                          </Select.Root>
+                                                <Select.ItemIndicator>
+                                                  <CheckIcon className="size-3.5 text-primary" />
+                                                </Select.ItemIndicator>
+                                              </div>
+                                            </Select.Item>
+                                          );
+                                        })}
+                                      </Select.Group>
+                                    ))}
+                                  </Select.Viewport>
+                                  <Select.Arrow />
+                                </Select.Content>
+                              </Select.Portal>
+                            </Select.Root>
 
-                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                          <ApiSelectionDialog
-                            selectedProviderIds={selectedProviderIds}
-                            onSelectionChange={setSelectedProviderIds}
-                          />
-
-                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                          {/* Plan mode */}
-                          <input type="hidden" name="quality" value={quality} />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setQuality((current) =>
-                                current === "high" ? "low" : "high",
-                              )
-                            }
-                            aria-pressed={quality === "high"}
-                            aria-label={
-                              quality === "high"
-                                ? "Plan first mode enabled"
-                                : "Build fast mode enabled"
-                            }
-                            title={
-                              quality === "high"
-                                ? "Ask clarifying questions and approve a plan before code generation (recommended)"
-                                : "Skip planning and generate code immediately"
-                            }
-                            className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
-                          >
-                            <Sparkles className="size-3" aria-hidden="true" />
-                            <span className="hidden sm:inline">
-                              {quality === "high" ? "Plan first" : "Build fast"}
-                            </span>
-                          </button>
-
-                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                          {/* Prompt Builder */}
-                          <button
-                            type="button"
-                            onClick={() => setShowPromptBuilder(true)}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-                            title="Enhance your prompt with AI"
-                          >
-                            <span className="hidden sm:inline">Enhance</span>
-                          </button>
-
-                          <div className="toolbar-divider mx-0.5 sm:mx-1" />
-
-                          {/* Upload */}
-                          <div className="flex items-center gap-0.5">
-                            <label
-                              htmlFor="screenshot"
-                              className="upload-btn"
-                              title="Attach image"
-                            >
-                              <UploadIcon className="size-[15px]" />
-                            </label>
+                            {/* Plan mode */}
                             <input
-                              id="screenshot"
-                              type="file"
-                              accept="image/png, image/jpeg, image/webp"
-                              onChange={handleScreenshotUpload}
-                              className="hidden"
-                              ref={fileInputRef}
+                              type="hidden"
+                              name="quality"
+                              value={quality}
                             />
-                            <div className="relative hidden sm:block">
-                              <Info className="peer h-3 w-3 cursor-help text-muted-foreground/40 transition-colors hover:text-muted-foreground/70" />
-                              <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
-                                <p className="mb-1 font-semibold">
-                                  Supported formats
-                                </p>
-                                <p className="text-muted-foreground">
-                                  PNG, JPEG, WebP
-                                </p>
-                                <p className="mt-1 text-muted-foreground/70">
-                                  Upload a screenshot to recreate it in code
-                                </p>
-                                <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQuality((current) =>
+                                  current === "high" ? "low" : "high",
+                                )
+                              }
+                              aria-pressed={quality === "high"}
+                              aria-label={
+                                quality === "high"
+                                  ? "Plan mode enabled"
+                                  : "Plan mode disabled"
+                              }
+                              title={
+                                quality === "high"
+                                  ? "Ask clarifying questions and approve a plan before code generation (recommended)"
+                                  : "Skip planning and generate code immediately"
+                              }
+                              className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
+                            >
+                              <Sparkles className="size-3" aria-hidden="true" />
+                              <span>Plan mode</span>
+                            </button>
+
+                            <div className="toolbar-divider mx-0.5 sm:mx-1" />
+                          </div>
+
+                          <div className="compose-toolbar-actions">
+                            {/* Upload */}
+                            <div className="compose-upload-control flex items-center gap-0.5">
+                              <label
+                                htmlFor="screenshot"
+                                className="upload-btn"
+                                aria-label="Attach image"
+                                title="Attach image"
+                              >
+                                <UploadIcon className="size-[15px]" />
+                              </label>
+                              <input
+                                id="screenshot"
+                                type="file"
+                                accept="image/png, image/jpeg, image/webp"
+                                onChange={handleScreenshotUpload}
+                                className="hidden"
+                                ref={fileInputRef}
+                              />
+                              <div className="relative hidden sm:block">
+                                <Info className="peer h-3 w-3 cursor-help text-muted-foreground/40 transition-colors hover:text-muted-foreground/70" />
+                                <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-44 -translate-x-1/2 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
+                                  <p className="mb-1 font-semibold">
+                                    Supported formats
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    PNG, JPEG, WebP
+                                  </p>
+                                  <p className="mt-1 text-muted-foreground/70">
+                                    Upload a screenshot to recreate it in code
+                                  </p>
+                                  <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                                </div>
                               </div>
                             </div>
+
+                            {/* Submit button */}
+                            <Button
+                              type="submit"
+                              disabled={
+                                screenshotLoading ||
+                                prompt.length === 0 ||
+                                (activeTemplate !== null &&
+                                  !isPromptTemplateReady(
+                                    activeTemplate,
+                                    templateValues,
+                                  )) ||
+                                isCheckingEligibility ||
+                                isPending
+                              }
+                              className="build-btn group"
+                            >
+                              Build
+                              <Spinner
+                                loading={isCheckingEligibility || isPending}
+                              >
+                                <ArrowRightIcon
+                                  aria-hidden="true"
+                                  className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
+                                />
+                              </Spinner>
+                            </Button>
                           </div>
                         </div>
 
-                        {/* Submit button */}
-                        <Button
-                          type="submit"
-                          disabled={
-                            screenshotLoading ||
-                            prompt.length === 0 ||
-                            (activeTemplate !== null &&
-                              !isPromptTemplateReady(
-                                activeTemplate,
-                                templateValues,
-                              )) ||
-                            isCheckingEligibility ||
-                            isPending
-                          }
-                          className="build-btn group"
-                        >
-                          Build
-                          <Spinner loading={isCheckingEligibility || isPending}>
-                            <img
-                              src="/image.png"
-                              alt="Build"
-                              className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
-                            />
-                          </Spinner>
-                        </Button>
-                      </div>
-
-                      {/* Loading overlay */}
-                      {(isPending || isScrapingUrl) && (
-                        <LoadingMessage
-                          isHighQuality={quality === "high"}
-                          screenshotUrl={screenshotUrl ?? screenshotData}
-                          isScrapingUrl={isScrapingUrl}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Suggested prompts */}
-                <div className="starter-rail">
-                  {PROMPT_TEMPLATES.map((template, index) => (
-                    <div key={template.id} className="contents">
-                      {index > 0 ? (
-                        <span className="starter-sep" aria-hidden="true" />
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => activateTemplate(template)}
-                        className={`starter-link ${activeTemplate?.id === template.id ? "is-active" : ""}`}
-                        aria-pressed={activeTemplate?.id === template.id}
-                      >
-                        {template.shortLabel}
-                      </button>
-                    </div>
-                  ))}
-                  {SUGGESTED_PROMPTS.map((v) => (
-                    <div key={v.title} className="contents">
-                      <span className="starter-sep" aria-hidden="true" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStarterPrompt(v.description, v.title);
-                        }}
-                        className="starter-link"
-                      >
-                        {v.title}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                {/* URL section */}
-                <div
-                  className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10"
-                  data-hero-popout-exclude="clone"
-                >
-                  <div className="or-divider mb-4">or clone a site</div>
-
-                  <div className="flex justify-center">
-                    <div
-                      className={`url-strip group flex w-full max-w-[420px] items-center gap-3 px-4 py-2.5 ${
-                        urlInput.trim()
-                          ? "border-blue-500/35 bg-blue-50/20 dark:border-blue-500/25 dark:bg-blue-950/10"
-                          : ""
-                      } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
-                    >
-                      <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,box-shadow] duration-200 ${
-                          isScrapingUrl || urlInput.trim()
-                            ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
-                            : "bg-muted/70 text-muted-foreground/70"
-                        }`}
-                      >
-                        {isScrapingUrl ? (
-                          <Spinner className="size-3.5" />
-                        ) : (
-                          <Link2 className="size-3.5" />
+                        {/* Loading overlay */}
+                        {(isPending || isScrapingUrl) && (
+                          <LoadingMessage
+                            isHighQuality={quality === "high"}
+                            screenshotUrl={screenshotUrl ?? screenshotData}
+                            isScrapingUrl={isScrapingUrl}
+                          />
                         )}
                       </div>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com"
-                        value={urlInput}
-                        onChange={(e) => setUrlInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && urlInput.trim()) {
-                            e.preventDefault();
-                            handleUrlScrape();
-                          }
-                        }}
-                        disabled={isScrapingUrl}
-                        className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
-                      />
-                      {urlInput.trim() && !isScrapingUrl && (
-                        <button
-                          type="button"
-                          onClick={handleUrlScrape}
-                          aria-label="Clone website"
-                          className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                        >
-                          <ArrowRightIcon className="size-3" />
-                        </button>
-                      )}
                     </div>
                   </div>
-                </div>
-              </Fieldset>
-            </form>
+
+                  <div className="compose-secondary-actions">
+                    <button
+                      type="button"
+                      onClick={() => setShowPromptBuilder(true)}
+                      className="prompt-enhance-action"
+                    >
+                      <WandSparkles className="size-3.5" aria-hidden="true" />
+                      <span>Prompt Enhancer</span>
+                    </button>
+                    <ApiSelectionDialog
+                      selectedProviderIds={selectedProviderIds}
+                      onSelectionChange={setSelectedProviderIds}
+                      standaloneTrigger
+                    />
+                  </div>
+
+                  {/* Suggested prompts */}
+                  <div className="starter-rail">
+                    {PROMPT_TEMPLATES.map((template, index) => (
+                      <div key={template.id} className="contents">
+                        {index > 0 ? (
+                          <span className="starter-sep" aria-hidden="true" />
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => activateTemplate(template)}
+                          className={`starter-link ${activeTemplate?.id === template.id ? "is-active" : ""}`}
+                          aria-pressed={activeTemplate?.id === template.id}
+                        >
+                          {template.shortLabel}
+                        </button>
+                      </div>
+                    ))}
+                    {SUGGESTED_PROMPTS.map((v) => (
+                      <div key={v.title} className="contents">
+                        <span className="starter-sep" aria-hidden="true" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStarterPrompt(v.description, v.title);
+                          }}
+                          className="starter-link"
+                        >
+                          {v.title}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {/* URL section */}
+                  <div
+                    className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10"
+                    data-hero-popout-exclude="clone"
+                  >
+                    <div className="or-divider mb-4">or clone a site</div>
+
+                    <div className="flex justify-center">
+                      <div
+                        className={`url-strip group flex w-full max-w-[420px] items-center gap-3 px-4 py-2.5 ${
+                          urlInput.trim()
+                            ? "border-blue-500/35 bg-blue-50/20 dark:border-blue-500/25 dark:bg-blue-950/10"
+                            : ""
+                        } ${isScrapingUrl ? "border-blue-500/40" : ""}`}
+                      >
+                        <div
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,box-shadow] duration-200 ${
+                            isScrapingUrl || urlInput.trim()
+                              ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
+                              : "bg-muted/70 text-muted-foreground/70"
+                          }`}
+                        >
+                          {isScrapingUrl ? (
+                            <Spinner className="size-3.5" />
+                          ) : (
+                            <Link2 className="size-3.5" />
+                          )}
+                        </div>
+                        <Input
+                          type="url"
+                          placeholder="https://example.com"
+                          value={urlInput}
+                          onChange={(e) => setUrlInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && urlInput.trim()) {
+                              e.preventDefault();
+                              handleUrlScrape();
+                            }
+                          }}
+                          disabled={isScrapingUrl}
+                          className="w-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed"
+                        />
+                        {urlInput.trim() && !isScrapingUrl && (
+                          <button
+                            type="button"
+                            onClick={handleUrlScrape}
+                            aria-label="Clone website"
+                            className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                          >
+                            <ArrowRightIcon className="size-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Fieldset>
+              </form>
+            </div>
           </div>
-        </div>
 
-        <ProductWorkflowDemo />
-        <HomepageScrollStatement />
-        <HomepageAnswerSection />
-        <HomepageLandingPagesSection />
-        <HomepageResearchSection />
-        <AiBuilderFeatureComparison variant="homepage" />
-        <BuiltWithSquidSection />
-        <HomepageFaqSection />
-        <HoverBrandLogo />
+          <ProductWorkflowDemo />
+          <HomepageScrollStatement />
+          <HomepageAnswerSection />
+          <HomepageLandingPagesSection />
+          <HomepageResearchSection />
+          <AiBuilderFeatureComparison variant="homepage" />
+          <BuiltWithSquidSection />
+          <HomepageFaqSection />
+          <HoverBrandLogo />
 
-        <HomepageFlowSection />
+          <HomepageFlowSection />
+        </main>
         <Footer showPageLinks />
 
-        <PricingModal
-          open={showPricingModal}
-          onOpenChange={setShowPricingModal}
-          remainingCredits={userCredits}
-          isAuthenticated={isAuthenticated}
-          currentTier={currentTier ?? "free"}
-        />
-        <HelpPanel
-          isOpen={showHelpPanel}
-          onClose={() => setShowHelpPanel(false)}
-        />
-        <OnboardingWizard
-          isOpen={showOnboardingWizard}
-          onClose={() => setShowOnboardingWizard(false)}
-          onComplete={() => {
-            window.requestAnimationFrame(() => {
-              textareaRef.current?.focus();
-            });
-          }}
-        />
-        <PromptBuilderModal
-          open={showPromptBuilder}
-          onOpenChange={setShowPromptBuilder}
-          onUsePrompt={(enhanced) => {
-            setPrompt(enhanced);
-            if (textareaRef.current) {
-              textareaRef.current.focus();
-            }
-          }}
-        />
+        {showPricingModal ? (
+          <PricingModal
+            open
+            onOpenChange={setShowPricingModal}
+            remainingCredits={userCredits}
+            isAuthenticated={isAuthenticated}
+            currentTier={currentTier ?? "free"}
+          />
+        ) : null}
+        {showHelpPanel ? (
+          <HelpPanel isOpen onClose={() => setShowHelpPanel(false)} />
+        ) : null}
+        {showOnboardingWizard ? (
+          <OnboardingWizard
+            isOpen
+            onClose={() => setShowOnboardingWizard(false)}
+            onComplete={() => {
+              window.requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+              });
+            }}
+          />
+        ) : null}
+        {showPromptBuilder ? (
+          <PromptBuilderModal
+            open
+            onOpenChange={setShowPromptBuilder}
+            onUsePrompt={(enhanced) => {
+              setPrompt(enhanced);
+              if (textareaRef.current) {
+                textareaRef.current.focus();
+              }
+            }}
+          />
+        ) : null}
       </div>
     </>
   );
@@ -4278,7 +3037,7 @@ function HomepageFlowSection() {
                       <span
                         className={`flow-node-ring flex size-11 items-center justify-center rounded-full border bg-background/95 shadow-sm backdrop-blur transition-[border-color,background-color,box-shadow,color] ${
                           isActive
-                            ? "border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/25"
+                            ? "border-blue-700 bg-blue-700 text-white shadow-md shadow-blue-500/25 dark:border-blue-500 dark:bg-blue-600"
                             : isComplete
                               ? "border-blue-500/40 text-blue-500"
                               : "border-border/80 text-muted-foreground group-hover:border-blue-500/40 group-hover:text-foreground"

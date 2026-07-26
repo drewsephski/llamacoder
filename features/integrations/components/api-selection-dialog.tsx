@@ -23,9 +23,11 @@ const catalogProviders = buildIntegrationProviderSummaries();
 export function ApiSelectionDialog({
   selectedProviderIds,
   onSelectionChange,
+  standaloneTrigger = false,
 }: {
   selectedProviderIds: string[];
   onSelectionChange: (providerIds: string[]) => void;
+  standaloneTrigger?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [draftProviderIds, setDraftProviderIds] = useState<string[]>([]);
@@ -65,12 +67,26 @@ export function ApiSelectionDialog({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-8 items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-1.5 sm:px-2"
-          aria-label={`Choose APIs${selectedProviderIds.length ? `, ${selectedProviderIds.length} selected` : ""}`}
-          title="Choose APIs for this app"
+          className={
+            standaloneTrigger
+              ? "integration-modal-trigger"
+              : "api-selection-trigger inline-flex h-8 items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-1.5 sm:px-2"
+          }
+          aria-label={
+            standaloneTrigger
+              ? `Open Integrations${selectedProviderIds.length ? `, ${selectedProviderIds.length} selected` : ""}`
+              : `Choose APIs${selectedProviderIds.length ? `, ${selectedProviderIds.length} selected` : ""}`
+          }
+          title={
+            standaloneTrigger
+              ? "Open integrations modal"
+              : "Choose APIs for this app"
+          }
         >
           <Plug className="size-3.5" />
-          <span className="hidden sm:inline">APIs</span>
+          <span className={standaloneTrigger ? undefined : "hidden sm:inline"}>
+            {standaloneTrigger ? "Integrations" : "APIs"}
+          </span>
           {selectedProviderIds.length > 0 && (
             <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
               {selectedProviderIds.length}
@@ -81,7 +97,7 @@ export function ApiSelectionDialog({
       <DialogContent size="workspace" className="max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plug className="size-5 text-primary" /> Choose APIs for this app
+            <Plug className="size-5 text-primary" /> Integrations
           </DialogTitle>
           <DialogDescription>
             Select the services Squid should plan and generate around. APIs that

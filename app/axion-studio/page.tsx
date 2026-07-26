@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-
 import AxionStudioPage from "./page.client";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
-export const metadata: Metadata = {
-  title: "Axion Studio — Digital experiences for category leaders",
-  description:
-    "Axion Studio crafts strategy-led digital experiences for brands ready to dominate their category online.",
-};
+export const metadata = publicShowcaseMetadata("/axion-studio");
 
 export default function Page() {
   return <AxionStudioPage />;

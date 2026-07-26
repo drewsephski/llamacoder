@@ -4,19 +4,16 @@ import { getEntitlementTier, type TierKey } from "@/lib/billing";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import type { Metadata } from "next";
 import { Coins, FileText, ReceiptText } from "lucide-react";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
+import { createNoIndexMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createNoIndexMetadata({
   title: "Usage Ledger",
   description:
     "Review Squid generation credit estimates, actual charges, refunds, and credit history.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+  path: "/dashboard/usage",
+});
 
 export default async function UsagePage() {
   const session = await auth.api.getSession({

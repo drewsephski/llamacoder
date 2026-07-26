@@ -128,7 +128,7 @@ function Footer() {
     >
       <a
         className="inline-block pb-8 text-[30px] font-bold tracking-tight text-white transition-colors hover:text-[#DCFF00] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DCFF00]"
-        href="https://squidagent.app"
+        href="https://www.squidagent.app"
       >
         Design Rocket
       </a>
@@ -224,7 +224,7 @@ export function DesignRocketCertificatesPage({
           <div className="relative z-10 flex h-full flex-col items-center px-6 pb-10 pt-12 text-center">
             <a
               className="text-white transition-colors hover:text-[#DCFF00] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DCFF00]"
-              href="https://squidagent.app"
+              href="https://www.squidagent.app"
             >
               <span
                 className="block text-[28px] leading-[0.95] tracking-tight"

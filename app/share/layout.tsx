@@ -1,3 +1,11 @@
+import { createNoIndexMetadata } from "@/lib/seo";
+
+export const metadata = createNoIndexMetadata({
+  title: "Shared React App Preview",
+  description: "Preview a React app shared from Squid Agent.",
+  path: "/share",
+});
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center">

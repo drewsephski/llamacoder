@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-
 import Hero from "@/components/rivr/hero";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
-export const metadata: Metadata = {
-  title: "RIVR — Fluid Asset Streams",
-  description:
-    "Access Smart Vaults, stake RIVR, NFTs, and transform rigid holdings into liquid cash instantly.",
-};
+export const metadata = publicShowcaseMetadata("/rivr");
 
 export default function RIVRPage() {
   return (

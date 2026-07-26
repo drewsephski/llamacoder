@@ -1,14 +1,13 @@
-import type { Metadata } from "next";
 import { LegalPage } from "@/app/(main)/legal-page";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Cookie Policy",
   description:
     "Cookie policy for Squid Agent authentication, preferences, analytics, and billing flows.",
-  alternates: {
-    canonical: "/cookies",
-  },
-};
+  path: "/cookies",
+  keywords: ["Squid Agent cookie policy"],
+});
 
 export default function CookiesPage() {
   return (

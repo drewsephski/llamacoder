@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-
 import FormaPage from "@/components/forma-page";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
-export const metadata: Metadata = {
-  title: "Forma — Bold ideas, shipped as products",
-  description:
-    "Forma crafts bold digital ideas and ships them as thoughtful products.",
-};
+export const metadata = publicShowcaseMetadata("/forma");
 
 export default function FormaRoute() {
   return <FormaPage />;

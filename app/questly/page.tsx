@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-
 import { QuestlyPage } from "@/components/questly-page";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
-export const metadata: Metadata = {
-  title: "Questly — Get cited. Effortlessly.",
-  description:
-    "Ship articles that answer actual customer questions and get seen in AI search.",
-};
+export const metadata = publicShowcaseMetadata("/questly");
 
 export default function QuestlyRoute() {
   return <QuestlyPage />;

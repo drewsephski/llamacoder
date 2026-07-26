@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
-
 import { DashboardPage } from "@/features/projects/components/dashboard-page";
+import { createNoIndexMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createNoIndexMetadata({
   title: "Dashboard",
   description: "Manage Squid Agent projects, credits, and account activity.",
-  robots: { index: false, follow: false },
-};
+  path: "/dashboard",
+});
 
 export default DashboardPage;

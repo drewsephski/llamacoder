@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 
 import Hero from "@/components/mentality/hero";
 import Navbar from "@/components/mentality/navbar";
+import { publicShowcaseMetadata } from "@/lib/public-pages";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,11 +18,7 @@ const outfit = Outfit({
   weight: ["400", "500", "600"],
 });
 
-export const metadata: Metadata = {
-  title: "mėntality — Mental wellbeing resources",
-  description:
-    "Information and resources to help you manage your mental wellbeing.",
-};
+export const metadata = publicShowcaseMetadata("/mentality");
 
 export default function MentalityPage() {
   return (

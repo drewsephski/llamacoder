@@ -16,10 +16,11 @@ export const userQueryKeys = {
   eligibility: (model: string) => ["user", "eligibility", model] as const,
 };
 
-export function useUserCredits() {
+export function useUserCredits(enabled = true) {
   return useQuery({
     queryKey: userQueryKeys.credits,
     queryFn: () => fetchJson("/api/user/credits", userCreditsSchema),
+    enabled,
     staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,

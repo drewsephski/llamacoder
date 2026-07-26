@@ -59,7 +59,7 @@ function Navbar() {
       <a
         aria-label="Questly home"
         className="text-gray-900 transition-opacity hover:opacity-70 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/50"
-        href="https://squidagent.app"
+        href="https://www.squidagent.app"
       >
         <QuestlyLogo className="size-5 sm:size-6" />
       </a>
@@ -82,7 +82,7 @@ function Navbar() {
       <div className="flex items-center gap-2">
         <Link
           className="rounded-full bg-gray-900 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/50 focus-visible:ring-offset-2 sm:px-5"
-          href="https://squidagent.app"
+          href="https://www.squidagent.app"
         >
           Get started
         </Link>
@@ -464,7 +464,7 @@ export function QuestlyPage() {
         >
           <Link
             className="rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-gray-800 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
-            href="https://squidagent.app"
+            href="https://www.squidagent.app"
           >
             Try It Free
           </Link>
