@@ -4,12 +4,12 @@ import { MarketingHub } from "@/components/marketing-hub";
 import { comparisonPages } from "@/lib/marketing-pages";
 
 export const metadata: Metadata = {
-  title: "AI App Builder Comparisons",
+  title: "AI App Builder Comparisons (2026)",
   description:
     "Evidence-led 2026 comparisons of Squid Agent, Lovable, Bolt.new, and v0 covering code export, credits, version history, quality checks, and product fit.",
   alternates: { canonical: "/compare" },
   openGraph: {
-    title: "AI App Builder Comparisons | Squid Agent",
+    title: "AI App Builder Comparisons (2026) | Squid Agent",
     description:
       "Compare current AI app builder workflows using official sources and reproducible acceptance criteria.",
     url: "/compare",

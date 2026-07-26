@@ -6,14 +6,46 @@ const SITE_HEADLINE = "Turn ideas into apps";
 const SITE_DESCRIPTION =
   "Research the web. Approve the plan. Build, verify, and ship React code you own.";
 
+const editorialLabels = {
+  comparison: "Evidence-led comparison",
+  guide: "Practical React guide",
+  benchmark: "Reproducible benchmark",
+} as const;
+
+const editorialDescriptions = {
+  comparison:
+    "Compare AI app builders by ownership, cost, recovery, verification, and export evidence.",
+  guide:
+    "Production-minded guidance for building, reviewing, recovering, and exporting AI-generated React apps.",
+  benchmark:
+    "Transparent criteria for measuring responsive behavior, interactions, recovery, and export readiness.",
+} as const;
+
+function truncate(value: string, maxLength: number) {
+  return value.length > maxLength
+    ? `${value.slice(0, maxLength - 3)}...`
+    : value;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const prompt = searchParams.get("prompt")?.trim();
-  const title = prompt
-    ? prompt.length > 110
-      ? `${prompt.slice(0, 107)}...`
-      : prompt
-    : SITE_HEADLINE;
+  const articleTitle = searchParams.get("title")?.trim();
+  const requestedKind = searchParams.get("kind");
+  const editorialKind =
+    requestedKind && requestedKind in editorialLabels
+      ? (requestedKind as keyof typeof editorialLabels)
+      : undefined;
+  const title = truncate(prompt ?? articleTitle ?? SITE_HEADLINE, 110);
+  const eyebrow = prompt
+    ? "Built with Squid Agent"
+    : editorialKind
+      ? editorialLabels[editorialKind]
+      : "AI React app builder";
+  const description = editorialKind
+    ? editorialDescriptions[editorialKind]
+    : SITE_DESCRIPTION;
+  const isEditorial = Boolean(articleTitle && editorialKind);
   const logoUrl = `${domain}/squidagent-logo-192.png`;
 
   return new ImageResponse(
@@ -97,8 +129,8 @@ export async function GET(request: Request) {
               display: "flex",
               flexShrink: 0,
               flexDirection: "column",
-              marginTop: prompt ? 44 : 62,
-              maxWidth: prompt ? 1010 : 860,
+              marginTop: prompt || isEditorial ? 44 : 62,
+              maxWidth: prompt || isEditorial ? 1010 : 860,
             }}
           >
             <div
@@ -111,13 +143,13 @@ export async function GET(request: Request) {
                 textTransform: "uppercase",
               }}
             >
-              {prompt ? "Built with Squid Agent" : "AI app builder"}
+              {eyebrow}
             </div>
             <div
               style={{
                 display: "flex",
                 marginTop: 12,
-                fontSize: prompt ? 58 : 76,
+                fontSize: prompt || isEditorial ? 58 : 76,
                 fontWeight: 700,
                 lineHeight: 1.02,
                 letterSpacing: "-0.055em",
@@ -136,7 +168,7 @@ export async function GET(request: Request) {
                   lineHeight: 1.4,
                 }}
               >
-                {SITE_DESCRIPTION}
+                {description}
               </div>
             )}
           </div>

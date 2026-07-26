@@ -5,9 +5,27 @@ import { memo, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
-import { MenuIcon, XIcon, Zap, HelpCircle } from "lucide-react";
+import {
+  BarChart3,
+  CreditCard,
+  GalleryHorizontalEnd,
+  HelpCircle,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  MenuIcon,
+  UserPlus,
+  Zap,
+} from "lucide-react";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useUserCredits } from "@/features/user/client/queries";
 import { authClient, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -23,6 +41,9 @@ interface HeaderProps {
 type PricingTab = "plans" | "credits";
 
 const SCROLL_COMPACT_THRESHOLD = 28;
+
+const mobileMenuItemClassName =
+  "flex min-h-11 min-w-0 items-center gap-2.5 rounded-xl border border-border/75 bg-muted/35 px-3 text-sm font-semibold text-foreground shadow-sm transition-[background-color,border-color,transform] hover:border-border hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98] motion-reduce:transition-colors";
 
 function Header({ onHelpClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -56,6 +77,16 @@ function Header({ onHelpClick }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
+    const closeMobileMenu = (event: MediaQueryListEvent) => {
+      if (event.matches) setMobileMenuOpen(false);
+    };
+
+    desktopQuery.addEventListener("change", closeMobileMenu);
+    return () => desktopQuery.removeEventListener("change", closeMobileMenu);
+  }, []);
+
   const openPricingModal = (tab: PricingTab = "plans") => {
     setPricingInitialTab(tab);
     setShowPricingModal(true);
@@ -67,16 +98,16 @@ function Header({ onHelpClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))]">
+    <header className="sticky top-0 z-50 w-full shrink-0 pt-[max(0.5rem,env(safe-area-inset-top))] sm:pt-[max(0.75rem,env(safe-area-inset-top))]">
       <div className="mx-auto w-full px-3 sm:px-4 md:px-6">
         <div
           data-scrolled={isScrolled}
           className={cn(
-            "nav-pill bg-background/78 supports-[backdrop-filter]:bg-background/62 mx-auto flex w-full items-center justify-between gap-3 rounded-full border shadow-[0_10px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-xl",
+            "nav-pill mx-auto flex w-full items-center justify-between gap-2 rounded-full border bg-background/95 shadow-[0_10px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 sm:gap-3",
             "ease-[cubic-bezier(0.32,0.72,0,1)] transition-[max-width,padding,box-shadow,border-color,background-color] duration-500 motion-reduce:transition-none",
             isScrolled
-              ? "max-w-4xl border-border/80 px-3 py-2 shadow-[0_16px_44px_-26px_rgba(15,23,42,0.55)] sm:px-4"
-              : "max-w-6xl border-border/55 px-3.5 py-2.5 sm:px-5 sm:py-3",
+              ? "max-w-4xl border-border/80 px-2.5 py-1.5 shadow-[0_16px_44px_-26px_rgba(15,23,42,0.55)] sm:px-4 sm:py-2"
+              : "max-w-6xl border-border/70 px-2.5 py-1.5 sm:px-5 sm:py-3",
           )}
         >
           <Link
@@ -93,7 +124,7 @@ function Header({ onHelpClick }: HeaderProps) {
                 loading="eager"
                 className={cn(
                   "relative z-10 object-contain transition-[transform,width,height] duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] group-hover:-rotate-1 group-hover:scale-[1.05] motion-reduce:transition-none",
-                  isScrolled ? "h-8 w-8" : "h-9 w-9",
+                  isScrolled ? "size-7 sm:size-8" : "size-8 sm:size-9",
                 )}
               />
             </div>
@@ -251,195 +282,249 @@ function Header({ onHelpClick }: HeaderProps) {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <Button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            variant="ghost"
-            size="icon"
-            className="size-10 shrink-0 rounded-full md:hidden"
-            aria-label="Toggle menu"
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? (
-              <XIcon className="h-5 w-5" />
-            ) : (
-              <MenuIcon className="h-5 w-5" />
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="absolute inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] max-h-[calc(100svh-max(1.5rem,env(safe-area-inset-top)))] overflow-y-auto rounded-[1.75rem] border border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl">
-            <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/squidagent-logo.svg"
-                  alt="Squid Agent"
-                  width={28}
-                  height={28}
-                  loading="eager"
-                  className="h-7 w-auto"
-                />
-                <span className="text-sm font-semibold tracking-tight">
-                  Menu
-                </span>
-              </div>
+          <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <DialogTrigger asChild>
               <Button
-                onClick={() => setMobileMenuOpen(false)}
                 variant="ghost"
                 size="icon"
-                className="size-10 rounded-full"
-                aria-label="Close menu"
+                className="size-11 shrink-0 rounded-full border border-border/80 bg-foreground text-background shadow-sm hover:bg-foreground/90 hover:text-background md:hidden"
+                aria-label="Open navigation"
               >
-                <XIcon className="h-5 w-5" />
+                <MenuIcon className="size-4.5" strokeWidth={2.25} />
               </Button>
-            </div>
+            </DialogTrigger>
 
-            <div className="flex flex-col gap-3">
-              <MobileResourcesList
-                onNavigate={() => setMobileMenuOpen(false)}
-              />
-              {loading ? (
-                <span className="text-sm text-muted-foreground">Loading…</span>
-              ) : session ? (
-                <>
-                  {hasSubscription ? (
-                    <Button
-                      onClick={() => {
-                        openPricingModal("credits");
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="ghost"
-                      className="min-h-12 justify-start gap-2 bg-muted px-4 text-muted-foreground"
-                      aria-label="Buy more credits"
+            <DialogContent
+              className="flex w-[calc(100vw-1.5rem)] max-w-[22rem] !translate-y-0 flex-col gap-3 overflow-y-auto rounded-[1.25rem] border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_24px_80px_-24px_hsl(var(--foreground)/0.45)] sm:w-[calc(100vw-1.5rem)] sm:max-w-[22rem] sm:p-3 md:hidden"
+              style={{
+                top: "calc(env(safe-area-inset-top) + 4.25rem)",
+                maxHeight: "calc(100dvh - env(safe-area-inset-top) - 5rem)",
+              }}
+            >
+              <div className="flex min-h-11 items-center gap-2.5 border-b border-border/80 px-1 pb-3 pr-12">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/15">
+                  <Image
+                    src="/squidagent-logo.svg"
+                    alt=""
+                    width={26}
+                    height={26}
+                    loading="eager"
+                    className="size-6 object-contain"
+                  />
+                </span>
+                <div className="min-w-0">
+                  <DialogTitle>Navigation</DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Navigate Squid Agent and manage your account.
+                  </DialogDescription>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {session ? "Workspace and account" : "Explore Squid Agent"}
+                  </p>
+                </div>
+              </div>
+
+              <nav aria-label="Primary mobile navigation">
+                {loading ? (
+                  <div
+                    className="grid grid-cols-2 gap-2"
+                    aria-label="Loading navigation"
+                  >
+                    <span className="h-11 animate-pulse rounded-xl bg-muted motion-reduce:animate-none" />
+                    <span className="h-11 animate-pulse rounded-xl bg-muted motion-reduce:animate-none" />
+                  </div>
+                ) : session ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {creditsError ? (
+                      <button
+                        type="button"
+                        onClick={() => void refetchCredits()}
+                        className={cn(
+                          mobileMenuItemClassName,
+                          "col-span-2 text-amber-700 dark:text-amber-300",
+                        )}
+                      >
+                        <Zap className="size-4" aria-hidden="true" />
+                        Retry billing
+                      </button>
+                    ) : hasSubscription ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          openPricingModal("credits");
+                          setMobileMenuOpen(false);
+                        }}
+                        className={cn(
+                          mobileMenuItemClassName,
+                          "col-span-2 border-primary/20 bg-primary/10 text-primary",
+                        )}
+                      >
+                        <Zap className="size-4" aria-hidden="true" />
+                        <span>{credits ?? 0} credits</span>
+                        <span className="ml-auto text-xs font-medium opacity-75">
+                          Add more
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          openPricingModal("plans");
+                          setMobileMenuOpen(false);
+                        }}
+                        className={cn(
+                          mobileMenuItemClassName,
+                          "col-span-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90",
+                        )}
+                      >
+                        <Zap className="size-4" aria-hidden="true" />
+                        Upgrade
+                      </button>
+                    )}
+
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={mobileMenuItemClassName}
                     >
-                      <Zap className="h-4 w-4 text-yellow-500" />
-                      <span>{credits ?? 0} credits</span>
-                    </Button>
-                  ) : (
-                    <Button
+                      <LayoutDashboard
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/gallery"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={mobileMenuItemClassName}
+                    >
+                      <GalleryHorizontalEnd
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      Gallery
+                    </Link>
+                    <Link
+                      href="/dashboard/usage"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={mobileMenuItemClassName}
+                    >
+                      <BarChart3
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      Usage
+                    </Link>
+                    <button
+                      type="button"
                       onClick={() => {
                         openPricingModal("plans");
                         setMobileMenuOpen(false);
                       }}
-                      size="sm"
-                      className="min-h-12 justify-start"
+                      className={mobileMenuItemClassName}
                     >
-                      <Zap className="h-4 w-4" />
-                      Upgrade
-                    </Button>
-                  )}
-                  <Button
-                    asChild
-                    variant="default"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="min-h-12 justify-start"
-                  >
-                    <Link href="/gallery">Gallery</Link>
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      openPricingModal("plans");
-                      setMobileMenuOpen(false);
-                    }}
-                    variant="default"
-                    className="min-h-12 justify-start"
-                  >
-                    Pricing
-                  </Button>
-                  <Button
-                    asChild
-                    variant="default"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="min-h-12 justify-start"
-                  >
-                    <Link href="/dashboard">Dashboard</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="default"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="min-h-12 justify-start"
-                  >
-                    <Link href="/dashboard/usage">Usage</Link>
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      handleSignOut();
-                      setMobileMenuOpen(false);
-                    }}
-                    variant="default"
-                    className="min-h-12 justify-start"
-                  >
-                    Sign Out
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    asChild
-                    variant="default"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="min-h-12 justify-start"
-                  >
-                    <Link href="/gallery">Gallery</Link>
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      openPricingModal("plans");
-                      setMobileMenuOpen(false);
-                    }}
-                    variant="default"
-                    className="min-h-12 justify-start"
-                  >
-                    Pricing
-                  </Button>
-                  <Button
-                    asChild
-                    variant="default"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="min-h-12 justify-start"
-                  >
-                    <Link href="/sign-in">Sign In</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="default"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="min-h-12 justify-start"
-                  >
-                    <Link href="/sign-up">Sign Up</Link>
-                  </Button>
-                </>
-              )}
-              <div className="mt-1 border-t border-border pt-3">
-                <div className="flex items-center justify-between gap-3">
-                  <AnimatedThemeToggleButton variant="horizontal" />
-                  <Button
-                    className="size-11 rounded-full text-foreground hover:bg-accent hover:text-white"
-                    onClick={() => {
-                      onHelpClick?.();
-                      setMobileMenuOpen(false);
-                    }}
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Help"
-                  >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
+                      <CreditCard
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      Pricing
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      href="/gallery"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={mobileMenuItemClassName}
+                    >
+                      <GalleryHorizontalEnd
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      Gallery
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        openPricingModal("plans");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={mobileMenuItemClassName}
+                    >
+                      <CreditCard
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      Pricing
+                    </button>
+                    <Link
+                      href="/sign-in"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={mobileMenuItemClassName}
+                    >
+                      <LogIn
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      Sign in
+                    </Link>
+                    <Link
+                      href="/sign-up"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        mobileMenuItemClassName,
+                        "border-primary bg-primary text-primary-foreground hover:bg-primary/90",
+                      )}
+                    >
+                      <UserPlus className="size-4" aria-hidden="true" />
+                      Sign up
+                    </Link>
+                  </div>
+                )}
+              </nav>
+
+              <MobileResourcesList
+                compact
+                onNavigate={() => setMobileMenuOpen(false)}
+              />
+
+              <div className="flex items-center gap-2 border-t border-border/80 pt-3">
+                <div className="flex min-h-10 flex-1 items-center justify-between rounded-xl border border-border/75 bg-muted/35 px-3 text-xs font-semibold text-muted-foreground">
+                  Appearance
+                  <AnimatedThemeToggleButton
+                    className="!mx-0 ring-offset-background focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    variant="horizontal"
+                    style={{ width: 44, height: 44 }}
+                  />
                 </div>
+                <button
+                  type="button"
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border/75 bg-muted/35 text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  onClick={() => {
+                    onHelpClick?.();
+                    setMobileMenuOpen(false);
+                  }}
+                  aria-label="Help"
+                >
+                  <HelpCircle className="size-4" aria-hidden="true" />
+                </button>
+                {session ? (
+                  <button
+                    type="button"
+                    className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border/75 bg-muted/35 text-muted-foreground shadow-sm transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    onClick={() => {
+                      void handleSignOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="size-4" aria-hidden="true" />
+                  </button>
+                ) : null}
               </div>
-            </div>
-          </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      )}
+      </div>
 
       <PricingModal
         open={showPricingModal}

@@ -116,6 +116,51 @@ type BuiltWithSquidProject = {
   capabilities?: readonly ProjectCapability[];
 };
 
+const HOMEPAGE_RESEARCH_LINKS = [
+  {
+    href: "/compare",
+    eyebrow: "Choose a tool",
+    title: "Compare AI app builders",
+    description:
+      "Evaluate code ownership, pricing signals, recovery, verification, and export workflows using current sources.",
+  },
+  {
+    href: "/blog/export-react-app-from-ai",
+    eyebrow: "Own the output",
+    title: "Export a React app from AI",
+    description:
+      "Use a clean-room handoff checklist for source, dependencies, environment values, builds, and deployment files.",
+  },
+  {
+    href: "/blog/screenshot-to-responsive-react",
+    eyebrow: "Design to code",
+    title: "Turn a screenshot into responsive React",
+    description:
+      "Translate visual intent into components, interactions, and deliberate behavior across phone, tablet, and desktop.",
+  },
+  {
+    href: "/benchmarks/screenshot-to-react",
+    eyebrow: "Measure quality",
+    title: "Use the screenshot-to-React benchmark",
+    description:
+      "Score fidelity, responsive inference, accessibility, interactions, edit stability, recovery, and export readiness.",
+  },
+  {
+    href: "/blog/ai-saas-mvp-builder",
+    eyebrow: "Build a product",
+    title: "Plan and build a SaaS MVP with AI",
+    description:
+      "Define product boundaries, data contracts, modules, checkpoints, acceptance tests, and the final team handoff.",
+  },
+  {
+    href: "/blog/how-to-evaluate-ai-generated-react-code",
+    eyebrow: "Review the code",
+    title: "Evaluate AI-generated React",
+    description:
+      "Inspect the file graph, TypeScript, state, responsive behavior, accessibility, recovery path, and production build.",
+  },
+] as const;
+
 const BUILT_WITH_SQUID_PROJECTS: readonly BuiltWithSquidProject[] = [
   {
     name: "Octagon Rankings",
@@ -586,7 +631,7 @@ const homepageStructuredData = {
       ],
     },
     {
-      "@type": "SoftwareApplication",
+      "@type": "WebApplication",
       "@id": "https://squidagent.app/#software",
       name: "Squid Agent",
       alternateName: ["SquidAgent", "Squid Agent App Builder"],
@@ -596,6 +641,7 @@ const homepageStructuredData = {
       operatingSystem: "Web",
       url: "https://squidagent.app/",
       image: "https://squidagent.app/api/og?card=site&v=3",
+      screenshot: "https://squidagent.app/api/og?card=site&v=3",
       description:
         "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
       creator: {
@@ -633,11 +679,6 @@ const homepageStructuredData = {
       inLanguage: "en-US",
       publisher: {
         "@id": "https://squidagent.app/#organization",
-      },
-      potentialAction: {
-        "@type": "SearchAction",
-        target: "https://squidagent.app/?search={search_term_string}",
-        "query-input": "required name=search_term_string",
       },
     },
     {
@@ -3070,15 +3111,15 @@ export default function Home() {
             {/* Hero copy */}
             <div className="hero-copy" data-hero-popout-exclude="copy">
               <h1 className="animate-fade-up">
-                <span className="hero-brand">Squid</span>
+                <span className="hero-brand">Squid Agent</span>
                 <span className="hero-headline">
-                  Build React apps you <em>own</em>.
+                  The AI app builder for React apps you <em>own</em>.
                 </span>
               </h1>
 
               <p className="hero-support animate-fade-up-1">
-                Research the live web, approve the plan, then generate verified
-                code you can export.
+                Research live sources, approve the plan, then generate, verify,
+                and export production-ready React code.
               </p>
             </div>
 
@@ -3648,6 +3689,7 @@ export default function Home() {
         <HomepageScrollStatement />
         <HomepageAnswerSection />
         <HomepageLandingPagesSection />
+        <HomepageResearchSection />
         <AiBuilderFeatureComparison variant="homepage" />
         <BuiltWithSquidSection />
         <HomepageFaqSection />
@@ -4686,6 +4728,60 @@ function HomepageLandingPagesSection() {
               Build your version in 90 seconds
             </Link>
           </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomepageResearchSection() {
+  return (
+    <section
+      aria-labelledby="homepage-research-heading"
+      className="relative z-10 w-full px-4 pb-16 sm:px-6 sm:pb-24"
+    >
+      <div className="mx-auto w-full max-w-6xl border-y border-border/70 py-12 sm:py-16">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-end">
+          <div>
+            <p className="font-mono-jb text-xs font-semibold uppercase tracking-[0.16em] text-[#0062FF] dark:text-[#0CA8FF]">
+              Practical AI app builder guides
+            </p>
+            <h2
+              id="homepage-research-heading"
+              className="mt-4 font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
+            >
+              Choose well. Build deliberately. Ship code you can keep.
+            </h2>
+          </div>
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground lg:justify-self-end">
+            Learn the complete AI app workflow—from selecting a builder and
+            translating visual references to reviewing generated React,
+            recovering versions, and exporting a production-ready project.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          {HOMEPAGE_RESEARCH_LINKS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex min-h-[250px] flex-col bg-background p-6 transition-colors hover:bg-primary/[0.035] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:p-7"
+            >
+              <p className="font-mono-jb text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0062FF] dark:text-[#0CA8FF]">
+                {item.eyebrow}
+              </p>
+              <h3 className="mt-5 text-balance text-xl font-semibold tracking-[-0.025em] text-foreground">
+                {item.title}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {item.description}
+              </p>
+              <span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
+                Read the guide
+                <ArrowRightIcon className="size-4 transition-transform group-hover:translate-x-1" />
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

@@ -7,8 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { HelpCircle, Lightbulb, ListChecks, WandSparkles } from "lucide-react";
+import {
+  ChevronDown,
+  HelpCircle,
+  Lightbulb,
+  ListChecks,
+  WandSparkles,
+} from "lucide-react";
 
 interface HelpPanelProps {
   isOpen: boolean;
@@ -57,53 +62,49 @@ const HELP_SECTIONS = [
 export function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl">
-        <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <HelpCircle className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <DialogTitle>Help</DialogTitle>
-                <DialogDescription className="mt-1">
-                  Squid turns clear app ideas into editable React projects.
-                </DialogDescription>
-              </div>
+      <DialogContent className="max-h-[72dvh] max-w-[22rem] gap-2 overflow-hidden p-3 sm:max-h-[min(80dvh,38rem)] sm:max-w-xl sm:gap-3 sm:p-4 md:max-w-3xl">
+        <DialogHeader className="min-h-11 justify-center border-b border-border/80 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+              <HelpCircle className="size-4" strokeWidth={2} />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle>Help</DialogTitle>
+              <DialogDescription className="mt-0.5 line-clamp-2 text-xs sm:text-sm">
+                Turn clear app ideas into editable React projects.
+              </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="grid gap-4 py-3 md:grid-cols-3">
+        <div className="grid min-h-0 gap-2 overflow-y-auto overscroll-contain px-0.5 pb-0.5 md:grid-cols-3 md:gap-3">
           {HELP_SECTIONS.map((section) => (
-            <section key={section.title} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <details
+              key={section.title}
+              className="group self-start rounded-xl border border-border/80 bg-muted/25 open:bg-muted/40"
+            >
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl px-2.5 text-sm font-semibold text-foreground outline-none transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary md:cursor-default [&::-webkit-details-marker]:hidden">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-background text-primary shadow-sm ring-1 ring-border/70">
                   {section.icon}
-                </div>
-                <h3 className="text-sm font-medium">{section.title}</h3>
-              </div>
-              <ul className="space-y-1.5">
+                </span>
+                <span className="min-w-0 flex-1 truncate">{section.title}</span>
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none md:hidden" />
+              </summary>
+              <ul className="hidden px-2 pb-2 group-open:block md:block">
                 {section.items.map((item, index) => (
                   <li
                     key={item}
-                    className="flex gap-2 rounded-lg border border-border bg-card px-2.5 py-2 text-xs text-muted-foreground"
+                    className="flex gap-2 border-t border-border/65 px-1 py-2 text-xs leading-snug text-muted-foreground first:border-t-0"
                   >
-                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium leading-none text-foreground">
+                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-background text-[10px] font-semibold leading-none text-foreground ring-1 ring-border/70">
                       {index + 1}
                     </span>
-                    <span className="leading-snug">{item}</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
-            </section>
+            </details>
           ))}
-        </div>
-
-        <div className="flex justify-end border-t pt-3">
-          <Button size="sm" onClick={onClose}>
-            Close
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

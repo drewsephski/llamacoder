@@ -89,8 +89,15 @@ export function MarketingFooter() {
           title="Research"
           links={[
             { href: "/compare", label: "AI builder comparisons" },
-            { href: "/blog", label: "Blog" },
-            { href: "/benchmarks", label: "Benchmarks" },
+            { href: "/blog", label: "AI app builder guides" },
+            {
+              href: "/benchmarks/screenshot-to-react",
+              label: "Screenshot-to-React benchmark",
+            },
+            {
+              href: "/blog/export-react-app-from-ai",
+              label: "Export React from AI",
+            },
           ]}
         />
         <FooterColumn
@@ -99,6 +106,7 @@ export function MarketingFooter() {
             { href: "/", label: "Build an app" },
             { href: "/gallery", label: "Gallery" },
             { href: "/docs", label: "Documentation" },
+            { href: "/what-is-squid-agent", label: "What is Squid Agent?" },
             { href: "/dashboard", label: "Dashboard" },
             { href: "/dashboard/usage", label: "Usage ledger" },
             { href: "/contact", label: "Contact" },

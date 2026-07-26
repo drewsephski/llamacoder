@@ -4,14 +4,14 @@ import { MarketingHub } from "@/components/marketing-hub";
 import { blogPages } from "@/lib/marketing-pages";
 
 export const metadata: Metadata = {
-  title: "Guides for AI-Generated React Apps",
+  title: "AI App Builder Guides for React Apps",
   description:
-    "Production-minded guides for evaluating AI-generated React, understanding app builder credits, benchmarking screenshot-to-code, and exporting projects cleanly.",
+    "Practical AI app builder guides for choosing tools, controlling credits, turning screenshots into React, verifying generated code, recovering versions, and exporting cleanly.",
   alternates: { canonical: "/blog" },
   openGraph: {
-    title: "AI-Generated React Guides | Squid Agent",
+    title: "AI App Builder Guides for React Apps | Squid Agent",
     description:
-      "Practical guides for building, evaluating, recovering, and exporting AI-generated React applications.",
+      "Choose an AI builder, generate responsive React, verify the code, recover safely, and export a project your team can run.",
     url: "/blog",
     type: "website",
   },
@@ -22,8 +22,8 @@ export default function BlogIndexPage() {
     <>
       <MarketingHub
         kind="guide"
-        title="Field guides for React apps built with AI"
-        intro="Start from problem-led intent pages like export and cost comparison, then use these middle-stage guides to decide and execute with verified checkpoints."
+        title="AI app builder guides for React apps you can ship"
+        intro="Choose the right builder, turn prompts and visual references into responsive React, control cost, verify the result, recover safely, and export a project your team can keep building."
         pages={blogPages}
       />
       <BrandIdentityQuickFaq className="pb-0" />

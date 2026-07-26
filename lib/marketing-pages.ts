@@ -4237,6 +4237,76 @@ export const blogPages = blogPagesSeed.map((page) =>
   withMinimumInternalLinks(page, "guide"),
 );
 
+export type GuideTopicCluster = {
+  id: string;
+  title: string;
+  description: string;
+  slugs: readonly string[];
+};
+
+export const guideTopicClusters: readonly GuideTopicCluster[] = [
+  {
+    id: "ai-app-builder-foundations",
+    title: "AI app builder fundamentals",
+    description:
+      "Choose a builder, review generated React, verify the output, recover safely, and export a project that another developer can run.",
+    slugs: [
+      "why-ai-app-builders-burn-credits",
+      "how-to-evaluate-ai-generated-react-code",
+      "how-to-export-ai-generated-react-app",
+      "export-react-app-from-ai",
+      "how-we-verify-code",
+      "what-to-check-after-ai-generation",
+      "best-ai-builder-for-exportable-react-code",
+      "ai-app-builder-with-version-recovery",
+    ],
+  },
+  {
+    id: "screenshot-to-react",
+    title: "Screenshot and design to React",
+    description:
+      "Turn screenshots and Figma references into responsive components, complete interactions, and production-ready React instead of a single static frame.",
+    slugs: [
+      "screenshot-to-react-is-table-stakes",
+      "from-screenshot-to-production-react",
+      "screenshot-to-responsive-react",
+      "turn-figma-screenshot-into-react",
+    ],
+  },
+  {
+    id: "costs-and-alternatives",
+    title: "Costs, credits, and alternatives",
+    description:
+      "Compare AI coding costs, failed-run policies, recovery options, and alternatives with evidence tied to accepted, exportable results.",
+    slugs: [
+      "ai-coding-tool-comparison-with-credits",
+      "lovable-alternative-with-predictable-pricing",
+      "ai-app-builder-does-not-charge-failed-generations",
+      "how-to-recover-a-broken-lovable-project",
+      "bolt-new-keeps-burning-tokens",
+      "vibe-coding-cost-calculator",
+    ],
+  },
+  {
+    id: "ai-app-builder-use-cases",
+    title: "AI app builder use-case playbooks",
+    description:
+      "Plan the data, states, permissions, interactions, and handoff requirements for common products before asking AI to generate the interface.",
+    slugs: [
+      "ai-saas-mvp-builder",
+      "ai-landing-page-builder-with-code-export",
+      "build-react-dashboard-with-ai",
+      "ai-crm-builder",
+      "ai-client-portal-builder",
+      "ai-booking-app-builder",
+      "ai-dashboard-builder",
+      "ai-portfolio-builder",
+      "ai-marketplace-builder",
+      "ai-internal-tool-builder",
+    ],
+  },
+] as const;
+
 export const benchmarkPage: MarketingPage = {
   kind: "benchmark",
   slug: "screenshot-to-react",
@@ -4480,8 +4550,20 @@ export function getMarketingPath(page: MarketingPage) {
   return `/benchmarks/${page.slug}`;
 }
 
+export function getMarketingOgImagePath(page: MarketingPage) {
+  const searchParams = new URLSearchParams({
+    card: "article",
+    kind: page.kind,
+    title: page.h1,
+    v: "4",
+  });
+
+  return `/api/og?${searchParams.toString()}`;
+}
+
 export function marketingMetadata(page: MarketingPage): Metadata {
   const path = getMarketingPath(page);
+  const ogImagePath = getMarketingOgImagePath(page);
   const keywords = [
     "AI app builder",
     "React app generator",
@@ -4510,7 +4592,7 @@ export function marketingMetadata(page: MarketingPage): Metadata {
       authors: [SITE_NAME],
       images: [
         {
-          url: "/api/og?card=site&v=2",
+          url: ogImagePath,
           width: 1200,
           height: 630,
           alt: `${page.h1} — ${SITE_NAME}`,
@@ -4521,7 +4603,7 @@ export function marketingMetadata(page: MarketingPage): Metadata {
       card: "summary_large_image",
       title: page.title,
       description: page.description,
-      images: ["/api/og?card=site&v=2"],
+      images: [ogImagePath],
     },
   };
 }
@@ -4529,6 +4611,7 @@ export function marketingMetadata(page: MarketingPage): Metadata {
 export function marketingStructuredData(page: MarketingPage) {
   const path = getMarketingPath(page);
   const url = `${SITE_URL}${path}`;
+  const ogImageUrl = `${SITE_URL}${getMarketingOgImagePath(page)}`;
   const sectionName =
     page.kind === "comparison"
       ? "Comparisons"
@@ -4546,11 +4629,26 @@ export function marketingStructuredData(page: MarketingPage) {
     {
       "@context": "https://schema.org",
       "@type": "Article",
+      "@id": `${url}#article`,
       headline: page.h1,
       description: page.description,
+      url,
+      image: {
+        "@type": "ImageObject",
+        url: ogImageUrl,
+        width: 1200,
+        height: 630,
+      },
+      inLanguage: "en-US",
+      articleSection: sectionName,
       datePublished: page.publishedAt,
       dateModified: page.updatedAt,
-      mainEntityOfPage: url,
+      mainEntityOfPage: { "@type": "WebPage", "@id": url },
+      isPartOf: {
+        "@type": "CollectionPage",
+        "@id": `${SITE_URL}${sectionPath}`,
+        name: sectionName,
+      },
       author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
       publisher: {
         "@type": "Organization",
@@ -4565,6 +4663,7 @@ export function marketingStructuredData(page: MarketingPage) {
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
+      "@id": `${url}#breadcrumb`,
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
         {
@@ -4579,6 +4678,8 @@ export function marketingStructuredData(page: MarketingPage) {
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
+      "@id": `${url}#faq`,
+      url,
       mainEntity: page.faqs.map((faq) => ({
         "@type": "Question",
         name: faq.question,

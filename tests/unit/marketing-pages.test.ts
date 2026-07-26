@@ -3,7 +3,9 @@ import {
   benchmarkPage,
   blogPages,
   comparisonPages,
+  getMarketingOgImagePath,
   getMarketingPath,
+  guideTopicClusters,
   marketingPaths,
   marketingStructuredData,
 } from "@/lib/marketing-pages";
@@ -33,6 +35,30 @@ describe("marketing page content", () => {
     }
   });
 
+  it("organizes every guide into exactly one topical cluster", () => {
+    const clusteredSlugs = guideTopicClusters.flatMap((cluster) =>
+      Array.from(cluster.slugs),
+    );
+    const guideSlugs = blogPages.map((page) => page.slug);
+
+    expect(new Set(clusteredSlugs).size).toBe(clusteredSlugs.length);
+    expect(clusteredSlugs.sort()).toEqual(guideSlugs.sort());
+    expect(
+      guideTopicClusters.every((cluster) => cluster.slugs.length >= 4),
+    ).toBe(true);
+  });
+
+  it("creates page-specific social cards for every article", () => {
+    for (const page of pages) {
+      const path = getMarketingOgImagePath(page);
+      const params = new URL(path, "https://squidagent.app").searchParams;
+
+      expect(params.get("card")).toBe("article");
+      expect(params.get("kind")).toBe(page.kind);
+      expect(params.get("title")).toBe(page.h1);
+    }
+  });
+
   it("uses dated primary sources on every competitor comparison", () => {
     for (const page of comparisonPages) {
       expect(page.sources?.length).toBeGreaterThanOrEqual(2);
@@ -51,6 +77,19 @@ describe("marketing page content", () => {
         "BreadcrumbList",
         "FAQPage",
       ]);
+      expect(data[0]).toMatchObject({
+        url: `https://squidagent.app${getMarketingPath(page)}`,
+        inLanguage: "en-US",
+        image: {
+          "@type": "ImageObject",
+          width: 1200,
+          height: 630,
+        },
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": `https://squidagent.app${getMarketingPath(page)}`,
+        },
+      });
       expect(data[2].mainEntity).toHaveLength(page.faqs.length);
     }
   });

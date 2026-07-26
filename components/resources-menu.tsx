@@ -242,41 +242,72 @@ export function ResourcesMenu({
 
 export function MobileResourcesList({
   onNavigate,
+  compact = false,
 }: {
   onNavigate?: () => void;
+  compact?: boolean;
 }) {
-  return (
-    <div className="rounded-xl border border-border bg-muted/30 p-2">
-      <p className="px-2 pb-1 pt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-        Resources
-      </p>
-      <nav aria-label="Mobile resources">
-        <ul className="grid gap-2">
-          {resourceLinks.map((link) => {
-            const Icon = link.icon;
+  const links = (
+    <nav aria-label="Mobile resources">
+      <ul className={cn("grid", compact ? "gap-1 p-1.5 pt-0" : "gap-2 p-2")}>
+        {resourceLinks.map((link) => {
+          const Icon = link.icon;
 
-            return (
-              <li key={link.href} className="min-w-0">
-                <Link
-                  href={link.href}
-                  onClick={onNavigate}
-                  className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground transition-[background-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary active:translate-y-px motion-reduce:transition-colors"
-                  aria-label={link.label}
-                >
+          return (
+            <li key={link.href} className="min-w-0">
+              <Link
+                href={link.href}
+                onClick={onNavigate}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-lg text-left text-sm font-medium text-foreground transition-[background-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary active:scale-[0.99] motion-reduce:transition-colors",
+                  compact ? "min-h-11 px-2.5 py-1.5" : "min-h-12 px-3 py-2",
+                )}
+                aria-label={link.label}
+              >
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-background text-primary shadow-sm ring-1 ring-border/70">
                   <Icon
-                    className="size-4 shrink-0 text-muted-foreground"
-                    strokeWidth={1.75}
+                    className="size-3.5"
+                    strokeWidth={1.9}
                     aria-hidden="true"
                   />
-                  <span className="min-w-0 truncate">
-                    {link.shortLabel ?? link.label}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </div>
+                </span>
+                <span className="min-w-0 truncate">
+                  {link.shortLabel ?? link.label}
+                </span>
+                <ArrowRight
+                  className="ml-auto size-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+
+  if (!compact) {
+    return (
+      <div className="rounded-xl border border-border bg-muted/30">
+        <p className="px-4 pb-1 pt-3 text-xs font-semibold text-muted-foreground">
+          Resources
+        </p>
+        {links}
+      </div>
+    );
+  }
+
+  return (
+    <details className="group rounded-xl border border-border/80 bg-muted/35 open:bg-muted/50">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
+        <BookOpen className="size-4 text-primary" strokeWidth={1.9} />
+        <span>Resources</span>
+        <span className="ml-auto text-xs font-medium text-muted-foreground">
+          {resourceLinks.length}
+        </span>
+        <ChevronDown className="size-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
+      </summary>
+      {links}
+    </details>
   );
 }

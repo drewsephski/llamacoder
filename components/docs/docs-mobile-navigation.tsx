@@ -31,7 +31,7 @@ export function DocsMobileNavigation({
             <Menu className="size-4" />
           </button>
         </DialogTrigger>
-        <DialogContent className="!left-0 !top-0 flex !h-dvh !w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:rounded-none sm:p-0">
+        <DialogContent className="!left-0 !top-0 flex !h-dvh !max-h-none !w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:rounded-none sm:p-0">
           <DialogTitle className="flex h-16 shrink-0 items-center border-b border-border px-5 pr-14 text-base">
             Squid Agent Docs
           </DialogTitle>

@@ -17,19 +17,43 @@ export const metadata: Metadata = {
     description,
     url: pageUrl,
     type: "article",
+    images: [
+      {
+        url: "/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4",
+        width: 1200,
+        height: 630,
+        alt: "What is Squid Agent?",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: [
+      "/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4",
+    ],
   },
 };
 
 const structuredData = [
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
+    "@type": "WebApplication",
+    "@id": `${siteUrl}/#software`,
     name: "Squid Agent",
     alternateName: ["SquidAgent", "Squid Agent App Builder"],
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Web",
     description,
     url: pageUrl,
+    image: `${siteUrl}/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4`,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      category: "Free starter plan",
+    },
     provider: {
       "@type": "Organization",
       name: "Squid Agent",
@@ -52,7 +76,7 @@ const structuredData = [
     name: "Squid Agent",
     url: siteUrl,
     description:
-      "A product team building and export-first AI app builder for React with checkpoints and verifiable handoff.",
+      "A product team building an export-first AI app builder for React with checkpoints and verifiable handoff.",
     sameAs: [
       "https://github.com/drewsephski/llamacoder",
       "https://squidagent.app/docs",

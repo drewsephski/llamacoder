@@ -117,7 +117,7 @@ export function PricingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="pricing-modal-content w-[calc(100vw-1.5rem)] max-w-5xl gap-0 overflow-y-auto overscroll-contain p-4 sm:w-[calc(100vw-2rem)] sm:p-5">
+      <DialogContent className="pricing-modal-content w-[calc(100vw-1.5rem)] max-w-5xl gap-0 overflow-y-auto overscroll-contain p-4 sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:p-5">
         <DialogHeader className="text-left">
           <DialogTitle className="flex items-start gap-2 pr-7 text-xl font-bold leading-tight tracking-tight sm:items-center sm:gap-3 sm:pr-0 sm:text-3xl">
             <Crown className="mt-0.5 h-6 w-6 shrink-0 text-amber-500 sm:mt-0 sm:h-7 sm:w-7" />
