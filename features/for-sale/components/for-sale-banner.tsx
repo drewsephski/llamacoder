@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { beginForSaleCheckout } from "@/features/for-sale/checkout";
 import { getForSaleProduct } from "@/features/for-sale/products";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 export function ForSaleBanner() {
   const pathname = usePathname();
@@ -142,7 +143,11 @@ export function ForSaleBanner() {
             disabled={isPending}
             onClick={startCheckout}
           >
-            <ShoppingBag className="size-4" />
+            {isPending ? (
+              <CometSpinner className="size-4" aria-hidden="true" />
+            ) : (
+              <ShoppingBag className="size-4" />
+            )}
             {isPending
               ? "Starting…"
               : `Get this page for ${product.priceLabel}`}

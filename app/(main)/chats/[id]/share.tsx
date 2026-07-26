@@ -1,13 +1,7 @@
 "use client";
 
 import type { Message } from "@prisma/client";
-import {
-  CheckCircle2,
-  Copy,
-  ExternalLink,
-  Loader2,
-  LockKeyhole,
-} from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, LockKeyhole } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +27,7 @@ import {
   waitForPreviewScreenshot,
 } from "@/features/gallery/client/preview-screenshot";
 import { uploadGalleryThumbnail } from "@/features/gallery/client/upload-gallery-thumbnail";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -279,7 +274,7 @@ export function Share({
 
           {isLoading ? (
             <div className="flex min-h-52 items-center justify-center text-sm text-muted-foreground">
-              <Loader2 className="mr-2 size-4 animate-spin" />
+              <CometSpinner className="mr-2 size-4" aria-hidden="true" />
               Loading publication settings…
             </div>
           ) : (
@@ -339,7 +334,10 @@ export function Share({
                     Published! Your project is live.
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                    <span>
+                    <span className="flex items-center gap-2">
+                      {isUploadingThumbnail ? (
+                        <CometSpinner className="size-3.5" aria-hidden="true" />
+                      ) : null}
                       {isUploadingThumbnail
                         ? "Uploading gallery preview image…"
                         : publication.thumbnailStatus === "ready"
@@ -356,9 +354,17 @@ export function Share({
                         onClick={retryThumbnail}
                         disabled={isRetryingThumbnail || isUploadingThumbnail}
                       >
-                        {isRetryingThumbnail || isUploadingThumbnail
-                          ? "Retrying…"
-                          : "Retry preview"}
+                        {isRetryingThumbnail || isUploadingThumbnail ? (
+                          <>
+                            <CometSpinner
+                              className="size-3.5"
+                              aria-hidden="true"
+                            />
+                            Retrying…
+                          </>
+                        ) : (
+                          "Retry preview"
+                        )}
                       </Button>
                     )}
                   </div>
@@ -399,7 +405,14 @@ export function Share({
                   disabled={isUnpublishing}
                   className="text-destructive hover:text-destructive"
                 >
-                  {isUnpublishing ? "Unpublishing…" : "Unpublish"}
+                  {isUnpublishing ? (
+                    <>
+                      <CometSpinner className="size-4" aria-hidden="true" />
+                      Unpublishing…
+                    </>
+                  ) : (
+                    "Unpublish"
+                  )}
                 </Button>
               )}
             </div>
@@ -418,11 +431,16 @@ export function Share({
                   isSaving || isLoading || !title.trim() || !description.trim()
                 }
               >
-                {isSaving
-                  ? "Publishing…"
-                  : publication?.isPublished
-                    ? "Update project"
-                    : "Publish project"}
+                {isSaving ? (
+                  <>
+                    <CometSpinner className="size-4" aria-hidden="true" />
+                    Publishing…
+                  </>
+                ) : publication?.isPublished ? (
+                  "Update project"
+                ) : (
+                  "Publish project"
+                )}
               </Button>
             </div>
           </DialogFooter>

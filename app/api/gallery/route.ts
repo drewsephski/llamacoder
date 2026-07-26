@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
                 project.thumbnailUrl !== null &&
                 project.generationPrompt.trim().length > 0,
             )
-            .slice(0, 6)
             .map((project) => ({
               src: project.thumbnailUrl,
               alt: `Preview of ${project.title}`,

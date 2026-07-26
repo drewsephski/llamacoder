@@ -8,7 +8,6 @@ import {
   ExternalLink,
   GitBranch,
   KeyRound,
-  Loader2,
   Plug,
   RefreshCw,
   Rocket,
@@ -52,6 +51,7 @@ import {
   type SupabaseAuthMode,
 } from "@/features/integrations/supabase-backend";
 import { fetchJson } from "@/features/shared/client/http";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 const deleteResponseSchema = z.object({ ok: z.literal(true) });
 
@@ -253,14 +253,15 @@ function SupabaseBackendCard({
   if (backend.status === "provisioning") {
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" /> Provisioning
+        <CometSpinner className="size-3.5" aria-hidden="true" /> Provisioning
       </div>
     );
   }
   if (backend.status === "applying" || applyMutation.isPending) {
     return (
       <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-        <Loader2 className="size-3.5 animate-spin" /> Applying backend
+        <CometSpinner className="size-3.5" aria-hidden="true" /> Applying
+        backend
       </div>
     );
   }
@@ -426,7 +427,7 @@ function ProviderActions({
         onClick={() => actionMutation.mutate()}
       >
         {actionMutation.isPending ? (
-          <Loader2 className="animate-spin" />
+          <CometSpinner className="size-4" aria-hidden="true" />
         ) : integration.providerId === "github" ? (
           <GitBranch />
         ) : (
@@ -699,7 +700,7 @@ function SupabaseProvisionActions({
                 onClick={() => configureAuthModeMutation.mutate(authMode)}
               >
                 {configureAuthModeMutation.isPending ? (
-                  <Loader2 className="animate-spin" />
+                  <CometSpinner className="size-4" aria-hidden="true" />
                 ) : (
                   <KeyRound />
                 )}
@@ -720,7 +721,7 @@ function SupabaseProvisionActions({
   if (operationRunning) {
     return (
       <div className="mt-2 flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 p-3 text-xs">
-        <Loader2 className="size-3.5 animate-spin" />
+        <CometSpinner className="size-3.5" aria-hidden="true" />
         <span className="font-semibold">
           {supabaseProvisioningLabel(operation.phase)}
         </span>
@@ -793,7 +794,7 @@ function SupabaseProvisionActions({
             onClick={() => bindMutation.mutate()}
           >
             {bindMutation.isPending ? (
-              <Loader2 className="animate-spin" />
+              <CometSpinner className="size-4" aria-hidden="true" />
             ) : (
               <Plug />
             )}
@@ -839,7 +840,7 @@ function SupabaseProvisionActions({
             onClick={() => createMutation.mutate()}
           >
             {createMutation.isPending ? (
-              <Loader2 className="animate-spin" />
+              <CometSpinner className="size-4" aria-hidden="true" />
             ) : (
               <Rocket />
             )}
@@ -1203,8 +1204,8 @@ export function ProjectIntegrationsPanel({
 
           {workspaceQuery.isLoading ? (
             <div className="flex min-h-32 items-center justify-center text-sm text-muted-foreground">
-              <Loader2 className="mr-2 size-4 animate-spin" /> Loading
-              integrations
+              <CometSpinner className="mr-2 size-4" aria-hidden="true" />{" "}
+              Loading integrations
             </div>
           ) : workspaceQuery.isError ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
@@ -1290,6 +1291,14 @@ export function ProjectIntegrationsPanel({
                                     disconnectMutation.mutate(integration.id)
                                   }
                                 >
+                                  {disconnectMutation.isPending &&
+                                  disconnectMutation.variables ===
+                                    integration.id ? (
+                                    <CometSpinner
+                                      className="size-4"
+                                      aria-hidden="true"
+                                    />
+                                  ) : null}
                                   Disconnect
                                 </Button>
                                 <Button
@@ -1312,14 +1321,15 @@ export function ProjectIntegrationsPanel({
                                     testMutation.mutate(integration.id)
                                   }
                                 >
-                                  <RefreshCw
-                                    className={
-                                      testMutation.isPending &&
-                                      testMutation.variables === integration.id
-                                        ? "animate-spin"
-                                        : ""
-                                    }
-                                  />
+                                  {testMutation.isPending &&
+                                  testMutation.variables === integration.id ? (
+                                    <CometSpinner
+                                      className="size-4"
+                                      aria-hidden="true"
+                                    />
+                                  ) : (
+                                    <RefreshCw />
+                                  )}
                                   Test
                                 </Button>
                                 <Button
@@ -1600,7 +1610,7 @@ export function ProjectIntegrationsPanel({
                       onClick={() => saveMutation.mutate()}
                     >
                       {saveMutation.isPending && (
-                        <Loader2 className="animate-spin" />
+                        <CometSpinner className="size-4" aria-hidden="true" />
                       )}
                       {editingBindingId
                         ? "Save changes"

@@ -1,7 +1,8 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 const PREVIEW_WIDTH = 1280;
 const PREVIEW_HEIGHT = 720;
@@ -94,7 +95,7 @@ export function GalleryProjectPreview({
 
       {status !== "ready" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted via-background to-primary/10 text-muted-foreground transition-opacity">
-          <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+          <CometSpinner className="size-5" aria-hidden="true" />
           <span className="text-xs font-medium">
             {status === "loading" ? "Loading preview" : "Building preview"}
           </span>

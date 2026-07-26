@@ -15,7 +15,8 @@ import { PromptPills } from "./prompt-pills";
 import { PromptOutput } from "./prompt-output";
 import { usePromptBuilder } from "../hooks/use-prompt-builder";
 import { cn } from "@/lib/utils";
-import { Sparkles, Loader2, Check, Clock, Trash2 } from "lucide-react";
+import { Sparkles, Check, Clock, Trash2 } from "lucide-react";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -131,7 +132,7 @@ export function PromptBuilderModal({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <CometSpinner className="size-4" aria-hidden="true" />
                   Enhancing...
                 </>
               ) : (

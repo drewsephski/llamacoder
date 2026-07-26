@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 type SearchResult = {
   id: string;
@@ -155,7 +156,8 @@ export function DocsSearch() {
               Enter at least two characters to search the docs.
             </p>
           ) : loading ? (
-            <p className="px-3 py-10 text-center text-sm text-muted-foreground">
+            <p className="flex items-center justify-center gap-2 px-3 py-10 text-center text-sm text-muted-foreground">
+              <CometSpinner className="size-4" aria-hidden="true" />
               Searching…
             </p>
           ) : results.length === 0 ? (

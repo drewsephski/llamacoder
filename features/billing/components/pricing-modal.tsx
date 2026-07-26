@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Zap, Check, Sparkles, Crown, Lock } from "lucide-react";
+import { Zap, Check, Sparkles, Crown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { MODELS } from "@/lib/constants";
 import {
@@ -25,6 +25,7 @@ import type {
   SubscriptionTier,
 } from "@/features/billing/contracts";
 import { getErrorMessage } from "@/features/shared/errors";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 interface PricingModalProps {
   open: boolean;
@@ -292,7 +293,10 @@ export function PricingModal({
                   className="min-h-10 w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold shadow-sm hover:bg-blue-500"
                 >
                   {isLoading === "pro" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <>
+                      <CometSpinner className="size-4" aria-hidden="true" />
+                      Opening checkout
+                    </>
                   ) : (
                     "Start Pro"
                   )}
@@ -373,7 +377,10 @@ export function PricingModal({
                   className="min-h-10 w-full rounded-xl border-b-[3px] border-amber-700 bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:-translate-y-px hover:border-b-[4px] hover:bg-amber-400 active:translate-y-px active:border-b-2"
                 >
                   {isLoading === "pro_plus" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <>
+                      <CometSpinner className="size-4" aria-hidden="true" />
+                      Opening checkout
+                    </>
                   ) : currentTier === "pro" ? (
                     "Upgrade to Pro Plus"
                   ) : (
@@ -495,7 +502,10 @@ export function PricingModal({
                     }`}
                   >
                     {isLoading === `credits-${pack.credits}` ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <>
+                        <CometSpinner className="size-4" aria-hidden="true" />
+                        Opening checkout
+                      </>
                     ) : (
                       "Buy Now"
                     )}

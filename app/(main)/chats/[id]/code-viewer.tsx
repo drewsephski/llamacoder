@@ -7,7 +7,6 @@ import {
   ExternalLink,
   FlaskConical,
   LayoutDashboard,
-  Loader2,
   MousePointer2,
   ShieldCheck,
 } from "lucide-react";
@@ -76,6 +75,7 @@ import {
   type SupabaseBrowserRuntimeState,
 } from "@/features/integrations/supabase-browser-runtime";
 import { DEFAULT_SUPABASE_AUTH_MODE } from "@/features/integrations/supabase-backend";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -586,11 +586,9 @@ export default function CodeViewer({
   const supabaseRuntime = resolveSupabaseBrowserRuntimeForPreview({
     runtime: integrationWorkspaceQuery.data?.browserRuntime.supabase,
     generatedAppUsesSupabase,
-    workspaceResolved:
-      !chat.userId || integrationWorkspaceQuery.isSuccess,
+    workspaceResolved: !chat.userId || integrationWorkspaceQuery.isSuccess,
   });
-  const isSupabaseRuntimePending =
-    generatedAppUsesSupabase && !supabaseRuntime;
+  const isSupabaseRuntimePending = generatedAppUsesSupabase && !supabaseRuntime;
   const supabasePublishableKey =
     supabaseRuntime?.status === "ready"
       ? supabaseRuntime.config.publishableKey
@@ -931,8 +929,8 @@ export default function CodeViewer({
               integrationWorkspaceQuery.isLoading &&
               !integrationWorkspaceQuery.isError && (
                 <Button size="sm" variant="secondary" disabled>
-                  <Loader2 className="size-3.5 animate-spin" /> Checking
-                  Supabase setup
+                  <CometSpinner className="size-3.5" aria-hidden="true" />{" "}
+                  Checking Supabase setup
                 </Button>
               )}
             {showSupabaseConnectCta && integrationWorkspaceQuery.isError && (
@@ -974,7 +972,7 @@ export default function CodeViewer({
                   onClick={() => supabaseProvisionMutation.mutate()}
                 >
                   {supabaseProvisionMutation.isPending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
+                    <CometSpinner className="size-3.5" aria-hidden="true" />
                   ) : null}
                   {supabaseProvisionMutation.isPending
                     ? "Creating project"
@@ -988,7 +986,7 @@ export default function CodeViewer({
               isSupabaseReady &&
               isSupabaseProvisioning && (
                 <Button size="sm" variant="secondary" disabled>
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <CometSpinner className="size-3.5" aria-hidden="true" />
                   {supabaseProvisioningLabel(
                     supabaseProvisioningOperation?.phase,
                   )}
@@ -1086,13 +1084,16 @@ export default function CodeViewer({
                   !chat.userId ? "bg-green-600 hover:bg-green-700" : ""
                 }
               >
-                {isSaving
-                  ? "Saving..."
-                  : isCheckingSession
-                    ? "Loading..."
-                    : !chat.userId
-                      ? "Sign Up to Save"
-                      : "Save"}
+                {isSaving || isCheckingSession ? (
+                  <>
+                    <CometSpinner className="size-4" aria-hidden="true" />
+                    {isSaving ? "Saving..." : "Loading..."}
+                  </>
+                ) : !chat.userId ? (
+                  "Sign Up to Save"
+                ) : (
+                  "Save"
+                )}
               </Button>
             )}
             {isSaved && (
@@ -1185,7 +1186,10 @@ export default function CodeViewer({
                     </>
                   ) : (
                     <>
-                      <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                      <CometSpinner
+                        className="size-5 text-muted-foreground"
+                        aria-hidden="true"
+                      />
                       <p className="text-sm text-muted-foreground">
                         Loading Supabase preview configuration…
                       </p>
@@ -1292,7 +1296,7 @@ export default function CodeViewer({
             className="hidden md:inline-flex"
           >
             {isVerifyingExport ? (
-              <Loader2 className="size-3 animate-spin" />
+              <CometSpinner className="size-3" aria-hidden="true" />
             ) : (
               <DownloadIcon className="size-3" />
             )}
@@ -1353,7 +1357,7 @@ export default function CodeViewer({
               >
                 <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   {isVerifyingExport ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <CometSpinner className="size-4" aria-hidden="true" />
                   ) : (
                     <DownloadIcon className="size-4" />
                   )}

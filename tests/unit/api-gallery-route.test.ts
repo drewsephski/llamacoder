@@ -108,6 +108,43 @@ describe("/api/gallery", () => {
     });
   });
 
+  it("does not truncate older gallery thumbnails from hero popouts", async () => {
+    const rows = Array.from({ length: 8 }, (_, index) => ({
+      id: `publication_${index + 1}`,
+      chatId: `chat_${index + 1}`,
+      userId: `owner_${index + 1}`,
+      slug: `project-${index + 1}`,
+      title: `Project ${index + 1}`,
+      description: `Gallery project ${index + 1}`,
+      allowRemixes: true,
+      publishedAt: new Date(
+        `2026-01-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
+      ),
+      messageId: `message_${index + 1}`,
+      thumbnailUrl: `https://cdn.example/project-${index + 1}.png`,
+      thumbnailStatus: "ready",
+      thumbnailCapturedMessageId: `message_${index + 1}`,
+      chat: { prompt: `Build gallery project ${index + 1}` },
+      user: { name: `Creator ${index + 1}`, image: null },
+    }));
+    prismaMock.galleryPublication.count.mockResolvedValue(rows.length);
+    prismaMock.galleryPublication.findMany.mockResolvedValue(rows);
+
+    const response = await GET(
+      new Request("http://localhost/api/gallery?withThumbnails=true") as never,
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.images).toHaveLength(8);
+    expect(body.images.at(-1)).toEqual(
+      expect.objectContaining({
+        title: "Project 8",
+        href: "/gallery/project-8",
+      }),
+    );
+  });
+
   it("publishes an owned assistant version with a stable project slug", async () => {
     prismaMock.message.findFirst.mockResolvedValue({
       id: "message_1",

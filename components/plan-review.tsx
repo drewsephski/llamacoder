@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, Loader2, FileText, Edit2 } from "lucide-react";
+import { Check, X, FileText, Edit2 } from "lucide-react";
 import { Textarea } from "./ui/textarea";
 import { getErrorMessage } from "@/features/shared/errors";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 interface PlanReviewProps {
   plan: string;
@@ -135,7 +136,7 @@ export function PlanReview({
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <CometSpinner className="size-4" aria-hidden="true" />
                   Generating...
                 </>
               ) : (

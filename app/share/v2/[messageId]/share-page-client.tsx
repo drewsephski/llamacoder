@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 type SharedFile = {
   path: string;
@@ -115,7 +116,11 @@ export function SharePageClient({
         <div className="grid gap-2">
           {allowRemixes ? (
             <Button onClick={handleRemix} disabled={isPending}>
-              <GitFork className="size-4" />
+              {isPending ? (
+                <CometSpinner className="size-4" aria-hidden="true" />
+              ) : (
+                <GitFork className="size-4" />
+              )}
               {isPending ? "Remixing..." : "Remix this app"}
             </Button>
           ) : (

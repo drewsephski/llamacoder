@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Database,
   ExternalLink,
-  LoaderCircle,
   LockKeyhole,
   Plug,
   RotateCcw,
@@ -56,6 +55,7 @@ import {
   type SupabaseAuthMode,
 } from "@/features/integrations/supabase-backend";
 import { fetchJson } from "@/features/shared/client/http";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 function setupQueryKey(projectId: string, interactionId: string) {
   return ["chat-supabase-setup", projectId, interactionId] as const;
@@ -210,7 +210,12 @@ function ProjectSetupDialog({
             disabled={pending}
             onClick={() => onAction({ action: "resume_project" })}
           >
-            <RotateCcw className="size-4" /> Resume incomplete project
+            {pending ? (
+              <CometSpinner className="size-4" aria-hidden="true" />
+            ) : (
+              <RotateCcw className="size-4" />
+            )}
+            Resume incomplete project
           </Button>
         ) : null}
         <div className="grid grid-cols-2 gap-2">
@@ -261,6 +266,9 @@ function ProjectSetupDialog({
                 })
               }
             >
+              {pending ? (
+                <CometSpinner className="size-4" aria-hidden="true" />
+              ) : null}
               Connect selected project
             </Button>
           </div>
@@ -336,6 +344,9 @@ function ProjectSetupDialog({
                 })
               }
             >
+              {pending ? (
+                <CometSpinner className="size-4" aria-hidden="true" />
+              ) : null}
               Create project
             </Button>
           </div>
@@ -385,7 +396,9 @@ function AuthModeStep({
           })
         }
       >
-        {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
+        {pending ? (
+          <CometSpinner className="size-4" aria-hidden="true" />
+        ) : null}
         {mode === "verified_email"
           ? "Use verified email"
           : "Approve instant signup"}
@@ -607,10 +620,17 @@ export function ChatSupabaseSetupCard({
     >
       <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-3.5 py-2">
         <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          <span
-            className={`size-1.5 rounded-full ${isBusy ? "animate-pulse bg-blue-500" : "bg-emerald-500"}`}
-            aria-hidden="true"
-          />
+          {isBusy ? (
+            <CometSpinner
+              className="size-2.5 text-blue-500"
+              aria-hidden="true"
+            />
+          ) : (
+            <span
+              className="size-1.5 rounded-full bg-emerald-500"
+              aria-hidden="true"
+            />
+          )}
           Backend setup
         </span>
         <span className="text-[11px] font-medium text-muted-foreground">
@@ -711,7 +731,12 @@ export function ChatSupabaseSetupCard({
                 })
               }
             >
-              <RotateCcw className="size-4" /> Retry backend setup
+              {actionMutation.isPending ? (
+                <CometSpinner className="size-4" aria-hidden="true" />
+              ) : (
+                <RotateCcw className="size-4" />
+              )}
+              Retry backend setup
             </Button>
             <Button
               type="button"
@@ -792,6 +817,9 @@ export function ChatSupabaseSetupCard({
                   })
                 }
               >
+                {actionMutation.isPending ? (
+                  <CometSpinner className="size-4" aria-hidden="true" />
+                ) : null}
                 Approve backend setup
               </Button>
               <Button
@@ -819,7 +847,10 @@ export function ChatSupabaseSetupCard({
               return (
                 <span key={label} className="flex items-center gap-2">
                   {active ? (
-                    <LoaderCircle className="size-3.5 animate-spin text-blue-500" />
+                    <CometSpinner
+                      className="size-3.5 text-blue-500"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <span className="size-3.5 rounded-full border border-border" />
                   )}

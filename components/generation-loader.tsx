@@ -1,3 +1,5 @@
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
+
 type PreviewBlock = {
   kind:
     | "nav"
@@ -430,23 +432,6 @@ export function GenerationLoader({
           text-overflow: ellipsis;
         }
 
-        .generation-label-dots {
-          display: inline-flex;
-          gap: 3px;
-        }
-
-        .generation-label-dots span {
-          width: 3px;
-          height: 3px;
-          border-radius: 999px;
-          background: currentColor;
-          opacity: 0.28;
-          animation: generation-dot 1.4s ease-in-out infinite;
-        }
-
-        .generation-label-dots span:nth-child(2) { animation-delay: 0.18s; }
-        .generation-label-dots span:nth-child(3) { animation-delay: 0.36s; }
-
         .generation-loader.is-compact {
           max-width: none;
           height: 100%;
@@ -574,11 +559,6 @@ export function GenerationLoader({
           66%, 100% { transform: translateX(120%); }
         }
 
-        @keyframes generation-dot {
-          0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
-          40% { opacity: 0.95; transform: translateY(-2px); }
-        }
-
         @media (max-width: 520px) {
           .generation-preview-nav {
             grid-template-columns: 24px minmax(0, 1fr) 46px;
@@ -589,8 +569,7 @@ export function GenerationLoader({
           .generation-browser::after,
           .generation-address-dot,
           .generation-preview-track,
-          .generation-preview-block::after,
-          .generation-label-dots span {
+          .generation-preview-block::after {
             animation: none !important;
           }
         }
@@ -626,11 +605,7 @@ export function GenerationLoader({
 
       <p className="generation-loader-label">
         <span>{label}</span>
-        <span className="generation-label-dots" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </span>
+        <CometSpinner className="size-3.5 text-blue-400" aria-hidden="true" />
       </p>
     </div>
   );

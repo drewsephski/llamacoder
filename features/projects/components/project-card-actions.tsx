@@ -5,6 +5,7 @@ import { Copy, Trash2 } from "lucide-react";
 import { DeleteProjectModal } from "@/features/projects/components/delete-project-modal";
 import { duplicateProject } from "@/features/projects/server/actions";
 import { toast } from "sonner";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 interface ProjectCardActionsProps {
   projectId: string;
@@ -43,7 +44,10 @@ export function ProjectCardActions({
           title="Duplicate"
         >
           {isDuplicating ? (
-            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            <CometSpinner
+              className="size-3.5"
+              aria-label={`Duplicating ${projectTitle}`}
+            />
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}

@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 interface SignInModalProps {
   open: boolean;
@@ -20,7 +21,11 @@ interface SignInModalProps {
   onSuccess?: () => void;
 }
 
-export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps) {
+export function SignInModal({
+  open,
+  onOpenChange,
+  onSuccess,
+}: SignInModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -89,7 +94,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+                className="mt-1 block min-h-[48px] w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 placeholder="you@example.com"
               />
             </div>
@@ -106,7 +111,7 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[48px]"
+                className="mt-1 block min-h-[48px] w-full rounded-md border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 placeholder="••••••••"
               />
             </div>
@@ -115,16 +120,23 @@ export function SignInModal({ open, onOpenChange, onSuccess }: SignInModalProps)
           <Button
             type="submit"
             disabled={loading}
-            className="w-full min-h-[48px]"
+            className="min-h-[48px] w-full"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? (
+              <>
+                <CometSpinner className="size-4" aria-hidden="true" />
+                Signing in...
+              </>
+            ) : (
+              "Sign in"
+            )}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link
               href="/sign-up"
-              className="font-medium text-primary hover:underline min-h-[44px] inline-flex items-center"
+              className="inline-flex min-h-[44px] items-center font-medium text-primary hover:underline"
               onClick={() => onOpenChange(false)}
             >
               Sign up

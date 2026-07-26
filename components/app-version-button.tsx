@@ -1,4 +1,5 @@
 import ArrowLeftIcon from "@/components/icons/arrow-left";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 import { toTitleCase } from "@/lib/utils";
 
 export function AppVersionButton({
@@ -29,7 +30,7 @@ export function AppVersionButton({
         disabled={disabled}
         className={`inline-flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border-4 border-border p-1.5 ${
           generating
-            ? "animate-pulse"
+            ? "bg-muted"
             : isActive !== undefined
               ? isActive
                 ? "bg-background"
@@ -77,28 +78,31 @@ export function AppVersionButton({
             </>
           ) : null}
         </div>
-        {!generating && (
-          <div className="ml-auto shrink-0">
-            {isActive ? (
-              <ArrowLeftIcon />
-            ) : (
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M11 0.5L11 11M5.16667 2.25L8.66667 5.75M8.66667 5.75L5.16667 9.25M8.66667 5.75L0.5 5.75"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-          </div>
-        )}
+        <div className="ml-auto shrink-0">
+          {generating ? (
+            <CometSpinner
+              className="size-4 text-blue-500"
+              aria-label="Generating app version"
+            />
+          ) : isActive ? (
+            <ArrowLeftIcon />
+          ) : (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11 0.5L11 11M5.16667 2.25L8.66667 5.75M8.66667 5.75L5.16667 9.25M8.66667 5.75L0.5 5.75"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </div>
       </button>
     </div>
   );

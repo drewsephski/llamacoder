@@ -1,13 +1,8 @@
 "use client";
 
-import {
-  ArrowUpRight,
-  Check,
-  Globe2,
-  LoaderCircle,
-  Search,
-} from "lucide-react";
+import { ArrowUpRight, Check, Globe2, Search } from "lucide-react";
 
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Confirmation,
@@ -223,12 +218,7 @@ export function ResearchActivityCard({
         <div className="flex items-center gap-2.5">
           <span className="relative flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
             {isSearching ? (
-              <>
-                <LoaderCircle
-                  className="relative size-3.5 animate-spin"
-                  aria-hidden="true"
-                />
-              </>
+              <CometSpinner className="relative size-3.5" aria-hidden="true" />
             ) : (
               <Check className="size-3.5" aria-hidden="true" />
             )}
@@ -295,11 +285,10 @@ export function ResearchActivityCard({
             </div>
           ) : isSearching ? (
             <div className="flex items-center gap-2 rounded-lg border border-dashed border-border/70 px-2.5 py-2 text-[11px] text-muted-foreground">
-              <span className="flex gap-1" aria-hidden="true">
-                <span className="size-1 animate-pulse rounded-full bg-blue-500 [animation-delay:-240ms]" />
-                <span className="size-1 animate-pulse rounded-full bg-blue-500 [animation-delay:-120ms]" />
-                <span className="size-1 animate-pulse rounded-full bg-blue-500" />
-              </span>
+              <CometSpinner
+                className="size-3 text-blue-500"
+                aria-hidden="true"
+              />
               Finding relevant sources…
             </div>
           ) : null}

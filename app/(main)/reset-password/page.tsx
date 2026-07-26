@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -152,7 +153,14 @@ function ResetPasswordForm() {
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Resetting..." : "Reset password"}
+        {loading ? (
+          <>
+            <CometSpinner className="size-4" aria-hidden="true" />
+            Resetting...
+          </>
+        ) : (
+          "Reset password"
+        )}
       </Button>
 
       <p className="text-center text-sm">

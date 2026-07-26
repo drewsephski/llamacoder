@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -93,7 +94,14 @@ export default function ForgotPasswordPage() {
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Sending..." : "Send reset link"}
+              {loading ? (
+                <>
+                  <CometSpinner className="size-4" aria-hidden="true" />
+                  Sending...
+                </>
+              ) : (
+                "Send reset link"
+              )}
             </Button>
 
             <p className="text-center text-sm">

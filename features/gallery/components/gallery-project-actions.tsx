@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, LockKeyhole, Trash2 } from "lucide-react";
+import { LockKeyhole, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DeleteProjectModal } from "@/features/projects/components/delete-project-modal";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 export function GalleryProjectActions({
   chatId,
@@ -117,7 +118,7 @@ export function GalleryProjectActions({
             >
               {isUnpublishing ? (
                 <>
-                  <Loader2 className="animate-spin" />
+                  <CometSpinner className="size-4" aria-hidden="true" />
                   Making private…
                 </>
               ) : (

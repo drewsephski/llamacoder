@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type ComponentProps, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 import { useStripePortal } from "@/features/billing/client/use-stripe-portal";
 import { executeStripeRedirect } from "@/features/billing/client/stripe-redirect";
 
@@ -38,7 +38,10 @@ export function StripePortalButton({
       disabled={disabled || isRedirecting}
     >
       {isRedirecting ? (
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        <>
+          <CometSpinner className="size-4" aria-hidden="true" />
+          Opening portal
+        </>
       ) : (
         children
       )}

@@ -1,8 +1,10 @@
 "use client";
 
-import { ImageOff, Loader2 } from "lucide-react";
+import { ImageOff } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 export function GalleryProjectThumbnail({
   thumbnailUrl,
@@ -54,7 +56,7 @@ export function GalleryProjectThumbnail({
         {failed ? (
           <ImageOff className="size-5" aria-hidden="true" />
         ) : (
-          <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+          <CometSpinner className="size-5" aria-hidden="true" />
         )}
         <span className="text-xs font-medium">
           {failed ? "Preview unavailable" : "Preparing preview"}

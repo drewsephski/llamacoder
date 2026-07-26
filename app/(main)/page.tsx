@@ -91,6 +91,10 @@ import {
 import { ProductWorkflowDemo } from "@/components/homepage/product-workflow-demo";
 import { HomepageScrollStatement } from "@/components/homepage/scroll-statement";
 import { uploadScreenshot } from "@/lib/s3-upload-client";
+import {
+  buildGalleryHeroImageDeck,
+  type GalleryHeroImage,
+} from "@/features/gallery/client/hero-image-rotation";
 
 const ApiSelectionDialog = dynamic(() =>
   import("@/features/integrations/components/api-selection-dialog").then(
@@ -136,6 +140,7 @@ const ACCEPTED_SCREENSHOT_TYPES = new Set([
   "image/webp",
 ]);
 const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
+const BUILD_LAUNCH_ANIMATION_MS = 1750;
 
 type BuiltWithSquidProject = {
   name: string;
@@ -400,13 +405,6 @@ const landingPageCapabilities: Partial<
   "/rivr": ["Responsive", "Auth", "API"],
   "/skyelite": ["Responsive"],
   "/jack": ["Responsive"],
-};
-
-type HeroPopoutImage = {
-  src: string;
-  alt: string;
-  title: string;
-  prompt: string;
 };
 
 const homepageFaq = [
@@ -1079,7 +1077,7 @@ function pickHeroPopoutSlot(
 function buildHeroPopoutFromSlot(
   slot: HeroPopoutSlot,
   slotIndex: number,
-  showcase: HeroPopoutImage,
+  showcase: GalleryHeroImage,
 ): HeroPopout {
   const horizontalJitter = randomInRange(-1.8, 1.8);
 
@@ -1170,9 +1168,10 @@ function HeroPopoutShowcases({
   const reduceMotion = useReducedMotion();
   const layerRef = useRef<HTMLDivElement>(null);
   const exclusionZonesRef = useRef<HeroPopoutExclusionZone[]>([]);
-  const showcaseImagesRef = useRef<HeroPopoutImage[]>([]);
+  const showcaseImagesRef = useRef<GalleryHeroImage[]>([]);
+  const imageDeckRef = useRef<GalleryHeroImage[]>([]);
+  const lastImageSrcRef = useRef<string | null>(null);
   const slotIndexRef = useRef(0);
-  const imageIndexRef = useRef(0);
   const [popouts, setPopouts] = useState<HeroPopout[]>([]);
   const [showcaseImagesReady, setShowcaseImagesReady] = useState(false);
 
@@ -1184,13 +1183,13 @@ function HeroPopoutShowcases({
         if (!response.ok) {
           throw new Error("Unable to load gallery previews.");
         }
-        return response.json() as Promise<{ images?: HeroPopoutImage[] }>;
+        return response.json() as Promise<{ images?: GalleryHeroImage[] }>;
       })
       .then((data) => {
         if (cancelled) return;
 
         showcaseImagesRef.current = (data.images ?? []).filter(
-          (image): image is HeroPopoutImage =>
+          (image): image is GalleryHeroImage =>
             typeof image.src === "string" &&
             image.src.length > 0 &&
             typeof image.alt === "string" &&
@@ -1198,6 +1197,8 @@ function HeroPopoutShowcases({
             typeof image.prompt === "string" &&
             image.prompt.trim().length > 0,
         );
+        imageDeckRef.current = [];
+        lastImageSrcRef.current = null;
         setShowcaseImagesReady(true);
       })
       .catch(() => {
@@ -1280,15 +1281,22 @@ function HeroPopoutShowcases({
           return current;
         }
 
-        const showcase =
-          showcaseImagesRef.current[
-            imageIndexRef.current % showcaseImagesRef.current.length
-          ];
-        if (!showcase) return current;
+        if (imageDeckRef.current.length === 0) {
+          imageDeckRef.current = buildGalleryHeroImageDeck(
+            showcaseImagesRef.current,
+            lastImageSrcRef.current,
+          );
+        }
+
+        const showcase = imageDeckRef.current.shift();
+        if (!showcase) {
+          delayForNextSpawn = randomInRange(680, 980);
+          return current;
+        }
 
         slotIndexRef.current =
           (slotSelection.slotIndex + 1) % HERO_POPOUT_SLOTS.length;
-        imageIndexRef.current += 1;
+        lastImageSrcRef.current = showcase.src;
         delayForNextSpawn = getHeroPopoutSpawnDelayMs(slotSelection.slotIndex);
 
         const popout = buildHeroPopoutFromSlot(
@@ -1337,6 +1345,7 @@ export default function Home() {
   const { setStreamPromise } = useGenerationHandoff();
   const router = useRouter();
   const plausible = usePlausible();
+  const reduceMotion = useReducedMotion();
 
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(DEFAULT_MODEL);
@@ -1355,6 +1364,7 @@ export default function Home() {
   const modelSelectScrollRef = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const buildButtonRef = useRef<HTMLButtonElement>(null);
 
   const [isPending, startTransition] = useTransition();
   const [showPricingModal, setShowPricingModal] = useState(false);
@@ -1371,6 +1381,30 @@ export default function Home() {
   const promptStartedAtRef = useRef<number | null>(null);
   const activationParamsHandledRef = useRef(false);
   const pendingProjectResumeRef = useRef(false);
+  const buildLaunchInFlightRef = useRef(false);
+
+  const playBuildLaunchAnimation = useCallback(async () => {
+    if (buildLaunchInFlightRef.current) return false;
+    if (reduceMotion) return true;
+
+    const buildButton = buildButtonRef.current;
+    if (!buildButton) return true;
+
+    buildLaunchInFlightRef.current = true;
+    buildButton.classList.remove("is-launching");
+    void buildButton.offsetWidth;
+    buildButton.classList.add("is-launching");
+
+    try {
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, BUILD_LAUNCH_ANIMATION_MS);
+      });
+      return true;
+    } finally {
+      buildButton.classList.remove("is-launching");
+      buildLaunchInFlightRef.current = false;
+    }
+  }, [reduceMotion]);
 
   const { data: session } = useUserSession();
   const {
@@ -1865,6 +1899,9 @@ export default function Home() {
                 data-hero-popout-exclude="compose"
                 className="animate-fade-up-2 relative z-[3] w-full max-w-2xl pt-8 sm:pt-10 lg:pt-12"
                 action={async (formData) => {
+                  const shouldSubmit = await playBuildLaunchAnimation();
+                  if (!shouldSubmit) return;
+
                   setIsCheckingEligibility(true);
                   const currentModel =
                     (formData.get("model") as string) || model;
@@ -2291,6 +2328,7 @@ export default function Home() {
 
                             {/* Submit button */}
                             <Button
+                              ref={buildButtonRef}
                               type="submit"
                               disabled={
                                 screenshotLoading ||
@@ -2309,10 +2347,14 @@ export default function Home() {
                               <Spinner
                                 loading={isCheckingEligibility || isPending}
                               >
-                                <ArrowRightIcon
+                                <span
+                                  className="build-launch-stage"
                                   aria-hidden="true"
-                                  className="size-4 invert transition-transform duration-200 group-hover:translate-x-0.5"
-                                />
+                                >
+                                  <ArrowRightIcon className="build-launch-arrow build-launch-arrow-trail build-launch-arrow-trail-one" />
+                                  <ArrowRightIcon className="build-launch-arrow build-launch-arrow-trail build-launch-arrow-trail-two" />
+                                  <ArrowRightIcon className="build-launch-arrow build-launch-arrow-main" />
+                                </span>
                               </Spinner>
                             </Button>
                           </div>

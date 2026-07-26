@@ -33,6 +33,7 @@ import {
   MobileResourcesList,
   ResourcesMenu,
 } from "@/components/resources-menu";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 interface HeaderProps {
   onHelpClick?: () => void;
@@ -169,7 +170,10 @@ function Header({ onHelpClick }: HeaderProps) {
           >
             <ResourcesMenu className="hidden lg:block" />
             {loading ? (
-              <span className="text-sm text-muted-foreground">Loading…</span>
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CometSpinner className="size-4" aria-hidden="true" />
+                Loading…
+              </span>
             ) : session ? (
               <>
                 {creditsError ? (

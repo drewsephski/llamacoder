@@ -13,6 +13,7 @@ import { useState } from "react";
 import { deleteProject } from "@/features/projects/server/actions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 
 interface DeleteProjectModalProps {
   projectId: string;
@@ -87,7 +88,7 @@ export function DeleteProjectModal({
           >
             {isDeleting ? (
               <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <CometSpinner className="size-4" aria-hidden="true" />
                 Deleting...
               </>
             ) : (
