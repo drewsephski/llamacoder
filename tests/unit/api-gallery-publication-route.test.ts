@@ -108,6 +108,7 @@ describe("gallery publication management", () => {
       },
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/gallery");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/api/gallery");
   });
 
   it("lets the owner upload a client-captured thumbnail for a published project", async () => {

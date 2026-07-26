@@ -1178,7 +1178,7 @@ function HeroPopoutShowcases({
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/gallery?withThumbnails=true")
+    fetch("/api/gallery?withThumbnails=all")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Unable to load gallery previews.");

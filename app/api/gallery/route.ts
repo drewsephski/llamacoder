@@ -16,8 +16,11 @@ export const maxDuration = 120;
 
 export async function GET(request: NextRequest) {
   try {
+    const thumbnailScope = new URL(request.url).searchParams.get(
+      "withThumbnails",
+    );
     const withThumbnails =
-      new URL(request.url).searchParams.get("withThumbnails") === "true";
+      thumbnailScope === "true" || thumbnailScope === "all";
 
     const { projects } = await getGalleryProjects({
       query: "",
@@ -43,10 +46,7 @@ export async function GET(request: NextRequest) {
             })),
         },
         {
-          headers: {
-            "Cache-Control":
-              "public, s-maxage=300, stale-while-revalidate=3600",
-          },
+          headers: { "Cache-Control": "no-store" },
         },
       );
     }

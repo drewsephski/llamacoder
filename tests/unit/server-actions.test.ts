@@ -893,6 +893,7 @@ describe("server actions", () => {
       where: { id: "chat_1" },
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/gallery");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/api/gallery");
 
     prismaMock.chat.findUnique.mockResolvedValueOnce(
       buildChat({

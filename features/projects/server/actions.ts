@@ -39,6 +39,7 @@ export async function deleteProject(chatId: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/gallery");
+  revalidatePath("/api/gallery");
 }
 
 export async function renameProject(chatId: string, newTitle: string) {

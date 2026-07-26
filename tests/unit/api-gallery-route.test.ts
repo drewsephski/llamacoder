@@ -91,10 +91,11 @@ describe("/api/gallery", () => {
     ]);
 
     const response = await GET(
-      new Request("http://localhost/api/gallery?withThumbnails=true") as never,
+      new Request("http://localhost/api/gallery?withThumbnails=all") as never,
     );
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
     await expect(response.json()).resolves.toEqual({
       images: [
         {
@@ -131,7 +132,7 @@ describe("/api/gallery", () => {
     prismaMock.galleryPublication.findMany.mockResolvedValue(rows);
 
     const response = await GET(
-      new Request("http://localhost/api/gallery?withThumbnails=true") as never,
+      new Request("http://localhost/api/gallery?withThumbnails=all") as never,
     );
     const body = await response.json();
 

@@ -34,6 +34,7 @@ export async function DELETE(
     data: { isPublished: false, unpublishedAt: new Date() },
   });
   revalidatePath("/gallery");
+  revalidatePath("/api/gallery");
 
   return NextResponse.json({ ok: true });
 }
