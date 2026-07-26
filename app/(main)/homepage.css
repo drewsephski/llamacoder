@@ -1249,6 +1249,41 @@ body[data-scroll-locked] {
   }
 }
 
+@media (max-width: 339px) {
+  .compose-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 44px;
+    align-items: center;
+  }
+
+  .compose-toolbar-actions {
+    display: contents;
+  }
+
+  .build-btn {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .model-trigger {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    max-width: none;
+  }
+
+  .plan-mode-toggle {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .compose-upload-control {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
 /* ---------- Research-to-ship workflow ---------- */
 .workflow-rail {
   overflow: visible;
