@@ -2,6 +2,36 @@ const DEFAULT_LOOKBACK_MONTHS = 6;
 const DEFAULT_MAX_SOURCES = 5;
 const DEFAULT_MAX_EXCERPT_CHARACTERS = 4_000;
 
+export const RESEARCH_TOOL_LOOP_MAX_STEPS = 5;
+
+export type ResearchToolChoice =
+  | "auto"
+  | "none"
+  | { type: "tool"; toolName: "web_search" };
+
+/**
+ * Explicit research must force the initial search without trapping every
+ * subsequent model step in another tool call. The final bounded step disables
+ * tools so the model always has an opportunity to synthesize an answer.
+ */
+export function getResearchToolChoiceForStep({
+  forceInitialSearch,
+  stepNumber,
+}: {
+  forceInitialSearch: boolean;
+  stepNumber: number;
+}): ResearchToolChoice {
+  if (stepNumber >= RESEARCH_TOOL_LOOP_MAX_STEPS - 1) {
+    return "none";
+  }
+
+  if (forceInitialSearch && stepNumber === 0) {
+    return { type: "tool", toolName: "web_search" };
+  }
+
+  return "auto";
+}
+
 export type ResearchWindow = {
   start: Date;
   end: Date;

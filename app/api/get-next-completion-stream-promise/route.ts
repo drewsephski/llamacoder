@@ -104,6 +104,8 @@ import {
 import {
   createResearchWindow,
   extractExaToolSources,
+  getResearchToolChoiceForStep,
+  RESEARCH_TOOL_LOOP_MAX_STEPS,
 } from "@/features/generation/research-policy";
 import { buildWebResearchAgentInstructions } from "@/features/generation/research-prompts";
 import {
@@ -1662,13 +1664,18 @@ export async function POST(req: Request) {
             ),
             temperature: 0.4,
             tools: exaTools ?? undefined,
-            toolChoice:
-              exaTools && forceResearchToolChoice
-                ? { type: "tool", toolName: "web_search" }
-                : exaTools
-                  ? "auto"
-                  : undefined,
-            stopWhen: exaTools ? stepCountIs(5) : undefined,
+            toolChoice: exaTools ? "auto" : undefined,
+            prepareStep: exaTools
+              ? ({ stepNumber }) => ({
+                  toolChoice: getResearchToolChoiceForStep({
+                    forceInitialSearch: forceResearchToolChoice,
+                    stepNumber,
+                  }),
+                })
+              : undefined,
+            stopWhen: exaTools
+              ? stepCountIs(RESEARCH_TOOL_LOOP_MAX_STEPS)
+              : undefined,
             experimental_onToolCallStart: exaTools
               ? ({ toolCall }) => {
                   if (toolCall.toolName === "web_search") {

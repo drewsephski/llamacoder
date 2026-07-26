@@ -2196,9 +2196,19 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       ]),
     );
     expect(canonicalQuery).not.toContain("white");
-    expect(streamTextMock.mock.calls[0][0].toolChoice).toEqual({
-      type: "tool",
-      toolName: "web_search",
+    const generationCall = streamTextMock.mock.calls[0][0];
+    expect(generationCall.toolChoice).toBe("auto");
+    expect(generationCall.prepareStep({ stepNumber: 0 })).toEqual({
+      toolChoice: {
+        type: "tool",
+        toolName: "web_search",
+      },
+    });
+    expect(generationCall.prepareStep({ stepNumber: 1 })).toEqual({
+      toolChoice: "auto",
+    });
+    expect(generationCall.prepareStep({ stepNumber: 4 })).toEqual({
+      toolChoice: "none",
     });
     expect(streamTextMock).toHaveBeenCalledTimes(1);
   });
