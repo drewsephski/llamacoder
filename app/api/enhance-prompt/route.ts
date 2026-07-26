@@ -37,7 +37,10 @@ export async function POST(request: NextRequest) {
 
     if (!session) {
       return NextResponse.json(
-        { error: "AUTHENTICATION_REQUIRED", message: "Please sign in first." },
+        {
+          error: "AUTHENTICATION_REQUIRED",
+          message: "Sign in to enhance your prompt, then try again.",
+        },
         { status: 401 },
       );
     }

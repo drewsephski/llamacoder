@@ -39,12 +39,32 @@ export interface UsePromptBuilderReturn {
 const STORAGE_KEY = "prompt-builder-history";
 const MAX_HISTORY = 10;
 
+interface PromptBuilderApiResponse {
+  enhanced?: string;
+  error?: string;
+  message?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getResponseErrorMessage(
+  body: PromptBuilderApiResponse | null,
+  status: number,
+): string {
+  const message =
+    typeof body?.message === "string" ? body.message.trim() : "";
+  if (status < 500 && message) {
+    return message;
+  }
+
+  const error = typeof body?.error === "string" ? body.error.trim() : "";
+  return error || `Request failed with status ${status}`;
 }
 
 type ParsedSectionKey =
@@ -221,23 +241,19 @@ export function usePromptBuilder(): UsePromptBuilderReturn {
         body: JSON.stringify({ prompt: trimmed }),
       });
 
+      const data = (await response.json().catch(() => null)) as
+        | PromptBuilderApiResponse
+        | null;
+
       if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(
-          body?.error || `Request failed with status ${response.status}`,
-        );
+        throw new Error(getResponseErrorMessage(data, response.status));
       }
 
-      const data = (await response.json()) as {
-        enhanced?: string;
-        error?: string;
-      };
-
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
       }
 
-      if (!data.enhanced) {
+      if (!data?.enhanced) {
         throw new Error("Empty response from the enhancement service.");
       }
 
@@ -281,23 +297,19 @@ export function usePromptBuilder(): UsePromptBuilderReturn {
         }),
       });
 
+      const data = (await response.json().catch(() => null)) as
+        | PromptBuilderApiResponse
+        | null;
+
       if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(
-          body?.error || `Request failed with status ${response.status}`,
-        );
+        throw new Error(getResponseErrorMessage(data, response.status));
       }
 
-      const data = (await response.json()) as {
-        enhanced?: string;
-        error?: string;
-      };
-
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
       }
 
-      if (!data.enhanced) {
+      if (!data?.enhanced) {
         throw new Error("Empty response from the enhancement service.");
       }
 

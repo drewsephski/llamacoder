@@ -20,6 +20,12 @@ describe("CometSpinner", () => {
     expect(spinner).toHaveClass("size-6", "text-blue-500");
     expect(spinner).toHaveAttribute("data-slot", "comet-spinner");
     expect(spinner).toHaveStyle({ containerType: "size" });
+    expect(spinner.style.getPropertyValue("--loading-ui-comet-head")).toBe(
+      "14.00cqmin",
+    );
+    expect(spinner.style.getPropertyValue("--loading-ui-comet-radius")).toBe(
+      "46.00cqmin",
+    );
     expect(document.querySelector("style")?.textContent).toContain(
       "@keyframes loading-ui-comet-rotation",
     );
@@ -37,6 +43,18 @@ describe("CometSpinner", () => {
     );
     expect(spinner.style.getPropertyValue("--loading-ui-comet-radius")).toBe(
       "30.00cqmin",
+    );
+  });
+
+  it("preserves the wider orbit for page-level loading", () => {
+    render(<CometSpinner variant="page" aria-label="Loading page" />);
+
+    const spinner = screen.getByRole("status", { name: "Loading page" });
+    expect(spinner.style.getPropertyValue("--loading-ui-comet-head")).toBe(
+      "20.00cqmin",
+    );
+    expect(spinner.style.getPropertyValue("--loading-ui-comet-radius")).toBe(
+      "83.00cqmin",
     );
   });
 });

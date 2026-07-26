@@ -520,10 +520,6 @@ body[data-scroll-locked] {
 
 @media (min-width: 640px) {
   .compose-toolbar {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
     flex-wrap: nowrap;
     gap: 0;
   }

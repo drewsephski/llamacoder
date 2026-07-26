@@ -35,6 +35,7 @@ function SignInForm() {
         <CometSpinner
           className="size-8 text-primary"
           aria-label="Checking your session"
+          variant="page"
         />
       </div>
     );
@@ -235,6 +236,7 @@ export default function SignInPage() {
           <CometSpinner
             className="size-8 text-primary"
             aria-label="Loading sign in"
+            variant="page"
           />
         </div>
       }

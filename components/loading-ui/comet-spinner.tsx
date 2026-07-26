@@ -8,12 +8,15 @@ const ROTATION_ANIMATION = "loading-ui-comet-rotation";
 type CometSpinnerProps = ComponentProps<"span"> & {
   headScale?: number;
   radiusScale?: number;
+  variant?: CometSpinnerVariant;
 };
 
 type CometSpinnerStyle = CSSProperties & {
   "--loading-ui-comet-head": string;
   "--loading-ui-comet-radius": string;
 };
+
+type CometSpinnerVariant = "inline" | "page";
 
 function clamp(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) return min;
@@ -24,13 +27,16 @@ function CometSpinner({
   "aria-label": ariaLabel = "Loading",
   className,
   style,
-  headScale = 0.2,
-  radiusScale = 0.83,
+  headScale,
+  radiusScale,
+  variant = "inline",
   role = "status",
   ...props
 }: CometSpinnerProps) {
-  const safeHeadScale = clamp(headScale, 0.08, 0.35);
-  const safeRadiusScale = clamp(radiusScale, 0.3, 1.1);
+  const defaultHeadScale = variant === "page" ? 0.2 : 0.14;
+  const defaultRadiusScale = variant === "page" ? 0.83 : 0.46;
+  const safeHeadScale = clamp(headScale ?? defaultHeadScale, 0.08, 0.35);
+  const safeRadiusScale = clamp(radiusScale ?? defaultRadiusScale, 0.3, 1.1);
   const cometStyle = {
     ...style,
     containerType: "size",
@@ -141,4 +147,4 @@ function CometSpinner({
   );
 }
 
-export { CometSpinner };
+export { CometSpinner, type CometSpinnerVariant };

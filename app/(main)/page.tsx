@@ -101,6 +101,9 @@ const ApiSelectionDialog = dynamic(() =>
     (module) => module.ApiSelectionDialog,
   ),
 );
+
+const PROMPT_TEXTAREA_MAX_HEIGHT_PX = 360;
+const PROMPT_TEXTAREA_VIEWPORT_RATIO = 0.42;
 const HelpPanel = dynamic(
   () => import("@/components/help-panel").then((module) => module.HelpPanel),
   { ssr: false },
@@ -1556,6 +1559,50 @@ export default function Home() {
     }
   }, []);
 
+  const resizePromptTextarea = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const minimumHeight =
+      Number.parseFloat(window.getComputedStyle(textarea).minHeight) || 90;
+    const maximumHeight = Math.max(
+      minimumHeight,
+      Math.min(
+        PROMPT_TEXTAREA_MAX_HEIGHT_PX,
+        window.innerHeight * PROMPT_TEXTAREA_VIEWPORT_RATIO,
+      ),
+    );
+    const previousHeight = textarea.getBoundingClientRect().height;
+
+    textarea.style.height = "0px";
+    const contentHeight = textarea.scrollHeight;
+    const nextHeight = Math.min(
+      Math.max(contentHeight, minimumHeight),
+      maximumHeight,
+    );
+
+    textarea.style.height = `${previousHeight}px`;
+    textarea.style.overflowY =
+      contentHeight > maximumHeight ? "auto" : "hidden";
+
+    if (Math.abs(previousHeight - nextHeight) < 1) {
+      textarea.style.height = `${nextHeight}px`;
+      return;
+    }
+
+    void textarea.offsetHeight;
+    textarea.style.height = `${nextHeight}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    resizePromptTextarea();
+  }, [activeTemplate, prompt, resizePromptTextarea]);
+
+  useEffect(() => {
+    window.addEventListener("resize", resizePromptTextarea);
+    return () => window.removeEventListener("resize", resizePromptTextarea);
+  }, [resizePromptTextarea]);
+
   useEffect(() => {
     if (activationParamsHandledRef.current) return;
     activationParamsHandledRef.current = true;
@@ -1978,7 +2025,7 @@ export default function Home() {
                   {/* Compose box */}
                   <div className="compose-shell">
                     <div className="compose-box w-full">
-                      <div className="compose-box-inner relative w-full sm:pb-11">
+                      <div className="compose-box-inner relative w-full">
                         {/* Screenshot preview */}
                         {screenshotLoading && (
                           <div className="mx-3 mt-3">
@@ -2045,7 +2092,7 @@ export default function Home() {
                                 placeholder="Build me a budgeting app..."
                                 required
                                 name="prompt"
-                                className="min-h-[118px] resize-none border-0 bg-transparent px-4 pt-4 text-base leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
+                                className="min-h-[118px] resize-none overflow-y-hidden border-0 bg-transparent px-4 pt-4 text-base leading-relaxed transition-[height] duration-200 ease-out placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
                                 value={prompt}
                                 onChange={(e) => {
                                   if (

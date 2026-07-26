@@ -2,22 +2,29 @@
 
 import type { ReactNode } from "react";
 
-import { CometSpinner } from "@/components/loading-ui/comet-spinner";
+import {
+  CometSpinner,
+  type CometSpinnerVariant,
+} from "@/components/loading-ui/comet-spinner";
 
 export default function Spinner({
   loading = true,
   children,
   className = "size-3",
   label = "Loading",
+  variant = "inline",
 }: {
   loading?: boolean;
   children?: ReactNode;
   className?: string;
   label?: string;
+  variant?: CometSpinnerVariant;
 }) {
   if (!loading) return children;
 
-  const spinner = <CometSpinner className={className} aria-label={label} />;
+  const spinner = (
+    <CometSpinner className={className} aria-label={label} variant={variant} />
+  );
 
   if (!children) return spinner;
 

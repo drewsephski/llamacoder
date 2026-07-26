@@ -53,6 +53,9 @@ describe("POST /api/enhance-prompt", () => {
 
     expect(response.status).toBe(401);
     expect(body.error).toBe("AUTHENTICATION_REQUIRED");
+    expect(body.message).toBe(
+      "Sign in to enhance your prompt, then try again.",
+    );
     expect(generateTextMock).not.toHaveBeenCalled();
   });
 

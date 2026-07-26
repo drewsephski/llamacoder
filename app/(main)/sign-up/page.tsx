@@ -295,6 +295,7 @@ export default function SignUpPage() {
           <CometSpinner
             className="size-8 text-primary"
             aria-label="Loading sign up"
+            variant="page"
           />
         </div>
       }
