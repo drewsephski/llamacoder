@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 const videoSrc =
@@ -125,6 +126,40 @@ export function SkyElitePage({ fontClassName }: SkyElitePageProps) {
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#202A36] px-6 py-16 text-white sm:px-8 sm:py-20">
+        <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div>
+            <p className="text-sm font-semibold tracking-wider text-white/60">
+              BUILT WITH SQUID AGENT
+            </p>
+            <h2 className="mt-4 max-w-3xl text-3xl font-medium tracking-tight sm:text-4xl">
+              A responsive private-aviation concept built as portable React.
+            </h2>
+            <p className="mt-5 max-w-3xl text-base leading-7 text-white/70">
+              SkyElite demonstrates a focused luxury landing-page direction:
+              restrained typography, cinematic media, responsive navigation,
+              accessible controls, and a clear booking path. Squid Agent can
+              turn a similarly specific brief or visual reference into code you
+              can inspect, refine, verify, and export for your own workflow.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full border border-white/30 px-5 text-sm font-medium transition-colors hover:border-white hover:bg-white/10"
+              href="/gallery"
+            >
+              Explore examples
+            </Link>
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full bg-white px-5 text-sm font-medium text-[#202A36] transition-colors hover:bg-gray-100"
+              href="/"
+            >
+              Build your app
+            </Link>
           </div>
         </div>
       </section>

@@ -2,15 +2,19 @@ import { createUIMessageStreamResponse, type UIMessageChunk } from "ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  COMPLETION_IDLE_TIMEOUT_MS,
+  COMPLETION_START_TIMEOUT_MS,
   fetchCompletionStream,
   fetchGenerationRun,
   finalizeGenerationRun,
+  getCompletionStreamMessageId,
   recoverCompletionStream,
   retryCompletionStream,
 } from "@/features/generation/client/completion-stream";
 
 describe("fetchCompletionStream", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -71,6 +75,67 @@ describe("fetchCompletionStream", () => {
         }),
       }),
     );
+  });
+
+  it("fails a stalled start with retryable message identity", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_input: RequestInfo | URL, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              reject(new DOMException("Aborted", "AbortError"));
+            });
+          }),
+      ),
+    );
+
+    const pending = fetchCompletionStream({
+      messageId: "message_timeout",
+      model: "model_1",
+    });
+    const assertion = expect(pending).rejects.toMatchObject({
+      message: "Squid couldn't start the response in time. Please retry.",
+      messageId: "message_timeout",
+    });
+
+    await vi.advanceTimersByTimeAsync(COMPLETION_START_TIMEOUT_MS);
+    await assertion;
+    await expect(pending.catch(getCompletionStreamMessageId)).resolves.toBe(
+      "message_timeout",
+    );
+  });
+
+  it("fails a stream that stops producing events instead of hanging forever", async () => {
+    vi.useFakeTimers();
+    const response = createUIMessageStreamResponse({
+      stream: new ReadableStream<UIMessageChunk>({
+        start(controller) {
+          controller.enqueue({
+            type: "data-generation-status",
+            data: { phase: "preparing", label: "Preparing" },
+            transient: true,
+          });
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
+
+    const completion = await fetchCompletionStream({
+      messageId: "message_idle",
+      model: "model_1",
+    });
+    const reader = completion.events.getReader();
+    await expect(reader.read()).resolves.toMatchObject({ done: false });
+
+    const stalledRead = reader.read();
+    const assertion = expect(stalledRead).rejects.toMatchObject({
+      message: "The response stopped making progress. Please retry.",
+      messageId: "message_idle",
+    });
+    await vi.advanceTimersByTimeAsync(COMPLETION_IDLE_TIMEOUT_MS);
+    await assertion;
   });
 
   it("replays persisted output without another model request", async () => {
@@ -205,9 +270,8 @@ describe("fetchCompletionStream", () => {
     const message = await finalizeGenerationRun("run_1");
 
     expect(message.id).toBe("assistant_1");
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/generation-runs/run_1",
-      { method: "POST" },
-    );
+    expect(fetchMock).toHaveBeenCalledWith("/api/generation-runs/run_1", {
+      method: "POST",
+    });
   });
 });

@@ -1,10 +1,4 @@
 import dedent from "dedent";
-import {
-  getRecentStylePackIds,
-  pickDiversifiedPack,
-  readHallmarkLog,
-  themeNameToStylePackId,
-} from "@/features/generation/hallmark-memory";
 
 /**
  * Subject-routed Style Packs for vague briefs.
@@ -40,6 +34,45 @@ export const GENERIC_AI_PALETTE_BANS = [
 ] as const;
 
 export type StylePackId = (typeof STYLE_PACK_IDS)[number];
+
+const THEME_TO_PACK: Record<string, StylePackId> = {
+  cobalt: "cobaltMinimal",
+  cobaltminimal: "cobaltMinimal",
+  lumen: "lumenAtmospheric",
+  lumenatmospheric: "lumenAtmospheric",
+  specimen: "editorialSpecimen",
+  editorial: "editorialSpecimen",
+  editorialspecimen: "editorialSpecimen",
+  brutal: "swissBrutal",
+  swissbrutal: "swissBrutal",
+  carnival: "kineticAwwwards",
+  kinetic: "kineticAwwwards",
+  kineticawwwards: "kineticAwwwards",
+  hum: "softStructural",
+  softstructural: "softStructural",
+  terminal: "terminalPhosphor",
+  terminalphosphor: "terminalPhosphor",
+  garden: "gardenBotanical",
+  gardenbotanical: "gardenBotanical",
+  midnight: "midnightCool",
+  midnightcool: "midnightCool",
+  aurora: "midnightCool",
+  manifesto: "manifestoGeometric",
+  manifestogeometric: "manifestoGeometric",
+  atelier: "editorialSpecimen",
+  newsprint: "newsprintEditorial",
+  newsprinteditorial: "newsprintEditorial",
+  riso: "risoPoster",
+  risoposter: "risoPoster",
+};
+
+export function themeNameToStylePackId(theme: string): StylePackId | null {
+  const key = theme
+    .trim()
+    .toLowerCase()
+    .replace(/[\s/_-]+/g, "");
+  return THEME_TO_PACK[key] ?? null;
+}
 
 export type SubjectBucket =
   | "tools"
@@ -1277,7 +1310,7 @@ export function hashBriefSeed(brief: string): number {
 
 export function selectStylePackId(
   brief: string,
-  options?: { forcePack?: StylePackId; recentPacks?: StylePackId[] },
+  options?: { forcePack?: StylePackId },
 ): StylePackId | null {
   if (options?.forcePack) return options.forcePack;
 
@@ -1296,10 +1329,8 @@ export function selectStylePackId(
 
   const bucket = inferSubjectBucket(brief);
   const candidates = BUCKET_PACKS[bucket];
-  const recent =
-    options?.recentPacks ?? getRecentStylePackIds(readHallmarkLog(), 3);
   const seed = hashBriefSeed(brief);
-  return pickDiversifiedPack(candidates, recent, seed);
+  return candidates[seed % candidates.length] ?? candidates[0]!;
 }
 
 export function getStylePack(id: StylePackId): StylePackWithFonts {
@@ -1422,11 +1453,6 @@ export function buildActiveStylePackDirective(brief: string): string {
     ? `\n    - mono: \`${pack.typography.mono}\``
     : "";
   const cheat = pack.classCheatSheet.map((line) => `- ${line}`).join("\n");
-  const recent = getRecentStylePackIds(readHallmarkLog(), 3);
-  const diversificationNote =
-    recent.length > 0
-      ? `- Diversification: recent builds used ${recent.join(", ")} — this build locks **${packId}** to avoid palette/font repetition.`
-      : "";
 
   return [
     "**Active Style Pack directive (LOCKED for this build — do not re-route):**",
@@ -1434,7 +1460,6 @@ export function buildActiveStylePackDirective(brief: string): string {
     `- Hallmark alias: ${pack.hallmarkAlias}`,
     `- Design Read: ${pack.designReadTemplate}`,
     `- Aesthetic mode: ${pack.aestheticMode} | Luminosity: ${pack.luminosity}`,
-    diversificationNote,
     "- You MUST implement this pack's SURFACE_MAP classes, font pairing, signature element, and composition scaffold below. Do not fall back to anonymous gray SaaS, yellow/black CTAs, or three equal feature cards.",
     "- Apply this pack completely in the code. Do not dump STYLE_PACK / DIALS / SURFACE_MAP lines into the user-facing reply — keep that lock private.",
     "",
@@ -1481,9 +1506,8 @@ export function buildStylePackContract(): string {
       1. If explicit aesthetic/color/reference signals exist (not a Hallmark theme name) → skip packs; honor user + color-fidelity contracts.
       2. If the user names a Hallmark theme (Cobalt, Lumen, Brutal, Terminal, Garden, …) → map to the matching Style Pack and commit fully.
       3. Else infer a subject bucket: tools/API/docs/dashboard → tools; AI/creative/voice/music → aiCreative; portfolio/agency/editorial → portfolioEditorial; industrial/ops/infra/telemetry → industrialOps; landing/marketing/agency showcase → landingAgency; consumer/health/onboarding/friendly → consumerFriendly; unknown product → tools.
-      4. Read \`.hallmark/log.json\` when present and avoid repeating the last 2 Style Packs (palette/font diversification).
-      5. Hash seed = brief character length + first token + last token. Pick among the bucket's allowed packs (after diversification filter) by \`seed % pool.length\`.
-      6. Privately lock \`STYLE_PACK: <id> | DIALS: V/M/D | SURFACE_MAP: ...\` using the pack's exact classes, then implement from that map. Do not print the preflight line, Design Read, dials, or surface map in the user-facing reply.
+      4. Hash seed = brief character length + first token + last token. Pick among the bucket's allowed packs by \`seed % pool.length\`.
+      5. Privately lock \`STYLE_PACK: <id> | DIALS: V/M/D | SURFACE_MAP: ...\` using the pack's exact classes, then implement from that map. Do not print the preflight line, Design Read, dials, or surface map in the user-facing reply.
     - After locking a pack: reuse its surface-role classes AND font pairing everywhere; do not improvise a second palette or font mid-build. Aesthetic mode in the Design Taste contract must match the pack (brutalist ↔ swissBrutal/terminalPhosphor, minimalist ↔ cobaltMinimal, etc.).
     - Hallmark family names map 1:1 to Style Packs — Cobalt→cobaltMinimal; Lumen→lumenAtmospheric; Specimen→editorialSpecimen; Brutal→swissBrutal; Carnival→kineticAwwwards; Hum→softStructural; Terminal→terminalPhosphor; Garden→gardenBotanical; Midnight/Aurora→midnightCool; Manifesto→manifestoGeometric; Newsprint→newsprintEditorial; Riso→risoPoster. Pick the pack, then keep one luminosity model.
     - Overlay safety: for light-first packs, portalled overlays (\`DialogContent\`, menus, popovers, sheets) use the pack's \`overlay\` classes (typically white/light). For dark-first packs (lumenAtmospheric), overlays use the pack's dark overlay pair. Never let an inherited root \`dark\` class silently break contrast on unthemed portals.
@@ -1500,7 +1524,7 @@ export function buildStylePackContract(): string {
 export const stylePackContract = buildStylePackContract();
 
 export const stylePackPlanningRule =
-  "Unspecified-theme Style Pack: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural, terminalPhosphor, gardenBotanical, midnightCool, manifestoGeometric, newsprintEditorial, risoPoster) from the subject bucket + brief-hash seed + .hallmark/log.json diversification; privately lock dials, literal SURFACE_MAP classes, and font pairing; commit fully to that one aesthetic world; do not default to anonymous Vercel-gray SaaS or yellow/black CTAs; honor explicit user aesthetic direction over packs.";
+  "Unspecified-theme Style Pack: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural, terminalPhosphor, gardenBotanical, midnightCool, manifestoGeometric, newsprintEditorial, risoPoster) from the subject bucket + brief-hash seed; privately lock dials, literal SURFACE_MAP classes, and font pairing; commit fully to that one aesthetic world; do not default to anonymous Vercel-gray SaaS or yellow/black CTAs; honor explicit user aesthetic direction over packs.";
 
 /** @deprecated Use stylePackContract — kept as alias during migration. */
 export const unspecifiedThemeStylePackContract = stylePackContract;

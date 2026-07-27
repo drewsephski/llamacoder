@@ -2272,7 +2272,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     slug: "what-to-check-after-ai-generation",
     title: "What to Check After AI Generation: A Practical Receipt",
     description:
-      "A post-generation runbook for accepted outputs, revisions, and safe continuation.",
+      "Use this post-generation runbook to verify accepted output, inspect revisions, test the exported React app, and continue from a safe checkpoint.",
     h1: "What to check after AI generation",
     intro:
       "You should not move forward until you can replay the output outside the builder and confirm baseline behavior, accessibility, and business logic.",
@@ -3905,7 +3905,7 @@ const blogPagesSeed: MarketingPageSeed[] = [
     slug: "ai-dashboard-builder",
     title: "AI Dashboard Builder: Generate Operational and Product Dashboards",
     description:
-      "A template for generating React dashboards with role-specific widgets, filters, and consistent state checks.",
+      "Use this template to generate React dashboards with role-specific widgets, useful filters, realistic data states, and consistent interaction checks.",
     h1: "AI dashboard builder",
     intro:
       "A dashboard is not one view; it is several operational surfaces with strict state expectations and editability requirements.",
@@ -4733,6 +4733,39 @@ export function getMarketingPath(page: MarketingPage) {
   return `/benchmarks/${page.slug}`;
 }
 
+export function getRelatedMarketingLinks(page: MarketingPage): MarketingLink[] {
+  const siblings =
+    page.kind === "guide"
+      ? (guideTopicClusters
+          .find((cluster) => cluster.slugs.includes(page.slug))
+          ?.slugs.map((slug) =>
+            blogPages.find((candidate) => candidate.slug === slug),
+          )
+          .filter((candidate): candidate is MarketingPage =>
+            Boolean(candidate),
+          ) ?? [])
+      : page.kind === "comparison"
+        ? comparisonPages
+        : [];
+  const currentIndex = siblings.findIndex(
+    (candidate) => candidate.slug === page.slug,
+  );
+  const reciprocalLinks =
+    currentIndex >= 0
+      ? Array.from(
+          { length: Math.min(3, Math.max(0, siblings.length - 1)) },
+          (_, offset) =>
+            siblings[(currentIndex + offset + 1) % siblings.length],
+        ).map((candidate) => ({
+          href: getMarketingPath(candidate),
+          label: candidate.h1,
+          description: candidate.description,
+        }))
+      : [];
+
+  return uniqueByHref([...page.internalLinks, ...reciprocalLinks]);
+}
+
 export function getMarketingOgImagePath(page: MarketingPage) {
   const searchParams = new URLSearchParams({
     card: "article",
@@ -4840,7 +4873,7 @@ export function marketingStructuredData(page: MarketingPage) {
         url: MARKETING_AUTHOR.url,
         sameAs: MARKETING_AUTHOR.sameAs,
       },
-      reviewedBy: {
+      contributor: {
         "@type": "Organization",
         name: MARKETING_REVIEWER.name,
         url: MARKETING_REVIEWER.url,

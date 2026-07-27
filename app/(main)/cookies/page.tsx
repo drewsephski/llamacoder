@@ -4,7 +4,7 @@ import { createPageMetadata } from "@/lib/seo";
 export const metadata = createPageMetadata({
   title: "Cookie Policy",
   description:
-    "Cookie policy for Squid Agent authentication, preferences, analytics, and billing flows.",
+    "Learn how Squid Agent uses cookies and browser storage for authentication, preferences, analytics, project state, billing, and product operation.",
   path: "/cookies",
   keywords: ["Squid Agent cookie policy"],
 });

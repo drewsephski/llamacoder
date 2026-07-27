@@ -154,7 +154,7 @@ export function formatScreenshotCloneUserContext(analysisText: string): string {
   `;
 }
 
-/** Best-effort parse of vision output for project memory / diversification logs. */
+/** Best-effort parse of vision output for direct screenshot-clone coding context. */
 export function buildScreenshotDirectCodingUserText(
   userText: string,
   intent: ScreenshotCloneIntent,

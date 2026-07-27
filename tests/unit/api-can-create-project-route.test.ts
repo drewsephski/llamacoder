@@ -16,7 +16,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/billing", () => ({
   FREE_PROJECT_LIMIT: 3,
   hasModelPricing: (modelId: string) =>
-    modelId === "google/gemini-3-flash-preview",
+    modelId === "google/gemini-3.1-flash-lite",
   getModelCreditHoldCost: () => 1,
   checkProjectCreationEligibility: vi.fn(),
 }));

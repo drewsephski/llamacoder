@@ -14,6 +14,108 @@ export type CompletionStream = {
   generationRunId?: string;
 };
 
+export const COMPLETION_START_TIMEOUT_MS = 30_000;
+export const COMPLETION_IDLE_TIMEOUT_MS = 75_000;
+
+export class CompletionStreamError extends Error {
+  constructor(
+    message: string,
+    public readonly messageId: string,
+  ) {
+    super(message);
+    this.name = "CompletionStreamError";
+  }
+}
+
+export function getCompletionStreamMessageId(error: unknown) {
+  return error instanceof CompletionStreamError ? error.messageId : undefined;
+}
+
+function toCompletionStreamError(
+  error: unknown,
+  messageId: string,
+  fallback: string,
+) {
+  if (error instanceof CompletionStreamError) return error;
+  return new CompletionStreamError(
+    error instanceof Error && error.name !== "AbortError"
+      ? error.message
+      : fallback,
+    messageId,
+  );
+}
+
+function withIdleTimeout({
+  stream,
+  messageId,
+  abort,
+}: {
+  stream: ReadableStream<UIMessageChunk>;
+  messageId: string;
+  abort: () => void;
+}) {
+  let reader: ReadableStreamDefaultReader<UIMessageChunk> | null = null;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let settled = false;
+
+  const clearIdleTimeout = () => {
+    if (timeout) clearTimeout(timeout);
+    timeout = undefined;
+  };
+
+  return new ReadableStream<UIMessageChunk>({
+    async start(controller) {
+      reader = stream.getReader();
+      const scheduleIdleTimeout = () => {
+        clearIdleTimeout();
+        timeout = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          const error = new CompletionStreamError(
+            "The response stopped making progress. Please retry.",
+            messageId,
+          );
+          abort();
+          void reader?.cancel(error).catch(() => undefined);
+          controller.error(error);
+        }, COMPLETION_IDLE_TIMEOUT_MS);
+      };
+
+      scheduleIdleTimeout();
+      try {
+        while (!settled) {
+          const next = await reader.read();
+          if (next.done) {
+            settled = true;
+            clearIdleTimeout();
+            controller.close();
+            return;
+          }
+          controller.enqueue(next.value);
+          scheduleIdleTimeout();
+        }
+      } catch (error) {
+        if (settled) return;
+        settled = true;
+        clearIdleTimeout();
+        controller.error(
+          toCompletionStreamError(
+            error,
+            messageId,
+            "The response connection was interrupted. Please retry.",
+          ),
+        );
+      }
+    },
+    async cancel(reason) {
+      settled = true;
+      clearIdleTimeout();
+      abort();
+      await reader?.cancel(reason).catch(() => undefined);
+    },
+  });
+}
+
 export type GenerationRunSnapshot = {
   id: string;
   messageId: string;
@@ -50,23 +152,50 @@ export async function fetchCompletionStream({
   model: string;
   screenshotData?: string;
 }) {
-  const response = await fetch("/api/get-next-completion-stream-promise", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const abortController = new AbortController();
+  let startTimedOut = false;
+  const startTimeout = setTimeout(() => {
+    startTimedOut = true;
+    abortController.abort();
+  }, COMPLETION_START_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch("/api/get-next-completion-stream-promise", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messageId,
+        model,
+        screenshotData,
+      }),
+      signal: abortController.signal,
+    });
+  } catch (error) {
+    throw toCompletionStreamError(
+      error,
       messageId,
-      model,
-      screenshotData,
-    }),
-  });
+      startTimedOut
+        ? "Squid couldn't start the response in time. Please retry."
+        : "Unable to connect to the generation service. Please retry.",
+    );
+  } finally {
+    clearTimeout(startTimeout);
+  }
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "");
-    throw new Error(errorText || "Failed to start generation");
+    throw new CompletionStreamError(
+      errorText || "Failed to start generation",
+      messageId,
+    );
   }
 
   if (!response.body) {
-    throw new Error("Generation did not return a response body");
+    throw new CompletionStreamError(
+      "Generation did not return a response body",
+      messageId,
+    );
   }
 
   const events = parseJsonEventStream({
@@ -84,7 +213,11 @@ export async function fetchCompletionStream({
   );
 
   return {
-    events,
+    events: withIdleTimeout({
+      stream: events,
+      messageId,
+      abort: () => abortController.abort(),
+    }),
     messageId,
     creditHoldId: response.headers.get("x-credit-hold-id") || undefined,
     generationRunId: response.headers.get("x-generation-run-id") || undefined,

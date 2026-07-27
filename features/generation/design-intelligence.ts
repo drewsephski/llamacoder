@@ -2,7 +2,7 @@ import dedent from "dedent";
 
 /**
  * Programmatic distillation of Hallmark + design-taste-frontend skills.
- * Used by Squid prompts, screenshot clone analysis, and project memory.
+ * Used by Squid prompts and screenshot clone analysis.
  *
  * Source skills (not loaded at runtime):
  * - Hallmark: macrostructures, genres, themes, slop gates, pre-emit critique

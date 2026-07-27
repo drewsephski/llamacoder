@@ -1,6 +1,8 @@
 import {
   DEFAULT_MODEL,
   FREE_MODEL,
+  GEMINI_3_5_FLASH_LITE_MODEL,
+  LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
   LEGACY_MINIMAX_M3_MODEL,
@@ -59,7 +61,11 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     tier: "efficient",
     bands: { small: 3, standard: 4, large: 5, xl: 6 },
   },
-  "google/gemini-3-flash-preview": {
+  [DEFAULT_MODEL]: {
+    tier: "efficient",
+    bands: { small: 2, standard: 3, large: 4, xl: 5 },
+  },
+  [GEMINI_3_5_FLASH_LITE_MODEL]: {
     tier: "efficient",
     bands: { small: 3, standard: 4, large: 5, xl: 6 },
   },
@@ -161,9 +167,13 @@ export const MODEL_TOKEN_PRICING: Record<string, ModelTokenPricing> = {
     outputPricePerMillion: 0.87,
   },
   "z-ai/glm-5.2": { inputPricePerMillion: 0.84, outputPricePerMillion: 2.64 },
-  "google/gemini-3-flash-preview": {
-    inputPricePerMillion: 0.5,
-    outputPricePerMillion: 3,
+  [DEFAULT_MODEL]: {
+    inputPricePerMillion: 0.25,
+    outputPricePerMillion: 1.5,
+  },
+  [GEMINI_3_5_FLASH_LITE_MODEL]: {
+    inputPricePerMillion: 0.3,
+    outputPricePerMillion: 2.5,
   },
   [LEGACY_KIMI_CODE_MODEL]: {
     inputPricePerMillion: 0.5,
@@ -312,6 +322,8 @@ export const TIERS = {
     monthlyCredits: 5,
     allowedModels: [
       DEFAULT_MODEL,
+      GEMINI_3_5_FLASH_LITE_MODEL,
+      LEGACY_DEFAULT_MODEL,
       FREE_MODEL,
       LEGACY_FREE_MODEL,
       SECONDARY_STARTER_MODEL,

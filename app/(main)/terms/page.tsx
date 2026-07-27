@@ -4,7 +4,7 @@ import { createPageMetadata } from "@/lib/seo";
 export const metadata = createPageMetadata({
   title: "Terms of Service",
   description:
-    "Terms of service for using Squid Agent to generate exportable React apps.",
+    "Review the terms for using Squid Agent to generate, inspect, save, remix, and export React applications, including credits and acceptable use.",
   path: "/terms",
   keywords: ["Squid Agent terms", "AI app builder terms"],
 });

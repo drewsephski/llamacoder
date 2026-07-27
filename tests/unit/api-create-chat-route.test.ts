@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FREE_MODEL } from "@/lib/constants";
+import { DEFAULT_MODEL, FREE_MODEL } from "@/lib/constants";
 import { readJson } from "../fixtures/builders";
 
 const {
@@ -58,7 +58,7 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 });
 
 vi.mock("@/lib/openrouter", () => ({
-  VISION_ANALYSIS_MODEL: "google/gemini-3-flash-preview",
+  VISION_ANALYSIS_MODEL: "google/gemini-3.1-flash-lite",
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>
@@ -242,13 +242,13 @@ describe("/api/create-chat", () => {
     });
   });
 
-  it("preserves Plan mode for Gemini 3 Flash Preview", async () => {
+  it("preserves Plan mode for the default Gemini model", async () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
 
     const response = await POST(
       request({
         prompt: "Build a timer",
-        model: "google/gemini-3-flash-preview",
+        model: DEFAULT_MODEL,
         quality: "high",
       }),
     );

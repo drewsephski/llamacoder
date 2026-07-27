@@ -42,7 +42,7 @@ export function GalleryProjectCard({
                 {project.creator.image ? (
                   <Image
                     src={project.creator.image}
-                    alt=""
+                    alt={`${project.creator.name}'s profile`}
                     width={24}
                     height={24}
                     unoptimized

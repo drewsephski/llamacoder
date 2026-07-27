@@ -340,7 +340,7 @@ export default function TerraElixPage({
             </a>
           </div>
           <RemoteImage
-            alt=""
+            alt="TerraElix personal assessment artwork"
             className="pointer-events-none absolute bottom-0 right-0 h-full mix-blend-multiply"
             src={ASSESSMENT_IMAGE}
           />
@@ -404,7 +404,7 @@ export default function TerraElixPage({
       </div>
 
       <RemoteImage
-        alt=""
+        alt="TerraElix botanical wellness products"
         className="terra-animate-scale-in pointer-events-none absolute bottom-[-10%] right-[clamp(-400px,-20vw,-100px)] z-0 hidden h-auto w-[clamp(600px,80vw,1412px)] lg:block"
         src={PRODUCT_IMAGE}
         style={{ animationDelay: "0.7s" }}

@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, expect, it, beforeEach } from "vitest";
+import { DEFAULT_MODEL } from "@/lib/constants";
 import {
   clearPendingProject,
   readPendingProject,
@@ -16,13 +17,13 @@ describe("pending project storage", () => {
   it("persists and reads a pending project", () => {
     savePendingProject({
       prompt: "Build a task manager",
-      model: "google/gemini-3-flash-preview",
+      model: DEFAULT_MODEL,
       quality: "low",
     });
 
     expect(readPendingProject()).toEqual({
       prompt: "Build a task manager",
-      model: "google/gemini-3-flash-preview",
+      model: DEFAULT_MODEL,
       quality: "low",
     });
   });
@@ -30,7 +31,7 @@ describe("pending project storage", () => {
   it("clears stored pending projects", () => {
     savePendingProject({
       prompt: "Build a task manager",
-      model: "google/gemini-3-flash-preview",
+      model: DEFAULT_MODEL,
       quality: "low",
     });
 

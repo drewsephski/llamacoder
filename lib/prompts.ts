@@ -37,9 +37,7 @@ import {
 } from "@/lib/prompt-compression";
 import shadcnDocs from "./shadcn-docs";
 import { buildDesignIntelligenceReference } from "@/features/generation/design-intelligence";
-import {
-  buildScreenshotCloneCodegenDirective,
-} from "@/features/generation/screenshot-clone";
+import { buildScreenshotCloneCodegenDirective } from "@/features/generation/screenshot-clone";
 
 export {
   screenshotCloneVisionPrompt,
@@ -351,7 +349,7 @@ export function getMainCodingPrompt(options?: {
 
   **1. Plan.** Before touching Tailwind classes, decide:
      - *Design Read*: privately decide page kind, audience, vibe, and aesthetic lean before any classes — do not print this to the user.
-     - *Style Pack*: if the user gave no theme/palette/aesthetic/reference, lock one Style Pack from the 12-pack catalog (see Active Style Pack directive above) via subject bucket + brief-hash seed + .hallmark/log.json diversification. Apply that pack's SURFACE_MAP, font pairing, and scaffold in the code; do not emit STYLE_PACK / DIALS / SURFACE_MAP lines in the user-facing reply. Explicit user direction skips packs; Hallmark theme names map to packs.
+     - *Style Pack*: if the user gave no theme/palette/aesthetic/reference, lock one Style Pack from the 12-pack catalog (see Active Style Pack directive above) via subject bucket + brief-hash seed. Apply that pack's SURFACE_MAP, font pairing, and scaffold in the code; do not emit STYLE_PACK / DIALS / SURFACE_MAP lines in the user-facing reply. Explicit user direction skips packs; Hallmark theme names map to packs.
      - *Taste dials*: use the locked Style Pack dials when present; otherwise set DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY from the brief (see Design Taste contract). Keep dials private.
      - *Subject*: what is this app, for whom, and what's the one job this screen does? Ground every choice in that, not in "an app like this."
   - *Tone / aesthetic mode*: must match the locked Style Pack (or explicit user direction). "Clean and modern" is not a direction. Activate at most one aesthetic mode — never mix swissBrutal radius-0 with softStructural double-bezel glass.

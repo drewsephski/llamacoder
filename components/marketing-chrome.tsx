@@ -15,7 +15,7 @@ export function MarketingHeader() {
         >
           <Image
             src="/squidagent-logo.svg"
-            alt=""
+            alt="Squid Agent"
             width={28}
             height={28}
             priority
@@ -57,7 +57,12 @@ export function MarketingFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:px-8">
         <div>
           <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/squidagent-logo.svg" alt="" width={28} height={28} />
+            <Image
+              src="/squidagent-logo.svg"
+              alt="Squid Agent"
+              width={28}
+              height={28}
+            />
             <span className="font-semibold tracking-tight">Squid Agent</span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">
@@ -108,8 +113,14 @@ export function MarketingFooter() {
             { href: "/docs", label: "Documentation" },
             { href: "/search", label: "Search resources" },
             { href: "/what-is-squid-agent", label: "What is Squid Agent?" },
-            { href: "/dashboard", label: "Dashboard" },
-            { href: "/dashboard/usage", label: "Usage ledger" },
+            {
+              href: "/sign-in?callbackUrl=/dashboard",
+              label: "Dashboard",
+            },
+            {
+              href: "/sign-in?callbackUrl=/dashboard/usage",
+              label: "Usage ledger",
+            },
             { href: "/contact", label: "Contact" },
           ]}
         />

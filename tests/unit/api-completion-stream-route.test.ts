@@ -41,7 +41,7 @@ const {
   gatewayModelMock: vi.fn(() => "gateway-model"),
   generateTextMock: vi.fn(),
   getModelCreditHoldCostMock: vi.fn((model: string) =>
-    model === "google/gemini-3-flash-preview" ? 6 : 10,
+    model === "google/gemini-3.1-flash-lite" ? 5 : 10,
   ),
   getSessionMock: vi.fn(),
   releaseCreditHoldMock: vi.fn(),
@@ -152,7 +152,7 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 
 vi.mock("@/lib/openrouter", () => ({
   GENERATED_CODE_MAX_TOKENS: 16000,
-  VISION_ANALYSIS_MODEL: "google/gemini-3-flash-preview",
+  VISION_ANALYSIS_MODEL: "google/gemini-3.1-flash-lite",
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>
@@ -2641,7 +2641,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(reserveCreditHoldMock).not.toHaveBeenCalled();
     expect(createRequestTelemetryMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        modelId: "google/gemini-3-flash-preview",
+        modelId: "google/gemini-3.1-flash-lite",
         requestKind: "free_repair",
       }),
     );
@@ -2754,6 +2754,46 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
           phase: "validation_repair",
           label: "Fixing generated app",
           partialText: invalidApp,
+        }),
+      }),
+    );
+  });
+
+  it("fails and releases an empty model completion instead of stranding the run", async () => {
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_empty",
+        content: "Build a dashboard",
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a dashboard" },
+    ]);
+    mockGeneration({ text: "" });
+
+    const response = await POST(
+      request({ messageId: "msg_empty", model: "model_1" }),
+    );
+    await collectUIChunks(response, { invokeStreamLifecycle: true });
+
+    expect(releaseCreditHoldMock).toHaveBeenCalledWith({ holdId: "hold_1" });
+    expect(prismaMock.generationRun.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "run_1", status: "running" },
+        data: expect.objectContaining({
+          status: "failed",
+          phase: "failed",
+          label: "Generation failed",
+          partialText: "",
+          errorMessage: "The model completed without returning an answer.",
+          completedAt: expect.any(Date),
         }),
       }),
     );

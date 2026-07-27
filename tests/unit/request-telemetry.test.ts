@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_MODEL } from "@/lib/constants";
 
 const { aiRequestLogCreateMock, creditHoldUpdateManyMock } = vi.hoisted(() => ({
   aiRequestLogCreateMock: vi.fn(),
@@ -31,7 +32,7 @@ describe("AI request telemetry", () => {
       userId: "user_1",
       chatId: "chat_1",
       messageId: "message_1",
-      modelId: "google/gemini-3-flash-preview",
+      modelId: DEFAULT_MODEL,
       quality: "high",
       reasoning: {
         enabled: true,

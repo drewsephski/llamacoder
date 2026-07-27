@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   getMarketingPath,
+  getRelatedMarketingLinks,
   MARKETING_AUTHOR,
   MARKETING_REVIEWER,
   marketingStructuredData,
@@ -67,6 +68,7 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
     { label: "Frequently asked questions", id: "faqs" },
   ];
   const structuredData = marketingStructuredData(page);
+  const relatedLinks = getRelatedMarketingLinks(page);
   const hasWorkflowSteps = Boolean(page.workflow && page.workflow.length > 0);
   const workflowStart = page.workflow?.[0];
   const workflowEnd = page.workflow?.[page.workflow.length - 1];
@@ -594,7 +596,7 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                   title="Related guides and comparisons"
                 />
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                  {page.internalLinks.map((link) => (
+                  {relatedLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}

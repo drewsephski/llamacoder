@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_MODEL,
   FREE_MODEL,
+  LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
   LEGACY_MINIMAX_M3_MODEL,
@@ -47,7 +49,7 @@ describe("model fallbacks", () => {
 
   it("routes removed provider-failing models to supported alternatives", () => {
     expect(getModelWithFallbacks(LEGACY_GEMINI_PRO_MODEL)).toEqual([
-      "google/gemini-3-flash-preview",
+      DEFAULT_MODEL,
     ]);
     expect(getModelWithFallbacks(LEGACY_QWEN_MAX_MODEL)).toEqual([
       "deepseek/deepseek-v4-pro",
@@ -57,6 +59,12 @@ describe("model fallbacks", () => {
     ]);
     expect(getModelWithFallbacks(LEGACY_MINIMAX_M3_MODEL)).toEqual([
       "deepseek/deepseek-v4-pro",
+    ]);
+  });
+
+  it("routes projects on the former default to the current default", () => {
+    expect(getModelWithFallbacks(LEGACY_DEFAULT_MODEL)).toEqual([
+      DEFAULT_MODEL,
     ]);
   });
 });

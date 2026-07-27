@@ -11,7 +11,7 @@ import Marquee from "@/components/jack/marquee";
 import ProjectsSection from "@/components/jack/projects-section";
 import ServicesSection from "@/components/jack/services-section";
 
-const portraitUrl = "/showcase/drew-portrait.png";
+const portraitUrl = "/showcase/drew-portrait.webp";
 
 export default function JackPortfolioPage({
   fontClassName,

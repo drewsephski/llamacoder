@@ -15,7 +15,7 @@ const landingLinks = [
   { href: "/search", label: "Search" },
   { href: "/prisma", label: "Creative React example" },
   { href: "/what-is-squid-agent", label: "What is Squid Agent?" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/sign-in?callbackUrl=/dashboard", label: "Dashboard" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
 ];

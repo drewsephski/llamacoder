@@ -80,7 +80,6 @@ export const homepageStructuredData = [
     description:
       "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
     creator: { "@id": `${SITE_URL}/#organization` },
-    brand: { "@id": `${SITE_URL}/#organization` },
     isPartOf: { "@id": `${SITE_URL}/#website` },
     offers: {
       "@type": "Offer",

@@ -1,5 +1,6 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
+  DEFAULT_MODEL,
   getModelReasoningCapability,
   type ReasoningEffort,
 } from "@/lib/constants";
@@ -11,7 +12,7 @@ import { getErrorMessage } from "@/features/shared/errors";
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
 export const GENERATED_CODE_MAX_TOKENS = 16000;
 export const VISION_ANALYSIS_MODEL =
-  process.env.OPENROUTER_VISION_MODEL || "google/gemini-3-flash-preview";
+  process.env.OPENROUTER_VISION_MODEL || DEFAULT_MODEL;
 type OpenRouterClient = ReturnType<typeof createOpenRouter>;
 type OpenRouterModelSettings = NonNullable<Parameters<OpenRouterClient>[1]>;
 type OpenRouterProviderOptions = {

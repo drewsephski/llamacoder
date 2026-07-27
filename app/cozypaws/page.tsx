@@ -238,7 +238,7 @@ function AvatarStack() {
   return (
     <span aria-hidden="true" className="flex -space-x-2">
       <ExternalImage
-        alt=""
+        alt="CozyPaws community member"
         className="h-7 w-7 rounded-full border-2 border-[#EFFDF0] object-cover"
         src={assets.avatar}
       />

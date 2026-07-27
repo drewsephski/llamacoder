@@ -4,6 +4,7 @@ export const metadata = createNoIndexMetadata({
   title: "Shared React App Preview",
   description: "Preview a React app shared from Squid Agent.",
   path: "/share",
+  includeCanonical: false,
 });
 
 export default function Layout({ children }: { children: React.ReactNode }) {

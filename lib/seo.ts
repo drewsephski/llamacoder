@@ -38,6 +38,7 @@ type PageMetadataInput = {
   image?: SocialImage;
   type?: "website" | "article";
   index?: boolean;
+  includeCanonical?: boolean;
 };
 
 export function absoluteUrl(path: string): string {
@@ -103,6 +104,7 @@ export function createPageMetadata({
   image,
   type = "website",
   index = true,
+  includeCanonical = true,
 }: PageMetadataInput): Metadata {
   const canonical = absoluteUrl(path);
   const pageTitle = createBrandedTitle(title);
@@ -119,13 +121,17 @@ export function createPageMetadata({
     title: { absolute: pageTitle },
     description: pageDescription,
     ...(keywords.length > 0 ? { keywords: [...keywords] } : {}),
-    alternates: {
-      canonical,
-      languages: {
-        en: canonical,
-        "x-default": canonical,
-      },
-    },
+    ...(includeCanonical
+      ? {
+          alternates: {
+            canonical,
+            languages: {
+              en: canonical,
+              "x-default": canonical,
+            },
+          },
+        }
+      : {}),
     robots: index
       ? {
           index: true,

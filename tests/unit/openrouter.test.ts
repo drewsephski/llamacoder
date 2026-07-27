@@ -15,7 +15,12 @@ import {
   getOpenRouterReasoningSelection,
   requiresOpenRouterReasoning,
 } from "@/lib/openrouter";
-import { SAFE_GPT_MODEL, SECONDARY_STARTER_MODEL } from "@/lib/constants";
+import {
+  DEFAULT_MODEL,
+  GEMINI_3_5_FLASH_LITE_MODEL,
+  SAFE_GPT_MODEL,
+  SECONDARY_STARTER_MODEL,
+} from "@/lib/constants";
 
 describe("OpenRouter helpers", () => {
   beforeEach(() => {
@@ -121,6 +126,7 @@ describe("OpenRouter helpers", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
     expect(requiresOpenRouterReasoning("x-ai/grok-4.5")).toBe(true);
+    expect(requiresOpenRouterReasoning(GEMINI_3_5_FLASH_LITE_MODEL)).toBe(true);
     expect(getOpenRouterReasoningSelection("x-ai/grok-4.5", "low")).toEqual({
       enabled: true,
       visible: true,
@@ -132,13 +138,21 @@ describe("OpenRouter helpers", () => {
         },
       },
     });
+    expect(
+      getOpenRouterReasoningSelection(GEMINI_3_5_FLASH_LITE_MODEL, "low"),
+    ).toMatchObject({
+      enabled: true,
+      visible: true,
+      mandatory: true,
+      effort: "low",
+    });
   });
 
   it("uses the model default visible reasoning for Plan mode", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
     expect(
-      getOpenRouterReasoningSelection("google/gemini-3-flash-preview", "high"),
+      getOpenRouterReasoningSelection(DEFAULT_MODEL, "high"),
     ).toMatchObject({
       enabled: true,
       visible: true,
@@ -155,9 +169,7 @@ describe("OpenRouter helpers", () => {
   it("explicitly disables Gemini reasoning outside Plan mode", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
-    expect(
-      getOpenRouterReasoningSelection("google/gemini-3-flash-preview", "low"),
-    ).toEqual({
+    expect(getOpenRouterReasoningSelection(DEFAULT_MODEL, "low")).toEqual({
       enabled: false,
       visible: false,
       mandatory: false,

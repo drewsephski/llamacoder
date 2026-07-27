@@ -2,6 +2,7 @@
 
 import { ArrowRight, Check } from "lucide-react";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import Link from "next/link";
 import { useRef } from "react";
 
 const HERO_VIDEO_URL =
@@ -203,7 +204,7 @@ function FeatureCard({
       {/* The supplied feature artwork is remote and intentionally unoptimized. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        alt=""
+        alt={`${title} feature artwork`}
         className="h-10 w-10 rounded object-cover sm:h-12 sm:w-12"
         src={icon}
       />
@@ -430,7 +431,42 @@ export default function PrismaPage({
         </div>
       </section>
 
-      <div className="h-px bg-black" id="inquiries" />
+      <section
+        className="border-t border-white/10 bg-black px-4 py-16 sm:px-6 sm:py-20"
+        id="inquiries"
+      >
+        <div className="mx-auto grid max-w-6xl gap-8 border border-white/10 bg-[#101010] p-6 sm:p-10 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-[#DEDBC8]/60">
+              Built with Squid Agent
+            </p>
+            <h2 className="mt-4 max-w-2xl text-3xl font-normal leading-tight text-[#E1E0CC] sm:text-4xl">
+              Explore the React builder behind this creative portfolio.
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#DEDBC8]/70 sm:text-base">
+              Prisma is a public design example showing how a cinematic visual
+              direction, responsive layout, motion system, and clear content
+              hierarchy can become portable React code. Browse more finished
+              examples or start with your own brief, then inspect and export the
+              generated project.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full border border-[#DEDBC8]/30 px-5 text-sm text-[#E1E0CC] transition-colors hover:border-[#DEDBC8]"
+              href="/gallery"
+            >
+              View the gallery
+            </Link>
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full bg-[#DEDBC8] px-5 text-sm font-medium text-black transition-colors hover:bg-white"
+              href="/"
+            >
+              Build with Squid
+            </Link>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

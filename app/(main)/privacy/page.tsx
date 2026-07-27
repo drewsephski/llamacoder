@@ -4,7 +4,7 @@ import { createPageMetadata } from "@/lib/seo";
 export const metadata = createPageMetadata({
   title: "Privacy Policy",
   description:
-    "Privacy policy for Squid Agent, an AI React app builder for exportable code.",
+    "Read how Squid Agent handles accounts, prompts, screenshots, generated React code, analytics, billing records, retention, and privacy requests.",
   path: "/privacy",
   keywords: ["Squid Agent privacy", "AI app builder privacy"],
 });

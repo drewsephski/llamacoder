@@ -197,6 +197,16 @@ export default function App() {
     expect(inspector).toContain("window.clearInterval(readyAnnouncementTimer)");
     expect(inspector).toContain('message.type === "capture-screenshot"');
     expect(inspector).toContain('type: "screenshot"');
+    expect(inspector).toContain("captureWithSafeCanvasPatterns");
+    expect(inspector).toContain(
+      'typeof source.getContext === "function" &&',
+    );
+    expect(inspector).toContain(
+      "source.width === 0 || source.height === 0",
+    );
+    expect(inspector).toContain(
+      "prototype.createPattern = originalCreatePattern",
+    );
     expect(config.customSetup.dependencies.html2canvas).toBe("1.4.1");
   });
 

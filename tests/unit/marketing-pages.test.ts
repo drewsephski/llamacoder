@@ -5,6 +5,7 @@ import {
   comparisonPages,
   getMarketingOgImagePath,
   getMarketingPath,
+  getRelatedMarketingLinks,
   guideTopicClusters,
   marketingMetadata,
   marketingPaths,
@@ -48,6 +49,19 @@ describe("marketing page content", () => {
     expect(
       guideTopicClusters.every((cluster) => cluster.slugs.length >= 4),
     ).toBe(true);
+  });
+
+  it("gives every guide and comparison multiple reciprocal internal links", () => {
+    const reciprocalPages = [...comparisonPages, ...blogPages];
+
+    for (const page of reciprocalPages) {
+      const path = getMarketingPath(page);
+      const incomingCount = reciprocalPages.filter((candidate) =>
+        getRelatedMarketingLinks(candidate).some((link) => link.href === path),
+      ).length;
+
+      expect(incomingCount).toBeGreaterThanOrEqual(2);
+    }
   });
 
   it("creates page-specific social cards for every article", () => {
@@ -176,11 +190,12 @@ describe("marketing page content", () => {
           "@type": "Person",
           name: "Drew Sepeczi",
         },
-        reviewedBy: {
+        contributor: {
           "@type": "Organization",
           name: "Squid Agent product and engineering",
         },
       });
+      expect(data[0]).not.toHaveProperty("reviewedBy");
       expect(data[2].mainEntity).toHaveLength(page.faqs.length);
     }
   });

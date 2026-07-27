@@ -1,5 +1,7 @@
 export const FREE_MODEL = "deepseek/deepseek-v4-flash";
-export const DEFAULT_MODEL = "google/gemini-3-flash-preview";
+export const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
+export const GEMINI_3_5_FLASH_LITE_MODEL = "google/gemini-3.5-flash-lite";
+export const LEGACY_DEFAULT_MODEL = "google/gemini-3-flash-preview";
 export const LEGACY_FREE_MODEL = "tencent/hy3-preview:free";
 export const LEGACY_SECONDARY_STARTER_MODEL = "minimax/minimax-m2.5";
 export const LEGACY_MIMO_STARTER_MODEL = "xiaomi/mimo-v2.5";
@@ -53,16 +55,29 @@ export type ModelOption = {
 
 export const MODELS: ModelOption[] = [
   {
-    label: "Gemini 3 Flash Preview",
+    label: "Gemini 3.1 Flash Lite",
     value: DEFAULT_MODEL,
     free: true,
     group: "free",
-    summary: "Fast multimodal starter model for screenshot-first app work.",
+    summary: "Low-latency multimodal default for fast app generation.",
     reasoning: {
       supported: true,
       mandatory: false,
       supportedEfforts: ["high", "medium", "low", "minimal"],
       defaultEffort: "medium",
+    },
+  },
+  {
+    label: "Gemini 3.5 Flash Lite",
+    value: GEMINI_3_5_FLASH_LITE_MODEL,
+    free: true,
+    group: "free",
+    summary: "Upgraded agentic Gemini model for focused app generation.",
+    reasoning: {
+      supported: true,
+      mandatory: true,
+      supportedEfforts: ["high", "medium", "low", "minimal"],
+      defaultEffort: "minimal",
     },
   },
   {

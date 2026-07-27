@@ -453,6 +453,45 @@ export function SquidPreviewInspector() {
       window.parent?.postMessage({ source: PREVIEW_SOURCE, type: "ready" }, "*");
     }
 
+    async function captureWithSafeCanvasPatterns<T>(
+      capture: () => Promise<T>,
+    ) {
+      const prototype = CanvasRenderingContext2D.prototype;
+      const originalCreatePattern = prototype.createPattern;
+
+      prototype.createPattern = function (
+        image: CanvasImageSource,
+        repetition: string | null,
+      ) {
+        const source = image as CanvasImageSource & {
+          width?: number;
+          height?: number;
+          getContext?: unknown;
+        };
+        const isZeroSizedCanvas =
+          typeof source.getContext === "function" &&
+          (source.width === 0 || source.height === 0);
+
+        if (isZeroSizedCanvas) {
+          // html2canvas 1.4.1 can round a subpixel gradient surface down to
+          // zero before creating its pattern. A transparent pixel preserves
+          // the screenshot while omitting only that unrenderable surface.
+          const fallback = this.canvas.ownerDocument.createElement("canvas");
+          fallback.width = 1;
+          fallback.height = 1;
+          return originalCreatePattern.call(this, fallback, repetition);
+        }
+
+        return originalCreatePattern.call(this, image, repetition);
+      };
+
+      try {
+        return await capture();
+      } finally {
+        prototype.createPattern = originalCreatePattern;
+      }
+    }
+
     async function captureScreenshot(message: {
       requestId?: string;
       width?: number;
@@ -466,20 +505,22 @@ export function SquidPreviewInspector() {
 
       try {
         const html2canvas = (await import("html2canvas")).default;
-        const canvas = await html2canvas(document.documentElement, {
-          width,
-          height,
-          windowWidth: width,
-          windowHeight: height,
-          scale: 1,
-          logging: false,
-          useCORS: true,
-          backgroundColor:
-            getComputedStyle(document.body).backgroundColor || "#ffffff",
-          onclone: (doc) => {
-            doc.querySelector("[data-squid-preview-inspector]")?.remove();
-          },
-        });
+        const canvas = await captureWithSafeCanvasPatterns(() =>
+          html2canvas(document.documentElement, {
+            width,
+            height,
+            windowWidth: width,
+            windowHeight: height,
+            scale: 1,
+            logging: false,
+            useCORS: true,
+            backgroundColor:
+              getComputedStyle(document.body).backgroundColor || "#ffffff",
+            onclone: (doc) => {
+              doc.querySelector("[data-squid-preview-inspector]")?.remove();
+            },
+          }),
+        );
         const blob = await new Promise<Blob>((resolve, reject) => {
           canvas.toBlob(
             (result) =>

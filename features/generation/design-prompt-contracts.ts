@@ -34,7 +34,6 @@ export {
   screenshotCloneVisionPrompt,
   buildScreenshotCloneCodegenDirective,
 } from "@/features/generation/screenshot-clone";
-export { recordGenerationDesignMemory } from "@/features/generation/hallmark-memory";
 export type {
   StylePackId,
   StylePack,

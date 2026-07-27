@@ -27,7 +27,7 @@ export function DocsShell({
           >
             <Image
               src="/squidagent-logo.svg"
-              alt=""
+              alt="Squid Agent"
               width={28}
               height={28}
               priority

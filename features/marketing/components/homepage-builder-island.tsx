@@ -725,7 +725,7 @@ function HeroPopoutCard({
       <div className="hero-popout-image-wrap">
         <Image
           src={popout.src}
-          alt=""
+          alt={`${popout.title} app preview`}
           fill
           sizes="196px"
           draggable={false}

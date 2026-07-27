@@ -81,6 +81,18 @@ describe("SEO metadata", () => {
     expect(metadata.robots).toMatchObject({ index: false, follow: false });
   });
 
+  it("can omit a canonical from a container layout without a real page", () => {
+    const metadata = createNoIndexMetadata({
+      title: "Shared preview container",
+      description: "Metadata inherited by shared preview routes.",
+      path: "/share",
+      includeCanonical: false,
+    });
+
+    expect(metadata.alternates).toBeUndefined();
+    expect(metadata.robots).toMatchObject({ index: false, follow: false });
+  });
+
   it("keeps every public showcase title, description, and canonical unique", () => {
     const metadata = publicShowcasePages.map((page) =>
       publicShowcaseMetadata(page.path),

@@ -6,12 +6,15 @@ import {
   getEntitlementTier,
   getModelCreditHoldCost,
   getModelCreditCost,
+  getModelTokenPricing,
   isSubscriptionEntitled,
   normalizeTier,
 } from "@/lib/billing/config";
 import {
   DEFAULT_MODEL,
   FREE_MODEL,
+  GEMINI_3_5_FLASH_LITE_MODEL,
+  LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_KIMI_CODE_MODEL,
   LEGACY_MINIMAX_M3_MODEL,
@@ -25,7 +28,9 @@ import {
 describe("billing config", () => {
   it("uses conservative model costs and fails closed for unknown models", () => {
     expect(getModelCreditCost(FREE_MODEL)).toBe(1);
-    expect(getModelCreditCost(DEFAULT_MODEL)).toBe(3);
+    expect(getModelCreditCost(DEFAULT_MODEL)).toBe(2);
+    expect(getModelCreditCost(GEMINI_3_5_FLASH_LITE_MODEL)).toBe(3);
+    expect(getModelCreditCost(LEGACY_DEFAULT_MODEL)).toBe(2);
     expect(getModelCreditCost(SECONDARY_STARTER_MODEL)).toBe(1);
     expect(getModelCreditCost(LEGACY_SECONDARY_STARTER_MODEL)).toBe(1);
     expect(getModelCreditCost(LEGACY_MIMO_STARTER_MODEL)).toBe(1);
@@ -37,7 +42,7 @@ describe("billing config", () => {
     expect(getModelCreditCost(LEGACY_QWEN_MAX_MODEL)).toBe(2);
     expect(getModelCreditCost("anthropic/claude-sonnet-5")).toBe(8);
     expect(getModelCreditCost("x-ai/grok-4.5")).toBe(7);
-    expect(getModelCreditCost(LEGACY_GEMINI_PRO_MODEL)).toBe(3);
+    expect(getModelCreditCost(LEGACY_GEMINI_PRO_MODEL)).toBe(2);
     expect(getModelCreditCost(SAFE_GPT_MODEL)).toBe(7);
     expect(getModelCreditCost("anthropic/claude-opus-4.8")).toBe(19);
     expect(
@@ -52,6 +57,20 @@ describe("billing config", () => {
       "UNPRICED_MODEL:openai/gpt-5.99-preview",
     );
     expect(canTierUseModel("pro_plus", "unknown/model")).toBe(false);
+  });
+
+  it("uses the current OpenRouter token prices for the default model", () => {
+    expect(getModelTokenPricing(DEFAULT_MODEL)).toEqual({
+      inputPricePerMillion: 0.25,
+      outputPricePerMillion: 1.5,
+    });
+    expect(getModelTokenPricing(GEMINI_3_5_FLASH_LITE_MODEL)).toEqual({
+      inputPricePerMillion: 0.3,
+      outputPricePerMillion: 2.5,
+    });
+    expect(getModelTokenPricing(LEGACY_DEFAULT_MODEL)).toEqual(
+      getModelTokenPricing(DEFAULT_MODEL),
+    );
   });
 
   it("rounds actual provider cost up to preserve the configured margin", () => {
@@ -81,6 +100,8 @@ describe("billing config", () => {
   it("enforces tier model access from the config", () => {
     expect(canTierUseModel("free", FREE_MODEL)).toBe(true);
     expect(canTierUseModel("free", DEFAULT_MODEL)).toBe(true);
+    expect(canTierUseModel("free", GEMINI_3_5_FLASH_LITE_MODEL)).toBe(true);
+    expect(canTierUseModel("free", LEGACY_DEFAULT_MODEL)).toBe(true);
     expect(canTierUseModel("free", SECONDARY_STARTER_MODEL)).toBe(true);
     expect(canTierUseModel("free", LEGACY_SECONDARY_STARTER_MODEL)).toBe(true);
     expect(canTierUseModel("free", LEGACY_MIMO_STARTER_MODEL)).toBe(true);

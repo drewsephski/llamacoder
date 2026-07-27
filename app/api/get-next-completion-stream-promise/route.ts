@@ -35,6 +35,7 @@ import { estimateTokens } from "@/lib/prompt-compression";
 import { generatedAppRepairCapabilityRules } from "@/lib/generated-app-capabilities";
 import {
   ACCEPTED_SCREENSHOT_MIME_TYPES,
+  DEFAULT_MODEL,
   FREE_MODEL,
   MAX_SCREENSHOT_DATA_URL_LENGTH,
   MAX_SCREENSHOT_SIZE_MB,
@@ -85,13 +86,11 @@ import {
   resolveResearchReason,
   shouldAnswerWithoutCode,
 } from "@/features/generation/research-intent";
-import { recordGenerationDesignMemory } from "@/features/generation/hallmark-memory";
 import {
   detectScreenshotCloneIntent,
   attachScreenshotToUserMessage,
   resolveVisionCapableCodingModel,
 } from "@/features/generation/screenshot-clone";
-import { selectStylePackId } from "@/features/generation/style-packs";
 import {
   buildLiveApiGenerationContract,
   detectLiveApiIntent,
@@ -361,9 +360,7 @@ export async function POST(req: Request) {
     const appSpec: AppSpec =
       parseAppSpec(message.chat.appSpec) ?? createEmptyAppSpec();
     const agentMetadata = parseAgentMessageMetadata(message.files);
-    const executionModel = isFreeRepairRequest
-      ? "google/gemini-3-flash-preview"
-      : chatModel;
+    const executionModel = isFreeRepairRequest ? DEFAULT_MODEL : chatModel;
     const executionQuality = isFreeRepairRequest ? "low" : quality;
     const holdAmount = isFreeRepairRequest
       ? 0
@@ -679,6 +676,34 @@ export async function POST(req: Request) {
         let persistedPartialText = "";
         let codegenModel = executionModel;
         let lastSnapshotLength = 0;
+        const persistTerminalFailure = async ({
+          error,
+          aborted = false,
+        }: {
+          error: unknown;
+          aborted?: boolean;
+        }) => {
+          const hasPartialOutput = persistedPartialText.trim().length > 0;
+          if (holdId && !hasPartialOutput) {
+            await releaseCreditHold({ holdId });
+            holdId = undefined;
+          }
+          await prisma.generationRun.updateMany({
+            where: { id: generationRun.id, status: "running" },
+            data: {
+              status: hasPartialOutput ? "recoverable" : "failed",
+              phase: hasPartialOutput ? "finalizing" : "failed",
+              label: hasPartialOutput
+                ? "Ready to recover"
+                : "Generation failed",
+              partialText: persistedPartialText,
+              errorMessage: aborted
+                ? "The connection closed before the result was saved."
+                : getAIErrorMessage(error),
+              completedAt: hasPartialOutput ? undefined : new Date(),
+            },
+          });
+        };
         const writeStatus = (status: GenerationStatus) => {
           writer.write({
             type: "data-generation-status",
@@ -1805,6 +1830,39 @@ export async function POST(req: Request) {
               response,
               model: completedModel,
             }) {
+              const hasOutput = persistedPartialText.trim().length > 0;
+              if (!hasOutput) {
+                const emptyOutputError = new Error(
+                  finishReason === "error"
+                    ? "The model provider failed before returning a response."
+                    : "The model completed without returning an answer.",
+                );
+                await telemetry.record({
+                  status: "error",
+                  error: emptyOutputError,
+                  usage,
+                  finishReason,
+                  providerMetadata,
+                  providerRequestId: response?.id,
+                  provider: completedModel.provider,
+                });
+                await persistTerminalFailure({ error: emptyOutputError });
+                await recordOperationalEvent({
+                  name: "generation_failed",
+                  level: "error",
+                  userId: session.user.id,
+                  operation: "completion_stream",
+                  status: "empty_output",
+                  error: emptyOutputError,
+                  metadata: {
+                    chatId: message.chat.id,
+                    generationRunId: generationRun.id,
+                    model: codegenModel,
+                    finishReason,
+                  },
+                });
+                return;
+              }
               await telemetry.record({
                 status: finishReason === "error" ? "error" : "completed",
                 usage,
@@ -1832,49 +1890,14 @@ export async function POST(req: Request) {
                   completedAt: finalizeState.completedAt,
                 },
               });
-
-              if (
-                isCodeGeneration &&
-                finishReason !== "error" &&
-                persistedPartialText.trim().length > 0
-              ) {
-                const styleBriefForMemory =
-                  typeof message.chat.prompt === "string" &&
-                  message.chat.prompt.trim()
-                    ? message.chat.prompt
-                    : latestResearchObjective;
-
-                if (screenshotData && screenshotCloneIntent.fidelityLocked) {
-                  recordGenerationDesignMemory({
-                    brief: styleBriefForMemory,
-                    theme: "studied-DNA (screenshot-direct)",
-                    enrichment: "screenshot-clone-direct",
-                  });
-                } else {
-                  recordGenerationDesignMemory({
-                    brief: styleBriefForMemory,
-                    stylePackId: selectStylePackId(styleBriefForMemory),
-                    theme:
-                      selectStylePackId(styleBriefForMemory) ?? "user-directed",
-                  });
-                }
-              }
             },
             async onAbort() {
               await telemetry.record({ status: "aborted" });
-              if (holdId && !persistedPartialText.trim()) {
-                await releaseCreditHold({ holdId });
-                holdId = undefined;
-              }
-              await prisma.generationRun.updateMany({
-                where: { id: generationRun.id, status: "running" },
-                data: {
-                  status: persistedPartialText ? "recoverable" : "failed",
-                  partialText: persistedPartialText,
-                  errorMessage:
-                    "The connection closed before the result was saved.",
-                  completedAt: persistedPartialText ? undefined : new Date(),
-                },
+              await persistTerminalFailure({
+                error: new Error(
+                  "The connection closed before the result was saved.",
+                ),
+                aborted: true,
               });
             },
             async onError({ error }) {
@@ -1896,19 +1919,7 @@ export async function POST(req: Request) {
                   model: executionModel,
                 },
               });
-              if (holdId && !persistedPartialText.trim()) {
-                await releaseCreditHold({ holdId });
-                holdId = undefined;
-              }
-              await prisma.generationRun.updateMany({
-                where: { id: generationRun.id, status: "running" },
-                data: {
-                  status: persistedPartialText ? "recoverable" : "failed",
-                  partialText: persistedPartialText,
-                  errorMessage: getAIErrorMessage(error),
-                  completedAt: persistedPartialText ? undefined : new Date(),
-                },
-              });
+              await persistTerminalFailure({ error });
             },
           });
 
@@ -1930,6 +1941,20 @@ export async function POST(req: Request) {
           writer.merge(observedStream);
         } catch (error) {
           await telemetry.record({ status: "error", error });
+          await persistTerminalFailure({ error });
+          await recordOperationalEvent({
+            name: "generation_failed",
+            level: "error",
+            userId: session.user.id,
+            operation: "completion_stream_setup",
+            status: "error",
+            error,
+            metadata: {
+              chatId: message.chat.id,
+              generationRunId: generationRun.id,
+              model: codegenModel,
+            },
+          });
           throw error;
         }
       },

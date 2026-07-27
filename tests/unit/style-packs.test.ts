@@ -142,6 +142,8 @@ describe("style pack router", () => {
     expect(contract).toContain("softStructural");
     expect(contract).toContain("STYLE_PACK: <id>");
     expect(stylePackPlanningRule).toContain("Style Pack");
+    expect(contract).not.toContain(".hallmark");
+    expect(stylePackPlanningRule).not.toContain(".hallmark");
     expect(contract).not.toContain(
       "Default to a light-first, Vercel-inspired Tailwind `neutral` system",
     );

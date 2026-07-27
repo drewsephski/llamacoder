@@ -48,6 +48,7 @@ import {
   fetchCompletionStream,
   fetchGenerationRun,
   finalizeGenerationRun,
+  getCompletionStreamMessageId,
   recoverCompletionStream,
   retryCompletionStream,
   updateGenerationRun,
@@ -243,25 +244,19 @@ export default function PageClient({ chat }: { chat: Chat }) {
     }
   };
 
-  const handleRetry = useCallback(async () => {
+  const handleRetry = useCallback(() => {
     const failedStream = streamError;
-    setStreamError(null);
     if (!failedStream?.failedMessageId) return;
 
-    try {
-      const retriedStream = await retryCompletionStream({
+    setStreamError(null);
+    setRecoverableRun(null);
+    setStreamPromise(
+      retryCompletionStream({
         messageId: failedStream.failedMessageId,
         model: chat.model,
         generationRunId: failedStream.generationRunId,
-      });
-      setRecoverableRun(null);
-      setStreamPromise(Promise.resolve(retriedStream));
-    } catch (error) {
-      setStreamError({
-        ...failedStream,
-        message: getErrorMessage(error, "Unable to retry generation"),
-      });
-    }
+      }),
+    );
   }, [chat.model, streamError]);
 
   const handleNewStreamPromise = useCallback(
@@ -363,8 +358,9 @@ export default function PageClient({ chat }: { chat: Chat }) {
         setRecoverableRun(null);
 
         if (stream.events.locked) {
-          console.warn("Skipping duplicate stream reader for locked stream");
-          return;
+          throw new Error(
+            "The response stream could not be resumed. Please retry.",
+          );
         }
 
         reader = stream.events.getReader();
@@ -801,11 +797,13 @@ export default function PageClient({ chat }: { chat: Chat }) {
         freeRepairSourceFilesRef.current = null;
         repairRequestInFlightRef.current = false;
 
+        const failedMessageId =
+          activeStream?.messageId ?? getCompletionStreamMessageId(error);
         setStreamError({
           message: getErrorMessage(error, "Connection lost"),
           partialText: fullText,
-          canRetry: true,
-          failedMessageId: activeStream?.messageId,
+          canRetry: Boolean(failedMessageId),
+          failedMessageId,
           generationRunId: activeStream?.generationRunId,
         });
         if (activeStream?.generationRunId && fullText) {

@@ -1,6 +1,8 @@
 import {
+  DEFAULT_MODEL,
   FREE_MODEL,
   LEGACY_CLAUDE_OPUS_MODEL,
+  LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_GPT_5_4_MODEL,
   LEGACY_KIMI_CODE_MODEL,
@@ -17,7 +19,7 @@ import {
 export const FALLBACK_MODELS = {
   free: FREE_MODEL,
   gpt: SAFE_GPT_MODEL,
-  gemini: "google/gemini-3-flash-preview",
+  gemini: DEFAULT_MODEL,
   advancedCode: "deepseek/deepseek-v4-pro",
   premium: "anthropic/claude-opus-4.8",
 };
@@ -30,6 +32,11 @@ export function getModelWithFallbacks(model: string): string[] {
 
   if (model === FALLBACK_MODELS.free) {
     return [FALLBACK_MODELS.free];
+  }
+
+  // Keep projects created with the former default on the current Gemini lane.
+  if (model === LEGACY_DEFAULT_MODEL) {
+    return [FALLBACK_MODELS.gemini];
   }
 
   // Keep existing starter chats on the current cheaper starter lane.

@@ -131,7 +131,7 @@ export default function ContactPage() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="/dashboard/usage"
+                  href="/sign-in?callbackUrl=/dashboard/usage"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
                 >
                   View usage ledger <ArrowRight className="size-4" />
