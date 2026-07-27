@@ -16,6 +16,10 @@
     {
       "path": "/api/maintenance/gallery-thumbnails",
       "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/api/maintenance/feedback-delivery",
+      "schedule": "45 0 * * *"
     }
   ]
 }

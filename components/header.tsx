@@ -190,10 +190,10 @@ function Header({ onHelpClick }: HeaderProps) {
                     onClick={() => openPricingModal("credits")}
                     variant="ghost"
                     size="sm"
-                    className="gap-2 bg-muted px-3 text-muted-foreground hover:bg-accent hover:text-white"
+                    className="group gap-2 bg-muted px-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     aria-label="Buy more credits"
                   >
-                    <Zap className="h-4 w-4 text-yellow-500" />
+                    <Zap className="h-4 w-4 text-yellow-500 transition-colors group-hover:text-accent-foreground" />
                     <span>{credits ?? 0} credits</span>
                   </Button>
                 ) : (
@@ -206,7 +206,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Link href="/gallery">Gallery</Link>
                 </Button>
@@ -214,7 +214,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   onClick={() => openPricingModal("plans")}
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   Pricing
                 </Button>
@@ -222,7 +222,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Link href="/dashboard">Dashboard</Link>
                 </Button>
@@ -230,7 +230,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Link href="/dashboard/usage">Usage</Link>
                 </Button>
@@ -238,7 +238,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   onClick={handleSignOut}
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   Sign Out
                 </Button>
@@ -249,7 +249,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Link href="/gallery">Gallery</Link>
                 </Button>
@@ -257,7 +257,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   onClick={() => openPricingModal("plans")}
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   Pricing
                 </Button>
@@ -265,7 +265,7 @@ function Header({ onHelpClick }: HeaderProps) {
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-foreground hover:bg-accent hover:text-white"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Link href="/sign-in">Sign In</Link>
                 </Button>
@@ -276,7 +276,7 @@ function Header({ onHelpClick }: HeaderProps) {
             )}
             <AnimatedThemeToggleButton variant="horizontal" />
             <Button
-              className="size-8 text-foreground hover:bg-accent hover:text-white"
+              className="size-8 text-foreground hover:bg-accent hover:text-accent-foreground"
               onClick={onHelpClick}
               variant="ghost"
               size="icon"

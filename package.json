@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "credits:grant": "tsx scripts/grant-credits.ts",
+    "feedback:review": "tsx scripts/review-feedback.ts",
     "db:deploy": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint . && tsc --noEmit --noUnusedLocals",

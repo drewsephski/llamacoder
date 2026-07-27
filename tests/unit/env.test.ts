@@ -82,4 +82,20 @@ describe("production environment validation", () => {
     );
     expect(result.errors.join("\n")).toContain("STRIPE_PRO_PLUS_PRICE_ID");
   });
+
+  it("rejects a partial Google Sheets service-account configuration", () => {
+    const environment = {
+      ...validEnvironment(),
+      GOOGLE_SHEETS_SERVICE_ACCOUNT_EMAIL:
+        "squid-feedback@example-project.iam.gserviceaccount.com",
+    };
+
+    const result = validateProductionEnvironment(environment);
+
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.errors.join("\n")).toContain(
+      "GOOGLE_SHEETS_SERVICE_ACCOUNT_EMAIL, GOOGLE_SHEETS_PRIVATE_KEY, GOOGLE_SHEETS_SPREADSHEET_ID",
+    );
+  });
 });

@@ -27,12 +27,14 @@ import {
   Blocks,
   TriangleAlert,
   Info,
+  MessageSquareText,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { MODELS } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { getDashboardData } from "@/features/projects/server/dashboard-query";
+import { getResearchProgramState } from "@/features/feedback/server/program";
 import { getModelBadgeClass } from "@/features/projects/model-badge";
 import { z } from "zod";
 
@@ -106,6 +108,9 @@ export async function DashboardPage({
   if (!session) {
     redirect("/sign-in?callbackUrl=/dashboard");
   }
+
+  const researchState = await getResearchProgramState(session.user.id);
+  const researchProject = researchState?.eligibleProjects[0];
 
   const userName = session.user.name?.split(" ")[0] || "there";
   const creditScale = hasActiveSubscription
@@ -237,6 +242,30 @@ export async function DashboardPage({
             </div>
           </div>
         </div>
+
+        {researchProject && !researchState?.submission && (
+          <section className="mb-8 flex flex-col gap-5 border-y border-primary/25 bg-primary/[0.035] px-1 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div className="flex gap-3">
+              <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <MessageSquareText className="size-4" />
+              </div>
+              <div>
+                <h2 className="font-semibold">
+                  Help improve Squid and earn 15 credits
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  Tell us what worked, what broke, and what would make your
+                  project launch-ready. Honest criticism is encouraged.
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="outline" className="shrink-0">
+              <Link href={`/feedback?project=${researchProject.id}`}>
+                Share feedback <ArrowRight />
+              </Link>
+            </Button>
+          </section>
+        )}
 
         {/* Upgrade Banner - show limit-reached when free user hits limit */}
         {!hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT ? (

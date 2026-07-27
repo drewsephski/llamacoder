@@ -14,6 +14,12 @@ const productionEnvironmentSchema = z.object({
   EXA_API_KEY: z.string().min(1),
   RESEND_API_KEY: z.string().min(1),
   RESEND_FROM_EMAIL: z.string().min(3).optional(),
+  FEEDBACK_ADMIN_EMAILS: z.string().optional(),
+  FEEDBACK_NOTIFICATION_EMAILS: z.string().optional(),
+  GOOGLE_SHEETS_SERVICE_ACCOUNT_EMAIL: z.string().email().optional(),
+  GOOGLE_SHEETS_PRIVATE_KEY: z.string().min(32).optional(),
+  GOOGLE_SHEETS_SPREADSHEET_ID: z.string().min(1).optional(),
+  GOOGLE_SHEETS_TAB_NAME: z.string().min(1).optional(),
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
   OPERATIONAL_ALERT_WEBHOOK_URL: optionalUrl,
@@ -66,6 +72,11 @@ export function validateProductionEnvironment(
 
   const conditionalGroups = [
     ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+    [
+      "GOOGLE_SHEETS_SERVICE_ACCOUNT_EMAIL",
+      "GOOGLE_SHEETS_PRIVATE_KEY",
+      "GOOGLE_SHEETS_SPREADSHEET_ID",
+    ],
     ["TURNSTILE_SECRET_KEY", "NEXT_PUBLIC_TURNSTILE_SITE_KEY"],
     [
       "S3_UPLOAD_REGION",

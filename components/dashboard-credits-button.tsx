@@ -29,13 +29,13 @@ export function DashboardCreditsButton({
         onClick={() => setOpen(true)}
         variant="ghost"
         className={cn(
-          "gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 hover:bg-accent hover:text-white",
+          "group gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground",
           compact && "size-11 px-0 min-[360px]:w-auto min-[360px]:px-3",
           className,
         )}
         aria-label="Buy more credits"
       >
-        <Coins className="h-4 w-4 text-amber-500" />
+        <Coins className="h-4 w-4 text-amber-500 transition-colors group-hover:text-accent-foreground" />
         <span
           className={cn(
             "text-sm font-medium",
@@ -46,7 +46,7 @@ export function DashboardCreditsButton({
         </span>
         <span
           className={cn(
-            "text-xs text-muted-foreground",
+            "text-xs text-muted-foreground transition-colors group-hover:text-accent-foreground",
             showLabel ? "inline" : "hidden sm:inline",
             compact && "hidden",
           )}

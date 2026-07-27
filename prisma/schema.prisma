@@ -18,24 +18,24 @@ model GeneratedApp {
 }
 
 model Chat {
-  id                    String                 @id @default(nanoid(16))
+  id                    String                       @id @default(nanoid(16))
   model                 String
   quality               String
   prompt                String
   title                 String
-  llamaCoderVersion     String                 @default("v2")
+  llamaCoderVersion     String                       @default("v2")
   shadcn                Boolean
   plan                  String?
   appSpec               Json?
-  hasCode               Boolean                @default(false)
-  generationStatus      String                 @default("idle")
+  hasCode               Boolean                      @default(false)
+  generationStatus      String                       @default("idle")
   generationStartedAt   DateTime?
   sourceMessageId       String?
   sourceChatId          String?
   referrerUserId        String?
-  createdAt             DateTime               @default(now())
+  createdAt             DateTime                     @default(now())
   userId                String?
-  user                  User?                  @relation(fields: [userId], references: [id])
+  user                  User?                        @relation(fields: [userId], references: [id])
   messages              Message[]
   projectIntegrations   ProjectIntegration[]
   integrationOperations IntegrationOperation[]
@@ -43,6 +43,7 @@ model Chat {
   runtimeVerifications  RuntimeVerification[]
   galleryPublication    GalleryPublication?
   publicArtifacts       PublicArtifact[]
+  researchFeedback      ResearchFeedbackSubmission[]
 
   @@index([createdAt])
   @@index([userId])
@@ -115,15 +116,15 @@ model ShareEvent {
 }
 
 model User {
-  id                     String                  @id
+  id                     String                      @id
   name                   String?
-  email                  String                  @unique
-  emailVerified          Boolean                 @default(false)
+  email                  String                      @unique
+  emailVerified          Boolean                     @default(false)
   image                  String?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  credits                Int                     @default(0)
-  stripeCustomerId       String?                 @unique
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+  credits                Int                         @default(0)
+  stripeCustomerId       String?                     @unique
   chats                  Chat[]
   creditHistory          CreditHistory[]
   creditGrants           CreditGrant[]
@@ -138,6 +139,7 @@ model User {
   galleryPublications    GalleryPublication[]
   publicArtifacts        PublicArtifact[]
   pagePurchases          PagePurchase[]
+  researchFeedback       ResearchFeedbackSubmission?
 
   @@map("user")
 }
@@ -276,6 +278,46 @@ model RuntimeVerification {
   @@index([messageId, createdAt])
   @@index([chatId, createdAt])
   @@index([userId, createdAt])
+}
+
+model ResearchFeedbackSubmission {
+  id                 String    @id @default(nanoid(16))
+  userId             String    @unique
+  chatId             String
+  accountEmail       String
+  buildGoal          String
+  previousTools      String
+  frustration        String
+  betterThanExpected String
+  abandonmentPoint   String
+  launchBlocker      String
+  singleImprovement  String
+  paymentIntent      String
+  monthlyPriceUsd    Int
+  followUpConsent    Boolean   @default(false)
+  mediaUrl           String?
+  rewardTrack        String    @default("standard")
+  activityEvidence   Json
+  status             String    @default("pending")
+  primaryCategory    String?
+  rewardAmount       Int?
+  reviewNotes        String?
+  reviewedByEmail    String?
+  reviewedAt         DateTime?
+  sheetSyncStatus    String    @default("pending")
+  sheetSyncedAt      DateTime?
+  sheetSyncError     String?
+  notificationStatus String    @default("pending")
+  notifiedAt         DateTime?
+  notificationError  String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat               Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@index([status, createdAt])
+  @@index([sheetSyncStatus, updatedAt])
 }
 
 model IntegrationConnection {

@@ -27,7 +27,7 @@ import type { TierKey } from "@/lib/billing/config";
 
 type DashboardNavigationProps = {
   credits: number;
-  currentPage: "Dashboard" | "Usage";
+  currentPage: "Dashboard" | "Usage" | "Research";
   currentTier: TierKey;
 };
 

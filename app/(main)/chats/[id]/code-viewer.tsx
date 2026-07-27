@@ -443,6 +443,13 @@ export default function CodeViewer({
             : report.status === "review"
               ? "Runtime verification needs review"
               : "Runtime verification failed",
+          {
+            action: {
+              label: "Share feedback",
+              onClick: () =>
+                window.location.assign(`/feedback?project=${chat.id}`),
+            },
+          },
         );
       } catch {
         toast.error("Runtime result could not be saved");

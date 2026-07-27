@@ -8,6 +8,7 @@ export type RateLimitOperation =
   | "create_project"
   | "enhance_prompt"
   | "export"
+  | "feedback"
   | "generate_code"
   | "integration"
   | "portal"
