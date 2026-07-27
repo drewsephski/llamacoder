@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { PromptPills } from "./prompt-pills";
 import { PromptOutput } from "./prompt-output";
 import { usePromptBuilder } from "../hooks/use-prompt-builder";

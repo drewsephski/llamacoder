@@ -14,7 +14,6 @@ import {
   hasPremiumModelAccess,
   isSubscriptionEntitled,
   MODEL_COST_OVERHEAD_MULTIPLIER,
-  normalizeTier,
   TIERS,
 } from "./config";
 
@@ -425,9 +424,6 @@ async function checkCreditAccess({
     return { success: false, error: "USER_NOT_FOUND" };
   }
 
-  const hasActiveSubscription = isSubscriptionEntitled(
-    user.subscription?.status,
-  );
   const tier = getEntitlementTier(user.subscription);
 
   const isAllowed = canTierUseModel(tier, modelId, {

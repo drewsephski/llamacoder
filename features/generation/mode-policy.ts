@@ -9,6 +9,9 @@ import type { AppSpec } from "@/features/generation/app-spec";
 import { describePersistenceIntent } from "@/features/generation/persistence-intent";
 import { buildSelectedApiPurposeStep } from "@/features/integrations/generation-contract";
 import type { IntegrationProvider } from "@/features/integrations/registry";
+import { createSupabaseBackendPlan } from "@/features/integrations/server/supabase-backend-plan";
+import { getAuthenticatedTasksBackendPlan } from "@/features/integrations/supabase-backend";
+import type { SupabaseBackendColumn } from "@/features/integrations/supabase-backend";
 
 function summarizePrompt(prompt: string) {
   const normalized = prompt.replace(/\s+/g, " ").trim();
@@ -232,6 +235,12 @@ export function classifySupabaseSetupRequirements({
     /\btasks?\b/i.test(entity.entity),
   );
   const isTaskApp = /\b(?:task manager|todo|to-do|tasks?)\b/i.test(normalized);
+  const backendPlan =
+    database && authentication
+      ? hasTasksEntity || isTaskApp
+        ? getAuthenticatedTasksBackendPlan()
+        : buildBackendPlanFromAppSpec(spec)
+      : null;
 
   return {
     database,
@@ -239,10 +248,153 @@ export function classifySupabaseSetupRequirements({
     storage,
     realtime,
     privilegedServerLogic,
-    ...(database && authentication && (hasTasksEntity || isTaskApp)
-      ? { backendTemplate: "authenticated_tasks" as const }
+    ...(backendPlan
+      ? {
+          backendTemplate: backendPlan.template,
+          backendPlan,
+        }
       : {}),
   };
+}
+
+const RESERVED_BACKEND_IDENTIFIERS = new Set([
+  "id",
+  "user_id",
+  "created_at",
+  "updated_at",
+  "tableoid",
+  "xmin",
+  "cmin",
+  "xmax",
+  "cmax",
+  "ctid",
+]);
+
+function backendIdentifier(value: string, fallback: string) {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/^[^a-z]+/, "")
+    .slice(0, 48);
+  const identifier = normalized || fallback;
+  return RESERVED_BACKEND_IDENTIFIERS.has(identifier)
+    ? `${identifier}_value`.slice(0, 48)
+    : identifier;
+}
+
+function inferBackendColumn(
+  field: string,
+  index: number,
+): SupabaseBackendColumn {
+  const [rawName = "", rawDescription = ""] = field.split(/[:—-]/, 2);
+  const name = backendIdentifier(rawName, `field_${index + 1}`);
+  const description = `${field} ${rawDescription}`.toLowerCase();
+  const type = /\b(?:boolean|bool|completed|enabled|active|published)\b/.test(
+    description,
+  )
+    ? ("boolean" as const)
+    : /\b(?:timestamp|datetime|date and time)\b/.test(description)
+      ? ("timestamptz" as const)
+      : /\bdate\b/.test(description)
+        ? ("date" as const)
+        : /\b(?:integer|count|quantity|position|rank)\b/.test(description)
+          ? ("integer" as const)
+          : /\b(?:number|decimal|price|amount|total)\b/.test(description)
+            ? ("numeric" as const)
+            : /\b(?:json|metadata|settings)\b/.test(description)
+              ? ("jsonb" as const)
+              : ("text" as const);
+  return {
+    name,
+    type,
+    nullable: false,
+    unique: false,
+    ...(type === "text" ? { maxLength: 2_000 } : {}),
+  };
+}
+
+function buildBackendPlanFromAppSpec(spec: AppSpec) {
+  const sourceEntities = spec.dataPersistence.proposedSchema.slice(0, 4);
+  if (!sourceEntities.length) return null;
+  const names = sourceEntities.map((entity, index) =>
+    backendIdentifier(entity.entity, `entity_${index + 1}`),
+  );
+  if (new Set(names).size !== names.length) return null;
+  const entities = sourceEntities.map((entity, entityIndex) => {
+    const columns = (entity.fields?.length ? entity.fields : ["name: text"])
+      .slice(0, 16)
+      .map(inferBackendColumn);
+    const uniqueColumns: SupabaseBackendColumn[] = Array.from(
+      new Map(columns.map((column) => [column.name, column])).values(),
+    );
+    const relationships = (entity.relationships ?? []).flatMap(
+      (relationship) => {
+        const targetIndex = sourceEntities.findIndex(
+          (target, index) =>
+            index !== entityIndex &&
+            relationship
+              .toLowerCase()
+              .includes(target.entity.trim().toLowerCase()),
+        );
+        if (targetIndex < 0) return [];
+        const column = backendIdentifier(
+          `${names[targetIndex]}_id`,
+          "parent_id",
+        );
+        if (!uniqueColumns.some((candidate) => candidate.name === column)) {
+          uniqueColumns.push({
+            name: column,
+            type: "uuid",
+            nullable: false,
+            unique: false,
+          });
+        }
+        return [
+          {
+            column,
+            targetEntity: names[targetIndex],
+            onDelete: "cascade" as const,
+          },
+        ];
+      },
+    );
+    return {
+      name: names[entityIndex],
+      columns: uniqueColumns,
+      indexes: [],
+      relationships,
+    };
+  });
+  const hasRelationships = entities.some(
+    (entity) => entity.relationships.length > 0,
+  );
+  const isPublicRead =
+    /\b(?:public|published|catalog|directory|anyone can view)\b/i.test(
+      `${spec.dataPersistence.useCase ?? ""} ${spec.overview.purpose ?? ""}`,
+    );
+  if (hasRelationships && entities.length > 1) {
+    return createSupabaseBackendPlan({
+      version: 2,
+      template: "related_owner_scoped",
+      summary: `Create ${entities.length} related, owner-scoped tables with authenticated CRUD access.`,
+      operations: ["select", "insert", "update", "delete"],
+      destructive: false,
+      entities,
+    });
+  }
+  const { relationships: _relationships, ...singleEntity } = entities[0];
+  return createSupabaseBackendPlan({
+    version: 2,
+    template: isPublicRead ? "public_read_owner_write" : "owner_scoped_crud",
+    summary: isPublicRead
+      ? `Create public-read, owner-write storage for ${entities[0].name}.`
+      : `Create owner-scoped authenticated CRUD storage for ${entities[0].name}.`,
+    operations: ["select", "insert", "update", "delete"],
+    destructive: false,
+    entity: singleEntity,
+  });
 }
 
 export function buildPlanModeFallbackInterview({

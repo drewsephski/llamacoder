@@ -11,6 +11,7 @@ import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getPrisma } from "@/lib/prisma";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getErrorMessage } from "@/features/shared/errors";
+import { publishGalleryArtifact } from "@/features/public-artifacts/server/publish";
 
 export const maxDuration = 120;
 
@@ -125,14 +126,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existing = await prisma.galleryPublication.findUnique({
-      where: { chatId: message.chatId },
-      select: { slug: true },
-    });
     const now = new Date();
-    const publication = await prisma.galleryPublication.upsert({
-      where: { chatId: message.chatId },
-      create: {
+    const { artifact, publication, stableSlug } = await publishGalleryArtifact(
+      prisma,
+      {
         slug: createGallerySlug(parsed.data.title, message.chatId),
         chatId: message.chatId,
         messageId: message.id,
@@ -140,36 +137,21 @@ export async function POST(request: NextRequest) {
         title: parsed.data.title,
         description: parsed.data.description,
         allowRemixes: parsed.data.allowRemixes,
-        isPublished: true,
-        publishedAt: now,
-        thumbnailStatus: "pending",
-        thumbnailUpdatedAt: now,
+        allowStarterDownloads: parsed.data.allowStarterDownloads,
+        now,
       },
-      update: {
-        messageId: message.id,
-        title: parsed.data.title,
-        description: parsed.data.description,
-        allowRemixes: parsed.data.allowRemixes,
-        isPublished: true,
-        publishedAt: now,
-        unpublishedAt: null,
-        thumbnailUrl: null,
-        thumbnailStatus: "pending",
-        thumbnailCapturedMessageId: null,
-        thumbnailError: null,
-        thumbnailUpdatedAt: now,
-      },
-    });
+    );
 
     revalidatePath("/gallery");
 
     return NextResponse.json({
       publication: {
         id: publication.id,
-        slug: existing?.slug ?? publication.slug,
+        slug: stableSlug,
         title: publication.title,
         description: publication.description,
         allowRemixes: publication.allowRemixes,
+        allowStarterDownloads: artifact.allowStarterDownloads,
         isPublished: publication.isPublished,
         thumbnailStatus: "pending",
         url: `/gallery/${publication.slug}`,

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getCurrentSession: vi.fn(),
   getPrisma: vi.fn(),
+  finalizeOwnedGenerationRun: vi.fn(),
   releaseCreditHold: vi.fn(),
 }));
 
@@ -18,7 +19,17 @@ vi.mock("@/lib/prisma", () => ({
   getPrisma: mocks.getPrisma,
 }));
 
-import { GET, PATCH } from "@/app/api/generation-runs/[runId]/route";
+vi.mock(
+  "@/features/generation/server/workflow",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@/features/generation/server/workflow")
+    >()),
+    finalizeOwnedGenerationRun: mocks.finalizeOwnedGenerationRun,
+  }),
+);
+
+import { GET, PATCH, POST } from "@/app/api/generation-runs/[runId]/route";
 
 describe("/api/generation-runs/[runId]", () => {
   beforeEach(() => {
@@ -71,11 +82,8 @@ describe("/api/generation-runs/[runId]", () => {
     });
   });
 
-  it("completes a generation run when requested", async () => {
-    const findFirst = vi.fn().mockResolvedValue({
-      id: "run_1",
-      creditHoldId: "hold_1",
-    });
+  it("rejects client-authored completion state", async () => {
+    const findFirst = vi.fn();
     const update = vi.fn().mockResolvedValue({});
     mocks.getPrisma.mockReturnValue({
       generationRun: { findFirst, update },
@@ -93,15 +101,36 @@ describe("/api/generation-runs/[runId]", () => {
       { params: Promise.resolve({ runId: "run_1" }) },
     );
 
+    expect(response.status).toBe(400);
+    expect(findFirst).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("finalizes a generation run through the server-owned workflow", async () => {
+    mocks.finalizeOwnedGenerationRun.mockResolvedValue({
+      id: "assistant_1",
+      chatId: "chat_1",
+      role: "assistant",
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/generation-runs/run_1", {
+        method: "POST",
+      }),
+      { params: Promise.resolve({ runId: "run_1" }) },
+    );
+
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ status: "completed" });
-    expect(update).toHaveBeenCalledWith({
-      where: { id: "run_1" },
-      data: {
-        status: "completed",
-        assistantMessageId: "assistant_1",
-        completedAt: expect.any(Date),
+    await expect(response.json()).resolves.toEqual({
+      message: {
+        id: "assistant_1",
+        chatId: "chat_1",
+        role: "assistant",
       },
+    });
+    expect(mocks.finalizeOwnedGenerationRun).toHaveBeenCalledWith({
+      runId: "run_1",
+      userId: "user_1",
     });
   });
 });

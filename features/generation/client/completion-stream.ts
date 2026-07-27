@@ -1,5 +1,6 @@
 "use client";
 
+import type { ProjectMessage } from "@/features/projects/contracts";
 import {
   parseJsonEventStream,
   uiMessageChunkSchema,
@@ -22,6 +23,7 @@ export type GenerationRunSnapshot = {
   partialText: string;
   creditHoldId?: string;
   errorMessage?: string;
+  assistantMessageId?: string;
 };
 
 export async function fetchGenerationRun(
@@ -137,11 +139,26 @@ export async function retryCompletionStream({
   return fetchCompletionStream({ messageId, model });
 }
 
+export async function finalizeGenerationRun(
+  runId: string,
+): Promise<ProjectMessage> {
+  const response = await fetch(`/api/generation-runs/${runId}`, {
+    method: "POST",
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.message?.id) {
+    throw new Error(
+      payload?.message ||
+        payload?.error ||
+        "Unable to finalize the generated app",
+    );
+  }
+  return payload.message as ProjectMessage;
+}
+
 export async function updateGenerationRun(
   runId: string,
-  body:
-    | { action: "cancel" }
-    | { action: "complete"; assistantMessageId: string },
+  body: { action: "cancel" },
 ) {
   const response = await fetch(`/api/generation-runs/${runId}`, {
     method: "PATCH",

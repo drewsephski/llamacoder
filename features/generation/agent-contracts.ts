@@ -5,6 +5,7 @@ import {
   appSpecSchema,
   deliveryContractSchema,
 } from "@/features/generation/app-spec";
+import { supabaseBackendPlanSchema } from "@/features/integrations/supabase-backend";
 
 export const agentIntentSchema = z.enum([
   "answer",
@@ -44,7 +45,15 @@ export const backendSetupRequestSchema = z.object({
       storage: z.boolean(),
       realtime: z.boolean(),
       privilegedServerLogic: z.boolean(),
-      backendTemplate: z.literal("authenticated_tasks").optional(),
+      backendTemplate: z
+        .enum([
+          "authenticated_tasks",
+          "owner_scoped_crud",
+          "public_read_owner_write",
+          "related_owner_scoped",
+        ])
+        .optional(),
+      backendPlan: supabaseBackendPlanSchema.optional(),
     })
     .strict(),
   continuation: z

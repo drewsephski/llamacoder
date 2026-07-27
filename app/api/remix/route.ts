@@ -11,9 +11,11 @@ import {
   getModelCreditHoldCost,
 } from "@/lib/billing";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { resolveAuthorizedPublicArtifact } from "@/features/public-artifacts/server/access";
 
 const remixSchema = z.object({
   messageId: z.string().min(1),
+  artifactToken: z.string().min(1).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -57,28 +59,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const prisma = getPrisma();
-  const sourceMessage = await prisma.message.findUnique({
-    where: { id: parsed.data.messageId },
-    include: { chat: true },
-  });
+  const publicArtifact = await resolveAuthorizedPublicArtifact(
+    parsed.data.artifactToken ?? parsed.data.messageId,
+    "remix",
+  );
+  const sourceMessage = publicArtifact?.message;
 
   if (!sourceMessage) {
     return NextResponse.json(
-      { error: "NOT_FOUND", message: "Shared app not found" },
-      { status: 404 },
-    );
-  }
-
-  const publication = await prisma.galleryPublication.findUnique({
-    where: { messageId: sourceMessage.id },
-    select: { allowRemixes: true, isPublished: true },
-  });
-  if (publication && (!publication.isPublished || !publication.allowRemixes)) {
-    return NextResponse.json(
       {
         error: "REMIX_NOT_ALLOWED",
-        message: "The creator has not allowed remixes for this project",
+        message: "This shared app is unavailable or cannot be remixed",
       },
       { status: 403 },
     );
@@ -100,6 +91,7 @@ export async function POST(request: NextRequest) {
     userId: session.user.id,
     modelId: sourceMessage.chat.model,
   });
+  const prisma = getPrisma();
 
   if (!eligibility.success) {
     if (eligibility.error === "ELIGIBILITY_CHECK_FAILED") {

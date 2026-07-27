@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { getPrisma } from "@/lib/prisma";
+import { revokeGalleryArtifact } from "@/features/public-artifacts/server/publish";
 
 export async function DELETE(
   _request: NextRequest,
@@ -20,7 +21,7 @@ export async function DELETE(
   const prisma = getPrisma();
   const publication = await prisma.galleryPublication.findFirst({
     where: { id: publicationId, userId: session.user.id },
-    select: { id: true },
+    select: { id: true, publicArtifactId: true },
   });
   if (!publication) {
     return NextResponse.json(
@@ -29,9 +30,8 @@ export async function DELETE(
     );
   }
 
-  await prisma.galleryPublication.update({
-    where: { id: publication.id },
-    data: { isPublished: false, unpublishedAt: new Date() },
+  await prisma.$transaction(async (tx) => {
+    await revokeGalleryArtifact(tx, publication, new Date());
   });
   revalidatePath("/gallery");
   revalidatePath("/api/gallery");

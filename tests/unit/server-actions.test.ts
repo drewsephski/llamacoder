@@ -607,8 +607,13 @@ describe("server actions", () => {
         assistantMessageId: "assistant_repaired",
       }),
     });
-    expect(prismaMock.generationRun.updateMany).toHaveBeenCalledWith({
-      where: { id: "run_repair", chatId: "chat_1", userId: "user_1" },
+    expect(txMock.generationRun.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "run_repair",
+        chatId: "chat_1",
+        userId: "user_1",
+        status: { in: ["running", "recoverable"] },
+      },
       data: expect.objectContaining({
         status: "completed",
         assistantMessageId: "assistant_repaired",

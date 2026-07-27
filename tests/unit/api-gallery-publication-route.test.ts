@@ -6,15 +6,18 @@ const {
   getThumbnailObjectMock,
   persistThumbnailMock,
   prismaMock,
+  revokeGalleryArtifactMock,
   revalidatePathMock,
   validateUploadMock,
 } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
   getThumbnailObjectMock: vi.fn(),
   persistThumbnailMock: vi.fn(),
+  revokeGalleryArtifactMock: vi.fn(),
   revalidatePathMock: vi.fn(),
   validateUploadMock: vi.fn(),
   prismaMock: {
+    $transaction: vi.fn(),
     galleryPublication: {
       findFirst: vi.fn(),
       update: vi.fn(),
@@ -45,6 +48,10 @@ vi.mock("@/lib/prisma", () => ({
   getPrisma: () => prismaMock,
 }));
 
+vi.mock("@/features/public-artifacts/server/publish", () => ({
+  revokeGalleryArtifact: revokeGalleryArtifactMock,
+}));
+
 import { DELETE } from "@/app/api/gallery/[publicationId]/route";
 import {
   GET as getThumbnail,
@@ -56,6 +63,9 @@ describe("gallery publication management", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSessionMock.mockResolvedValue({ user: { id: "owner_1" } });
+    prismaMock.$transaction.mockImplementation(async (callback) =>
+      callback(prismaMock),
+    );
   });
 
   it("only returns settings for a publication owned by the current user", async () => {
@@ -66,6 +76,7 @@ describe("gallery publication management", () => {
       description: "A calmer way to plan focused work.",
       allowRemixes: false,
       isPublished: true,
+      publicArtifact: { allowStarterDownloads: true },
     });
 
     const response = await GET(
@@ -80,11 +91,17 @@ describe("gallery publication management", () => {
         where: { chatId: "chat_123", userId: "owner_1" },
       }),
     );
+    await expect(response.json()).resolves.toEqual({
+      publication: expect.objectContaining({
+        allowStarterDownloads: true,
+      }),
+    });
   });
 
   it("soft-unpublishes an owned project so its stable record can be reused", async () => {
     prismaMock.galleryPublication.findFirst.mockResolvedValue({
       id: "publication_1",
+      publicArtifactId: "artifact_1",
     });
     prismaMock.galleryPublication.update.mockResolvedValue({});
 
@@ -98,15 +115,13 @@ describe("gallery publication management", () => {
     expect(response.status).toBe(200);
     expect(prismaMock.galleryPublication.findFirst).toHaveBeenCalledWith({
       where: { id: "publication_1", userId: "owner_1" },
-      select: { id: true },
+      select: { id: true, publicArtifactId: true },
     });
-    expect(prismaMock.galleryPublication.update).toHaveBeenCalledWith({
-      where: { id: "publication_1" },
-      data: {
-        isPublished: false,
-        unpublishedAt: expect.any(Date),
-      },
-    });
+    expect(revokeGalleryArtifactMock).toHaveBeenCalledWith(
+      prismaMock,
+      { id: "publication_1", publicArtifactId: "artifact_1" },
+      expect.any(Date),
+    );
     expect(revalidatePathMock).toHaveBeenCalledWith("/gallery");
     expect(revalidatePathMock).toHaveBeenCalledWith("/api/gallery");
   });

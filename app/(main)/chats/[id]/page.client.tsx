@@ -5,14 +5,12 @@ import {
   createAgentUserMessage,
 } from "@/features/generation/server/agent-actions";
 import {
-  createFreeRepairAssistantMessage,
   createMessage,
   createPreviewRepairMessage,
   createValidationRepairMessage,
   releaseReservedCreditHold,
   restoreSelectedFilesAsCheckpoint,
   restoreVersionAsCheckpoint,
-  saveStreamedAssistantMessage,
 } from "@/features/generation/server/actions";
 import { saveProject } from "@/features/projects/server/actions";
 import LogoSmall from "@/components/icons/logo-small";
@@ -49,6 +47,7 @@ import { toast } from "sonner";
 import {
   fetchCompletionStream,
   fetchGenerationRun,
+  finalizeGenerationRun,
   recoverCompletionStream,
   retryCompletionStream,
   updateGenerationRun,
@@ -573,7 +572,6 @@ export default function PageClient({ chat }: { chat: Chat }) {
         let message: Message | undefined;
         let shouldOpenPreview = false;
         let queuedRepairStream: Promise<CompletionStream> | undefined;
-        let completedGenerationRun = false;
         const agentMessageOptions = {
           creditHoldId,
           generationRunId: activeStream?.generationRunId,
@@ -641,32 +639,16 @@ export default function PageClient({ chat }: { chat: Chat }) {
               },
               { ...agentMessageOptions, chargeCredits: true },
             )) as Message;
-          } else if (repairMessageId) {
-            message = (await createFreeRepairAssistantMessage(
-              chat.id,
-              repairMessageId,
-              fullText,
-              allFiles,
-              { generationRunId: activeStream?.generationRunId },
-            )) as Message;
-            completedGenerationRun = Boolean(activeStream?.generationRunId);
-            shouldOpenPreview = true;
           } else {
-            message = (await saveStreamedAssistantMessage(
-              chat.id,
-              fullText,
-              allFiles,
-              {
-                creditHoldId,
-                generationRunId: activeStream?.generationRunId,
-              },
+            if (!activeStream?.generationRunId) {
+              throw new Error(
+                "Generation run state is missing. Retry this request.",
+              );
+            }
+            message = (await finalizeGenerationRun(
+              activeStream.generationRunId,
             )) as Message;
-            completedGenerationRun = Boolean(activeStream?.generationRunId);
             shouldOpenPreview = true;
-          }
-
-          if (completedAgentAction && activeStream?.generationRunId) {
-            completedGenerationRun = true;
           }
         } catch (saveError) {
           const saveErrorMessage = getErrorMessage(saveError, "");
@@ -747,13 +729,6 @@ export default function PageClient({ chat }: { chat: Chat }) {
               attempts: automaticRepairAttemptsRef.current,
             });
           }
-        }
-
-        if (stream.generationRunId && message && !completedGenerationRun) {
-          await updateGenerationRun(stream.generationRunId, {
-            action: "complete",
-            assistantMessageId: message.id,
-          });
         }
 
         startTransition(() => {

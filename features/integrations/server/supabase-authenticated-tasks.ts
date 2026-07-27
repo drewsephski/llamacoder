@@ -277,10 +277,16 @@ export function verifyAuthenticatedTasksResult(
     string,
     { type: string; nullable: string; defaultIncludes?: string }
   >([
-    ["id", { type: "uuid", nullable: "NO", defaultIncludes: "gen_random_uuid()" }],
+    [
+      "id",
+      { type: "uuid", nullable: "NO", defaultIncludes: "gen_random_uuid()" },
+    ],
     ["user_id", { type: "uuid", nullable: "NO" }],
     ["title", { type: "text", nullable: "NO" }],
-    ["completed", { type: "boolean", nullable: "NO", defaultIncludes: "false" }],
+    [
+      "completed",
+      { type: "boolean", nullable: "NO", defaultIncludes: "false" },
+    ],
     [
       "created_at",
       {
@@ -318,10 +324,12 @@ export function verifyAuthenticatedTasksResult(
     ]),
   );
   const primaryKey =
-    payload.constraints.find(
-      (constraint) =>
-        constraint.name === "tasks_pkey" && constraint.type === "p",
-    )?.definition.toLowerCase() === "primary key (id)";
+    payload.constraints
+      .find(
+        (constraint) =>
+          constraint.name === "tasks_pkey" && constraint.type === "p",
+      )
+      ?.definition.toLowerCase() === "primary key (id)";
   const userForeignKey = Boolean(
     payload.constraints.some(
       (constraint) =>
@@ -333,12 +341,12 @@ export function verifyAuthenticatedTasksResult(
     ),
   );
   const titleLength =
-    constraintDefinitions.get("tasks_title_length")?.includes(
-      "char_length(title) >= 1",
-    ) === true &&
-    constraintDefinitions.get("tasks_title_length")?.includes(
-      "char_length(title) <= 200",
-    ) === true;
+    constraintDefinitions
+      .get("tasks_title_length")
+      ?.includes("char_length(title) >= 1") === true &&
+    constraintDefinitions
+      .get("tasks_title_length")
+      ?.includes("char_length(title) <= 200") === true;
   const userIndex = payload.indexes.some(
     (index) =>
       index.name === "tasks_user_id_idx" &&
@@ -398,6 +406,13 @@ export function verifyAuthenticatedTasksResult(
     anonAccessRevoked:
       payload.anonGrants.length === 0 && payload.publicGrants.length === 0,
   };
+  if (!Object.values(verification).every((verified) => verified === true)) {
+    throw new IntegrationServiceError(
+      "SUPABASE_BACKEND_VERIFICATION_FAILED",
+      "Supabase backend verification did not confirm the required table security.",
+      409,
+    );
+  }
   const parsed = supabaseBackendVerificationSchema.safeParse(verification);
   if (!parsed.success) {
     throw new IntegrationServiceError(

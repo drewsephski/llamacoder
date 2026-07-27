@@ -115,6 +115,12 @@ export default async function GalleryProjectPage({
             content: file.code,
           }))}
           allowRemixes={publication.allowRemixes}
+          allowStarterDownloads={
+            publication.publicArtifact?.allowStarterDownloads ?? false
+          }
+          publicReference={
+            publication.publicArtifact?.token ?? publication.messageId
+          }
           galleryHref="/gallery"
         />
       </div>

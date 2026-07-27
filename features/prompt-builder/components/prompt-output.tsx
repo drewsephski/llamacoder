@@ -296,6 +296,7 @@ export function PromptOutput({
 
           return (
             <button
+              type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               disabled={!hasContent}

@@ -5,6 +5,7 @@ export const publishProjectSchema = z.object({
   title: z.string().trim().min(1).max(80),
   description: z.string().trim().min(1).max(280),
   allowRemixes: z.boolean(),
+  allowStarterDownloads: z.boolean().default(false),
 });
 
 export const gallerySearchSchema = z.object({

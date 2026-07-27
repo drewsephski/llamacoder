@@ -39,6 +39,7 @@ type Publication = {
   title: string;
   description: string;
   allowRemixes: boolean;
+  allowStarterDownloads: boolean;
   isPublished: boolean;
   thumbnailStatus: "pending" | "ready" | "failed";
   thumbnailError?: string | null;
@@ -63,6 +64,7 @@ export function Share({
     normalizeDescription(projectDescription),
   );
   const [allowRemixes, setAllowRemixes] = useState(false);
+  const [allowStarterDownloads, setAllowStarterDownloads] = useState(false);
   const [publication, setPublication] = useState<Publication | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,6 +157,7 @@ export function Share({
         setTitle(data.publication.title);
         setDescription(data.publication.description);
         setAllowRemixes(data.publication.allowRemixes);
+        setAllowStarterDownloads(data.publication.allowStarterDownloads);
       })
       .catch(() => {
         toast.error("Unable to load publication settings");
@@ -174,6 +177,7 @@ export function Share({
           title,
           description,
           allowRemixes,
+          allowStarterDownloads,
         }),
       });
       const data = (await response.json().catch(() => null)) as {
@@ -318,6 +322,27 @@ export function Share({
                   checked={allowRemixes}
                   onCheckedChange={setAllowRemixes}
                   aria-label="Allow other people to remix this project"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-6 border-b border-border pb-3">
+                <div>
+                  <label
+                    htmlFor="allow-starter-downloads"
+                    className="text-sm font-semibold"
+                  >
+                    Allow starter downloads
+                  </label>
+                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                    Visitors can download a small attribution bundle. Your
+                    generated source remains private.
+                  </p>
+                </div>
+                <Switch
+                  id="allow-starter-downloads"
+                  checked={allowStarterDownloads}
+                  onCheckedChange={setAllowStarterDownloads}
+                  aria-label="Allow starter bundle downloads"
                 />
               </div>
 

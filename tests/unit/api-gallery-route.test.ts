@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionMock, prismaMock, revalidatePathMock } = vi.hoisted(() => ({
+const {
+  getSessionMock,
+  prismaMock,
+  publishGalleryArtifactMock,
+  revalidatePathMock,
+} = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
+  publishGalleryArtifactMock: vi.fn(),
   revalidatePathMock: vi.fn(),
   prismaMock: {
     galleryPublication: {
@@ -26,6 +32,10 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   getPrisma: () => prismaMock,
+}));
+
+vi.mock("@/features/public-artifacts/server/publish", () => ({
+  publishGalleryArtifact: publishGalleryArtifactMock,
 }));
 
 import { GET, POST } from "@/app/api/gallery/route";
@@ -160,14 +170,21 @@ describe("/api/gallery", () => {
       ],
       chat: { id: "chat_1234567", userId: "owner_1" },
     });
-    prismaMock.galleryPublication.upsert.mockResolvedValue({
-      id: "publication_1",
-      slug: "focus-day-chat123",
-      title: "Focus Day",
-      description: "A calmer way to plan focused work.",
-      allowRemixes: true,
-      isPublished: true,
-      thumbnailStatus: "pending",
+    publishGalleryArtifactMock.mockResolvedValue({
+      stableSlug: "focus-day-chat123",
+      artifact: {
+        token: "opaque_token",
+        allowStarterDownloads: true,
+      },
+      publication: {
+        id: "publication_1",
+        slug: "focus-day-chat123",
+        title: "Focus Day",
+        description: "A calmer way to plan focused work.",
+        allowRemixes: true,
+        isPublished: true,
+        thumbnailStatus: "pending",
+      },
     });
 
     const response = await POST(
@@ -178,6 +195,7 @@ describe("/api/gallery", () => {
           title: "Focus Day",
           description: "A calmer way to plan focused work.",
           allowRemixes: true,
+          allowStarterDownloads: true,
         }),
       }) as never,
     );
@@ -191,20 +209,14 @@ describe("/api/gallery", () => {
         }),
       }),
     );
-    expect(prismaMock.galleryPublication.upsert).toHaveBeenCalledWith(
+    expect(publishGalleryArtifactMock).toHaveBeenCalledWith(
+      prismaMock,
       expect.objectContaining({
-        where: { chatId: "chat_1234567" },
-        create: expect.objectContaining({
-          userId: "owner_1",
-          messageId: "message_1",
-          allowRemixes: true,
-          thumbnailStatus: "pending",
-        }),
-        update: expect.objectContaining({
-          thumbnailUrl: null,
-          thumbnailStatus: "pending",
-          thumbnailCapturedMessageId: null,
-        }),
+        chatId: "chat_1234567",
+        userId: "owner_1",
+        messageId: "message_1",
+        allowRemixes: true,
+        allowStarterDownloads: true,
       }),
     );
     await expect(response.json()).resolves.toEqual({
@@ -225,11 +237,12 @@ describe("/api/gallery", () => {
           title: "Private app",
           description: "This should not be published.",
           allowRemixes: false,
+          allowStarterDownloads: false,
         }),
       }) as never,
     );
 
     expect(response.status).toBe(404);
-    expect(prismaMock.galleryPublication.upsert).not.toHaveBeenCalled();
+    expect(publishGalleryArtifactMock).not.toHaveBeenCalled();
   });
 });

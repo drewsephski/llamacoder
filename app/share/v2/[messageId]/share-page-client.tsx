@@ -27,6 +27,8 @@ type SharePageClientProps = {
   creatorName: string;
   files: SharedFile[];
   allowRemixes?: boolean;
+  allowStarterDownloads?: boolean;
+  publicReference?: string;
   galleryHref?: string;
 };
 
@@ -37,6 +39,8 @@ export function SharePageClient({
   creatorName,
   files,
   allowRemixes = true,
+  allowStarterDownloads = false,
+  publicReference = messageId,
   galleryHref,
 }: SharePageClientProps) {
   const router = useRouter();
@@ -62,7 +66,11 @@ export function SharePageClient({
       const response = await fetch("/api/remix", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messageId }),
+        body: JSON.stringify({
+          messageId,
+          artifactToken:
+            publicReference !== messageId ? publicReference : undefined,
+        }),
       });
       const data = await response.json().catch(() => null);
 
@@ -80,7 +88,7 @@ export function SharePageClient({
     });
   };
 
-  const downloadHref = `/api/export/${messageId}?starter=1`;
+  const downloadHref = `/api/export/${encodeURIComponent(publicReference)}?starter=1`;
 
   return (
     <div
@@ -133,15 +141,17 @@ export function SharePageClient({
             <Copy className="size-4" />
             {didCopy ? "Copied" : "Copy prompt"}
           </Button>
-          <Button asChild variant="outline">
-            <a
-              href={downloadHref}
-              onClick={() => recordShareEvent(messageId, "download_starter")}
-            >
-              <Download className="size-4" />
-              Download starter
-            </a>
-          </Button>
+          {allowStarterDownloads && (
+            <Button asChild variant="outline">
+              <a
+                href={downloadHref}
+                onClick={() => recordShareEvent(messageId, "download_starter")}
+              >
+                <Download className="size-4" />
+                Download starter
+              </a>
+            </Button>
+          )}
         </div>
 
         <a

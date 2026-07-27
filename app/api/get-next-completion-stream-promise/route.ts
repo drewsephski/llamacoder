@@ -16,7 +16,6 @@ import {
   createOpenRouterModel,
   getAIErrorMessage,
   getAIErrorStatus,
-  getOpenRouterProviderOptions,
   getOpenRouterReasoningSelection,
 } from "@/lib/openrouter";
 import {

@@ -9,7 +9,7 @@ import Spinner from "@/components/spinner";
 
 describe("CometSpinner", () => {
   it("renders an accessible animated loading status", () => {
-    const { container } = render(
+    render(
       <CometSpinner
         className="size-6 text-blue-500"
         aria-label="Loading plans"

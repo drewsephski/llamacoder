@@ -6,20 +6,20 @@ const {
   checkProjectCreationEligibilityMock,
   consumeRateLimitMock,
   getSessionMock,
+  resolveAuthorizedPublicArtifactMock,
   prismaMock,
   txMock,
 } = vi.hoisted(() => ({
   checkProjectCreationEligibilityMock: vi.fn(),
   consumeRateLimitMock: vi.fn(),
   getSessionMock: vi.fn(),
+  resolveAuthorizedPublicArtifactMock: vi.fn(),
   txMock: {
     chat: { create: vi.fn() },
     shareEvent: { create: vi.fn() },
   },
   prismaMock: {
     $transaction: vi.fn(),
-    galleryPublication: { findUnique: vi.fn() },
-    message: { findUnique: vi.fn() },
   },
 }));
 
@@ -45,6 +45,10 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 
 vi.mock("@/features/security/server/rate-limit", () => ({
   consumeRateLimit: consumeRateLimitMock,
+}));
+
+vi.mock("@/features/public-artifacts/server/access", () => ({
+  resolveAuthorizedPublicArtifact: resolveAuthorizedPublicArtifactMock,
 }));
 
 import { POST } from "@/app/api/remix/route";
@@ -98,8 +102,9 @@ describe("/api/remix", () => {
       modelCost: 1,
       hasActiveSubscription: false,
     });
-    prismaMock.message.findUnique.mockResolvedValue(sourceMessage());
-    prismaMock.galleryPublication.findUnique.mockResolvedValue(null);
+    resolveAuthorizedPublicArtifactMock.mockResolvedValue({
+      message: sourceMessage(),
+    });
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback(txMock),
     );
@@ -152,15 +157,15 @@ describe("/api/remix", () => {
   });
 
   it("rejects remixes when the source model is not allowed for the user", async () => {
-    prismaMock.message.findUnique.mockResolvedValueOnce(
-      sourceMessage({
+    resolveAuthorizedPublicArtifactMock.mockResolvedValueOnce({
+      message: sourceMessage({
         chat: buildChat({
           id: "source_chat",
           model: "anthropic/claude-paid",
           userId: "creator_1",
         }),
       }),
-    );
+    });
     checkProjectCreationEligibilityMock.mockResolvedValueOnce({
       success: false,
       error: "FORBIDDEN_MODEL",
@@ -183,17 +188,14 @@ describe("/api/remix", () => {
   });
 
   it("enforces a published project's remix setting before eligibility checks", async () => {
-    prismaMock.galleryPublication.findUnique.mockResolvedValueOnce({
-      isPublished: true,
-      allowRemixes: false,
-    });
+    resolveAuthorizedPublicArtifactMock.mockResolvedValueOnce(null);
 
     const response = await POST(request({ messageId: "assistant_1" }));
 
     expect(response.status).toBe(403);
     await expect(readJson(response)).resolves.toEqual({
       error: "REMIX_NOT_ALLOWED",
-      message: "The creator has not allowed remixes for this project",
+      message: "This shared app is unavailable or cannot be remixed",
     });
     expect(checkProjectCreationEligibilityMock).not.toHaveBeenCalled();
     expect(prismaMock.$transaction).not.toHaveBeenCalled();

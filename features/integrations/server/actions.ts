@@ -30,6 +30,12 @@ import {
   verifyAuthenticatedTasksBackend,
 } from "@/features/integrations/server/supabase-authenticated-tasks";
 import {
+  buildSupabaseBackendMigrationId,
+  compileSupabaseBackendPlan,
+  verifySupabaseBackendPlan,
+  type CompiledSupabaseBackendPlan,
+} from "@/features/integrations/server/supabase-backend-plan";
+import {
   getAuthenticatedTasksBackendPlan,
   supabaseAuthModeSchema,
 } from "@/features/integrations/supabase-backend";
@@ -784,13 +790,9 @@ async function executeSupabaseBackendAction({
       409,
     );
   }
-  if (!isAuthenticatedTasksBackendPlan(action.plan)) {
-    throw new IntegrationServiceError(
-      "SUPABASE_BACKEND_PLAN_UNSUPPORTED",
-      "The requested Supabase backend template or security behavior is unsupported.",
-      400,
-    );
-  }
+  const legacyPlan = isAuthenticatedTasksBackendPlan(action.plan);
+  let compiledPlan: CompiledSupabaseBackendPlan | null = null;
+  if (!legacyPlan) compiledPlan = compileSupabaseBackendPlan(action.plan);
 
   const currentBinding = await getPrisma().projectIntegration.findUnique({
     where: { id: binding.id },
@@ -807,11 +809,19 @@ async function executeSupabaseBackendAction({
     );
   }
 
-  const plan = getAuthenticatedTasksBackendPlan();
-  const migrationId = buildAuthenticatedTasksMigrationId({
-    squidProjectId: projectId,
-    supabaseProjectRef: projectRef,
-  });
+  const plan = legacyPlan
+    ? getAuthenticatedTasksBackendPlan()
+    : compiledPlan!.plan;
+  const migrationId = legacyPlan
+    ? buildAuthenticatedTasksMigrationId({
+        squidProjectId: projectId,
+        supabaseProjectRef: projectRef,
+      })
+    : buildSupabaseBackendMigrationId({
+        squidProjectId: projectId,
+        supabaseProjectRef: projectRef,
+        plan: compiledPlan!.plan,
+      });
   const started = await getPrisma().$transaction(async (tx) => {
     const lockKey = `supabase-backend:${migrationId}`;
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
@@ -872,7 +882,7 @@ async function executeSupabaseBackendAction({
           version: plan.version,
           migrationChecksum: plan.migrationChecksum,
           projectRef,
-          destructive: false,
+          destructive: plan.destructive,
         },
       },
     });
@@ -886,7 +896,9 @@ async function executeSupabaseBackendAction({
       bindingId,
       userId,
       projectRef,
-      query: AUTHENTICATED_TASKS_MIGRATION_SQL,
+      query: legacyPlan
+        ? AUTHENTICATED_TASKS_MIGRATION_SQL
+        : compiledPlan!.migrationSql,
       approval: { approved: true, approvedByUserId: userId },
     });
     await getPrisma().integrationOperation.update({
@@ -898,12 +910,20 @@ async function executeSupabaseBackendAction({
         } as Prisma.InputJsonValue,
       },
     });
-    const verification = await verifyAuthenticatedTasksBackend({
-      projectId,
-      bindingId,
-      userId,
-      projectRef,
-    });
+    const verification = legacyPlan
+      ? await verifyAuthenticatedTasksBackend({
+          projectId,
+          bindingId,
+          userId,
+          projectRef,
+        })
+      : await verifySupabaseBackendPlan({
+          projectId,
+          bindingId,
+          userId,
+          projectRef,
+          compiled: compiledPlan!,
+        });
     const verifiedAt = new Date();
     const completed = await getPrisma().$transaction(async (tx) => {
       const latestBinding = await tx.projectIntegration.findUnique({

@@ -243,48 +243,6 @@ function mockGeneration({
   return toUIMessageStream;
 }
 
-function mockResearch(outputs: unknown[], responseId = "research_response_1") {
-  const toolResults = outputs.map((output, index) => ({
-    type: "tool-result" as const,
-    toolCallId: `search_${index + 1}`,
-    toolName: "web_search",
-    input: {},
-    output,
-    providerExecuted: true,
-  }));
-  const fullStream = (async function* () {
-    for (const result of toolResults) yield result;
-  })();
-
-  streamTextMock.mockReturnValueOnce({
-    fullStream,
-    toolResults: Promise.resolve(toolResults),
-    usage: Promise.resolve(undefined),
-    finishReason: Promise.resolve("stop"),
-    providerMetadata: Promise.resolve(undefined),
-    response: Promise.resolve({ id: responseId }),
-  });
-}
-
-function mockResearchSkipped(responseId = "research_skipped_1") {
-  const fullStream = (async function* () {
-    yield {
-      type: "text-delta" as const,
-      id: "research_decision_1",
-      text: "The supplied brief is sufficient; web search would not improve the output.",
-    };
-  })();
-
-  streamTextMock.mockReturnValueOnce({
-    fullStream,
-    toolResults: Promise.resolve([]),
-    usage: Promise.resolve(undefined),
-    finishReason: Promise.resolve("stop"),
-    providerMetadata: Promise.resolve(undefined),
-    response: Promise.resolve({ id: responseId }),
-  });
-}
-
 async function collectUIChunks(
   response: Response,
   options?: { invokeStreamLifecycle?: boolean },

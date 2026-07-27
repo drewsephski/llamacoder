@@ -42,6 +42,7 @@ model Chat {
   generationRuns        GenerationRun[]
   runtimeVerifications  RuntimeVerification[]
   galleryPublication    GalleryPublication?
+  publicArtifacts       PublicArtifact[]
 
   @@index([createdAt])
   @@index([userId])
@@ -52,23 +53,24 @@ model Chat {
 }
 
 model Message {
-  id                   String                @id @default(nanoid(16))
-  role                 String
-  content              String
-  files                Json?
-  followUpPrompts      Json?
-  chatId               String
-  position             Int
-  changeSummary        String?
-  versionKind          String?
-  versionLabel         String?
-  designScores         Json?
-  isBookmarked         Boolean               @default(false)
-  createdAt            DateTime              @default(now())
-  chat                 Chat                  @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  generationRuns       GenerationRun[]
-  runtimeVerifications RuntimeVerification[]
-  galleryPublication   GalleryPublication?
+  id                      String                   @id @default(nanoid(16))
+  role                    String
+  content                 String
+  files                   Json?
+  followUpPrompts         Json?
+  chatId                  String
+  position                Int
+  changeSummary           String?
+  versionKind             String?
+  versionLabel            String?
+  designScores            Json?
+  isBookmarked            Boolean                  @default(false)
+  createdAt               DateTime                 @default(now())
+  chat                    Chat                     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  generationRuns          GenerationRun[]
+  runtimeVerifications    RuntimeVerification[]
+  galleryPublication      GalleryPublication?
+  publicArtifactRevisions PublicArtifactRevision[]
 
   @@index([chatId])
   @@index([chatId, createdAt])
@@ -134,6 +136,7 @@ model User {
   generationRuns         GenerationRun[]
   runtimeVerifications   RuntimeVerification[]
   galleryPublications    GalleryPublication[]
+  publicArtifacts        PublicArtifact[]
   pagePurchases          PagePurchase[]
 
   @@map("user")
@@ -156,32 +159,82 @@ model PagePurchase {
 }
 
 model GalleryPublication {
-  id                         String    @id @default(nanoid(16))
-  slug                       String    @unique
-  chatId                     String    @unique
-  messageId                  String    @unique
+  id                         String          @id @default(nanoid(16))
+  slug                       String          @unique
+  chatId                     String          @unique
+  messageId                  String          @unique
   userId                     String
   title                      String
   description                String
-  allowRemixes               Boolean   @default(false)
-  isPublished                Boolean   @default(true)
-  publishedAt                DateTime  @default(now())
+  allowRemixes               Boolean         @default(false)
+  isPublished                Boolean         @default(true)
+  publishedAt                DateTime        @default(now())
   unpublishedAt              DateTime?
   thumbnailUrl               String?
-  thumbnailStatus            String    @default("pending")
+  thumbnailStatus            String          @default("pending")
   thumbnailCapturedMessageId String?
   thumbnailError             String?
   thumbnailUpdatedAt         DateTime?
-  createdAt                  DateTime  @default(now())
-  updatedAt                  DateTime  @updatedAt
-  chat                       Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  message                    Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user                       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+  chat                       Chat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  message                    Message         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user                       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publicArtifactId           String?         @unique
+  publicArtifact             PublicArtifact? @relation(fields: [publicArtifactId], references: [id], onDelete: SetNull)
 
   @@index([isPublished, publishedAt])
   @@index([userId, isPublished])
   @@index([allowRemixes, isPublished])
   @@index([thumbnailStatus, thumbnailUpdatedAt])
+}
+
+enum PublicArtifactVisibility {
+  UNLISTED
+  GALLERY
+}
+
+enum PublicArtifactStatus {
+  ACTIVE
+  REVOKED
+}
+
+model PublicArtifact {
+  id                    String                   @id @default(nanoid(16))
+  token                 String                   @unique @default(nanoid(24))
+  chatId                String
+  userId                String
+  visibility            PublicArtifactVisibility @default(UNLISTED)
+  status                PublicArtifactStatus     @default(ACTIVE)
+  allowRemixes          Boolean                  @default(false)
+  allowStarterDownloads Boolean                  @default(false)
+  currentRevisionId     String?                  @unique
+  revokedAt             DateTime?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  chat                  Chat                     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user                  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentRevision       PublicArtifactRevision?  @relation("CurrentPublicArtifactRevision", fields: [currentRevisionId], references: [id], onDelete: SetNull)
+  revisions             PublicArtifactRevision[] @relation("PublicArtifactRevisions")
+  galleryPublication    GalleryPublication?
+
+  @@unique([chatId, visibility])
+  @@index([userId, status])
+  @@index([visibility, status, createdAt])
+}
+
+model PublicArtifactRevision {
+  id         String          @id @default(nanoid(16))
+  artifactId String
+  messageId  String
+  createdAt  DateTime        @default(now())
+  artifact   PublicArtifact  @relation("PublicArtifactRevisions", fields: [artifactId], references: [id], onDelete: Cascade)
+  message    Message         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  currentFor PublicArtifact? @relation("CurrentPublicArtifactRevision")
+
+  @@unique([artifactId, messageId])
+  @@index([messageId])
+  @@index([artifactId, createdAt])
 }
 
 model GenerationRun {

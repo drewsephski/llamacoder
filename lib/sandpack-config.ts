@@ -29,7 +29,12 @@ type SandpackFileValue =
 export function getSandpackConfig(
   files: Array<{ path: string; content: string }>,
   supabaseRuntime?: SupabaseBrowserRuntimeState,
-) {
+): {
+  template: "react-ts";
+  files: Record<string, SandpackFileValue>;
+  options: { externalResources: string[] };
+  customSetup: { dependencies: Record<string, string> };
+} {
   const normalizedFiles = normalizeGeneratedFiles(files);
   const sandpackFiles: Record<string, SandpackFileValue> = {
     ...getRequiredShadcnFiles(normalizedFiles),

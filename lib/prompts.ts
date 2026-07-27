@@ -14,7 +14,6 @@ import {
   designTasteContract,
   designTastePlanningRule,
   structuralDiversityContract,
-  structuralDiversityPlanningRule,
   tailwindColorFidelityContract,
   tailwindColorPlanningRule,
   tailwindTypographyFidelityContract,
@@ -33,7 +32,6 @@ import {
   selectVisualSignatureMode,
 } from "@/features/generation/past-media-urls";
 import {
-  estimateTokens,
   getCompressedCodingPrompt,
   shouldUseCompressedPrompt,
 } from "@/lib/prompt-compression";
@@ -41,8 +39,6 @@ import shadcnDocs from "./shadcn-docs";
 import { buildDesignIntelligenceReference } from "@/features/generation/design-intelligence";
 import {
   buildScreenshotCloneCodegenDirective,
-  screenshotCloneVisionPrompt,
-  screenshotToCodePrompt,
 } from "@/features/generation/screenshot-clone";
 
 export {

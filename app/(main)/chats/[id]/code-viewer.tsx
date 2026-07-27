@@ -72,7 +72,6 @@ import {
 import {
   getSupabaseRuntimeSetupMessage,
   resolveSupabaseBrowserRuntimeForPreview,
-  type SupabaseBrowserRuntimeState,
 } from "@/features/integrations/supabase-browser-runtime";
 import { DEFAULT_SUPABASE_AUTH_MODE } from "@/features/integrations/supabase-backend";
 import { CometSpinner } from "@/components/loading-ui/comet-spinner";

@@ -8,6 +8,10 @@ import { headers } from "next/headers";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getErrorMessage } from "@/features/shared/errors";
+import {
+  canAccessPublicArtifact,
+  resolvePublicArtifact,
+} from "@/features/public-artifacts/server/access";
 
 type RouteContext = {
   params: Promise<{ messageId: string }>;
@@ -34,7 +38,7 @@ async function assertExportAccess(chatUserId: string | null) {
     headers: await headers(),
   });
 
-  if (chatUserId && session?.user.id !== chatUserId) {
+  if (!chatUserId || session?.user.id !== chatUserId) {
     return {
       ok: false as const,
       session,
@@ -50,8 +54,38 @@ async function assertExportAccess(chatUserId: string | null) {
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
-    const { messageId } = await params;
-    const exportable = await getExportableMessage(messageId);
+    const { messageId: reference } = await params;
+    const requestUrl = new URL(_request.url);
+    const isStarterDownload = requestUrl.searchParams.get("starter") === "1";
+
+    if (isStarterDownload) {
+      const artifact = await resolvePublicArtifact(reference);
+      if (artifact && canAccessPublicArtifact(artifact, "starter_download")) {
+        const files = getMessageGeneratedFiles(artifact.message);
+        if (files.length === 0) {
+          return NextResponse.json(
+            {
+              error: "NOT_FOUND",
+              message: "Exportable generated app not found",
+            },
+            { status: 404 },
+          );
+        }
+
+        return createZipResponse(
+          buildStarterBundle({
+            appTitle: artifact.message.chat.title,
+            prompt: artifact.message.chat.prompt,
+            messageId: artifact.message.id,
+            publicReference: artifact.token ?? artifact.message.id,
+            requestUrl,
+          }),
+          `${artifact.message.chat.title.replace(/[^a-zA-Z0-9]/g, "-")}-squid-starter.zip`,
+        );
+      }
+    }
+
+    const exportable = await getExportableMessage(reference);
 
     if (!exportable) {
       return NextResponse.json(
@@ -79,15 +113,13 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
       }
     }
 
-    const requestUrl = new URL(_request.url);
-    const isStarterDownload = requestUrl.searchParams.get("starter") === "1";
-
     if (isStarterDownload) {
       return createZipResponse(
         buildStarterBundle({
           appTitle: exportable.message.chat.title,
           prompt: exportable.message.chat.prompt,
           messageId: exportable.message.id,
+          publicReference: exportable.message.id,
           requestUrl,
         }),
         `${exportable.message.chat.title.replace(/[^a-zA-Z0-9]/g, "-")}-squid-starter.zip`,
@@ -136,16 +168,18 @@ function buildStarterBundle({
   appTitle,
   prompt,
   messageId,
+  publicReference,
   requestUrl,
 }: {
   appTitle: string;
   prompt: string;
   messageId: string;
+  publicReference: string;
   requestUrl: URL;
 }) {
   const origin = requestUrl.origin;
-  const shareUrl = `${origin}/share/v2/${messageId}`;
-  const remixUrl = `${origin}/?ref=${messageId}`;
+  const shareUrl = `${origin}/share/v2/${publicReference}`;
+  const remixUrl = `${origin}/?ref=${publicReference}`;
 
   return [
     {
@@ -168,6 +202,7 @@ function buildStarterBundle({
           appTitle,
           prompt,
           messageId,
+          publicReference,
           shareUrl,
           remixUrl,
           source: "Squid",

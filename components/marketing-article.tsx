@@ -16,6 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   getMarketingPath,
+  MARKETING_AUTHOR,
+  MARKETING_REVIEWER,
   marketingStructuredData,
   type MarketingPage,
 } from "@/lib/marketing-pages";
@@ -51,7 +53,12 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
     ...(page.workflow
       ? [{ label: "Evaluation workflow", id: "workflow" }]
       : []),
-    ...(page.realExample ? [{ label: "Real generated example", id: "real-example" }] : []),
+    ...(page.realExample
+      ? [{ label: "Real generated example", id: "real-example" }]
+      : []),
+    ...(page.firstPartyEvidence
+      ? [{ label: "First-party evidence", id: "first-party-evidence" }]
+      : []),
     ...page.sections.map((section) => ({
       label: section.title,
       id: sectionId(section.title),
@@ -64,8 +71,7 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
   const workflowStart = page.workflow?.[0];
   const workflowEnd = page.workflow?.[page.workflow.length - 1];
   const ctaPrompt =
-    page.ctaPrompt ??
-    `Use this ${page.kind} strategy in Squid: ${page.h1}.`;
+    page.ctaPrompt ?? `Use this ${page.kind} strategy in Squid: ${page.h1}.`;
   const ctaDefaultPrompt = `Run ${page.h1} in Squid with explicit review and verification checkpoints.`;
   const ctaHref =
     page.kind === "comparison"
@@ -125,6 +131,28 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
 
               <div className="mt-12 grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.75fr)] lg:gap-16">
                 <div>
+                  {page.topicRelationship ? (
+                    <div className="mb-5 flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <span className="rounded-full border border-primary/25 bg-primary/[0.06] px-2.5 py-1 uppercase tracking-[0.08em] text-primary">
+                        {page.topicRelationship.role === "primary"
+                          ? "Primary guide"
+                          : "Focused tutorial"}
+                      </span>
+                      {page.topicRelationship.role === "supporting" ? (
+                        <>
+                          <span>Part of</span>
+                          <Link
+                            href={page.topicRelationship.primaryPath}
+                            className="text-foreground underline decoration-primary/30 underline-offset-4 hover:decoration-primary"
+                          >
+                            {page.topicRelationship.primaryLabel}
+                          </Link>
+                        </>
+                      ) : (
+                        <span>Canonical topic hub for this workflow</span>
+                      )}
+                    </div>
+                  ) : null}
                   <h1 className="text-balance text-4xl font-semibold tracking-[-0.04em] sm:text-5xl lg:text-6xl lg:leading-[1.04]">
                     {page.h1}
                   </h1>
@@ -137,7 +165,20 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                       {page.readingTime}
                     </span>
                     <span>Updated {formatDate(page.updatedAt)}</span>
-                    <span>Reviewed by Squid Agent</span>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                    <span>Written by</span>
+                    <Link
+                      href="/what-is-squid-agent"
+                      rel="author"
+                      className="font-medium text-foreground underline decoration-primary/30 underline-offset-4 hover:decoration-primary"
+                    >
+                      {MARKETING_AUTHOR.name}
+                    </Link>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      {MARKETING_REVIEWER.role} by {MARKETING_REVIEWER.name}
+                    </span>
                   </div>
                 </div>
                 <ExportArtifactPreview kind={page.kind} />
@@ -184,13 +225,16 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                       Reversible edits and handoff
                     </h3>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      Keep checkpoints, require scoped rollbacks, and export with
-                      manifest, quality report, and deployment instructions.
+                      Keep checkpoints, require scoped rollbacks, and export
+                      with manifest, quality report, and deployment
+                      instructions.
                     </p>
                     <ul className="mt-3 space-y-1 text-xs leading-5 text-muted-foreground">
                       <li>One restore creates one explicit new checkpoint</li>
                       <li>Restore history stays visible for auditability</li>
-                      <li>Export includes manifest, report, and deployment files</li>
+                      <li>
+                        Export includes manifest, report, and deployment files
+                      </li>
                     </ul>
                   </article>
                   <article className="rounded-xl border border-border p-4">
@@ -207,7 +251,9 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                     <ul className="mt-3 space-y-1 text-xs leading-5 text-muted-foreground">
                       <li>Expected usage shown before generation</li>
                       <li>Actual usage and refunds after completion</li>
-                      <li>Post-build artifacts checked in a clean environment</li>
+                      <li>
+                        Post-build artifacts checked in a clean environment
+                      </li>
                     </ul>
                   </article>
                 </div>
@@ -376,7 +422,9 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                       <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
                         {page.realExample.files.map((file) => (
                           <li key={file} className="flex gap-2.5">
-                            <span className="font-mono text-primary">&bull;</span>
+                            <span className="font-mono text-primary">
+                              &bull;
+                            </span>
                             <span className="font-mono">{file}</span>
                           </li>
                         ))}
@@ -415,6 +463,44 @@ export function MarketingArticle({ page }: MarketingArticleProps) {
                       ))}
                     </div>
                   </div>
+                </section>
+              )}
+
+              {page.firstPartyEvidence && (
+                <section
+                  id="first-party-evidence"
+                  className="scroll-mt-28 py-16"
+                >
+                  <SectionHeading
+                    label="First-party evidence"
+                    title={page.firstPartyEvidence.title}
+                    description={page.firstPartyEvidence.summary}
+                  />
+                  <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                    {page.firstPartyEvidence.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="group border border-primary/25 bg-primary/[0.035] p-5 transition-colors hover:border-primary/50 hover:bg-primary/[0.06]"
+                      >
+                        <span className="flex items-center justify-between gap-4 font-medium">
+                          {item.label}
+                          <ArrowRight
+                            className="size-4 shrink-0 text-primary transition-transform group-hover:translate-x-1"
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span className="mt-2 block text-sm leading-6 text-muted-foreground">
+                          {item.description}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                  <p className="mt-5 text-xs leading-5 text-muted-foreground">
+                    Evidence links are maintained by Squid Agent. Product
+                    behavior can change; repeat the documented checks against
+                    the current project and review date.
+                  </p>
                 </section>
               )}
 

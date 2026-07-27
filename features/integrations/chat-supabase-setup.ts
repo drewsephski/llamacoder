@@ -11,6 +11,7 @@ import {
 import {
   getAuthenticatedTasksBackendPlan,
   readSupabaseAuthState,
+  supabaseBackendPlanSchema,
   type SupabaseBackendPlan,
 } from "@/features/integrations/supabase-backend";
 
@@ -44,7 +45,15 @@ export const chatSupabaseSetupViewSchema = z
       storage: z.boolean(),
       realtime: z.boolean(),
       privilegedServerLogic: z.boolean(),
-      backendTemplate: z.literal("authenticated_tasks").optional(),
+      backendTemplate: z
+        .enum([
+          "authenticated_tasks",
+          "owner_scoped_crud",
+          "public_read_owner_write",
+          "related_owner_scoped",
+        ])
+        .optional(),
+      backendPlan: supabaseBackendPlanSchema.optional(),
     }),
     continuationStatus: z.enum([
       "pending",
@@ -64,15 +73,7 @@ export const chatSupabaseSetupViewSchema = z
       })
       .nullable(),
     authMode: z.enum(["prototype_instant_signup", "verified_email"]).nullable(),
-    backendPlan: z
-      .object({
-        version: z.literal(1),
-        template: z.literal("authenticated_tasks"),
-        summary: z.string(),
-        migrationChecksum: z.string(),
-        destructive: z.literal(false),
-      })
-      .nullable(),
+    backendPlan: supabaseBackendPlanSchema.nullable(),
     message: z.string(),
   })
   .strict();
@@ -162,9 +163,9 @@ function messageForState(
     case "auth_mode_required":
       return "Choose how new users should sign up.";
     case "backend_approval_required":
-      return "Squid will create a tasks database and make sure each signed-in user can access only their own tasks.";
+      return "Review and approve the typed database plan. Squid will create only its listed tables and enforce row-level access rules.";
     case "backend_applying":
-      return "Squid is creating the tasks database and applying access rules.";
+      return "Squid is applying the approved database plan and access rules.";
     case "backend_verifying":
       return "Squid is verifying the database structure and security rules.";
     case "ready":
@@ -177,8 +178,8 @@ function messageForState(
 }
 
 function readyMessage(requirements: SupabaseSetupRequirements) {
-  if (requirements.backendTemplate === "authenticated_tasks") {
-    return "Supabase is ready. Squid can now build authentication and persistent task data.";
+  if (requirements.backendTemplate) {
+    return "Supabase is ready. Squid can now build authentication and the approved persistent data model.";
   }
   if (requirements.authentication) {
     return "Supabase is ready. Squid can now build the requested authentication flow.";
@@ -209,10 +210,11 @@ export function deriveChatSupabaseSetupView({
   const authMode = integration
     ? (readSupabaseAuthState(integration.config)?.mode ?? null)
     : null;
-  const backendPlan: SupabaseBackendPlan | null = request.requirements
-    .backendTemplate
-    ? getAuthenticatedTasksBackendPlan()
-    : null;
+  const backendPlan: SupabaseBackendPlan | null =
+    request.requirements.backendPlan ??
+    (request.requirements.backendTemplate === "authenticated_tasks"
+      ? getAuthenticatedTasksBackendPlan()
+      : null);
 
   let state: ChatSupabaseSetupState;
   if (!integration) {
@@ -254,19 +256,23 @@ export function deriveChatSupabaseSetupView({
     }
   } else if (request.requirements.authentication && !authMode) {
     state = "auth_mode_required";
-  } else if (request.requirements.backendTemplate) {
+  } else if (backendPlan) {
     const backend = integration.supabaseBackend;
+    const isRequestedPlan =
+      backend &&
+      "plan" in backend &&
+      backend.plan.migrationChecksum === backendPlan.migrationChecksum;
     if (backend?.status === "reauthorization_required") {
       state = "authorization_required";
-    } else if (backend?.status === "applying") {
+    } else if (backend?.status === "applying" && isRequestedPlan) {
       state =
         operation?.kind === "supabase_backend_migration" &&
         operation.phase === "verifying_backend"
           ? "backend_verifying"
           : "backend_applying";
-    } else if (backend?.status === "ready") {
+    } else if (backend?.status === "ready" && isRequestedPlan) {
       state = "ready";
-    } else if (backend?.status === "verification_failed") {
+    } else if (backend?.status === "verification_failed" && isRequestedPlan) {
       state = "failed";
     } else {
       state = "backend_approval_required";

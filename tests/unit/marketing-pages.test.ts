@@ -59,6 +59,56 @@ describe("marketing page content", () => {
     }
   });
 
+  it("keeps overlapping export and screenshot guides self-canonical and explicitly related", () => {
+    const relationships = blogPages.filter((page) => page.topicRelationship);
+
+    expect(relationships.length).toBeGreaterThanOrEqual(6);
+    for (const page of relationships) {
+      expect(page.topicRelationship?.primaryPath).toMatch(/^\/blog\//);
+      expect(
+        blogPages.some(
+          (candidate) =>
+            getMarketingPath(candidate) === page.topicRelationship?.primaryPath,
+        ),
+      ).toBe(true);
+    }
+
+    const exportTutorial = blogPages.find(
+      (page) => page.slug === "how-to-export-ai-generated-react-app",
+    );
+    const exportPillar = blogPages.find(
+      (page) => page.slug === "export-react-app-from-ai",
+    );
+
+    expect(exportTutorial?.topicRelationship).toMatchObject({
+      role: "supporting",
+      primaryPath: "/blog/export-react-app-from-ai",
+    });
+    expect(exportPillar?.topicRelationship).toMatchObject({
+      role: "primary",
+      primaryPath: "/blog/export-react-app-from-ai",
+    });
+    expect(exportTutorial?.title).not.toBe(exportPillar?.title);
+    expect(exportTutorial?.description).not.toBe(exportPillar?.description);
+  });
+
+  it("adds first-party evidence to the highest-intent guides", () => {
+    const highIntentSlugs = [
+      "how-to-evaluate-ai-generated-react-code",
+      "how-to-export-ai-generated-react-app",
+      "export-react-app-from-ai",
+      "how-we-verify-code",
+      "screenshot-to-responsive-react",
+      "ai-saas-mvp-builder",
+    ];
+
+    for (const slug of highIntentSlugs) {
+      const page = blogPages.find((candidate) => candidate.slug === slug);
+      expect(page?.firstPartyEvidence?.summary.length).toBeGreaterThan(100);
+      expect(page?.firstPartyEvidence?.items.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
   it("uses dated primary sources on every competitor comparison", () => {
     for (const page of comparisonPages) {
       expect(page.sources?.length).toBeGreaterThanOrEqual(2);
@@ -88,6 +138,14 @@ describe("marketing page content", () => {
         mainEntityOfPage: {
           "@type": "WebPage",
           "@id": `https://www.squidagent.app${getMarketingPath(page)}`,
+        },
+        author: {
+          "@type": "Person",
+          name: "Drew Sepeczi",
+        },
+        reviewedBy: {
+          "@type": "Organization",
+          name: "Squid Agent product and engineering",
         },
       });
       expect(data[2].mainEntity).toHaveLength(page.faqs.length);

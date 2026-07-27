@@ -109,10 +109,17 @@ export const getPublicGalleryProject = cache(async (slug: string) => {
       chat: true,
       message: true,
       user: { select: { name: true, image: true } },
+      publicArtifact: true,
     },
   });
 
-  if (!publication) return null;
+  if (
+    !publication ||
+    (publication.publicArtifact &&
+      publication.publicArtifact.status !== "ACTIVE")
+  ) {
+    return null;
+  }
   const files = getMessageGeneratedFiles(publication.message);
   if (files.length === 0) return null;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -88,26 +88,21 @@ export function OnboardingWizard({
   const StepIcon = step.icon;
   const isLastStep = stepIndex === ONBOARDING_STEPS.length - 1;
 
-  useEffect(() => {
-    if (!isOpen) {
-      setStepIndex(0);
-    }
-  }, [isOpen]);
-
   function handleClose() {
+    setStepIndex(0);
     onClose();
   }
 
   function handleSkip() {
     markOnboardingCompleted();
-    onClose();
+    handleClose();
   }
 
   function handleNext() {
     if (isLastStep) {
       markOnboardingCompleted();
       onComplete?.();
-      onClose();
+      handleClose();
       return;
     }
 

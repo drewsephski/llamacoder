@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import { publicShowcasePaths } from "@/lib/public-pages";
 
 export { SITE_NAME, SITE_URL };
@@ -37,6 +37,29 @@ type MarketingExample = {
   files: string[];
   screenshots: MarketingExampleScreenshot[];
 };
+
+export type MarketingContributor = {
+  name: string;
+  role: string;
+  url: string;
+  sameAs?: readonly string[];
+};
+
+export const MARKETING_AUTHOR: MarketingContributor = {
+  name: "Drew Sepeczi",
+  role: "Founder and product builder",
+  url: `${SITE_URL}/what-is-squid-agent`,
+  sameAs: [
+    "https://github.com/drewsephski",
+    "https://www.instagram.com/drew.sepeczi",
+  ],
+};
+
+export const MARKETING_REVIEWER = {
+  name: "Squid Agent product and engineering",
+  role: "Technical review",
+  url: `${SITE_URL}/what-is-squid-agent`,
+} as const;
 
 export type MarketingPage = {
   kind: "comparison" | "guide" | "benchmark";
@@ -76,6 +99,16 @@ export type MarketingPage = {
   cta: string;
   ctaPrompt?: string;
   realExample?: MarketingExample;
+  topicRelationship?: {
+    role: "primary" | "supporting";
+    primaryPath: string;
+    primaryLabel: string;
+  };
+  firstPartyEvidence?: {
+    title: string;
+    summary: string;
+    items: MarketingLink[];
+  };
 };
 
 const sharedComparisonLinks: MarketingLink[] = [
@@ -1755,10 +1788,10 @@ const blogPagesSeed: MarketingPageSeed[] = [
   {
     kind: "guide",
     slug: "how-to-export-ai-generated-react-app",
-    title: "How to Export an AI-Generated React App Without Surprises",
+    title: "AI React Export Tutorial: Clean-Room Installation and Team Handoff",
     description:
-      "A step-by-step guide to exporting AI-generated React code, validating the bundle, installing locally, building for production, and preparing a clean handoff.",
-    h1: "How to export an AI-generated React app",
+      "A hands-on AI React export tutorial for inventorying a bundle, installing it in a clean directory, reproducing the build, and creating a team baseline.",
+    h1: "AI React export tutorial: install, build, and hand off",
     intro:
       "Downloading source is the beginning of an export, not the end. A reliable handoff reproduces the runtime, explains dependencies, documents environment needs, and proves the project builds outside the generator.",
     summary:
@@ -4219,9 +4252,173 @@ const blogPagesSeed: MarketingPageSeed[] = [
   },
 ];
 
-export const blogPages = blogPagesSeed.map((page) =>
-  withMinimumInternalLinks(page, "guide"),
-);
+const guideTopicRelationships: Record<
+  string,
+  NonNullable<MarketingPage["topicRelationship"]>
+> = {
+  "export-react-app-from-ai": {
+    role: "primary",
+    primaryPath: "/blog/export-react-app-from-ai",
+    primaryLabel: "Export React app from AI",
+  },
+  "how-to-export-ai-generated-react-app": {
+    role: "supporting",
+    primaryPath: "/blog/export-react-app-from-ai",
+    primaryLabel: "Export React app from AI",
+  },
+  "from-screenshot-to-production-react": {
+    role: "primary",
+    primaryPath: "/blog/from-screenshot-to-production-react",
+    primaryLabel: "From screenshot to production React",
+  },
+  "screenshot-to-responsive-react": {
+    role: "supporting",
+    primaryPath: "/blog/from-screenshot-to-production-react",
+    primaryLabel: "From screenshot to production React",
+  },
+  "turn-figma-screenshot-into-react": {
+    role: "supporting",
+    primaryPath: "/blog/from-screenshot-to-production-react",
+    primaryLabel: "From screenshot to production React",
+  },
+  "screenshot-to-react-is-table-stakes": {
+    role: "supporting",
+    primaryPath: "/blog/from-screenshot-to-production-react",
+    primaryLabel: "From screenshot to production React",
+  },
+};
+
+const firstPartyEvidenceByGuide: Record<
+  string,
+  NonNullable<MarketingPage["firstPartyEvidence"]>
+> = {
+  "how-to-evaluate-ai-generated-react-code": {
+    title: "Inspect the same surfaces Squid checks",
+    summary:
+      "This checklist is grounded in Squid's implemented file-graph, preview, accessibility, recovery, and export checks. Use the public workspace and methodology to reproduce the review on a real generated project.",
+    items: [
+      {
+        href: "/example",
+        label: "Inspect a public generated workspace",
+        description:
+          "Review the files, running preview, checkpoints, and handoff path without creating an account.",
+      },
+      {
+        href: "/blog/how-we-verify-code",
+        label: "Read the implemented verification sequence",
+        description:
+          "See which checks are automated, which remain manual, and how evidence follows a project.",
+      },
+    ],
+  },
+  "export-react-app-from-ai": {
+    title: "Follow the export evidence from workspace to clean build",
+    summary:
+      "The public workspace demonstrates the source and checkpoint side of the handoff. The verification guide documents the manifest, diagnostics, and clean-environment checks expected after download.",
+    items: [
+      {
+        href: "/example",
+        label: "Open the public project workspace",
+        description:
+          "Inspect a real generated file tree and the version that becomes the export baseline.",
+      },
+      {
+        href: "/blog/how-we-verify-code",
+        label: "Review export verification evidence",
+        description:
+          "Trace the checks and reports that distinguish a portable artifact from a preview-only ZIP.",
+      },
+    ],
+  },
+  "how-to-export-ai-generated-react-app": {
+    title: "Use a real project for the clean-room tutorial",
+    summary:
+      "Start from the public Squid workspace, capture its known-good checkpoint, then apply this tutorial's archive inventory, clean install, production build, and baseline commit steps.",
+    items: [
+      {
+        href: "/example",
+        label: "Start with the public workspace",
+        description:
+          "Use a visible generated project instead of an invented file tree.",
+      },
+      {
+        href: "/blog/export-react-app-from-ai",
+        label: "Return to the primary export checklist",
+        description:
+          "Use the concise decision checklist before beginning this hands-on tutorial.",
+      },
+    ],
+  },
+  "how-we-verify-code": {
+    title: "Verification claims map to visible product evidence",
+    summary:
+      "Squid separates mechanical checks from human review and preserves the resulting project context. The public workspace and benchmark methodology let readers inspect or reproduce that boundary.",
+    items: [
+      {
+        href: "/example",
+        label: "Inspect a generated project",
+        description:
+          "Review the source, preview, version history, and handoff surfaces used by the workflow.",
+      },
+      {
+        href: "/benchmarks/screenshot-to-react",
+        label: "Run the reproducible benchmark",
+        description:
+          "Apply fixed inputs, viewports, edit tests, recovery tests, and clean-room export checks.",
+      },
+    ],
+  },
+  "screenshot-to-responsive-react": {
+    title: "Compare responsive outputs against real Squid examples",
+    summary:
+      "The gallery provides first-party generated pages at multiple visual densities. The benchmark defines the desktop, tablet, and phone evidence needed to evaluate responsive inference.",
+    items: [
+      {
+        href: "/gallery",
+        label: "Inspect generated responsive examples",
+        description:
+          "Open real outputs and test their layout and interaction behavior across viewport sizes.",
+      },
+      {
+        href: "/benchmarks/screenshot-to-react",
+        label: "Use the viewport benchmark",
+        description:
+          "Score desktop fidelity and inferred tablet and phone behavior with one repeatable protocol.",
+      },
+    ],
+  },
+  "ai-saas-mvp-builder": {
+    title: "Ground the MVP workflow in a complete public project",
+    summary:
+      "Use the public workspace to inspect the file graph, preview, checkpoints, and handoff surfaces behind the staged MVP workflow rather than relying only on conceptual screenshots.",
+    items: [
+      {
+        href: "/example",
+        label: "Inspect the complete public workspace",
+        description:
+          "Review how an idea becomes files, a running preview, versions, and an exportable artifact.",
+      },
+      {
+        href: "/blog/how-to-evaluate-ai-generated-react-code",
+        label: "Apply the React acceptance checklist",
+        description:
+          "Validate the generated MVP's structure, interactions, responsive behavior, and portability.",
+      },
+    ],
+  },
+};
+
+export const blogPages = blogPagesSeed.map((page) => {
+  const enriched = withMinimumInternalLinks(page, "guide");
+  const topicRelationship = guideTopicRelationships[page.slug];
+  const firstPartyEvidence = firstPartyEvidenceByGuide[page.slug];
+
+  return {
+    ...enriched,
+    ...(topicRelationship ? { topicRelationship } : {}),
+    ...(firstPartyEvidence ? { firstPartyEvidence } : {}),
+  };
+});
 
 export type GuideTopicCluster = {
   id: string;
@@ -4575,7 +4772,7 @@ export function marketingMetadata(page: MarketingPage): Metadata {
       siteName: SITE_NAME,
       publishedTime: page.publishedAt,
       modifiedTime: page.updatedAt,
-      authors: [SITE_NAME],
+      authors: [MARKETING_AUTHOR.name],
       images: [
         {
           url: ogImagePath,
@@ -4640,7 +4837,37 @@ export function marketingStructuredData(page: MarketingPage) {
         "@id": `${SITE_URL}${sectionPath}`,
         name: sectionName,
       },
-      author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+      author: {
+        "@type": "Person",
+        "@id": `${MARKETING_AUTHOR.url}#drew-sepeczi`,
+        name: MARKETING_AUTHOR.name,
+        jobTitle: MARKETING_AUTHOR.role,
+        url: MARKETING_AUTHOR.url,
+        sameAs: MARKETING_AUTHOR.sameAs,
+      },
+      reviewedBy: {
+        "@type": "Organization",
+        name: MARKETING_REVIEWER.name,
+        url: MARKETING_REVIEWER.url,
+      },
+      ...(page.topicRelationship
+        ? {
+            about: {
+              "@type": "Thing",
+              name: page.topicRelationship.primaryLabel,
+              url: `${SITE_URL}${page.topicRelationship.primaryPath}`,
+            },
+          }
+        : {}),
+      ...(page.firstPartyEvidence
+        ? {
+            citation: page.firstPartyEvidence.items.map((item) =>
+              item.href.startsWith("http")
+                ? item.href
+                : `${SITE_URL}${item.href}`,
+            ),
+          }
+        : {}),
       publisher: {
         "@type": "Organization",
         name: SITE_NAME,

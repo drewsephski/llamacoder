@@ -16,7 +16,6 @@ import { getShowcaseLandingSummaries } from "@/features/gallery/showcase-landing
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const buildDate = new Date();
   const contentReviewDate = new Date(`${CONTENT_REVIEW_DATE}T00:00:00Z`);
   const marketingLastModified = new Map(
     [...comparisonPages, ...blogPages, benchmarkPage].map((page) => [
@@ -55,49 +54,53 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const staticEntries: MetadataRoute.Sitemap = [...new Set(staticPaths)].map(
-    (path) => ({
-      url: `${SITE_URL}${path}`,
-      lastModified:
+    (path) => {
+      const lastModified =
         marketingLastModified.get(path) ??
         (path === "/" || path === "/what-is-squid-agent"
           ? contentReviewDate
-          : buildDate),
-      changeFrequency:
-        path === "/" ||
-        path === "/what-is-squid-agent" ||
-        path === "/docs" ||
-        path === "/blog" ||
-        path === "/compare" ||
-        path.startsWith("/compare/squid-vs-") ||
-        highIntentGuidePaths.has(path) ||
-        highIntentBenchmarkPaths.has(path)
-          ? "weekly"
-          : "monthly",
-      priority:
-        path === "/"
-          ? 1
-          : path === "/what-is-squid-agent"
-            ? 0.92
-            : path === "/docs"
-              ? 0.9
-              : path.startsWith("/docs/")
-                ? 0.75
-                : path === "/compare" || path.startsWith("/compare/")
-                  ? highIntentComparePaths.has(path)
-                    ? 0.9
-                    : 0.82
-                  : path === "/blog" || path === "/benchmarks"
-                    ? 0.8
-                    : path.startsWith("/blog/")
-                      ? highIntentGuidePaths.has(path)
-                        ? 0.88
-                        : 0.76
-                      : path.startsWith("/benchmarks/")
-                        ? highIntentBenchmarkPaths.has(path)
-                          ? 0.84
-                          : 0.75
-                        : 0.5,
-    }),
+          : undefined);
+
+      return {
+        url: `${SITE_URL}${path}`,
+        ...(lastModified ? { lastModified } : {}),
+        changeFrequency:
+          path === "/" ||
+          path === "/what-is-squid-agent" ||
+          path === "/docs" ||
+          path === "/blog" ||
+          path === "/compare" ||
+          path.startsWith("/compare/squid-vs-") ||
+          highIntentGuidePaths.has(path) ||
+          highIntentBenchmarkPaths.has(path)
+            ? "weekly"
+            : "monthly",
+        priority:
+          path === "/"
+            ? 1
+            : path === "/what-is-squid-agent"
+              ? 0.92
+              : path === "/docs"
+                ? 0.9
+                : path.startsWith("/docs/")
+                  ? 0.75
+                  : path === "/compare" || path.startsWith("/compare/")
+                    ? highIntentComparePaths.has(path)
+                      ? 0.9
+                      : 0.82
+                    : path === "/blog" || path === "/benchmarks"
+                      ? 0.8
+                      : path.startsWith("/blog/")
+                        ? highIntentGuidePaths.has(path)
+                          ? 0.88
+                          : 0.76
+                        : path.startsWith("/benchmarks/")
+                          ? highIntentBenchmarkPaths.has(path)
+                            ? 0.84
+                            : 0.75
+                          : 0.5,
+      };
+    },
   );
   const showcaseEntries: MetadataRoute.Sitemap = [
     ...getShowcaseGameSummaries(""),

@@ -1,4 +1,3 @@
-import { getPrisma } from "@/lib/prisma";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -8,6 +7,7 @@ import {
   getPublishedGallerySocialImage,
 } from "@/features/gallery/social-metadata";
 import { SharePageClient } from "./share-page-client";
+import { resolvePublicArtifact } from "@/features/public-artifacts/server/access";
 
 export async function generateMetadata({
   params,
@@ -15,11 +15,12 @@ export async function generateMetadata({
   params: Promise<{ messageId: string }>;
 }): Promise<Metadata> {
   let { messageId } = await params;
-  const message = await getMessage(messageId);
-  if (!message) {
+  const artifact = await getArtifact(messageId);
+  if (!artifact) {
     notFound();
   }
 
+  const message = artifact.message;
   const title = message.chat.title;
   const description = `An app generated on Squid Agent.app: ${title}`;
 
@@ -28,7 +29,7 @@ export async function generateMetadata({
     description,
     canonicalPath: `/share/v2/${encodeURIComponent(messageId)}`,
     image: getPublishedGallerySocialImage({
-      publication: message.galleryPublication,
+      publication: artifact.galleryPublication,
       title,
     }),
     index: false,
@@ -42,11 +43,12 @@ export default async function SharePage({
 }) {
   const { messageId } = await params;
 
-  const message = await getMessage(messageId);
-  if (!message) {
+  const artifact = await getArtifact(messageId);
+  if (!artifact) {
     notFound();
   }
 
+  const message = artifact.message;
   const files = getMessageGeneratedFiles(message);
   if (files.length === 0) {
     notFound();
@@ -59,42 +61,11 @@ export default async function SharePage({
       prompt={message.chat.prompt}
       creatorName={message.chat.user?.name ?? "Squid creator"}
       files={files.map((file) => ({ path: file.path, content: file.code }))}
-      allowRemixes={
-        message.galleryPublication
-          ? message.galleryPublication.isPublished &&
-            message.galleryPublication.allowRemixes
-          : true
-      }
+      allowRemixes={artifact.allowRemixes}
+      allowStarterDownloads={artifact.allowStarterDownloads}
+      publicReference={artifact.token ?? message.id}
     />
   );
 }
 
-const getMessage = cache(async (messageId: string) => {
-  const prisma = getPrisma();
-  return prisma.message.findUnique({
-    where: {
-      id: messageId,
-    },
-    include: {
-      galleryPublication: {
-        select: {
-          id: true,
-          slug: true,
-          messageId: true,
-          allowRemixes: true,
-          isPublished: true,
-          thumbnailUrl: true,
-          thumbnailStatus: true,
-          thumbnailCapturedMessageId: true,
-        },
-      },
-      chat: {
-        include: {
-          user: {
-            select: { name: true },
-          },
-        },
-      },
-    },
-  });
-});
+const getArtifact = cache(resolvePublicArtifact);

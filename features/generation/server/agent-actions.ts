@@ -344,31 +344,51 @@ export async function createAgentAssistantMessage(
         );
       }
 
+      if (options?.generationRunId) {
+        await tx.generationRun.updateMany({
+          where: {
+            id: options.generationRunId,
+            chatId,
+            userId: session.user.id,
+          },
+          data: {
+            status: "completed",
+            assistantMessageId: message.id,
+            completedAt: new Date(),
+            phase: "completed",
+            label: "Saved",
+            errorMessage: null,
+          },
+        });
+      }
+
       return message;
     });
   } else {
-    created = await prisma.message.create({ data: messageData });
+    created = await prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({ data: messageData });
+      if (options?.generationRunId) {
+        await tx.generationRun.updateMany({
+          where: {
+            id: options.generationRunId,
+            chatId,
+            userId: session.user.id,
+          },
+          data: {
+            status: "completed",
+            assistantMessageId: message.id,
+            completedAt: new Date(),
+            phase: "completed",
+            label: "Saved",
+            errorMessage: null,
+          },
+        });
+      }
+      return message;
+    });
     if (options?.creditHoldId) {
       await releaseCreditHold({ holdId: options.creditHoldId });
     }
-  }
-
-  if (options?.generationRunId) {
-    await prisma.generationRun.updateMany({
-      where: {
-        id: options.generationRunId,
-        chatId,
-        userId: session.user.id,
-      },
-      data: {
-        status: "completed",
-        assistantMessageId: created.id,
-        completedAt: new Date(),
-        phase: "completed",
-        label: "Saved",
-        errorMessage: null,
-      },
-    });
   }
 
   return created;

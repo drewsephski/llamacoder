@@ -157,7 +157,7 @@ export async function executeChatSupabaseSetupAction({
               }
             : {
                 action: "supabase_apply_backend" as const,
-                plan: getAuthenticatedTasksBackendPlan(),
+                plan: current.backendPlan ?? getAuthenticatedTasksBackendPlan(),
                 approval: action.approval,
               };
 

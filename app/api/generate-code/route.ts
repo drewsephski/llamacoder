@@ -7,7 +7,6 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import {
   checkCreditAvailability,
-  consumeCreditsForGeneration,
   getModelCreditHoldCost,
   releaseCreditHold,
   reserveCreditHold,
@@ -28,22 +27,16 @@ import { recoverStaleGenerationLocks } from "@/lib/generation-recovery";
 import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
 import { runGeneratedCodePipeline } from "@/features/generation/server/code-generation-pipeline";
+import {
+  GenerationWorkflowError,
+  persistInitialGenerationResult,
+} from "@/features/generation/server/workflow";
 
 import { z } from "zod";
 
 const generateCodeSchema = z.object({
   chatId: z.string().trim().min(1, "chatId is required"),
 });
-
-class CreditConsumptionError extends Error {
-  constructor(
-    public readonly code: "INSUFFICIENT_CREDITS" | "CREDIT_CHECK_FAILED",
-    message = code,
-  ) {
-    super(message);
-    this.name = "CreditConsumptionError";
-  }
-}
 
 export async function POST(request: NextRequest) {
   let reservedHoldId: string | undefined;
@@ -324,59 +317,22 @@ export async function POST(request: NextRequest) {
       files: generatedFiles,
     });
 
-    const message = await prisma.$transaction(async (tx) => {
-      const createdMessage = await tx.message.create({
-        data: {
-          role: "assistant",
-          content,
-          files: generatedFiles.length
-            ? JSON.parse(JSON.stringify(generatedFiles))
-            : null,
-          chatId: chat.id,
-          position: 2,
-          designScores: designScores
-            ? JSON.parse(JSON.stringify(designScores))
-            : null,
-        },
-      });
-
-      await tx.chat.update({
-        where: { id: chat.id },
-        data: {
-          hasCode: true,
-          generationStatus: "completed",
-          generationStartedAt: null,
-        },
-      });
-
-      const consumeResult = await consumeCreditsForGeneration({
-        client: tx,
-        userId: session.user.id,
-        modelId: chat.model,
-        chatId: chat.id,
-        messageId: createdMessage.id,
-        description: `Code generation - ${chat.title}`,
-        phase: "initial_generation",
-        status: "completed",
-        creditHoldId: reservedHoldId,
+    const message = await persistInitialGenerationResult({
+      userId: session.user.id,
+      chat,
+      content,
+      generatedFiles,
+      designScores,
+      creditHoldId: reservedHoldId,
+      usage: {
         tokensUsed,
         inputTokens,
         outputTokens,
-        generatedText: content,
+        reasoningTokens,
         providerCostUsd,
         upstreamInferenceCostUsd,
-        reasoningTokens,
         provider,
-      });
-
-      if (!consumeResult.success) {
-        if (consumeResult.error === "INSUFFICIENT_CREDITS") {
-          throw new CreditConsumptionError("INSUFFICIENT_CREDITS");
-        }
-        throw new CreditConsumptionError("CREDIT_CHECK_FAILED");
-      }
-
-      return createdMessage;
+      },
     });
     reservedHoldId = undefined;
     generationStarted = false;
@@ -390,7 +346,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     await releaseHoldAndResetChat();
 
-    if (error instanceof CreditConsumptionError) {
+    if (
+      error instanceof GenerationWorkflowError &&
+      (error.code === "INSUFFICIENT_CREDITS" ||
+        error.code === "CREDIT_CHECK_FAILED")
+    ) {
       return NextResponse.json(
         {
           error: error.code,

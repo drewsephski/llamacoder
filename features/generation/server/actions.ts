@@ -402,6 +402,25 @@ export async function createMessage(
         throw new Error("CREDIT_CHECK_FAILED");
       }
 
+      if (options?.generationRunId) {
+        await tx.generationRun.updateMany({
+          where: {
+            id: options.generationRunId,
+            chatId,
+            userId: session.user.id,
+            status: { in: ["running", "recoverable"] },
+          },
+          data: {
+            status: "completed",
+            assistantMessageId: newMessage.id,
+            completedAt: new Date(),
+            phase: "completed",
+            label: "Saved",
+            errorMessage: null,
+          },
+        });
+      }
+
       return newMessage;
     });
 
@@ -476,38 +495,13 @@ export async function saveStreamedAssistantMessage(
   files: RawGeneratedFile[],
   options?: { creditHoldId?: string; generationRunId?: string },
 ) {
-  const message = await createMessage(
+  return createMessage(
     chatId,
     text,
     "assistant",
     files,
     options,
   );
-
-  if (options?.generationRunId) {
-    const session = await getCurrentSession();
-    if (!session) {
-      throw new Error("You must be signed in to save messages");
-    }
-
-    await getPrisma().generationRun.updateMany({
-      where: {
-        id: options.generationRunId,
-        chatId,
-        userId: session.user.id,
-      },
-      data: {
-        status: "completed",
-        assistantMessageId: message.id,
-        completedAt: new Date(),
-        phase: "completed",
-        label: "Saved",
-        errorMessage: null,
-      },
-    });
-  }
-
-  return message;
 }
 
 export async function releaseReservedCreditHold(holdId: string) {
@@ -996,32 +990,32 @@ export async function createFreeRepairAssistantMessage(
       });
     }
 
+    if (
+      options?.generationRunId &&
+      options.generationRunId !== contractRepair?.rootGenerationRunId
+    ) {
+      await tx.generationRun.updateMany({
+        where: {
+          id: options.generationRunId,
+          chatId,
+          userId: session.user.id,
+          status: { in: ["running", "recoverable"] },
+        },
+        data: {
+          status: "completed",
+          assistantMessageId: newMessage.id,
+          completedAt: new Date(),
+          phase: "completed",
+          label: contractRepair ? "Generated app ready" : "Repaired preview",
+          errorMessage: null,
+        },
+      });
+    }
+
     return newMessage;
   });
 
   await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
-
-  const completedRootRunId = contractRepair?.rootGenerationRunId ?? null;
-  if (
-    options?.generationRunId &&
-    options.generationRunId !== completedRootRunId
-  ) {
-    await prisma.generationRun.updateMany({
-      where: {
-        id: options.generationRunId,
-        chatId,
-        userId: session.user.id,
-      },
-      data: {
-        status: "completed",
-        assistantMessageId: newMessage.id,
-        completedAt: new Date(),
-        phase: "completed",
-        label: contractRepair ? "Generated app ready" : "Repaired preview",
-        errorMessage: null,
-      },
-    });
-  }
 
   return newMessage;
 }

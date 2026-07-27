@@ -260,9 +260,6 @@ export function validateGeneratedFiles(
 ) {
   const diagnostics: GeneratedFileDiagnostic[] = [];
   const appFile = files.find((file) => file.path === "App.tsx");
-  const runnableFiles = files.filter((file) =>
-    /\.(tsx|ts|jsx|js)$/i.test(file.path),
-  );
 
   if (!appFile) {
     diagnostics.push({

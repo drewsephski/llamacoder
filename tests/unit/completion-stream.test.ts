@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchCompletionStream,
   fetchGenerationRun,
+  finalizeGenerationRun,
   recoverCompletionStream,
   retryCompletionStream,
 } from "@/features/generation/client/completion-stream";
@@ -185,5 +186,28 @@ describe("fetchCompletionStream", () => {
 
     expect(run.phase).toBe("validation_repair");
     expect(run.partialText).toContain("App.tsx");
+  });
+
+  it("asks the server-owned workflow to finalize a generated app", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        message: {
+          id: "assistant_1",
+          chatId: "chat_1",
+          role: "assistant",
+          content: "Generated app",
+          files: [],
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const message = await finalizeGenerationRun("run_1");
+
+    expect(message.id).toBe("assistant_1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/generation-runs/run_1",
+      { method: "POST" },
+    );
   });
 });

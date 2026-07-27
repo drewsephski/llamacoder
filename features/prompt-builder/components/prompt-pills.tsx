@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -107,6 +106,7 @@ export function PromptPills({ onSelect }: PromptPillsProps) {
           const Icon = pill.icon;
           return (
             <button
+              type="button"
               key={pill.id}
               onClick={() => onSelect(pill.prompt)}
               className={cn(

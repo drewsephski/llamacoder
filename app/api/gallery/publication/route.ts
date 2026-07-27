@@ -29,15 +29,27 @@ export async function GET(request: NextRequest) {
       title: true,
       description: true,
       allowRemixes: true,
+      publicArtifact: {
+        select: {
+          allowStarterDownloads: true,
+        },
+      },
       isPublished: true,
       thumbnailStatus: true,
       thumbnailError: true,
     },
   });
 
+  if (!publication) {
+    return NextResponse.json({ publication: null });
+  }
+
+  const { publicArtifact, ...publicationSettings } = publication;
   return NextResponse.json({
-    publication: publication
-      ? { ...publication, url: `/gallery/${publication.slug}` }
-      : null,
+    publication: {
+      ...publicationSettings,
+      allowStarterDownloads: publicArtifact?.allowStarterDownloads ?? false,
+      url: `/gallery/${publication.slug}`,
+    },
   });
 }

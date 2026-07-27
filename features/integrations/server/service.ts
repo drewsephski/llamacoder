@@ -38,11 +38,12 @@ import {
 } from "@/features/integrations/server/supabase-oauth-tokens";
 import { buildSupabaseBrowserRuntimeState } from "@/features/integrations/supabase-browser-runtime";
 import {
-  buildAuthenticatedTasksGenerationContext,
+  buildSupabaseBackendGenerationContext,
   getAuthenticatedTasksBackendPlan,
   readSupabaseAuthState,
   readSupabaseBackendState,
 } from "@/features/integrations/supabase-backend";
+import { isSupportedSupabaseBackendPlan } from "@/features/integrations/server/supabase-backend-plan";
 import {
   hasSupabaseCapabilityStatus,
   preserveVerifiedSupabaseWriteCapabilities,
@@ -108,11 +109,14 @@ function serializeBinding(
   }
   const capabilities = readSupabaseManagementCapabilities(storedConfig);
   const storedBackend = readSupabaseBackendState(storedConfig);
-  const currentPlan = getAuthenticatedTasksBackendPlan();
-  const hasCurrentPlan =
-    storedBackend &&
-    "plan" in storedBackend &&
-    storedBackend.plan.migrationChecksum === currentPlan.migrationChecksum;
+  const defaultPlan = getAuthenticatedTasksBackendPlan();
+  const storedPlan =
+    storedBackend && "plan" in storedBackend ? storedBackend.plan : null;
+  const currentPlan =
+    storedPlan && isSupportedSupabaseBackendPlan(storedPlan)
+      ? storedPlan
+      : defaultPlan;
+  const hasCurrentPlan = storedBackend && storedPlan === currentPlan;
   const hasBrowserConfiguration = Boolean(
     storedConfig?.supabaseProjectRef &&
       storedConfig?.supabaseProjectUrl &&
@@ -264,10 +268,10 @@ export async function getConnectedIntegrationPromptContext({
       const backend = readSupabaseBackendState(binding.config);
       return binding.status === "ready" &&
         backend?.status === "ready" &&
-        backend.plan.migrationChecksum ===
-          getAuthenticatedTasksBackendPlan().migrationChecksum
+        isSupportedSupabaseBackendPlan(backend.plan)
         ? [
-            buildAuthenticatedTasksGenerationContext({
+            buildSupabaseBackendGenerationContext({
+              plan: backend.plan,
               authMode: readSupabaseAuthState(binding.config)?.mode ?? null,
             }),
           ]

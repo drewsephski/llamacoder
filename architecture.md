@@ -15,8 +15,10 @@ features/
   auth/                           session and ownership primitives
   billing/                        checkout contracts, hooks, and UI
   generation/                     agent, completion, repair, and telemetry logic
+  integrations/                   typed provider plans, authorization, and setup
   marketing/                      public-site components and content
   projects/                       project contracts, queries, actions, and UI
+  public-artifacts/               publication capabilities and pinned revisions
   security/                       rate limiting and outbound URL policy
   shared/                         typed HTTP and error primitives
   user/                           user-facing query contracts and hooks
@@ -51,9 +53,11 @@ lib/
 2. The route authenticates, rate-limits, checks eligibility, and creates the
    chat plus initial messages.
 3. The workspace calls the completion route with the persisted message ID.
-4. Generation reserves a credit hold, applies model/research policy, records
-   request telemetry, validates output, persists a version, and captures or
-   releases the hold.
+4. Generation reserves a credit hold, applies model/research policy, and
+   persists recoverable stream progress on the server.
+5. The idempotent generation workflow reconstructs the authoritative file
+   snapshot from persisted messages and run output, then atomically saves the
+   assistant version, completes the run, and captures or releases the hold.
 
 ### Code generation paths
 
@@ -70,6 +74,35 @@ Squid uses two HTTP entry points that share prompt assembly via
 Both paths must stay aligned on credit holds, prompt contracts, and repair
 logic. Prefer extending shared modules under `features/generation/server/`
 instead of duplicating policy in either route.
+
+The browser may display provisional output and diagnostics, but it does not
+choose the authoritative merge or write the final checkpoint. Interrupted
+streams remain recoverable through the same server finalization command.
+
+### Public artifacts
+
+Public access is represented by an opaque `PublicArtifact` token, not by
+knowledge of a message ID. Each artifact points to an immutable revision that
+pins one generated message and carries explicit view, remix, and starter-bundle
+permissions. Gallery publications keep stable slugs while their current
+revision advances. Revocation makes both the token and gallery publication
+unavailable.
+
+Raw message IDs are accepted only for the migration-era compatibility case
+where that message is still attached to an explicitly published gallery entry.
+Full source export always requires the authenticated project owner.
+
+### Supabase backend plans
+
+Generated apps request backend work through versioned Zod contracts. The
+server compiles a small set of non-destructive templates into deterministic
+SQL, verifies the plan checksum, waits for explicit approval, and executes it
+under a project-scoped advisory lock. The compiler owns identifiers, grants,
+foreign keys, indexes, and row-level-security policies; model-authored SQL is
+never executed.
+
+Provisioning is complete only after provider-side verification confirms the
+expected tables, ownership policies, grants, and anonymous-access boundary.
 
 ### Project mutations
 

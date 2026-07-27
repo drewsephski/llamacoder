@@ -67,7 +67,7 @@ function RevealLine({
   });
 
   return (
-    <p className={className} ref={ref}>
+    <p className={`relative ${className}`} ref={ref}>
       {words.map((word, index) => (
         <RevealWord
           key={`${word}-${index}`}
