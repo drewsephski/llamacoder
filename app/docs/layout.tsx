@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   ...docsMetadata,
   title: {
     default: "Documentation",
-    template: "%s | Squid Agent Docs",
+    template: "%s | Squid Agent",
   },
 };
 

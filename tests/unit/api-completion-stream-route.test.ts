@@ -33,6 +33,7 @@ const {
   exaSearchMock,
   loadChatUrlContentMock,
   getConnectedIntegrationPromptContextMock,
+  classifyPersistenceIntentMock,
 } = vi.hoisted(() => ({
   createOpenRouterModelMock: vi.fn(() => "openrouter-model"),
   createRequestTelemetryMock: vi.fn(),
@@ -48,6 +49,7 @@ const {
   streamTextMock: vi.fn(),
   exaSearchMock: vi.fn(() => ({ type: "provider-tool" })),
   loadChatUrlContentMock: vi.fn(),
+  classifyPersistenceIntentMock: vi.fn(),
   getConnectedIntegrationPromptContextMock: vi.fn<
     () => Promise<{
       prompt: string;
@@ -111,6 +113,10 @@ vi.mock("@/features/generation/server/request-telemetry", () => ({
   createRequestTelemetry: createRequestTelemetryMock,
 }));
 
+vi.mock("@/features/generation/server/persistence-intent-classifier", () => ({
+  classifyPersistenceIntent: classifyPersistenceIntentMock,
+}));
+
 vi.mock("@/features/security/server/rate-limit", () => ({
   consumeRateLimit: consumeRateLimitMock,
 }));
@@ -167,6 +173,28 @@ vi.mock("@/lib/openrouter", () => ({
 }));
 
 import { POST } from "@/app/api/get-next-completion-stream-promise/route";
+
+function classifiedPersistenceIntent(detected: boolean) {
+  return {
+    outcome: "classified" as const,
+    intent: {
+      detected,
+      confidence: 98,
+      recommendation: detected
+        ? ("require_database" as const)
+        : ("prototype" as const),
+      useCase: detected ? "Persisted app data" : "Static experience",
+      reason: detected
+        ? "The app creates data that must remain available."
+        : "The experience is static and read-only.",
+      explicitlyRequested: false,
+      status: "not_prompted" as const,
+      proposedSchema: detected
+        ? [{ entity: "records", purpose: "Store app records." }]
+        : [],
+    },
+  };
+}
 
 function request(body: unknown) {
   return new Request(
@@ -293,6 +321,10 @@ describe("/api/get-next-completion-stream-promise", () => {
     vi.clearAllMocks();
     generateTextMock.mockReset();
     streamTextMock.mockReset();
+    classifyPersistenceIntentMock.mockReset();
+    classifyPersistenceIntentMock.mockResolvedValue(
+      classifiedPersistenceIntent(false),
+    );
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 11 });
     getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
     reserveCreditHoldMock.mockResolvedValue({
@@ -1779,6 +1811,9 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
+    classifyPersistenceIntentMock.mockResolvedValueOnce(
+      classifiedPersistenceIntent(true),
+    );
 
     const response = await POST(
       request({ messageId: "msg_direct_backend", model: "model_1" }),
@@ -1794,7 +1829,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
         action: "request_backend_setup",
         request: {
           id: "backend-setup-msg_direct_backend",
-          description: expect.stringContaining("accounts or saved data"),
+          description: expect.stringContaining("needs saved data"),
         },
       },
     });
@@ -1825,6 +1860,9 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       { role: "system", content: "system" },
       { role: "user", content },
     ]);
+    classifyPersistenceIntentMock.mockResolvedValueOnce(
+      classifiedPersistenceIntent(true),
+    );
 
     const response = await POST(
       request({ messageId: "msg_plan_backend", model: "model_1" }),
@@ -1847,8 +1885,250 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(streamTextMock).not.toHaveBeenCalled();
   });
 
+  it("keeps a static landing page on the normal generation path", async () => {
+    const content = "Build a static read-only landing page with a headline";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_static_page",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: createEmptyAppSpec(),
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const chunks = await collectUIChunks(
+      await POST(request({ messageId: "msg_static_page", model: "model_1" })),
+    );
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: { action: "generate_code" },
+        }),
+      ]),
+    );
+    expect(chunks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          data: { action: "request_backend_setup" },
+        }),
+      ]),
+    );
+  });
+
+  it("re-evaluates follow-up intent and surfaces setup when a form is added", async () => {
+    const content = "Add a signup form to the landing page";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_form_followup",
+        content,
+        position: 3,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: createEmptyAppSpec(),
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a static landing page" },
+      { role: "assistant", content: "Previous generated page" },
+      { role: "user", content },
+    ]);
+    classifyPersistenceIntentMock.mockResolvedValueOnce(
+      classifiedPersistenceIntent(true),
+    );
+
+    const chunks = await collectUIChunks(
+      await POST(request({ messageId: "msg_form_followup", model: "model_1" })),
+    );
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: expect.objectContaining({ action: "request_backend_setup" }),
+        }),
+      ]),
+    );
+    expect(classifyPersistenceIntentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recentUserRequests: [
+          "Build a static landing page",
+          "Add a signup form to the landing page",
+        ],
+      }),
+    );
+  });
+
+  it("fails safe without stalling generation when classification fails", async () => {
+    const content = "Build a todo app";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_classifier_failure",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: createEmptyAppSpec(),
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    classifyPersistenceIntentMock.mockRejectedValueOnce(
+      new Error("classification timeout"),
+    );
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const chunks = await collectUIChunks(
+      await POST(
+        request({ messageId: "msg_classifier_failure", model: "model_1" }),
+      ),
+    );
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: { action: "generate_code" },
+        }),
+      ]),
+    );
+    expect(streamTextMock).toHaveBeenCalledOnce();
+  });
+
+  it("does not add a second setup card on a follow-up prompt", async () => {
+    const content = "Make the todo list blue";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_card_followup",
+        content,
+        position: 3,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: createEmptyAppSpec(),
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a todo app" },
+      {
+        role: "assistant",
+        content: "Add a database",
+        files: {
+          kind: "agent_backend_setup_request",
+          request: {
+            id: "backend-setup-original",
+            title: "Add a database",
+            description: "Connect Supabase.",
+            capabilities: ["Persistent data"],
+            requirements: {
+              database: true,
+              authentication: false,
+              storage: false,
+              realtime: false,
+              privilegedServerLogic: false,
+            },
+            continuation: {
+              id: "550e8400-e29b-41d4-a716-446655440000",
+              originalMessageId: "msg_original",
+              originalUserRequest: "Build a todo app",
+              mode: "direct",
+              status: "pending",
+            },
+          },
+        },
+      },
+      { role: "user", content },
+    ]);
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const chunks = await collectUIChunks(
+      await POST(request({ messageId: "msg_card_followup", model: "model_1" })),
+    );
+
+    expect(classifyPersistenceIntentMock).not.toHaveBeenCalled();
+    expect(chunks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          data: { action: "request_backend_setup" },
+        }),
+      ]),
+    );
+  });
+
+  it("does not show setup again when Supabase is already configured", async () => {
+    const content = "Add a contact form";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_supabase_ready",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: createEmptyAppSpec(),
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    classifyPersistenceIntentMock.mockResolvedValueOnce(
+      classifiedPersistenceIntent(true),
+    );
+    prismaMock.projectIntegration.findFirst.mockResolvedValue({
+      status: "ready",
+      config: {
+        supabaseProjectUrl: "https://project-ref.supabase.co",
+        supabasePublishableKey: "sb_publishable_test",
+      },
+    });
+    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
+
+    const chunks = await collectUIChunks(
+      await POST(
+        request({ messageId: "msg_supabase_ready", model: "model_1" }),
+      ),
+    );
+
+    expect(chunks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          data: { action: "request_backend_setup" },
+        }),
+      ]),
+    );
+    expect(streamTextMock).toHaveBeenCalledOnce();
+  });
+
   it("keeps the Plan mode interview ahead of model-suggested research", async () => {
-    const content = "Build a polished habit tracker app";
+    const content = "Build a polished static product landing page";
     prismaMock.message.findUnique.mockResolvedValueOnce(
       buildMessage({
         id: "msg_optional_search",

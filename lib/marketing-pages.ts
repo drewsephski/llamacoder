@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_NAME, SITE_URL } from "@/lib/seo";
+import { SITE_NAME, SITE_URL, createPageMetadata } from "@/lib/seo";
 import { publicShowcasePaths } from "@/lib/public-pages";
 
 export { SITE_NAME, SITE_URL };
@@ -4758,40 +4758,35 @@ export function marketingMetadata(page: MarketingPage): Metadata {
         ? ["screenshot to React benchmark", "AI code benchmark"]
         : ["AI generated React", "React code quality"]),
   ];
+  const conciseTitle =
+    page.slug === "how-to-export-ai-generated-react-app"
+      ? "AI React Export: Install, Build & Handoff"
+      : page.slug === "ai-app-builder-does-not-charge-failed-generations"
+        ? "AI App Builder: No Charge for Failed Runs"
+        : page.h1;
+
+  const baseMetadata = createPageMetadata({
+    title: conciseTitle,
+    description: page.description,
+    path,
+    keywords,
+    type: "article",
+    image: {
+      url: ogImagePath,
+      width: 1200,
+      height: 630,
+      alt: `${page.h1} — ${SITE_NAME}`,
+    },
+  });
 
   return {
-    title: page.title,
-    description: page.description,
-    keywords,
-    alternates: { canonical: path },
+    ...baseMetadata,
     openGraph: {
-      title: page.title,
-      description: page.description,
-      url: `${SITE_URL}${path}`,
+      ...baseMetadata.openGraph,
       type: "article",
-      siteName: SITE_NAME,
       publishedTime: page.publishedAt,
       modifiedTime: page.updatedAt,
       authors: [MARKETING_AUTHOR.name],
-      images: [
-        {
-          url: ogImagePath,
-          width: 1200,
-          height: 630,
-          alt: `${page.h1} — ${SITE_NAME}`,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: page.title,
-      description: page.description,
-      images: [ogImagePath],
-    },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: { index: true, follow: true },
     },
   };
 }

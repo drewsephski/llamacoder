@@ -21,6 +21,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:launch": "RUN_LAUNCH_E2E=1 playwright test tests/e2e/launch-flow.spec.ts --workers=1",
+    "seo:audit": "node scripts/audit-seo.mjs",
     "test:quick": "pnpm test:unit",
     "ship:quick": "pnpm validate:schema && pnpm typecheck && pnpm lint && pnpm test:unit",
     "ship:full": "pnpm ship:quick && pnpm test:e2e",

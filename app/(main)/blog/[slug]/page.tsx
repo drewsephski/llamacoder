@@ -14,7 +14,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const page = blogPages.find((candidate) => candidate.slug === slug);
-  return page ? marketingMetadata(page) : {};
+  if (!page) notFound();
+  return marketingMetadata(page);
 }
 
 export default async function BlogPage({ params }: Props) {

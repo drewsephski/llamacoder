@@ -139,7 +139,7 @@ describe("chat Supabase setup state mapper", () => {
 
     expect(view.state).toBe("connection_required");
     expect(view.message).toBe(
-      "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices.",
+      "Connect Supabase for accounts and saved data, or continue with browser-only data.",
     );
   });
 

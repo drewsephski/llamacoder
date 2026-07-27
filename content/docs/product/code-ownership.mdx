@@ -1,34 +1,108 @@
 ---
-title: Code ownership and checkpoints
-description: Work with generated React files, preserve project history, and move accepted source into your own development workflow.
+title: Export & Own Your React Code
+description: Export React files you own, track changes with checkpoints, restore earlier versions, and hand off production-ready code to any developer workflow.
 ---
 
-Squid is designed around exportable React code. The generated project is visible as files, can be refined through follow-up prompts, and can be downloaded for continued development outside the product.
+Squid Agent is an AI React app builder designed to produce code you can keep. Your generated app is available as inspectable source files, not locked inside a visual preview or a proprietary runtime. You can refine the project in Squid, export the accepted version, move it into your own repository, and continue development with the tools and team you choose.
 
-## Generated files
+That portability is the practical foundation of code ownership: you can review what was generated, control which version becomes the handoff, and keep working after the project leaves Squid.
 
-The file view is the durable representation of the current app. Use it to confirm:
+## What code ownership means in Squid Agent
 
-- The main entry point and feature components are present.
-- Imports resolve to generated files or installed dependencies.
-- Configuration files match the generated runtime.
-- Important behavior is implemented in code rather than represented only by static markup.
+An exportable React project gives you control over the source and the next development step. You can:
 
-## Checkpoints
+- Inspect the generated components, routes, styles, configuration, and dependencies.
+- Edit or refactor the files directly instead of requesting every change through an AI app builder.
+- Download the project or publish an accepted bundle to your GitHub workflow.
+- Run the app with a standard React, TypeScript, and Vite toolchain.
+- Commit the source to your own repository, add tests and CI, and review future changes through normal pull requests.
+- Choose your own hosting, analytics, authentication, database, and deployment process.
 
-Each saved generation or accepted edit becomes part of the project history. That makes it possible to compare the current result with an earlier one and recover when a follow-up introduces a regression.
+The code can move without Squid. External services may still require their own accounts, credentials, migrations, pricing plans, or licenses, so portability should be evaluated across the complete application rather than the component source alone.
 
-Restoring a previous result should be treated as creating a new current checkpoint from known-good code, not rewriting the historical record.
+## What is included in an exported React project
 
-## Portability
+Squid assembles the selected generated files into a development-ready bundle. Depending on the app, the export includes:
 
-A portable project needs more than component source. It also needs enough context to install, run, inspect, and deploy the app in another environment. Review the exported README, package configuration, manifest, and quality information that accompany the generated files.
+- React and TypeScript source files for the accepted checkpoint
+- Required generated UI support files and inferred package dependencies
+- The application entry point, HTML shell, and project styles
+- `package.json` scripts for local development, type checking, and production builds
+- TypeScript, Vite, Tailwind CSS, and PostCSS configuration
+- A README with local setup and detected integration guidance
+- An environment-variable template that keeps secret values out of source
+- A file manifest plus generated-code quality and export verification reports
+- Starter deployment configuration for Vercel, Netlify, and Cloudflare Workers
+
+Exact contents vary with the generated app. Review the README, `squid-manifest.json`, `squid-quality-report.json`, and `squid-verification-report.json` in the exported bundle instead of assuming that every project has the same dependencies or integration requirements.
+
+## Generated files are the source of the current version
+
+The file view is the durable representation of the selected app checkpoint. The preview helps you evaluate appearance and behavior, but the generated files show what you will actually take into another development environment.
+
+Before accepting a version, confirm that:
+
+- The main entry point and expected feature components are present.
+- Internal imports resolve to generated or included support files.
+- Package and build configuration match the generated runtime.
+- Important interactions are implemented in code rather than represented only by static markup.
+- Placeholder data, copy, links, and assets are appropriate for the intended handoff.
+
+Use the [quality checks guide](/docs/product/quality-checks) to understand which structural issues Squid can detect and which runtime, security, accessibility, and product checks still require human review.
+
+## How checkpoints protect project history
+
+Each code-bearing generation or accepted follow-up becomes a version checkpoint in the project history. This gives you a recoverable sequence of working states while you iterate on layout, behavior, content, and integrations.
+
+From the version controls, you can inspect an earlier checkpoint, review its exact source changes, add a useful label or bookmark, and compare the files with the surrounding version. If a later edit introduces a regression, you can restore the complete earlier version or restore only selected files.
+
+A restore does not erase or rewrite the historical record. Squid creates a new current checkpoint from the restored source while retaining the versions that came before it. Selective restore follows the same principle: the chosen older files are combined with the unaffected files from the current version, then saved as another checkpoint.
+
+This makes experiments safer, but checkpoints are not a replacement for Git. Squid history protects the generation and refinement phase. After export, create a repository commit for the untouched accepted bundle so downstream changes have their own reviewable baseline.
+
+## Move generated React code into your workflow
+
+Use a deliberate handoff sequence instead of treating export as a one-click production approval:
+
+1. Select the checkpoint that passed your product and visual acceptance criteria.
+2. Review its source diff, file tree, quality report, and any unresolved integration setup.
+3. Verify and download the ZIP, or publish the accepted bundle into an authorized GitHub repository.
+4. Open the project in a clean directory and follow the included README.
+5. Run `pnpm install`, `pnpm typecheck`, and `pnpm build`, then test the primary workflow in the local app.
+6. Commit the untouched export as a baseline before adapting architecture, adding services, or merging it into a larger codebase.
+
+Testing in a clean directory matters. Existing monorepo dependencies, cached packages, global tools, and local environment variables can make an incomplete project appear healthy. The [export and handoff guide](/docs/workflows/export-and-handoff) provides a practical validation and delivery checklist.
 
 <Callout title="Ownership still includes responsibility" type="info">
-  Exportable source gives you control over the project. You should still review
-  generated code, licenses, data handling, accessibility, security, and
-  external-service configuration before production use.
+  Exportable source gives you control over the project, but it is not automatic
+  production approval. Review generated code, third-party licenses, copied
+  content and assets, data handling, accessibility, security, environment
+  variables, and external-service configuration before release.
 </Callout>
+
+## Prepare a developer handoff
+
+A useful handoff includes more than a ZIP file. Give the next developer the accepted checkpoint, the original product brief, important follow-up prompts, and a short description of the primary user path. Include desktop and mobile acceptance screenshots, known limitations, unresolved quality warnings, and the names of required environment variables without including secret values.
+
+Also explain which integrations are live, mocked, or still awaiting configuration. If the destination project uses different routing, state management, styling, or deployment conventions, preserve the verified export as a baseline and adapt it through explicit, reviewable commits.
+
+## Code ownership questions
+
+### Can I use the generated React code outside Squid Agent?
+
+Yes. The export is assembled as a conventional React, TypeScript, and Vite project with source, package scripts, build configuration, and setup guidance. You can continue locally, move it into an existing repository, or deploy it through your preferred platform.
+
+### Can another developer take over the project?
+
+Yes. The source files are inspectable and editable, and the export includes the configuration and evidence needed to begin a normal engineering handoff. A developer should still install and build the project in a clean environment, review its architecture, and validate every production requirement.
+
+### Are checkpoints the same as Git commits?
+
+No. Squid checkpoints preserve generated versions and make full or file-level restoration possible during AI-assisted iteration. Git should become the source of truth for branching, code review, CI, releases, and long-term maintenance after the export enters your engineering workflow.
+
+### Does an export guarantee production-ready code?
+
+No automated export can guarantee that an application meets every business, security, privacy, accessibility, or operational requirement. Squid includes structural diagnostics and export verification evidence so you can identify known issues, but production acceptance remains a team decision backed by local builds, interaction tests, and deployment review.
 
 ## A handoff-focused follow-up
 

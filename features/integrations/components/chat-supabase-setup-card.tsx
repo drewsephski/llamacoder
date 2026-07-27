@@ -516,9 +516,9 @@ export function ChatSupabaseSetupCard({
   if (response) {
     const usesSupabase = response.decision === "connect_supabase";
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card/90 px-4 py-3 text-sm shadow-sm">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
-          <Check className="size-4" aria-hidden="true" />
+      <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/90 px-3 py-2.5 text-sm shadow-sm">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600">
+          <Check className="size-3.5" aria-hidden="true" />
         </span>
         <div className="min-w-0">
           <p className="font-medium text-foreground">
@@ -538,9 +538,9 @@ export function ChatSupabaseSetupCard({
     const resumed = view.continuationStatus === "resumed";
     const uiOnly = view.continuationStatus === "ui_only";
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card/90 px-4 py-3 text-sm shadow-sm">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <Check className="size-4" aria-hidden="true" />
+      <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/90 px-3 py-2.5 text-sm shadow-sm">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <Check className="size-3.5" aria-hidden="true" />
         </span>
         <div className="min-w-0">
           <p className="font-medium text-foreground">
@@ -598,7 +598,7 @@ export function ChatSupabaseSetupCard({
 
   const statusLabel =
     state === "connection_required"
-      ? "optional"
+      ? "Recommended"
       : state
         ? state.replaceAll("_", " ")
         : "Checking status";
@@ -606,7 +606,7 @@ export function ChatSupabaseSetupCard({
     state === "ready" || state === "runtime_ready"
       ? "Supabase is ready"
       : state === "connection_required"
-        ? "Start with the UI"
+        ? "Add a database"
         : request.title;
   const connectionMessage =
     state === "authorizing"
@@ -616,10 +616,10 @@ export function ChatSupabaseSetupCard({
   return (
     <section
       aria-labelledby={`${request.id}-title`}
-      className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm"
+      className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-3.5 py-2">
-        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 border-b border-border/50 bg-muted/15 px-3 py-1.5">
+        <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
           {isBusy ? (
             <CometSpinner
               className="size-2.5 text-blue-500"
@@ -631,23 +631,23 @@ export function ChatSupabaseSetupCard({
               aria-hidden="true"
             />
           )}
-          Backend setup
+          Database
         </span>
         <span className="text-[11px] font-medium text-muted-foreground">
           {statusLabel}
         </span>
       </div>
-      <div className="p-3.5">
-        <div className="flex items-start gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/40 text-muted-foreground">
+      <div className="p-3">
+        <div className="flex items-start gap-2.5">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/35 text-muted-foreground">
             {state === "authorization_required" ? (
-              <LockKeyhole className="size-4" />
+              <LockKeyhole className="size-3.5" />
             ) : state === "failed" || state === "timed_out" ? (
-              <AlertTriangle className="size-4" />
+              <AlertTriangle className="size-3.5" />
             ) : state === "ready" || state === "runtime_ready" ? (
-              <ShieldCheck className="size-4" />
+              <ShieldCheck className="size-3.5" />
             ) : (
-              <Database className="size-4" />
+              <Database className="size-3.5" />
             )}
           </span>
           <div className="min-w-0 flex-1">
@@ -658,7 +658,7 @@ export function ChatSupabaseSetupCard({
               {connectionTitle}
             </h3>
             <p
-              className="mt-1 text-sm leading-5 text-muted-foreground"
+              className="mt-0.5 text-[13px] leading-[1.35rem] text-muted-foreground"
               role="status"
               aria-live="polite"
             >
@@ -674,36 +674,26 @@ export function ChatSupabaseSetupCard({
         ) : null}
 
         {state === "connection_required" ? (
-          <div className="mt-3 grid gap-2">
+          <div className="mt-2.5 flex flex-col gap-1.5 sm:flex-row">
             <Button
               type="button"
+              size="sm"
               className="w-full sm:w-auto"
+              onClick={startOAuth}
+              aria-label="Set up Supabase"
+            >
+              <Plug className="size-3.5" aria-hidden="true" />
+              Connect Supabase
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground sm:w-auto"
               onClick={() => void onRespond(request, "build_ui_only")}
             >
               Build UI only
             </Button>
-            <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-foreground">
-                  Set up Supabase
-                </p>
-                <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
-                  Recommended for production — accounts and saved data across
-                  devices
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full shrink-0 sm:w-auto"
-                onClick={startOAuth}
-                aria-label="Set up Supabase"
-              >
-                <Plug className="size-3.5" aria-hidden="true" />
-                Connect
-              </Button>
-            </div>
           </div>
         ) : state === "authorization_required" ? (
           <Button
@@ -862,15 +852,14 @@ export function ChatSupabaseSetupCard({
         ) : null}
 
         {state === "connection_required" ? (
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
             <details className="group">
               <summary className="cursor-pointer rounded-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 Why is this optional?
               </summary>
               <p className="mt-1.5 max-w-md leading-5">
-                UI-only builds use browser-local data so you can iterate fast.
-                Supabase is recommended before production when you need user
-                accounts, sessions, and data that persists across devices.
+                UI-only builds keep data in this browser. Supabase keeps it
+                available across sessions, users, and devices.
               </p>
             </details>
             <ProjectIntegrationsPanel

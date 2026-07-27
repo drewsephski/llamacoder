@@ -9,6 +9,7 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "@/lib/seo";
+import { sitewideStructuredData } from "@/lib/site-structured-data";
 
 import "./globals.css";
 
@@ -19,7 +20,7 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const title = "Squid Agent - Research, Build, Verify, and Ship React Apps";
+const title = "Squid Agent: AI React App Builder";
 const description =
   "Research the live web, approve a plan, build and verify React apps, restore versions, connect APIs, deploy to Vercel, and export code you own.";
 const url = `${SITE_URL}/`;
@@ -56,6 +57,17 @@ export const metadata: Metadata = {
     "Bolt alternative",
     "v0 alternative",
   ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/squidagent-logo.svg", type: "image/svg+xml", sizes: "any" },
@@ -112,6 +124,15 @@ export default function RootLayout({
     >
       <head>
         <PlausibleProvider domain="squidagent.app" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(sitewideStructuredData).replace(
+              /</g,
+              "\\u003c",
+            ),
+          }}
+        />
       </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground antialiased">
         {children}

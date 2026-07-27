@@ -42,10 +42,7 @@ export function shouldAskPersistenceQuestion(
     return false;
   }
 
-  if (
-    intent.status === "connect_confirmed" &&
-    options?.supabaseProvisioned === true
-  ) {
+  if (options?.supabaseProvisioned === true) {
     return false;
   }
 
@@ -184,9 +181,9 @@ export function buildDirectBackendSetupRequest({
     action: "request_backend_setup",
     request: {
       id: `backend-setup-${messageId}`,
-      title: "Start with the UI",
+      title: "Add a database",
       description:
-        `Squid detected accounts or saved data in ${appSummary}. Build a UI-only preview first, or connect Supabase when you need a production-ready backend.${dataDescription}`.trim(),
+        `This app needs saved data for ${appSummary}. Connect Supabase now, or continue with browser-only data.${dataDescription}`.trim(),
       capabilities: [
         "Persistent data across refreshes and devices",
         "Browser-safe Supabase runtime configuration",

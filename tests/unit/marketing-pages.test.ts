@@ -6,9 +6,11 @@ import {
   getMarketingOgImagePath,
   getMarketingPath,
   guideTopicClusters,
+  marketingMetadata,
   marketingPaths,
   marketingStructuredData,
 } from "@/lib/marketing-pages";
+import { MAX_META_DESCRIPTION_LENGTH, MAX_META_TITLE_LENGTH } from "@/lib/seo";
 
 const pages = [...comparisonPages, ...blogPages, benchmarkPage];
 
@@ -56,6 +58,37 @@ describe("marketing page content", () => {
       expect(params.get("card")).toBe("article");
       expect(params.get("kind")).toBe(page.kind);
       expect(params.get("title")).toBe(page.h1);
+    }
+  });
+
+  it("keeps every rendered article title and description unique and concise", () => {
+    const metadata = pages.map((page) => marketingMetadata(page));
+    const titles = metadata.map(
+      (item) => (item.title as { absolute: string }).absolute,
+    );
+    const descriptions = metadata.map((item) => item.description as string);
+
+    expect(new Set(titles).size).toBe(pages.length);
+    expect(new Set(descriptions).size).toBe(pages.length);
+    expect(titles.every((title) => title.length <= MAX_META_TITLE_LENGTH)).toBe(
+      true,
+    );
+    expect(
+      descriptions.every(
+        (description) => description.length <= MAX_META_DESCRIPTION_LENGTH,
+      ),
+    ).toBe(true);
+
+    for (const item of metadata) {
+      const title = (item.title as { absolute: string }).absolute;
+      expect(item.openGraph).toMatchObject({
+        title,
+        description: item.description,
+      });
+      expect(item.twitter).toMatchObject({
+        title,
+        description: item.description,
+      });
     }
   });
 

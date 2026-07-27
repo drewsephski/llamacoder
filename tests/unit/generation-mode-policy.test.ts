@@ -10,13 +10,26 @@ import {
   buildPlanModeFallbackInterview,
   shouldAskPersistenceQuestion,
 } from "@/features/generation/mode-policy";
-import { detectPersistenceIntentFromText } from "@/features/generation/persistence-intent";
+import { persistenceJudgmentToIntent } from "@/features/generation/persistence-intent";
 import { getIntegrationProvider } from "@/features/integrations/registry";
 
 describe("generation mode policy", () => {
   it("requires a backend for the live task-manager canary prompt", () => {
     const prompt = "Build a task manager with accounts and persistent tasks.";
-    const intent = detectPersistenceIntentFromText(prompt);
+    const intent = persistenceJudgmentToIntent({
+      isAppRequest: true,
+      requiresPersistence: true,
+      confidence: 98,
+      rationale: "Accounts and task records must persist.",
+      useCase: "Project tracker",
+      explicitlyRequested: true,
+      requirements: {
+        authentication: true,
+        storage: false,
+        realtime: false,
+      },
+      entities: [{ name: "tasks", purpose: "Store persistent tasks." }],
+    });
 
     expect(intent).toMatchObject({
       detected: true,
@@ -50,10 +63,21 @@ describe("generation mode policy", () => {
     });
   });
 
-  it("keeps an explicitly browser-local task manager on the prototype path", () => {
-    const intent = detectPersistenceIntentFromText(
-      "Build a task manager that uses browser-local storage only.",
-    );
+  it("keeps a classifier-approved browser-local app on the prototype path", () => {
+    const intent = persistenceJudgmentToIntent({
+      isAppRequest: true,
+      requiresPersistence: false,
+      confidence: 96,
+      rationale: "The user requested a disposable browser-only prototype.",
+      useCase: "Local prototype",
+      explicitlyRequested: false,
+      requirements: {
+        authentication: false,
+        storage: false,
+        realtime: false,
+      },
+      entities: [],
+    });
 
     expect(intent.detected).toBe(false);
     expect(intent.recommendation).toBe("prototype");
@@ -88,7 +112,7 @@ describe("generation mode policy", () => {
       action: "request_backend_setup",
       request: {
         id: "backend-setup-message_direct_backend",
-        title: expect.stringContaining("Start with the UI"),
+        title: expect.stringContaining("Add a database"),
         description: expect.stringContaining("tasks"),
       },
     });
@@ -228,10 +252,47 @@ describe("generation mode policy", () => {
     expect(action.action).toBe("request_backend_setup");
   });
 
+  it("never asks again when a Supabase project is already provisioned", () => {
+    const spec = {
+      ...createEmptyAppSpec(),
+      dataPersistence: persistenceJudgmentToIntent({
+        isAppRequest: true,
+        requiresPersistence: true,
+        confidence: 98,
+        rationale: "Contact submissions must be stored.",
+        useCase: "Contact form",
+        explicitlyRequested: false,
+        requirements: {
+          authentication: false,
+          storage: false,
+          realtime: false,
+        },
+        entities: [
+          { name: "submissions", purpose: "Store contact submissions." },
+        ],
+      }),
+    };
+
+    expect(
+      shouldAskPersistenceQuestion(spec, { supabaseProvisioned: true }),
+    ).toBe(false);
+  });
+
   it("detects generic database language even without a canonical use case", () => {
-    const intent = detectPersistenceIntentFromText(
-      "Build a recipe app with a database to save user recipes and accounts.",
-    );
+    const intent = persistenceJudgmentToIntent({
+      isAppRequest: true,
+      requiresPersistence: true,
+      confidence: 97,
+      rationale: "User recipes and accounts must be stored.",
+      useCase: "Recipe collection",
+      explicitlyRequested: true,
+      requirements: {
+        authentication: true,
+        storage: false,
+        realtime: false,
+      },
+      entities: [{ name: "recipes", purpose: "Store user recipes." }],
+    });
 
     expect(intent.detected).toBe(true);
     expect(intent.recommendation).not.toBe("prototype");

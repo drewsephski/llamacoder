@@ -97,9 +97,10 @@ import {
   detectLiveApiIntent,
 } from "@/features/generation/live-api";
 import {
-  detectPersistenceIntentFromMessages,
+  createPersistenceClassificationFallback,
   describePersistenceIntent,
 } from "@/features/generation/persistence-intent";
+import { classifyPersistenceIntent } from "@/features/generation/server/persistence-intent-classifier";
 import {
   createResearchWindow,
   extractExaToolSources,
@@ -480,15 +481,30 @@ export async function POST(req: Request) {
           }))
       : [{ content: latestResearchObjective }];
     const chatUrls = extractChatUrls(chatUrlMessages);
-    const persistenceIntent = detectPersistenceIntentFromMessages(
-      shouldCarryResearchThroughWorkflow
-        ? rawMessages
-            .filter((candidate) => candidate.role === "user")
-            .map((candidate) => ({ content: getResearchObjective(candidate) }))
-            .filter((candidate) => candidate.content.trim().length > 0)
-            .slice(-4)
-        : [{ content: latestResearchObjective }],
-    );
+    const hasExistingBackendSetupCard = rawMessages.some((candidate) => {
+      const metadata = parseAgentMessageMetadata(candidate.files);
+      return metadata?.kind === "agent_backend_setup_request";
+    });
+    const shouldClassifyPersistence =
+      !isFreeRepairRequest &&
+      !isGeneratedAppRequestMetadata(message.files) &&
+      !isStructuredDecisionResponse &&
+      !hasExistingBackendSetupCard;
+    const persistenceClassifierRequests = rawMessages
+      .filter((candidate) => {
+        if (candidate.role !== "user") return false;
+        const metadata = parseAgentMessageMetadata(candidate.files);
+        return (
+          metadata?.kind !== "agent_clarification_response" &&
+          metadata?.kind !== "agent_interview_response" &&
+          metadata?.kind !== "agent_backend_setup_response" &&
+          metadata?.kind !== "agent_plan_approval" &&
+          metadata?.kind !== "agent_search_approval_response"
+        );
+      })
+      .map((candidate) => getResearchObjective(candidate))
+      .filter((content) => content.trim().length > 0)
+      .slice(-4);
     const apiDocumentation = assessApiDocumentation(researchMessages);
     const researchIntent = detectResearchIntent(researchMessages);
     const portfolioResearchIntent = detectPortfolioResearchIntent(
@@ -598,6 +614,65 @@ export async function POST(req: Request) {
       quality: executionQuality,
       reasoning,
     });
+    const persistenceReasoning = getOpenRouterReasoningSelection(
+      FREE_MODEL,
+      "low",
+    );
+    const persistenceTelemetry = shouldClassifyPersistence
+      ? createRequestTelemetry({
+          userId: session.user.id,
+          chatId: message.chatId,
+          messageId,
+          modelId: FREE_MODEL,
+          creditHoldId: holdId,
+          requestKind: "classification",
+          quality: "low",
+          reasoning: persistenceReasoning,
+        })
+      : null;
+    const persistenceClassificationPromise = shouldClassifyPersistence
+      ? (async () => {
+          try {
+            const result = await classifyPersistenceIntent({
+              model: createOpenRouterModel(openrouter, FREE_MODEL, {
+                maxTokens: 360,
+                usage: { include: true },
+              }),
+              recentUserRequests: persistenceClassifierRequests,
+              providerOptions: persistenceReasoning.providerOptions,
+              abortSignal: req.signal,
+            });
+            if (result.outcome === "fallback") {
+              console.warn(
+                "Persistence classification failed; continuing without database setup:",
+                getAIErrorMessage(result.error),
+              );
+              void persistenceTelemetry?.record({
+                status: "error",
+                error: result.error,
+              });
+            } else {
+              persistenceTelemetry?.markFirstByte();
+              void persistenceTelemetry?.record({ status: "completed" });
+            }
+            return result;
+          } catch (error) {
+            console.warn(
+              "Persistence classification failed; continuing without database setup:",
+              getAIErrorMessage(error),
+            );
+            void persistenceTelemetry?.record({
+              status: "error",
+              error,
+            });
+            return {
+              outcome: "fallback" as const,
+              intent: createPersistenceClassificationFallback(),
+              error,
+            };
+          }
+        })()
+      : null;
 
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
@@ -629,31 +704,25 @@ export async function POST(req: Request) {
             label: "Understanding your request",
           });
 
+          const persistenceClassification =
+            await persistenceClassificationPromise;
+
           // Final spec state (persisted after orchestration decision)
           let finalSpec = appSpec;
           const currentPersistenceState = finalSpec.dataPersistence;
-          finalSpec = {
-            ...finalSpec,
-            dataPersistence:
-              currentPersistenceState.status !== "not_prompted"
-                ? currentPersistenceState
-                : persistenceIntent.detected ||
-                    currentPersistenceState.confidence > 0
-                  ? {
-                      ...currentPersistenceState,
-                      ...persistenceIntent,
-                      status: currentPersistenceState.status,
-                      reason:
-                        currentPersistenceState.reason ??
-                        persistenceIntent.reason ??
-                        undefined,
-                      useCase:
-                        currentPersistenceState.useCase ??
-                        persistenceIntent.useCase ??
-                        "Workflow data tracking",
-                    }
-                  : currentPersistenceState,
-          };
+          if (
+            persistenceClassification &&
+            currentPersistenceState.status === "not_prompted"
+          ) {
+            finalSpec = {
+              ...finalSpec,
+              dataPersistence: {
+                ...currentPersistenceState,
+                ...persistenceClassification.intent,
+                status: currentPersistenceState.status,
+              },
+            };
+          }
           const metadataPersistenceSelection =
             agentMetadata?.kind === "agent_interview_response" ||
             agentMetadata?.kind === "agent_clarification_response"
@@ -833,13 +902,11 @@ export async function POST(req: Request) {
             finalSpec,
             connectedIntegrationSelection.providerIds,
           );
-          const shouldAskPersistencePreflight = shouldAskPersistenceQuestion(
-            finalSpec,
-            {
-              force: needsSupabaseProjectSetup,
+          const shouldAskPersistencePreflight =
+            shouldAskPersistenceQuestion(finalSpec, {
+              force: needsSupabaseProjectSetup && !hasExistingBackendSetupCard,
               supabaseProvisioned: isSupabaseProjectProvisioned,
-            },
-          );
+            }) && !hasExistingBackendSetupCard;
           const initialPlanInterviewRequired =
             planMode &&
             !conversationHasCode &&
@@ -1161,6 +1228,7 @@ export async function POST(req: Request) {
           }
           finalSpec = enforceRequestedPersistenceProvider(finalSpec);
           if (
+            persistenceClassification?.outcome === "classified" ||
             planMode ||
             connectedIntegrationSelection.providerIds.length > 0
           ) {

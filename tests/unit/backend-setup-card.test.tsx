@@ -18,9 +18,9 @@ vi.mock(
 
 const request: BackendSetupRequest = {
   id: "backend-setup-message_1",
-  title: "Start with the UI",
+  title: "Add a database",
   description:
-    "Build a UI-only preview first, or connect Supabase when you need a production-ready backend.",
+    "This app needs saved data. Connect Supabase now, or continue with browser-only data.",
   capabilities: [
     "Persistent data across refreshes and devices",
     "Browser-safe Supabase runtime configuration",
@@ -82,7 +82,7 @@ describe("direct backend setup card", () => {
           authMode: null,
           backendPlan: null,
           message:
-            "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices.",
+            "Connect Supabase for accounts and saved data, or continue with browser-only data.",
         }),
       ),
     );
@@ -90,7 +90,7 @@ describe("direct backend setup card", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Start with the UI",
+        name: "Add a database",
       }),
     ).toBeInTheDocument();
     expect(
@@ -99,7 +99,7 @@ describe("direct backend setup card", () => {
     expect(
       screen.getByRole("button", { name: "Set up Supabase" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/recommended for production/i)).toBeInTheDocument();
+    expect(screen.getByText("Recommended")).toBeInTheDocument();
     expect(screen.queryByText(/choose the decisions/i)).not.toBeInTheDocument();
 
     await userEvent.click(
@@ -122,7 +122,7 @@ describe("direct backend setup card", () => {
           authMode: null,
           backendPlan: null,
           message:
-            "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices.",
+            "Connect Supabase for accounts and saved data, or continue with browser-only data.",
         }),
       ),
     );
@@ -488,7 +488,7 @@ describe("direct backend setup card", () => {
           authMode: null,
           backendPlan: null,
           message:
-            "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices.",
+            "Connect Supabase for accounts and saved data, or continue with browser-only data.",
         }),
       ),
     );

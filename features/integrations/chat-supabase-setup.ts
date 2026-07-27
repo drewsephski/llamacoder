@@ -148,8 +148,8 @@ function messageForState(
   switch (state) {
     case "connection_required":
       return requirements.authentication
-        ? "Build a UI-only preview with local data, or connect Supabase for accounts and persistence across devices."
-        : "Build a UI-only preview with local data, or connect Supabase for persistence across devices.";
+        ? "Connect Supabase for accounts and saved data, or continue with browser-only data."
+        : "Connect Supabase to save data across sessions, or continue with browser-only data.";
     case "authorizing":
       return "Finish authorizing Supabase in the secure window.";
     case "authorization_required":

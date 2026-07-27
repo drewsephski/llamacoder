@@ -6,6 +6,7 @@ import {
   getPublishedGallerySocialImage,
   getShowcaseGallerySocialImage,
 } from "@/features/gallery/social-metadata";
+import { MAX_META_DESCRIPTION_LENGTH, MAX_META_TITLE_LENGTH } from "@/lib/seo";
 
 const readyPublication = {
   id: "publication_1",
@@ -57,6 +58,26 @@ describe("gallery social metadata", () => {
     });
 
     expect(metadata.robots).toMatchObject({ index: false, follow: false });
+  });
+
+  it("bounds dynamic project metadata without losing canonical or social tags", () => {
+    const metadata = buildGallerySocialMetadata({
+      title: "A very long generated application title ".repeat(5),
+      description: "A detailed generated application description ".repeat(8),
+      canonicalPath: "/gallery/generated-project",
+      index: false,
+    });
+    const title = (metadata.title as { absolute: string }).absolute;
+
+    expect(title.length).toBeLessThanOrEqual(MAX_META_TITLE_LENGTH);
+    expect((metadata.description as string).length).toBeLessThanOrEqual(
+      MAX_META_DESCRIPTION_LENGTH,
+    );
+    expect(metadata.openGraph).toMatchObject({
+      title,
+      description: metadata.description,
+      url: "https://www.squidagent.app/gallery/generated-project",
+    });
   });
 
   it.each([

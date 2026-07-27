@@ -66,18 +66,6 @@ export const homepageFaq = [
 export const homepageStructuredData = [
   {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "@id": `${SITE_URL}/#organization`,
-    name: "Squid Agent",
-    url: `${SITE_URL}/`,
-    logo: `${SITE_URL}/squidagent-logo-512.png`,
-    sameAs: [
-      "https://www.instagram.com/drew.sepeczi",
-      "https://github.com/drewsephski",
-    ],
-  },
-  {
-    "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "@id": `${SITE_URL}/#software`,
     name: "Squid Agent",
@@ -92,6 +80,8 @@ export const homepageStructuredData = [
     description:
       "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
     creator: { "@id": `${SITE_URL}/#organization` },
+    brand: { "@id": `${SITE_URL}/#organization` },
+    isPartOf: { "@id": `${SITE_URL}/#website` },
     offers: {
       "@type": "Offer",
       price: "0",
@@ -115,15 +105,6 @@ export const homepageStructuredData = [
       "Transparent AI credit pricing",
       "Reversible project versions",
     ],
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "@id": `${SITE_URL}/#website`,
-    name: "Squid Agent",
-    url: `${SITE_URL}/`,
-    inLanguage: "en-US",
-    publisher: { "@id": `${SITE_URL}/#organization` },
   },
   {
     "@context": "https://schema.org",

@@ -21,6 +21,7 @@ type RequestTelemetryOptions = {
     | "free_repair"
     | "screenshot"
     | "title"
+    | "classification"
     | "orchestration"
     | "search";
   quality: GenerationQuality;
