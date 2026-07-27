@@ -26,7 +26,7 @@ export default function CookiesPage() {
         },
         {
           title: "Analytics",
-          body: "Squid Agent uses privacy-conscious analytics to understand traffic, page performance, onboarding, and product reliability. Plausible Analytics provides site and product measurements. Selected public acquisition pages also use Ahrefs Web Analytics, configured without cookies and without query strings. Ahrefs measures aggregate page views and may automatically measure outbound link clicks and eligible form submissions on those public pages.",
+          body: "Squid Agent uses privacy-conscious analytics to understand traffic, page performance, onboarding, and product reliability. Plausible Analytics provides site and product measurements. Ahrefs Web Analytics is configured without cookies and measures aggregate page views, outbound link clicks, and eligible form submissions.",
         },
         {
           title: "Local Project State",

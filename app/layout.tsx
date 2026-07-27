@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import PlausibleProvider from "next-plausible";
 import { DM_Sans } from "next/font/google";
 
-import { AhrefsAnalytics } from "@/features/analytics/ahrefs-analytics";
 import { ForSaleBanner } from "@/features/for-sale/components/for-sale-banner";
 import {
   DEFAULT_OG_IMAGE,
@@ -125,7 +124,11 @@ export default function RootLayout({
     >
       <head>
         <PlausibleProvider domain="squidagent.app" />
-        <AhrefsAnalytics />
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="O4gKckTzoHrR2FUZoZUz8w"
+          async
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

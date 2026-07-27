@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         },
         {
           title: "Analytics Providers",
-          body: "Squid Agent uses Plausible Analytics for site and product measurement. Selected public acquisition pages also use Ahrefs Web Analytics to understand search, referral, and AI-assistant traffic. Ahrefs is configured without cookies, automatic cross-route page views, or query strings, and is not loaded on project chats, dashboards, or account pages. Ahrefs may process page paths, referrers, browser and device attributes, and approximate location derived from an IP address; Ahrefs states that it discards raw IP addresses rather than storing them.",
+          body: "Squid Agent uses Plausible Analytics for site and product measurement and Ahrefs Web Analytics to understand search, referral, and AI-assistant traffic. Ahrefs is configured without cookies and may process page URLs, referrers, browser and device attributes, aggregate interaction events, and approximate location derived from an IP address; Ahrefs states that it discards raw IP addresses rather than storing them.",
         },
         {
           title: "AI Providers",
