@@ -13,7 +13,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updatedAt="July 10, 2026"
+      updatedAt="July 27, 2026"
       intro="This policy explains what Squid Agent collects, why it is used, and how product data is handled when you generate, preview, save, and export React apps."
       sections={[
         {
@@ -22,12 +22,16 @@ export default function PrivacyPage() {
           points: [
             "Prompts, screenshots, and generated files are used to create and maintain your projects.",
             "Billing and credit records are used to show balances, usage history, and plan status.",
-            "Basic analytics may be used to understand public page traffic and product reliability.",
+            "Analytics may include page paths, referrers, coarse location, browser and device attributes, and aggregate interaction events used to understand traffic and product reliability.",
           ],
         },
         {
           title: "How Information Is Used",
           body: "Data is used to authenticate users, generate code, save project history, provide exports, prevent abuse, process payments, debug reliability issues, and improve the product experience.",
+        },
+        {
+          title: "Analytics Providers",
+          body: "Squid Agent uses Plausible Analytics for site and product measurement. Selected public acquisition pages also use Ahrefs Web Analytics to understand search, referral, and AI-assistant traffic. Ahrefs is configured without cookies, automatic cross-route page views, or query strings, and is not loaded on project chats, dashboards, or account pages. Ahrefs may process page paths, referrers, browser and device attributes, and approximate location derived from an IP address; Ahrefs states that it discards raw IP addresses rather than storing them.",
         },
         {
           title: "AI Providers",

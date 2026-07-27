@@ -11,7 +11,7 @@ function createContentSecurityPolicy(frameAncestors) {
     "form-action 'self'",
     `frame-ancestors ${frameAncestors}`,
     "object-src 'none'",
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://plausible.io ${monacoAssetDirectory}`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://analytics.ahrefs.com https://challenges.cloudflare.com https://plausible.io ${monacoAssetDirectory}`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${monacoAssetDirectory}`,
     "img-src 'self' data: blob: https:",
     "media-src 'self' blob: https://d8j0ntlcm91z4.cloudfront.net",

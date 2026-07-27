@@ -13,7 +13,7 @@ export default function CookiesPage() {
   return (
     <LegalPage
       title="Cookie Policy"
-      updatedAt="July 10, 2026"
+      updatedAt="July 27, 2026"
       intro="This page explains how Squid Agent uses cookies and similar browser storage for sign-in, preferences, product operation, analytics, and billing-related flows."
       sections={[
         {
@@ -26,7 +26,7 @@ export default function CookiesPage() {
         },
         {
           title: "Analytics",
-          body: "The public site may use privacy-conscious analytics to understand traffic and page performance. These signals help improve SEO surfaces, onboarding, and product reliability.",
+          body: "Squid Agent uses privacy-conscious analytics to understand traffic, page performance, onboarding, and product reliability. Plausible Analytics provides site and product measurements. Selected public acquisition pages also use Ahrefs Web Analytics, configured without cookies and without query strings. Ahrefs measures aggregate page views and may automatically measure outbound link clicks and eligible form submissions on those public pages.",
         },
         {
           title: "Local Project State",
