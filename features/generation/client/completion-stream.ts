@@ -6,6 +6,7 @@ import {
   uiMessageChunkSchema,
   type UIMessageChunk,
 } from "ai";
+import type { GenerationRecoveryMode } from "@/features/generation/recovery";
 
 export type CompletionStream = {
   events: ReadableStream<UIMessageChunk>;
@@ -126,6 +127,7 @@ export type GenerationRunSnapshot = {
   creditHoldId?: string;
   errorMessage?: string;
   assistantMessageId?: string;
+  recoveryMode: GenerationRecoveryMode;
 };
 
 export async function fetchGenerationRun(
@@ -234,6 +236,11 @@ export async function recoverCompletionStream(
       run?.errorMessage ||
         run?.message ||
         "No recoverable generation output was found",
+    );
+  }
+  if (run.recoveryMode !== "restore") {
+    throw new Error(
+      "The saved response ended before an application file was completed. Restart the build to try again.",
     );
   }
 

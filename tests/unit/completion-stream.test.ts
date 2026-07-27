@@ -148,6 +148,7 @@ describe("fetchCompletionStream", () => {
           partialText:
             "```tsx{path=App.tsx}\nexport default function App(){}\n```",
           creditHoldId: "hold_1",
+          recoveryMode: "restore",
         }),
       ),
     );
@@ -213,6 +214,24 @@ describe("fetchCompletionStream", () => {
     expect(completion.generationRunId).toBe("run_2");
   });
 
+  it("does not replay partial text that cannot produce an application", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({
+          id: "run_1",
+          messageId: "message_1",
+          partialText: "I will start by creating the application shell.",
+          recoveryMode: "restart",
+        }),
+      ),
+    );
+
+    await expect(recoverCompletionStream("run_1")).rejects.toThrow(
+      "Restart the build to try again",
+    );
+  });
+
   it("surfaces the persisted provider error when a run has no output", async () => {
     vi.stubGlobal(
       "fetch",
@@ -222,6 +241,7 @@ describe("fetchCompletionStream", () => {
           messageId: "message_1",
           partialText: "",
           errorMessage: "Upstream provider rate limited",
+          recoveryMode: "restart",
         }),
       ),
     );
@@ -243,6 +263,7 @@ describe("fetchCompletionStream", () => {
           label: "Fixing generated app",
           partialText:
             "```tsx{path=App.tsx}\nexport default function App(){}\n```",
+          recoveryMode: "restore",
         }),
       ),
     );

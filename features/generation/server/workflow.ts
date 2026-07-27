@@ -74,7 +74,7 @@ export function buildFinalGenerationFiles({
   if (generatedFiles.length === 0) {
     throw new GenerationWorkflowError(
       "NO_GENERATED_FILES",
-      "The generation run did not contain generated application files.",
+      "The saved response ended before any application files were completed. Restart the build to try again.",
     );
   }
 

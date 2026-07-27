@@ -10,6 +10,7 @@ import type {
 } from "@/features/projects/contracts";
 import { getPrisma } from "@/lib/prisma";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
+import { getGenerationRecoveryMode } from "@/features/generation/recovery";
 
 function isInternalContractRepairMessage(message: { files: unknown }) {
   return (
@@ -146,6 +147,7 @@ const loadProjectWorkspace = cache(
             phase: activeRun.phase,
             label: activeRun.label,
             partialTextLength: activeRun.partialText.length,
+            recoveryMode: getGenerationRecoveryMode(activeRun.partialText),
             createdAt: activeRun.createdAt,
           }
         : null,

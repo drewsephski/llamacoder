@@ -76,6 +76,7 @@ import {
   type SourceUrl,
 } from "@/features/generation/agent-contracts";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
+import { getGenerationRecoveryMode } from "@/features/generation/recovery";
 import { getErrorMessage } from "@/features/shared/errors";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 import { Lightbulb, RotateCcw, X } from "lucide-react";
@@ -295,9 +296,17 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const handleRecoverGeneration = useCallback(() => {
     if (!recoverableRun) return;
     setStreamError(null);
-    setStreamPromise(recoverCompletionStream(recoverableRun.id));
+    setStreamPromise(
+      recoverableRun.recoveryMode === "restore"
+        ? recoverCompletionStream(recoverableRun.id)
+        : retryCompletionStream({
+            messageId: recoverableRun.messageId,
+            model: chat.model,
+            generationRunId: recoverableRun.id,
+          }),
+    );
     setRecoverableRun(null);
-  }, [recoverableRun]);
+  }, [chat.model, recoverableRun]);
 
   useEffect(() => {
     let reader: ReadableStreamDefaultReader<UIMessageChunk> | null = null;
@@ -814,6 +823,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
             phase: "finalizing",
             label: "Recover interrupted generation",
             partialTextLength: fullText.length,
+            recoveryMode: getGenerationRecoveryMode(fullText),
             createdAt: new Date(),
           });
         }
@@ -1120,7 +1130,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
             streamSources={streamSources}
             isStreaming={!!streamPromise}
             activeMessage={activeMessage}
-            streamError={streamError}
+            streamError={recoverableRun ? null : streamError}
             onRetryAction={handleRetry}
             onClarificationCompleteAction={handleClarificationComplete}
             onInterviewCompleteAction={handleInterviewComplete}
@@ -1145,32 +1155,53 @@ export default function PageClient({ chat }: { chat: Chat }) {
             }}
           />
 
-          {recoverableRun &&
+          {recoverableRun?.status === "recoverable" &&
             recoverableRun.partialTextLength > 0 &&
             !streamPromise && (
-              <div className="mx-3 mb-2 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
-                <RotateCcw className="mt-0.5 size-4 shrink-0 text-amber-600" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">Recover interrupted generation</p>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    {`${recoverableRun.partialTextLength.toLocaleString()} characters are safely stored. Recover the draft now; Squid will validate it and repair the preview if needed.`}
-                  </p>
-                  <button
-                    type="button"
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground"
-                    onClick={handleRecoverGeneration}
-                  >
-                    <RotateCcw className="size-3" /> Recover draft
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Dismiss recovery"
-                  className="rounded-md p-1 text-muted-foreground hover:bg-muted"
-                  onClick={() => setRecoverableRun(null)}
+              <div className="mx-auto mb-3 w-full max-w-[42rem] px-4 sm:px-5">
+                <section
+                  aria-labelledby="generation-recovery-title"
+                  className="relative overflow-hidden rounded-xl border border-amber-500/25 bg-card/80 p-4 text-sm shadow-[0_14px_40px_-28px_hsl(var(--foreground)/0.45)] backdrop-blur-sm"
                 >
-                  <X className="size-3.5" />
-                </button>
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                      <RotateCcw className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1 pr-7">
+                      <p
+                        id="generation-recovery-title"
+                        className="font-medium text-foreground"
+                      >
+                        {recoverableRun.recoveryMode === "restore"
+                          ? "Continue interrupted build"
+                          : "Restart interrupted build"}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
+                        {recoverableRun.recoveryMode === "restore"
+                          ? `${recoverableRun.partialTextLength.toLocaleString()} characters and completed application files were saved. Continue to validate and open the recovered preview.`
+                          : `${recoverableRun.partialTextLength.toLocaleString()} characters were saved, but the response ended before an application file was completed. Restart from your original request.`}
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-3 inline-flex min-h-8 items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background transition hover:bg-foreground/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-px"
+                        onClick={handleRecoverGeneration}
+                      >
+                        <RotateCcw className="size-3.5" />
+                        {recoverableRun.recoveryMode === "restore"
+                          ? "Continue build"
+                          : "Restart build"}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Dismiss interrupted build"
+                      className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => setRecoverableRun(null)}
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                </section>
               </div>
             )}
 

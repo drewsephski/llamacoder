@@ -5,6 +5,7 @@ import {
   finalizeOwnedGenerationRun,
   GenerationWorkflowError,
 } from "@/features/generation/server/workflow";
+import { getGenerationRecoveryMode } from "@/features/generation/recovery";
 import { releaseCreditHold } from "@/lib/billing";
 import { getPrisma } from "@/lib/prisma";
 
@@ -37,6 +38,7 @@ export async function GET(
     creditHoldId: run.creditHoldId,
     errorMessage: run.errorMessage,
     assistantMessageId: run.assistantMessageId,
+    recoveryMode: getGenerationRecoveryMode(run.partialText),
   });
 }
 

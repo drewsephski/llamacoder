@@ -76,6 +76,7 @@ describe("/api/generation-runs/[runId]", () => {
       partialText: "```tsx{path=App.tsx}\nexport default function App(){}\n```",
       creditHoldId: "hold_1",
       errorMessage: "Generated app did not pass its required contract",
+      recoveryMode: "restore",
     });
     expect(findFirst).toHaveBeenCalledWith({
       where: { id: "run_1", userId: "user_1" },

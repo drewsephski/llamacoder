@@ -7,6 +7,7 @@ import {
   MAX_SCREENSHOT_DATA_URL_LENGTH,
   MAX_SCREENSHOT_SIZE_MB,
 } from "@/lib/constants";
+import type { GenerationRecoveryMode } from "@/features/generation/recovery";
 
 const imageDataUrlPattern = new RegExp(
   `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
@@ -107,6 +108,7 @@ export type ActiveGenerationRun = {
   phase: string;
   label: string;
   partialTextLength: number;
+  recoveryMode: GenerationRecoveryMode;
   createdAt: Date;
 };
 
