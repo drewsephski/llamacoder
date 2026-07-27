@@ -26,6 +26,7 @@ const PUBLIC_ANALYTICS_EXACT_PATHS = new Set([
   "/gallery/rune-circuit",
   "/gallery/small-hours-table",
   "/jack",
+  "/launch",
   "/mentality",
   "/mindloop",
   "/prisma",

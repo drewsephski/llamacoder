@@ -110,33 +110,5 @@
     "enrichment": "none",
     "brief": "hi",
     "stylePack": "newsprintEditorial"
-  },
-  {
-    "date": "2026-07-26",
-    "theme": "midnightCool",
-    "enrichment": "none",
-    "brief": "Preview the animated build arrow",
-    "stylePack": "midnightCool"
-  },
-  {
-    "date": "2026-07-26",
-    "theme": "swissBrutal",
-    "enrichment": "none",
-    "brief": "Build a travel budget app that converts trip costs from USD into EUR with current Frankfurter rates",
-    "stylePack": "swissBrutal"
-  },
-  {
-    "date": "2026-07-26",
-    "theme": "newsprintEditorial",
-    "enrichment": "none",
-    "brief": "Build a travel budget app that converts trip costs from USD into EUR with current Frankfurter rates",
-    "stylePack": "newsprintEditorial"
-  },
-  {
-    "date": "2026-07-26",
-    "theme": "manifestoGeometric",
-    "enrichment": "none",
-    "brief": "Build a travel budget app that converts trip costs from USD into EUR with current Frankfurter rates",
-    "stylePack": "manifestoGeometric"
   }
 ]

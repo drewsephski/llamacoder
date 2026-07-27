@@ -16,6 +16,7 @@ describe("Ahrefs analytics scope", () => {
     const publicPaths = [
       "/",
       "/what-is-squid-agent",
+      "/launch",
       ...marketingLandingPaths,
       ...marketingPaths,
       ...getShowcaseGameSummaries().map((game) => `/gallery/${game.slug}`),
