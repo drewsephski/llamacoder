@@ -276,7 +276,7 @@ export function HomepageLandingPagesSection() {
           <ArrowRight className="size-4" aria-hidden="true" />
         </p>
         <div
-          className="showcase-rail -mx-4 mt-3 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-3 md:mx-0 md:mt-12 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 md:pb-0"
+          className="showcase-rail showcase-rail--landing -mx-4 mt-3 px-4 pb-3 md:mx-0 md:mt-12 md:px-0 md:pb-0"
           aria-label="Landing page projects"
           tabIndex={0}
         >
@@ -387,14 +387,14 @@ export function HomepageBuiltWithSquidSection() {
           <ArrowRight className="size-4" aria-hidden="true" />
         </p>
         <div
-          className="showcase-rail -mx-4 mt-3 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-3 lg:mx-0 lg:mt-12 lg:grid lg:grid-cols-12 lg:gap-x-6 lg:gap-y-12 lg:overflow-visible lg:px-0 lg:pb-0"
+          className="showcase-rail showcase-rail--shipped -mx-4 mt-3 px-4 pb-3 lg:mx-0 lg:mt-12 lg:px-0 lg:pb-0"
           aria-label="Projects built with Squid"
           tabIndex={0}
         >
           {shippedProjects.map((project) => (
             <figure
               key={project.href}
-              className="group w-[min(82vw,22rem)] min-w-0 shrink-0 snap-start border-t border-border/70 pt-4 [scroll-snap-stop:always] sm:w-[min(76vw,24rem)] lg:col-span-6 lg:w-auto"
+              className="group min-w-0 snap-start border-t border-border/70 pt-4 [scroll-snap-stop:always]"
             >
               <a
                 href={project.href}

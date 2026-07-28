@@ -46,9 +46,7 @@ export function ShowcaseProjectCard({
   const linkClassName =
     "group showcase-card block min-w-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4";
   const railClassName =
-    layout === "rail"
-      ? " w-[min(82vw,22rem)] shrink-0 snap-start [scroll-snap-stop:always] sm:w-[min(76vw,24rem)] md:w-auto"
-      : "";
+    layout === "rail" ? " snap-start [scroll-snap-stop:always]" : "";
 
   const content = (
     <>
