@@ -1,49 +1,71 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { CSSProperties, ElementType } from "react";
-import { memo, useMemo } from "react";
+import { motion } from "motion/react";
+import React, { useMemo, type JSX } from "react";
 
-export interface TextShimmerProps {
+export type TextShimmerProps = {
   children: string;
-  as?: ElementType;
+  as?: React.ElementType;
   className?: string;
   duration?: number;
   spread?: number;
-}
+  baseColor?: string;
+  shimmerColor?: string;
+  style?: React.CSSProperties;
+};
 
-const ShimmerComponent = ({
+function TextShimmerComponent({
   children,
   as: Component = "p",
   className,
   duration = 2,
   spread = 2,
-}: TextShimmerProps) => {
-  const dynamicSpread = useMemo(
-    () => (children?.length ?? 0) * spread,
-    [children, spread],
+  baseColor,
+  shimmerColor,
+  style,
+}: TextShimmerProps) {
+  const MotionComponent = useMemo(
+    () => motion.create(Component as keyof JSX.IntrinsicElements),
+    [Component],
   );
 
+  const dynamicSpread = useMemo(() => {
+    return children.length * spread;
+  }, [children, spread]);
+
   return (
-    <Component
+    <MotionComponent
       className={cn(
-        "relative inline-block bg-[length:250%_100%,auto] bg-clip-text text-transparent",
-        "[--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--color-background),#0000_calc(50%+var(--spread)))] [background-repeat:no-repeat,padding-box]",
-        "animate-pulse",
+        "bg-size-[250%_100%,auto] relative inline-block bg-clip-text",
+        "[-webkit-text-fill-color:transparent]",
+        "[--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--base-gradient-color),#0000_calc(50%+var(--spread)))] [background-repeat:no-repeat,padding-box]",
         className,
       )}
+      initial={{ backgroundPosition: "100% center" }}
+      animate={{ backgroundPosition: "0% center" }}
+      transition={{
+        repeat: Infinity,
+        duration,
+        ease: "linear",
+      }}
       style={
         {
+          ...style,
           "--spread": `${dynamicSpread}px`,
-          backgroundImage:
-            "var(--bg), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))",
-          animationDuration: `${duration}s`,
-        } as CSSProperties
+          "--base-color":
+            baseColor ?? "color-mix(in oklab, currentColor 55%, transparent)",
+          "--base-gradient-color": shimmerColor ?? "currentColor",
+          backgroundImage: `var(--bg), linear-gradient(var(--base-color), var(--base-color))`,
+        } as React.CSSProperties
       }
     >
       {children}
-    </Component>
+    </MotionComponent>
   );
-};
+}
 
-export const Shimmer = memo(ShimmerComponent);
+export const TextShimmer = React.memo(TextShimmerComponent);
+
+// Keep the existing name for consumers that already use the shimmer.
+export const Shimmer = TextShimmer;

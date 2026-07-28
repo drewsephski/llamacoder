@@ -308,7 +308,7 @@ export function getMainCodingPrompt(options?: {
   Every marketing, portfolio, or showcase surface needs **exactly one** hero signature — locked in the Visual signature directive above. Choose one path only:
 
   1. **Catalog video** — CloudFront \`<video autoPlay loop muted playsInline>\` from the past media catalog (~⅓ of vague briefs when catalog video exists).
-  2. **Mesh gradient** — \`MeshGradient\` or \`DotOrbit\` from \`@paper-design/shaders-react\` ONLY (~⅓). No other shader component names exist.
+  2. **Shader field** — one verified export from \`@paper-design/shaders-react\` such as \`MeshGradient\`, \`NeuroNoise\`, \`Metaballs\`, \`Warp\`, \`Swirl\`, \`Water\`, or \`DotOrbit\`; use a custom Fiber shader with an eased pointer uniform when cursor response is central to the concept (~⅓).
   3. **Noisy pattern** — subtle fixed grain/noise texture layer on the hero (~⅓).
   4. **User-specified** — when the user named a palette, aesthetic, or supplied media URLs.
 

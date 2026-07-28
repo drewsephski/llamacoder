@@ -29,6 +29,10 @@ describe("generated app dependencies", () => {
       "@react-three/fiber": "9.6.1",
       "@react-three/drei": "10.7.7",
       "@react-three/postprocessing": "3.0.4",
+      "@react-three/rapier": "2.2.0",
+      "@react-three/cannon": "6.6.0",
+      "three-stdlib": "2.36.1",
+      maath: "0.10.8",
       postprocessing: "6.39.3",
       leva: "0.10.1",
       "@paper-design/shaders-react": "0.0.77",
@@ -85,6 +89,10 @@ describe("generated app dependencies", () => {
       "@react-three/fiber",
       "@react-three/drei",
       "@react-three/postprocessing",
+      "@react-three/rapier",
+      "@react-three/cannon",
+      "three-stdlib",
+      "maath",
       "@paper-design/shaders-react",
       "leva",
       "sonner",
@@ -114,11 +122,14 @@ describe("generated app dependencies", () => {
       for (const packageName of packageNames) {
         expect(prompt).toContain(packageName);
       }
+      expect(prompt).toContain("NeuroNoise");
+      expect(prompt).toContain("pointer");
     }
 
     const repairPrompt = buildGeneratedFilesRepairPrompt("bad", [], []);
     expect(repairPrompt).toContain("QueryClientProvider");
     expect(repairPrompt).toContain("@xyflow/react/dist/style.css");
     expect(repairPrompt).toContain("File dropzones select local files only");
+    expect(repairPrompt).toContain("pointer-reactive custom shaders");
   });
 });

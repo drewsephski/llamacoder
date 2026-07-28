@@ -282,7 +282,7 @@ function buildCatalogVideoInstructions(
 function buildMeshGradientInstructions() {
   return dedent`
     ### Implement: mesh gradient
-    - Import \`MeshGradient\` or \`DotOrbit\` from \`@paper-design/shaders-react\` ONLY — no other shader names exist.
+    - Import one verified shader from \`@paper-design/shaders-react\` (for example \`MeshGradient\`, \`DotOrbit\`, \`NeuroNoise\`, \`Metaballs\`, \`Warp\`, \`Swirl\`, or \`Water\`) and keep it subordinate to readable content.
     - Use as the hero/first-viewport signature: full-bleed behind content with explicit width/height via style props and a tasteful \`colors\` array matched to the subject (not generic AI purple).
     - Layer readable content above with an intentional scrim or solid panel — never illegible text on raw shader.
     - Do NOT also embed a catalog video or noise layer as the hero signature for this build.

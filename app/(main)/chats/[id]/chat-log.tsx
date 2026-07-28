@@ -45,6 +45,7 @@ import {
 import type { Plan } from "@/features/generation/agent-contracts";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { GenerationReceipt } from "@/components/generation-receipt";
+import { TextShimmer } from "@/components/ai-elements/shimmer";
 
 export default function ChatLog({
   chat,
@@ -197,6 +198,18 @@ export default function ChatLog({
 
         {isStreaming && (
           <div className="flex flex-col gap-4">
+            {!reasoningText && !streamText && (
+              <div role="status" aria-live="polite" className="min-h-6">
+                <TextShimmer
+                  as="span"
+                  duration={1.5}
+                  className="text-[15px] font-medium text-muted-foreground"
+                >
+                  Thinking...
+                </TextShimmer>
+              </div>
+            )}
+
             {researchActivity && (
               <ResearchActivityCard
                 activity={researchActivity}
