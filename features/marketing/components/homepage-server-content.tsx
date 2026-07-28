@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ExternalLink } from "lucide-react";
 
+import { DraggableProjectRail } from "@/components/homepage/draggable-project-rail";
 import { ShowcaseProjectCard } from "@/components/homepage/showcase-project-card";
 import { Button } from "@/components/ui/button";
 import { homepageFaq } from "@/features/marketing/homepage-seo";
@@ -275,10 +276,10 @@ export function HomepageLandingPagesSection() {
           Swipe to explore
           <ArrowRight className="size-4" aria-hidden="true" />
         </p>
-        <div
-          className="showcase-rail showcase-rail--landing -mx-4 mt-3 px-4 pb-3 md:mx-0 md:mt-12 md:px-0 md:pb-0"
-          aria-label="Landing page projects"
-          tabIndex={0}
+        <DraggableProjectRail
+          ariaLabel="Landing page projects"
+          desktopBreakpoint={768}
+          variant="landing"
         >
           {landingPages.map((landing) => (
             <ShowcaseProjectCard
@@ -287,7 +288,7 @@ export function HomepageLandingPagesSection() {
               layout="rail"
             />
           ))}
-        </div>
+        </DraggableProjectRail>
 
         <div className="mt-10 flex flex-col gap-5 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-2xl text-base leading-7 text-muted-foreground">
@@ -386,10 +387,10 @@ export function HomepageBuiltWithSquidSection() {
           Swipe to explore
           <ArrowRight className="size-4" aria-hidden="true" />
         </p>
-        <div
-          className="showcase-rail showcase-rail--shipped -mx-4 mt-3 px-4 pb-3 lg:mx-0 lg:mt-12 lg:px-0 lg:pb-0"
-          aria-label="Projects built with Squid"
-          tabIndex={0}
+        <DraggableProjectRail
+          ariaLabel="Projects built with Squid"
+          desktopBreakpoint={1024}
+          variant="shipped"
         >
           {shippedProjects.map((project) => (
             <figure
@@ -408,6 +409,7 @@ export function HomepageBuiltWithSquidSection() {
                     src={project.imageSrc}
                     alt={project.imageAlt}
                     fill
+                    draggable={false}
                     sizes="(min-width: 1024px) 58vw, 85vw"
                     className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none"
                   />
@@ -468,7 +470,7 @@ export function HomepageBuiltWithSquidSection() {
               </figcaption>
             </figure>
           ))}
-        </div>
+        </DraggableProjectRail>
       </div>
     </section>
   );

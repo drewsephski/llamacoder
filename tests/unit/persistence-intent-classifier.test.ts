@@ -47,7 +47,59 @@ describe("AI persistence classifier", () => {
       expect.objectContaining({
         timeout: { totalMs: 2_500 },
         system: expect.stringMatching(
-          /todo lists[\s\S]*every form[\s\S]*landing page[\s\S]*ambiguous/i,
+          /habit[\s\S]*todo lists[\s\S]*every form[\s\S]*counterfactual[\s\S]*landing page[\s\S]*returning/i,
+        ),
+      }),
+    );
+  });
+
+  it("gives the model semantic guidance for implied habit history", async () => {
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        isAppRequest: true,
+        requiresPersistence: true,
+        confidence: 98,
+        rationale:
+          "A habit tracker must retain completions, progress, and streak history across visits.",
+        useCase: "Habit tracker",
+        explicitlyRequested: false,
+        requirements: {
+          authentication: false,
+          storage: false,
+          realtime: false,
+        },
+        entities: [
+          { name: "habits", purpose: "Store tracked habits." },
+          {
+            name: "habit_entries",
+            purpose: "Store dated completions and streak history.",
+          },
+        ],
+      },
+    });
+
+    const result = await classifyPersistenceIntent({
+      model: "test-model" as never,
+      recentUserRequests: ["Build me a habit tracker app"],
+    });
+
+    expect(result).toMatchObject({
+      outcome: "classified",
+      intent: {
+        detected: true,
+        recommendation: "require_database",
+        explicitlyRequested: false,
+        proposedSchema: [
+          { entity: "habits" },
+          { entity: "habit_entries" },
+        ],
+      },
+    });
+    expect(generateTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: "REQUEST 1:\nBuild me a habit tracker app",
+        system: expect.stringContaining(
+          "even when the user never says \"database\", \"save\", or \"persist\"",
         ),
       }),
     );

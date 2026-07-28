@@ -1954,36 +1954,25 @@ body[data-scroll-locked] {
   }
 }
 
+.showcase-rail-viewport {
+  margin-inline: -1rem;
+  margin-top: 0.75rem;
+  overflow: hidden;
+  touch-action: pan-y;
+}
 .showcase-rail {
   display: grid;
   grid-auto-columns: min(82vw, 22rem);
   grid-auto-flow: column;
   gap: 1.25rem;
+  width: max-content;
   max-width: none;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scroll-behavior: smooth;
-  scroll-padding-inline: 1rem;
-  scroll-snap-type: x mandatory;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
-  scrollbar-width: thin;
+  cursor: grab;
+  padding: 0 1rem 0.75rem;
+  user-select: none;
 }
-.showcase-rail::-webkit-scrollbar {
-  height: 4px;
-}
-.showcase-rail::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: hsl(var(--muted-foreground) / 0.35);
-}
-.showcase-rail::-webkit-scrollbar-track {
-  background: transparent;
-}
-.showcase-rail:focus-visible {
-  border-radius: 0.75rem;
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 4px;
+.showcase-rail:active {
+  cursor: grabbing;
 }
 @media (min-width: 640px) {
   .showcase-rail {
@@ -1995,9 +1984,16 @@ body[data-scroll-locked] {
     grid-auto-flow: row;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem;
+    width: 100%;
+    padding: 0;
+    cursor: auto;
+    user-select: auto;
+  }
+  .showcase-rail-viewport--landing {
+    margin-inline: 0;
+    margin-top: 3rem;
     overflow: visible;
-    scroll-padding-inline: 0;
-    scroll-snap-type: none;
+    touch-action: auto;
   }
 }
 @media (min-width: 1024px) {
@@ -2006,9 +2002,16 @@ body[data-scroll-locked] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 1.5rem;
     row-gap: 3rem;
+    width: 100%;
+    padding: 0;
+    cursor: auto;
+    user-select: auto;
+  }
+  .showcase-rail-viewport--shipped {
+    margin-inline: 0;
+    margin-top: 3rem;
     overflow: visible;
-    scroll-padding-inline: 0;
-    scroll-snap-type: none;
+    touch-action: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {

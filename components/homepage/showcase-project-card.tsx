@@ -55,6 +55,7 @@ export function ShowcaseProjectCard({
           src={imageSrc}
           alt={imageAlt}
           fill
+          draggable={false}
           sizes={
             layout === "rail"
               ? "(min-width: 768px) 50vw, 85vw"
