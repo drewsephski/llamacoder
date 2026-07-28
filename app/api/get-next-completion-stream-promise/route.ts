@@ -31,6 +31,7 @@ import {
 } from "@/lib/generated-files";
 import { extractAllCodeBlocks } from "@/lib/utils";
 import { getMainCodingPrompt } from "@/lib/prompts";
+import { resolveEffectiveBrief } from "@/features/generation/effective-brief";
 import { estimateTokens } from "@/lib/prompt-compression";
 import { generatedAppRepairCapabilityRules } from "@/lib/generated-app-capabilities";
 import {
@@ -70,6 +71,7 @@ import {
   createEmptyAppSpec,
   mergeSpecUpdate,
   parseAppSpec,
+  serializeSpecForPrompt,
   type AppSpec,
 } from "@/features/generation/app-spec";
 import {
@@ -200,15 +202,26 @@ function buildPreviewRepairMessages({
   systemContent,
   repairRequest,
   sourceFiles,
+  appSpec,
+  latestUserRequest,
 }: {
   systemContent?: string;
   repairRequest: string;
   sourceFiles: GeneratedFile[];
+  appSpec: AppSpec;
+  latestUserRequest: string;
 }) {
+  const acceptanceContract = serializeSpecForPrompt(appSpec, "compact");
   const repairPrompt = `Repair the existing generated React + TypeScript app.
 
 Preview/runtime error:
 ${repairRequest}
+
+Immutable product and acceptance contract:
+${acceptanceContract}
+
+Latest user delta:
+${latestUserRequest}
 
 Current source files:
 ${formatGeneratedFilesMarkdown(sourceFiles)}
@@ -216,6 +229,7 @@ ${formatGeneratedFilesMarkdown(sourceFiles)}
 Requirements:
 - Make the minimal code change needed to fix the error.
 - Preserve all unrelated files, components, copy, state, imports, styling, and behavior.
+- Preserve every must-have requirement and acceptance criterion before and after the repair. Never make the app compile by deleting or weakening requested behavior.
 - Return only complete files that changed, using fenced code blocks like \`\`\`tsx{path=App.tsx}.
 - Do not regenerate unchanged files.
 - Keep existing paths unless a new file is required to fix the error.
@@ -558,6 +572,8 @@ export async function POST(req: Request) {
         systemContent: rawMessages.find((m) => m.role === "system")?.content,
         repairRequest,
         sourceFiles,
+        appSpec,
+        latestUserRequest: message.content,
       });
     } else {
       let messages: BillingBudgetMessage[] = z
@@ -1328,11 +1344,12 @@ export async function POST(req: Request) {
             // System prompts are persisted with chats for reproducibility, but
             // code generation should always use the current safety and design
             // contract so existing projects receive prompt-policy upgrades.
-            const styleBrief =
-              typeof message.chat.prompt === "string" &&
-              message.chat.prompt.trim()
-                ? message.chat.prompt
-                : latestResearchObjective;
+            const effectiveBrief = resolveEffectiveBrief({
+              originalIntent: message.chat.prompt,
+              latestUserRequest: latestUserContent || latestResearchObjective,
+              appSpec: finalSpec,
+            });
+            const styleBrief = effectiveBrief.latestUserRequest;
             const pastMediaCatalog = await resolvePastMediaCatalogForPrompt({
               prompt: styleBrief,
             });
@@ -1346,6 +1363,7 @@ export async function POST(req: Request) {
                   .join("\n"),
               ),
               screenshotCloneMode: screenshotCloneIntent.fidelityLocked,
+              effectiveBrief,
             });
           }
           if (linkedPageContext) {

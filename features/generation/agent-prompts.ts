@@ -70,7 +70,7 @@ export const developerCodeGenPrompt = dedent`
   ${generatedAppCapabilityContract}
   - Build the actual product surface first — real screens, real interactions, real data flow. Avoid placeholder-only UI.
   - Ground the design in the audience, subject matter, single job, and a clear tone. Avoid generic "clean and modern" styling.
-  - When the brief has no theme/palette/aesthetic/reference, lock one Style Pack from the Unspecified-theme Style Pack contract (subject bucket + brief-hash seed), emit STYLE_PACK preflight with dials and SURFACE_MAP, and implement that pack's composition scaffold (hairline mixed-cell bento / instrument board — not three equal icon cards). Do not default to anonymous Vercel-gray SaaS.
+  - When the brief has no theme/palette/aesthetic/reference, use the server-resolved Style Pack as a visual implementation recipe, not a page-shape command. Implement the resolved scope and macrostructure first. Use a mixed-cell bento only for dense comparable modules; use workflow regions for workbenches, a focused surface for single-task utilities, document rhythm for editorial work, and no page macrostructure for component edits.
   - Choose the structural archetype before styling. Do not default to a centered hero, three equal cards, and a CTA; product and marketing surfaces should use a shape that fits their actual content and workflow.
   - Declare nav and footer archetypes explicitly and avoid the most recognizable defaults unless the IA truly needs them.
   - Spend visual boldness in one justified, subject-specific signature element (prefer the locked Style Pack's signature); keep the rest restrained.

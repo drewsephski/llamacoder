@@ -1384,6 +1384,7 @@ function formatPackBlock(pack: StylePack): string {
  */
 export function buildStyleCommitmentDirective(
   pack: StylePackWithFonts,
+  options?: { navigation?: string; footer?: string },
 ): string {
   const bans = GENERIC_AI_PALETTE_BANS.map((b) => `- ${b}`).join("\n");
   const fonts = pack.fontPairing;
@@ -1401,8 +1402,8 @@ export function buildStyleCommitmentDirective(
     - EVERY section reuses surface/subdued/inverse roles from this pack — no one-off \`bg-zinc-900\` cards in a light pack or random \`bg-white\` panels in a dark pack
     - EVERY h1–h3 uses the locked display type recipe; EVERY paragraph uses the locked body recipe
     - Primary AND secondary CTAs use this pack's cheat-sheet recipes — not bare Shadcn defaults
-    - Nav matches: ${pack.navArchetype}
-    - Footer matches: ${pack.footerArchetype}
+    - Navigation decision: ${options?.navigation ?? pack.navArchetype}
+    - Footer decision: ${options?.footer ?? pack.footerArchetype}
     - Radius system: ${pack.radiusLock}
     - Signature element MUST appear: ${pack.signatureElement}
     - If luminosity is **${pack.luminosity}**, the ENTIRE app follows that model — no accidental mid-page theme flips
@@ -1434,21 +1435,32 @@ export function buildStyleCommitmentDirective(
  * Server-resolved directive for the active brief. Inject near the top of
  * codegen prompts so normal builds cannot bury the pack in a long catalog.
  */
-export function buildActiveStylePackDirective(brief: string): string {
-  const packId = selectStylePackId(brief);
+export function buildActiveStylePackDirective(
+  brief: string,
+  options?: {
+    forcePack?: StylePackId | null;
+    macrostructure?: string;
+    navigation?: string;
+    footer?: string;
+  },
+): string {
+  const packId =
+    options && "forcePack" in options
+      ? options.forcePack
+      : selectStylePackId(brief);
   if (!packId) {
     return dedent`
       **Active Style Pack directive (this build):**
       - The brief supplies explicit aesthetic, palette, color, or reference direction.
       - Honor that direction with the color-fidelity and Design Taste contracts.
-      - Still apply the Premium composition contract: mixed-cell craft, motivated motion, no three-equal-card defaults.
+      - Apply composition appropriate to the resolved scope. Bento and mixed-cell boards are allowed only for dense comparable modules, never as a universal proof of craft.
       - Still ban generic AI defaults: yellow/black CTA combo, Inter-only typography, purple mesh heroes.
     `;
   }
 
   const pack = getStylePack(packId);
   const preflight = formatStylePackPreflight(pack);
-  const commitment = buildStyleCommitmentDirective(pack);
+  const commitment = buildStyleCommitmentDirective(pack, options);
   const monoRole = pack.typography.mono
     ? `\n    - mono: \`${pack.typography.mono}\``
     : "";
@@ -1460,7 +1472,8 @@ export function buildActiveStylePackDirective(brief: string): string {
     `- Hallmark alias: ${pack.hallmarkAlias}`,
     `- Design Read: ${pack.designReadTemplate}`,
     `- Aesthetic mode: ${pack.aestheticMode} | Luminosity: ${pack.luminosity}`,
-    "- You MUST implement this pack's SURFACE_MAP classes, font pairing, signature element, and composition scaffold below. Do not fall back to anonymous gray SaaS, yellow/black CTAs, or three equal feature cards.",
+    `- Resolved macrostructure: ${options?.macrostructure ?? "infer from the product job"}. This structural decision outranks the pack's example scaffold.`,
+    "- You MUST implement this pack's SURFACE_MAP classes, font pairing, and one subject-specific signature element. Use its composition scaffold only when it fits the resolved macrostructure; never force a bento into a focused utility, component edit, editorial document, or workbench.",
     "- Apply this pack completely in the code. Do not dump STYLE_PACK / DIALS / SURFACE_MAP lines into the user-facing reply — keep that lock private.",
     "",
     commitment,
@@ -1478,7 +1491,8 @@ export function buildActiveStylePackDirective(brief: string): string {
     `- display: \`${pack.typography.display}\` + class \`.${pack.fontPairing.displayClass}\``,
     `- body: \`${pack.typography.body}\` + class \`.${pack.fontPairing.bodyClass}\`${monoRole}`,
     "",
-    "### Locked composition scaffold",
+    "### Conditional composition reference",
+    "Use the following only when it matches the resolved scope and information architecture. Otherwise preserve the pack's visual system while implementing the resolved macrostructure:",
     pack.compositionScaffold,
     "",
     "### Class cheat-sheet",

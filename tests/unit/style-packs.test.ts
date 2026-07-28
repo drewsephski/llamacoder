@@ -32,13 +32,14 @@ describe("style pack router", () => {
     }
   });
 
-  it("builds an active directive that locks the composition scaffold", () => {
+  it("builds an active directive with a conditional composition reference", () => {
     const directive = buildActiveStylePackDirective(
       "Build an API proxy dashboard for developers",
     );
     expect(directive).toContain("LOCKED for this build");
     expect(directive).toContain("Full-style commitment");
-    expect(directive).toContain("Locked composition scaffold");
+    expect(directive).toContain("Conditional composition reference");
+    expect(directive).toContain("never force a bento");
     expect(directive).toMatch(
       /STYLE_PACK: (cobaltMinimal|terminalPhosphor|midnightCool|manifestoGeometric|swissBrutal|newsprintEditorial)/,
     );
@@ -52,8 +53,8 @@ describe("style pack router", () => {
 
   it("defines premium composition craft rules", () => {
     expect(premiumCompositionContract).toContain("hairline bento");
-    expect(premiumCompositionContract).toContain("gap-px");
-    expect(premiumCompositionContract).toContain("staggerChildren");
+    expect(premiumCompositionContract).toContain("six or more dense");
+    expect(premiumCompositionContract).toContain("Motion is optional");
     expect(premiumCompositionContract).toContain("three equal");
   });
 

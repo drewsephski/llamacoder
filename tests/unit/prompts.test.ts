@@ -117,8 +117,8 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("hairline bento");
     expect(prompt).toContain("three equal");
     expect(prompt).toContain("gap-px");
-    expect(prompt).toContain("did you follow the Active Style Pack directive");
-    expect(prompt).toContain("mixed-span hairline bento");
+    expect(prompt).toContain("Active Style Pack surface/type system");
+    expect(prompt).toContain("Bento only for dense comparable modules");
     expect(prompt).not.toContain(
       "does the app use the Vercel-inspired Tailwind neutral fallback",
     );
@@ -217,7 +217,9 @@ describe("prompt design guidance", () => {
       "do not default to anonymous Vercel-gray SaaS",
     );
     expect(softwareArchitectPrompt).toContain("Premium composition:");
-    expect(softwareArchitectPrompt).toContain("mixed-cell hairline bento");
+    expect(softwareArchitectPrompt).toContain(
+      "mixed-cell Bento only for six or more dense comparable modules",
+    );
     expect(softwareArchitectPrompt).toContain(
       "Normal, helper, and placeholder text must reach 4.5:1",
     );
@@ -266,8 +268,12 @@ describe("prompt design guidance", () => {
     expect(developerCodeGenPrompt).toContain(
       "Do NOT default every vague brief to anonymous Vercel-gray SaaS",
     );
-    expect(developerCodeGenPrompt).toContain("lock one Style Pack");
-    expect(developerCodeGenPrompt).toContain("STYLE_PACK preflight");
+    expect(developerCodeGenPrompt).toContain(
+      "server-resolved Style Pack as a visual implementation recipe",
+    );
+    expect(developerCodeGenPrompt).toContain(
+      "mixed-cell bento only for dense comparable modules",
+    );
     expect(developerCodeGenPrompt).toContain("cobaltMinimal");
     expect(developerCodeGenPrompt).toContain(
       "Visual system coherence contract (mandatory)",
@@ -308,12 +314,32 @@ describe("prompt design guidance", () => {
       userPrompt: "Build an API proxy dashboard for developers",
     });
     expect(prompt).toContain("LOCKED for this build");
-    expect(prompt).toContain("Locked composition scaffold");
+    expect(prompt).toContain("Conditional composition reference");
     expect(prompt).toMatch(
       /STYLE_PACK: (cobaltMinimal|terminalPhosphor|midnightCool|manifestoGeometric|swissBrutal|newsprintEditorial)/,
     );
     expect(prompt).toContain("Visual signature");
     expect(prompt).toContain("One signature only");
+  });
+
+  it("renders the latest effective brief ahead of inferred Style Pack defaults", async () => {
+    const { createEmptyAppSpec } = await import(
+      "@/features/generation/app-spec"
+    );
+    const { resolveEffectiveBrief } = await import(
+      "@/features/generation/effective-brief"
+    );
+    const effectiveBrief = resolveEffectiveBrief({
+      originalIntent: "Build a dark atmospheric AI music app",
+      latestUserRequest: "Make it light and editorial",
+      appSpec: createEmptyAppSpec(),
+    });
+    const prompt = getMainCodingPrompt({ effectiveBrief });
+
+    expect(prompt).toContain("EFFECTIVE BRIEF (authoritative precedence)");
+    expect(prompt).toContain("Make it light and editorial");
+    expect(prompt).toContain("Style Pack is an implementation aid only");
+    expect(prompt).not.toContain("LOCKED for this build");
   });
 
   it("uses the compressed coding prompt when conversation context is large", () => {

@@ -38,6 +38,8 @@ import {
 import shadcnDocs from "./shadcn-docs";
 import { buildDesignIntelligenceReference } from "@/features/generation/design-intelligence";
 import { buildScreenshotCloneCodegenDirective } from "@/features/generation/screenshot-clone";
+import type { EffectiveBrief } from "@/features/generation/effective-brief";
+import { serializeEffectiveBrief } from "@/features/generation/effective-brief";
 
 export {
   screenshotCloneVisionPrompt,
@@ -110,6 +112,7 @@ export function getMainCodingPrompt(options?: {
   estimatedContextTokens?: number;
   /** When true, suspend Style Pack rotation and enforce screenshot fidelity rules. */
   screenshotCloneMode?: boolean;
+  effectiveBrief?: EffectiveBrief;
 }) {
   const designEmphasis = buildDesignEmphasis(
     options?.designScoreSummary ?? null,
@@ -118,7 +121,10 @@ export function getMainCodingPrompt(options?: {
   const catalogEntries = Array.isArray(pastMediaCatalog)
     ? pastMediaCatalog
     : [];
-  const styleBrief = options?.userPrompt?.trim() || "product app";
+  const styleBrief =
+    options?.effectiveBrief?.latestUserRequest ||
+    options?.userPrompt?.trim() ||
+    "product app";
   const screenshotCloneMode = options?.screenshotCloneMode === true;
   const hasCatalogVideo = catalogEntries.some(
     (entry) => entry.kind === "video",
@@ -149,7 +155,20 @@ export function getMainCodingPrompt(options?: {
         - The user supplied explicit aesthetic, palette, or media direction.
         - Honor their direction; do not override with Style Pack routing.
       `
-      : buildActiveStylePackDirective(styleBrief);
+      : buildActiveStylePackDirective(
+          styleBrief,
+          options?.effectiveBrief
+            ? {
+                forcePack: options.effectiveBrief.design.stylePack,
+                macrostructure: options.effectiveBrief.design.macrostructure,
+                navigation: options.effectiveBrief.design.navigation,
+                footer: options.effectiveBrief.design.footer,
+              }
+            : undefined,
+        );
+  const effectiveBriefSection = options?.effectiveBrief
+    ? serializeEffectiveBrief(options.effectiveBrief)
+    : "";
   const designIntelligenceBlock = screenshotCloneMode
     ? ""
     : `\n${buildDesignIntelligenceReference({ mode: "original" })}\n`;
@@ -162,6 +181,8 @@ export function getMainCodingPrompt(options?: {
   if (useCompressedPrompt) {
     return dedent`
       ${getCompressedCodingPrompt()}
+
+      ${effectiveBriefSection}
 
       ${visualSignatureDirective}
 
@@ -177,6 +198,8 @@ export function getMainCodingPrompt(options?: {
   # SquidAgent
 
   You are SquidAgent, an expert frontend React engineer and UI/UX designer. You emulate the world's best developers: concise, helpful, and friendly.
+
+  ${effectiveBriefSection}
 
   ${visualSignatureDirective}
   ${activeStylePackDirective}
@@ -496,8 +519,8 @@ export function getMainCodingPrompt(options?: {
   13. If the user named a color, does the intended element use complete literal classes from that exact Tailwind family, with no computed or conflicting color utilities?
   14. Are exactly one display role and one body role locked and reused throughout, with no font swaps mid-render and no italicized headings?
   15. Did you privately choose and justify explicit nav and footer archetypes (or a justified absence of a footer), avoiding the generic wordmark+links+button nav and four-column footer defaults, and does the overall structure differ from the immediately preceding app generated in this session on at least one of page archetype, nav treatment, or palette family?
-  16. If the user did not specify a theme, did you follow the Active Style Pack directive (SURFACE_MAP + composition scaffold) in the code, keep STYLE_PACK/DIALS/SURFACE_MAP out of the user-facing reply, and avoid anonymous gray SaaS / three equal feature cards / AI-purple glow?
-  16b. Does at least one module use mixed-span hairline bento or the pack's scaffold craft with Framer stagger wired (not three equal icon cards)?
+  16. If the user did not specify a theme, did you follow the Active Style Pack surface/type system without allowing it to override the resolved macrostructure, latest user delta, or approved spec?
+  16b. Does the composition match the product job: workflow regions for a workbench, focused surface for a utility, document rhythm for editorial, and Bento only for dense comparable modules?
   17. Did you trace every visible control to a real handler or valid destination and exercise the primary, cancel, invalid, success, and error paths with visible state changes?
   18. If a theme control exists, does it persist preference, update the root HTML dark class and color-scheme, expose its current state accessibly, and visibly theme every surface including dialogs and toasts?
   19. Does the screen use one coherent luminosity model, at most one focal inverse region, explicit foregrounds for every major surface, a non-uniform hierarchy, and fully styled chart labels/axes/tooltips where applicable?

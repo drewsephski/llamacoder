@@ -2,11 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
-import React, { useMemo, type JSX } from "react";
+import React, { useMemo } from "react";
 
 export type TextShimmerProps = {
   children: string;
-  as?: React.ElementType;
+  as?: "p" | "span";
   className?: string;
   duration?: number;
   spread?: number;
@@ -25,10 +25,7 @@ function TextShimmerComponent({
   shimmerColor,
   style,
 }: TextShimmerProps) {
-  const MotionComponent = useMemo(
-    () => motion.create(Component as keyof JSX.IntrinsicElements),
-    [Component],
-  );
+  const MotionComponent = Component === "span" ? motion.span : motion.p;
 
   const dynamicSpread = useMemo(() => {
     return children.length * spread;
@@ -37,7 +34,7 @@ function TextShimmerComponent({
   return (
     <MotionComponent
       className={cn(
-        "bg-size-[250%_100%,auto] relative inline-block bg-clip-text",
+        "relative inline-block bg-[length:250%_100%,auto] bg-clip-text",
         "[-webkit-text-fill-color:transparent]",
         "[--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--base-gradient-color),#0000_calc(50%+var(--spread)))] [background-repeat:no-repeat,padding-box]",
         className,

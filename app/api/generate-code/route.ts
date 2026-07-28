@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 import { getMainCodingPrompt } from "@/lib/prompts";
+import { resolveEffectiveBrief } from "@/features/generation/effective-brief";
+import {
+  createEmptyAppSpec,
+  parseAppSpec,
+} from "@/features/generation/app-spec";
 import { resolvePastMediaCatalogForPrompt } from "@/features/generation/server/past-media-library";
 import { generateText } from "ai";
 import { auth } from "@/lib/auth";
@@ -234,6 +239,12 @@ export async function POST(request: NextRequest) {
     const pastMediaCatalog = await resolvePastMediaCatalogForPrompt({
       prompt: chat.prompt?.trim() || "",
     });
+    const appSpec = parseAppSpec(chat.appSpec) ?? createEmptyAppSpec();
+    const effectiveBrief = resolveEffectiveBrief({
+      originalIntent: chat.prompt,
+      latestUserRequest: chat.plan,
+      appSpec,
+    });
 
     const generateCode = (userContent: string) =>
       generateText({
@@ -247,7 +258,8 @@ export async function POST(request: NextRequest) {
         ),
         system: getMainCodingPrompt({
           designScoreSummary: latestDesignScores,
-          userPrompt: chat.prompt || chat.plan,
+          userPrompt: effectiveBrief.latestUserRequest,
+          effectiveBrief,
           pastMediaCatalog,
           messageCount: 1,
         }),

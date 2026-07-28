@@ -36,14 +36,14 @@ export function shouldUseCompressedPrompt(
 /**
  * Compressed variant of the main coding prompt.
  *
- * Preserves all hard technical rules (multi-file structure, import resolution,
+ * Preserves all hard technical rules (file organization, import resolution,
  * export style, styling constraints, known gotchas, live API safety) but
  * truncates the design process, anti-generic checks, and premium UX contract
  * to essential summaries.
  *
- * The model still receives the full design contracts via the imported
- * design-prompt-contracts modules — this compression only removes the
- * long-form explanatory prose in the prompt body.
+ * This compact renderer must not redefine hard constraints differently from
+ * the full renderer. Keep its rules semantically equivalent and shorten only
+ * explanations and examples.
  */
 export function getCompressedCodingPrompt(): string {
   return dedent`
@@ -53,11 +53,11 @@ export function getCompressedCodingPrompt(): string {
 
   ## Hard technical rules (never violate these)
 
-  1. **Multi-file structure, always.**
-     - Minimum 3-5 files per app: \`App.tsx\` (routing/layout), \`components/\` (UI pieces), and \`types/\` and/or \`utils/\` as needed.
-     - Never put all logic in one file. A response with only \`App.tsx\` is invalid.
+  1. **Multi-file structure, by default.**
+     - Keep \`App.tsx\` as the composition root and split reusable UI, layout regions, and logic into supporting files when useful.
+     - A genuinely trivial single-purpose app may remain one file; substantial apps may not be monolithic.
      - Do not output paths under \`src/\` — generated files run from the sandbox root.
-     - Do not output or redefine anything under \`components/ui/\` or \`lib/utils\` — those are pre-installed platform files.
+     - Do not redefine \`lib/utils\` or most of \`components/ui/*\`. Branded overrides are allowed only for \`button.tsx\`, \`badge.tsx\`, \`navigation-menu.tsx\`, or \`toggle.tsx\` when the default cannot express the requested states.
 
   2. **Every import must resolve.** Check each import against:
      - A package listed under Available Libraries below.
@@ -119,8 +119,8 @@ export function getCompressedCodingPrompt(): string {
   - Declare one-line interaction-state coverage for primary controls (default, hover, active, focus-visible, disabled, loading, success, error) before finalizing.
   - State the inferred or confirmed audience and single job-to-be-done when the brief is ambiguous.
 
-  Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Pick deliberate nav and footer archetypes.
-  Render header navigation in one centered shell first (\`max-w-*\` + \`mx-auto\` + balanced horizontal padding), then map the chosen nav archetype into it; mobile can simplify or stack but must retain centered rhythm and touch-safe spacing.
+  Lock 4-6 semantic palette roles. Lock one display and one body type role. Choose a structural archetype before styling. Navigation and footer are nullable decisions: preserve existing chrome, integrate navigation into a workbench toolbar, or omit either when the product has no information-architecture need for it.
+  When a separate header navigation is justified, render it in one centered shell first (\`max-w-*\` + \`mx-auto\` + balanced horizontal padding); mobile can simplify or stack but must retain centered rhythm and touch-safe spacing.
   If the user does not provide a brand palette, pick one Hallmark-compatible theme family (editorial, modern-minimal, atmospheric, playful) and keep one global luminosity model.
   - Modern-minimal (technical/dev): prefer Cobalt semantics (single signal hue, bordered controls, code/API anchor, compact corners, low ornamentation).
   - Atmospheric (AI-creative): prefer Lumen semantics (dark-first canvas, one engineered apparatus motif, low-chroma rhythm, one controlled reveal).
@@ -131,7 +131,7 @@ export function getCompressedCodingPrompt(): string {
   - Many equally important features/entry points (6+ tiles/modules): choose a Bento Grid layout.
   - Single thesis or statement-first product story: choose Marquee Hero.
   - Tool-like, control-first workflows: choose Workbench/command + panel composition.
-  - For Bento Grid use explicit tile role classes ('bento', 'span-2x2', 'span-2x1', 'span-1x2', 'span-1x1') so span logic is visible and intentional.
+  - For Bento Grid only, use explicit tile role classes ('bento', 'span-2x2', 'span-2x1', 'span-1x2', 'span-1x1') so span logic is visible and intentional. Never add a Bento merely to demonstrate craft.
   - Pick one theme family for the whole screen and keep one global surface tone. Avoid per-section theme shifts.
 
   Spend boldness in one signature element. Keep the rest disciplined.

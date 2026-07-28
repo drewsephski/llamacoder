@@ -2004,37 +2004,41 @@ export function HomepageBuilderIsland({
                     />
                   </div>
 
-                  {/* Suggested prompts */}
-                  <div className="starter-rail">
-                    {PROMPT_TEMPLATES.map((template, index) => (
-                      <div key={template.id} className="contents">
-                        {index > 0 ? (
-                          <span className="starter-sep" aria-hidden="true" />
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => activateTemplate(template)}
-                          className={`starter-link ${activeTemplate?.id === template.id ? "is-active" : ""}`}
-                          aria-pressed={activeTemplate?.id === template.id}
-                        >
-                          {template.shortLabel}
-                        </button>
+                  {/* Prompt starters */}
+                  <div className="starter-groups" aria-label="Prompt starters">
+                    <div className="starter-group">
+                      <span className="starter-label">Quick starts:</span>
+                      <div className="starter-rail">
+                        {SUGGESTED_PROMPTS.map((v) => (
+                          <button
+                            key={v.title}
+                            type="button"
+                            onClick={() => {
+                              setStarterPrompt(v.description, v.title);
+                            }}
+                            className="starter-link"
+                          >
+                            {v.title}
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                    {SUGGESTED_PROMPTS.map((v) => (
-                      <div key={v.title} className="contents">
-                        <span className="starter-sep" aria-hidden="true" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStarterPrompt(v.description, v.title);
-                          }}
-                          className="starter-link"
-                        >
-                          {v.title}
-                        </button>
+                    </div>
+                    <div className="starter-group">
+                      <span className="starter-label">Customize:</span>
+                      <div className="starter-rail">
+                        {PROMPT_TEMPLATES.map((template) => (
+                          <button
+                            key={template.id}
+                            type="button"
+                            onClick={() => activateTemplate(template)}
+                            className={`starter-link ${activeTemplate?.id === template.id ? "is-active" : ""}`}
+                            aria-pressed={activeTemplate?.id === template.id}
+                          >
+                            {template.shortLabel}
+                          </button>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                   {/* URL section */}
                   <div

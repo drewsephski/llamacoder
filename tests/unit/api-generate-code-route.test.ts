@@ -241,6 +241,38 @@ describe("/api/generate-code", () => {
     });
   });
 
+  it("uses the approved AppSpec and plan to serialize the effective brief", async () => {
+    getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
+    prismaMock.chat.findUnique.mockResolvedValueOnce(
+      buildChat({
+        prompt: "Build a dark atmospheric AI music workbench",
+        plan: "Approved plan: make the workbench light and editorial.",
+        appSpec: {
+          status: "approved",
+          overview: {
+            purpose: "Generate and edit music",
+            appType: "AI music workbench",
+            audience: ["music producers"],
+          },
+          features: { mustHave: ["Edit a track timeline"] },
+          design: { visualDirection: "light editorial" },
+        },
+      }),
+    );
+    generateTextMock.mockResolvedValueOnce({ text: completeGeneratedApp });
+
+    const response = await POST(request({ chatId: "chat_1" }));
+
+    expect(response.status).toBe(200);
+    const system = generateTextMock.mock.calls[0]?.[0]?.system as string;
+    expect(system).toContain("EFFECTIVE BRIEF (authoritative precedence)");
+    expect(system).toContain(
+      "Approved plan: make the workbench light and editorial.",
+    );
+    expect(system).toContain('"macrostructure": "Workbench"');
+    expect(system).toContain('"navigation": "integrated-toolbar"');
+  });
+
   it("rejects before model execution when a credit hold cannot be reserved", async () => {
     getSessionMock.mockResolvedValueOnce({ user: { id: "user_1" } });
     prismaMock.chat.findUnique.mockResolvedValueOnce(buildChat());
