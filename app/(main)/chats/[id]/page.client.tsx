@@ -78,7 +78,7 @@ import {
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getGenerationRecoveryMode } from "@/features/generation/recovery";
 import { getErrorMessage } from "@/features/shared/errors";
-import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
+import { useGenerationHandoffStream } from "@/features/generation/client/generation-handoff-context";
 import { Lightbulb, RotateCcw, X } from "lucide-react";
 import { usePlausible } from "next-plausible";
 
@@ -113,12 +113,10 @@ HeaderChat.displayName = "HeaderChat";
 export default function PageClient({ chat }: { chat: Chat }) {
   const plausible = usePlausible();
   const {
-    streamPromise: initialStreamPromise,
-    setStreamPromise: setContextStreamPromise,
-  } = useGenerationHandoff();
-  const [streamPromise, setStreamPromise] = useState<
-    Promise<CompletionStream> | undefined
-  >(initialStreamPromise);
+    streamPromise,
+    setStreamPromise,
+    setHandedOffStreamPromise: setContextStreamPromise,
+  } = useGenerationHandoffStream();
   const [streamText, setStreamText] = useState("");
   const [reasoningText, setReasoningText] = useState("");
   const [streamSources, setStreamSources] = useState<SourceUrl[]>([]);
