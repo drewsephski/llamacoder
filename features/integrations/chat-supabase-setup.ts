@@ -50,6 +50,7 @@ export const chatSupabaseSetupViewSchema = z
           "authenticated_tasks",
           "owner_scoped_crud",
           "public_read_owner_write",
+          "public_insert",
           "related_owner_scoped",
         ])
         .optional(),
@@ -169,7 +170,7 @@ function messageForState(
     case "backend_verifying":
       return "Squid is verifying the database structure and security rules.";
     case "ready":
-      return "Supabase is ready. Squid can now build authentication and persistent task data.";
+      return "Supabase is ready. Squid can now build the requested authentication and persistent data flows.";
     case "timed_out":
       return "Supabase took too long to finish provisioning. You can safely resume the same project.";
     case "failed":

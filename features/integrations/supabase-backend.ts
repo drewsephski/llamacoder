@@ -238,6 +238,15 @@ const publicReadOwnerWritePlanSchema = z
     }
   });
 
+const publicInsertPlanSchema = z
+  .object({
+    ...customPlanBase,
+    template: z.literal("public_insert"),
+    operations: z.tuple([z.literal("insert")]),
+    entity: backendEntitySchema,
+  })
+  .strict();
+
 const relatedOwnerScopedPlanSchema = z
   .object({
     ...customPlanBase,
@@ -314,6 +323,7 @@ export const supabaseBackendPlanSchema = z.union([
   authenticatedTasksBackendPlanSchema,
   ownerScopedCrudPlanSchema,
   publicReadOwnerWritePlanSchema,
+  publicInsertPlanSchema,
   relatedOwnerScopedPlanSchema,
 ]);
 
@@ -398,7 +408,7 @@ export const supabaseAuthModeSchema = z.enum([
 export type SupabaseAuthMode = z.infer<typeof supabaseAuthModeSchema>;
 
 export const DEFAULT_SUPABASE_AUTH_MODE =
-  "prototype_instant_signup" as const satisfies SupabaseAuthMode;
+  "verified_email" as const satisfies SupabaseAuthMode;
 
 export const supabaseAuthStateSchema = z
   .object({
@@ -511,10 +521,14 @@ export function buildSupabaseBackendGenerationContext({
     `The server verified the ${plan.template} version ${plan.version} plan. Do not output SQL, migrations, policies, service-role keys, or Management API credentials.`,
     'Import the protected browser client exactly as: import { supabase } from "@/lib/supabase";',
     `Allowed operations: ${plan.operations.join(", ")}. Use no table or operation outside this contract.`,
-    plan.template === "public_read_owner_write"
-      ? "Rows are publicly readable, but every insert, update, and delete is restricted by RLS to the authenticated row owner."
-      : "Every operation is restricted by RLS to the authenticated row owner.",
-    "Obtain the authenticated user before inserts and set user_id to that user's id. Never update user_id and never use a privileged key.",
+    plan.template === "public_insert"
+      ? "The browser may insert new rows without authentication. It cannot read, update, or delete submitted rows. Do not query submissions back into the public UI. Add a clear success state, rate-limit-friendly retry behavior, and a honeypot field for public forms."
+      : plan.template === "public_read_owner_write"
+        ? "Rows are publicly readable, but every insert, update, and delete is restricted by RLS to the authenticated row owner."
+        : "Every operation is restricted by RLS to the authenticated row owner.",
+    plan.template === "public_insert"
+      ? "Insert only the declared form fields. Never use a privileged key or expose administrative reads in the browser."
+      : "Obtain the authenticated user before inserts and set user_id to that user's id. Never update user_id and never use a privileged key.",
     entityContract,
     "Implement explicit loading, empty, validation, and actionable error states. Update local state only after Supabase succeeds.",
     "=== END VERIFIED SUPABASE BACKEND PLAN ===",

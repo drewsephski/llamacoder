@@ -276,8 +276,8 @@ export async function getConnectedIntegrationPromptContext({
             }),
           ]
         : [
-            "Supabase browser runtime may be connected, but the authenticated_tasks backend is not verified ready. Do not claim working task persistence or invent SQL. The user must approve and complete Squid's server-owned backend template first.",
-            `For the exact signed-in personal tasks use case, the model may request only this typed plan and must never provide executable SQL: ${JSON.stringify(getAuthenticatedTasksBackendPlan())}`,
+            "Supabase browser runtime may be connected, but no approved backend plan is verified ready. Do not claim working persistence or invent SQL. The user must approve and complete Squid's server-owned typed backend setup first.",
+            `For the exact signed-in personal tasks compatibility case, the model may request this typed plan and must never provide executable SQL: ${JSON.stringify(getAuthenticatedTasksBackendPlan())}`,
           ];
     }),
   ].join("\n");

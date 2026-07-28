@@ -50,6 +50,7 @@ export const backendSetupRequestSchema = z.object({
           "authenticated_tasks",
           "owner_scoped_crud",
           "public_read_owner_write",
+          "public_insert",
           "related_owner_scoped",
         ])
         .optional(),

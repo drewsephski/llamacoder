@@ -398,13 +398,13 @@ describe("direct backend setup card", () => {
     renderCard();
 
     expect(
-      await screen.findByRole("radio", { name: /instant signup/i }),
+      await screen.findByRole("radio", { name: /verified email/i }),
     ).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByText("Recommended for testing")).toBeInTheDocument();
+    expect(screen.getByText("Recommended")).toBeInTheDocument();
     expect(screen.getByText("Security and launch details")).toBeInTheDocument();
     expect(screen.getByText("More details")).toBeInTheDocument();
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve instant signup" }),
+      screen.getByRole("button", { name: "Use verified email" }),
     );
 
     await waitFor(() =>
@@ -414,7 +414,7 @@ describe("direct backend setup card", () => {
           method: "POST",
           body: JSON.stringify({
             action: "configure_auth_mode",
-            mode: "prototype_instant_signup",
+            mode: "verified_email",
             approval: { approved: true },
           }),
         }),

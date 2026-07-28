@@ -561,9 +561,9 @@ describe("project integrations panel", () => {
     );
     expect(await screen.findByText("Existing Tasks")).toBeInTheDocument();
     expect(
-      screen.getByText(/Prototype\/demo — instant signup/),
+      screen.getByText(/Verified email — production mode/),
     ).toBeInTheDocument();
-    expect(screen.getByText("Recommended for testing")).toBeInTheDocument();
+    expect(screen.getByText("Recommended")).toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "Connect Supabase project" }),
     );
@@ -573,7 +573,7 @@ describe("project integrations panel", () => {
     );
     expect(JSON.parse(bindingRequest!.body!)).toEqual({
       action: "supabase_bind_project",
-      authMode: "prototype_instant_signup",
+      authMode: "verified_email",
       authModeApproval: { approved: true },
       projectRef: "existing-ref",
     });

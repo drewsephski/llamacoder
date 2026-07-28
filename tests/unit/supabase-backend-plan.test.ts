@@ -13,6 +13,7 @@ import {
 } from "@/features/integrations/server/supabase-backend-plan";
 import { appSpecSchema } from "@/features/generation/app-spec";
 import { classifySupabaseSetupRequirements } from "@/features/generation/mode-policy";
+import { validateSupabaseBackendGeneratedApp } from "@/lib/generated-api";
 
 type OwnerPlan = Extract<
   SupabaseBackendPlan,
@@ -75,12 +76,16 @@ function verificationResult(
             rlsForced: true,
             columns: [
               { name: "id", type: "uuid", nullable: "NO", default: null },
-              {
-                name: "user_id",
-                type: "uuid",
-                nullable: "NO",
-                default: null,
-              },
+              ...(compiled.plan.template === "public_insert"
+                ? []
+                : [
+                    {
+                      name: "user_id",
+                      type: "uuid",
+                      nullable: "NO",
+                      default: null,
+                    },
+                  ]),
               ...entity.columns.map((column) => ({
                 name: column.name,
                 type:
@@ -109,12 +114,16 @@ function verificationResult(
                 type: "p",
                 definition: "PRIMARY KEY (id)",
               },
-              {
-                name: `${entity.name}_user_id_fkey`,
-                type: "f",
-                definition:
-                  "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
-              },
+              ...(compiled.plan.template === "public_insert"
+                ? []
+                : [
+                    {
+                      name: `${entity.name}_user_id_fkey`,
+                      type: "f",
+                      definition:
+                        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+                    },
+                  ]),
               ...relationships.map((relationship) => ({
                 name: `${entity.name}_${relationship.column}_fkey`,
                 type: "f",
@@ -122,7 +131,11 @@ function verificationResult(
               })),
             ],
             indexes: [
-              `CREATE INDEX ${entity.name}_user_id_idx ON public.${entity.name} USING btree (user_id)`,
+              ...(compiled.plan.template === "public_insert"
+                ? []
+                : [
+                    `CREATE INDEX ${entity.name}_user_id_idx ON public.${entity.name} USING btree (user_id)`,
+                  ]),
               ...relationships.map(
                 (relationship) =>
                   `CREATE INDEX ${entity.name}_${relationship.column}_idx ON public.${entity.name} USING btree (${relationship.column})`,
@@ -132,12 +145,14 @@ function verificationResult(
               const publicRead =
                 compiled.plan.template === "public_read_owner_write" &&
                 operation === "select";
+              const publicInsert = compiled.plan.template === "public_insert";
               return {
                 name: `policy_${operation}`,
                 command: operation.toUpperCase(),
-                roles: publicRead
-                  ? ["anon", "authenticated"]
-                  : ["authenticated"],
+                roles:
+                  publicRead || publicInsert
+                    ? ["anon", "authenticated"]
+                    : ["authenticated"],
                 using:
                   operation === "insert"
                     ? null
@@ -145,7 +160,9 @@ function verificationResult(
                       ? "true"
                       : "((SELECT auth.uid()) = user_id)",
                 withCheck: ["insert", "update"].includes(operation)
-                  ? "((SELECT auth.uid()) = user_id)"
+                  ? publicInsert
+                    ? "id IS NOT NULL"
+                    : "((SELECT auth.uid()) = user_id)"
                   : null,
               };
             }),
@@ -155,7 +172,9 @@ function verificationResult(
             anonGrants:
               compiled.plan.template === "public_read_owner_write"
                 ? ["SELECT"]
-                : [],
+                : compiled.plan.template === "public_insert"
+                  ? ["INSERT"]
+                  : [],
             publicGrants: [],
           };
         }),
@@ -218,6 +237,76 @@ describe("typed Supabase backend plans", () => {
       supabaseBackendPlanSchema.safeParse({ ...plan, sql: "drop table users" })
         .success,
     ).toBe(false);
+  });
+
+  it("creates an insert-only public backend for forms without accounts", () => {
+    const spec = appSpecSchema.parse({
+      overview: { purpose: "A contact form" },
+      dataPersistence: {
+        detected: true,
+        confidence: 99,
+        recommendation: "require_database",
+        explicitlyRequested: true,
+        status: "connect_confirmed",
+        useCase: "Collect contact requests",
+        proposedSchema: [
+          {
+            entity: "contact_requests",
+            purpose: "Contact form submissions",
+            fields: ["email: text", "message: text"],
+          },
+        ],
+      },
+    });
+    const requirements = classifySupabaseSetupRequirements({
+      prompt: "Build a public contact form",
+      spec,
+    });
+    expect(requirements.authentication).toBe(false);
+    expect(requirements.backendTemplate).toBe("public_insert");
+    const compiled = compileSupabaseBackendPlan(requirements.backendPlan);
+    expect(compiled.migrationSql).toContain(
+      "grant insert on table public.contact_requests to anon",
+    );
+    expect(compiled.migrationSql).not.toContain("user_id uuid");
+    expect(compiled.migrationSql).not.toMatch(/grant select/i);
+    expect(
+      verifySupabaseBackendPlanResult(compiled, verificationResult(compiled)),
+    ).toMatchObject({ anonAccessRevoked: false, rowLevelSecurity: true });
+    expect(buildSupabaseBackendCanary(compiled).tables[0]).toMatchObject({
+      isolation: "anonymous_insert_only",
+      operations: ["insert"],
+    });
+    expect(
+      validateSupabaseBackendGeneratedApp(
+        [
+          {
+            path: "App.tsx",
+            code: `import { supabase } from "@/lib/supabase";
+              await supabase.from("contact_requests").insert({ email, message });`,
+          },
+        ],
+        compiled.plan,
+      ),
+    ).toEqual([]);
+    expect(
+      validateSupabaseBackendGeneratedApp(
+        [
+          {
+            path: "App.tsx",
+            code: `await supabase.from("contact_requests").select();`,
+          },
+        ],
+        compiled.plan,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ message: expect.stringContaining("insert") }),
+        expect.objectContaining({
+          message: expect.stringContaining("cannot select"),
+        }),
+      ]),
+    );
   });
 
   it("rejects identifiers, incompatible defaults, unknown indexes, and checksum drift", () => {

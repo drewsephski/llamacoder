@@ -232,12 +232,11 @@ export function classifySupabaseSetupRequirements({
     /\btasks?\b/i.test(entity.entity),
   );
   const isTaskApp = /\b(?:task manager|todo|to-do|tasks?)\b/i.test(normalized);
-  const backendPlan =
-    database && authentication
-      ? hasTasksEntity || isTaskApp
-        ? getAuthenticatedTasksBackendPlan()
-        : buildBackendPlanFromAppSpec(spec)
-      : null;
+  const backendPlan = database
+    ? authentication && (hasTasksEntity || isTaskApp)
+      ? getAuthenticatedTasksBackendPlan()
+      : buildBackendPlanFromAppSpec(spec, { authentication })
+    : null;
 
   return {
     database,
@@ -312,7 +311,10 @@ function inferBackendColumn(
   };
 }
 
-function buildBackendPlanFromAppSpec(spec: AppSpec) {
+function buildBackendPlanFromAppSpec(
+  spec: AppSpec,
+  { authentication }: { authentication: boolean },
+) {
   const sourceEntities = spec.dataPersistence.proposedSchema.slice(0, 4);
   if (!sourceEntities.length) return null;
   const names = sourceEntities.map((entity, index) =>
@@ -382,6 +384,16 @@ function buildBackendPlanFromAppSpec(spec: AppSpec) {
     });
   }
   const { relationships: _relationships, ...singleEntity } = entities[0];
+  if (!authentication) {
+    return createSupabaseBackendPlan({
+      version: 2,
+      template: "public_insert",
+      summary: `Accept public submissions into ${entities[0].name} without exposing stored rows.`,
+      operations: ["insert"],
+      destructive: false,
+      entity: singleEntity,
+    });
+  }
   return createSupabaseBackendPlan({
     version: 2,
     template: isPublicRead ? "public_read_owner_write" : "owner_scoped_crud",

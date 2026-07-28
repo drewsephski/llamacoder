@@ -19,6 +19,7 @@ import {
 } from "@/lib/generated-files";
 import {
   validateAuthenticatedTasksGeneratedApp,
+  validateSupabaseBackendGeneratedApp,
   validateSelectedApiUsage,
 } from "@/lib/generated-api";
 import {
@@ -95,17 +96,22 @@ async function getGeneratedAppContractDiagnostics(
     files,
     selectedBindings.map((binding) => binding.providerId),
   );
-  const authenticatedTasksReady = selectedBindings.some((binding) => {
-    if (binding.providerId !== "supabase") return false;
+  const readySupabaseBackends = selectedBindings.flatMap((binding) => {
+    if (binding.providerId !== "supabase") return [];
     const backend = readSupabaseBackendState(binding.config);
-    return (
-      backend?.status === "ready" &&
-      backend.plan.migrationChecksum ===
-        getAuthenticatedTasksBackendPlan().migrationChecksum
-    );
+    return backend?.status === "ready" ? [backend.plan] : [];
   });
-  if (authenticatedTasksReady) {
-    diagnostics.push(...(await validateAuthenticatedTasksGeneratedApp(files)));
+  for (const plan of readySupabaseBackends) {
+    if (
+      plan.migrationChecksum ===
+      getAuthenticatedTasksBackendPlan().migrationChecksum
+    ) {
+      diagnostics.push(
+        ...(await validateAuthenticatedTasksGeneratedApp(files)),
+      );
+    } else {
+      diagnostics.push(...validateSupabaseBackendGeneratedApp(files, plan));
+    }
   }
   return diagnostics;
 }
@@ -495,13 +501,7 @@ export async function saveStreamedAssistantMessage(
   files: RawGeneratedFile[],
   options?: { creditHoldId?: string; generationRunId?: string },
 ) {
-  return createMessage(
-    chatId,
-    text,
-    "assistant",
-    files,
-    options,
-  );
+  return createMessage(chatId, text, "assistant", files, options);
 }
 
 export async function releaseReservedCreditHold(holdId: string) {

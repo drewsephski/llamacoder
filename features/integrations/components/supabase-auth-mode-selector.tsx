@@ -40,9 +40,6 @@ export function SupabaseAuthModeSelector({
       >
         <span className="block font-semibold">
           {compact ? "Instant signup" : "Prototype/demo — instant signup"}
-          <span className="ml-1 font-normal text-amber-700 dark:text-amber-300">
-            Recommended for testing
-          </span>
         </span>
         <span className="mt-1 block text-xs leading-5 text-muted-foreground">
           Users can start immediately while you build and test. Email ownership
@@ -59,6 +56,9 @@ export function SupabaseAuthModeSelector({
       >
         <span className="block font-semibold">
           {compact ? "Verified email" : "Verified email — production mode"}
+          <span className="ml-1 font-normal text-blue-700 dark:text-blue-300">
+            Recommended
+          </span>
         </span>
         <span className="mt-1 block text-xs leading-5 text-muted-foreground">
           Use before launch. Requires working email delivery for confirmation

@@ -65,6 +65,10 @@ function markerForPlan(plan: CustomBackendPlan) {
   return `squid:backend_plan:v2:${sha256(canonicalJson(definition)).slice(0, 24)}`;
 }
 
+function isPublicInsertPlan(plan: CustomBackendPlan) {
+  return plan.template === "public_insert";
+}
+
 function compileDefault(column: BackendEntity["columns"][number]) {
   if (!column.default) return "";
   switch (column.default.kind) {
@@ -110,6 +114,9 @@ function compilePolicies(plan: CustomBackendPlan, entity: BackendEntity) {
   lines.push(
     `grant ${grants} on table public.${entity.name} to authenticated;`,
   );
+  if (isPublicInsertPlan(plan)) {
+    lines.push(`grant insert on table public.${entity.name} to anon;`);
+  }
   if (plan.template === "public_read_owner_write") {
     lines.push(`grant select on table public.${entity.name} to anon;`);
   }
@@ -125,6 +132,12 @@ function compilePolicies(plan: CustomBackendPlan, entity: BackendEntity) {
     lines.push(
       `drop policy if exists "${policyName}" on public.${entity.name};`,
     );
+    if (isPublicInsertPlan(plan)) {
+      lines.push(
+        `create policy "${policyName}" on public.${entity.name} for insert to anon, authenticated with check (id is not null);`,
+      );
+      continue;
+    }
     if (plan.template === "public_read_owner_write" && operation === "select") {
       lines.push(
         `create policy "${policyName}" on public.${entity.name} for select to anon, authenticated using (true);`,
@@ -170,13 +183,12 @@ $$;
 
 create table if not exists public.${entity.name} (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-${columns},
+${isPublicInsertPlan(plan) ? "" : "  user_id uuid not null references auth.users(id) on delete cascade,\n"}${columns},
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 comment on table public.${entity.name} is '${marker}';
-create index if not exists ${sqlName(entity.name, "user_id", "idx")} on public.${entity.name} (user_id);`;
+${isPublicInsertPlan(plan) ? "" : `create index if not exists ${sqlName(entity.name, "user_id", "idx")} on public.${entity.name} (user_id);`}`;
     })
     .join("\n\n");
   const relationships =
@@ -438,7 +450,9 @@ export function verifySupabaseBackendPlanResult(
     const expectedColumns = new Map<string, { type: string; nullable: string }>(
       [
         ["id", { type: "uuid", nullable: "NO" }],
-        ["user_id", { type: "uuid", nullable: "NO" }],
+        ...(isPublicInsertPlan(compiled.plan)
+          ? []
+          : ([["user_id", { type: "uuid", nullable: "NO" }]] as const)),
         ...entity.columns.map(
           (column) =>
             [
@@ -465,18 +479,31 @@ export function verifySupabaseBackendPlanResult(
           expected.nullable === column.nullable
         );
       });
-    const ownerIndex = row.indexes.some((definition) =>
-      new RegExp(`\\(user_id\\)\\s*$`, "i").test(definition.trim()),
-    );
+    const ownerIndex =
+      isPublicInsertPlan(compiled.plan) ||
+      row.indexes.some((definition) =>
+        new RegExp(`\\(user_id\\)\\s*$`, "i").test(definition.trim()),
+      );
     const grants = [...row.authenticatedGrants].sort();
     const expectedGrants = [...expectedOperations].sort();
     const anonGrants =
-      compiled.plan.template === "public_read_owner_write" ? ["SELECT"] : [];
+      compiled.plan.template === "public_read_owner_write"
+        ? ["SELECT"]
+        : isPublicInsertPlan(compiled.plan)
+          ? ["INSERT"]
+          : [];
     const policiesValid = compiled.plan.operations.every((operation) => {
       const policy = row.policies.find(
         (candidate) => candidate.command.toLowerCase() === operation,
       );
       if (!policy) return false;
+      if (isPublicInsertPlan(compiled.plan)) {
+        return (
+          policy.roles.includes("anon") &&
+          policy.roles.includes("authenticated") &&
+          normalizePolicy(policy.withCheck) === "idisnotnull"
+        );
+      }
       if (
         compiled.plan.template === "public_read_owner_write" &&
         operation === "select"
@@ -501,13 +528,15 @@ export function verifySupabaseBackendPlanResult(
         constraint.type === "p" &&
         constraint.definition.toLowerCase() === "primary key (id)",
     );
-    const ownerForeignKey = row.constraints.some(
-      (constraint) =>
-        constraint.type === "f" &&
-        /foreign key \(user_id\) references auth\.users\(id\) on delete cascade/i.test(
-          constraint.definition,
-        ),
-    );
+    const ownerForeignKey =
+      isPublicInsertPlan(compiled.plan) ||
+      row.constraints.some(
+        (constraint) =>
+          constraint.type === "f" &&
+          /foreign key \(user_id\) references auth\.users\(id\) on delete cascade/i.test(
+            constraint.definition,
+          ),
+      );
     const relationshipsValid = (entity.relationships ?? []).every(
       (relationship) =>
         row.constraints.some(
@@ -552,7 +581,9 @@ export function verifySupabaseBackendPlanResult(
     rowLevelSecurity: true,
     authenticatedGrants: true,
     ownershipPolicies: true,
-    anonAccessRevoked: compiled.plan.template !== "public_read_owner_write",
+    anonAccessRevoked: !["public_read_owner_write", "public_insert"].includes(
+      compiled.plan.template,
+    ),
   };
 }
 
@@ -591,7 +622,10 @@ export function buildSupabaseBackendCanary(
     tables: compiled.tableNames.map((table) => ({
       table,
       operations: compiled.plan.operations,
-      isolation: "two_user_owner_rls" as const,
+      isolation:
+        compiled.plan.template === "public_insert"
+          ? ("anonymous_insert_only" as const)
+          : ("two_user_owner_rls" as const),
       publicRead: compiled.plan.template === "public_read_owner_write",
     })),
   };

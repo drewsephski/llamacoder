@@ -52,6 +52,7 @@ import {
 } from "@/features/integrations/contracts";
 import {
   DEFAULT_SUPABASE_AUTH_MODE,
+  type SupabaseBackendPlan,
   type SupabaseAuthMode,
 } from "@/features/integrations/supabase-backend";
 import { fetchJson } from "@/features/shared/client/http";
@@ -62,6 +63,28 @@ function setupQueryKey(projectId: string, interactionId: string) {
 }
 
 const autoResumedContinuations = new Set<string>();
+
+function backendPlanDetails(plan: SupabaseBackendPlan | null | undefined) {
+  if (!plan) return null;
+  if (plan.template === "authenticated_tasks") {
+    return {
+      summary: plan.summary,
+      tables: ["tasks"],
+      access: "Signed-in users can access only their own rows.",
+    };
+  }
+  const tables =
+    "entity" in plan
+      ? [plan.entity.name]
+      : plan.entities.map((entity) => entity.name);
+  const access =
+    plan.template === "public_insert"
+      ? "Anyone can submit new rows; stored submissions cannot be read from the public app."
+      : plan.template === "public_read_owner_write"
+        ? "Anyone can read rows; signed-in owners control writes."
+        : "Signed-in users can access only their own rows.";
+  return { summary: plan.summary, tables, access };
+}
 
 function SetupProgress({
   state,
@@ -115,6 +138,7 @@ function SetupProgress({
 }
 
 function TechnicalDetails({ request }: { request: BackendSetupRequest }) {
+  const plan = backendPlanDetails(request.requirements.backendPlan);
   return (
     <details className="group mt-3 text-xs text-muted-foreground">
       <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-sm font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -128,10 +152,10 @@ function TechnicalDetails({ request }: { request: BackendSetupRequest }) {
             {capability}
           </span>
         ))}
-        {request.requirements.backendTemplate ? (
+        {plan ? (
           <span>
-            Backend template: secure personal tasks. Executable SQL stays on
-            Squid&apos;s server.
+            Database tables: {plan.tables.join(", ")}. {plan.access} Executable
+            SQL stays on Squid&apos;s server.
           </span>
         ) : null}
       </div>
@@ -780,19 +804,23 @@ export function ChatSupabaseSetupCard({
           <div className="mt-3 grid gap-2.5">
             <div className="rounded-lg border border-border/60 bg-muted/25 p-2.5 text-xs leading-5 text-muted-foreground">
               <p className="font-medium text-foreground">Backend setup</p>
-              <p className="mt-1">
-                Creates the tasks table, enables row-level security, and lets
-                signed-in users access only their own tasks. No destructive
-                changes.
-              </p>
+              <p className="mt-1">{view?.backendPlan?.summary}</p>
+              {backendPlanDetails(view?.backendPlan) ? (
+                <p className="mt-1">
+                  Tables:{" "}
+                  {backendPlanDetails(view?.backendPlan)?.tables.join(", ")}.{" "}
+                  {backendPlanDetails(view?.backendPlan)?.access}
+                </p>
+              ) : null}
               <details className="mt-2">
                 <summary className="cursor-pointer rounded-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   View technical details
                 </summary>
                 <p className="mt-2">
-                  Squid applies its fixed authenticated_tasks v1 template. The
-                  browser receives the summary and checksum, never executable
-                  migration SQL.
+                  Squid compiles a non-destructive typed plan, enables and
+                  verifies row-level security, applies least-privilege Data API
+                  grants, and checks the schema after creation. The browser
+                  receives the plan summary and checksum, never executable SQL.
                 </p>
               </details>
             </div>

@@ -5,6 +5,7 @@ import {
   getIntegrationProvider,
   type IntegrationPolicyStatus,
 } from "@/features/integrations/registry";
+import type { SupabaseBackendPlan } from "@/features/integrations/supabase-backend";
 
 export type ApiIntegrationIssue = {
   path?: string;
@@ -1011,5 +1012,61 @@ export async function validateAuthenticatedTasksGeneratedApp(
     "Give every rendered icon-only button an accessible name.",
   );
 
+  return issues;
+}
+
+export function validateSupabaseBackendGeneratedApp(
+  files: SourceFile[],
+  plan: SupabaseBackendPlan,
+): ApiIntegrationIssue[] {
+  if (plan.template === "authenticated_tasks") return [];
+  const source = files
+    .filter((file) => /\.(?:ts|tsx|js|jsx)$/i.test(file.path))
+    .map((file) => file.code)
+    .join("\n");
+  const issues: ApiIntegrationIssue[] = [];
+  const entities = "entity" in plan ? [plan.entity] : plan.entities;
+  const allowedTables = new Set(entities.map((entity) => entity.name));
+  const tableMatches = Array.from(
+    source.matchAll(/\.from\(\s*["']([^"']+)["']\s*\)/g),
+  );
+
+  for (const table of allowedTables) {
+    if (!tableMatches.some((match) => match[1] === table)) {
+      issues.push({
+        message: `Verified Supabase backend app must use public.${table}.`,
+      });
+      continue;
+    }
+    for (const operation of plan.operations) {
+      const usage = new RegExp(
+        `\\.from\\(\\s*["']${escapeRegExp(table)}["']\\s*\\)[\\s\\S]*?\\.${operation}\\s*\\(`,
+      );
+      if (!usage.test(source)) {
+        issues.push({
+          message: `Verified Supabase backend app must ${operation} public.${table}.`,
+        });
+      }
+    }
+  }
+
+  for (const match of tableMatches) {
+    if (!allowedTables.has(match[1])) {
+      issues.push({
+        message: `Verified Supabase backend app may access only ${Array.from(allowedTables, (table) => `public.${table}`).join(", ")}.`,
+      });
+      break;
+    }
+  }
+
+  if (plan.template === "public_insert") {
+    for (const forbidden of ["select", "update", "delete"] as const) {
+      if (new RegExp(`\\.${forbidden}\\s*\\(`).test(source)) {
+        issues.push({
+          message: `Public submission backends cannot ${forbidden} stored rows from the browser.`,
+        });
+      }
+    }
+  }
   return issues;
 }
