@@ -1,8 +1,14 @@
 "use client";
 
-import { animate, motion, useMotionValue } from "framer-motion";
+import {
+  animate,
+  motion,
+  useDragControls,
+  useMotionValue,
+} from "framer-motion";
 import {
   type MouseEvent,
+  type PointerEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -29,6 +35,7 @@ export function DraggableProjectRail({
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const draggedRef = useRef(false);
+  const dragControls = useDragControls();
   const x = useMotionValue(0);
   const [maxDrag, setMaxDrag] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -77,23 +84,33 @@ export function DraggableProjectRail({
     draggedRef.current = false;
   };
 
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (isDesktop || maxDrag === 0) return;
+
+    draggedRef.current = false;
+    dragControls.start(event, {
+      distanceThreshold: DRAG_CLICK_THRESHOLD_PX,
+      snapToCursor: false,
+    });
+  };
+
   return (
     <div
       ref={viewportRef}
       className={`showcase-rail-viewport showcase-rail-viewport--${variant}`}
       aria-label={ariaLabel}
+      onPointerDown={handlePointerDown}
     >
       <motion.div
         ref={trackRef}
         className={`showcase-rail showcase-rail--${variant}`}
         drag={!isDesktop && maxDrag > 0 ? "x" : false}
+        dragControls={dragControls}
         dragConstraints={{ left: -maxDrag, right: 0 }}
         dragElastic={0.08}
+        dragListener={false}
         dragMomentum={false}
         style={{ x }}
-        onPointerDownCapture={() => {
-          draggedRef.current = false;
-        }}
         onDragStart={() => {
           draggedRef.current = false;
         }}
@@ -120,6 +137,10 @@ export function DraggableProjectRail({
             stiffness: 320,
             damping: 34,
           });
+
+          window.setTimeout(() => {
+            draggedRef.current = false;
+          }, 0);
         }}
         onClickCapture={handleClickCapture}
       >
