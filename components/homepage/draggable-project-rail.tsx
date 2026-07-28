@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  animate,
-  motion,
-  useDragControls,
-  useMotionValue,
-} from "framer-motion";
+import { animate, motion, useDragControls, useMotionValue } from "motion/react";
 import {
   type MouseEvent,
   type PointerEvent,
