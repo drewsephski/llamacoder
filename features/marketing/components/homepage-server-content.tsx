@@ -271,7 +271,15 @@ export function HomepageLandingPagesSection() {
           </p>
         </div>
 
-        <div className="showcase-rail -mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
+        <p className="mt-10 flex items-center justify-end gap-2 text-xs font-medium text-muted-foreground md:hidden">
+          Swipe to explore
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </p>
+        <div
+          className="showcase-rail -mx-4 mt-3 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-3 md:mx-0 md:mt-12 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 md:pb-0"
+          aria-label="Landing page projects"
+          tabIndex={0}
+        >
           {landingPages.map((landing) => (
             <ShowcaseProjectCard
               key={landing.href}
@@ -374,11 +382,19 @@ export function HomepageBuiltWithSquidSection() {
           </Link>
         </div>
 
-        <div className="showcase-rail -mx-4 mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-12 lg:gap-x-6 lg:gap-y-12 lg:overflow-visible lg:px-0 lg:pb-0">
+        <p className="mt-10 flex items-center justify-end gap-2 text-xs font-medium text-muted-foreground lg:hidden">
+          Swipe to explore
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </p>
+        <div
+          className="showcase-rail -mx-4 mt-3 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-3 lg:mx-0 lg:mt-12 lg:grid lg:grid-cols-12 lg:gap-x-6 lg:gap-y-12 lg:overflow-visible lg:px-0 lg:pb-0"
+          aria-label="Projects built with Squid"
+          tabIndex={0}
+        >
           {shippedProjects.map((project) => (
             <figure
               key={project.href}
-              className="group w-[min(85vw,22rem)] min-w-0 shrink-0 snap-center border-t border-border/70 pt-4 lg:col-span-6 lg:w-auto"
+              className="group w-[min(82vw,22rem)] min-w-0 shrink-0 snap-start border-t border-border/70 pt-4 [scroll-snap-stop:always] sm:w-[min(76vw,24rem)] lg:col-span-6 lg:w-auto"
             >
               <a
                 href={project.href}

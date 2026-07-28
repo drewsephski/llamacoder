@@ -11,6 +11,7 @@
     "build": "prisma generate && next build",
     "credits:grant": "tsx scripts/grant-credits.ts",
     "feedback:review": "tsx scripts/review-feedback.ts",
+    "eval:generation": "tsx scripts/run-generation-evals.ts",
     "db:deploy": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint . && tsc --noEmit --noUnusedLocals",
