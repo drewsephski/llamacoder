@@ -3,6 +3,7 @@ import { developerCodeGenPrompt } from "@/features/generation/agent-prompts";
 import { buildGeneratedFilesRepairPrompt } from "@/lib/generated-files";
 import { getMainCodingPrompt, softwareArchitectPrompt } from "@/lib/prompts";
 import { dependencies } from "@/lib/sandpack-config";
+import { getRequiredGeneratedAppDependencies } from "@/lib/generated-app-dependencies";
 
 describe("generated app dependencies", () => {
   it("pins the complete generated-app capability set", () => {
@@ -31,6 +32,8 @@ describe("generated app dependencies", () => {
       "@react-three/postprocessing": "3.0.4",
       "@react-three/rapier": "2.2.0",
       "@react-three/cannon": "6.6.0",
+      "@splinetool/react-spline": "4.1.0",
+      "@splinetool/runtime": "1.12.98",
       "three-stdlib": "2.36.1",
       maath: "0.10.8",
       postprocessing: "6.39.3",
@@ -63,6 +66,17 @@ describe("generated app dependencies", () => {
       "@tsparticles/slim": "4.3.2",
       "react-parallax": "3.5.2",
       motion: "12.43.0",
+    });
+  });
+
+  it("includes the Spline runtime when generated code imports React Spline", () => {
+    expect(
+      getRequiredGeneratedAppDependencies([
+        "import Spline from '@splinetool/react-spline';",
+      ]),
+    ).toEqual({
+      "@splinetool/react-spline": "4.1.0",
+      "@splinetool/runtime": "1.12.98",
     });
   });
 

@@ -64,6 +64,8 @@ export const generatedAppDependencies: Record<string, string> = {
   "@react-three/postprocessing": "3.0.4",
   "@react-three/rapier": "2.2.0",
   "@react-three/cannon": "6.6.0",
+  "@splinetool/react-spline": "4.1.0",
+  "@splinetool/runtime": "1.12.98",
   "three-stdlib": "2.36.1",
   maath: "0.10.8",
   postprocessing: "6.39.3",
@@ -95,6 +97,10 @@ export const generatedAppDependencies: Record<string, string> = {
   "react-parallax": "3.5.2",
   zod: "4.4.3",
   zustand: "5.0.14",
+};
+
+const generatedAppCompanionDependencies: Record<string, readonly string[]> = {
+  "@splinetool/react-spline": ["@splinetool/runtime"],
 };
 
 const STATIC_IMPORT_SOURCE_REGEX =
@@ -135,7 +141,13 @@ export function getRequiredGeneratedAppDependencies(
     for (const source of extractGeneratedAppImportSources(code)) {
       const packageName = getGeneratedAppPackageName(source);
       const version = generatedAppDependencies[packageName];
-      if (version) selected[packageName] = version;
+      if (!version) continue;
+
+      selected[packageName] = version;
+      for (const companion of generatedAppCompanionDependencies[packageName] ??
+        []) {
+        selected[companion] = generatedAppDependencies[companion];
+      }
     }
   }
 
