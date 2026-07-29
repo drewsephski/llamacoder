@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
 
     const screenshotBuffer = await capturePublicUrlScreenshot(
       validatedUrl.toString(),
+      { signal: request.signal },
     );
     const base64Screenshot = screenshotBuffer.toString("base64");
     const dataUrl = `data:image/png;base64,${base64Screenshot}`;

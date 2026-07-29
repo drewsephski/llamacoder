@@ -62,6 +62,7 @@ describe("generated app dependencies", () => {
       "@tsparticles/engine": "4.3.2",
       "@tsparticles/slim": "4.3.2",
       "react-parallax": "3.5.2",
+      motion: "12.43.0",
     });
   });
 

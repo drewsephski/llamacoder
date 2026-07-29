@@ -2645,6 +2645,11 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
         requestKind: "free_repair",
       }),
     );
+    expect(createOpenRouterModelMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "google/gemini-3.1-flash-lite",
+      expect.objectContaining({ maxTokens: 16_000 }),
+    );
     const prompt = streamTextMock.mock.calls[0][0].messages[0].content;
     expect(prompt).toContain("Render a reachable edit-title action");
     expect(prompt).toContain("export default function App");

@@ -54,6 +54,7 @@ describe("screenshotone screenshot capture", () => {
       viewport_height: number;
       format: string;
       wait_until: string[];
+      delay: number;
       timeout: number;
       navigation_timeout: number;
       block_cookie_banners: boolean;
@@ -65,13 +66,43 @@ describe("screenshotone screenshot capture", () => {
       viewport_width: 1280,
       viewport_height: 720,
       format: "png",
-      wait_until: ["networkidle0"],
-      timeout: 60,
-      navigation_timeout: 30,
+      wait_until: ["domcontentloaded"],
+      delay: 2,
+      timeout: 35,
+      navigation_timeout: 20,
       block_cookie_banners: true,
       block_ads: true,
       block_chats: true,
     });
+  });
+
+  it("aborts a screenshot request before the serverless function deadline", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        }),
+    );
+
+    const capture = capturePublicUrlScreenshot("https://slow.example.com", {
+      transportTimeoutMs: 50,
+    });
+    const rejection = expect(capture).rejects.toEqual(
+      expect.objectContaining({
+        status: 504,
+        errorCode: "transport_timeout",
+        message: expect.stringContaining("did not respond in time"),
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(50);
+    await rejection;
+    vi.useRealTimers();
   });
 
   it("maps ScreenshotOne timeout errors to user-facing errors", async () => {

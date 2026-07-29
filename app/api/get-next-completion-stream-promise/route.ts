@@ -116,6 +116,10 @@ import { recordOperationalEvent } from "@/lib/observability";
 import { getGenerationAvailability } from "@/lib/provider-controls";
 import { getConnectedIntegrationPromptContext } from "@/features/integrations/server/service";
 import { resolvePastMediaCatalogForPrompt } from "@/features/generation/server/past-media-library";
+import {
+  buildComponentRegistryPromptSection,
+  resolveComponentRegistryImports,
+} from "@/features/generation/server/component-registry";
 import { findIntegrationProviders } from "@/features/integrations/registry";
 import {
   enforceSelectedProvidersInAppSpec,
@@ -791,6 +795,41 @@ export async function POST(req: Request) {
           const latestUserContent =
             rawMessages.findLast((candidate) => candidate.role === "user")
               ?.content ?? message.content;
+          const componentRegistryImports = isFreeRepairRequest
+            ? []
+            : await resolveComponentRegistryImports(
+                rawMessages
+                  .filter((candidate) => candidate.role === "user")
+                  .map((candidate) => candidate.content)
+                  .join("\n"),
+              );
+          if (componentRegistryImports.length > 0) {
+            const existingMetadata =
+              message.files &&
+              typeof message.files === "object" &&
+              !Array.isArray(message.files)
+                ? message.files
+                : {};
+            await prisma.message.update({
+              where: { id: message.id },
+              data: {
+                files: JSON.parse(
+                  JSON.stringify({
+                    ...existingMetadata,
+                    registryFiles: componentRegistryImports.flatMap(
+                      (item) => item.files,
+                    ),
+                    registryImports: componentRegistryImports.map((item) => ({
+                      address: item.address,
+                      title: item.title,
+                      homepage: item.homepage,
+                      warnings: item.warnings,
+                    })),
+                  }),
+                ),
+              },
+            });
+          }
           let linkedPages: ChatLinkedPage[] = [];
           let linkedPageContext = "";
           let linkedPageCoverageComplete = false;
@@ -1365,6 +1404,14 @@ export async function POST(req: Request) {
               screenshotCloneMode: screenshotCloneIntent.fidelityLocked,
               effectiveBrief,
             });
+            const componentRegistryPrompt = buildComponentRegistryPromptSection(
+              componentRegistryImports,
+            );
+            if (componentRegistryPrompt) {
+              systemInstruction = [systemInstruction, componentRegistryPrompt]
+                .filter(Boolean)
+                .join("\n\n");
+            }
           }
           if (linkedPageContext) {
             const lastUserMessageIndex = guardedMessages.findLastIndex(
@@ -1755,11 +1802,7 @@ export async function POST(req: Request) {
 
           const result = streamText({
             model: createOpenRouterModel(openrouter, codegenModel, {
-              maxTokens: isFreeRepairRequest
-                ? 4_000
-                : isCodeGeneration
-                  ? GENERATED_CODE_MAX_TOKENS
-                  : 4_000,
+              maxTokens: isCodeGeneration ? GENERATED_CODE_MAX_TOKENS : 4_000,
               usage: { include: true },
             }),
             providerOptions: reasoning.providerOptions,
@@ -1880,6 +1923,14 @@ export async function POST(req: Request) {
                   },
                 });
                 return;
+              }
+              if (isCodeGeneration && componentRegistryImports.length > 0) {
+                const registrySource = formatGeneratedFilesMarkdown(
+                  componentRegistryImports.flatMap((item) => item.files),
+                );
+                persistedPartialText = [persistedPartialText, registrySource]
+                  .filter(Boolean)
+                  .join("\n\n");
               }
               await telemetry.record({
                 status: finishReason === "error" ? "error" : "completed",

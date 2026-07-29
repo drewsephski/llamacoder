@@ -13,6 +13,7 @@ import {
 import {
   formatGeneratedFilesMarkdown,
   normalizeGeneratedFiles,
+  parseStoredGeneratedFiles,
   type GeneratedFile,
   type GeneratedFileDiagnostic,
   type RawGeneratedFile,
@@ -634,7 +635,31 @@ export async function createValidationRepairMessage(
   const chat = await findOwnedProjectWithMessages(chatId, session.user.id);
   if (!chat) notFound();
 
-  const normalizedFiles = normalizeGeneratedFiles(files);
+  const sourceGenerationRun = await prisma.generationRun.findFirst({
+    where: { id: generationRunId, chatId, userId: session.user.id },
+    select: { messageId: true },
+  });
+  const sourceRequestMessage = sourceGenerationRun
+    ? await prisma.message.findFirst({
+        where: {
+          id: sourceGenerationRun.messageId,
+          chatId,
+          role: "user",
+        },
+        select: { files: true },
+      })
+    : null;
+  const sourceRequestMetadata = sourceRequestMessage?.files as
+    | { registryFiles?: unknown }
+    | null
+    | undefined;
+  const registryFiles = normalizeGeneratedFiles(
+    parseStoredGeneratedFiles(sourceRequestMetadata?.registryFiles),
+  );
+  const normalizedFiles = normalizeGeneratedFiles([
+    ...files,
+    ...registryFiles,
+  ]);
   const diagnostics = await getGeneratedAppContractDiagnostics(
     prisma,
     chatId,

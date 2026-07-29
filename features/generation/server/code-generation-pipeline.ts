@@ -133,6 +133,23 @@ function parseGeneratedOutput(text: string) {
   return { generatedFiles, content };
 }
 
+function parseGeneratedOutputWithAdditionalFiles(
+  text: string,
+  additionalFiles: GeneratedFile[],
+) {
+  const parsed = parseGeneratedOutput(text);
+  if (additionalFiles.length === 0) return parsed;
+
+  const generatedFiles = normalizeGeneratedFiles([
+    ...parsed.generatedFiles,
+    ...additionalFiles,
+  ]);
+  return {
+    generatedFiles,
+    content: formatGeneratedFilesMarkdown(generatedFiles),
+  };
+}
+
 export function finalizeGeneratedCodeFromText(
   text: string,
 ): GeneratedCodePipelineResult {
@@ -255,10 +272,12 @@ export async function runGeneratedCodePipeline({
   generate,
   userContent,
   allowRepair = true,
+  additionalFiles = [],
 }: {
   generate: (userContent: string) => Promise<GenerateTextLikeResponse>;
   userContent: string;
   allowRepair?: boolean;
+  additionalFiles?: GeneratedFile[];
 }): Promise<GeneratedCodePipelineResult> {
   const initialResponse = await generate(userContent);
 
@@ -272,7 +291,10 @@ export async function runGeneratedCodePipeline({
 
   let generatedText = initialResponse.text;
   let usage = extractUsageFromGenerateTextResponse(initialResponse);
-  let parsed = parseGeneratedOutput(generatedText);
+  let parsed = parseGeneratedOutputWithAdditionalFiles(
+    generatedText,
+    additionalFiles,
+  );
   let diagnostics = validateGeneratedFiles(parsed.generatedFiles);
 
   if (allowRepair && diagnostics.length > 0) {
@@ -288,7 +310,10 @@ export async function runGeneratedCodePipeline({
       extractUsageFromGenerateTextResponse(repairResponse),
     );
 
-    const repairedParsed = parseGeneratedOutput(repairResponse.text);
+    const repairedParsed = parseGeneratedOutputWithAdditionalFiles(
+      repairResponse.text,
+      additionalFiles,
+    );
     const repairedDiagnostics = validateGeneratedFiles(
       repairedParsed.generatedFiles,
     );
@@ -300,7 +325,7 @@ export async function runGeneratedCodePipeline({
     }
   }
 
-  const finalized = finalizeGeneratedCodeFromText(generatedText);
+  const finalized = finalizeGeneratedCodeFromText(parsed.content);
   if (!finalized.ok) {
     return finalized;
   }
@@ -308,6 +333,7 @@ export async function runGeneratedCodePipeline({
   return {
     ...finalized,
     generatedText,
+    designScores: extractDesignScores(generatedText),
     usage,
   };
 }

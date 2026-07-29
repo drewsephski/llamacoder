@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import ArrowRightIcon from "@/components/icons/arrow-right";
@@ -6,6 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -27,8 +29,17 @@ import {
 import { GenerationLoader } from "@/components/generation-loader";
 import type { ProjectMessage } from "@/features/projects/contracts";
 import { getErrorMessage } from "@/features/shared/errors";
-import { Maximize2, Minimize2, Square } from "lucide-react";
+import { ImagePlus, Maximize2, Minimize2, Square, X } from "lucide-react";
 import { ProjectIntegrationsPanel } from "@/features/integrations/components/project-integrations-panel";
+import {
+  getClipboardImageFile,
+  getImageAttachmentError,
+  IMAGE_ATTACHMENT_ACCEPT,
+  readImageAttachmentAsDataUrl,
+} from "@/features/generation/client/image-attachment";
+
+const IMAGE_CLONE_PROMPT =
+  "Recreate the attached screenshot as closely as possible.";
 
 interface ChatBoxProps {
   chat: {
@@ -52,7 +63,14 @@ export default function ChatBox({
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
+  const [imageAttachment, setImageAttachment] = useState<{
+    dataUrl: string;
+    name: string;
+  } | null>(null);
+  const [isReadingImage, setIsReadingImage] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputId = useId();
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isCheckingCredits, setIsCheckingCredits] = useState(false);
   const disabled = isStreaming || isCheckingCredits;
@@ -70,6 +88,27 @@ export default function ChatBox({
     : (creditsData?.hasActiveSubscription ?? false);
   const isAuthenticated = !!session;
   const latestFollowUpPrompts = getLatestFollowUpPrompts(chat.messages);
+
+  const attachImage = useCallback(async (file: File) => {
+    const attachmentError = getImageAttachmentError(file);
+    if (attachmentError) {
+      toast.error(attachmentError);
+      return;
+    }
+
+    setIsReadingImage(true);
+    try {
+      const dataUrl = await readImageAttachmentAsDataUrl(file);
+      setImageAttachment({
+        dataUrl,
+        name: file.name || "Pasted screenshot",
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Unable to read image file."));
+    } finally {
+      setIsReadingImage(false);
+    }
+  }, []);
 
   const resizeTextarea = useCallback(() => {
     const textarea = textareaRef.current;
@@ -118,8 +157,9 @@ export default function ChatBox({
   }, [disabled]);
 
   const handleSubmit = async () => {
-    const nextPrompt = prompt.trim();
-    if (disabled || !nextPrompt) return;
+    const nextPrompt =
+      prompt.trim() || (imageAttachment ? IMAGE_CLONE_PROMPT : "");
+    if (disabled || isReadingImage || !nextPrompt) return;
 
     // Require authentication before sending messages
     if (!isAuthenticated) {
@@ -153,12 +193,14 @@ export default function ChatBox({
         const streamPromise = fetchCompletionStream({
           messageId: message.id,
           model: chat.model,
+          screenshotData: imageAttachment?.dataUrl,
         });
 
         onNewStreamPromiseAction(streamPromise);
         startTransition(() => {
           router.refresh();
           setPrompt("");
+          setImageAttachment(null);
           setIsComposerExpanded(false);
         });
       } catch (error: unknown) {
@@ -355,6 +397,47 @@ export default function ChatBox({
         <form className="relative flex w-full min-w-0" action={handleSubmit}>
           <fieldset className="w-full min-w-0" disabled={disabled}>
             <div className="chatbox-field relative flex flex-col">
+              {(imageAttachment || isReadingImage) && (
+                <div
+                  className="flex items-center gap-2 px-3 pt-3"
+                  aria-live="polite"
+                >
+                  {isReadingImage ? (
+                    <div className="flex h-14 w-16 items-center justify-center rounded-xl border border-border/60 bg-muted/45">
+                      <Spinner className="size-4" />
+                    </div>
+                  ) : imageAttachment ? (
+                    <div className="relative overflow-hidden rounded-xl border border-border/60 bg-muted/40 shadow-sm">
+                      <img
+                        src={imageAttachment.dataUrl}
+                        alt="Screenshot attached for cloning"
+                        className="h-14 w-16 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setImageAttachment(null)}
+                        className="absolute right-1 top-1 inline-flex size-5 items-center justify-center rounded-full bg-background/90 text-muted-foreground shadow-sm ring-1 ring-border/60 transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label="Remove attached screenshot"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium text-foreground">
+                      {isReadingImage
+                        ? "Reading screenshot…"
+                        : imageAttachment?.name}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {isReadingImage
+                        ? "Preparing image for the model"
+                        : "Attached as a visual clone reference"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Textarea */}
               <Textarea
                 ref={textareaRef}
@@ -366,7 +449,6 @@ export default function ChatBox({
                 }
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                required
                 name="prompt"
                 className="chatbox-textarea min-h-[4.5rem] resize-none overflow-y-auto border-0 bg-transparent px-4 py-4 text-[14.5px] leading-relaxed outline-none placeholder:text-muted-foreground/55 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 onKeyDown={(event) => {
@@ -377,6 +459,13 @@ export default function ChatBox({
                     if (!(target instanceof HTMLTextAreaElement)) return;
                     target.closest("form")?.requestSubmit();
                   }
+                }}
+                onPaste={(event) => {
+                  if (disabled) return;
+                  const image = getClipboardImageFile(event.clipboardData);
+                  if (!image) return;
+                  event.preventDefault();
+                  void attachImage(image);
                 }}
               />
 
@@ -404,6 +493,27 @@ export default function ChatBox({
                       triggerPlacement="composer"
                     />
                   )}
+
+                  <label
+                    htmlFor={fileInputId}
+                    className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors focus-within:ring-2 focus-within:ring-ring hover:bg-muted/70 hover:text-foreground"
+                    aria-label="Attach screenshot"
+                    title="Attach or paste a screenshot"
+                  >
+                    <ImagePlus className="size-3.5" aria-hidden="true" />
+                    <input
+                      ref={fileInputRef}
+                      id={fileInputId}
+                      type="file"
+                      accept={IMAGE_ATTACHMENT_ACCEPT}
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void attachImage(file);
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
 
                   {isStreaming && (
                     <div className="streaming-indicator ml-1">
@@ -448,7 +558,11 @@ export default function ChatBox({
                   <button
                     type="submit"
                     aria-label="Send message"
-                    disabled={disabled || prompt.trim().length === 0}
+                    disabled={
+                      disabled ||
+                      isReadingImage ||
+                      (prompt.trim().length === 0 && !imageAttachment)
+                    }
                     className="send-btn shrink-0 bg-primary text-primary-foreground"
                   >
                     <Spinner loading={disabled}>

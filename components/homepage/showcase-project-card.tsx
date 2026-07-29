@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { BorderGlow } from "@/components/ui/border-glow";
+
 export type ProjectCapability =
   | "Auth"
   | "Stripe"
@@ -46,7 +48,7 @@ export function ShowcaseProjectCard({
   const linkClassName =
     "group showcase-card block min-w-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4";
   const railClassName =
-    layout === "rail" ? " snap-start [scroll-snap-stop:always]" : "";
+    layout === "rail" ? "snap-start [scroll-snap-stop:always]" : "";
 
   const content = (
     <>
@@ -113,22 +115,31 @@ export function ShowcaseProjectCard({
     </>
   );
 
-  if (isExternal) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className={`${linkClassName}${railClassName}`}
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} className={`${linkClassName}${railClassName}`}>
+  const projectLink = isExternal ? (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`${linkClassName} h-full p-4 sm:p-5`}
+    >
+      {content}
+    </a>
+  ) : (
+    <Link href={href} className={`${linkClassName} h-full p-4 sm:p-5`}>
       {content}
     </Link>
+  );
+
+  return (
+    <BorderGlow
+      className={railClassName}
+      edgeSensitivity={18}
+      glowRadius={28}
+      glowIntensity={0.72}
+      coneSpread={22}
+      fillOpacity={0.12}
+    >
+      {projectLink}
+    </BorderGlow>
   );
 }

@@ -37,6 +37,7 @@ export const generatedAppDependencies: Record<string, string> = {
   "date-fns": "^3.6.0",
   "embla-carousel-react": "^8.1.8",
   "framer-motion": "^11.15.0",
+  motion: "12.43.0",
   gsap: "3.14.2",
   "@types/gsap": "3.0.0",
   "fuse.js": "7.5.0",

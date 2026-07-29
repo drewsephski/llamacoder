@@ -90,4 +90,40 @@ describe("generation workflow finalization", () => {
       ]),
     );
   });
+
+  it("persists trusted registry files and prevents generated overwrites", () => {
+    const files = buildFinalGenerationFiles({
+      requestMessage: {
+        id: "registry_request_1",
+        files: {
+          registryFiles: [
+            {
+              path: "components/ui/animated-beam.tsx",
+              code: "export const AnimatedBeam = 'trusted registry source';",
+            },
+          ],
+        },
+        position: 2,
+      },
+      messages: [],
+      generatedText: [
+        "```tsx{path=App.tsx}",
+        "import { AnimatedBeam } from '@/components/ui/animated-beam';",
+        "export default function App() { return <main>{AnimatedBeam}</main>; }",
+        "```",
+        "```tsx{path=components/ui/animated-beam.tsx}",
+        "export const AnimatedBeam = 'model overwrite';",
+        "```",
+      ].join("\n"),
+    });
+
+    expect(files).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "components/ui/animated-beam.tsx",
+          code: expect.stringContaining("trusted registry source"),
+        }),
+      ]),
+    );
+  });
 });

@@ -187,7 +187,7 @@ export function ResourcesMenu({
       <div
         id={panelId}
         className={cn(
-          "absolute top-full z-50 mt-3 w-[min(27rem,calc(100vw-2rem))] rounded-2xl border border-border bg-popover p-2 text-popover-foreground shadow-xl shadow-foreground/10 transition-[opacity,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] motion-reduce:translate-y-0 motion-reduce:transition-opacity",
+          "absolute top-full z-50 mt-3 w-[min(40rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-2 text-popover-foreground shadow-2xl shadow-foreground/10 backdrop-blur-xl transition-[opacity,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] motion-reduce:translate-y-0 motion-reduce:transition-opacity",
           compact
             ? "fixed inset-x-4 top-16 mt-2 w-auto"
             : align === "end"
@@ -198,19 +198,21 @@ export function ResourcesMenu({
             : "pointer-events-none invisible -translate-y-1 opacity-0",
         )}
       >
-        <div className="px-3 pb-2 pt-2">
-          <p className="text-sm font-semibold tracking-tight">Explore Squid</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Learn, compare, and get help.
+        <div className="flex items-center justify-between gap-4 px-3 pb-2 pt-2">
+          <p className="text-[13px] font-semibold tracking-tight">
+            Explore Squid
+          </p>
+          <p className="text-[11px] font-medium text-muted-foreground">
+            Learn, compare, and get help
           </p>
         </div>
         <nav aria-label="Resources">
-          <ul className="space-y-0.5">
+          <ul className="grid grid-flow-dense grid-cols-1 gap-1 sm:grid-cols-2">
             {resourceLinks.map((link, index) => {
               const Icon = link.icon;
 
               return (
-                <li key={link.href}>
+                <li key={link.href} className="min-w-0">
                   <Link
                     ref={index === 0 ? firstLinkRef : undefined}
                     href={link.href}
@@ -218,23 +220,25 @@ export function ResourcesMenu({
                       pinnedOpen.current = false;
                       setOpen(false);
                     }}
-                    className="group flex min-h-14 items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-[background-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary active:translate-y-px motion-reduce:transition-colors"
+                    className="group flex min-h-[3.75rem] items-center gap-2.5 overflow-hidden rounded-xl border border-transparent px-2.5 py-2 text-left transition-[background-color,border-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:border-border/70 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary active:translate-y-px motion-reduce:transition-colors"
                   >
-                    <Icon
-                      className="size-4 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none"
-                      strokeWidth={1.75}
-                      aria-hidden="true"
-                    />
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/60 transition-[background-color,color,transform] duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105 group-hover:bg-background group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-colors">
+                      <Icon
+                        className="size-3.5"
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block whitespace-nowrap text-sm font-medium text-foreground">
+                      <span className="block truncate text-[13px] font-semibold tracking-[-0.01em] text-foreground">
                         {link.label}
                       </span>
-                      <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                      <span className="mt-0.5 block truncate text-[11px] leading-4 text-muted-foreground">
                         {link.description}
                       </span>
                     </span>
                     <ArrowRight
-                      className="size-3.5 shrink-0 text-muted-foreground"
+                      className="size-3.5 shrink-0 -translate-x-1 text-muted-foreground/70 opacity-0 transition-[opacity,transform,color] duration-200 group-hover:translate-x-0 group-hover:text-primary group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 motion-reduce:transition-colors"
                       aria-hidden="true"
                     />
                   </Link>

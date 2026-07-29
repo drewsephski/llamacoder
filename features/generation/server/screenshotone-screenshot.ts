@@ -7,6 +7,10 @@ const SCREENSHOT_VIEWPORT = {
   height: 720,
 } as const;
 
+const SCREENSHOTONE_PROVIDER_TIMEOUT_SECONDS = 35;
+const SCREENSHOTONE_NAVIGATION_TIMEOUT_SECONDS = 20;
+export const SCREENSHOTONE_TRANSPORT_TIMEOUT_MS = 45_000;
+
 type ScreenshotOneErrorResponse = {
   is_successful?: boolean;
   error_code?: string;
@@ -91,7 +95,13 @@ async function readScreenshotOneError(response: Response) {
   );
 }
 
-export async function capturePublicUrlScreenshot(url: string) {
+export async function capturePublicUrlScreenshot(
+  url: string,
+  options: {
+    signal?: AbortSignal;
+    transportTimeoutMs?: number;
+  } = {},
+) {
   const config = getScreenshotOneConfig();
   if (!config) {
     throw new ScreenshotOneError(
@@ -100,38 +110,70 @@ export async function capturePublicUrlScreenshot(url: string) {
     );
   }
 
-  const response = await fetch(SCREENSHOTONE_TAKE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Access-Key": config.accessKey,
-      Accept: "image/png, application/json",
-    },
-    body: JSON.stringify({
-      url,
-      viewport_width: SCREENSHOT_VIEWPORT.width,
-      viewport_height: SCREENSHOT_VIEWPORT.height,
-      format: "png",
-      wait_until: ["networkidle0"],
-      timeout: 60,
-      navigation_timeout: 30,
-      block_cookie_banners: true,
-      block_ads: true,
-      block_chats: true,
-    }),
-  });
+  const controller = new AbortController();
+  const transportTimeoutMs =
+    options.transportTimeoutMs ?? SCREENSHOTONE_TRANSPORT_TIMEOUT_MS;
+  let transportTimedOut = false;
+  const timeoutId = setTimeout(() => {
+    transportTimedOut = true;
+    controller.abort();
+  }, transportTimeoutMs);
+  const abortFromRequest = () => controller.abort(options.signal?.reason);
 
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!response.ok || contentType.includes("application/json")) {
-    throw await readScreenshotOneError(response);
+  if (options.signal?.aborted) {
+    abortFromRequest();
+  } else {
+    options.signal?.addEventListener("abort", abortFromRequest, { once: true });
   }
 
-  if (!contentType.startsWith("image/")) {
-    throw new ScreenshotOneError(
-      "ScreenshotOne returned an unexpected response.",
-      502,
-    );
-  }
+  try {
+    const response = await fetch(SCREENSHOTONE_TAKE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Access-Key": config.accessKey,
+        Accept: "image/png, application/json",
+      },
+      body: JSON.stringify({
+        url,
+        viewport_width: SCREENSHOT_VIEWPORT.width,
+        viewport_height: SCREENSHOT_VIEWPORT.height,
+        format: "png",
+        wait_until: ["domcontentloaded"],
+        delay: 2,
+        timeout: SCREENSHOTONE_PROVIDER_TIMEOUT_SECONDS,
+        navigation_timeout: SCREENSHOTONE_NAVIGATION_TIMEOUT_SECONDS,
+        block_cookie_banners: true,
+        block_ads: true,
+        block_chats: true,
+      }),
+      signal: controller.signal,
+    });
 
-  return Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!response.ok || contentType.includes("application/json")) {
+      throw await readScreenshotOneError(response);
+    }
+
+    if (!contentType.startsWith("image/")) {
+      throw new ScreenshotOneError(
+        "ScreenshotOne returned an unexpected response.",
+        502,
+      );
+    }
+
+    return Buffer.from(await response.arrayBuffer());
+  } catch (error) {
+    if (transportTimedOut) {
+      throw new ScreenshotOneError(
+        "Website capture did not respond in time. Please try again or use a screenshot instead.",
+        504,
+        "transport_timeout",
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    options.signal?.removeEventListener("abort", abortFromRequest);
+  }
 }

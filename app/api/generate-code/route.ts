@@ -36,6 +36,11 @@ import {
   GenerationWorkflowError,
   persistInitialGenerationResult,
 } from "@/features/generation/server/workflow";
+import {
+  buildComponentRegistryPromptSection,
+  ComponentRegistryError,
+  resolveComponentRegistryImports,
+} from "@/features/generation/server/component-registry";
 
 import { z } from "zod";
 
@@ -245,6 +250,12 @@ export async function POST(request: NextRequest) {
       latestUserRequest: chat.plan,
       appSpec,
     });
+    const componentRegistryImports = await resolveComponentRegistryImports(
+      [chat.prompt, chat.plan].filter(Boolean).join("\n"),
+    );
+    const componentRegistryPrompt = buildComponentRegistryPromptSection(
+      componentRegistryImports,
+    );
 
     const generateCode = (userContent: string) =>
       generateText({
@@ -256,13 +267,18 @@ export async function POST(request: NextRequest) {
           chat.model,
           chat.quality === "high" ? "high" : "low",
         ),
-        system: getMainCodingPrompt({
-          designScoreSummary: latestDesignScores,
-          userPrompt: effectiveBrief.latestUserRequest,
-          effectiveBrief,
-          pastMediaCatalog,
-          messageCount: 1,
-        }),
+        system: [
+          getMainCodingPrompt({
+            designScoreSummary: latestDesignScores,
+            userPrompt: effectiveBrief.latestUserRequest,
+            effectiveBrief,
+            pastMediaCatalog,
+            messageCount: 1,
+          }),
+          componentRegistryPrompt,
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
         messages: [
           {
             role: "user",
@@ -274,6 +290,7 @@ export async function POST(request: NextRequest) {
     const pipelineResult = await runGeneratedCodePipeline({
       generate: generateCode,
       userContent: chat.plan,
+      additionalFiles: componentRegistryImports.flatMap((item) => item.files),
     });
 
     if (!pipelineResult.ok) {
@@ -357,6 +374,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     await releaseHoldAndResetChat();
+
+    if (error instanceof ComponentRegistryError) {
+      return NextResponse.json(
+        { error: error.code, message: error.message },
+        { status: 422 },
+      );
+    }
 
     if (
       error instanceof GenerationWorkflowError &&

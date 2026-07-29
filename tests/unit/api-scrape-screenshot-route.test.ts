@@ -125,6 +125,7 @@ describe("/api/scrape-screenshot", () => {
     });
     expect(capturePublicUrlScreenshotMock).toHaveBeenCalledWith(
       "https://example.com/path",
+      { signal: expect.any(AbortSignal) },
     );
   });
 

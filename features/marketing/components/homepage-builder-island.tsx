@@ -64,6 +64,11 @@ import {
 } from "@/lib/billing/config";
 import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
+import {
+  getImageAttachmentError,
+  readImageAttachmentAsDataUrl,
+} from "@/features/generation/client/image-attachment";
+import { captureWebsiteScreenshot } from "@/features/generation/client/screenshot-capture";
 import { getErrorMessage } from "@/features/shared/errors";
 import type { CreateProjectRequest } from "@/features/projects/contracts";
 import {
@@ -126,12 +131,6 @@ const PromptTemplateEditor = dynamic(
   { ssr: false },
 );
 
-const ACCEPTED_SCREENSHOT_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-]);
-const MAX_SCREENSHOT_FILE_SIZE_BYTES = 6 * 1024 * 1024;
 const BUILD_LAUNCH_ANIMATION_MS = 1750;
 
 const homepageNarrativeBlocks = [
@@ -309,24 +308,6 @@ function getHomepageFlowPartialPath(progress: number) {
   }
 
   return pathParts.join(" ");
-}
-
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-        return;
-      }
-      reject(new Error("Unable to read image file."));
-    };
-    reader.onerror = () => {
-      reject(new Error("Unable to read image file."));
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 type HeroPopoutSlot = {
@@ -1408,14 +1389,9 @@ export function HomepageBuilderIsland({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!ACCEPTED_SCREENSHOT_TYPES.has(file.type)) {
-      toast.error("Please upload a PNG, JPEG, or WebP image.");
-      event.target.value = "";
-      return;
-    }
-
-    if (file.size > MAX_SCREENSHOT_FILE_SIZE_BYTES) {
-      toast.error("Please upload an image under 6 MB.");
+    const attachmentError = getImageAttachmentError(file);
+    if (attachmentError) {
+      toast.error(attachmentError);
       event.target.value = "";
       return;
     }
@@ -1427,7 +1403,7 @@ export function HomepageBuilderIsland({
     setScreenshotData(undefined);
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await readImageAttachmentAsDataUrl(file);
       setScreenshotData(dataUrl);
       setScreenshotLoading(false);
 
@@ -1454,15 +1430,9 @@ export function HomepageBuilderIsland({
     setIsScrapingUrl(true);
     setScreenshotLoading(true);
     try {
-      const response = await fetch("/api/scrape-screenshot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: urlInput.trim() }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to scrape URL");
+      const data = await captureWebsiteScreenshot(urlInput.trim());
       setScreenshotData(data.screenshotData);
-      setScreenshotUrl(urlInput);
+      setScreenshotUrl(data.url);
       setUrlInput("");
       toast.success("Website captured successfully!");
     } catch (error: unknown) {

@@ -21,6 +21,7 @@ type GenerationRequestMetadata = {
   chargeCredits?: boolean;
   sourceMessageId?: string;
   draftFiles?: unknown;
+  registryFiles?: unknown;
 };
 
 type InitialGenerationUsage = {
@@ -82,6 +83,9 @@ export function buildFinalGenerationFiles({
     metadata?.kind === "contract_repair"
       ? normalizeGeneratedFiles(parseStoredGeneratedFiles(metadata.draftFiles))
       : [];
+  const registryFiles = normalizeGeneratedFiles(
+    parseStoredGeneratedFiles(metadata?.registryFiles),
+  );
   const sourceMessage =
     metadata?.sourceMessageId && contractRepairFiles.length === 0
       ? messages.find(
@@ -109,6 +113,7 @@ export function buildFinalGenerationFiles({
     sourceFiles,
     historicalFiles,
     generatedFiles,
+    registryFiles,
   );
 }
 

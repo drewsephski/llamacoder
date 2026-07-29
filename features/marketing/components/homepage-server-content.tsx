@@ -5,6 +5,7 @@ import { ArrowRight, ExternalLink } from "lucide-react";
 import { DraggableProjectRail } from "@/components/homepage/draggable-project-rail";
 import { ShowcaseProjectCard } from "@/components/homepage/showcase-project-card";
 import { Button } from "@/components/ui/button";
+import { BorderGlow } from "@/components/ui/border-glow";
 import { homepageFaq } from "@/features/marketing/homepage-seo";
 
 const researchLinks = [
@@ -330,27 +331,36 @@ export function HomepageResearchSection() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {researchLinks.map((item) => (
-            <Link
+            <BorderGlow
               key={item.href}
-              href={item.href}
-              className="group flex min-h-[250px] flex-col bg-background p-6 transition-colors hover:bg-primary/[0.035] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:p-7"
+              className="min-h-[250px]"
+              edgeSensitivity={20}
+              glowRadius={26}
+              glowIntensity={0.68}
+              coneSpread={20}
+              fillOpacity={0.1}
             >
-              <p className="font-mono-jb text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0062FF] dark:text-[#0CA8FF]">
-                {item.eyebrow}
-              </p>
-              <h3 className="mt-5 text-balance text-xl font-semibold tracking-[-0.025em] text-foreground">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {item.description}
-              </p>
-              <span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
-                Read the guide
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-              </span>
-            </Link>
+              <Link
+                href={item.href}
+                className="group flex h-full min-h-[250px] flex-col p-6 transition-colors hover:bg-primary/[0.035] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:p-7"
+              >
+                <p className="font-mono-jb text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0062FF] dark:text-[#0CA8FF]">
+                  {item.eyebrow}
+                </p>
+                <h3 className="mt-5 text-balance text-xl font-semibold tracking-[-0.025em] text-foreground">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  {item.description}
+                </p>
+                <span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
+                  Read the guide
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              </Link>
+            </BorderGlow>
           ))}
         </div>
       </div>
