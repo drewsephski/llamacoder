@@ -98,20 +98,9 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Composed spatial rhythm");
     expect(prompt).toContain("Surface and voice restraint");
     expect(prompt).toContain("Distribution-default copy");
-    expect(prompt).toContain(
-      "Unspecified-theme Style Pack contract (mandatory)",
-    );
-    expect(prompt).toContain(
-      "Do NOT default every vague brief to anonymous Vercel-gray SaaS",
-    );
-    expect(prompt).toContain("STYLE_PACK: <id>");
-    expect(prompt).toContain("cobaltMinimal");
-    expect(prompt).toContain("lumenAtmospheric");
-    expect(prompt).toContain("editorialSpecimen");
-    expect(prompt).toContain("swissBrutal");
-    expect(prompt).toContain("kineticAwwwards");
-    expect(prompt).toContain("softStructural");
-    expect(prompt).toContain("Still banned as lazy defaults across all packs");
+    expect(prompt).toContain("Runtime Style Pack policy (mandatory)");
+    expect(prompt).toContain("server-resolved and authoritative");
+    expect(prompt).toContain("Active Style Pack directive");
     expect(prompt).toContain("Active Style Pack directive");
     expect(prompt).toContain("Premium composition contract (mandatory");
     expect(prompt).toContain("hairline bento");
@@ -211,7 +200,7 @@ describe("prompt design guidance", () => {
       "record the exact standard Tailwind family",
     );
     expect(softwareArchitectPrompt).toContain("Style Pack lock:");
-    expect(softwareArchitectPrompt).toContain("Unspecified-theme Style Pack:");
+    expect(softwareArchitectPrompt).toContain("Incomplete-theme Style Pack:");
     expect(softwareArchitectPrompt).toContain("cobaltMinimal");
     expect(softwareArchitectPrompt).toContain(
       "do not default to anonymous Vercel-gray SaaS",
@@ -263,10 +252,7 @@ describe("prompt design guidance", () => {
       "Avoid card-in-card nesting, emoji feature icons",
     );
     expect(developerCodeGenPrompt).toContain(
-      "Unspecified-theme Style Pack contract (mandatory)",
-    );
-    expect(developerCodeGenPrompt).toContain(
-      "Do NOT default every vague brief to anonymous Vercel-gray SaaS",
+      "Runtime Style Pack policy (mandatory)",
     );
     expect(developerCodeGenPrompt).toContain(
       "server-resolved Style Pack as a visual implementation recipe",
@@ -274,7 +260,9 @@ describe("prompt design guidance", () => {
     expect(developerCodeGenPrompt).toContain(
       "mixed-cell bento only for dense comparable modules",
     );
-    expect(developerCodeGenPrompt).toContain("cobaltMinimal");
+    expect(developerCodeGenPrompt).toContain(
+      "Never combine the user's canvas request with an accent copied from an incompatible pack",
+    );
     expect(developerCodeGenPrompt).toContain(
       "Visual system coherence contract (mandatory)",
     );
@@ -306,7 +294,9 @@ describe("prompt design guidance", () => {
       "Premium composition contract (mandatory",
     );
     expect(developerCodeGenPrompt).toContain("hairline bento");
-    expect(developerCodeGenPrompt).toContain("composition scaffold");
+    expect(developerCodeGenPrompt).toContain(
+      "server-resolved and authoritative",
+    );
   });
 
   it("server-locks a Style Pack scaffold into the coding prompt for vague briefs", () => {
@@ -320,6 +310,20 @@ describe("prompt design guidance", () => {
     );
     expect(prompt).toContain("Visual signature");
     expect(prompt).toContain("One signature only");
+  });
+
+  it("keeps the starter AI landing prompt dark and free of the orange kinetic lock", () => {
+    const prompt = getMainCodingPrompt({
+      userPrompt:
+        "Build a modern landing page for an AI startup with a bold hero section, an animated feature grid, a pricing table with three tiers, a testimonials carousel, and a waitlist signup form. Use smooth scroll animations and a sleek dark theme.",
+    });
+
+    expect(prompt).toContain("STYLE_PACK: midnightCool");
+    expect(prompt).toContain("Luminosity: dark-first");
+    expect(prompt).not.toContain("STYLE_PACK: kineticAwwwards");
+    expect(prompt).toContain("Media fidelity");
+    expect(prompt).not.toContain("## Style Pack catalog");
+    expect(prompt.length).toBeLessThan(110_000);
   });
 
   it("renders the latest effective brief ahead of inferred Style Pack defaults", async () => {

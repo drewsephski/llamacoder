@@ -82,6 +82,8 @@ export type SubjectBucket =
   | "landingAgency"
   | "consumerFriendly";
 
+export type RequestedLuminosity = "light-first" | "dark-first";
+
 export type StylePackDials = {
   variance: number;
   motion: number;
@@ -1253,20 +1255,32 @@ const LANDING_KEYWORDS =
 const CONSUMER_KEYWORDS =
   /\b(consumer|onboarding|health|wellness|fitness|local|booking|recipe|habit|kids?|family|friendly)\b/i;
 
-/** Detect whether the brief already supplies aesthetic direction (skip packs). */
-export function hasExplicitAestheticDirection(brief: string): boolean {
+const DARK_LUMINOSITY_PATTERN =
+  /\b(?:dark(?:[-\s]+(?:mode|theme|themed|palette|canvas|ui|interface|site|page))|(?:mode|theme|palette|canvas|ui|interface|site|page)\s+(?:is\s+)?dark|near[-\s]+black)\b/i;
+const LIGHT_LUMINOSITY_PATTERN =
+  /\b(?:light(?:[-\s]+(?:mode|theme|themed|palette|canvas|ui|interface|site|page))|(?:mode|theme|palette|canvas|ui|interface|site|page)\s+(?:is\s+)?light)\b/i;
+
+/** A luminosity request constrains a palette, but does not define one. */
+export function inferRequestedLuminosity(
+  brief: string,
+): RequestedLuminosity | null {
+  const dark = DARK_LUMINOSITY_PATTERN.test(brief);
+  const light = LIGHT_LUMINOSITY_PATTERN.test(brief);
+  if (dark === light) return null;
+  return dark ? "dark-first" : "light-first";
+}
+
+export function hasCompleteAestheticDirection(brief: string): boolean {
   const text = brief.trim();
   if (!text) return false;
 
   const aestheticSignals =
-    /\b(brutalist|minimalist|editorial|glassmorphism|awwwards|kinetic|swiss\s+industrial|tactical\s+crt|neumorphic|retro-futuristic|art deco|linear-style|apple-y|dark\s+mode|light\s+mode|color\s+scheme|brand\s+colors?|visual\s+theme|color\s+theme|theming|make\s+it\s+(purple|blue|green|red|orange|pink|black|white)|like\s+(linear|vercel|stripe|notion|figma|apple))\b/i;
+    /\b(brutalist|minimalist|editorial|glassmorphism|awwwards|kinetic|swiss\s+industrial|tactical\s+crt|neumorphic|retro-futuristic|art deco|linear-style|apple-y|color\s+scheme|brand\s+colors?|visual\s+theme|color\s+theme|theming|make\s+it\s+(purple|blue|green|red|orange|pink|black|white)|like\s+(linear|vercel|stripe|notion|figma|apple))\b/i;
 
   const colorWords =
     /\b(purple|violet|indigo|fuchsia|blue|sky|cyan|teal|emerald|green|lime|yellow|amber|orange|red|rose|pink|stone|zinc|neutral|gray|grey|slate|black|white)\b/i;
-
   const colorIntent =
     /\b(bg-|text-|colour(?:ed)?|colored|palette|accent|primary\s+color|make\s+(?:it|the|this|an?)\s+|use\s+|with\s+a\s+)\b/i;
-
   const namedColor =
     colorWords.test(text) &&
     (colorIntent.test(text) ||
@@ -1277,9 +1291,19 @@ export function hasExplicitAestheticDirection(brief: string): boolean {
         text,
       ));
 
-  const hexOrReference = /#[0-9a-f]{3,8}\b|https?:\/\/\S+/i.test(text);
+  return (
+    aestheticSignals.test(text) ||
+    namedColor ||
+    /#[0-9a-f]{3,8}\b|https?:\/\/\S+/i.test(text)
+  );
+}
 
-  return aestheticSignals.test(text) || namedColor || hexOrReference;
+/** Detect any explicit aesthetic constraint; luminosity alone remains pack-eligible. */
+export function hasExplicitAestheticDirection(brief: string): boolean {
+  return (
+    inferRequestedLuminosity(brief) !== null ||
+    hasCompleteAestheticDirection(brief)
+  );
 }
 
 export function inferSubjectBucket(brief: string): SubjectBucket {
@@ -1325,10 +1349,19 @@ export function selectStylePackId(
     if (mapped) return mapped;
   }
 
-  if (hasExplicitAestheticDirection(brief)) return null;
+  if (hasCompleteAestheticDirection(brief)) return null;
 
   const bucket = inferSubjectBucket(brief);
-  const candidates = BUCKET_PACKS[bucket];
+  const requestedLuminosity = inferRequestedLuminosity(brief);
+  const bucketCandidates = BUCKET_PACKS[bucket];
+  const compatibleCandidates = requestedLuminosity
+    ? bucketCandidates.filter(
+        (candidate) =>
+          STYLE_PACKS[candidate].luminosity === requestedLuminosity,
+      )
+    : bucketCandidates;
+  const candidates =
+    compatibleCandidates.length > 0 ? compatibleCandidates : bucketCandidates;
   const seed = hashBriefSeed(brief);
   return candidates[seed % candidates.length] ?? candidates[0]!;
 }
@@ -1512,12 +1545,12 @@ export function buildStylePackContract(): string {
 
   return dedent`
     **Unspecified-theme Style Pack contract (mandatory):**
-    - Apply this when the user has NOT explicitly supplied a theme, palette, named color, visual reference, URL moodboard, or aesthetic direction (e.g. brutalist, Linear-style, dark mode, "make it purple"). Explicit user direction always wins over Style Packs. For edits to an existing app, preserve its established theme unless the user asks to restyle or recolor it.
+    - Apply this when the user has NOT supplied a complete palette, named color, visual reference, URL moodboard, or aesthetic direction (e.g. brutalist, Linear-style, "make it purple"). A luminosity-only request such as dark theme or light mode still needs a compatible Style Pack to supply the missing palette roles. Explicit user direction always wins over Style Packs. For edits to an existing app, preserve its established theme unless the user asks to restyle or recolor it.
     - Do NOT default every vague brief to anonymous Vercel-gray SaaS. Vague briefs must lock exactly one Style Pack below and build from its literal surface map, font pairing, composition scaffold, and class cheat-sheet. When an Active Style Pack directive is present above, it is authoritative — do not pick a different pack.
     - **Full-style commitment:** once a pack is locked, the ENTIRE app must live inside that aesthetic world — canvas, surfaces, type, radius, nav, footer, motion, and signature element. Partial adoption (gray SaaS base + one accent button) reads as generic AI output and fails review.
     - **Generic AI palette bans (always):** yellow-400/500 primary CTA on black/near-black canvas; Inter/system-ui as the only font; purple mesh hero; three equal icon cards when the scaffold specifies mixed-cell craft.
     - Routing (deterministic, private — never dump the lock into the chat reply):
-      1. If explicit aesthetic/color/reference signals exist (not a Hallmark theme name) → skip packs; honor user + color-fidelity contracts.
+      1. If explicit aesthetic/color/reference signals beyond luminosity exist (not a Hallmark theme name) → skip packs; honor user + color-fidelity contracts. If the request only specifies dark-first or light-first, retain only packs with that luminosity before deterministic selection.
       2. If the user names a Hallmark theme (Cobalt, Lumen, Brutal, Terminal, Garden, …) → map to the matching Style Pack and commit fully.
       3. Else infer a subject bucket: tools/API/docs/dashboard → tools; AI/creative/voice/music → aiCreative; portfolio/agency/editorial → portfolioEditorial; industrial/ops/infra/telemetry → industrialOps; landing/marketing/agency showcase → landingAgency; consumer/health/onboarding/friendly → consumerFriendly; unknown product → tools.
       4. Hash seed = brief character length + first token + last token. Pick among the bucket's allowed packs by \`seed % pool.length\`.
@@ -1537,8 +1570,22 @@ export function buildStylePackContract(): string {
 
 export const stylePackContract = buildStylePackContract();
 
+/**
+ * Compact runtime policy. The server already injects the one selected pack and
+ * its concrete recipe, so repeating the full twelve-pack catalog only dilutes
+ * the authoritative brief and wastes context.
+ */
+export const activeStylePackRuntimeContract = dedent`
+  **Runtime Style Pack policy (mandatory):**
+  - The Active Style Pack directive near the start of this prompt is server-resolved and authoritative. Do not re-route or choose from the catalog during code generation.
+  - A requested luminosity such as “dark theme” or “light theme” is a constraint, not a complete palette. The server-selected pack must match that luminosity while supplying the missing surface, accent, type, and motion roles.
+  - A named color, visual reference, supplied media URL, or explicit aesthetic overrides inferred pack styling within its requested scope.
+  - Preserve one coherent luminosity and one accent family. Never combine the user's canvas request with an accent copied from an incompatible pack.
+  - Generic yellow/black CTAs, purple mesh heroes, Inter-only typography, and three equal feature cards remain banned unless the user explicitly requests them.
+`;
+
 export const stylePackPlanningRule =
-  "Unspecified-theme Style Pack: when the user provides no explicit theme, palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural, terminalPhosphor, gardenBotanical, midnightCool, manifestoGeometric, newsprintEditorial, risoPoster) from the subject bucket + brief-hash seed; privately lock dials, literal SURFACE_MAP classes, and font pairing; commit fully to that one aesthetic world; do not default to anonymous Vercel-gray SaaS or yellow/black CTAs; honor explicit user aesthetic direction over packs.";
+  "Incomplete-theme Style Pack: when the user provides no complete palette, named color, visual reference, or aesthetic direction, deterministically route to one Style Pack (cobaltMinimal, lumenAtmospheric, editorialSpecimen, swissBrutal, kineticAwwwards, softStructural, terminalPhosphor, gardenBotanical, midnightCool, manifestoGeometric, newsprintEditorial, risoPoster) from the subject bucket + brief-hash seed; treat dark/light requests as luminosity constraints and filter to compatible packs; privately lock dials, literal SURFACE_MAP classes, and font pairing; commit fully to that one aesthetic world; do not default to anonymous Vercel-gray SaaS or yellow/black CTAs; honor complete explicit user aesthetic direction over packs.";
 
 /** @deprecated Use stylePackContract — kept as alias during migration. */
 export const unspecifiedThemeStylePackContract = stylePackContract;

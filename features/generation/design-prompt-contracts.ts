@@ -1,5 +1,6 @@
 import dedent from "dedent";
 import {
+  activeStylePackRuntimeContract,
   stylePackContract,
   stylePackPlanningRule,
 } from "@/features/generation/style-packs";
@@ -8,11 +9,17 @@ import {
   premiumCompositionPlanningRule,
 } from "@/features/generation/premium-composition-contract";
 
-export { stylePackContract, stylePackPlanningRule };
+export {
+  activeStylePackRuntimeContract,
+  stylePackContract,
+  stylePackPlanningRule,
+};
 export { premiumCompositionContract, premiumCompositionPlanningRule };
 export {
   selectStylePackId,
   hasExplicitAestheticDirection,
+  hasCompleteAestheticDirection,
+  inferRequestedLuminosity,
   inferSubjectBucket,
   hashBriefSeed,
   getStylePack,

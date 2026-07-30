@@ -4,9 +4,9 @@ import type { AppSpec } from "@/features/generation/app-spec";
 import { serializeSpecForPrompt } from "@/features/generation/app-spec";
 import { generatedAppCapabilityContract } from "@/lib/generated-app-capabilities";
 import {
+  activeStylePackRuntimeContract,
   designTasteContract,
   functionalInteractionContract,
-  neutralThemeDefaultContract,
   premiumCompositionContract,
   tailwindColorFidelityContract,
   themeToggleContract,
@@ -82,7 +82,7 @@ export const developerCodeGenPrompt = dedent`
   - Pair semantic Tailwind roles directly (for example, bg-primary with text-primary-foreground, bg-card with text-card-foreground, and bg-muted with text-muted-foreground). When using standard palette utilities, choose and apply a deliberate text-* color for that exact bg-* shade.
   - Audit contrast across light and dark themes plus default, hover, active, focus-visible, disabled, loading, selected, and error states. Opacity, gradients, images, and translucent overlays must be evaluated against the final composited background; never produce dark-on-dark, light-on-light, or washed-out gray-on-color text.
   ${tailwindColorFidelityContract}
-  ${neutralThemeDefaultContract}
+  ${activeStylePackRuntimeContract}
   ${visualSystemCoherenceContract}
   ${functionalInteractionContract}
   ${themeToggleContract}

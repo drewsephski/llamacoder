@@ -150,6 +150,14 @@ describe("past-media-urls", () => {
     ).toBe("userSpecified");
   });
 
+  test("a luminosity-only request still receives a concrete signature", () => {
+    expect(
+      selectVisualSignatureMode("Build an AI landing page with a dark theme", {
+        hasCatalogVideo: true,
+      }),
+    ).not.toBe("userSpecified");
+  });
+
   test("buildVisualSignatureDirective locks one mode with implementation steps", () => {
     const mesh = buildVisualSignatureDirective(
       "todo app",
@@ -178,6 +186,9 @@ describe("past-media-urls", () => {
     );
     expect(video).toContain("d8j0ntlcm91z4.cloudfront.net/demo.mp4");
     expect(video).toContain("Do NOT also add MeshGradient");
+    expect(video).toContain("Do not dim, tint, desaturate, or recolor");
+    expect(video).toContain("localized edge gradient");
+    expect(video).toContain("neutral white/black controls");
   });
 
   test("selectPastMediaCatalogForPrompt ranks jet membership brief to skyleite video", () => {

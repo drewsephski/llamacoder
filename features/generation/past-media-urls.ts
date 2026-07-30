@@ -2,7 +2,7 @@ import dedent from "dedent";
 
 import type { PastMediaCatalogEntry } from "@/features/generation/past-media-catalog";
 import {
-  hasExplicitAestheticDirection,
+  hasCompleteAestheticDirection,
   hashBriefSeed,
 } from "@/features/generation/style-packs";
 
@@ -234,7 +234,7 @@ export function selectVisualSignatureMode(
 
   if (
     promptHasOwnMediaUrls(trimmed) ||
-    hasExplicitAestheticDirection(trimmed)
+    hasCompleteAestheticDirection(trimmed)
   ) {
     return "userSpecified";
   }
@@ -273,7 +273,9 @@ function buildCatalogVideoInstructions(
     ### Implement: catalog video
     - Embed \`${primaryVideo.url}\` in \`<video autoPlay loop muted playsInline />\` per: ${primaryVideo.howToUse}
     - Comment \`{/* visual-signature: ${primaryVideo.id} */}\` above the element.
-    - Derive scrim, text color, and accent from the video mood (${primaryVideo.mood}).
+    - Preserve the video's original color and contrast. Do not dim, tint, desaturate, or recolor the whole frame merely to force it into the page theme.
+    - Derive typography and accent from the video's dominant color family, not a small incidental highlight. If the catalog metadata does not name a palette and you cannot inspect a frame, use neutral white/black controls instead of inventing a saturated accent.
+    - For text legibility, try placement in clean negative space first, then a localized edge gradient or compact solid/translucent text panel. Use the weakest treatment that passes contrast. A uniform full-frame scrim is a last resort and requires a clear readability need.
     - Do NOT also add MeshGradient, DotOrbit, or a noise overlay as the hero signature.
     ${imageHints}
   `;
@@ -340,6 +342,8 @@ export function buildVisualSignatureDirective(
 
     ### Rules for every mode
     - **One signature only** — never stack catalog video + mesh gradient + noise pattern in the same hero.
+    - **Media fidelity:** preserve the source asset's color balance. Do not add a blanket dark/color overlay as a default stylistic effect. Prefer text placement, a localized gradient, or a compact text panel; keep any necessary scrim spatially limited and as weak as contrast allows.
+    - **Palette coupling:** accents and CTAs must belong to the asset's dominant color family. If that family is unknown, use a neutral high-contrast CTA instead of guessing amber, orange, yellow, purple, or neon.
     - **Banned generic default:** \`bg-yellow-400\`/\`bg-yellow-500\` CTA on \`bg-black\`/\`bg-neutral-950\` unless the user explicitly asked for it.
     - Dashboard/workbench apps may skip a cinematic hero signature when the product surface IS the hero — still obey the locked mode for any marketing band present.
     - Catalog images below the fold are optional in all modes; never use dashed placeholder divs when a catalog URL fits the section.
@@ -387,6 +391,8 @@ export function buildPastMediaCatalogPromptSection(
 
     Ranked showcase assets when the locked visual signature is \`catalogVideo\`,
     or when a section genuinely needs a real image/video. Not mandatory every build.
+
+    If you use a catalog asset, preserve its native color balance. Do not apply a blanket tint, opacity reduction, or full-frame dark overlay as decoration. Solve text contrast with placement first, then a localized gradient or compact text panel. Match accents to the dominant media family; when the palette is unknown, keep controls neutral rather than inventing a warm or neon accent.
 
     ### Videos
     ${videoLines}

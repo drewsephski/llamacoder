@@ -64,6 +64,21 @@ describe("effective brief", () => {
     expect(brief.design.macrostructure).toBe("Long Document");
   });
 
+  it("keeps a dark-theme request out of light-first style packs", () => {
+    const prompt =
+      "Build a modern landing page for an AI startup with animated features, pricing, testimonials, and a sleek dark theme.";
+    const brief = resolveEffectiveBrief({
+      originalIntent: prompt,
+      latestUserRequest: prompt,
+      appSpec: createEmptyAppSpec(),
+      latestRequestIsInitialBuild: true,
+    });
+
+    expect(brief.design.requestedLuminosity).toBe("dark-first");
+    expect(brief.design.stylePack).not.toBeNull();
+    expect(brief.design.stylePack).not.toBe("kineticAwwwards");
+  });
+
   it.each([
     "Redesign this as a landing page",
     "Make this a landing page",

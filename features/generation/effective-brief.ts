@@ -1,5 +1,6 @@
 import type { AppSpec } from "@/features/generation/app-spec";
 import {
+  inferRequestedLuminosity,
   selectStylePackId,
   type StylePackId,
 } from "@/features/generation/style-packs";
@@ -16,6 +17,7 @@ export type ResolvedHallmarkBrief = {
   audience: string;
   primaryJob: string;
   tone: string;
+  requestedLuminosity: "light-first" | "dark-first" | null;
   macrostructure: string;
   stylePack: StylePackId | null;
   navigation: string;
@@ -177,6 +179,7 @@ export function resolveEffectiveBrief(input: {
         latestUserRequest ||
         originalIntent,
       tone: resolveTone(spec, latestUserRequest),
+      requestedLuminosity: inferRequestedLuminosity(designInput),
       macrostructure: structure.macrostructure,
       stylePack: selectStylePackId(designInput),
       navigation: structure.navigation,

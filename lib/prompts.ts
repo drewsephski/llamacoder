@@ -1,10 +1,10 @@
 import dedent from "dedent";
 import { generatedAppCapabilityContract } from "@/lib/generated-app-capabilities";
 import {
+  activeStylePackRuntimeContract,
   buildActiveStylePackDirective,
   functionalInteractionContract,
   functionalInteractionPlanningRule,
-  neutralThemeDefaultContract,
   stylePackPlanningRule,
   premiumArchetypeAndThemeContract,
   premiumArchetypeAndThemePlanningRule,
@@ -245,7 +245,7 @@ export function getMainCodingPrompt(options?: {
 
   ${tailwindColorFidelityContract}
 
-  ${neutralThemeDefaultContract}
+  ${activeStylePackRuntimeContract}
 
   ${visualSystemCoherenceContract}
 

@@ -9,6 +9,7 @@ import {
   hasExplicitAestheticDirection,
   hashBriefSeed,
   inferSubjectBucket,
+  inferRequestedLuminosity,
   selectStylePackId,
   stylePackContract,
   stylePackPlanningRule,
@@ -65,6 +66,17 @@ describe("style pack router", () => {
     expect(hasExplicitAestheticDirection("dark mode AI chat")).toBe(true);
     expect(hasExplicitAestheticDirection("like Linear")).toBe(true);
     expect(selectStylePackId("make a purple analytics tool")).toBeNull();
+  });
+
+  it("treats luminosity as a constraint and chooses a compatible pack", () => {
+    const prompt =
+      "Build a modern landing page for an AI startup with a bold hero section, an animated feature grid, a pricing table with three tiers, a testimonials carousel, and a waitlist signup form. Use smooth scroll animations and a sleek dark theme.";
+
+    expect(inferRequestedLuminosity(prompt)).toBe("dark-first");
+    expect(selectStylePackId(prompt)).toBe("midnightCool");
+    expect(getStylePack(selectStylePackId(prompt)!).luminosity).toBe(
+      "dark-first",
+    );
   });
 
   it("routes vague briefs into subject buckets", () => {
