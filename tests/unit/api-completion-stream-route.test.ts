@@ -174,7 +174,10 @@ vi.mock("@/lib/openrouter", () => ({
 
 import { POST } from "@/app/api/get-next-completion-stream-promise/route";
 
-function classifiedPersistenceIntent(detected: boolean) {
+function classifiedPersistenceIntent(
+  detected: boolean,
+  options?: { explicitlyRequested?: boolean },
+) {
   return {
     outcome: "classified" as const,
     intent: {
@@ -187,8 +190,14 @@ function classifiedPersistenceIntent(detected: boolean) {
       reason: detected
         ? "The app creates data that must remain available."
         : "The experience is static and read-only.",
-      explicitlyRequested: false,
+      explicitlyRequested: detected && options?.explicitlyRequested === true,
       status: "not_prompted" as const,
+      requirements: {
+        authentication: false,
+        storage: false,
+        realtime: false,
+        privilegedServerLogic: false,
+      },
       proposedSchema: detected
         ? [{ entity: "records", purpose: "Store app records." }]
         : [],
@@ -1840,6 +1849,56 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(streamTextMock).not.toHaveBeenCalled();
   });
 
+  it("routes a habit tracker with a backend to Supabase before initial codegen", async () => {
+    const content = "build a habit tracker with a backend";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_habit_backend",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: createEmptyAppSpec(),
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content },
+    ]);
+    classifyPersistenceIntentMock.mockResolvedValueOnce(
+      classifiedPersistenceIntent(true, { explicitlyRequested: true }),
+    );
+
+    const chunks = await collectUIChunks(
+      await POST(request({ messageId: "msg_habit_backend", model: "model_1" })),
+    );
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: expect.objectContaining({
+            action: "request_backend_setup",
+            request: expect.objectContaining({ title: "Add a database" }),
+          }),
+        }),
+      ]),
+    );
+    expect(streamTextMock).not.toHaveBeenCalled();
+    expect(prismaMock.chat.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          appSpec: expect.objectContaining({
+            deliveryContract: "frontend_with_backend_blueprint",
+          }),
+        },
+      }),
+    );
+  });
+
   it("uses the backend setup handoff in Plan mode when persistence is detected", async () => {
     const content =
       "Build a CRM with a database to track leads and sales stages";
@@ -1975,7 +2034,7 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
   });
 
-  it("fails safe without stalling generation when classification fails", async () => {
+  it("fails safe by requesting a backend decision when classification fails", async () => {
     const content = "Build a todo app";
     prismaMock.message.findUnique.mockResolvedValueOnce(
       buildMessage({
@@ -1997,8 +2056,6 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     classifyPersistenceIntentMock.mockRejectedValueOnce(
       new Error("classification timeout"),
     );
-    mockGeneration({ text: "```tsx{path=App.tsx}\nexport default 1\n```" });
-
     const chunks = await collectUIChunks(
       await POST(
         request({ messageId: "msg_classifier_failure", model: "model_1" }),
@@ -2009,11 +2066,11 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       expect.arrayContaining([
         expect.objectContaining({
           type: "data-agent-action",
-          data: { action: "generate_code" },
+          data: expect.objectContaining({ action: "request_backend_setup" }),
         }),
       ]),
     );
-    expect(streamTextMock).toHaveBeenCalledOnce();
+    expect(streamTextMock).not.toHaveBeenCalled();
   });
 
   it("does not add a second setup card on a follow-up prompt", async () => {
@@ -2080,6 +2137,89 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
   });
 
+  it("reopens Supabase setup after UI-only mode when the user explicitly asks again", async () => {
+    const content = "add supabase";
+    const declinedSpec = createEmptyAppSpec();
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_reopen_supabase",
+        content,
+        position: 4,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "low",
+          appSpec: {
+            ...declinedSpec,
+            overview: { purpose: "A personal habit tracker" },
+            dataPersistence: {
+              ...declinedSpec.dataPersistence,
+              detected: true,
+              confidence: 98,
+              recommendation: "require_database",
+              status: "connect_declined",
+              reason: "Habit history must persist.",
+              proposedSchema: [
+                { entity: "habits", purpose: "Store tracked habits." },
+              ],
+            },
+          },
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a habit tracker" },
+      {
+        role: "assistant",
+        content: "Add a database",
+        files: {
+          kind: "agent_backend_setup_request",
+          request: {
+            id: "backend-setup-completed",
+            title: "Add a database",
+            description: "Connect Supabase.",
+            capabilities: ["Persistent data"],
+            requirements: {
+              database: true,
+              authentication: false,
+              storage: false,
+              realtime: false,
+              privilegedServerLogic: false,
+            },
+            continuation: {
+              id: "550e8400-e29b-41d4-a716-446655440001",
+              originalMessageId: "msg_original",
+              originalUserRequest: "Build a habit tracker",
+              mode: "direct",
+              status: "ui_only",
+            },
+          },
+        },
+      },
+      { role: "user", content },
+    ]);
+    classifyPersistenceIntentMock.mockResolvedValueOnce(
+      classifiedPersistenceIntent(true, { explicitlyRequested: true }),
+    );
+
+    const chunks = await collectUIChunks(
+      await POST(request({ messageId: "msg_reopen_supabase", model: "model_1" })),
+    );
+
+    expect(classifyPersistenceIntentMock).toHaveBeenCalledOnce();
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: expect.objectContaining({ action: "request_backend_setup" }),
+        }),
+      ]),
+    );
+    expect(streamTextMock).not.toHaveBeenCalled();
+  });
+
   it("does not show setup again when Supabase is already configured", async () => {
     const content = "Add a contact form";
     prismaMock.message.findUnique.mockResolvedValueOnce(
@@ -2125,6 +2265,15 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       ]),
     );
     expect(streamTextMock).toHaveBeenCalledOnce();
+    expect(prismaMock.chat.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          appSpec: expect.objectContaining({
+            deliveryContract: "connected_full_stack",
+          }),
+        },
+      }),
+    );
   });
 
   it("keeps the Plan mode interview ahead of model-suggested research", async () => {

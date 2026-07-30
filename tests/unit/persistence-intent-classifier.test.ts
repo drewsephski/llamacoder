@@ -29,8 +29,16 @@ describe("AI persistence classifier", () => {
           authentication: false,
           storage: false,
           realtime: false,
+          privilegedServerLogic: false,
         },
-        entities: [{ name: "tasks", purpose: "Store todo items." }],
+        entities: [
+          {
+            name: "tasks",
+            purpose: "Store todo items.",
+            fields: ["title: text", "completed: boolean"],
+            relationships: [],
+          },
+        ],
       },
     });
 
@@ -45,7 +53,7 @@ describe("AI persistence classifier", () => {
     });
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        timeout: { totalMs: 2_500 },
+        timeout: { totalMs: 8_000 },
         system: expect.stringMatching(
           /habit[\s\S]*todo lists[\s\S]*every form[\s\S]*counterfactual[\s\S]*landing page[\s\S]*returning/i,
         ),
@@ -67,12 +75,20 @@ describe("AI persistence classifier", () => {
           authentication: false,
           storage: false,
           realtime: false,
+          privilegedServerLogic: false,
         },
         entities: [
-          { name: "habits", purpose: "Store tracked habits." },
+          {
+            name: "habits",
+            purpose: "Store tracked habits.",
+            fields: ["name: text", "frequency: text"],
+            relationships: [],
+          },
           {
             name: "habit_entries",
             purpose: "Store dated completions and streak history.",
+            fields: ["habit_id: uuid", "completed_on: date"],
+            relationships: ["habit_entries belong to habits"],
           },
         ],
       },
@@ -97,7 +113,7 @@ describe("AI persistence classifier", () => {
     });
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        prompt: "REQUEST 1:\nBuild me a habit tracker app",
+        prompt: "USER REQUEST 1:\nBuild me a habit tracker app",
         system: expect.stringContaining(
           "even when the user never says \"database\", \"save\", or \"persist\"",
         ),
@@ -118,6 +134,7 @@ describe("AI persistence classifier", () => {
           authentication: false,
           storage: false,
           realtime: false,
+          privilegedServerLogic: false,
         },
         entities: [],
       },
@@ -134,8 +151,8 @@ describe("AI persistence classifier", () => {
     });
   });
 
-  it("fails safe when the provider fails or structured output cannot parse", async () => {
-    generateTextMock.mockRejectedValueOnce(new Error("invalid model output"));
+  it("retries and requires a backend decision when classification stays unavailable", async () => {
+    generateTextMock.mockRejectedValue(new Error("invalid model output"));
 
     const result = await classifyPersistenceIntent({
       model: "test-model" as never,
@@ -144,7 +161,61 @@ describe("AI persistence classifier", () => {
 
     expect(result).toMatchObject({
       outcome: "fallback",
-      intent: { detected: false, recommendation: "prototype" },
+      intent: { detected: true, recommendation: "suggest_database" },
     });
+    expect(generateTextMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("treats an explicit Supabase follow-up as an app modification", async () => {
+    generateTextMock.mockResolvedValueOnce({
+      output: {
+        isAppRequest: true,
+        requiresPersistence: true,
+        confidence: 100,
+        rationale: "The user explicitly requested Supabase for the existing app.",
+        useCase: "Habit tracker backend",
+        explicitlyRequested: true,
+        requirements: {
+          authentication: true,
+          storage: false,
+          realtime: true,
+          privilegedServerLogic: false,
+        },
+        entities: [
+          {
+            name: "habits",
+            purpose: "Store each user's habits.",
+            fields: ["name: text", "user_id: uuid"],
+            relationships: [],
+          },
+        ],
+      },
+    });
+
+    const result = await classifyPersistenceIntent({
+      model: "test-model" as never,
+      existingAppContext: "Purpose: Personal habit tracker",
+      recentUserRequests: ["Build a habit tracker", "add supabase"],
+    });
+
+    expect(result).toMatchObject({
+      outcome: "classified",
+      intent: {
+        detected: true,
+        explicitlyRequested: true,
+        requirements: { authentication: true, realtime: true },
+        proposedSchema: [{ entity: "habits", fields: ["name: text", "user_id: uuid"] }],
+      },
+    });
+    expect(generateTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: expect.stringMatching(
+          /EXISTING APP CONTEXT[\s\S]*USER REQUEST 1[\s\S]*USER REQUEST 2:\nadd supabase/,
+        ),
+        system: expect.stringContaining(
+          'Never interpret a short follow-up such as "add supabase" as a static or non-app request',
+        ),
+      }),
+    );
   });
 });

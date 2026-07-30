@@ -496,15 +496,18 @@ export async function POST(req: Request) {
           }))
       : [{ content: latestResearchObjective }];
     const chatUrls = extractChatUrls(chatUrlMessages);
-    const hasExistingBackendSetupCard = rawMessages.some((candidate) => {
+    const hasPendingBackendSetupCard = rawMessages.some((candidate) => {
       const metadata = parseAgentMessageMetadata(candidate.files);
-      return metadata?.kind === "agent_backend_setup_request";
+      return (
+        metadata?.kind === "agent_backend_setup_request" &&
+        metadata.request.continuation.status === "pending"
+      );
     });
     const shouldClassifyPersistence =
       !isFreeRepairRequest &&
       !isGeneratedAppRequestMetadata(message.files) &&
       !isStructuredDecisionResponse &&
-      !hasExistingBackendSetupCard;
+      !hasPendingBackendSetupCard;
     const persistenceClassifierRequests = rawMessages
       .filter((candidate) => {
         if (candidate.role !== "user") return false;
@@ -652,16 +655,34 @@ export async function POST(req: Request) {
           try {
             const result = await classifyPersistenceIntent({
               model: createOpenRouterModel(openrouter, FREE_MODEL, {
-                maxTokens: 360,
+                maxTokens: 720,
                 usage: { include: true },
               }),
               recentUserRequests: persistenceClassifierRequests,
+              existingAppContext: [
+                appSpec.overview.purpose
+                  ? `Purpose: ${appSpec.overview.purpose}`
+                  : null,
+                appSpec.overview.appType
+                  ? `App type: ${appSpec.overview.appType}`
+                  : null,
+                appSpec.dataPersistence.detected
+                  ? `Existing persistence decision: ${appSpec.dataPersistence.recommendation}; status=${appSpec.dataPersistence.status}`
+                  : null,
+                rawMessages.some(
+                  (candidate) => getStoredGeneratedFiles(candidate).length > 0,
+                )
+                  ? "The conversation already contains generated app code."
+                  : null,
+              ]
+                .filter(Boolean)
+                .join("\n"),
               providerOptions: persistenceReasoning.providerOptions,
               abortSignal: req.signal,
             });
             if (result.outcome === "fallback") {
               console.warn(
-                "Persistence classification failed; continuing without database setup:",
+                "Persistence classification failed after retry; requiring a backend decision before code generation:",
                 getAIErrorMessage(result.error),
               );
               void persistenceTelemetry?.record({
@@ -675,7 +696,7 @@ export async function POST(req: Request) {
             return result;
           } catch (error) {
             console.warn(
-              "Persistence classification failed; continuing without database setup:",
+              "Persistence classification failed unexpectedly; requiring a backend decision before code generation:",
               getAIErrorMessage(error),
             );
             void persistenceTelemetry?.record({
@@ -684,7 +705,9 @@ export async function POST(req: Request) {
             });
             return {
               outcome: "fallback" as const,
-              intent: createPersistenceClassificationFallback(),
+              intent: createPersistenceClassificationFallback({
+                reviewRecommended: true,
+              }),
               error,
             };
           }
@@ -755,16 +778,22 @@ export async function POST(req: Request) {
           // Final spec state (persisted after orchestration decision)
           let finalSpec = appSpec;
           const currentPersistenceState = finalSpec.dataPersistence;
-          if (
+          const shouldApplyPersistenceClassification =
             persistenceClassification &&
-            currentPersistenceState.status === "not_prompted"
-          ) {
+            (currentPersistenceState.status === "not_prompted" ||
+              (currentPersistenceState.status === "connect_declined" &&
+                persistenceClassification.intent.detected &&
+                persistenceClassification.intent.explicitlyRequested));
+          if (shouldApplyPersistenceClassification) {
             finalSpec = {
               ...finalSpec,
               dataPersistence: {
                 ...currentPersistenceState,
                 ...persistenceClassification.intent,
-                status: currentPersistenceState.status,
+                status:
+                  currentPersistenceState.status === "connect_declined"
+                    ? "not_prompted"
+                    : currentPersistenceState.status,
               },
             };
           }
@@ -972,6 +1001,19 @@ export async function POST(req: Request) {
               isConfiguredSupabaseValue(
                 connectedSupabaseConfig?.supabaseAnonKey,
               ));
+          if (finalSpec.dataPersistence.status === "connect_declined") {
+            finalSpec = {
+              ...finalSpec,
+              deliveryContract: "browser_frontend",
+            };
+          } else if (needsPersistenceBackendForProject) {
+            finalSpec = {
+              ...finalSpec,
+              deliveryContract: isSupabaseProjectProvisioned
+                ? "connected_full_stack"
+                : "frontend_with_backend_blueprint",
+            };
+          }
           const needsPersistenceBackend = (state: AppSpec) =>
             state.dataPersistence.detected &&
             state.dataPersistence.recommendation !== "prototype" &&
@@ -984,9 +1026,9 @@ export async function POST(req: Request) {
           );
           const shouldAskPersistencePreflight =
             shouldAskPersistenceQuestion(finalSpec, {
-              force: needsSupabaseProjectSetup && !hasExistingBackendSetupCard,
+              force: needsSupabaseProjectSetup && !hasPendingBackendSetupCard,
               supabaseProvisioned: isSupabaseProjectProvisioned,
-            }) && !hasExistingBackendSetupCard;
+            }) && !hasPendingBackendSetupCard;
           const initialPlanInterviewRequired =
             planMode &&
             !conversationHasCode &&
@@ -1042,21 +1084,20 @@ export async function POST(req: Request) {
               });
             }
 
-            if (!planMode) {
-              return action.action === "interview" ||
-                action.action === "clarify" ||
-                action.action === "present_plan" ||
-                action.action === "request_backend_setup"
-                ? { action: "generate_code" }
-                : action;
-            }
-
             if (action.action === "request_backend_setup") {
               return buildDirectBackendSetupRequest({
                 messageId,
                 prompt: latestUserContent,
                 spec: finalSpec,
               });
+            }
+
+            if (!planMode) {
+              return action.action === "interview" ||
+                action.action === "clarify" ||
+                action.action === "present_plan"
+                ? { action: "generate_code" }
+                : action;
             }
 
             const purposeGuardedAction = enforceSelectedApiPurpose(action);
@@ -1308,7 +1349,7 @@ export async function POST(req: Request) {
           }
           finalSpec = enforceRequestedPersistenceProvider(finalSpec);
           if (
-            persistenceClassification?.outcome === "classified" ||
+            persistenceClassification !== null ||
             planMode ||
             connectedIntegrationSelection.providerIds.length > 0
           ) {

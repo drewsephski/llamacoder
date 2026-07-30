@@ -53,6 +53,17 @@ export const dataEntitySchema = z.object({
 
 export type DataEntity = z.infer<typeof dataEntitySchema>;
 
+export const persistenceRequirementsSchema = z.object({
+  authentication: z.boolean().default(false),
+  storage: z.boolean().default(false),
+  realtime: z.boolean().default(false),
+  privilegedServerLogic: z.boolean().default(false),
+});
+
+export type PersistenceRequirements = z.infer<
+  typeof persistenceRequirementsSchema
+>;
+
 export const dataPersistenceIntentSchema = z.object({
   detected: z.boolean().default(false),
   confidence: z.number().min(0).max(100).default(0),
@@ -65,6 +76,12 @@ export const dataPersistenceIntentSchema = z.object({
   status: z
     .enum(["not_prompted", "connect_confirmed", "connect_declined"])
     .default("not_prompted"),
+  requirements: persistenceRequirementsSchema.default({
+    authentication: false,
+    storage: false,
+    realtime: false,
+    privilegedServerLogic: false,
+  }),
   proposedSchema: z.array(dataEntitySchema).default([]),
 });
 
@@ -291,8 +308,20 @@ export function serializeSpecForPrompt(
     const proposedSchema = spec.dataPersistence.proposedSchema
       .map((entity) => entity.entity)
       .join(", ");
+    const requiredCapabilities = [
+      spec.dataPersistence.requirements.authentication
+        ? "authentication"
+        : null,
+      spec.dataPersistence.requirements.storage ? "file storage" : null,
+      spec.dataPersistence.requirements.realtime ? "realtime" : null,
+      spec.dataPersistence.requirements.privilegedServerLogic
+        ? "privileged server logic"
+        : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
     parts.push(
-      `Persistence intent: ${decisionLabel}; status=${statusLabel}; confidence=${spec.dataPersistence.confidence}; useCase=${spec.dataPersistence.useCase || "not specified"}; schema=${proposedSchema || "pending"}`,
+      `Persistence intent: ${decisionLabel}; status=${statusLabel}; confidence=${spec.dataPersistence.confidence}; useCase=${spec.dataPersistence.useCase || "not specified"}; capabilities=${requiredCapabilities || "database only"}; schema=${proposedSchema || "pending"}`,
     );
   }
 
@@ -360,7 +389,11 @@ export function serializeSpecForPrompt(
     parts.push(`Confidence: ${spec.confidence}%`);
   }
 
-  if (spec.deliveryContract === "frontend_with_backend_blueprint") {
+  if (spec.deliveryContract === "connected_full_stack") {
+    parts.push(
+      "Runtime boundary: Supabase project setup is server-verified. Use the protected @/lib/supabase browser client for the approved schema and auth flows; never emit another client initializer, a service-role key, or simulated persistence.",
+    );
+  } else if (spec.deliveryContract === "frontend_with_backend_blueprint") {
     parts.push(
       "Runtime boundary: implement a functional browser frontend and export portable backend requirements as a blueprint. Do not simulate managed auth, persistence, server functions, or deployment as if Squid provisioned them.",
     );

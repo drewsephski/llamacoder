@@ -202,38 +202,27 @@ export function buildDirectBackendSetupRequest({
 }
 
 export function classifySupabaseSetupRequirements({
-  prompt,
   spec,
 }: {
   prompt: string;
   spec: AppSpec;
 }): SupabaseSetupRequirements {
-  const normalized = `${prompt} ${spec.overview.purpose ?? ""} ${spec.architecture.authentication ?? ""}`;
   const database =
     spec.dataPersistence.detected &&
     spec.dataPersistence.recommendation !== "prototype";
+  const semanticRequirements = spec.dataPersistence.requirements;
   const authentication =
-    Boolean(spec.architecture.authentication?.trim()) ||
-    /\b(?:auth|authentication|sign[ -]?(?:in|up)|log[ -]?in|accounts?|users?\s+can)\b/i.test(
-      normalized,
-    );
-  const storage =
-    /\b(?:supabase\s+storage|file uploads?|image uploads?|storage bucket)\b/i.test(
-      normalized,
-    );
-  const realtime = /\b(?:realtime|real-time|live updates?|presence)\b/i.test(
-    normalized,
-  );
-  const privilegedServerLogic =
-    /\b(?:service[_ -]?role|webhooks?|admin operations?|privileged|server function|secret key)\b/i.test(
-      normalized,
-    );
+    semanticRequirements.authentication ||
+    Boolean(spec.architecture.authentication?.trim());
+  const storage = semanticRequirements.storage;
+  const realtime = semanticRequirements.realtime;
+  const privilegedServerLogic = semanticRequirements.privilegedServerLogic;
+  const taskEntityNames = new Set(["task", "tasks", "todo", "todos"]);
   const hasTasksEntity = spec.dataPersistence.proposedSchema.some((entity) =>
-    /\btasks?\b/i.test(entity.entity),
+    taskEntityNames.has(entity.entity.trim().toLowerCase()),
   );
-  const isTaskApp = /\b(?:task manager|todo|to-do|tasks?)\b/i.test(normalized);
   const backendPlan = database
-    ? authentication && (hasTasksEntity || isTaskApp)
+    ? authentication && hasTasksEntity
       ? getAuthenticatedTasksBackendPlan()
       : buildBackendPlanFromAppSpec(spec, { authentication })
     : null;

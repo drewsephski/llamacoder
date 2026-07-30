@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { parse } from "@babel/parser";
+
 import { buildExportBundle } from "@/lib/export-bundle";
 import { getShowcaseLanding } from "@/features/gallery/showcase-landings";
 import type { ForSaleProduct } from "@/features/for-sale/types";
@@ -8,10 +10,61 @@ import { getLanguageOfFile } from "@/lib/utils";
 
 type BundleFile = { path: string; content: string | Buffer };
 const sourceExtensions = [".ts", ".tsx", ".js", ".jsx", ".css", ".json"];
-const importPattern = /(?:from\s*|import\s*(?:\(\s*)?)["']([^"']+)["']/g;
+const moduleSourceExtensions = new Set([".ts", ".tsx", ".js", ".jsx"]);
 const cssImportPattern = /@import\s+(?:url\()?['"]([^'"]+)['"]/g;
 const publicAssetPattern =
   /["'(]((?:\/[A-Za-z0-9_@.,+~%\-/]+)\.(?:png|jpe?g|webp|svg|gif|avif|mp4|webm|woff2?|ttf|otf))["')]/gi;
+
+function stringLiteralValue(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+  const node = value as { type?: unknown; value?: unknown };
+  return node.type === "StringLiteral" && typeof node.value === "string"
+    ? node.value
+    : null;
+}
+
+function collectModuleSpecifiers(content: string, sourcePath: string) {
+  const specifiers = new Set<string>();
+  const ast = parse(content, {
+    sourceFilename: sourcePath,
+    sourceType: "unambiguous",
+    plugins: ["typescript", "jsx", "decorators-legacy"],
+  });
+
+  const visit = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+
+    const node = value as Record<string, unknown>;
+    const type = node.type;
+    if (
+      type === "ImportDeclaration" ||
+      type === "ExportAllDeclaration" ||
+      type === "ExportNamedDeclaration"
+    ) {
+      const specifier = stringLiteralValue(node.source);
+      if (specifier) specifiers.add(specifier);
+    } else if (type === "ImportExpression") {
+      const specifier = stringLiteralValue(node.source);
+      if (specifier) specifiers.add(specifier);
+    } else if (type === "CallExpression") {
+      const callee = node.callee as { type?: unknown } | undefined;
+      const [argument] = Array.isArray(node.arguments) ? node.arguments : [];
+      if (callee?.type === "Import") {
+        const specifier = stringLiteralValue(argument);
+        if (specifier) specifiers.add(specifier);
+      }
+    }
+
+    for (const child of Object.values(node)) visit(child);
+  };
+
+  visit(ast.program);
+  return specifiers;
+}
 
 function resolveSource(
   projectRoot: string,
@@ -78,9 +131,12 @@ function buildCuratedRouteBundle(product: ForSaleProduct): BundleFile[] {
       content,
     });
 
-    for (const match of content.matchAll(importPattern)) {
-      recordPackage(match[1]);
-      const dependency = resolveSource(projectRoot, sourcePath, match[1]);
+    const moduleSpecifiers = moduleSourceExtensions.has(path.extname(sourcePath))
+      ? collectModuleSpecifiers(content, sourcePath)
+      : [];
+    for (const specifier of moduleSpecifiers) {
+      recordPackage(specifier);
+      const dependency = resolveSource(projectRoot, sourcePath, specifier);
       if (dependency && !visited.has(dependency)) queue.push(dependency);
     }
     for (const match of content.matchAll(publicAssetPattern)) {

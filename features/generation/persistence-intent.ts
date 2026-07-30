@@ -18,6 +18,7 @@ export const persistenceJudgmentSchema = z
         authentication: z.boolean(),
         storage: z.boolean(),
         realtime: z.boolean(),
+        privilegedServerLogic: z.boolean().default(false),
       })
       .strict(),
     entities: z
@@ -26,6 +27,14 @@ export const persistenceJudgmentSchema = z
           .object({
             name: z.string().trim().min(1).max(64),
             purpose: z.string().trim().min(1).max(160),
+            fields: z
+              .array(z.string().trim().min(1).max(120))
+              .max(10)
+              .default([]),
+            relationships: z
+              .array(z.string().trim().min(1).max(160))
+              .max(4)
+              .default([]),
           })
           .strict(),
       )
@@ -34,10 +43,14 @@ export const persistenceJudgmentSchema = z
   .strict();
 
 export type PersistenceJudgment = z.infer<typeof persistenceJudgmentSchema>;
+export type PersistenceJudgmentInput = z.input<
+  typeof persistenceJudgmentSchema
+>;
 
 export function persistenceJudgmentToIntent(
-  judgment: PersistenceJudgment,
+  input: PersistenceJudgmentInput,
 ): DataPersistenceIntent {
+  const judgment = persistenceJudgmentSchema.parse(input);
   const detected = judgment.isAppRequest && judgment.requiresPersistence;
 
   return dataPersistenceIntentSchema.parse({
@@ -48,24 +61,44 @@ export function persistenceJudgmentToIntent(
     reason: judgment.rationale,
     explicitlyRequested: detected && judgment.explicitlyRequested,
     status: "not_prompted",
+    requirements: detected
+      ? judgment.requirements
+      : {
+          authentication: false,
+          storage: false,
+          realtime: false,
+          privilegedServerLogic: false,
+        },
     proposedSchema: detected
       ? judgment.entities.map((entity) => ({
           entity: entity.name,
           purpose: entity.purpose,
+          fields: entity.fields,
+          relationships: entity.relationships,
         }))
       : [],
   });
 }
 
-export function createPersistenceClassificationFallback(): DataPersistenceIntent {
+export function createPersistenceClassificationFallback(options?: {
+  reviewRecommended?: boolean;
+}): DataPersistenceIntent {
+  const reviewRecommended = options?.reviewRecommended === true;
   return dataPersistenceIntentSchema.parse({
-    detected: false,
+    detected: reviewRecommended,
     confidence: 0,
-    recommendation: "prototype",
-    reason:
-      "Persistence classification was unavailable, so database setup was skipped.",
+    recommendation: reviewRecommended ? "suggest_database" : "prototype",
+    reason: reviewRecommended
+      ? "Persistence could not be classified reliably, so backend setup should be confirmed before code generation."
+      : "No persistence decision was available.",
     explicitlyRequested: false,
     status: "not_prompted",
+    requirements: {
+      authentication: false,
+      storage: false,
+      realtime: false,
+      privilegedServerLogic: false,
+    },
     proposedSchema: [],
   });
 }

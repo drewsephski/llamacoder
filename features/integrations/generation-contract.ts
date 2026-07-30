@@ -140,6 +140,7 @@ export function enforceSelectedProvidersInAppSpec(
       `${provider.name} [${provider.id}] is wired into a user-visible flow using its reviewed API contract.`,
   );
   const needsServerRuntime = providers.some(needsGeneratedServerRuntime);
+  const supabaseSelected = selectedIds.has("supabase");
 
   return {
     ...spec,
@@ -147,6 +148,19 @@ export function enforceSelectedProvidersInAppSpec(
       needsServerRuntime && spec.deliveryContract === "browser_frontend"
         ? "frontend_with_backend_blueprint"
         : spec.deliveryContract,
+    dataPersistence: supabaseSelected
+      ? {
+          ...spec.dataPersistence,
+          detected: true,
+          confidence: 100,
+          recommendation: "require_database",
+          explicitlyRequested: true,
+          status: spec.dataPersistence.status,
+          reason:
+            spec.dataPersistence.reason ||
+            "Supabase was explicitly selected for this generated app.",
+        }
+      : spec.dataPersistence,
     integrations: [...otherIntegrations, ...selectedIntegrations],
     acceptanceCriteria: Array.from(
       new Set([...spec.acceptanceCriteria, ...selectedAcceptanceCriteria]),

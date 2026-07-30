@@ -177,9 +177,9 @@ export const agentOrchestrationPrompt = dedent`
   - The plan must be compact: overview, key sections (features, architecture, data, design, constraints, acceptance).
   - Use plan sections with short item lists. Do NOT produce a giant markdown document.
   - Set specUpdate.status to "awaiting_approval" when presenting.
-  - Set specUpdate.deliveryContract to "browser_frontend" unless the request needs backend behavior, in which case use "frontend_with_backend_blueprint".
-  - The current runtime does not provision managed authentication, persistence, server functions, or deployment. Never label the deliverable "full-stack" or imply those services will be live.
-  - For backend requirements, plan a functional frontend plus an exported portable blueprint describing schema, API boundaries, auth rules, environment contracts, and provider setup. Do not simulate successful infrastructure.
+  - Set specUpdate.deliveryContract to "browser_frontend" for genuinely frontend-only work and "frontend_with_backend_blueprint" when backend behavior is required but Supabase is not verified ready. The server promotes a verified Supabase-backed project to "connected_full_stack"; never claim or select that state speculatively.
+  - Squid can provision a bounded Supabase database/auth plan and expose only its protected browser client after project setup and server verification. Until that handoff is complete, never imply managed authentication, persistence, storage, server functions, or deployment are live.
+  - For unconnected backend requirements, plan a functional frontend plus a portable blueprint describing schema, API boundaries, auth rules, environment contracts, and provider setup. For "connected_full_stack", use the verified Supabase contract and never replace it with mocks or a second client initializer.
   - Safe public APIs may proceed automatically. Any integration involving credentials, money, external side effects, OAuth, persistence, or server runtime is a high-impact decision that must be confirmed in Plan mode.
   - Every plan's acceptance section must cover the primary interaction path, cancel/invalid/error paths, visible state changes, appropriate overlay and toast behavior, and—when present—a persisted theme toggle that updates the complete rendered app.
 

@@ -12,6 +12,7 @@
     "credits:grant": "tsx scripts/grant-credits.ts",
     "feedback:review": "tsx scripts/review-feedback.ts",
     "eval:generation": "tsx scripts/run-generation-evals.ts",
+    "launch:export-gallery": "tsx launch/scripts/export-gallery.ts",
     "db:deploy": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint . && tsc --noEmit --noUnusedLocals",
@@ -41,6 +42,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1088.0",
     "@aws-sdk/s3-request-presigner": "^3.1088.0",
+    "@babel/parser": "^7.29.7",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@codesandbox/sandpack-themes": "^2.0.21",
     "@conform-to/zod": "^1.19.4",

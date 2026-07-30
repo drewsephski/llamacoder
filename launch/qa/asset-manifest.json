@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-30T02:53:40.025Z",
+  "renderer": "launch/renderer",
+  "command": "pnpm launch:export-gallery",
+  "exactContent": true,
+  "sourcePreservation": true,
+  "assetCount": 14,
+  "assets": [
+    {
+      "id": "thumbnail",
+      "path": "launch/thumbnail/squid-product-hunt-thumbnail.png",
+      "format": "png",
+      "width": 240,
+      "height": 240,
+      "byteSize": 22631,
+      "sha256": "536dbe3b2c754a2910ed458ae97f15bd2c5e99103081cf6bb4a3b097678ee989",
+      "sourceType": "coded-react-with-existing-logo",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "thumbnail-animation",
+      "path": "launch/thumbnail/squid-product-hunt-thumbnail.gif",
+      "format": "gif",
+      "width": 240,
+      "height": 240,
+      "byteSize": 34552,
+      "sha256": "8ad6e3019ad4e577000f4daff89deedccae71c027291aa062169f5ee39c8f281",
+      "sourceType": "coded-react-frames-and-ffmpeg",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "thumbnail-svg-source",
+      "path": "launch/thumbnail/squid-product-hunt-thumbnail.svg",
+      "format": "svg",
+      "width": 240,
+      "height": 240,
+      "byteSize": 1425,
+      "sha256": "1bed7ffe282dfc055965d951bba7819543c66b9238e3fe3314577995659b6dad",
+      "sourceType": "editable-vector-with-existing-logo",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "thumbnail-source",
+      "path": "launch/thumbnail/squid-product-hunt-thumbnail-source-960.png",
+      "format": "png",
+      "width": 960,
+      "height": 960,
+      "byteSize": 147125,
+      "sha256": "e05f0d1d66898d9132091add3bd730b686416bd7f00dabc916cb888e652bfeea",
+      "sourceType": "lossless-4x-react-export",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "complete-workflow",
+      "path": "launch/gallery/01-complete-workflow.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 110414,
+      "sha256": "4ef93148b0d8325de70f20b1e3171fcb865d20be241dee1c075e07220911bacc",
+      "sourceType": "coded-composition-and-react-demo",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "plan-mode",
+      "path": "launch/gallery/02-plan-mode.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 111218,
+      "sha256": "2d81bd23b4f6f9847122cfeeae25ebb78b87dfbe731137aea2b40b0e680b54e9",
+      "sourceType": "source-backed-representative-ui",
+      "requiresRealProductionData": true,
+      "productionDataNote": "Replace representative interview and approval cards with a stable authenticated Plan Mode capture when available."
+    },
+    {
+      "id": "project-aware-editing",
+      "path": "launch/gallery/03-project-aware-editing.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 109247,
+      "sha256": "4690ac7517e9e4e514caed72bb9285d6a3b9227f1893e01a2b9519ad04f70f72",
+      "sourceType": "source-backed-representative-editor-and-react-demo",
+      "requiresRealProductionData": true,
+      "productionDataNote": "The editor and checkpoint state are representative; replace them with a stable authenticated project-history capture."
+    },
+    {
+      "id": "verification",
+      "path": "launch/gallery/04-verification.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 137195,
+      "sha256": "5f7cf0b8320ce29004ed86ff73d001d2c9e81c52611e380535c2c76110a98c5d",
+      "sourceType": "public-example-and-honest-status-composition",
+      "requiresRealProductionData": true,
+      "productionDataNote": "Runtime, export, and integration states are intentionally not marked passed; replace with current production records before claiming success."
+    },
+    {
+      "id": "model-choice",
+      "path": "launch/gallery/05-model-choice.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 175761,
+      "sha256": "ca278156a1ab22f05b1e4fc407c1de796608a972af8ca7bc459ded3d42301b8b",
+      "sourceType": "real-public-trigger-and-source-backed-model-catalog",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "code-ownership",
+      "path": "launch/gallery/06-code-ownership.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 147506,
+      "sha256": "2938a05f46a0390c9a9b92bb861289ada24bafa7b1cc969326c8f9d9fccfa956",
+      "sourceType": "public-source-capture-and-source-backed-handoff",
+      "requiresRealProductionData": true,
+      "productionDataNote": "ZIP is visible in public product UI; GitHub publishing still needs a sanitized connected-account capture."
+    },
+    {
+      "id": "real-applications",
+      "path": "launch/gallery/07-real-applications.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 138413,
+      "sha256": "a49fd15beb72a5e918c27a87883699b273cbcc78eb882dc4dd3f292a607eef91",
+      "sourceType": "react-demo-apps-and-existing-showcase-capture",
+      "requiresRealProductionData": true,
+      "productionDataNote": "FieldFlow and LaunchOps are reproducible launch demo applications. LaunchOps is not a production authenticated customer project."
+    },
+    {
+      "id": "founder-story",
+      "path": "launch/gallery/08-founder-story.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 112046,
+      "sha256": "53b66bf0b694e758f259c90fcd802c6baa10a76e749dcd84fe335f59cacca390",
+      "sourceType": "existing-founder-image-and-coded-composition",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "gallery-contact-sheet",
+      "path": "launch/gallery/product-hunt-gallery-contact-sheet.png",
+      "format": "png",
+      "width": 1270,
+      "height": 760,
+      "byteSize": 164662,
+      "sha256": "d80f52ae6af711767d82ea81d8d7e793550f3143616055605f31b2982d2c149f",
+      "sourceType": "generated-review-sheet",
+      "requiresRealProductionData": false
+    },
+    {
+      "id": "thumbnail-contact-sheet",
+      "path": "launch/thumbnail/squid-product-hunt-thumbnail-contact-sheet.png",
+      "format": "png",
+      "width": 800,
+      "height": 360,
+      "byteSize": 59628,
+      "sha256": "153f805e30690cd769ce3f5f3d5b413225214653f6e1fd3fbd4defd2f1cfe99a",
+      "sourceType": "generated-size-test",
+      "requiresRealProductionData": false
+    }
+  ]
+}

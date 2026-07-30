@@ -1,0 +1,18 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="soft-shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#143A72" flood-opacity="0.16" />
+    </filter>
+  </defs>
+  <rect width="240" height="240" rx="48" fill="#F2F5F8" />
+  <circle cx="120" cy="120" r="88" stroke="#CBD6E2" stroke-width="1.5" stroke-dasharray="2 7" />
+  <g stroke="#60758D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(106 17)"><rect width="28" height="22" rx="7" fill="#F8FAFC" /><path d="M8 8h12M8 13h8" /></g>
+    <g transform="translate(190 77)"><rect width="26" height="30" rx="7" fill="#F8FAFC" /><path d="M7 9h12M7 15h12M7 21h8" /></g>
+    <g transform="translate(159 177)"><rect width="32" height="24" rx="7" fill="#F8FAFC" /><path d="M1 7h30M8 13h16" /></g>
+    <g transform="translate(49 177)"><circle cx="15" cy="15" r="15" fill="#F8FAFC" /><path d="m8 15 5 5 9-11" /></g>
+    <g transform="translate(23 77)"><rect width="28" height="30" rx="7" fill="#F8FAFC" /><path d="M14 7v14M9 16l5 5 5-5" /></g>
+  </g>
+  <circle cx="120" cy="120" r="60" fill="#FFFFFF" stroke="#DCE4EC" stroke-width="1.5" filter="url(#soft-shadow)" />
+  <image href="../../public/squidagent-logo.svg" x="72" y="72" width="96" height="96" preserveAspectRatio="xMidYMid meet" />
+</svg>

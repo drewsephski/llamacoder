@@ -42,6 +42,23 @@ describe("selected API generation contract", () => {
     );
   });
 
+  it("treats selecting Supabase as an explicit persistence request", () => {
+    const spec = enforceSelectedProvidersInAppSpec(createEmptyAppSpec(), [
+      "supabase",
+    ]);
+
+    expect(spec.dataPersistence).toMatchObject({
+      detected: true,
+      confidence: 100,
+      recommendation: "require_database",
+      explicitlyRequested: true,
+      status: "not_prompted",
+    });
+    expect(spec.integrations).toEqual([
+      expect.objectContaining({ providerId: "supabase", required: true }),
+    ]);
+  });
+
   it("restores a selected API after a model spec update omits it", () => {
     const original = enforceSelectedProvidersInAppSpec(createEmptyAppSpec(), [
       "weather-gov",

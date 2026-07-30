@@ -210,6 +210,10 @@ const productsByKey = new Map<string, ForSaleProduct>(
   products.map((product) => [product.key, product]),
 );
 
+export function getForSaleProducts(): readonly ForSaleProduct[] {
+  return products;
+}
+
 export function getForSaleProduct(pathname: string): ForSaleProduct | null {
   const normalizedPath = pathname.replace(/\/$/, "") || "/";
   const route = normalizedPath.endsWith("/preview")

@@ -108,6 +108,12 @@ describe("mergeSpecUpdate", () => {
         status: "connect_confirmed",
         reason: "Track customers through lifecycle",
         useCase: "CRM / sales pipeline",
+        requirements: {
+          authentication: true,
+          storage: false,
+          realtime: false,
+          privilegedServerLogic: false,
+        },
         proposedSchema: [
           {
             entity: "contacts",
