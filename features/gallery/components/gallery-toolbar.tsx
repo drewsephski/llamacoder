@@ -26,7 +26,7 @@ export function GalleryToolbar({
       if (!value) params.delete(key);
       else params.set(key, value);
     }
-    params.delete("page");
+    params.delete("cursor");
     router.push(`${pathname}${params.size ? `?${params}` : ""}`);
   };
 

@@ -7,20 +7,22 @@ export const GALLERY_THUMBNAIL_HEIGHT = 720;
 export const GALLERY_THUMBNAIL_QUALITY = 78;
 export const GALLERY_THUMBNAIL_SETTLE_MS = 1_000;
 
-function getPreviewIframe() {
-  return document.querySelector<HTMLIFrameElement>(".sp-preview-iframe");
+function getPreviewIframe(root: ParentNode) {
+  return root.querySelector<HTMLIFrameElement>(".sp-preview-iframe");
 }
 
 export async function capturePreviewScreenshot({
   width = GALLERY_THUMBNAIL_WIDTH,
   height = GALLERY_THUMBNAIL_HEIGHT,
   quality = GALLERY_THUMBNAIL_QUALITY,
+  root = document,
 }: {
   width?: number;
   height?: number;
   quality?: number;
+  root?: ParentNode;
 } = {}): Promise<Blob> {
-  const iframe = getPreviewIframe();
+  const iframe = getPreviewIframe(root);
   const iframeWindow = iframe?.contentWindow;
   if (!iframeWindow) {
     throw new Error("Preview iframe is not available.");

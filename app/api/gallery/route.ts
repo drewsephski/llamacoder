@@ -5,7 +5,7 @@ import { getCurrentSession } from "@/features/auth/server/session";
 import { publishProjectSchema } from "@/features/gallery/contracts";
 import {
   createGallerySlug,
-  getGalleryProjects,
+  getGalleryProjectFeed,
 } from "@/features/gallery/server/queries";
 import { getMessageGeneratedFiles } from "@/features/generation/message-files";
 import { getPrisma } from "@/lib/prisma";
@@ -23,11 +23,9 @@ export async function GET(request: NextRequest) {
     const withThumbnails =
       thumbnailScope === "true" || thumbnailScope === "all";
 
-    const { projects } = await getGalleryProjects({
-      query: "",
-      remixable: false,
-      sort: "newest",
-    });
+    const projects = await getGalleryProjectFeed(
+      withThumbnails ? {} : { take: 6 },
+    );
 
     if (withThumbnails) {
       return NextResponse.json(
@@ -53,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      apps: projects.slice(0, 6).map((project) => ({
+      apps: projects.map((project) => ({
         name: project.title,
         href: `/gallery/${project.slug}`,
         remixHref: project.allowRemixes

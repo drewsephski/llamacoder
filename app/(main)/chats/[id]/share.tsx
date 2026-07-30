@@ -74,6 +74,7 @@ export function Share({
     "loading" | "ready" | "error"
   >("loading");
   const previewStatusRef = useRef(previewStatus);
+  const previewRootRef = useRef<HTMLDivElement>(null);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
 
   useEffect(() => {
@@ -102,7 +103,9 @@ export function Share({
       isReady: () => previewStatusRef.current === "ready",
     });
     await sleep(GALLERY_THUMBNAIL_SETTLE_MS);
-    const thumbnail = await capturePreviewScreenshot();
+    const thumbnail = await capturePreviewScreenshot({
+      root: previewRootRef.current ?? document,
+    });
     return uploadGalleryThumbnail(publicationId, thumbnail);
   }
 
@@ -263,7 +266,7 @@ export function Share({
 
           {previewFiles.length > 0 && (
             <div className="h-56 overflow-hidden rounded-xl border border-border bg-muted/30 sm:h-60">
-              <div className="size-full">
+              <div ref={previewRootRef} className="size-full">
                 <CodeRunner
                   files={previewFiles}
                   onPreviewHealthChange={(health) => {

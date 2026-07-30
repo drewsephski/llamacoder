@@ -9,10 +9,10 @@ describe("GalleryLoading", () => {
   it("centers the loader within the full dynamic viewport height", () => {
     render(<GalleryLoading />);
 
-    expect(screen.getByText("Loading gallery...").parentElement).toHaveClass(
-      "min-h-dvh",
-      "items-center",
-      "justify-center",
-    );
+    expect(
+      screen
+        .getByText("Loading gallery...")
+        .closest('[data-slot="page-status-shell"]'),
+    ).toHaveClass("min-h-dvh", "items-center", "justify-center");
   });
 });

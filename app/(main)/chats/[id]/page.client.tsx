@@ -112,11 +112,7 @@ HeaderChat.displayName = "HeaderChat";
 
 export default function PageClient({ chat }: { chat: Chat }) {
   const plausible = usePlausible();
-  const {
-    streamPromise,
-    setStreamPromise,
-    setHandedOffStreamPromise: setContextStreamPromise,
-  } = useGenerationHandoffStream();
+  const { streamPromise, setStreamPromise } = useGenerationHandoffStream();
   const [streamText, setStreamText] = useState("");
   const [reasoningText, setReasoningText] = useState("");
   const [streamSources, setStreamSources] = useState<SourceUrl[]>([]);
@@ -256,7 +252,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         generationRunId: failedStream.generationRunId,
       }),
     );
-  }, [chat.model, streamError]);
+  }, [chat.model, setStreamPromise, streamError]);
 
   const handleNewStreamPromise = useCallback(
     (nextStream: Promise<CompletionStream>) => {
@@ -265,7 +261,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
       setPreviewRecovery(null);
       setStreamPromise(nextStream);
     },
-    [],
+    [setStreamPromise],
   );
 
   const handleStopGeneration = useCallback(async () => {
@@ -289,7 +285,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     freeRepairSourceMessageIdRef.current = null;
     freeRepairSourceFilesRef.current = null;
     toast.info("Generation stopped. Reserved credits were released.");
-  }, [generationRunId]);
+  }, [generationRunId, setStreamPromise]);
 
   const handleRecoverGeneration = useCallback(() => {
     if (!recoverableRun) return;
@@ -304,7 +300,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           }),
     );
     setRecoverableRun(null);
-  }, [chat.model, recoverableRun]);
+  }, [chat.model, recoverableRun, setStreamPromise]);
 
   useEffect(() => {
     let reader: ReadableStreamDefaultReader<UIMessageChunk> | null = null;
@@ -340,7 +336,6 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
       handledStreamPromiseRef.current = streamPromise;
       isHandlingStreamRef.current = true;
-      setContextStreamPromise(undefined);
 
       let didPushToCode = false;
       let didPushToPreview = false;
@@ -850,8 +845,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
     chat.model,
     plausible,
     router,
+    setStreamPromise,
     streamPromise,
-    setContextStreamPromise,
   ]);
 
   const continueAgentConversation = useCallback(
@@ -917,7 +912,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
         toast.error(message);
       }
     },
-    [chat.id, chat.model, router, streamPromise],
+    [chat.id, chat.model, router, setStreamPromise, streamPromise],
   );
 
   const openSupabaseConnectFlow = useCallback(() => {
@@ -1088,7 +1083,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
         );
       }
     },
-    [activeMessage, chat.id, chat.model, router, streamPromise],
+    [
+      activeMessage,
+      chat.id,
+      chat.model,
+      router,
+      setStreamPromise,
+      streamPromise,
+    ],
   );
 
   const handlePreviewHealth = useCallback(

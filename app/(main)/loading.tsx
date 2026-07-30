@@ -1,10 +1,5 @@
-import Spinner from "@/components/spinner";
+import { FullPageStatus } from "@/components/page-status/full-page-status";
 
 export default function Loading() {
-  return (
-    <div className="flex h-screen flex-col items-center justify-center gap-4">
-      <Spinner className="block size-8" variant="page" />
-      <p className="text-sm text-muted-foreground">Loading...</p>
-    </div>
-  );
+  return <FullPageStatus label="Loading..." />;
 }

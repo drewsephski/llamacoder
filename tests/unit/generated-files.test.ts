@@ -29,6 +29,43 @@ describe("generated file diagnostics", () => {
       ].join("\n"),
     );
   });
+
+  it("surfaces unsupported external imports in validation and repair guidance", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import axios from "axios";',
+          "export default function App() { return <main>{String(axios)}</main>; }",
+        ].join("\n"),
+      },
+    ]);
+    const diagnostics = validateGeneratedFiles(files);
+
+    expect(diagnostics).toEqual([
+      {
+        path: "App.tsx",
+        message:
+          'Unsupported external package "axios" imported from "axios". Use a package supported by Squid or remove the import.',
+      },
+    ]);
+    expect(
+      buildGeneratedFilesRepairPrompt("broken response", files, diagnostics),
+    ).toContain(
+      'App.tsx: Unsupported external package "axios" imported from "axios"',
+    );
+  });
+
+  it("keeps incomplete streamed imports out of terminal validation diagnostics", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { motion } from "framer-motion',
+      },
+    ]);
+
+    expect(validateGeneratedFiles(files)).toEqual([]);
+  });
 });
 
 describe("generated file normalization", () => {

@@ -41,6 +41,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1088.0",
     "@aws-sdk/s3-request-presigner": "^3.1088.0",
+    "@babel/parser": "7.29.7",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@codesandbox/sandpack-themes": "^2.0.21",
     "@conform-to/zod": "^1.19.4",

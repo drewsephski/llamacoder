@@ -62,7 +62,7 @@ export default async function Page({
       aria-label="Generated app preview"
       className="h-dvh min-h-[520px] w-full min-w-0 overflow-hidden"
     >
-      <CodeRunner language="tsx" code={generatedApp.code} />
+      <CodeRunner language="tsx" code={generatedApp.code} showStatusOverlay />
     </main>
   );
 }

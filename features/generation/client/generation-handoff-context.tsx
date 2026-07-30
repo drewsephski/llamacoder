@@ -3,17 +3,23 @@
 import {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import type { CompletionStream } from "@/features/generation/client/completion-stream";
 
+type StreamPromise = Promise<CompletionStream>;
+type StreamPromiseListener = (streamPromise: StreamPromise) => void;
+
 type GenerationHandoffContextValue = {
-  streamPromise?: Promise<CompletionStream>;
-  setStreamPromise: (stream: Promise<CompletionStream> | undefined) => void;
+  claimStreamPromise: (streamPromise: StreamPromise) => boolean;
+  setStreamPromise: (streamPromise: StreamPromise | undefined) => void;
+  subscribeToStreamPromise: (listener: StreamPromiseListener) => () => void;
 };
 
 const GenerationHandoffContext =
@@ -24,11 +30,51 @@ export function GenerationHandoffProvider({
 }: {
   children: ReactNode;
 }) {
-  const [streamPromise, setStreamPromise] =
-    useState<Promise<CompletionStream>>();
+  const pendingStreamPromiseRef = useRef<StreamPromise | undefined>(undefined);
+  const listenersRef = useRef(new Set<StreamPromiseListener>());
+
+  const claimStreamPromise = useCallback((streamPromise: StreamPromise) => {
+    if (pendingStreamPromiseRef.current !== streamPromise) return false;
+
+    pendingStreamPromiseRef.current = undefined;
+    return true;
+  }, []);
+
+  const setStreamPromise = useCallback(
+    (streamPromise: StreamPromise | undefined) => {
+      pendingStreamPromiseRef.current = streamPromise;
+      if (!streamPromise) return;
+
+      for (const listener of listenersRef.current) {
+        listener(streamPromise);
+      }
+    },
+    [],
+  );
+
+  const subscribeToStreamPromise = useCallback(
+    (listener: StreamPromiseListener) => {
+      listenersRef.current.add(listener);
+
+      const pendingStreamPromise = pendingStreamPromiseRef.current;
+      if (pendingStreamPromise) {
+        listener(pendingStreamPromise);
+      }
+
+      return () => {
+        listenersRef.current.delete(listener);
+      };
+    },
+    [],
+  );
+
   const value = useMemo(
-    () => ({ streamPromise, setStreamPromise }),
-    [streamPromise],
+    () => ({
+      claimStreamPromise,
+      setStreamPromise,
+      subscribeToStreamPromise,
+    }),
+    [claimStreamPromise, setStreamPromise, subscribeToStreamPromise],
   );
 
   return (
@@ -50,31 +96,42 @@ export function useGenerationHandoff() {
 
 /**
  * Owns the stream currently handled by a chat page while continuing to listen
- * for a stream handed off during navigation. Context updates and route mounts
- * are scheduled independently, so reading the context only as a useState
- * initializer can permanently miss a first-message stream that arrives just
- * after the destination mounts.
+ * for a stream handed off during navigation. The provider behaves as a mailbox:
+ * an offered stream remains pending until one mounted destination claims that
+ * exact promise. A destination with an active stream discards, but never adopts,
+ * a late offer.
  */
 export function useGenerationHandoffStream() {
-  const {
-    streamPromise: handedOffStreamPromise,
-    setStreamPromise: setHandedOffStreamPromise,
-  } = useGenerationHandoff();
-  const [streamPromise, setStreamPromise] = useState<
-    Promise<CompletionStream> | undefined
-  >(handedOffStreamPromise);
+  const { claimStreamPromise, subscribeToStreamPromise } =
+    useGenerationHandoff();
+  const [streamPromise, setOwnedStreamPromise] = useState<StreamPromise>();
+  const ownedStreamPromiseRef = useRef<StreamPromise | undefined>(undefined);
 
-  useEffect(() => {
-    if (!handedOffStreamPromise) return;
+  const setStreamPromise = useCallback(
+    (nextStreamPromise: StreamPromise | undefined) => {
+      ownedStreamPromiseRef.current = nextStreamPromise;
+      setOwnedStreamPromise(nextStreamPromise);
+    },
+    [],
+  );
 
-    // Never replace a stream that this page is already consuming. The handoff
-    // is cleared by the consumer once it claims that exact stream.
-    setStreamPromise((current) => current ?? handedOffStreamPromise);
-  }, [handedOffStreamPromise]);
+  useEffect(
+    () =>
+      subscribeToStreamPromise((offeredStreamPromise) => {
+        if (ownedStreamPromiseRef.current) {
+          claimStreamPromise(offeredStreamPromise);
+          return;
+        }
+        if (!claimStreamPromise(offeredStreamPromise)) return;
+
+        ownedStreamPromiseRef.current = offeredStreamPromise;
+        setOwnedStreamPromise(offeredStreamPromise);
+      }),
+    [claimStreamPromise, subscribeToStreamPromise],
+  );
 
   return {
     streamPromise,
     setStreamPromise,
-    setHandedOffStreamPromise,
   };
 }

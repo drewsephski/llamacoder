@@ -186,8 +186,10 @@ model GalleryPublication {
   publicArtifact             PublicArtifact? @relation(fields: [publicArtifactId], references: [id], onDelete: SetNull)
 
   @@index([isPublished, publishedAt])
+  @@index([isPublished, publishedAt, id])
   @@index([userId, isPublished])
   @@index([allowRemixes, isPublished])
+  @@index([allowRemixes, isPublished, publishedAt, id])
   @@index([thumbnailStatus, thumbnailUpdatedAt])
 }
 

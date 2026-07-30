@@ -107,10 +107,9 @@ export function getExportFilename(appTitle: string) {
 export function inferPackageDependencies(
   files: Array<{ code: string }>,
 ): Record<string, string> {
-  const source = files.map((file) => file.code).join("\n");
   return {
     ...BASE_DEPENDENCIES,
-    ...getRequiredGeneratedAppDependencies([source]),
+    ...getRequiredGeneratedAppDependencies(files.map((file) => file.code)),
   };
 }
 
@@ -204,10 +203,7 @@ function assembleExportFiles({
       "squid-runtime/supabase.ts",
       buildSupabaseExportRuntimeModule(),
     );
-    bundleFiles.set(
-      "vite-env.d.ts",
-      '/// <reference types="vite/client" />\n',
-    );
+    bundleFiles.set("vite-env.d.ts", '/// <reference types="vite/client" />\n');
   }
 
   if (!bundleFiles.has("main.tsx")) {

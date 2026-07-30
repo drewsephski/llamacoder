@@ -5,26 +5,42 @@ import {
   SandpackProvider,
   useSandpack,
 } from "@codesandbox/sandpack-react/unstyled";
-import { CheckIcon, CopyIcon, MousePointer2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { MousePointer2 } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { getSandpackConfig } from "@/lib/sandpack-config";
+import { preflightGeneratedAppImports } from "@/lib/generated-app-dependencies";
 import type { PreviewElementSelection } from "@/lib/targeted-preview-edit";
 import type { RuntimeVerificationReport } from "@/features/generation/runtime-verification";
 import type { SupabaseBrowserRuntimeState } from "@/features/integrations/supabase-browser-runtime";
+import {
+  PreviewStatusOverlay,
+  type PreviewLifecycle,
+} from "@/components/preview-status-overlay";
 
 const PREVIEW_INSPECTOR_SOURCE = "squid-preview-inspector";
 const PREVIEW_PARENT_SOURCE = "squid-preview-parent";
 const PREVIEW_HANDSHAKE_TIMEOUT_MS = 60_000;
+const PREVIEW_STABILIZATION_MS = 1_500;
+const INITIAL_PREVIEW_LIFECYCLE = { status: "loading" } as const;
 
 export default function ReactCodeRunner({
   files,
   onRequestFix,
   onPreviewHealthChange,
+  onPreviewLifecycleChange,
   onPreviewSelection,
   previewSelectionMode = false,
   previewTestNonce = 0,
   onPreviewTestReport,
   supabaseRuntime,
+  showStatusOverlay = true,
 }: {
   files: Array<{ path: string; content: string }>;
   onRequestFix?: (e: string) => void;
@@ -32,6 +48,7 @@ export default function ReactCodeRunner({
     status: "working" | "error";
     error?: string;
   }) => void;
+  onPreviewLifecycleChange?: (lifecycle: PreviewLifecycle) => void;
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
   previewSelectionMode?: boolean;
   previewTestNonce?: number;
@@ -39,60 +56,214 @@ export default function ReactCodeRunner({
     report: Omit<RuntimeVerificationReport, "messageId">,
   ) => void;
   supabaseRuntime?: SupabaseBrowserRuntimeState;
+  showStatusOverlay?: boolean;
 }) {
   const runtimeKey =
     supabaseRuntime?.status === "ready"
       ? `${supabaseRuntime.status}:${supabaseRuntime.config.url}:${supabaseRuntime.config.publishableKey}`
       : (supabaseRuntime?.status ?? "none");
   const filesKey = `${files.map((f) => f.path + f.content).join("")}:${runtimeKey}`;
-  return (
-    <SandpackProvider
-      key={filesKey}
-      className="relative h-full min-h-0 w-full min-w-0 overflow-hidden [&_.sp-preview-container]:flex [&_.sp-preview-container]:h-full [&_.sp-preview-container]:min-h-0 [&_.sp-preview-container]:w-full [&_.sp-preview-container]:min-w-0 [&_.sp-preview-container]:grow [&_.sp-preview-container]:flex-col [&_.sp-preview-container]:overflow-hidden [&_.sp-preview-iframe]:h-full [&_.sp-preview-iframe]:min-h-0 [&_.sp-preview-iframe]:w-full [&_.sp-preview-iframe]:min-w-0 [&_.sp-preview-iframe]:grow"
-      {...getSandpackConfig(files, supabaseRuntime)}
-    >
-      <SandpackPreview
-        showNavigator={false}
-        showOpenInCodeSandbox={false}
-        showRefreshButton={false}
-        showRestartButton={false}
-        showOpenNewtab={false}
-        className="h-full min-h-0 w-full min-w-0 overflow-hidden"
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const retryPreview = useCallback(() => {
+    onPreviewLifecycleChange?.(INITIAL_PREVIEW_LIFECYCLE);
+    setRetryAttempt((attempt) => attempt + 1);
+  }, [onPreviewLifecycleChange]);
+  const preflight = preflightGeneratedAppImports(
+    files.map(({ path, content }) => ({ path, code: content })),
+  );
+  const preflightDiagnostic = preflight.diagnostics[0];
+
+  if (preflightDiagnostic) {
+    const error = `${preflightDiagnostic.message}${preflightDiagnostic.path ? ` File: ${preflightDiagnostic.path}.` : ""}`;
+
+    return (
+      <PreflightFailure
+        key={retryAttempt}
+        error={error}
+        onPreviewHealthChange={onPreviewHealthChange}
+        onPreviewLifecycleChange={onPreviewLifecycleChange}
+        onRequestFix={onRequestFix}
+        onRetry={retryPreview}
       />
-      {onRequestFix && <ErrorMessage onRequestFix={onRequestFix} />}
-      {onPreviewHealthChange && (
-        <PreviewHealthReporter onChange={onPreviewHealthChange} />
-      )}
-      {(onPreviewSelection || onPreviewTestReport) && (
-        <PreviewInspector
-          selectionMode={previewSelectionMode}
-          testNonce={previewTestNonce}
-          onPreviewSelection={onPreviewSelection}
-          onPreviewTestReport={onPreviewTestReport}
-        />
-      )}
-    </SandpackProvider>
+    );
+  }
+
+  return (
+    <PreviewAttempt
+      key={`${filesKey}:${retryAttempt}`}
+      files={files}
+      onRequestFix={onRequestFix}
+      onPreviewHealthChange={onPreviewHealthChange}
+      onPreviewLifecycleChange={onPreviewLifecycleChange}
+      onPreviewSelection={onPreviewSelection}
+      previewSelectionMode={previewSelectionMode}
+      previewTestNonce={previewTestNonce}
+      onPreviewTestReport={onPreviewTestReport}
+      supabaseRuntime={supabaseRuntime}
+      showStatusOverlay={showStatusOverlay}
+      onRetry={retryPreview}
+    />
   );
 }
 
-function PreviewHealthReporter({
-  onChange,
+function PreflightFailure({
+  error,
+  onPreviewHealthChange,
+  onPreviewLifecycleChange,
+  onRequestFix,
+  onRetry,
 }: {
-  onChange: (health: { status: "working" | "error"; error?: string }) => void;
+  error: string;
+  onPreviewHealthChange?: (health: {
+    status: "working" | "error";
+    error?: string;
+  }) => void;
+  onPreviewLifecycleChange?: (lifecycle: PreviewLifecycle) => void;
+  onRequestFix?: (error: string) => void;
+  onRetry: () => void;
+}) {
+  useLayoutEffect(() => {
+    onPreviewLifecycleChange?.({ status: "error", error });
+    onPreviewHealthChange?.({ status: "error", error });
+  }, [error, onPreviewHealthChange, onPreviewLifecycleChange]);
+
+  return (
+    <div
+      className="relative h-full min-h-0 w-full min-w-0 overflow-hidden"
+      data-preview-runner-root
+    >
+      <PreviewStatusOverlay
+        lifecycle={{ status: "error", error }}
+        onRequestFix={onRequestFix}
+        onRetry={onRetry}
+      />
+    </div>
+  );
+}
+
+function PreviewAttempt({
+  files,
+  onRequestFix,
+  onPreviewHealthChange,
+  onPreviewLifecycleChange,
+  onPreviewSelection,
+  previewSelectionMode,
+  previewTestNonce,
+  onPreviewTestReport,
+  supabaseRuntime,
+  showStatusOverlay,
+  onRetry,
+}: {
+  files: Array<{ path: string; content: string }>;
+  onRequestFix?: (error: string) => void;
+  onPreviewHealthChange?: (health: {
+    status: "working" | "error";
+    error?: string;
+  }) => void;
+  onPreviewLifecycleChange?: (lifecycle: PreviewLifecycle) => void;
+  onPreviewSelection?: (selection: PreviewElementSelection) => void;
+  previewSelectionMode: boolean;
+  previewTestNonce: number;
+  onPreviewTestReport?: (
+    report: Omit<RuntimeVerificationReport, "messageId">,
+  ) => void;
+  supabaseRuntime?: SupabaseBrowserRuntimeState;
+  showStatusOverlay: boolean;
+  onRetry: () => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [lifecycle, setLifecycle] = useState<PreviewLifecycle>(
+    INITIAL_PREVIEW_LIFECYCLE,
+  );
+  const lifecycleRef = useRef<PreviewLifecycle>(INITIAL_PREVIEW_LIFECYCLE);
+  const healthChangeRef = useRef(onPreviewHealthChange);
+  const lifecycleChangeRef = useRef(onPreviewLifecycleChange);
+
+  useLayoutEffect(() => {
+    healthChangeRef.current = onPreviewHealthChange;
+    lifecycleChangeRef.current = onPreviewLifecycleChange;
+  }, [onPreviewHealthChange, onPreviewLifecycleChange]);
+
+  const handleLifecycleChange = useCallback((next: PreviewLifecycle) => {
+    const current = lifecycleRef.current;
+    const accepted = getAcceptedLifecycle(current, next);
+    if (isSameLifecycle(current, accepted)) return;
+
+    lifecycleRef.current = accepted;
+    setLifecycle(accepted);
+    lifecycleChangeRef.current?.(accepted);
+
+    if (accepted.status === "ready") {
+      healthChangeRef.current?.({ status: "working" });
+    } else if (accepted.status === "error" || accepted.status === "timeout") {
+      healthChangeRef.current?.({
+        status: "error",
+        error: accepted.error,
+      });
+    }
+  }, []);
+
+  return (
+    <div
+      ref={rootRef}
+      className="relative h-full min-h-0 w-full min-w-0 overflow-hidden"
+      data-preview-runner-root
+    >
+      <SandpackProvider
+        className="relative h-full min-h-0 w-full min-w-0 overflow-hidden [&_.sp-preview-container]:flex [&_.sp-preview-container]:h-full [&_.sp-preview-container]:min-h-0 [&_.sp-preview-container]:w-full [&_.sp-preview-container]:min-w-0 [&_.sp-preview-container]:grow [&_.sp-preview-container]:flex-col [&_.sp-preview-container]:overflow-hidden [&_.sp-preview-iframe]:h-full [&_.sp-preview-iframe]:min-h-0 [&_.sp-preview-iframe]:w-full [&_.sp-preview-iframe]:min-w-0 [&_.sp-preview-iframe]:grow"
+        {...getSandpackConfig(files, supabaseRuntime)}
+      >
+        <SandpackPreview
+          showNavigator={false}
+          showOpenInCodeSandbox={false}
+          showRefreshButton={false}
+          showRestartButton={false}
+          showOpenNewtab={false}
+          className="h-full min-h-0 w-full min-w-0 overflow-hidden"
+        />
+        <PreviewLifecycleReporter
+          onChange={handleLifecycleChange}
+          rootRef={rootRef}
+        />
+        {(onPreviewSelection || onPreviewTestReport) && (
+          <PreviewInspector
+            rootRef={rootRef}
+            selectionMode={previewSelectionMode}
+            testNonce={previewTestNonce}
+            onPreviewSelection={onPreviewSelection}
+            onPreviewTestReport={onPreviewTestReport}
+          />
+        )}
+        {showStatusOverlay ? (
+          <PreviewStatusOverlay
+            lifecycle={lifecycle}
+            onRequestFix={onRequestFix}
+            onRetry={onRetry}
+          />
+        ) : null}
+      </SandpackProvider>
+    </div>
+  );
+}
+
+function PreviewLifecycleReporter({
+  onChange,
+  rootRef,
+}: {
+  onChange: (lifecycle: PreviewLifecycle) => void;
+  rootRef: RefObject<HTMLDivElement | null>;
 }) {
   const { sandpack } = useSandpack();
   const [isPreviewReady, setIsPreviewReady] = useState(false);
-  const latchedErrorRef = useRef<string | null>(null);
-  const currentError =
-    sandpack.error?.message ??
-    (sandpack.status === "timeout"
-      ? "The preview timed out while compiling."
-      : null);
+  const [didHandshakeTimeout, setDidHandshakeTimeout] = useState(false);
+  const [didStabilize, setDidStabilize] = useState(false);
+  const currentError = sandpack.error?.message ?? null;
 
   useEffect(() => {
     let retryTimer: number | undefined;
+    let handshakeTimeoutTimer: number | undefined;
     const onMessage = (event: MessageEvent) => {
-      const iframe = getPreviewIframe();
+      const iframe = getPreviewIframe(rootRef.current);
       if (
         event.source !== iframe?.contentWindow ||
         event.data?.source !== PREVIEW_INSPECTOR_SOURCE ||
@@ -103,13 +274,16 @@ function PreviewHealthReporter({
 
       setIsPreviewReady(true);
       if (retryTimer !== undefined) window.clearInterval(retryTimer);
+      if (handshakeTimeoutTimer !== undefined) {
+        window.clearTimeout(handshakeTimeoutTimer);
+      }
       iframe?.contentWindow?.postMessage(
         { source: PREVIEW_PARENT_SOURCE, type: "ready-ack" },
         "*",
       );
     };
     const pingPreview = () => {
-      getPreviewIframe()?.contentWindow?.postMessage(
+      getPreviewIframe(rootRef.current)?.contentWindow?.postMessage(
         { source: PREVIEW_PARENT_SOURCE, type: "ping" },
         "*",
       );
@@ -118,53 +292,72 @@ function PreviewHealthReporter({
     window.addEventListener("message", onMessage);
     pingPreview();
     retryTimer = window.setInterval(pingPreview, 250);
-    const stopRetryTimer = window.setTimeout(
-      () => window.clearInterval(retryTimer),
-      PREVIEW_HANDSHAKE_TIMEOUT_MS,
-    );
+    handshakeTimeoutTimer = window.setTimeout(() => {
+      window.clearInterval(retryTimer);
+      setDidHandshakeTimeout(true);
+    }, PREVIEW_HANDSHAKE_TIMEOUT_MS);
 
     return () => {
       window.removeEventListener("message", onMessage);
       window.clearInterval(retryTimer);
-      window.clearTimeout(stopRetryTimer);
+      window.clearTimeout(handshakeTimeoutTimer);
     };
-  }, []);
-
-  useEffect(() => {
-    if (!currentError) return;
-
-    latchedErrorRef.current = currentError;
-    onChange({ status: "error", error: currentError });
-  }, [currentError, onChange]);
+  }, [rootRef]);
 
   useEffect(() => {
     if (
-      latchedErrorRef.current ||
-      sandpack.error ||
-      sandpack.status === "timeout" ||
-      (!isPreviewReady && sandpack.status !== "done")
+      currentError ||
+      !isPreviewReady ||
+      didHandshakeTimeout ||
+      (sandpack.status !== "running" && sandpack.status !== "done")
     ) {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      if (!latchedErrorRef.current) {
-        onChange({ status: "working" });
-      }
-    }, 1500);
+      setDidStabilize(true);
+    }, PREVIEW_STABILIZATION_MS);
 
     return () => window.clearTimeout(timer);
-  }, [currentError, isPreviewReady, onChange, sandpack.error, sandpack.status]);
+  }, [currentError, didHandshakeTimeout, isPreviewReady, sandpack.status]);
+
+  const status: PreviewLifecycle["status"] = currentError
+    ? "error"
+    : sandpack.status === "timeout" || didHandshakeTimeout
+      ? "timeout"
+      : didStabilize &&
+          isPreviewReady &&
+          (sandpack.status === "running" || sandpack.status === "done")
+        ? "ready"
+        : sandpack.status === "running" || sandpack.status === "done"
+          ? "compiling"
+          : "loading";
+  const error =
+    status === "error"
+      ? currentError
+      : status === "timeout"
+        ? "The preview timed out while compiling."
+        : null;
+
+  useLayoutEffect(() => {
+    if (status === "error" || status === "timeout") {
+      onChange({ status, error: error! });
+      return;
+    }
+    onChange({ status });
+  }, [error, onChange, status]);
 
   return null;
 }
 
 function PreviewInspector({
+  rootRef,
   selectionMode,
   testNonce,
   onPreviewSelection,
   onPreviewTestReport,
 }: {
+  rootRef: RefObject<HTMLDivElement | null>;
   selectionMode: boolean;
   testNonce: number;
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
@@ -179,7 +372,9 @@ function PreviewInspector({
 
     const onMessage = (event: MessageEvent) => {
       const message = event.data;
+      const iframe = getPreviewIframe(rootRef.current);
       if (
+        event.source !== iframe?.contentWindow ||
         !message ||
         message.source !== PREVIEW_INSPECTOR_SOURCE ||
         message.type !== "selected"
@@ -195,11 +390,12 @@ function PreviewInspector({
     return () => {
       window.removeEventListener("message", onMessage);
     };
-  }, [onPreviewSelection]);
+  }, [onPreviewSelection, rootRef]);
 
   useEffect(() => {
+    const root = rootRef.current;
     const sendSelectionMode = () => {
-      getPreviewIframe()?.contentWindow?.postMessage(
+      getPreviewIframe(root)?.contentWindow?.postMessage(
         {
           source: PREVIEW_PARENT_SOURCE,
           type: "set-selection-mode",
@@ -219,7 +415,7 @@ function PreviewInspector({
       window.clearInterval(retryTimer);
       window.clearTimeout(stopRetryTimer);
       if (selectionMode) {
-        getPreviewIframe()?.contentWindow?.postMessage(
+        getPreviewIframe(root)?.contentWindow?.postMessage(
           {
             source: PREVIEW_PARENT_SOURCE,
             type: "set-selection-mode",
@@ -229,12 +425,12 @@ function PreviewInspector({
         );
       }
     };
-  }, [selectionMode]);
+  }, [rootRef, selectionMode]);
 
   useEffect(() => {
     if (!testNonce || !onPreviewTestReport) return;
 
-    const iframe = getPreviewIframe();
+    const iframe = getPreviewIframe(rootRef.current);
     const runtimeError = sandpack.error?.message;
     let settled = false;
 
@@ -260,6 +456,7 @@ function PreviewInspector({
     const onMessage = (event: MessageEvent) => {
       const message = event.data;
       if (
+        event.source !== iframe?.contentWindow ||
         !message ||
         message.source !== PREVIEW_INSPECTOR_SOURCE ||
         message.type !== "runtime-test-report" ||
@@ -297,7 +494,7 @@ function PreviewInspector({
       window.removeEventListener("message", onMessage);
       window.clearTimeout(unavailableTimer);
     };
-  }, [testNonce, onPreviewTestReport, sandpack.error]);
+  }, [testNonce, onPreviewTestReport, rootRef, sandpack.error]);
 
   if (!selectionMode) return null;
 
@@ -309,58 +506,27 @@ function PreviewInspector({
   );
 }
 
-function getPreviewIframe() {
-  return document.querySelector<HTMLIFrameElement>(".sp-preview-iframe");
+function getPreviewIframe(root: HTMLElement | null) {
+  return root?.querySelector<HTMLIFrameElement>(".sp-preview-iframe") ?? null;
 }
 
-function ErrorMessage({ onRequestFix }: { onRequestFix: (e: string) => void }) {
-  const { sandpack } = useSandpack();
-  const [didCopy, setDidCopy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function getAcceptedLifecycle(
+  current: PreviewLifecycle,
+  next: PreviewLifecycle,
+): PreviewLifecycle {
+  if (current.status === "error" || current.status === "timeout") {
+    return current;
+  }
+  return next;
+}
 
-  useEffect(() => {
-    const nextError = sandpack.error?.message;
-    if (!nextError) return;
-
-    // Sandpack may clear a compile error on the next render; retain it
-    // synchronously so the user can still inspect and repair that failure.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setError(nextError);
-  }, [sandpack.error]);
-
-  if (!error) return null;
-
-  return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 text-base backdrop-blur-sm">
-      <div className="max-w-[400px] rounded-md bg-destructive p-4 text-destructive-foreground shadow-xl">
-        <p className="text-lg font-medium">Error</p>
-
-        <p className="mt-4 line-clamp-[10] overflow-x-auto whitespace-pre font-mono text-xs">
-          {error}
-        </p>
-
-        <div className="mt-8 flex justify-between gap-4">
-          <button
-            type="button"
-            onClick={async () => {
-              setDidCopy(true);
-              await window.navigator.clipboard.writeText(error);
-              await new Promise((resolve) => setTimeout(resolve, 2000));
-              setDidCopy(false);
-            }}
-            className="rounded border border-destructive/30 px-2.5 py-1.5 text-sm font-semibold text-destructive-foreground hover:bg-destructive/10"
-          >
-            {didCopy ? <CheckIcon size={18} /> : <CopyIcon size={18} />}
-          </button>
-          <button
-            type="button"
-            onClick={() => onRequestFix(error)}
-            className="rounded border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            Fix error
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function isSameLifecycle(current: PreviewLifecycle, next: PreviewLifecycle) {
+  if (current.status !== next.status) return false;
+  if (
+    (current.status === "error" || current.status === "timeout") &&
+    (next.status === "error" || next.status === "timeout")
+  ) {
+    return current.error === next.error;
+  }
+  return true;
 }

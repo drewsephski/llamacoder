@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildExportBundle, getExportFilename } from "@/lib/export-bundle";
+import {
+  buildExportBundle,
+  getExportFilename,
+  inferPackageDependencies,
+} from "@/lib/export-bundle";
 import { normalizeGeneratedFiles } from "@/lib/generated-files";
+import { getSandpackConfig } from "@/lib/sandpack-config";
 
 describe("export bundle", () => {
   it("assembles a portable verified repo bundle from generated files", () => {
@@ -230,5 +235,38 @@ describe("export bundle", () => {
     expect(paths.has("components/ui/form.tsx")).toBe(true);
     expect(paths.has("components/ui/label.tsx")).toBe(true);
     expect(paths.has("components/ui/calendar.tsx")).toBe(false);
+  });
+
+  it("keeps preview and export dependency selection aligned", () => {
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: [
+          'import Spline from "@splinetool/react-spline/next";',
+          'const loadFlow = () => import("@xyflow/react");',
+          "export default function App() {",
+          '  return <Spline scene="https://prod.spline.design/example/scene.splinecode" />;',
+          "}",
+          "void loadFlow;",
+        ].join("\n"),
+      },
+    ]);
+    const previewDependencies = getSandpackConfig(
+      files.map((file) => ({ path: file.path, content: file.code })),
+    ).customSetup.dependencies;
+    const exportDependencies = inferPackageDependencies(files);
+
+    expect(previewDependencies).toMatchObject({
+      "@splinetool/react-spline": "4.1.0",
+      "@splinetool/runtime": "1.12.98",
+      "@xyflow/react": "12.11.2",
+    });
+    expect(exportDependencies).toMatchObject({
+      "@splinetool/react-spline": "4.1.0",
+      "@splinetool/runtime": "1.12.98",
+      "@xyflow/react": "12.11.2",
+    });
+    expect(previewDependencies.html2canvas).toBe("1.4.1");
+    expect(exportDependencies.html2canvas).toBeUndefined();
   });
 });

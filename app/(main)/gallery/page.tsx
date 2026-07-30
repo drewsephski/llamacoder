@@ -5,6 +5,7 @@ import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/features/auth/server/session";
 import { GalleryProjectCard } from "@/features/gallery/components/gallery-project-card";
+import { GalleryPagination } from "@/features/gallery/components/gallery-pagination";
 import { GalleryThumbnailRefresh } from "@/features/gallery/components/gallery-thumbnail-refresh";
 import { GalleryToolbar } from "@/features/gallery/components/gallery-toolbar";
 import { ShowcaseGameCard } from "@/features/gallery/components/showcase-game-card";
@@ -64,6 +65,8 @@ export default async function GalleryPage({
       typeof rawSearchParams.sort === "string"
         ? rawSearchParams.sort
         : "newest",
+    cursor:
+      typeof rawSearchParams.cursor === "string" ? rawSearchParams.cursor : "",
   });
   const session = await getCurrentSession();
   const showcaseGames = !parsed.remixable
@@ -72,10 +75,11 @@ export default async function GalleryPage({
   const showcaseLandings = !parsed.remixable
     ? getShowcaseLandingSummaries(parsed.q)
     : [];
-  const { projects } = await getGalleryProjects({
+  const { projects, previousCursor, nextCursor } = await getGalleryProjects({
     query: parsed.q,
     remixable: parsed.remixable,
     sort: parsed.sort,
+    cursor: parsed.cursor,
     viewerId: session?.user.id,
   });
   const hasPendingThumbnails = projects.some(
@@ -185,17 +189,38 @@ export default async function GalleryPage({
                 />
               ))}
             </div>
+            <GalleryPagination
+              query={parsed.q}
+              remixable={parsed.remixable}
+              sort={parsed.sort}
+              previousCursor={previousCursor}
+              nextCursor={nextCursor}
+            />
           </section>
-        ) : showcaseGames.length === 0 && showcaseLandings.length === 0 ? (
-          <div className="mt-16 border-y border-border py-20 text-center">
-            <h2 className="text-xl font-semibold">
-              No published projects yet.
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-              {parsed.q || parsed.remixable
-                ? "Try a different search or turn off the remixable filter."
-                : "Publish a generated app and it will appear here for the community to explore."}
-            </p>
+        ) : parsed.cursor ||
+          (showcaseGames.length === 0 && showcaseLandings.length === 0) ? (
+          <div className="mt-16 border-y border-border py-20">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold">
+                {parsed.cursor
+                  ? "No more projects."
+                  : "No published projects yet."}
+              </h2>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                {parsed.cursor
+                  ? "Return to the previous page or adjust the gallery filters."
+                  : parsed.q || parsed.remixable
+                    ? "Try a different search or turn off the remixable filter."
+                    : "Publish a generated app and it will appear here for the community to explore."}
+              </p>
+            </div>
+            <GalleryPagination
+              query={parsed.q}
+              remixable={parsed.remixable}
+              sort={parsed.sort}
+              previousCursor={previousCursor}
+              nextCursor={nextCursor}
+            />
           </div>
         ) : null}
 

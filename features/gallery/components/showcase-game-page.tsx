@@ -103,7 +103,7 @@ export function ShowcaseGamePage({ game }: { game: ShowcaseGame }) {
 
       <div className="w-full lg:pl-[360px]">
         <main className="h-dvh min-h-[640px] w-full min-w-0 overflow-hidden bg-slate-950">
-          <CodeRunner files={game.files} />
+          <CodeRunner files={game.files} showStatusOverlay />
         </main>
       </div>
     </div>
