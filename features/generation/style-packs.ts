@@ -1129,10 +1129,10 @@ export const PACK_FONT_PAIRINGS: Record<StylePackId, StylePackFontPairing> = {
     monoClass: "font-mono-ui",
   },
   kineticAwwwards: {
-    display: "Clash Display",
-    body: "Satoshi",
+    display: "Syne",
+    body: "Manrope",
     googleFontsUrl:
-      "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap",
+      "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Syne:wght@600;700;800&display=swap",
     displayClass: "font-display",
     bodyClass: "font-body",
   },
@@ -1155,10 +1155,10 @@ export const PACK_FONT_PAIRINGS: Record<StylePackId, StylePackFontPairing> = {
     monoClass: "font-mono-ui",
   },
   gardenBotanical: {
-    display: "Fraunces",
-    body: "Work Sans",
+    display: "Bricolage Grotesque",
+    body: "Manrope",
     googleFontsUrl:
-      "https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap",
+      "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap",
     displayClass: "font-display",
     bodyClass: "font-body",
   },
@@ -1419,22 +1419,19 @@ export function buildStyleCommitmentDirective(
   pack: StylePackWithFonts,
   options?: { navigation?: string; footer?: string },
 ): string {
-  const bans = [...GENERIC_AI_PALETTE_BANS, ...pack.hardBans]
-    .map((item) => `- ${item}`)
-    .join("\n");
+  const bans = [...GENERIC_AI_PALETTE_BANS, ...pack.hardBans].join("; ");
   const fonts = pack.fontPairing;
 
   return dedent`
     **Full-style commitment (mandatory):**
-    - One visual world: **${pack.id}** (${pack.hallmarkAlias}), ${pack.luminosity}.
-    - Canvas: \`${pack.surfaceMap.canvas}\`. Reuse only this pack's surface roles; never introduce a second palette or mid-page luminosity flip.
-    - Type: load ${fonts.googleFontsUrl}; use \`.${fonts.displayClass}\` for display and \`.${fonts.bodyClass}\` for body${fonts.monoClass ? `, with \`.${fonts.monoClass}\` only for data/code` : ""}.
-    - Radius: ${pack.radiusLock}. Elevation: ${pack.elevationLock}.
-    - Navigation: ${options?.navigation ?? pack.navArchetype}. Footer: ${options?.footer ?? pack.footerArchetype}.
-    - Primary and secondary actions must use complete surface + foreground recipes from this pack, not default Shadcn styling.
-    - Signature is optional when the product surface or typography is already distinctive; if used, adapt ${pack.signatureElement} to the subject and spend boldness only there.
-    - Hard bans:
-    ${bans}
+    - STYLE_PACK: ${pack.id} | ${pack.hallmarkAlias} | DIALS: ${pack.dials.variance}/${pack.dials.motion}/${pack.dials.density} | ${pack.luminosity}.
+    - Surfaces: canvas=\`${pack.surfaceMap.canvas}\`; surface=\`${pack.surfaceMap.surface}\`; subdued=\`${pack.surfaceMap.subdued}\`; inverse=\`${pack.surfaceMap.inverse}\`; primary=\`${pack.surfaceMap.primary}\`; muted=\`${pack.surfaceMap.mutedInk}\`; overlay=\`${pack.surfaceMap.overlay}\`.
+    - Type: load ${fonts.googleFontsUrl}; display=${fonts.display} via \`.${fonts.displayClass}\` with \`${pack.typography.display}\`; body=${fonts.body} via \`.${fonts.bodyClass}\` with \`${pack.typography.body}\`${fonts.monoClass && fonts.mono ? `; data/code=${fonts.mono} via \`.${fonts.monoClass}\`` : ""}.
+    - Shape/elevation: ${pack.radiusLock}; ${pack.elevationLock}.
+    - Navigation=${options?.navigation ?? pack.navArchetype}; footer=${options?.footer ?? pack.footerArchetype}. Omit either when the resolved scope does not need it.
+    - Use complete surface + foreground recipes. Keep one luminosity and palette; never fall back to default Shadcn styling midway.
+    - Signature is optional. If needed, adapt this cue to the actual subject: ${pack.signatureElement}.
+    - Avoid: ${bans}.
   `;
 }
 
@@ -1465,30 +1462,13 @@ export function buildActiveStylePackDirective(
   }
 
   const pack = getStylePack(packId);
-  const monoRole = pack.typography.mono
-    ? `; mono \`${pack.typography.mono}\` via \`.${pack.fontPairing.monoClass}\``
-    : "";
-  const surfaceMap = [
-    `canvas=\`${pack.surfaceMap.canvas}\``,
-    `surface=\`${pack.surfaceMap.surface}\``,
-    `subdued=\`${pack.surfaceMap.subdued}\``,
-    `inverse=\`${pack.surfaceMap.inverse}\``,
-    `primary=\`${pack.surfaceMap.primary}\``,
-    `muted=\`${pack.surfaceMap.mutedInk}\``,
-    `overlay=\`${pack.surfaceMap.overlay}\``,
-  ].join("; ");
   const classes = pack.classCheatSheet.map((line) => `- ${line}`).join("\n");
 
   return [
     "**Active Style Pack directive (LOCKED for this build - do not re-route):**",
-    `- ${formatStylePackPreflight(pack)}`,
-    `- Design Read: ${pack.designReadTemplate}`,
-    `- Aesthetic: ${pack.aestheticMode}; luminosity: ${pack.luminosity}; resolved macrostructure: ${options?.macrostructure ?? "infer from the product job"}.`,
-    `- Surface map: ${surfaceMap}`,
-    `- Type: display \`${pack.typography.display}\` via \`.${pack.fontPairing.displayClass}\`; body \`${pack.typography.body}\` via \`.${pack.fontPairing.bodyClass}\`${monoRole}. Load ${pack.fontPairing.googleFontsUrl}.`,
     buildStyleCommitmentDirective(pack, options),
     "### Conditional composition reference",
-    `- Subject-specific cue: ${pack.signatureElement}`,
+    `- Resolved macrostructure: ${options?.macrostructure ?? "infer from the product job"}. Infer the real subject, audience, and job from the authoritative brief; the pack supplies a visual language, not product content or page shape.`,
     `- Motion: ${pack.motionRecipe}`,
     "- Use these cues only when they serve the resolved scope. Preserve the visual system but never force a bento, hero, media effect, nav, or footer into a focused utility, component edit, editorial document, or workbench.",
     "### Ready-to-use class recipes",

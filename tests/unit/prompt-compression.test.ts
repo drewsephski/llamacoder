@@ -28,8 +28,21 @@ describe("prompt-compression", () => {
     expect(prompt).toContain(
       "Navigation and footer may be integrated or omitted",
     );
+    expect(prompt).toContain("Installed capability catalog");
+    expect(prompt).toContain("no specialized package is required");
+    expect(prompt).not.toContain('from "/components/');
     expect(prompt).toContain("## Output contract");
-    expect(prompt.length).toBeLessThan(21_000);
+    expect(prompt.length).toBeLessThan(14_000);
+  });
+
+  test("expands only request-matched capability guidance", () => {
+    const mapPrompt = getCanonicalCodingPrompt(
+      "Build an interactive map with searchable location markers",
+    );
+
+    expect(mapPrompt).toContain("Maps: use `react-leaflet`");
+    expect(mapPrompt).toContain("Search: use array filtering");
+    expect(mapPrompt).not.toContain("Put rigid bodies inside `Physics`");
   });
 
   test("estimateTokens uses the 4-char heuristic", () => {

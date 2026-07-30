@@ -41,6 +41,139 @@ export const generatedAppCapabilityContract = [
   "- No other packages are available. Do not import React Router, axios, alternate chart/date/toast/carousel/animation libraries, or a competing drag-and-drop framework.",
 ].join("\n");
 
+const generatedAppCapabilityCatalog = [
+  "**Installed capability catalog (use only when the product needs it):**",
+  "- Forms/state/data: `react-hook-form`, `zod`, `@hookform/resolvers/zod`, `@tanstack/react-query`, `zustand`, `@tanstack/react-table`, `@tanstack/react-virtual`, `fuse.js`.",
+  "- Layout/input: `react-dnd`, `react-dnd-html5-backend`, `react-dnd-touch-backend`, `react-resizable-panels` via `@/components/ui/resizable`, `react-resizable`, `react-dropzone`, `@use-gesture/react`.",
+  "- Content/tools: `react-markdown`, `remark-gfm`, `@uiw/react-md-editor`, `react-syntax-highlighter`, `cmdk`, `qrcode.react`, `jspdf`, `@react-pdf/renderer`, `react-colorful`.",
+  "- Visual/media: `gsap`, `gsap/ScrollTrigger`, `motion`, `react-intersection-observer`, `react-countup`, `react-parallax`, `@tsparticles/react`, `@tsparticles/slim`, `hls.js`, `howler`, `react-masonry-css`, `yet-another-react-lightbox`.",
+  "- Canvas/3D: `@xyflow/react`, `three`, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, `@react-three/cannon`, `three-stdlib`, `maath`, `@react-three/postprocessing`, `postprocessing`, `leva`, `@paper-design/shaders-react`.",
+  "- Specialized UI: `react-leaflet`, `leaflet`, `react-arborist`, `sonner`.",
+  "- No other packages are available. Prefer React and installed Shadcn primitives when a specialized package is unnecessary.",
+].join("\n");
+
+const requestScopedCapabilityRules: ReadonlyArray<{
+  matches: RegExp;
+  guidance: string;
+}> = [
+  {
+    matches:
+      /\b(form|validation|signup|sign up|login|survey|questionnaire|checkout|field)\b/i,
+    guidance:
+      "Forms: use `react-hook-form` + `zod` + `@hookform/resolvers/zod` for non-trivial typed validation; native validation is enough for one simple field.",
+  },
+  {
+    matches:
+      /\b(api|server data|remote data|pagination|infinite scroll|mutation|cache|background refresh)\b/i,
+    guidance:
+      "Server state: use `@tanstack/react-query` only when caching, mutations, pagination, or refresh justify it; mount one `QueryClientProvider` and keep fetch validation in the typed API client.",
+  },
+  {
+    matches:
+      /\b(global state|shared state|persisted preferences?|cross-component|workspace state)\b/i,
+    guidance:
+      "Shared state: use `zustand` only across distant components or for minimal versioned non-sensitive browser persistence; otherwise keep state local.",
+  },
+  {
+    matches: /\b(table|data grid|columns?|rows?|virtuali[sz]ed|large list)\b/i,
+    guidance:
+      "Dense data: use `@tanstack/react-table` for interactive tables and `@tanstack/react-virtual` only for genuinely large lists; simple static tables use Shadcn Table.",
+  },
+  {
+    matches: /\b(drag|drop|draggable|droppable|kanban|reorder|touch drag)\b/i,
+    guidance:
+      "Drag and drop: use `react-dnd` with the HTML5 backend, or `react-dnd-touch-backend` for coarse pointers; always provide a visible keyboard/non-drag alternative.",
+  },
+  {
+    matches: /\b(resizable|split pane|split view|panel resize|inspector)\b/i,
+    guidance:
+      "Resizable workspace: prefer `ResizablePanelGroup`, `ResizablePanel`, and `ResizableHandle` from `@/components/ui/resizable`; use `react-resizable` only for freeform boxes.",
+  },
+  {
+    matches:
+      /\b(file|upload|dropzone|attachment|local image|document picker)\b/i,
+    guidance:
+      "Files: `react-dropzone` selects and previews local files with type/size validation; never claim a remote upload succeeded without a reviewed server integration.",
+  },
+  {
+    matches:
+      /\b(node editor|flowchart|workflow diagram|graph editor|edges?|nodes?)\b/i,
+    guidance:
+      "Node canvas: use `@xyflow/react`, import `@xyflow/react/dist/style.css` once, give the canvas explicit height, and preserve keyboard-accessible controls.",
+  },
+  {
+    matches: /\b(markdown|md editor|rich text|readme|gfm)\b/i,
+    guidance:
+      "Markdown: render with `react-markdown` + `remark-gfm` without raw HTML; use `@uiw/react-md-editor` only when editing is part of the job.",
+  },
+  {
+    matches:
+      /\b(search(?:able|ing)?|fuzzy|command palette|command menu|cmd\+k)\b/i,
+    guidance:
+      "Search: use array filtering for tiny exact sets, default `fuse.js` for meaningful local fuzzy search, and `cmdk` for a keyboard-navigable command palette.",
+  },
+  {
+    matches: /\b(color picker|theme editor|palette editor|qr|qr code)\b/i,
+    guidance:
+      "Special inputs: use named `react-colorful` exports with a labeled text fallback; use `QRCodeSVG` or `QRCodeCanvas` from `qrcode.react` with an accessible text value.",
+  },
+  {
+    matches:
+      /\b(3d|webgl|three(?:\.js)?|shader|physics|game|particle|post-processing|postprocessing|canvas scene)\b/i,
+    guidance:
+      "3D/WebGL: use `Canvas` from `@react-three/fiber`, Drei helpers, explicit canvas height, capped DPR, and ref-backed pointer/uniform updates in `useFrame`. Put rigid bodies inside `Physics` from `@react-three/rapier`; use `EffectComposer` from `@react-three/postprocessing`; use one verified `@paper-design/shaders-react` export such as `MeshGradient`, `NeuroNoise`, `Metaballs`, or `Warp` rather than stacked effects.",
+  },
+  {
+    matches: /\b(map|mapping|geospatial|location pins?|markers?)\b/i,
+    guidance:
+      "Maps: use `react-leaflet`, import `leaflet/dist/leaflet.css`, and compose `MapContainer`, `TileLayer`, `Marker`, and `Popup`.",
+  },
+  {
+    matches: /\b(code viewer|syntax highlight|source code|code block)\b/i,
+    guidance:
+      "Code display: import `Prism` or `Light` from `react-syntax-highlighter/dist/esm/{prism,light}` and only the required language/style.",
+  },
+  {
+    matches:
+      /\b(animation|animate|motion|scroll|parallax|counter|marquee|reveal)\b/i,
+    guidance:
+      "Motion: prefer `gsap`/`ScrollTrigger` for orchestrated timelines, `motion` for state/layout transitions, `react-intersection-observer` for simple visibility, and `react-countup` only for truthful numeric values. Respect reduced motion and animate transform/opacity.",
+  },
+  {
+    matches: /\b(video|hls|streaming video|audio|music|podcast|sound)\b/i,
+    guidance:
+      "Media: initialize `hls.js` only when `Hls.isSupported()` and fall back to native video; use `howler` for controlled audio playback and clean up instances.",
+  },
+  {
+    matches: /\b(pdf|printable|export document|generate document)\b/i,
+    guidance:
+      "PDF: use `@react-pdf/renderer` for declarative multi-page documents and `jspdf` only for simple single-page output.",
+  },
+  {
+    matches:
+      /\b(tree view|file explorer|hierarchy|masonry|lightbox|gallery)\b/i,
+    guidance:
+      "Collections: use `react-arborist` for interactive trees, `react-masonry-css` for masonry, and `yet-another-react-lightbox` for image viewing; keep selection/open state explicit.",
+  },
+];
+
+/**
+ * Keeps the complete installed-package inventory visible while expanding only
+ * the implementation guidance relevant to the current product brief.
+ */
+export function buildRequestScopedCapabilityContract(brief: string): string {
+  const matchedGuidance = requestScopedCapabilityRules
+    .filter((rule) => rule.matches.test(brief))
+    .map((rule) => `- ${rule.guidance}`);
+
+  return [
+    generatedAppCapabilityCatalog,
+    matchedGuidance.length
+      ? `**Request-matched capability guidance:**\n${matchedGuidance.join("\n")}`
+      : "**Request-matched capability guidance:** no specialized package is required unless the implemented workflow proves otherwise.",
+  ].join("\n\n");
+}
+
 export const generatedAppRepairCapabilityRules = [
   "- Use only installed generated-app libraries and exact package names from the capability contract.",
   "- Preserve required provider setup: QueryClientProvider for TanStack Query and DndProvider for React DnD.",

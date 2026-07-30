@@ -34,6 +34,9 @@ export {
   screenshotToCodePrompt,
 } from "@/features/generation/screenshot-clone";
 
+const VISUAL_SIGNATURE_REQUEST_RE =
+  /\b(hero|landing|marketing|homepage|portfolio|showcase|campaign|cinematic|immersive|shader|webgl|3d|video background|animated background|visual signature)\b/i;
+
 export const softwareArchitectPrompt = dedent`
 You are an expert software architect and product lead responsible for taking an idea of an app, analyzing it, and producing an implementation plan for a single page React frontend app. You are describing a plan for a multi-file React + Tailwind CSS + TypeScript app with the installed UI, data, state, form, file, canvas, and content capabilities listed below.
 
@@ -117,42 +120,48 @@ export function getMainCodingPrompt(options?: {
     ]
       .filter(Boolean)
       .join("\n") || "product app";
+  const capabilityBrief = options?.effectiveBrief
+    ? [
+        options.effectiveBrief.approvedSpec,
+        options.effectiveBrief.latestUserRequest,
+      ]
+        .filter(Boolean)
+        .join("\n") || styleBrief
+    : styleBrief;
   const screenshotCloneMode = options?.screenshotCloneMode === true;
   const hasCatalogVideo = catalogEntries.some(
     (entry) => entry.kind === "video",
   );
+  const shouldIncludeVisualSignature =
+    !screenshotCloneMode &&
+    (options?.effectiveBrief?.design.scope === "marketing" ||
+      VISUAL_SIGNATURE_REQUEST_RE.test(styleBrief));
   const visualSignatureMode = screenshotCloneMode
     ? "userSpecified"
     : selectVisualSignatureMode(styleBrief, { hasCatalogVideo });
-  const visualSignatureDirective = screenshotCloneMode
-    ? ""
-    : buildVisualSignatureDirective(
+  const visualSignatureDirective = shouldIncludeVisualSignature
+    ? buildVisualSignatureDirective(
         styleBrief,
         catalogEntries,
         visualSignatureMode,
-      );
-  const pastMediaPromptSection = screenshotCloneMode
-    ? ""
-    : buildPastMediaCatalogPromptSection(catalogEntries);
+      )
+    : "";
+  const pastMediaPromptSection = shouldIncludeVisualSignature
+    ? buildPastMediaCatalogPromptSection(catalogEntries)
+    : "";
   const activeStylePackDirective = screenshotCloneMode
     ? buildScreenshotCloneCodegenDirective()
-    : visualSignatureMode === "userSpecified"
-      ? dedent`
-        **User-directed visual system:**
-        Follow the user's explicit aesthetic, palette, media, and references.
-        Do not override them with a default Style Pack.
-      `
-      : buildActiveStylePackDirective(
-          styleBrief,
-          options?.effectiveBrief
-            ? {
-                forcePack: options.effectiveBrief.design.stylePack,
-                macrostructure: options.effectiveBrief.design.macrostructure,
-                navigation: options.effectiveBrief.design.navigation,
-                footer: options.effectiveBrief.design.footer,
-              }
-            : undefined,
-        );
+    : buildActiveStylePackDirective(
+        styleBrief,
+        options?.effectiveBrief
+          ? {
+              forcePack: options.effectiveBrief.design.stylePack,
+              macrostructure: options.effectiveBrief.design.macrostructure,
+              navigation: options.effectiveBrief.design.navigation,
+              footer: options.effectiveBrief.design.footer,
+            }
+          : undefined,
+      );
   const effectiveBriefSection = options?.effectiveBrief
     ? serializeEffectiveBrief(options.effectiveBrief)
     : "Authority: latest explicit user instruction > established app constraints > inferred defaults.";
@@ -177,7 +186,7 @@ export function getMainCodingPrompt(options?: {
     ${designEmphasis ? `\n${designEmphasis}\n` : ""}
     ${pastMediaPromptSection ? `\n${pastMediaPromptSection}\n` : ""}
 
-    ${getCanonicalCodingPrompt()}
+    ${getCanonicalCodingPrompt(capabilityBrief)}
   `;
 }
 

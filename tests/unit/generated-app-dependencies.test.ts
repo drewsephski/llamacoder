@@ -137,9 +137,18 @@ describe("generated app dependencies", () => {
       for (const packageName of packageNames) {
         expect(prompt).toContain(packageName);
       }
-      expect(prompt).toContain("NeuroNoise");
-      expect(prompt).toContain("pointer");
     }
+
+    const specializedPrompt = getMainCodingPrompt({
+      userPrompt:
+        "Build a pointer-reactive 3D shader scene with physics and post-processing",
+    });
+    expect(specializedPrompt).toContain("Request-matched capability guidance");
+    expect(specializedPrompt).toContain("NeuroNoise");
+    expect(specializedPrompt).toContain("pointer/uniform updates");
+
+    expect(softwareArchitectPrompt).toContain("NeuroNoise");
+    expect(developerCodeGenPrompt).toContain("NeuroNoise");
 
     const repairPrompt = buildGeneratedFilesRepairPrompt("bad", [], []);
     expect(repairPrompt).toContain("QueryClientProvider");

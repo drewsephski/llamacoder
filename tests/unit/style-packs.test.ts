@@ -30,6 +30,13 @@ describe("style pack router", () => {
       expect(pack.compositionScaffold).toMatch(/className=/);
       expect(pack.dials.variance).toBeGreaterThanOrEqual(1);
       expect(pack.dials.variance).toBeLessThanOrEqual(10);
+      expect(pack.fontPairing.googleFontsUrl).toContain(
+        pack.fontPairing.display.replaceAll(" ", "+"),
+      );
+      expect(pack.fontPairing.googleFontsUrl).toContain(
+        pack.fontPairing.body.replaceAll(" ", "+"),
+      );
+      expect(pack.fontPairing.display).not.toBe("Fraunces");
     }
   });
 
@@ -46,8 +53,12 @@ describe("style pack router", () => {
     );
     expect(directive).toContain("font-display");
     expect(directive).toContain("Ready-to-use class recipes");
+    expect(directive).toContain(
+      "the pack supplies a visual language, not product content or page shape",
+    );
+    expect(directive).not.toContain("Reading this as: portfolio");
     expect(directive).not.toMatch(/className=/);
-    expect(directive.length).toBeLessThan(7_000);
+    expect(directive.length).toBeLessThan(5_000);
 
     const explicit = buildActiveStylePackDirective("make it purple brutalist");
     expect(explicit).toContain("explicit aesthetic");

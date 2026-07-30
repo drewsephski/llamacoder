@@ -30,7 +30,7 @@ describe("prompt design guidance", () => {
     expect(prompt).not.toContain("Premium UI/UX execution contract");
     expect(prompt).not.toContain("27. Did you implement");
     expect(prompt).not.toContain("Vary border-radius");
-    expect(prompt.length).toBeLessThan(35_000);
+    expect(prompt.length).toBeLessThan(20_000);
   });
 
   it("keeps design guidance contextual instead of forcing decoration", () => {
@@ -39,15 +39,23 @@ describe("prompt design guidance", () => {
     });
 
     expect(prompt).toContain(
-      "A product surface, focused utility, or strong typographic opening",
-    );
-    expect(prompt).toContain(
-      "Signature is optional when the product surface or typography is already distinctive",
+      "Signature is optional. If needed, adapt this cue to the actual subject",
     );
     expect(prompt).toContain("never force a bento, hero, media effect");
     expect(prompt).toContain("one luminosity model");
     expect(prompt).toContain("Headings stay roman");
     expect(prompt).toContain("centered hero -> three equal cards -> CTA");
+    expect(prompt).not.toContain("## Visual signature");
+    expect(prompt).not.toContain("## Curated media catalog");
+  });
+
+  it("adds visual-signature guidance only when the requested surface needs it", () => {
+    const prompt = getMainCodingPrompt({
+      userPrompt: "Build a portfolio landing page with an animated hero",
+    });
+
+    expect(prompt).toContain("## Visual signature");
+    expect(prompt).toContain("One signature only");
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -214,8 +222,7 @@ describe("prompt design guidance", () => {
     expect(prompt).toMatch(
       /STYLE_PACK: (cobaltMinimal|terminalPhosphor|midnightCool|manifestoGeometric|swissBrutal|newsprintEditorial)/,
     );
-    expect(prompt).toContain("Visual signature");
-    expect(prompt).toContain("One signature only");
+    expect(prompt).not.toContain("## Visual signature");
   });
 
   it("keeps the starter AI landing prompt dark and free of the orange kinetic lock", () => {
@@ -225,7 +232,7 @@ describe("prompt design guidance", () => {
     });
 
     expect(prompt).toContain("STYLE_PACK: midnightCool");
-    expect(prompt).toContain("luminosity: dark-first");
+    expect(prompt).toContain("| dark-first.");
     expect(prompt).not.toContain("STYLE_PACK: kineticAwwwards");
     expect(prompt).toContain("Media fidelity");
     expect(prompt).not.toContain("## Style Pack catalog");
@@ -250,6 +257,23 @@ describe("prompt design guidance", () => {
     expect(prompt).toContain("Make it light and editorial");
     expect(prompt).toContain("Style Pack is an implementation aid only");
     expect(prompt).not.toContain("LOCKED for this build");
+  });
+
+  it("does not expand capabilities from stale original intent during edits", async () => {
+    const { createEmptyAppSpec } = await import(
+      "@/features/generation/app-spec"
+    );
+    const { resolveEffectiveBrief } = await import(
+      "@/features/generation/effective-brief"
+    );
+    const effectiveBrief = resolveEffectiveBrief({
+      originalIntent: "Build an interactive map of local parks",
+      latestUserRequest: "Change the empty-state heading to Find a park",
+      appSpec: createEmptyAppSpec(),
+    });
+    const prompt = getMainCodingPrompt({ effectiveBrief });
+
+    expect(prompt).not.toContain("Maps: use `react-leaflet`");
   });
 
   it("uses the compressed coding prompt when conversation context is large", () => {

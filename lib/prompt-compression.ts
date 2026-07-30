@@ -1,6 +1,6 @@
 import dedent from "dedent";
 
-import { generatedAppCapabilityContract } from "@/lib/generated-app-capabilities";
+import { buildRequestScopedCapabilityContract } from "@/lib/generated-app-capabilities";
 import shadcnDocs from "@/lib/shadcn-docs";
 
 /** Approximate token count using the repository's 4-chars-per-token heuristic. */
@@ -29,7 +29,7 @@ export function shouldUseCompressedPrompt(
  * Canonical direct-codegen contract. Keep this concise: build-specific design
  * direction is injected separately by getMainCodingPrompt().
  */
-export function getCanonicalCodingPrompt(): string {
+export function getCanonicalCodingPrompt(brief = ""): string {
   return dedent`
   ## Execution contract
 
@@ -76,7 +76,7 @@ export function getCanonicalCodingPrompt(): string {
   ## Available UI modules
   ${shadcnDocs.map((component) => "- " + component.name + ": " + component.importDocs).join("\n")}
 
-  ${generatedAppCapabilityContract}
+  ${buildRequestScopedCapabilityContract(brief)}
 
   ## Output contract
   - Start with exactly one short customized acknowledgment sentence, then code fences immediately. Never expose Design Read, dials, Style Pack, surface-map, critique, or nav/footer planning.
