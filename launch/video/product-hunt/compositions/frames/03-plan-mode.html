@@ -1,0 +1,711 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 700;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Bold.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 500;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Medium.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Regular.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik Mono";
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/AeonikMono-Regular.otf") format("opentype");
+    }
+
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #0a0a0a;
+      font-family: "Aeonik";
+    }
+
+    .f03-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .f03-bg::before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 7px;
+      content: "";
+      background: #326df5;
+    }
+
+    .f03-scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .f03-world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5300px;
+      height: 900px;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .f03-kicker {
+      position: absolute;
+      top: 58px;
+      left: 96px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: #326df5;
+      font-family: "Aeonik Mono";
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .f03-kicker-line {
+      width: 60px;
+      height: 4px;
+      border-radius: 2px;
+      background: #326df5;
+    }
+
+    .f03-prompt-shell {
+      position: absolute;
+      top: 112px;
+      left: 96px;
+      width: 1048px;
+      height: 654px;
+      overflow: hidden;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: rgba(50, 109, 245, 0.04);
+    }
+
+    .f03-prompt-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .f03-prompt-focus {
+      position: absolute;
+      top: 432px;
+      left: 322px;
+      width: 650px;
+      height: 154px;
+      border-left: 4px solid #326df5;
+      border-radius: 12px;
+      background: rgba(50, 109, 245, 0.08);
+      transform-origin: 0% 50%;
+    }
+
+    .f03-prompt-tag {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      padding: 10px 15px;
+      border-radius: 100px;
+      background: #326df5;
+      color: #ffffff;
+      font-family: "Aeonik Mono";
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1;
+    }
+
+    .f03-rail {
+      position: absolute;
+      top: 694px;
+      left: 1032px;
+      width: 3160px;
+      height: 2px;
+      background: rgba(50, 109, 245, 0.2);
+    }
+
+    .f03-rail-fill {
+      width: 100%;
+      height: 100%;
+      transform-origin: 0% 50%;
+      background: #326df5;
+    }
+
+    .f03-station {
+      position: absolute;
+      top: 198px;
+      width: 600px;
+      height: 510px;
+    }
+
+    .f03-station-one {
+      left: 1174px;
+    }
+
+    .f03-station-two {
+      left: 2124px;
+    }
+
+    .f03-station-three {
+      left: 3074px;
+    }
+
+    .f03-depth {
+      position: absolute;
+      width: 548px;
+      height: 390px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: rgba(50, 109, 245, 0.04);
+    }
+
+    .f03-depth-back {
+      top: 24px;
+      left: 36px;
+      opacity: 0.35;
+    }
+
+    .f03-depth-mid {
+      top: 12px;
+      left: 22px;
+      opacity: 0.62;
+    }
+
+    .f03-question-card {
+      position: absolute;
+      top: 0;
+      left: 8px;
+      box-sizing: border-box;
+      width: 548px;
+      height: 390px;
+      padding: 42px 44px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    .f03-question-index {
+      display: grid;
+      width: 58px;
+      height: 58px;
+      place-items: center;
+      border-radius: 50%;
+      background: #326df5;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .f03-opening-marker {
+      position: absolute;
+      top: 0;
+      left: 8px;
+      z-index: 2;
+      display: grid;
+      width: 58px;
+      height: 58px;
+      place-items: center;
+      border-radius: 50%;
+      background: #326df5;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .f03-question-type {
+      margin-top: 68px;
+      color: #326df5;
+      font-family: "Aeonik Mono";
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .f03-question-copy {
+      width: 430px;
+      margin-top: 20px;
+      color: #0a0a0a;
+      font-size: 50px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.08;
+    }
+
+    .f03-station-dot {
+      position: absolute;
+      top: 486px;
+      left: 267px;
+      width: 16px;
+      height: 16px;
+      border: 5px solid #ffffff;
+      border-radius: 50%;
+      background: #326df5;
+      outline: 2px solid #326df5;
+    }
+
+    .f03-plan-shell {
+      position: absolute;
+      top: 82px;
+      left: 3678px;
+      width: 1160px;
+      height: 700px;
+      overflow: hidden;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    .f03-plan-image {
+      display: block;
+      width: 100%;
+      height: 725px;
+      object-fit: cover;
+      object-position: 50% 100%;
+    }
+
+    .f03-plan-vignette {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 55%, rgba(255, 255, 255, 0.94) 78%);
+      pointer-events: none;
+    }
+
+    .f03-plan-sequence {
+      position: absolute;
+      top: 190px;
+      right: 38px;
+      width: 250px;
+      min-height: 320px;
+      padding: 24px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.94);
+    }
+
+    .f03-plan-sequence-label {
+      margin-bottom: 20px;
+      color: #326df5;
+      font-family: "Aeonik Mono";
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .f03-plan-step {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+      align-items: center;
+      min-height: 72px;
+      border-top: 1px solid rgba(50, 109, 245, 0.15);
+      opacity: 0;
+    }
+
+    .f03-plan-step-number {
+      color: #326df5;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .f03-plan-step-lines {
+      display: grid;
+      gap: 8px;
+    }
+
+    .f03-plan-step-line {
+      height: 7px;
+      border-radius: 6px;
+      background: rgba(50, 109, 245, 0.15);
+    }
+
+    .f03-plan-step-line-short {
+      width: 66%;
+    }
+
+    .f03-approval {
+      position: absolute;
+      top: 588px;
+      left: 4532px;
+      box-sizing: border-box;
+      width: 470px;
+      height: 180px;
+      padding: 26px 28px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    .f03-approval-topline {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .f03-check {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 50%;
+      background: #326df5;
+      color: #ffffff;
+    }
+
+    .f03-check svg {
+      display: block;
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2.5;
+    }
+
+    .f03-approved-label {
+      color: #326df5;
+      font-family: "Aeonik Mono";
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .f03-approval-copy {
+      margin-top: 20px;
+      color: #0a0a0a;
+      font-size: 29px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .f03-progress {
+      position: absolute;
+      top: 874px;
+      left: 96px;
+      width: 1728px;
+      height: 3px;
+      background: rgba(50, 109, 245, 0.08);
+    }
+
+    .f03-progress-fill {
+      width: 50%;
+      height: 100%;
+      background: #326df5;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="03-plan-mode"
+    data-start="0"
+    data-duration="14.5"
+    data-width="1920"
+    data-height="1080"
+  >
+    <div class="clip f03-bg" data-start="0" data-duration="14.5" data-track-index="0"></div>
+
+    <div class="clip f03-scene" data-start="0" data-duration="14.5" data-track-index="1">
+      <div class="f03-world" id="f03-world">
+        <div class="f03-kicker" id="f03-kicker">
+          <span class="f03-kicker-line"></span>
+          <span>Plan mode</span>
+        </div>
+
+        <div class="f03-prompt-shell" id="f03-prompt-shell">
+          <img
+            class="f03-prompt-image"
+            src="assets/product-stills/example-prompt.png"
+            alt="Real Squid Prompt panel"
+          />
+          <div class="f03-prompt-focus" id="f03-prompt-focus">
+            <div class="f03-prompt-tag">VAGUE REQUEST</div>
+          </div>
+        </div>
+
+        <div class="f03-rail">
+          <div class="f03-rail-fill" id="f03-rail-fill"></div>
+        </div>
+
+        <section class="f03-station f03-station-one" id="f03-station-one">
+          <div class="f03-depth f03-depth-back"></div>
+          <div class="f03-depth f03-depth-mid"></div>
+          <div class="f03-question-card" id="f03-question-one">
+            <div class="f03-question-index">01</div>
+            <div class="f03-question-type">Customer</div>
+            <div class="f03-question-copy">Who is this for?</div>
+          </div>
+          <div class="f03-opening-marker" id="f03-marker-one">01</div>
+          <div class="f03-station-dot"></div>
+        </section>
+
+        <section class="f03-station f03-station-two" id="f03-station-two">
+          <div class="f03-depth f03-depth-back"></div>
+          <div class="f03-depth f03-depth-mid"></div>
+          <div class="f03-question-card" id="f03-question-two">
+            <div class="f03-question-index">02</div>
+            <div class="f03-question-type">Workflow</div>
+            <div class="f03-question-copy">What happens first?</div>
+          </div>
+          <div class="f03-station-dot"></div>
+        </section>
+
+        <section class="f03-station f03-station-three" id="f03-station-three">
+          <div class="f03-depth f03-depth-back"></div>
+          <div class="f03-depth f03-depth-mid"></div>
+          <div class="f03-question-card" id="f03-question-three">
+            <div class="f03-question-index">03</div>
+            <div class="f03-question-type">Success condition</div>
+            <div class="f03-question-copy">What proves it works?</div>
+          </div>
+          <div class="f03-station-dot"></div>
+        </section>
+
+        <div class="f03-plan-shell" id="f03-plan-shell">
+          <img
+            class="f03-plan-image"
+            src="assets/product-stills/example-plan.png"
+            alt="Real Squid approved Plan panel"
+          />
+          <div class="f03-plan-vignette"></div>
+          <div class="f03-plan-sequence" id="f03-plan-sequence">
+            <div class="f03-plan-sequence-label">Structured plan</div>
+            <div class="f03-plan-step" id="f03-plan-step-1">
+              <div class="f03-plan-step-number">01</div>
+              <div class="f03-plan-step-lines">
+                <div class="f03-plan-step-line"></div>
+                <div class="f03-plan-step-line f03-plan-step-line-short"></div>
+              </div>
+            </div>
+            <div class="f03-plan-step" id="f03-plan-step-2">
+              <div class="f03-plan-step-number">02</div>
+              <div class="f03-plan-step-lines">
+                <div class="f03-plan-step-line"></div>
+                <div class="f03-plan-step-line f03-plan-step-line-short"></div>
+              </div>
+            </div>
+            <div class="f03-plan-step" id="f03-plan-step-3">
+              <div class="f03-plan-step-number">03</div>
+              <div class="f03-plan-step-lines">
+                <div class="f03-plan-step-line"></div>
+                <div class="f03-plan-step-line f03-plan-step-line-short"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="f03-approval" id="f03-approval">
+          <div class="f03-approval-topline">
+            <div class="f03-check" id="f03-check">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12.5 9.2 17 19 7"></path>
+              </svg>
+            </div>
+            <div class="f03-approved-label">Approved</div>
+          </div>
+          <div class="f03-approval-copy">Ask before generating.</div>
+        </div>
+      </div>
+
+      <div class="f03-progress">
+        <div class="f03-progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      window.__timelines = window.__timelines || {};
+
+      const tl = gsap.timeline({ paused: true });
+      const world = document.getElementById("f03-world");
+      const camera = { scale: 1, x: 0, y: 0 };
+
+      const applyCamera = () => {
+        world.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
+      };
+
+      applyCamera();
+
+      tl.fromTo(
+        "#f03-prompt-shell",
+        { y: 34, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.62, ease: "power3.out" },
+        0,
+      );
+      tl.fromTo(
+        "#f03-kicker",
+        { x: -28, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+        0.12,
+      );
+      tl.fromTo(
+        "#f03-prompt-focus",
+        { scaleX: 0, opacity: 0.2 },
+        { scaleX: 1, opacity: 1, duration: 0.66, ease: "power3.out" },
+        1.05,
+      );
+      tl.fromTo(
+        "#f03-marker-one",
+        { scale: 0.35, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        2.66,
+      );
+
+      tl.to(
+        camera,
+        { x: -514, duration: 0.92, ease: "power3.inOut", onUpdate: applyCamera },
+        3.8,
+      );
+      tl.fromTo(
+        "#f03-question-one, .f03-station-one .f03-depth, .f03-station-one .f03-station-dot",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        4.25,
+      );
+
+      tl.to(
+        camera,
+        { x: -1464, duration: 1.0, ease: "power3.inOut", onUpdate: applyCamera },
+        5.12,
+      );
+      tl.fromTo(
+        "#f03-station-two",
+        { y: 34, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.58, ease: "power3.out" },
+        5.7,
+      );
+
+      tl.to(
+        camera,
+        { x: -2414, duration: 1.0, ease: "power3.inOut", onUpdate: applyCamera },
+        6.62,
+      );
+      tl.fromTo(
+        "#f03-station-three",
+        { y: 34, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.58, ease: "power3.out" },
+        7.2,
+      );
+      tl.fromTo(
+        "#f03-rail-fill",
+        { scaleX: 0.1 },
+        { scaleX: 1, duration: 4.1, ease: "none" },
+        3.8,
+      );
+
+      tl.to(
+        camera,
+        { x: -3300, duration: 0.62, ease: "power4.inOut", onUpdate: applyCamera },
+        8.4,
+      );
+      tl.fromTo(
+        "#f03-plan-shell",
+        { x: 230, opacity: 0.35 },
+        { x: 0, opacity: 1, duration: 0.62, ease: "power4.out" },
+        8.4,
+      );
+
+      const planEntries = [
+        { title: "01", body: "structure", hold: 0.22 },
+        { title: "02", body: "sequence", hold: 0.22 },
+        { title: "03", body: "verification", hold: 0.46 },
+      ];
+      let cumulative = 0;
+      const planTimeline = planEntries.map((entry) => {
+        const duration = 0.42 + entry.body.length * 0.025 + entry.hold;
+        const start = cumulative;
+        cumulative += duration;
+        return { ...entry, start, end: cumulative };
+      });
+      const planDriver = { t: 0 };
+      const planSteps = [
+        document.getElementById("f03-plan-step-1"),
+        document.getElementById("f03-plan-step-2"),
+        document.getElementById("f03-plan-step-3"),
+      ];
+      let lastPlanIndex = -1;
+
+      const entryIndexAt = (time) => {
+        for (let index = planTimeline.length - 1; index >= 0; index -= 1) {
+          if (time >= planTimeline[index].start) return index;
+        }
+        return 0;
+      };
+
+      tl.to(
+        planDriver,
+        {
+          t: cumulative,
+          duration: cumulative,
+          ease: "none",
+          onUpdate: () => {
+            const activeIndex = entryIndexAt(planDriver.t);
+            if (activeIndex === lastPlanIndex) return;
+
+            planSteps.forEach((step, index) => {
+              const isVisible = index <= activeIndex;
+              const isActive = index === activeIndex;
+              step.style.opacity = isVisible ? (isActive ? "1" : "0.58") : "0";
+              step.style.transform = isVisible ? "translateY(0px)" : "translateY(18px)";
+            });
+            lastPlanIndex = activeIndex;
+          },
+        },
+        9.02,
+      );
+
+      tl.fromTo(
+        "#f03-approval",
+        { y: 34, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        11.8,
+      );
+      tl.fromTo(
+        "#f03-check",
+        { scale: 0.35, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        12.06,
+      );
+
+      window.__timelines["03-plan-mode"] = tl;
+    })();
+  </script>
+</template>

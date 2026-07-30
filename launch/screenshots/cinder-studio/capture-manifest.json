@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "demo": "cinder-studio",
+  "capturedAt": "2026-07-30T06:19:23.519Z",
+  "baseUrl": "http://127.0.0.1:4179",
+  "routes": {
+    "home": "/launch-demo/cinder-studio",
+    "detail": "/launch-demo/cinder-studio/project/stone-court",
+    "interactive": "/launch-demo/cinder-studio/contact?demoState=verified"
+  },
+  "verifiedRoutes": [
+    "/launch-demo/cinder-studio",
+    "/launch-demo/cinder-studio/project/stone-court",
+    "/launch-demo/cinder-studio/contact"
+  ],
+  "verifiedViewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 375,
+      "height": 812
+    }
+  ],
+  "testedStates": [
+    "default",
+    "loading",
+    "error",
+    "empty",
+    "verified",
+    "mobile"
+  ],
+  "assets": [
+    {
+      "file": "launch/screenshots/cinder-studio/desktop-home.png",
+      "sha256": "8803027a1fefc1ac0aa1c025c8a0420d05286c6bf28bcb54d3cd0ec15cdfd354",
+      "bytes": 1240525,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/cinder-studio/mobile-home.png",
+      "sha256": "da49b6909512bd4236a766ddf8547b95d694b34a16e63b47b85721b4aa0e0020",
+      "bytes": 291056,
+      "width": 375,
+      "height": 812
+    },
+    {
+      "file": "launch/screenshots/cinder-studio/feature-detail.png",
+      "sha256": "0668d381171f0e9c8e3c21ac0d896ad7ab2d5618fd3b2d1a943f36ff766776b3",
+      "bytes": 687852,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/cinder-studio/interactive-state.png",
+      "sha256": "a4f75c7861b0129e1aeb780b5e3372000ca752b8fcca383cc6ec9cc927853c73",
+      "bytes": 71842,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/cinder-studio/contact-sheet.png",
+      "sha256": "53aa740906a788a7d3b4489c9f8ac9975c770a61e3c87434fac448ecb205f181",
+      "bytes": 501855,
+      "width": 1200,
+      "height": 750
+    },
+    {
+      "file": "launch/screenshots/cinder-studio/recording-contact-sheet.png",
+      "sha256": "b3cd2521121004b32f55ac3cf3b70c958737b00f9afc7e72a19a02c94066ae74",
+      "bytes": 189130,
+      "width": 1200,
+      "height": 225
+    },
+    {
+      "file": "launch/screenshots/cinder-studio/demo-recording.mp4",
+      "sha256": "85a14d8675a9fe9e1b4c0fba4e3b8964bdda8a749e85993c27c62f59b9762aea",
+      "bytes": 1732382,
+      "durationSeconds": 12
+    }
+  ]
+}

@@ -140,6 +140,11 @@ const homepageNarrativeBlocks = [
     side: "left",
     question: "Define",
     body: "Squid interviews you and converts an ambiguous idea into a structured product plan.",
+    media: {
+      video: "/launch/gifs/plan-mode.mp4",
+      poster: "/launch/gifs/plan-mode-poster.png",
+      alt: "Squid Plan Mode turning an ambiguous product idea into interview answers and an approved architecture plan",
+    },
   },
   {
     stage: "02",
@@ -147,6 +152,11 @@ const homepageNarrativeBlocks = [
     side: "right",
     question: "Build",
     body: "Multiple agents generate the interface, application logic, assets, and integrations.",
+    media: {
+      video: "/launch/gifs/screenshot-to-app.mp4",
+      poster: "/launch/gifs/screenshot-to-app-poster.png",
+      alt: "Squid turning a visual reference into editable React code and switching the generated preview from desktop to mobile",
+    },
   },
   {
     stage: "03",
@@ -154,6 +164,11 @@ const homepageNarrativeBlocks = [
     side: "left",
     question: "Verify and ship",
     body: "Squid renders, tests, repairs, and prepares the project for deployment.",
+    media: {
+      video: "/launch/gifs/verify-and-export.mp4",
+      poster: "/launch/gifs/verify-and-export-poster.png",
+      alt: "Squid detecting and repairing a runtime issue before opening verified ZIP and GitHub export options",
+    },
   },
 ] as const;
 
@@ -2400,9 +2415,10 @@ function HomepageAnswerSection() {
                 className="workflow-step grid gap-4 md:contents"
               >
                 {isLeft ? (
-                  <HomepageNarrativeArticle
+                  <HomepageWorkflowMedia
                     block={block}
                     className="md:col-start-1"
+                    reduceMotion={Boolean(reduceMotion)}
                   />
                 ) : (
                   <div className="hidden md:col-start-1 md:block" />
@@ -2420,9 +2436,10 @@ function HomepageAnswerSection() {
                 {isLeft ? (
                   <div className="hidden md:col-start-3 md:block" />
                 ) : (
-                  <HomepageNarrativeArticle
+                  <HomepageWorkflowMedia
                     block={block}
                     className="md:col-start-3 md:translate-y-8"
+                    reduceMotion={Boolean(reduceMotion)}
                   />
                 )}
               </div>
@@ -2456,29 +2473,55 @@ function HomepageAnswerSection() {
   );
 }
 
-function HomepageNarrativeArticle({
+function HomepageWorkflowMedia({
   block,
   className = "",
+  reduceMotion,
 }: {
   block: (typeof homepageNarrativeBlocks)[number];
   className?: string;
+  reduceMotion: boolean;
 }) {
+  const titleId = `workflow-media-${block.stage}`;
+
   return (
     <article
-      className={`workflow-card relative rounded-[24px] border border-border/70 bg-background/80 p-5 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur sm:p-6 ${className}`}
+      aria-labelledby={titleId}
+      className={`workflow-media-card relative overflow-hidden rounded-[24px] border border-border/70 bg-background/80 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur ${className}`}
     >
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-[12px] font-semibold text-[#0062FF] dark:text-[#0CA8FF]">
+      {reduceMotion ? (
+        <Image
+          src={block.media.poster}
+          alt={block.media.alt}
+          width={1270}
+          height={760}
+          sizes="(min-width: 768px) 440px, calc(100vw - 2rem)"
+          className="block h-auto w-full"
+        />
+      ) : (
+        <video
+          className="block h-auto w-full"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          poster={block.media.poster}
+          aria-label={block.media.alt}
+          disablePictureInPicture
+          disableRemotePlayback
+          tabIndex={-1}
+        >
+          <source src={block.media.video} type="video/mp4" />
+        </video>
+      )}
+      <div className="sr-only">
+        <p>
           {block.stage} — {block.label}
         </p>
-        <span className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+        <h3 id={titleId}>{block.question}</h3>
+        <p>{block.body}</p>
       </div>
-      <h3 className="mt-4 text-2xl font-semibold leading-tight tracking-normal text-foreground">
-        {block.question}
-      </h3>
-      <p className="mt-3 text-base leading-7 text-muted-foreground">
-        {block.body}
-      </p>
     </article>
   );
 }

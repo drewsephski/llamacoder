@@ -1,0 +1,443 @@
+[span] Squid
+[span] Guest
+[span] Resources
+[a] Gallery
+[button] Pricing
+[a] Sign In
+[a] Sign Up
+[span] Toggle theme
+[span] Squid Agent
+[span] The AI app builder for React apps you
+[em] own
+[p] Research live sources, approve the plan, then generate, verify, and export production-ready React code.
+[span] Gemini 3.1 Flash Lite
+[option] Gemini 3.1 Flash Lite
+[option] Gemini 3.5 Flash Lite
+[option] DeepSeek V4 Flash
+[option] Gemini 2.5 Flash Lite
+[option] GPT-4.1
+[option] Grok 4.5
+[option] DeepSeek V4 Pro
+[option] GLM 5.2
+[option] Claude Opus 4.8
+[option] Claude Sonnet 5
+[span] Plan mode
+[p] Supported formats
+[p] PNG, JPEG, WebP
+[p] Upload a screenshot to recreate it in code
+[button] Build
+[span] Prompt Enhancer
+[span] Integrations
+[span] Quick starts:
+[button] Kanban Board
+[button] Landing Page
+[button] Habit Tracker
+[span] Customize:
+[button] Portfolio
+[button] Company
+[button] Live API
+[button] Local biz
+[div] or clone a site
+[p] See Squid in action
+[h2] From prompt to working app.
+[p] Squid is not a one-shot generator. It interviews, plans, builds, verifies, repairs, and prepares your project to ship.
+[h3] Deploy or export the project
+[p] Publish to GitHub, deploy to Vercel, or download every source file.
+[button] Prompt
+[button] Interview
+[button] Plan
+[button] Build
+[button] Preview
+[button] Repair
+[button] Ship
+[a] Explore live example
+[span] MacBook Air
+[span] We're
+[span] building
+[span] space
+[span] where
+[span] ideas
+[span] become
+[span] systems
+[span] where
+[span] founders
+[span] find
+[span] leverage,
+[span] builders
+[span] find
+[span] speed,
+[span] and
+[span] every
+[span] prompt
+[span] becomes
+[span] product
+[span] worth
+[span] shipping.
+[span] platform
+[span] where
+[span] planning,
+[span] generation,
+[span] and
+[span] verification
+[span] flow
+[span] together
+[span] with
+[span] less
+[span] guesswork,
+[span] less
+[span] friction,
+[span] and
+[span] more
+[span] working
+[span] software
+[span] for
+[span] everyone
+[span] involved.
+[h2] The first prompt is only the beginning.
+[p] Squid turns your idea into a plan, builds the system, verifies it in a real runtime, and keeps iterating until it works.
+[p] Define
+[h3] Define
+[p] Squid interviews you and converts an ambiguous idea into a structured product plan.
+[p] Build
+[h3] Build
+[p] Multiple agents generate the interface, application logic, assets, and integrations.
+[p] Verify and ship
+[h3] Verify and ship
+[p] Squid renders, tests, repairs, and prepares the project for deployment.
+[p] Code ownership
+[h3] Your app never disappears inside a proprietary editor.
+[p] Inspect every file, connect your own services, export the code, or deploy it wherever you choose.
+[a] See a demo
+[h2] Apps that do more than look good.
+[p] From expressive landing pages to authenticated SaaS products, every project is generated as a real React codebase you can inspect, edit, and own.
+[span] Responsive
+[span] API
+[span] Open preview
+[p] Automation platform
+[h3] Axon
+[p] A bright, editorial landing page for digital workers that quietly run routine browser workflows.
+[span] Responsive
+[span] Open preview
+[p] Creative tools
+[h3] Velorah
+[p] An atmospheric studio landing page for tools that give deep thinkers room to focus and make.
+[span] Responsive
+[span] Database
+[span] Open preview
+[p] Content studio
+[h3] Mindloop
+[p] A luminous editorial space for meaningful ideas, thoughtful updates, and a shared journey toward depth.
+[span] Responsive
+[span] Stripe
+[span] Open preview
+[p] Pet marketplace
+[h3] CozyPaws
+[p] A warm, playful storefront that makes discovering happy-making products for pets feel effortless.
+[span] Responsive
+[span] Auth
+[span] API
+[span] Open preview
+[p] Security systems
+[h3] Sentinel AI
+[p] A high-contrast security landing page pairing zero-trust systems with a precise, technical visual language.
+[span] Responsive
+[span] Open preview
+[p] Digital studio
+[h3] Axion Studio
+[p] A strategy-led agency landing page for digital experiences built around category leadership.
+[span] Responsive
+[span] Open preview
+[p] AI education
+[h3] Design Rocket Certificates
+[p] A focused course landing page for leaders learning to guide AI transformation inside their organizations.
+[span] Responsive
+[span] API
+[span] Open preview
+[p] Product studio
+[h3] Forma
+[p] A concise studio landing page with motion-led visuals and a direct project intake surface.
+[span] Responsive
+[span] Stripe
+[span] Open preview
+[p] Wellness supplements
+[h3] TerraElix
+[p] A vivid wellness landing page for plant-based supplements, daily balance, and clean energy.
+[span] Responsive
+[span] Database
+[span] Open preview
+[p] Wellbeing resources
+[h3] Mentality
+[p] A calm mental wellbeing resource page with expressive editorial typography and a guided question entry point.
+[span] Responsive
+[span] API
+[span] Open preview
+[p] AI search content
+[h3] Questly
+[p] A content strategy landing page for shipping articles that answer customer questions and earn AI citations.
+[span] Responsive
+[span] Auth
+[span] API
+[span] Open preview
+[p] Asset liquidity
+[h3] RIVR
+[p] A cinematic finance landing page for smart vaults, staking, NFTs, and fluid asset streams.
+[span] Responsive
+[span] Open preview
+[p] Private aviation
+[h3] SkyElite
+[p] A premium private aviation landing page positioning jet access as refined and attainable.
+[span] Responsive
+[span] Open preview
+[p] 3D creator portfolio
+[h3] Drew
+[p] A dark, motion-led portfolio for a 3D creator who turns striking visual systems into unforgettable projects.
+[p] Start with a clear goal, turn on plan mode, and move into generation with checkpoints for restore and export.
+[a] Build your version in 90 seconds
+[p] Practical AI app builder guides
+[h2] Choose well. Build deliberately. Ship code you can keep.
+[p] Learn the complete AI app workflow—from selecting a builder and translating visual references to reviewing generated React, recovering versions, and exporting a production-ready project.
+[p] Choose a tool
+[h3] Compare AI app builders
+[p] Evaluate code ownership, pricing signals, recovery, verification, and export workflows using current sources.
+[span] Read the guide
+[p] Own the output
+[h3] Export a React app from AI
+[p] Use a clean-room handoff checklist for source, dependencies, environment values, builds, and deployment files.
+[span] Read the guide
+[p] Design to code
+[h3] Turn a screenshot into responsive React
+[p] Translate visual intent into components, interactions, and deliberate behavior across phone, tablet, and desktop.
+[span] Read the guide
+[p] Measure quality
+[h3] Use the screenshot-to-React benchmark
+[p] Score fidelity, responsive inference, accessibility, interactions, edit stability, recovery, and export readiness.
+[span] Read the guide
+[p] Build a product
+[h3] Plan and build a SaaS MVP with AI
+[p] Define product boundaries, data contracts, modules, checkpoints, acceptance tests, and the final team handoff.
+[span] Read the guide
+[p] Review the code
+[h3] Evaluate AI-generated React
+[p] Inspect the file graph, TypeScript, state, responsive behavior, accessibility, recovery path, and production build.
+[span] Read the guide
+[h2] The first prompt is the easy part.
+[p] Squid’s philosophy is planning first, verification before handoff, and code you can take anywhere.
+[span] Included
+[span] Limited
+[span] Not documented as equivalent
+[caption] Feature comparison of Lovable, Bolt.new, Base44, v0, and Squid Agent
+[th] Capability
+[span] Squid Agent
+[span] Export-first
+[span] Lovable
+[span] Bolt.new
+[span] Structured product interview
+[span] Included
+[span] Plan mode with approval gate
+[span] Not documented as equivalent
+[span] Prompt-first workflow
+[span] Not documented as equivalent
+[span] Prompt-first workflow
+[span] Not documented as equivalent
+[span] Prompt-first workflow
+[span] Runtime verification
+[span] Included
+[span] Checks + free preview repair
+[span] Limited
+[span] Try-to-fix preview errors
+[span] Limited
+[span] Restore-focused recovery
+[span] Not documented as equivalent
+[span] No equivalent workflow documented
+[span] Full source-code control
+[span] Included
+[span] Verified ZIP and GitHub publish
+[span] Included
+[span] Download and Git sync
+[span] Included
+[span] ZIP and GitHub
+[span] Included
+[span] Export and Git workflow
+[span] Multi-model selection
+[span] Included
+[span] Broad model catalog
+[span] Limited
+[span] Platform-managed models
+[span] Limited
+[span] Platform-managed models
+[span] Limited
+[span] Vercel-managed models
+[span] Deploy anywhere
+[span] Included
+[span] Export + GitHub + Vercel paths
+[span] Limited
+[span] Platform hosting focus
+[span] Included
+[span] Multiple deploy paths
+[span] Limited
+[span] Vercel-centric workflow
+[h3] Squid Agent
+[span] Export-first
+[span] Planning
+[span] Structured product interview
+[span] Included
+[dd] Plan mode with approval gate
+[span] Quality
+[span] Runtime verification
+[span] Included
+[dd] Checks + free preview repair
+[span] Ownership
+[span] Full source-code control
+[span] Included
+[dd] Verified ZIP and GitHub publish
+[span] Models
+[span] Multi-model selection
+[span] Included
+[dd] Broad model catalog
+[span] Shipping
+[span] Deploy anywhere
+[span] Included
+[dd] Export + GitHub + Vercel paths
+[h3] Lovable
+[span] Planning
+[span] Structured product interview
+[span] Not documented as equivalent
+[dd] Prompt-first workflow
+[span] Quality
+[span] Runtime verification
+[span] Limited
+[dd] Try-to-fix preview errors
+[span] Ownership
+[span] Full source-code control
+[span] Included
+[dd] Download and Git sync
+[span] Models
+[span] Multi-model selection
+[span] Limited
+[dd] Platform-managed models
+[span] Shipping
+[span] Deploy anywhere
+[span] Limited
+[dd] Platform hosting focus
+[h3] Bolt.new
+[span] Planning
+[span] Structured product interview
+[span] Not documented as equivalent
+[dd] Prompt-first workflow
+[span] Quality
+[span] Runtime verification
+[span] Limited
+[dd] Restore-focused recovery
+[span] Ownership
+[span] Full source-code control
+[span] Included
+[dd] ZIP and GitHub
+[span] Models
+[span] Multi-model selection
+[span] Limited
+[dd] Platform-managed models
+[span] Shipping
+[span] Deploy anywhere
+[span] Included
+[dd] Multiple deploy paths
+[span] Planning
+[span] Structured product interview
+[span] Not documented as equivalent
+[dd] Prompt-first workflow
+[span] Quality
+[span] Runtime verification
+[span] Not documented as equivalent
+[dd] No equivalent workflow documented
+[span] Ownership
+[span] Full source-code control
+[span] Included
+[dd] Export and Git workflow
+[span] Models
+[span] Multi-model selection
+[span] Limited
+[dd] Vercel-managed models
+[span] Shipping
+[span] Deploy anywhere
+[span] Limited
+[dd] Vercel-centric workflow
+[a] See full comparison
+[p] Reviewed July 16, 2026. An X means no equivalent built-in workflow was documented in the linked sources; it does not mean the outcome is technically impossible.
+[span] Official docs
+[a] Lovable
+[a] Bolt.new
+[a] Base44
+[h2] Real projects shipped from prompts.
+[p] Explore sites and tools built with Squid. Inspect a complete public workspace, remix the project, or download the source and continue in your own stack.
+[a] Open the no-signup example workspace
+[span] Responsive
+[span] Database
+[span] API
+[p] Sports data
+[h3] Octagon Rankings
+[p] A live UFC rankings explorer with division navigation, fighter cards, and detailed athlete profiles.
+[p] Shared by
+[p] Drew Sepeczi
+[a] View app
+[a] Remix
+[span] Responsive
+[p] Design agency
+[h3] Phoenix Design Lab
+[p] A cinematic agency landing page with a red editorial art direction and bold one-screen positioning.
+[a] View app
+[span] Responsive
+[span] Auth
+[span] API
+[p] AI portfolio builder
+[h3] PortfolioOS
+[p] An AI-native professional identity site where portfolios answer questions in real time.
+[a] View app
+[span] Responsive
+[span] Database
+[span] Auth
+[p] Event coordination
+[h3] Slotflow
+[p] A scheduling surface for coordinating group availability without spreadsheet back-and-forth.
+[a] View app
+[h2] Know what happens from prompt to production.
+[p] Research, planning, iteration, quality, recovery, integrations, deployment, ownership, and credits, without hidden steps.
+[h3] Is Squid Agent related to Squid AI (getsquid.ai)?
+[p] No. Squid Agent is a separate brand and workflow. Squid Agent is optimized for exportable React applications with explicit checkpoints, usage visibility, and quality verification.
+[h3] What is Squid Agent?
+[p] Squid Agent is an AI app builder that takes a project from research and planning through generation, iteration, verification, and shipping. It keeps the sources, decisions, React code, quality results, versions, integrations, and credit use visible throughout the process.
+[h3] Who is Squid Agent for?
+[p] Squid Agent is built for founders, builders, designers, and product teams who want to prototype full React apps quickly while keeping the generated code inspectable, editable, and portable.
+[h3] Can Squid Agent research current documentation and APIs?
+[p] Yes. Squid Agent can search the live web for current documentation, API references, package guidance, recommendations, and time-sensitive facts. You can see when research is happening and inspect the supporting sources instead of relying on hidden or stale model knowledge.
+[h3] What does Plan mode do?
+[p] Plan mode asks a compact set of consequential questions, turns your answers into a structured product specification, and presents the plan for review. You can revise it, resolve open decisions, and explicitly approve it before code generation starts.
+[h3] Can I keep editing after the first generation?
+[p] Yes. Continue in chat to make source-aware changes, or select an element in the live preview and describe the exact edit. Squid Agent works from the current project files so a focused change does not have to replace the entire application.
+[h3] How does Squid Agent verify and repair a build?
+[p] Squid Agent checks files, imports, exports, dependencies, accessibility basics, API safety, and the running preview. It shows what passed, what still needs review, and what was not tested. Recoverable preview problems can be repaired automatically without charging for the repair run.
+[h3] Can I restore an earlier version without losing newer work?
+[p] Yes. Code-bearing responses become visible checkpoints with summaries and exact diffs. Restore a complete version or recover selected files only, so you can undo one direction without overwriting unrelated work you want to keep.
+[h3] How do APIs and connected services work?
+[p] Choose APIs before a build, then connect supported services with project-scoped credentials, separate development and production settings, and health checks. Public browser-safe APIs can work directly; services that require secrets stay behind an explicit server and setup boundary rather than being presented as falsely complete.
+[h3] Can Squid Agent publish or export my app?
+[p] Yes. Publish verified code to a GitHub repository, deploy a Vercel preview or production build, share and remix a public project, or download a verified project bundle with React source, configuration, setup instructions, and quality reports. Your code remains portable outside Squid Agent.
+[h3] How does Squid Agent handle AI credits?
+[p] Squid Agent shows the model and expected credit range before generation, then records the actual charge after successful work is saved. Failed initial generations are not charged, preview repairs are free, and receipts make charges and refunds visible.
+[h3] Can I use the generated project outside Squid Agent?
+[p] Yes. You can export a complete project bundle or continue in your own repository with the generated source, dependency list, deployment instructions, and quality context. The handoff is intentionally designed for local or external workflows.
+[p] Built with
+[p] modern technologies
+[h2] Your idea keeps moving.
+[h2] You stay in control.
+[p] Move from a rough idea to a shipped app without losing the context, decisions, or code along the way. Select a stage to see what Squid handles and where you stay in control.
+[span] Research
+[button] Research
+[h3] Research the real world
+[p] Sources, APIs, and constraints become visible context before the first line of code.
+[span] Step
+[span] Every artifact is yours
+[a] Explore the full workflow
+[p] Research, build, verify, and ship React apps with code you own.
+[a] Squid Agent
+[a] Creative React example
+[a] What is Squid Agent?
+[a] Dashboard

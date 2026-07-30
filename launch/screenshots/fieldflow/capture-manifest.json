@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "demo": "fieldflow",
+  "capturedAt": "2026-07-30T06:17:58.163Z",
+  "baseUrl": "http://127.0.0.1:4179",
+  "routes": {
+    "home": "/launch-demo/fieldflow",
+    "detail": "/launch-demo/fieldflow/dashboard",
+    "interactive": "/launch-demo/fieldflow/quote?demoState=verified"
+  },
+  "verifiedRoutes": [
+    "/launch-demo/fieldflow",
+    "/launch-demo/fieldflow/quote",
+    "/launch-demo/fieldflow/dashboard",
+    "/launch-demo/fieldflow/customer"
+  ],
+  "verifiedViewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 375,
+      "height": 812
+    }
+  ],
+  "testedStates": [
+    "default",
+    "loading",
+    "error",
+    "empty",
+    "verified",
+    "mobile"
+  ],
+  "assets": [
+    {
+      "file": "launch/screenshots/fieldflow/desktop-home.png",
+      "sha256": "f2761641d1953cfa7b32bdeece75ee02c8a42902c4bac5d64d4265df7dcf99fd",
+      "bytes": 108061,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/fieldflow/mobile-home.png",
+      "sha256": "69c4b64cca5ef7d2514c34ad177d5f77cf79dfc3b5c4fc81a7164cd9feb17d67",
+      "bytes": 49132,
+      "width": 375,
+      "height": 812
+    },
+    {
+      "file": "launch/screenshots/fieldflow/feature-detail.png",
+      "sha256": "e3d27c778f228c02ceeee2f844dfb949d9a3442fa90884d1c02a1dcb959a4b7f",
+      "bytes": 97451,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/fieldflow/interactive-state.png",
+      "sha256": "ebfa85bd342d86f4405592ab3fe03495bd6fbe3f5e86e5b53d000d0b9a290a4a",
+      "bytes": 47744,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/fieldflow/contact-sheet.png",
+      "sha256": "6509cd16932c2ba40d0a62419372d5f9a1a7c7993851c86a67fcf7ced640d56c",
+      "bytes": 165451,
+      "width": 1200,
+      "height": 750
+    },
+    {
+      "file": "launch/screenshots/fieldflow/recording-contact-sheet.png",
+      "sha256": "6babae487c89a7d9d5440acc7d472892afa24457bb01d730829abe2bc0075c1c",
+      "bytes": 80082,
+      "width": 1200,
+      "height": 225
+    },
+    {
+      "file": "launch/screenshots/fieldflow/demo-recording.mp4",
+      "sha256": "1c4b79c035ff92d4609b7ee355fa59929db09958119fbff9b8183267e984fca7",
+      "bytes": 457453,
+      "durationSeconds": 12
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-30T15:12:40.573Z",
+  "command": "pnpm launch:export-gifs",
+  "profile": {
+    "width": 1270,
+    "height": 760,
+    "durationSeconds": 10,
+    "captureFps": 12,
+    "mp4Fps": 24,
+    "gifEncoder": "ffmpeg palettegen/paletteuse",
+    "webpEncoder": "img2webp"
+  },
+  "evidence": {
+    "productSources": [
+      "components/plan-review.tsx",
+      "components/tool-ui/question-flow/question-flow.tsx",
+      "features/marketing/components/homepage-builder-island.tsx",
+      "components/quality-report-panel.tsx",
+      "app/(main)/chats/[id]/code-viewer.tsx"
+    ],
+    "privacy": "Deterministic fictional launch fixtures only; no authenticated data."
+  },
+  "assets": [
+    {
+      "path": "launch/gifs/plan-mode.mp4",
+      "format": "mp4",
+      "bytes": 265753,
+      "sha256": "497de6b422cac35b5368a35aa63b0ea54646bf3737d2e9a58a9aca425ec191f5",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 10,
+      "framesPerSecond": 24
+    },
+    {
+      "path": "launch/gifs/plan-mode.gif",
+      "format": "gif",
+      "bytes": 1807368,
+      "sha256": "6e7e8b815f861c4eb6b18ae26031a2d85c3a6ca32fa70b5fb6b4e046e46bd705",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 10,
+      "framesPerSecond": 12.5,
+      "loop": "infinite"
+    },
+    {
+      "path": "launch/gifs/plan-mode.webp",
+      "format": "webp",
+      "bytes": 453126,
+      "sha256": "75314f7e0c196a28803ec7eb85606b602897d8a10f8921a09fa7a9a9f90ba64c",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 9.96,
+      "framesPerSecond": 12.048192771084338,
+      "loop": "infinite"
+    },
+    {
+      "path": "launch/gifs/plan-mode-poster.png",
+      "format": "png",
+      "bytes": 75629,
+      "sha256": "580e55f9fda6a5d1bd0a7afc296270a4ae25969d09314a8bea45f214b21e9e7f",
+      "width": 1270,
+      "height": 760,
+      "framesPerSecond": 25
+    },
+    {
+      "path": "launch/gifs/plan-mode-display-check.png",
+      "format": "png",
+      "bytes": 144160,
+      "sha256": "ad325b08033a8bcc7babc96ed9aba10a0b063564cf44968566de354ca545d960",
+      "width": 1270,
+      "height": 760,
+      "framesPerSecond": 25
+    },
+    {
+      "path": "launch/gifs/screenshot-to-app.mp4",
+      "format": "mp4",
+      "bytes": 309090,
+      "sha256": "52a67587126e3e36848b8ebf4de37a91baa5b9531901656e6fb2ab05c655c9c1",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 10,
+      "framesPerSecond": 24
+    },
+    {
+      "path": "launch/gifs/screenshot-to-app.gif",
+      "format": "gif",
+      "bytes": 2364834,
+      "sha256": "39750611930b754ebbe3729fc1cb97b8856ad660bbf5bc0d58887a580dcc1bad",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 10,
+      "framesPerSecond": 12.5,
+      "loop": "infinite"
+    },
+    {
+      "path": "launch/gifs/screenshot-to-app.webp",
+      "format": "webp",
+      "bytes": 519614,
+      "sha256": "69d4c655863cdd763b1f943b2207d56494b305844598af0e2acb0f97e5e5d0e5",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 9.96,
+      "framesPerSecond": 12.048192771084338,
+      "loop": "infinite"
+    },
+    {
+      "path": "launch/gifs/screenshot-to-app-poster.png",
+      "format": "png",
+      "bytes": 118334,
+      "sha256": "db5d64e4200859a060b8808602ef7846e405162b591f84e293e891b646a7a605",
+      "width": 1270,
+      "height": 760,
+      "framesPerSecond": 25
+    },
+    {
+      "path": "launch/gifs/screenshot-to-app-display-check.png",
+      "format": "png",
+      "bytes": 167343,
+      "sha256": "0448f995f72acbbeffa37d5bbd76aac5cd75caaf842140a9ccaf5b8f2a6a751e",
+      "width": 1270,
+      "height": 760,
+      "framesPerSecond": 25
+    },
+    {
+      "path": "launch/gifs/verify-and-export.mp4",
+      "format": "mp4",
+      "bytes": 283960,
+      "sha256": "3151c09f44d064c58c8360b24e14e8314f289b375733619599d93bcd894527b7",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 10,
+      "framesPerSecond": 24
+    },
+    {
+      "path": "launch/gifs/verify-and-export.gif",
+      "format": "gif",
+      "bytes": 2157421,
+      "sha256": "1c6b094884e187ece2b15e3ba0f84a6648f69b907fec1e5f4e4ae8187733d9e7",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 10,
+      "framesPerSecond": 12.5,
+      "loop": "infinite"
+    },
+    {
+      "path": "launch/gifs/verify-and-export.webp",
+      "format": "webp",
+      "bytes": 464390,
+      "sha256": "e9f1d161b503b8a145eab77a3e4736392fb3332607f4f79eb083d0f3191b918e",
+      "width": 1270,
+      "height": 760,
+      "durationSeconds": 9.96,
+      "framesPerSecond": 12.048192771084338,
+      "loop": "infinite"
+    },
+    {
+      "path": "launch/gifs/verify-and-export-poster.png",
+      "format": "png",
+      "bytes": 119277,
+      "sha256": "56745ed5780e7bbe85dcb596686f4a4f68692c328a0f50bdbe98e8d844960705",
+      "width": 1270,
+      "height": 760,
+      "framesPerSecond": 25
+    },
+    {
+      "path": "launch/gifs/verify-and-export-display-check.png",
+      "format": "png",
+      "bytes": 148021,
+      "sha256": "84a9a228ed6eec0f6bfa91d0883cd52eecc7bdc17dd35d5d6bea524f3a15d10b",
+      "width": 1270,
+      "height": 760,
+      "framesPerSecond": 25
+    }
+  ]
+}

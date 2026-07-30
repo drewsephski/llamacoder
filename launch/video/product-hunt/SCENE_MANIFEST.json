@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "title": "Squid Product Hunt launch",
+  "durationSeconds": 72,
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "captions": ["burned-in", "caption-free"],
+  "music": null,
+  "renderer": {"name":"HyperFrames","version":"0.7.84","videoCodec":"h264","quality":"crf-17"},
+  "outputs": [
+    "squid-product-hunt-launch-captioned.mp4",
+    "squid-product-hunt-launch-clean.mp4",
+    "squid-product-hunt-video-thumbnail.png"
+  ],
+  "scenes": [
+    {"id":"01-first-screen","start":0,"end":5,"headline":"The first screen is becoming easy. / Finishing the product is not.","source":"compositions/frames/01-first-screen.html","evidence":["assets/demos/fieldflow-demo.mp4","assets/product-stills/fieldflow-app-updated.png"]},
+    {"id":"02-meet-squid","start":5,"end":12,"headline":"From input to owned React app.","source":"compositions/frames/02-meet-squid.html","evidence":["assets/footage/composer-inputs.mp4"]},
+    {"id":"03-plan-mode","start":12,"end":26,"headline":"Ask before generating.","source":"compositions/frames/03-plan-mode.html","evidence":["assets/footage/prompt-to-plan.mp4","assets/product-stills/example-prompt.png","assets/product-stills/example-plan.png"]},
+    {"id":"04-build-iterate","start":26,"end":41,"headline":"Keep building after generation.","source":"compositions/frames/04-build-iterate.html","evidence":["assets/footage/build-and-iterate.mp4","assets/product-stills/fieldflow-app.png","assets/product-stills/fieldflow-app-updated.png"]},
+    {"id":"05-verify-repair","start":41,"end":54,"headline":"Know what actually works.","source":"compositions/frames/05-verify-repair.html","evidence":["assets/footage/verify-and-export.mp4","assets/product-stills/example-quality.png","assets/product-stills/04-verification.png"]},
+    {"id":"06-own-code","start":54,"end":66,"headline":"Your React code leaves with you.","source":"compositions/frames/06-own-the-code.html","evidence":["assets/footage/verify-and-export.mp4","assets/product-stills/example-files.png","assets/product-stills/06-code-ownership.png"]},
+    {"id":"07-close","start":66,"end":72,"headline":"Plan. Build. Verify. Export.","source":"compositions/frames/07-close.html","evidence":["assets/demos/fieldflow-demo.mp4","assets/demos/launchops-demo.mp4","assets/demos/cinder-studio-demo.mp4","assets/brand/squidagent-logo.svg"]}
+  ]
+}

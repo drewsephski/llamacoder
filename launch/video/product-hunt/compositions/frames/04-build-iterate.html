@@ -1,0 +1,527 @@
+<template>
+  <style>
+    @font-face{font-family:"Aeonik";font-weight:700;font-style:normal;font-display:block;src:url("assets/fonts/Aeonik-Bold.ttf") format("truetype");}
+    @font-face{font-family:"Aeonik";font-weight:500;font-style:normal;font-display:block;src:url("assets/fonts/Aeonik-Medium.ttf") format("truetype");}
+    @font-face{font-family:"Aeonik";font-weight:400;font-style:normal;font-display:block;src:url("assets/fonts/Aeonik-Regular.ttf") format("truetype");}
+    @font-face{font-family:"Aeonik Mono";font-weight:400;font-style:normal;font-display:block;src:url("assets/fonts/AeonikMono-Regular.otf") format("opentype");}
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      container-type: size;
+      font-family: "Aeonik";
+      color: #0a0a0a;
+    }
+
+    [class~="04-build-iterate-ground"] {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+
+    [class~="04-build-iterate-content"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    [class~="04-build-iterate-stage"] {
+      position: absolute;
+      left: 17.1875cqw;
+      top: 3.8889cqh;
+      width: 65.625cqw;
+      height: 74.8148cqh;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: rgba(50, 109, 245, 0.04);
+      overflow: hidden;
+    }
+
+    [class~="04-build-iterate-stagebar"] {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4.4444cqh;
+      display: flex;
+      align-items: center;
+      gap: 0.55cqw;
+      padding: 0 1cqw;
+      border-bottom: 1.5px solid rgba(50, 109, 245, 0.2);
+      background: #ffffff;
+      box-sizing: border-box;
+      z-index: 3;
+    }
+
+    [class~="04-build-iterate-stage-dot"] {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(50, 109, 245, 0.15);
+    }
+
+    [class~="04-build-iterate-stage-dot-active"] {
+      background: #326df5;
+    }
+
+    [class~="04-build-iterate-stage-label"] {
+      margin-left: 0.5cqw;
+      color: #0062ff;
+      font-family: "Aeonik Mono";
+      font-size: 13px;
+      line-height: 1;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    [class~="04-build-iterate-capture-window"],
+    [class~="04-build-iterate-fieldflow-window"] {
+      position: absolute;
+      inset: 0;
+    }
+
+    [class~="04-build-iterate-fieldflow-window"] {
+      z-index: 4;
+      background: #ffffff;
+    }
+
+    [class~="04-build-iterate-fieldflow-swap"] {
+      position: absolute;
+      left: 1.0417cqw;
+      top: 4.4444cqh;
+      width: 63.5417cqw;
+      height: 70.5556cqh;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    [class~="04-build-iterate-fieldflow-before"],
+    [class~="04-build-iterate-fieldflow-after"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      transform-origin: 50% 50%;
+    }
+
+    [class~="04-build-iterate-fieldflow-before"] {
+      z-index: 1;
+    }
+
+    [class~="04-build-iterate-fieldflow-after"] {
+      z-index: 2;
+    }
+
+    [class~="04-build-iterate-command"] {
+      position: absolute;
+      left: 17.5cqw;
+      top: 60.9259cqh;
+      width: 30.7292cqw;
+      min-height: 7.2222cqh;
+      display: flex;
+      align-items: center;
+      gap: 0.8cqw;
+      padding: 0.9cqh 0.7cqw 0.9cqh 1cqw;
+      box-sizing: border-box;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: #ffffff;
+      z-index: 7;
+    }
+
+    [class~="04-build-iterate-command-mark"] {
+      width: 1.45cqw;
+      height: 1.45cqw;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: rgba(50, 109, 245, 0.08);
+      color: #2f67e8;
+      font-family: "Aeonik";
+      font-size: 0.8cqw;
+      font-weight: 700;
+    }
+
+    [class~="04-build-iterate-command-copy"] {
+      min-width: 0;
+      flex: 1;
+      color: #0a0a0a;
+      font-family: "Aeonik";
+      font-size: 1.4cqw;
+      font-weight: 500;
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    [class~="04-build-iterate-command-submit"] {
+      width: 2.25cqw;
+      height: 2.25cqw;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #326df5;
+      color: #ffffff;
+      font-family: "Aeonik";
+      font-size: 1.2cqw;
+      font-weight: 500;
+    }
+
+    [class~="04-build-iterate-timer"] {
+      position: absolute;
+      right: 1.15cqw;
+      top: 0.8333cqh;
+      display: flex;
+      align-items: center;
+      gap: 0.55cqw;
+      padding: 0.7cqh 0.8cqw;
+      border-radius: 100px;
+      background: rgba(50, 109, 245, 0.08);
+      color: #0062ff;
+      font-family: "Aeonik Mono";
+      font-size: 13px;
+      line-height: 1;
+      letter-spacing: 0.05em;
+      z-index: 8;
+    }
+
+    [class~="04-build-iterate-timer-dot"] {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #326df5;
+    }
+
+    [class~="04-build-iterate-selection"] {
+      position: absolute;
+      left: 46.4583cqw;
+      top: 16.1111cqh;
+      width: 16.875cqw;
+      height: 31.1111cqh;
+      box-sizing: border-box;
+      border: 2px solid #326df5;
+      border-radius: 14px;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    [class~="04-build-iterate-selection-label"] {
+      position: absolute;
+      left: 0;
+      top: -3.0556cqh;
+      padding: 0.55cqh 0.65cqw;
+      border-radius: 100px;
+      background: #326df5;
+      color: #ffffff;
+      font-family: "Aeonik Mono";
+      font-size: 12px;
+      line-height: 1;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    [class~="04-build-iterate-change-emphasis"] {
+      position: absolute;
+      left: 46.25cqw;
+      top: 15.7407cqh;
+      width: 17.2917cqw;
+      height: 31.8519cqh;
+      border: 4px solid rgba(50, 109, 245, 0.15);
+      border-radius: 14px;
+      background: rgba(50, 109, 245, 0.04);
+      box-sizing: border-box;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    [class~="04-build-iterate-checkpoint"] {
+      position: absolute;
+      left: 50cqw;
+      top: 61.5741cqh;
+      display: flex;
+      align-items: center;
+      gap: 0.7cqw;
+      padding: 0.9cqh 1cqw;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 100px;
+      background: rgba(50, 109, 245, 0.08);
+      color: #0062ff;
+      font-family: "Aeonik";
+      font-size: 1.4cqw;
+      font-weight: 500;
+      line-height: 1;
+      z-index: 9;
+    }
+
+    [class~="04-build-iterate-check"] {
+      width: 1.45cqw;
+      height: 1.45cqw;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #326df5;
+      color: #ffffff;
+      font-size: 0.9cqw;
+      font-weight: 700;
+    }
+
+    [class~="04-build-iterate-cursor"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 28px;
+      height: 36px;
+      z-index: 12;
+      pointer-events: none;
+    }
+
+    [class~="04-build-iterate-cursor"] svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    [class~="04-build-iterate-ripple"] {
+      position: absolute;
+      left: 58.3333cqw;
+      top: 33.1481cqh;
+      width: 1.8cqw;
+      height: 1.8cqw;
+      margin-left: -0.9cqw;
+      margin-top: -0.9cqw;
+      border: 2px solid #326df5;
+      border-radius: 50%;
+      box-sizing: border-box;
+      z-index: 11;
+      pointer-events: none;
+    }
+
+    [class~="04-build-iterate-progress-track"] {
+      position: absolute;
+      left: 5cqw;
+      right: 5cqw;
+      top: 81.8519cqh;
+      height: 3px;
+      border-radius: 0;
+      background: rgba(50, 109, 245, 0.08);
+      overflow: hidden;
+    }
+
+    [class~="04-build-iterate-progress-fill"] {
+      display: block;
+      width: 57%;
+      height: 100%;
+      background: #326df5;
+    }
+  </style>
+
+  <div id="root" data-composition-id="04-build-iterate" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+    <div class="clip 04-build-iterate-ground" data-start="0" data-duration="15" data-track-index="0"></div>
+
+    <!-- approved frame video hoisted by assemble-index -->
+
+    <div class="clip 04-build-iterate-content" data-start="0" data-duration="15" data-track-index="2">
+      <div id="04-build-iterate-capture" class="04-build-iterate-stage 04-build-iterate-capture-window">
+        <div class="04-build-iterate-stagebar">
+          <span class="04-build-iterate-stage-dot 04-build-iterate-stage-dot-active"></span>
+          <span class="04-build-iterate-stage-dot"></span>
+          <span class="04-build-iterate-stage-dot"></span>
+          <span class="04-build-iterate-stage-label">Live build</span>
+        </div>
+
+        <div id="04-build-iterate-timer" class="04-build-iterate-timer">
+          <span class="04-build-iterate-timer-dot"></span>
+          <span id="04-build-iterate-timer-value">00:00</span>
+        </div>
+
+        <div id="04-build-iterate-context-command" class="04-build-iterate-command">
+          <span class="04-build-iterate-command-mark">+</span>
+          <span class="04-build-iterate-command-copy">Describe a focused change</span>
+          <span class="04-build-iterate-command-submit">&#8593;</span>
+        </div>
+      </div>
+
+      <div id="04-build-iterate-fieldflow" class="04-build-iterate-stage 04-build-iterate-fieldflow-window">
+        <div class="04-build-iterate-stagebar">
+          <span class="04-build-iterate-stage-dot 04-build-iterate-stage-dot-active"></span>
+          <span class="04-build-iterate-stage-dot"></span>
+          <span class="04-build-iterate-stage-dot"></span>
+          <span class="04-build-iterate-stage-label">FieldFlow</span>
+        </div>
+
+        <div class="04-build-iterate-fieldflow-swap">
+          <img
+            id="04-build-iterate-before"
+            class="04-build-iterate-fieldflow-before"
+            src="assets/product-stills/fieldflow-app.png"
+            alt="FieldFlow application before the focused edit"
+          />
+          <img
+            id="04-build-iterate-after"
+            class="04-build-iterate-fieldflow-after"
+            src="assets/product-stills/fieldflow-app-updated.png"
+            alt="FieldFlow application after the focused edit"
+          />
+        </div>
+
+        <div id="04-build-iterate-change-emphasis" class="04-build-iterate-change-emphasis"></div>
+        <div id="04-build-iterate-selection" class="04-build-iterate-selection">
+          <span class="04-build-iterate-selection-label">Selected</span>
+        </div>
+
+        <div id="04-build-iterate-focused-command" class="04-build-iterate-command">
+          <span class="04-build-iterate-command-mark">+</span>
+          <span class="04-build-iterate-command-copy">Prepare this quote to send</span>
+          <span class="04-build-iterate-command-submit">&#8593;</span>
+        </div>
+
+        <div id="04-build-iterate-checkpoint" class="04-build-iterate-checkpoint">
+          <span class="04-build-iterate-check">&#10003;</span>
+          <span>Version checkpoint</span>
+        </div>
+
+        <div id="04-build-iterate-ripple" class="04-build-iterate-ripple"></div>
+        <div id="04-build-iterate-cursor" class="04-build-iterate-cursor" aria-hidden="true">
+          <svg viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 2L24 22H14L10 33L5 31L9 21H3V2Z" fill="#326DF5" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="04-build-iterate-progress-track">
+        <span class="04-build-iterate-progress-fill"></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      window.__timelines = window.__timelines || {};
+
+      const sel = (name) => `[id="04-build-iterate-${name}"]`;
+      const tl = gsap.timeline({ paused: true });
+
+      tl.fromTo(
+        sel("capture"),
+        { opacity: 0, scale: 0.985 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        0
+      );
+      tl.fromTo(
+        sel("video"),
+        { opacity: 0, scale: 0.985 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+        0
+      );
+
+      tl.fromTo(
+        sel("timer"),
+        { opacity: 0, y: -18, scale: 0.92 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" },
+        5.05
+      );
+      tl.fromTo(
+        sel("context-command"),
+        { opacity: 0, y: 34, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+        5.55
+      );
+      tl.set(sel("timer-value"), { innerText: "00:01" }, 6.25);
+      tl.set(sel("timer-value"), { innerText: "00:02" }, 7.25);
+
+      tl.fromTo(
+        sel("fieldflow"),
+        { x: 230, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.3, ease: "power4.out" },
+        8
+      );
+      tl.to(
+        sel("capture"),
+        { x: -230, opacity: 0, duration: 0.3, ease: "power4.in" },
+        7.7
+      );
+      tl.to(
+        sel("video"),
+        { x: -230, opacity: 0, duration: 0.3, ease: "power4.in" },
+        7.7
+      );
+
+      tl.fromTo(
+        sel("cursor"),
+        { x: 730, y: 608, opacity: 0 },
+        { x: 1108, y: 346, opacity: 1, duration: 0.65, ease: "power3.out" },
+        8.15
+      );
+      tl.fromTo(
+        sel("ripple"),
+        { scale: 0.35, opacity: 0.65 },
+        { scale: 1.8, opacity: 0, duration: 0.55, ease: "power2.out" },
+        8.62
+      );
+      tl.fromTo(
+        sel("selection"),
+        { opacity: 0, scale: 1.06 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        8.72
+      );
+      tl.fromTo(
+        sel("focused-command"),
+        { opacity: 0, y: 30, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.52, ease: "power3.out" },
+        9.45
+      );
+      tl.to(
+        sel("cursor"),
+        { x: 890, y: 680, duration: 0.65, ease: "power3.inOut" },
+        9.85
+      );
+      tl.fromTo(
+        sel("focused-command") + " [class~=\"04-build-iterate-command-submit\"]",
+        { scale: 1 },
+        { scale: 0.86, duration: 0.14, ease: "power2.in" },
+        10.48
+      );
+      tl.to(
+        sel("focused-command") + " [class~=\"04-build-iterate-command-submit\"]",
+        { scale: 1, duration: 0.3, ease: "power3.out" },
+        10.62
+      );
+
+      tl.to(
+        sel("before"),
+        { scale: 0.72, opacity: 0, duration: 0.38, ease: "power2.in" },
+        11
+      );
+      tl.fromTo(
+        sel("after"),
+        { scale: 0.72, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.58, ease: "power3.out" },
+        11.23
+      );
+      tl.fromTo(
+        sel("change-emphasis"),
+        { opacity: 0, scale: 1.08 },
+        { opacity: 1, scale: 1, duration: 0.48, ease: "power3.out" },
+        12.5
+      );
+      tl.fromTo(
+        sel("checkpoint"),
+        { opacity: 0, y: 20, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+        13.25
+      );
+      tl.to(
+        sel("cursor"),
+        { x: 1098, y: 393, duration: 0.7, ease: "power3.out" },
+        12.55
+      );
+
+      window.__timelines["04-build-iterate"] = tl;
+    })();
+  </script>
+</template>

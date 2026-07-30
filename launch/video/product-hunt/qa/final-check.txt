@@ -1,0 +1,376 @@
+
+> check
+> npx --yes hyperframes@0.7.84 check
+
+◆  Checking product-hunt
+
+Lint
+  ⚠ id_requires_css_escape: id="04-build-iterate-video" starts with a digit, so the common selector `#04-build-iterate-video` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/index.html #04-build-iterate-video t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-video" starts with a digit, so the common selector `#05-verify-repair-video` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/index.html #05-verify-repair-video t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ composition_file_too_large: This HTML composition file has 319 lines. Smaller sub-compositions are easier to read, iterate on, and diff.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/index.html [data-composition-id] t=0s
+    Fix: Split coherent scenes or layers into separate .html files under compositions/, then mount them from the parent with data-composition-src so each file stays small enough to inspect, revise, and validate independently.
+  ℹ pointer_events_none: `#captions-root` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/captions.html #captions-root t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ℹ pointer_events_none: `.caption-layer` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/captions.html .caption-layer t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ⚠ id_requires_css_escape: id="01-first-screen-opening-copy" starts with a digit, so the common selector `#01-first-screen-opening-copy` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-opening-copy t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-title-a" starts with a digit, so the common selector `#01-first-screen-title-a` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-title-a t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-title-b" starts with a digit, so the common selector `#01-first-screen-title-b` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-title-b t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-video-chrome" starts with a digit, so the common selector `#01-first-screen-video-chrome` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-video-chrome t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-followup" starts with a digit, so the common selector `#01-first-screen-followup` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-followup t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-prompt-line-1" starts with a digit, so the common selector `#01-first-screen-prompt-line-1` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-prompt-line-1 t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-prompt-line-2" starts with a digit, so the common selector `#01-first-screen-prompt-line-2` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-prompt-line-2 t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-prompt-line-3" starts with a digit, so the common selector `#01-first-screen-prompt-line-3` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-prompt-line-3 t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-final-title" starts with a digit, so the common selector `#01-first-screen-final-title` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-final-title t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="01-first-screen-not-underline" starts with a digit, so the common selector `#01-first-screen-not-underline` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html #01-first-screen-not-underline t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ studio_missing_editable_id: <div class="01-first-screen-bg" data-start="0" data-track-index="0"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ℹ pointer_events_none: `[class~="01-first-screen-video-chrome"]` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/01-first-screen.html [class~="01-first-screen-video-chrome"] t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ⚠ studio_missing_editable_id: <div class="frame-02-meet-squid-background" data-start="0" data-track-index="0"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/02-meet-squid.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ⚠ studio_missing_editable_id: <div class="frame-02-meet-squid-content" data-start="0" data-track-index="2"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/02-meet-squid.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ℹ pointer_events_none: `.frame-02-meet-squid-video-frame` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/02-meet-squid.html .frame-02-meet-squid-video-frame t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ℹ pointer_events_none: `.frame-02-meet-squid-connectors` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/02-meet-squid.html .frame-02-meet-squid-connectors t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ⚠ studio_missing_editable_id: <div class="f03-bg" data-start="0" data-track-index="0"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/03-plan-mode.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ⚠ studio_missing_editable_id: <div class="f03-scene" data-start="0" data-track-index="1"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/03-plan-mode.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ℹ pointer_events_none: `.f03-plan-vignette` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/03-plan-mode.html .f03-plan-vignette t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ⚠ id_requires_css_escape: id="04-build-iterate-capture" starts with a digit, so the common selector `#04-build-iterate-capture` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-capture t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-timer" starts with a digit, so the common selector `#04-build-iterate-timer` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-timer t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-timer-value" starts with a digit, so the common selector `#04-build-iterate-timer-value` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-timer-value t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-context-command" starts with a digit, so the common selector `#04-build-iterate-context-command` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-context-command t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-fieldflow" starts with a digit, so the common selector `#04-build-iterate-fieldflow` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-fieldflow t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-before" starts with a digit, so the common selector `#04-build-iterate-before` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-before t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-after" starts with a digit, so the common selector `#04-build-iterate-after` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-after t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-change-emphasis" starts with a digit, so the common selector `#04-build-iterate-change-emphasis` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-change-emphasis t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-selection" starts with a digit, so the common selector `#04-build-iterate-selection` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-selection t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-focused-command" starts with a digit, so the common selector `#04-build-iterate-focused-command` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-focused-command t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-checkpoint" starts with a digit, so the common selector `#04-build-iterate-checkpoint` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-checkpoint t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-ripple" starts with a digit, so the common selector `#04-build-iterate-ripple` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-ripple t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="04-build-iterate-cursor" starts with a digit, so the common selector `#04-build-iterate-cursor` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html #04-build-iterate-cursor t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ studio_missing_editable_id: <div class="04-build-iterate-ground" data-start="0" data-track-index="0"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ⚠ studio_missing_editable_id: <div class="04-build-iterate-content" data-start="0" data-track-index="2"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ℹ pointer_events_none: `[class~="04-build-iterate-selection"]` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html [class~="04-build-iterate-selection"] t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ℹ pointer_events_none: `[class~="04-build-iterate-change-emphasis"]` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html [class~="04-build-iterate-change-emphasis"] t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ℹ pointer_events_none: `[class~="04-build-iterate-cursor"]` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html [class~="04-build-iterate-cursor"] t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ℹ pointer_events_none: `[class~="04-build-iterate-ripple"]` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/04-build-iterate.html [class~="04-build-iterate-ripple"] t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ⚠ id_requires_css_escape: id="05-verify-repair-wash" starts with a digit, so the common selector `#05-verify-repair-wash` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-wash t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-kicker" starts with a digit, so the common selector `#05-verify-repair-kicker` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-kicker t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-headline" starts with a digit, so the common selector `#05-verify-repair-headline` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-headline t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-legend" starts with a digit, so the common selector `#05-verify-repair-legend` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-legend t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-device" starts with a digit, so the common selector `#05-verify-repair-device` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-device t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-model-label" starts with a digit, so the common selector `#05-verify-repair-model-label` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-model-label t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-lane-static" starts with a digit, so the common selector `#05-verify-repair-lane-static` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-lane-static t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-lane-runtime" starts with a digit, so the common selector `#05-verify-repair-lane-runtime` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-lane-runtime t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-runtime-shape" starts with a digit, so the common selector `#05-verify-repair-runtime-shape` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-runtime-shape t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-runtime-before" starts with a digit, so the common selector `#05-verify-repair-runtime-before` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-runtime-before t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-runtime-after" starts with a digit, so the common selector `#05-verify-repair-runtime-after` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-runtime-after t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-lane-integration" starts with a digit, so the common selector `#05-verify-repair-lane-integration` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-lane-integration t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-boundary" starts with a digit, so the common selector `#05-verify-repair-boundary` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-boundary t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-action" starts with a digit, so the common selector `#05-verify-repair-action` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-action t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-action-glow" starts with a digit, so the common selector `#05-verify-repair-action-glow` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-action-glow t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-action-burst" starts with a digit, so the common selector `#05-verify-repair-action-burst` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-action-burst t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-button" starts with a digit, so the common selector `#05-verify-repair-button` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-button t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-repaired" starts with a digit, so the common selector `#05-verify-repair-repaired` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-repaired t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ id_requires_css_escape: id="05-verify-repair-progress-fill" starts with a digit, so the common selector `#05-verify-repair-progress-fill` throws a SyntaxError in querySelector().
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #05-verify-repair-progress-fill t=0s
+    Fix: Rename the id to start with a letter (recommended), or build selectors with `#${CSS.escape(id)}` at runtime.
+  ⚠ studio_missing_editable_id: <div class="05-verify-repair-ground" data-start="0" data-track-index="0"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ⚠ studio_missing_editable_id: <div class="05-verify-repair-stage" data-start="0" data-track-index="1"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ℹ pointer_events_none: `[class~="05-verify-repair-repaired"]` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html [class~="05-verify-repair-repaired"] t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ⚠ overlapping_gsap_tweens: GSAP tweens overlap on "#\30 5-verify-repair-action-burst" for opacity between 9.12s and 9.16s.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html #\30 5-verify-repair-action-burst t=0s
+    Fix: Shorten the earlier tween, move the later tween, or add `overwrite: "auto"`.
+  ⚠ composition_file_too_large: This HTML composition file has 310 lines. Smaller sub-compositions are easier to read, iterate on, and diff.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/05-verify-repair.html [data-composition-id] t=0s
+    Fix: Split this sub-composition further into smaller .html files, then mount them from the parent with data-composition-src so each file stays small enough to inspect, revise, and validate independently.
+  ⚠ studio_missing_editable_id: <div class="f06-own-the-code-ground" data-start="0" data-track-index="0"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/06-own-the-code.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ⚠ studio_missing_editable_id: <div class="f06-own-the-code-scene" data-start="0" data-track-index="1"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/06-own-the-code.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ⚠ studio_missing_editable_id: <div class="f06-own-the-code-capture-overlay" data-start="0" data-track-index="3"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/06-own-the-code.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ℹ pointer_events_none: `.f06-own-the-code-capture-overlay` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/06-own-the-code.html .f06-own-the-code-capture-overlay t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ℹ pointer_events_none: `.f06-own-the-code-focus` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/06-own-the-code.html .f06-own-the-code-focus t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  ⚠ duplicate_media_discovery_risk: Detected 2 matching img entries with the same source/start/duration.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/06-own-the-code.html [data-composition-id] t=0s
+    Fix: Avoid duplicated media nodes that can be discovered twice during compilation.
+  ⚠ overlapping_gsap_tweens: GSAP tweens overlap on "#f06-own-the-code-download-focus" for scale between 3.76s and 3.76s.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/06-own-the-code.html #f06-own-the-code-download-focus t=0s
+    Fix: Shorten the earlier tween, move the later tween, or add `overwrite: "auto"`.
+  ⚠ studio_missing_editable_id: <div class="f07-close-ground" data-start="0" data-track-index="0"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/07-close.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ⚠ studio_missing_editable_id: <div class="f07-close-content" data-start="0" data-track-index="5"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/07-close.html [data-composition-id] t=0s
+    Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
+  ℹ pointer_events_none: `.f07-close-content` sets `pointer-events: none`. Elements matching this selector are harder to select in the Studio preview.
+    /Users/drewsepeczi/llamacoder/launch/video/product-hunt/compositions/frames/07-close.html .f07-close-content t=0s
+    Fix: If these elements should be selectable in the Studio, remove `pointer-events: none` or move it to a wrapper that doesn't contain editable content.
+  0 error(s), 63 warning(s), 14 info(s)
+
+Runtime
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target null not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ console_warning: GSAP target  not found. https://gsap.com
+    index.html [data-composition-id] t=0s
+  ⚠ clip_media_fit: Audio "el-02-meet-squid-voice" is 6.95s but its slot (data-duration) is 7.00s — the slot is shortened to the media length when rendered. Set data-duration to ~6.95s if that isn't intended.
+    index.html [data-composition-id] t=0s
+  ⚠ clip_media_fit: Audio "el-03-plan-mode-voice" is 8.11s but its slot (data-duration) is 14.00s — the slot is shortened to the media length when rendered. Set data-duration to ~8.11s if that isn't intended.
+    index.html [data-composition-id] t=0s
+  ⚠ clip_media_fit: Audio "el-04-build-iterate-voice" is 8.64s but its slot (data-duration) is 15.00s — the slot is shortened to the media length when rendered. Set data-duration to ~8.64s if that isn't intended.
+    index.html [data-composition-id] t=0s
+  ⚠ clip_media_fit: Audio "el-05-verify-repair-voice" is 7.21s but its slot (data-duration) is 13.00s — the slot is shortened to the media length when rendered. Set data-duration to ~7.21s if that isn't intended.
+    index.html [data-composition-id] t=0s
+  ⚠ clip_media_fit: Audio "el-06-own-the-code-voice" is 6.10s but its slot (data-duration) is 12.00s — the slot is shortened to the media length when rendered. Set data-duration to ~6.10s if that isn't intended.
+    index.html [data-composition-id] t=0s
+  ⚠ clip_media_fit: Audio "el-07-close-voice" is 5.59s but its slot (data-duration) is 6.00s — the slot is shortened to the media length when rendered. Set data-duration to ~5.59s if that isn't intended.
+    index.html [data-composition-id] t=0s
+  0 error(s), 32 warning(s), 0 info(s)
+
+Layout
+  ⚠ t=12-20s (2 samples) container_overflow img.f03-plan-image inside #f03-plan-shell overflowed bottom 26px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=12s canvas_overflow div.f03-plan-sequence-label inside #root overflowed right 4951px "Structured plan" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=12s container_overflow #f03-world inside div[data-start="0"] overflowed right 3380px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow #f03-kicker > span:nth-of-type(2) inside #root overflowed left 2242px "Plan mode" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-prompt-tag inside #root overflowed left 1958px "VAGUE REQUEST" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-question-index inside #root overflowed left 1167.14px "01" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-question-type inside #root overflowed left 1187px "Customer" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-question-copy inside #root overflowed left 1187px "Who is this for?" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow #f03-marker-one inside #root overflowed left 1212.14px "01" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-question-index inside #root overflowed left 219px "02" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-question-type inside #root overflowed left 237px "Workflow" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-question-copy inside #root overflowed left 237px "What happens first?" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s canvas_overflow div.f03-plan-sequence-label inside #root overflowed right 617px "Structured plan" — Text extends outside the composition canvas.
+        Fix: Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s container_overflow #f03-world inside div[data-start="0"] overflowed left 2414px, right 966px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=20s panel_out_of_canvas div.f03-rail inside #root overflowed left 1382px — Painted panel extends outside the composition canvas.
+        Fix: Move the panel inward, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s panel_out_of_canvas div.f03-depth.f03-depth-back inside #root overflowed left 254px — Painted panel extends outside the composition canvas.
+        Fix: Move the panel inward, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s panel_out_of_canvas div.f03-depth.f03-depth-mid inside #root overflowed left 268px — Painted panel extends outside the composition canvas.
+        Fix: Move the panel inward, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s panel_out_of_canvas #f03-question-two inside #root overflowed left 282px "02 WORKFLOW What happens first?" — Painted panel extends outside the composition canvas.
+        Fix: Move the panel inward, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=20s panel_out_of_canvas #f03-plan-shell inside #root overflowed right 734px "STRUCTURED PLAN 01 02 03" — Painted panel extends outside the composition canvas.
+        Fix: Move the panel inward, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=36s container_overflow div.\30 4-build-iterate-fieldflow-swap inside #\30 4-build-iterate-fieldflow overflowed bottom 3px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=44s container_overflow #\30 5-verify-repair-wash inside div[data-start="0"] overflowed right 233.21px, top 256.48px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=52s container_overflow #\30 5-verify-repair-wash inside div[data-start="0"] overflowed right 189.09px, top 233.6px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=52s escaped_container #\30 5-verify-repair-action-glow inside #\30 5-verify-repair-action — Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).
+        Fix: Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.
+  ℹ t=60s text_occluded div.f06-own-the-code-station-title inside #f06-own-the-code-seam > span:nth-of-type(1) "ZIP source" — Text is hidden beneath an opaque element.
+        Fix: Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.
+  ℹ t=68s container_overflow div.f07-close-diagonal inside div[data-start="0"] overflowed right 249.59px, top 302.39px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=68s container_overflow div.f07-close-rings inside div[data-start="0"] overflowed top 190px — Element extends outside a clipping layout container.
+        Fix: Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.
+  ℹ t=68s panel_out_of_canvas div.f07-close-rings > i:nth-of-type(3) inside #root overflowed top 50px — Painted panel extends outside the composition canvas.
+        Fix: Move the panel inward, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  ℹ t=68s panel_out_of_canvas div.f07-close-rings > i:nth-of-type(4) inside #root overflowed top 130px — Painted panel extends outside the composition canvas.
+        Fix: Move the panel inward, or mark intentional off-canvas animation with data-layout-allow-overflow.
+  0 error(s), 1 warning(s), 27 info(s)
+
+Motion
+  ◇ 0 errors, 0 warnings
+
+Contrast
+  ◇ 46/46 text checks pass WCAG AA
+
+Snapshots
+  ◇ disabled
+
+◇  Check passed

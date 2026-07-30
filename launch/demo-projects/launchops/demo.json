@@ -1,0 +1,28 @@
+{
+  "name": "LaunchOps",
+  "audience": "Technical founders and developers",
+  "fixture": "Typed deterministic sample records with mocked integrations",
+  "routes": [
+    "/launch-demo/launchops/auth",
+    "/launch-demo/launchops",
+    "/launch-demo/launchops/project",
+    "/launch-demo/launchops/verification?tab=static",
+    "/launch-demo/launchops/verification?tab=runtime",
+    "/launch-demo/launchops/verification?tab=export"
+  ],
+  "features": [
+    "Fixture authentication",
+    "Role-sensitive navigation",
+    "Dashboard metrics",
+    "Search and filters",
+    "Project table",
+    "Detail drawer",
+    "Activity log",
+    "Mocked integration states",
+    "Static verification",
+    "Runtime verification",
+    "Export readiness",
+    "Repository file tree",
+    "Loading, error, and empty states"
+  ]
+}

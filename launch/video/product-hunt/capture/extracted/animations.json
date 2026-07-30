@@ -1,0 +1,419 @@
+{
+  "summary": {
+    "webAnimations": 123,
+    "cssDeclarations": 364,
+    "scrollTargets": 51,
+    "cdpAnimations": 411,
+    "canvases": 0
+  },
+  "namedAnimations": [
+    "heroPopoutLife",
+    "fadeUp",
+    "compose-prompt-enter",
+    "rotate",
+    "lid-screen",
+    "screen-shade",
+    "lid-macbody",
+    "lid-keyboard-area",
+    "keys",
+    "macbook-shadow-animation",
+    "flow-rail-trace",
+    "flow-rail-pulse",
+    "flow-node-pulse",
+    "flow-card-enter",
+    "flow-artifact-enter"
+  ],
+  "scrollTriggeredElements": 51,
+  "representativeAnimations": [
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 384,
+        "y": -9413.53125,
+        "width": 67.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 451.796875,
+        "bottom": -9383.53125,
+        "left": 384
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "backgroundColor": "rgb(50, 109, 245)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "backgroundColor": "rgb(255, 255, 255)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 384,
+        "y": -9413.53125,
+        "width": 67.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 451.796875,
+        "bottom": -9383.53125,
+        "left": 384
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "borderBottomColor": "rgba(50, 109, 245, 0.35)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "borderBottomColor": "rgba(229, 229, 229, 0.7)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 384,
+        "y": -9413.53125,
+        "width": 67.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 451.796875,
+        "bottom": -9383.53125,
+        "left": 384
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "borderLeftColor": "rgba(50, 109, 245, 0.35)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "borderLeftColor": "rgba(229, 229, 229, 0.7)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 384,
+        "y": -9413.53125,
+        "width": 67.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 451.796875,
+        "bottom": -9383.53125,
+        "left": 384
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "borderRightColor": "rgba(50, 109, 245, 0.35)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "borderRightColor": "rgba(229, 229, 229, 0.7)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 384,
+        "y": -9413.53125,
+        "width": 67.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 451.796875,
+        "bottom": -9383.53125,
+        "left": 384
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "borderTopColor": "rgba(50, 109, 245, 0.35)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "borderTopColor": "rgba(229, 229, 229, 0.7)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 384,
+        "y": -9413.53125,
+        "width": 67.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 451.796875,
+        "bottom": -9383.53125,
+        "left": 384
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "color": "rgb(255, 255, 255)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "color": "rgb(115, 115, 115)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 459.796875,
+        "y": -9413.53125,
+        "width": 77.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 537.59375,
+        "bottom": -9383.53125,
+        "left": 459.796875
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "backgroundColor": "rgb(255, 255, 255)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "backgroundColor": "rgb(50, 109, 245)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 459.796875,
+        "y": -9413.53125,
+        "width": 77.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 537.59375,
+        "bottom": -9383.53125,
+        "left": 459.796875
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "borderBottomColor": "rgba(229, 229, 229, 0.7)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "borderBottomColor": "rgba(50, 109, 245, 0.35)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 459.796875,
+        "y": -9413.53125,
+        "width": 77.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 537.59375,
+        "bottom": -9383.53125,
+        "left": 459.796875
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "borderLeftColor": "rgba(229, 229, 229, 0.7)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "borderLeftColor": "rgba(50, 109, 245, 0.35)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    },
+    {
+      "type": "CSSTransition",
+      "playState": "running",
+      "animationName": null,
+      "targetSelector": "button.rounded-full.border.border-border/70",
+      "targetRect": {
+        "x": 459.796875,
+        "y": -9413.53125,
+        "width": 77.796875,
+        "height": 30,
+        "top": -9413.53125,
+        "right": 537.59375,
+        "bottom": -9383.53125,
+        "left": 459.796875
+      },
+      "keyframes": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "composite": "auto",
+          "borderRightColor": "rgba(229, 229, 229, 0.7)",
+          "computedOffset": 0
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "composite": "auto",
+          "borderRightColor": "rgba(50, 109, 245, 0.35)",
+          "computedOffset": 1
+        }
+      ],
+      "timing": {
+        "duration": 150,
+        "delay": 0,
+        "iterations": 1,
+        "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "direction": "normal"
+      }
+    }
+  ]
+}

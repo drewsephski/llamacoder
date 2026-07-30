@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-30T06:19:23.520Z",
+  "demos": [
+    {
+      "schemaVersion": 1,
+      "demo": "fieldflow",
+      "capturedAt": "2026-07-30T06:17:58.163Z",
+      "baseUrl": "http://127.0.0.1:4179",
+      "routes": {
+        "home": "/launch-demo/fieldflow",
+        "detail": "/launch-demo/fieldflow/dashboard",
+        "interactive": "/launch-demo/fieldflow/quote?demoState=verified"
+      },
+      "verifiedRoutes": [
+        "/launch-demo/fieldflow",
+        "/launch-demo/fieldflow/quote",
+        "/launch-demo/fieldflow/dashboard",
+        "/launch-demo/fieldflow/customer"
+      ],
+      "verifiedViewports": [
+        {
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "width": 375,
+          "height": 812
+        }
+      ],
+      "testedStates": [
+        "default",
+        "loading",
+        "error",
+        "empty",
+        "verified",
+        "mobile"
+      ],
+      "assets": [
+        {
+          "file": "launch/screenshots/fieldflow/desktop-home.png",
+          "sha256": "f2761641d1953cfa7b32bdeece75ee02c8a42902c4bac5d64d4265df7dcf99fd",
+          "bytes": 108061,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/fieldflow/mobile-home.png",
+          "sha256": "69c4b64cca5ef7d2514c34ad177d5f77cf79dfc3b5c4fc81a7164cd9feb17d67",
+          "bytes": 49132,
+          "width": 375,
+          "height": 812
+        },
+        {
+          "file": "launch/screenshots/fieldflow/feature-detail.png",
+          "sha256": "e3d27c778f228c02ceeee2f844dfb949d9a3442fa90884d1c02a1dcb959a4b7f",
+          "bytes": 97451,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/fieldflow/interactive-state.png",
+          "sha256": "ebfa85bd342d86f4405592ab3fe03495bd6fbe3f5e86e5b53d000d0b9a290a4a",
+          "bytes": 47744,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/fieldflow/contact-sheet.png",
+          "sha256": "6509cd16932c2ba40d0a62419372d5f9a1a7c7993851c86a67fcf7ced640d56c",
+          "bytes": 165451,
+          "width": 1200,
+          "height": 750
+        },
+        {
+          "file": "launch/screenshots/fieldflow/recording-contact-sheet.png",
+          "sha256": "6babae487c89a7d9d5440acc7d472892afa24457bb01d730829abe2bc0075c1c",
+          "bytes": 80082,
+          "width": 1200,
+          "height": 225
+        },
+        {
+          "file": "launch/screenshots/fieldflow/demo-recording.mp4",
+          "sha256": "1c4b79c035ff92d4609b7ee355fa59929db09958119fbff9b8183267e984fca7",
+          "bytes": 457453,
+          "durationSeconds": 12
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "demo": "launchops",
+      "capturedAt": "2026-07-30T06:18:43.546Z",
+      "baseUrl": "http://127.0.0.1:4179",
+      "routes": {
+        "home": "/launch-demo/launchops",
+        "detail": "/launch-demo/launchops/project",
+        "interactive": "/launch-demo/launchops"
+      },
+      "verifiedRoutes": [
+        "/launch-demo/launchops/auth",
+        "/launch-demo/launchops",
+        "/launch-demo/launchops/project",
+        "/launch-demo/launchops/verification?tab=static",
+        "/launch-demo/launchops/verification?tab=runtime",
+        "/launch-demo/launchops/verification?tab=export"
+      ],
+      "verifiedViewports": [
+        {
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "width": 375,
+          "height": 812
+        }
+      ],
+      "testedStates": [
+        "default",
+        "loading",
+        "error",
+        "empty",
+        "verified",
+        "mobile"
+      ],
+      "assets": [
+        {
+          "file": "launch/screenshots/launchops/desktop-home.png",
+          "sha256": "e01f7b9ccbcac4f976bd2c2d1a6bb706f11b41d1918d0259d0a770aa72652eab",
+          "bytes": 99617,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/launchops/mobile-home.png",
+          "sha256": "157869d2604638242b7b8fa24b4e0b3e48f6fdbdfef4445ce0128c75955decc4",
+          "bytes": 48445,
+          "width": 375,
+          "height": 812
+        },
+        {
+          "file": "launch/screenshots/launchops/feature-detail.png",
+          "sha256": "a5b03807d571ea4d8ce6d4ed97a7befb0046105272ee6080c745a1ccf54fd961",
+          "bytes": 88948,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/launchops/interactive-state.png",
+          "sha256": "e59afb48f30df04d22b7f70eec06f951cef598804a78e3eea69325eb9a83532a",
+          "bytes": 95003,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/launchops/contact-sheet.png",
+          "sha256": "0ab438e5cbca130ea01f155e3c6b4baf9d5f41ca36ea4e941c7c570b093ec7f1",
+          "bytes": 165418,
+          "width": 1200,
+          "height": 750
+        },
+        {
+          "file": "launch/screenshots/launchops/recording-contact-sheet.png",
+          "sha256": "2a6d4cf6f728373e8f0ea512fda249dbcddb5d0bb7057777217e2e59d53ba869",
+          "bytes": 133345,
+          "width": 1200,
+          "height": 225
+        },
+        {
+          "file": "launch/screenshots/launchops/demo-recording.mp4",
+          "sha256": "545c7e8cbb32d3f68da93036b07ecf5bbd6a2a4bcaa39ecdfb3cf24f77060480",
+          "bytes": 697309,
+          "durationSeconds": 12
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "demo": "cinder-studio",
+      "capturedAt": "2026-07-30T06:19:23.519Z",
+      "baseUrl": "http://127.0.0.1:4179",
+      "routes": {
+        "home": "/launch-demo/cinder-studio",
+        "detail": "/launch-demo/cinder-studio/project/stone-court",
+        "interactive": "/launch-demo/cinder-studio/contact?demoState=verified"
+      },
+      "verifiedRoutes": [
+        "/launch-demo/cinder-studio",
+        "/launch-demo/cinder-studio/project/stone-court",
+        "/launch-demo/cinder-studio/contact"
+      ],
+      "verifiedViewports": [
+        {
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "width": 375,
+          "height": 812
+        }
+      ],
+      "testedStates": [
+        "default",
+        "loading",
+        "error",
+        "empty",
+        "verified",
+        "mobile"
+      ],
+      "assets": [
+        {
+          "file": "launch/screenshots/cinder-studio/desktop-home.png",
+          "sha256": "8803027a1fefc1ac0aa1c025c8a0420d05286c6bf28bcb54d3cd0ec15cdfd354",
+          "bytes": 1240525,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/cinder-studio/mobile-home.png",
+          "sha256": "da49b6909512bd4236a766ddf8547b95d694b34a16e63b47b85721b4aa0e0020",
+          "bytes": 291056,
+          "width": 375,
+          "height": 812
+        },
+        {
+          "file": "launch/screenshots/cinder-studio/feature-detail.png",
+          "sha256": "0668d381171f0e9c8e3c21ac0d896ad7ab2d5618fd3b2d1a943f36ff766776b3",
+          "bytes": 687852,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/cinder-studio/interactive-state.png",
+          "sha256": "a4f75c7861b0129e1aeb780b5e3372000ca752b8fcca383cc6ec9cc927853c73",
+          "bytes": 71842,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "file": "launch/screenshots/cinder-studio/contact-sheet.png",
+          "sha256": "53aa740906a788a7d3b4489c9f8ac9975c770a61e3c87434fac448ecb205f181",
+          "bytes": 501855,
+          "width": 1200,
+          "height": 750
+        },
+        {
+          "file": "launch/screenshots/cinder-studio/recording-contact-sheet.png",
+          "sha256": "b3cd2521121004b32f55ac3cf3b70c958737b00f9afc7e72a19a02c94066ae74",
+          "bytes": 189130,
+          "width": 1200,
+          "height": 225
+        },
+        {
+          "file": "launch/screenshots/cinder-studio/demo-recording.mp4",
+          "sha256": "85a14d8675a9fe9e1b4c0fba4e3b8964bdda8a749e85993c27c62f59b9762aea",
+          "bytes": 1732382,
+          "durationSeconds": 12
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+Scene 1, 0 to 5 seconds
+On screen: The first screen is becoming easy. Finishing the product is not.
+Voiceover: AI app builders can create an impressive first screen. The difficult part is turning it into a product that still works after the next five prompts.
+
+Scene 2, 5 to 12 seconds
+Show the Squid composer with Idea, Screenshot, Website URL, and API selection.
+Voiceover: Squid takes an idea, screenshot, or website through planning, generation, iteration, verification, and export.
+
+Scene 3, 12 to 26 seconds
+Show a vague product prompt, three targeted questions, user answers, a structured plan, and approval.
+On screen: Ask before generating.
+Voiceover: In Plan Mode, Squid asks the product questions your first prompt usually misses, then creates a structured plan for approval.
+
+Scene 4, 26 to 41 seconds
+Show application generation, a completed app, a focused follow-up edit, a selected-element change, and preserved functionality.
+On screen: Keep building after generation.
+Voiceover: Squid builds the React application, retains the project context, and applies focused changes without forcing you to start over.
+
+Scene 5, 41 to 54 seconds
+Show static, runtime, and export verification; one detected problem; repair; and an updated state.
+On screen: Know what actually works.
+Voiceover: It checks the project, explains what passed, identifies unresolved work, and repairs supported failures.
+
+Scene 6, 54 to 66 seconds
+Show the file tree, ZIP export, GitHub publishing, local editor, and deployment handoff.
+On screen: Your React code leaves with you.
+Voiceover: Inspect every file, publish to GitHub, export the source, and continue wherever you choose.
+
+Scene 7, 66 to 75 seconds
+Show the Squid logo, FieldFlow, LaunchOps, Cinder Studio, and squidagent.app.
+On screen: Plan. Build. Verify. Export. squidagent.app
+Voiceover: Squid is live. Build your first application and tell me where the workflow should go next.

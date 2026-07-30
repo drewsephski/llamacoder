@@ -1,0 +1,586 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 700;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Bold.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 500;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Medium.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Regular.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik Mono";
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/AeonikMono-Regular.otf") format("opentype");
+    }
+
+    #root {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #0a0a0a;
+      font-family: "Aeonik";
+    }
+
+    .frame-02-meet-squid-background {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .frame-02-meet-squid-field {
+      position: absolute;
+      left: 18cqw;
+      top: 2cqh;
+      width: 80cqw;
+      height: 76cqh;
+      border-radius: 14px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.62) 18%, rgba(255, 255, 255, 0) 44%),
+        linear-gradient(180deg, rgba(50, 109, 245, 0.035), rgba(50, 109, 245, 0.015));
+    }
+
+    .frame-02-meet-squid-content {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .frame-02-meet-squid-video-frame {
+      position: absolute;
+      left: 515px;
+      top: 78px;
+      width: 1350px;
+      height: 800px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      pointer-events: none;
+    }
+
+    .frame-02-meet-squid-video-wash {
+      position: absolute;
+      inset: 0;
+      border-radius: 13px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.52) 18%, rgba(255, 255, 255, 0) 40%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+    }
+
+    .frame-02-meet-squid-brand {
+      position: absolute;
+      left: 96px;
+      top: 74px;
+      width: 394px;
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .frame-02-meet-squid-mark {
+      width: 72px;
+      height: 72px;
+      display: block;
+    }
+
+    .frame-02-meet-squid-eyebrow {
+      color: #326df5;
+      font-family: "Aeonik Mono";
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .frame-02-meet-squid-heading {
+      margin-top: 11px;
+      max-width: 300px;
+      color: #0a0a0a;
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.06;
+    }
+
+    .frame-02-meet-squid-accent {
+      position: absolute;
+      left: 96px;
+      top: 183px;
+      width: 60px;
+      height: 4px;
+      border-radius: 2px;
+      background: #326df5;
+    }
+
+    .frame-02-meet-squid-callout {
+      position: absolute;
+      left: 96px;
+      top: 322px;
+      width: 380px;
+      min-height: 154px;
+      padding: 22px 24px 20px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: rgba(50, 109, 245, 0.04);
+      box-sizing: border-box;
+    }
+
+    .frame-02-meet-squid-callout-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .frame-02-meet-squid-callout-label {
+      color: #326df5;
+      font-family: "Aeonik Mono";
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .frame-02-meet-squid-count {
+      display: inline-grid;
+      place-items: center;
+      width: 38px;
+      height: 26px;
+      border-radius: 100px;
+      color: #326df5;
+      background: rgba(50, 109, 245, 0.08);
+      font-family: "Aeonik Mono";
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+    }
+
+    .frame-02-meet-squid-input-name {
+      min-height: 58px;
+      margin-top: 13px;
+      color: #0a0a0a;
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.08;
+      white-space: nowrap;
+    }
+
+    .frame-02-meet-squid-sequence-dots {
+      display: flex;
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    .frame-02-meet-squid-sequence-dot {
+      width: 38px;
+      height: 4px;
+      border-radius: 6px;
+      background: rgba(50, 109, 245, 0.15);
+    }
+
+    .frame-02-meet-squid-sequence-dot[data-active="true"] {
+      background: #326df5;
+    }
+
+    .frame-02-meet-squid-connectors {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .frame-02-meet-squid-connector-line {
+      fill: none;
+      stroke: #326df5;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .frame-02-meet-squid-connector-dot {
+      fill: #326df5;
+    }
+
+    .frame-02-meet-squid-target {
+      position: absolute;
+      left: 1190px;
+      top: 536px;
+      width: 38px;
+      height: 38px;
+      margin-left: -19px;
+      margin-top: -19px;
+      border: 2px solid #326df5;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.76);
+      box-sizing: border-box;
+    }
+
+    .frame-02-meet-squid-target::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #326df5;
+    }
+
+    .frame-02-meet-squid-workflow {
+      position: absolute;
+      left: 96px;
+      top: 694px;
+      width: 1728px;
+      height: 148px;
+      padding: 28px 40px 24px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.94);
+      box-sizing: border-box;
+    }
+
+    .frame-02-meet-squid-workflow-kicker {
+      color: #326df5;
+      font-family: "Aeonik Mono";
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .frame-02-meet-squid-rail {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: start;
+      margin-top: 20px;
+    }
+
+    .frame-02-meet-squid-rail-track {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 17px;
+      height: 4px;
+      border-radius: 6px;
+      background: rgba(50, 109, 245, 0.15);
+      overflow: hidden;
+    }
+
+    .frame-02-meet-squid-rail-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: #326df5;
+      transform-origin: left center;
+    }
+
+    .frame-02-meet-squid-step {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+    }
+
+    .frame-02-meet-squid-step-dot {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      color: #ffffff;
+      background: #326df5;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .frame-02-meet-squid-step-label {
+      color: #0a0a0a;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+  </style>
+
+  <div id="root" data-composition-id="02-meet-squid" data-start="0" data-duration="7.4" data-width="1920" data-height="1080">
+    <div class="clip frame-02-meet-squid-background" data-start="0" data-duration="7.4" data-track-index="0">
+      <div class="frame-02-meet-squid-field"></div>
+    </div>
+
+    <!-- approved frame video hoisted by assemble-index -->
+
+    <div class="clip frame-02-meet-squid-content" data-start="0" data-duration="7.4" data-track-index="2">
+      <div class="frame-02-meet-squid-video-frame" id="frame-02-meet-squid-video-frame">
+        <div class="frame-02-meet-squid-video-wash"></div>
+      </div>
+
+      <div class="frame-02-meet-squid-brand" id="frame-02-meet-squid-brand">
+        <img class="frame-02-meet-squid-mark" id="frame-02-meet-squid-mark" src="assets/brand/squidagent-logo.svg" alt="" />
+        <div>
+          <div class="frame-02-meet-squid-eyebrow">Squid Agent</div>
+          <div class="frame-02-meet-squid-heading">Start with what you have.</div>
+        </div>
+      </div>
+      <div class="frame-02-meet-squid-accent" id="frame-02-meet-squid-accent"></div>
+
+      <svg class="frame-02-meet-squid-connectors" id="frame-02-meet-squid-connectors" viewBox="0 0 1920 1080" aria-hidden="true">
+        <path class="frame-02-meet-squid-connector-line" id="frame-02-meet-squid-connector-line" d="M 476 420 C 700 420, 880 536, 1190 536"></path>
+        <circle class="frame-02-meet-squid-connector-dot" cx="476" cy="420" r="5"></circle>
+      </svg>
+
+      <div class="frame-02-meet-squid-callout" id="frame-02-meet-squid-callout">
+        <div class="frame-02-meet-squid-callout-topline">
+          <div class="frame-02-meet-squid-callout-label">Starting point</div>
+          <div class="frame-02-meet-squid-count" id="frame-02-meet-squid-count">01 / 04</div>
+        </div>
+        <div class="frame-02-meet-squid-input-name" id="frame-02-meet-squid-input-name">Idea</div>
+        <div class="frame-02-meet-squid-sequence-dots" aria-hidden="true">
+          <span class="frame-02-meet-squid-sequence-dot" data-active="true"></span>
+          <span class="frame-02-meet-squid-sequence-dot" data-active="false"></span>
+          <span class="frame-02-meet-squid-sequence-dot" data-active="false"></span>
+          <span class="frame-02-meet-squid-sequence-dot" data-active="false"></span>
+        </div>
+      </div>
+
+      <div class="frame-02-meet-squid-target" id="frame-02-meet-squid-target" aria-hidden="true"></div>
+
+      <div class="frame-02-meet-squid-workflow" id="frame-02-meet-squid-workflow">
+        <div class="frame-02-meet-squid-workflow-kicker">One continuous workflow</div>
+        <div class="frame-02-meet-squid-rail">
+          <div class="frame-02-meet-squid-rail-track">
+            <div class="frame-02-meet-squid-rail-fill" id="frame-02-meet-squid-rail-fill"></div>
+          </div>
+          <div class="frame-02-meet-squid-step">
+            <div class="frame-02-meet-squid-step-dot">1</div>
+            <div class="frame-02-meet-squid-step-label">Plan</div>
+          </div>
+          <div class="frame-02-meet-squid-step">
+            <div class="frame-02-meet-squid-step-dot">2</div>
+            <div class="frame-02-meet-squid-step-label">Build</div>
+          </div>
+          <div class="frame-02-meet-squid-step">
+            <div class="frame-02-meet-squid-step-dot">3</div>
+            <div class="frame-02-meet-squid-step-label">Refine</div>
+          </div>
+          <div class="frame-02-meet-squid-step">
+            <div class="frame-02-meet-squid-step-dot">4</div>
+            <div class="frame-02-meet-squid-step-label">Verify</div>
+          </div>
+          <div class="frame-02-meet-squid-step">
+            <div class="frame-02-meet-squid-step-dot">5</div>
+            <div class="frame-02-meet-squid-step-label">Export</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      const root = document.querySelector('[data-composition-id="02-meet-squid"]');
+      const brand = root.querySelector("#frame-02-meet-squid-brand");
+      const mark = root.querySelector("#frame-02-meet-squid-mark");
+      const accent = root.querySelector("#frame-02-meet-squid-accent");
+      const videoFrame = root.querySelector("#frame-02-meet-squid-video-frame");
+      const callout = root.querySelector("#frame-02-meet-squid-callout");
+      const calloutName = root.querySelector("#frame-02-meet-squid-input-name");
+      const calloutCount = root.querySelector("#frame-02-meet-squid-count");
+      const connectorGroup = root.querySelector("#frame-02-meet-squid-connectors");
+      const connectorLine = root.querySelector("#frame-02-meet-squid-connector-line");
+      const target = root.querySelector("#frame-02-meet-squid-target");
+      const sequenceDots = Array.from(root.querySelectorAll(".frame-02-meet-squid-sequence-dot"));
+      const workflow = root.querySelector("#frame-02-meet-squid-workflow");
+      const railFill = root.querySelector("#frame-02-meet-squid-rail-fill");
+      const workflowSteps = Array.from(root.querySelectorAll(".frame-02-meet-squid-step"));
+
+      const CONTENT = [
+        { title: "Idea", hold: 0.20, x: 1190, y: 536, path: "M 476 420 C 700 420, 880 536, 1190 536" },
+        { title: "Screenshot", hold: 0.08, x: 1146, y: 569, path: "M 476 420 C 710 420, 870 569, 1146 569" },
+        { title: "Website URL", hold: 0.06, x: 1190, y: 840, path: "M 476 420 C 760 420, 840 840, 1190 840" },
+        { title: "API", hold: 0.32, x: 1246, y: 639, path: "M 476 420 C 720 420, 940 639, 1246 639" },
+      ];
+      const BASE_DURATION = 0.52;
+      const SEC_PER_CHAR = 0.02;
+      let cumulative = 0;
+      const TIMELINE = CONTENT.map((entry, index) => {
+        const duration = BASE_DURATION + entry.title.length * SEC_PER_CHAR + entry.hold;
+        const start = cumulative;
+        cumulative += duration;
+        return { ...entry, index, start, end: cumulative };
+      });
+
+      const entryAt = (time) => {
+        for (let index = TIMELINE.length - 1; index >= 0; index -= 1) {
+          if (time >= TIMELINE[index].start) return TIMELINE[index];
+        }
+        return TIMELINE[0];
+      };
+
+      let lastTitle = "";
+      const renderEntry = (entry) => {
+        if (entry.title === lastTitle) return;
+        calloutName.textContent = entry.title;
+        calloutCount.textContent = `${String(entry.index + 1).padStart(2, "0")} / 04`;
+        target.style.left = `${entry.x}px`;
+        target.style.top = `${entry.y}px`;
+        connectorLine.setAttribute("d", entry.path);
+        sequenceDots.forEach((dot, index) => {
+          dot.dataset.active = index <= entry.index ? "true" : "false";
+        });
+        lastTitle = entry.title;
+      };
+
+      renderEntry(TIMELINE[0]);
+
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["02-meet-squid"] = tl;
+
+      tl.fromTo(
+        videoFrame,
+        { y: 34, opacity: 0, filter: "blur(18px)" },
+        { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.72, ease: "power4.out" },
+        0,
+      );
+      tl.fromTo(
+        brand,
+        { x: -46, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.62, ease: "power3.out" },
+        0.04,
+      );
+      tl.fromTo(
+        mark,
+        { scale: 0.72, rotation: -7, opacity: 0 },
+        { scale: 1, rotation: 0, opacity: 1, duration: 0.64, ease: "power3.out" },
+        0.08,
+      );
+      tl.fromTo(
+        accent,
+        { scaleX: 0, opacity: 0, transformOrigin: "left center" },
+        { scaleX: 1, opacity: 1, duration: 0.48, ease: "power3.out" },
+        0.42,
+      );
+
+      tl.fromTo(
+        callout,
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.38, ease: "power4.out" },
+        1.5,
+      );
+      tl.fromTo(
+        connectorGroup,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.28, ease: "power2.out" },
+        1.58,
+      );
+      tl.fromTo(
+        target,
+        { scale: 0.65, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.34, ease: "power3.out" },
+        1.56,
+      );
+
+      const driver = { t: 0 };
+      tl.to(
+        driver,
+        {
+          t: cumulative,
+          duration: cumulative,
+          ease: "none",
+          onUpdate: () => renderEntry(entryAt(driver.t)),
+        },
+        1.5,
+      );
+
+      TIMELINE.slice(1).forEach((entry) => {
+        const beat = 1.5 + entry.start;
+        tl.fromTo(
+          callout,
+          { x: -18, opacity: 0.3 },
+          { x: 0, opacity: 1, duration: 0.26, ease: "power3.out", immediateRender: false },
+          beat,
+        );
+        tl.fromTo(
+          target,
+          { scale: 0.68, opacity: 0.25 },
+          { scale: 1, opacity: 1, duration: 0.30, ease: "power3.out", immediateRender: false },
+          beat,
+        );
+        tl.fromTo(
+          connectorGroup,
+          { opacity: 0.25 },
+          { opacity: 1, duration: 0.22, ease: "power2.out", immediateRender: false },
+          beat,
+        );
+      });
+
+      tl.to(
+        callout,
+        { x: -230, duration: 0.30, ease: "power4.in" },
+        4.52,
+      );
+      tl.to(
+        callout,
+        { opacity: 0, duration: 0.20, ease: "power1.in" },
+        4.60,
+      );
+      tl.to(
+        [connectorGroup, target],
+        { opacity: 0, duration: 0.18, ease: "power1.in" },
+        4.62,
+      );
+
+      tl.fromTo(
+        workflow,
+        { x: 230, opacity: 0.35 },
+        { x: 0, opacity: 1, duration: 0.34, ease: "power4.out" },
+        4.80,
+      );
+      tl.fromTo(
+        railFill,
+        { scaleX: 0 },
+        { scaleX: 1, duration: 1.22, ease: "power2.out" },
+        4.96,
+      );
+      workflowSteps.forEach((step, index) => {
+        tl.fromTo(
+          step,
+          { y: 22, scale: 0.72, opacity: 0 },
+          { y: 0, scale: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+          4.92 + index * 0.27,
+        );
+      });
+    })();
+  </script>
+</template>

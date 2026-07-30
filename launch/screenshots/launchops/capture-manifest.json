@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "demo": "launchops",
+  "capturedAt": "2026-07-30T06:18:43.546Z",
+  "baseUrl": "http://127.0.0.1:4179",
+  "routes": {
+    "home": "/launch-demo/launchops",
+    "detail": "/launch-demo/launchops/project",
+    "interactive": "/launch-demo/launchops"
+  },
+  "verifiedRoutes": [
+    "/launch-demo/launchops/auth",
+    "/launch-demo/launchops",
+    "/launch-demo/launchops/project",
+    "/launch-demo/launchops/verification?tab=static",
+    "/launch-demo/launchops/verification?tab=runtime",
+    "/launch-demo/launchops/verification?tab=export"
+  ],
+  "verifiedViewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 375,
+      "height": 812
+    }
+  ],
+  "testedStates": [
+    "default",
+    "loading",
+    "error",
+    "empty",
+    "verified",
+    "mobile"
+  ],
+  "assets": [
+    {
+      "file": "launch/screenshots/launchops/desktop-home.png",
+      "sha256": "e01f7b9ccbcac4f976bd2c2d1a6bb706f11b41d1918d0259d0a770aa72652eab",
+      "bytes": 99617,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/launchops/mobile-home.png",
+      "sha256": "157869d2604638242b7b8fa24b4e0b3e48f6fdbdfef4445ce0128c75955decc4",
+      "bytes": 48445,
+      "width": 375,
+      "height": 812
+    },
+    {
+      "file": "launch/screenshots/launchops/feature-detail.png",
+      "sha256": "a5b03807d571ea4d8ce6d4ed97a7befb0046105272ee6080c745a1ccf54fd961",
+      "bytes": 88948,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/launchops/interactive-state.png",
+      "sha256": "e59afb48f30df04d22b7f70eec06f951cef598804a78e3eea69325eb9a83532a",
+      "bytes": 95003,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "launch/screenshots/launchops/contact-sheet.png",
+      "sha256": "0ab438e5cbca130ea01f155e3c6b4baf9d5f41ca36ea4e941c7c570b093ec7f1",
+      "bytes": 165418,
+      "width": 1200,
+      "height": 750
+    },
+    {
+      "file": "launch/screenshots/launchops/recording-contact-sheet.png",
+      "sha256": "2a6d4cf6f728373e8f0ea512fda249dbcddb5d0bb7057777217e2e59d53ba869",
+      "bytes": 133345,
+      "width": 1200,
+      "height": 225
+    },
+    {
+      "file": "launch/screenshots/launchops/demo-recording.mp4",
+      "sha256": "545c7e8cbb32d3f68da93036b07ecf5bbd6a2a4bcaa39ecdfb3cf24f77060480",
+      "bytes": 697309,
+      "durationSeconds": 12
+    }
+  ]
+}

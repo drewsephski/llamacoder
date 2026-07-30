@@ -1,0 +1,427 @@
+<template>
+  <div id="root" data-composition-id="07-close" data-start="0" data-duration="6" data-width="1920" data-height="1080">
+    <div class="clip f07-close-ground" data-start="0" data-duration="6" data-track-index="0">
+      <div class="f07-close-diagonal"></div>
+      <div class="f07-close-dot-grid" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div class="f07-close-rings" aria-hidden="true">
+        <i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+
+    <!-- approved frame video hoisted by assemble-index -->
+    <!-- approved frame video hoisted by assemble-index -->
+    <!-- approved frame video hoisted by assemble-index -->
+
+    <div class="clip f07-close-content" data-start="0" data-duration="6" data-track-index="5">
+      <div class="f07-close-brand-lockup">
+        <div class="f07-close-mark-wrap">
+          <div class="f07-close-mark-ring"></div>
+          <img id="f07-close-logo" src="assets/brand/squidagent-logo.svg" alt="Squid" />
+        </div>
+        <div id="f07-close-launch-line" class="f07-close-launch-line" aria-label="Plan. Build. Verify. Export.">
+          <span>Plan.</span>
+          <span>Build.</span>
+          <span>Verify.</span>
+          <span>Export.</span>
+        </div>
+      </div>
+
+      <div id="f07-close-shell-fieldflow" class="f07-close-demo-shell f07-close-shell-one"></div>
+      <div id="f07-close-shell-launchops" class="f07-close-demo-shell f07-close-shell-two"></div>
+      <div id="f07-close-shell-cinder" class="f07-close-demo-shell f07-close-shell-three"></div>
+
+      <div id="f07-close-label-fieldflow" class="f07-close-demo-label f07-close-label-one">
+        <span>FieldFlow</span><small>FIELD OPERATIONS</small>
+      </div>
+      <div id="f07-close-label-launchops" class="f07-close-demo-label f07-close-label-two">
+        <span>LaunchOps</span><small>LAUNCH WORKFLOW</small>
+      </div>
+      <div id="f07-close-label-cinder" class="f07-close-demo-label f07-close-label-three">
+        <span>Cinder Studio</span><small>CREATIVE STUDIO</small>
+      </div>
+
+      <div id="f07-close-url-mask" class="f07-close-url-mask">
+        <div class="f07-close-url-pill">
+          <span class="f07-close-url-dot"></span>
+          <span>squidagent.app</span>
+        </div>
+        <div id="f07-close-url-edge" class="f07-close-url-edge"></div>
+      </div>
+    </div>
+
+    <style>
+      @font-face {
+        font-family: "Aeonik";
+        src: url("assets/fonts/Aeonik-Regular.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Aeonik";
+        src: url("assets/fonts/Aeonik-Medium.ttf") format("truetype");
+        font-weight: 500;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Aeonik";
+        src: url("assets/fonts/Aeonik-Bold.ttf") format("truetype");
+        font-weight: 700;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Aeonik Mono";
+        src: url("assets/fonts/AeonikMono-Regular.otf") format("opentype");
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        container-type: size;
+        color: #0a0a0a;
+        font-family: "Aeonik", sans-serif;
+      }
+
+      .f07-close-ground,
+      .f07-close-content {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .f07-close-ground {
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      .f07-close-diagonal {
+        position: absolute;
+        top: -28cqh;
+        right: -13cqw;
+        width: 43cqw;
+        height: 103cqh;
+        border-radius: 50%;
+        background: rgba(50, 109, 245, 0.04);
+      }
+
+      .f07-close-dot-grid {
+        position: absolute;
+        top: 5.8cqh;
+        left: 5cqw;
+        display: grid;
+        grid-template-columns: repeat(3, 7px);
+        gap: 13px;
+        opacity: 0.34;
+      }
+
+      .f07-close-dot-grid i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #326df5;
+      }
+
+      .f07-close-rings {
+        position: absolute;
+        top: -190px;
+        left: 560px;
+        width: 800px;
+        height: 800px;
+      }
+
+      .f07-close-rings i {
+        position: absolute;
+        border: 1.5px solid rgba(50, 109, 245, 0.12);
+        border-radius: 50%;
+      }
+
+      .f07-close-rings i:nth-child(1) { inset: 300px; }
+      .f07-close-rings i:nth-child(2) { inset: 220px; }
+      .f07-close-rings i:nth-child(3) { inset: 140px; }
+      .f07-close-rings i:nth-child(4) { inset: 60px; }
+
+      .f07-close-content {
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      .f07-close-brand-lockup {
+        position: absolute;
+        top: 70px;
+        left: 300px;
+        width: 1320px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .f07-close-mark-wrap {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        display: grid;
+        place-items: center;
+      }
+
+      .f07-close-mark-ring {
+        position: absolute;
+        inset: -14px;
+        border: 2px solid rgba(50, 109, 245, 0.2);
+        border-radius: 50%;
+      }
+
+      [id="f07-close-logo"] {
+        display: block;
+        width: 138px;
+        height: 138px;
+        object-fit: contain;
+      }
+
+      .f07-close-launch-line {
+        min-height: 84px;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.48em;
+        color: #0a0a0a;
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+      }
+
+      .f07-close-launch-line span {
+        display: inline-block;
+      }
+
+      .f07-close-demo-shell {
+        position: absolute;
+        top: 474px;
+        width: 440px;
+        height: 248px;
+        border: 1.5px solid rgba(50, 109, 245, 0.2);
+        border-radius: 14px;
+        background: rgba(50, 109, 245, 0.04);
+        box-sizing: border-box;
+      }
+
+      .f07-close-demo-shell::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        box-shadow: inset 0 0 0 2px #ffffff;
+      }
+
+      .f07-close-shell-one { left: 218px; }
+      .f07-close-shell-two { left: 740px; }
+      .f07-close-shell-three { left: 1262px; }
+
+      .f07-close-demo-label {
+        position: absolute;
+        top: 738px;
+        width: 440px;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        color: #0a0a0a;
+      }
+
+      .f07-close-demo-label span {
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+
+      .f07-close-demo-label small {
+        color: #0062ff;
+        font-family: "Aeonik Mono", monospace;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: 0.05em;
+      }
+
+      .f07-close-label-one { left: 218px; }
+      .f07-close-label-two { left: 740px; }
+      .f07-close-label-three { left: 1262px; }
+
+      .f07-close-url-mask {
+        position: absolute;
+        top: 804px;
+        left: 640px;
+        width: 640px;
+        height: 76px;
+        overflow: hidden;
+        border-radius: 100px;
+      }
+
+      .f07-close-url-pill {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        border: 1.5px solid rgba(50, 109, 245, 0.2);
+        border-radius: 100px;
+        background: rgba(50, 109, 245, 0.08);
+        box-sizing: border-box;
+        color: #0a0a0a;
+        font-family: "Aeonik Mono", monospace;
+        font-size: 26px;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+      }
+
+      .f07-close-url-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #326df5;
+      }
+
+      .f07-close-url-edge {
+        position: absolute;
+        top: 5px;
+        left: 0;
+        width: 3px;
+        height: 66px;
+        border-radius: 6px;
+        background: #326df5;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        window.__timelines = window.__timelines || {};
+        window.__timelines["07-close"] = tl;
+
+        const videos = [
+          document.getElementById("f07-close-video-fieldflow"),
+          document.getElementById("f07-close-video-launchops"),
+          document.getElementById("f07-close-video-cinder"),
+        ];
+        const shells = [
+          document.getElementById("f07-close-shell-fieldflow"),
+          document.getElementById("f07-close-shell-launchops"),
+          document.getElementById("f07-close-shell-cinder"),
+        ];
+        const labels = [
+          document.getElementById("f07-close-label-fieldflow"),
+          document.getElementById("f07-close-label-launchops"),
+          document.getElementById("f07-close-label-cinder"),
+        ];
+        const arrivalTimes = [0.08, 0.80, 1.52];
+
+        videos.forEach((video, index) => {
+          tl.set(video, { borderRadius: 14, opacity: 0, y: -150, scale: 1.08, transformOrigin: "50% 50%" }, 0);
+          tl.fromTo(
+            video,
+            { opacity: 0, y: -150, scale: 0.94 },
+            { opacity: 1, y: -150, scale: 1.08, duration: 0.48, ease: "power3.out" },
+            arrivalTimes[index],
+          );
+          tl.fromTo(
+            shells[index],
+            { opacity: 0, y: -150, scale: 0.94 },
+            { opacity: 1, y: -150, scale: 1.08, duration: 0.48, ease: "power3.out" },
+            arrivalTimes[index],
+          );
+          tl.fromTo(
+            labels[index],
+            { opacity: 0, y: -138 },
+            { opacity: 0, y: -150, duration: 0.34, ease: "power2.out" },
+            arrivalTimes[index] + 0.28,
+          );
+          tl.to(video, { y: 0, scale: 1, duration: 0.56, ease: "power3.inOut" }, 2.72);
+          tl.to(shells[index], { y: 0, scale: 1, duration: 0.56, ease: "power3.inOut" }, 2.72);
+          tl.to(labels[index], { y: 0, opacity: 1, duration: 0.56, ease: "power3.inOut" }, 2.72);
+        });
+
+        tl.fromTo(
+          '[class~="f07-close-mark-ring"]',
+          { opacity: 0, scale: 0.35 },
+          { opacity: 1, scale: 1, duration: 0.62, ease: "power3.out" },
+          2.76,
+        );
+        tl.fromTo(
+          '[id="f07-close-logo"]',
+          { opacity: 0, scale: 0.72, rotation: -8, clipPath: "inset(0 50% 0 50%)" },
+          { opacity: 1, scale: 1, rotation: 0, clipPath: "inset(0 0% 0 0%)", duration: 0.68, ease: "power3.out" },
+          2.80,
+        );
+
+        const WORDS = ["Plan.", "Build.", "Verify.", "Export."];
+        const BASE_DURATION = 0.18;
+        const SEC_PER_CHAR = 0.012;
+        let cumulative = 0;
+        const WORD_TIMELINE = WORDS.map((word) => {
+          const duration = BASE_DURATION + word.length * SEC_PER_CHAR;
+          const start = cumulative;
+          cumulative += duration;
+          return { word, start, end: cumulative };
+        });
+        const wordEls = Array.from(document.querySelectorAll('[id="f07-close-launch-line"] span'));
+        const wordDriver = { t: 0 };
+        let lastWordIndex = -1;
+
+        tl.set(wordEls, { opacity: 0, color: "#666666", y: 8 }, 0);
+        tl.to(
+          wordDriver,
+          {
+            t: cumulative,
+            duration: cumulative,
+            ease: "none",
+            onUpdate: () => {
+              let activeIndex = 0;
+              for (let index = WORD_TIMELINE.length - 1; index >= 0; index -= 1) {
+                if (wordDriver.t >= WORD_TIMELINE[index].start) {
+                  activeIndex = index;
+                  break;
+                }
+              }
+              if (activeIndex !== lastWordIndex) {
+                wordEls.forEach((element, index) => {
+                  const revealed = index <= activeIndex;
+                  element.style.opacity = revealed ? "1" : "0";
+                  element.style.color = revealed ? "#0a0a0a" : "#666666";
+                  element.style.transform = revealed ? "translateY(0px)" : "translateY(8px)";
+                });
+                lastWordIndex = activeIndex;
+              }
+            },
+          },
+          3.08,
+        );
+
+        tl.fromTo(
+          '[id="f07-close-url-mask"]',
+          { clipPath: "inset(0 100% 0 0)", opacity: 1 },
+          { clipPath: "inset(0 0% 0 0)", opacity: 1, duration: 0.52, ease: "power3.inOut" },
+          4.40,
+        );
+        tl.fromTo(
+          '[id="f07-close-url-edge"]',
+          { x: 0, opacity: 1 },
+          { x: 632, opacity: 0, duration: 0.52, ease: "power3.inOut" },
+          4.40,
+        );
+      })();
+    </script>
+  </div>
+</template>

@@ -1,0 +1,23 @@
+{
+  "name": "Cinder Studio",
+  "audience": "Designers, agencies, and visually driven founders",
+  "fixture": "Original generated architecture imagery and deterministic local content",
+  "routes": [
+    "/launch-demo/cinder-studio",
+    "/launch-demo/cinder-studio/project/stone-court",
+    "/launch-demo/cinder-studio/contact"
+  ],
+  "features": [
+    "Immersive hero",
+    "Selected projects",
+    "Interactive project detail",
+    "Services",
+    "Studio philosophy",
+    "Team",
+    "Contact confirmation",
+    "Responsive navigation",
+    "Mobile composition",
+    "Controlled reduced-motion-safe animation",
+    "Loading, error, and empty states"
+  ]
+}

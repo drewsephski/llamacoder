@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "product-hunt",
+      "confirmed_in": [
+        "product-hunt"
+      ],
+      "updated_at": "2026-07-30T13:28:25.108Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "product-hunt"
+      ],
+      "updated_at": "2026-07-30T13:28:25.272Z"
+    },
+    "style_preset.product-launch-video": {
+      "value": "blue-professional",
+      "confirmed_in": [
+        "product-hunt"
+      ],
+      "updated_at": "2026-07-30T13:49:22.487Z"
+    }
+  },
+  "sightings": {}
+}

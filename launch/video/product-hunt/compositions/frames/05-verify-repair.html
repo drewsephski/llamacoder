@@ -1,0 +1,854 @@
+<template>
+  <div id="root" data-composition-id="05-verify-repair" data-start="0" data-duration="13.4" data-width="1920" data-height="1080">
+    <div class="clip 05-verify-repair-ground" data-start="0" data-duration="13.4" data-track-index="0">
+      <div class="05-verify-repair-grid"></div>
+      <div class="05-verify-repair-wash" id="05-verify-repair-wash"></div>
+    </div>
+
+    <div class="clip 05-verify-repair-stage" data-start="0" data-duration="13.4" data-track-index="1">
+      <header class="05-verify-repair-header">
+        <div class="05-verify-repair-kicker" id="05-verify-repair-kicker">VERIFY · REPAIR</div>
+        <div class="05-verify-repair-meta">05 / QUALITY</div>
+        <h1 id="05-verify-repair-headline">Know what actually works.</h1>
+
+        <div class="05-verify-repair-legend" id="05-verify-repair-legend" aria-label="Verification states">
+          <span class="05-verify-repair-chip 05-verify-repair-chip-pass">
+            <span class="05-verify-repair-chip-mark">✓</span>Passed
+          </span>
+          <span class="05-verify-repair-chip 05-verify-repair-chip-unresolved">
+            <span class="05-verify-repair-chip-mark">!</span>Unresolved
+          </span>
+          <span class="05-verify-repair-chip 05-verify-repair-chip-untested">
+            <span class="05-verify-repair-chip-mark">—</span>Untested
+          </span>
+        </div>
+      </header>
+
+      <section class="05-verify-repair-device" id="05-verify-repair-device" aria-label="Squid Agent Quality view">
+        <div class="05-verify-repair-chrome">
+          <div class="05-verify-repair-lights" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="05-verify-repair-address">squidagent.app / quality</div>
+          <div class="05-verify-repair-live"><span></span>REAL QUALITY VIEW</div>
+        </div>
+        <img
+          class="05-verify-repair-product-still"
+          src="assets/product-stills/example-quality.png"
+          alt="Squid Agent Quality report"
+        />
+        <div class="05-verify-repair-device-line" aria-hidden="true"></div>
+      </section>
+
+      <section class="05-verify-repair-model" aria-label="Verification lanes">
+        <div class="05-verify-repair-model-label" id="05-verify-repair-model-label">
+          <span>VERIFICATION MODEL</span>
+          <span class="05-verify-repair-model-rule"></span>
+        </div>
+
+        <article class="05-verify-repair-lane 05-verify-repair-lane-static" id="05-verify-repair-lane-static">
+          <div class="05-verify-repair-lane-shape 05-verify-repair-shape-pass">✓</div>
+          <div class="05-verify-repair-lane-copy">
+            <div class="05-verify-repair-lane-kind">STATIC</div>
+            <div class="05-verify-repair-lane-title">Source checks</div>
+          </div>
+          <div class="05-verify-repair-current 05-verify-repair-current-pass">PASSED</div>
+        </article>
+
+        <article class="05-verify-repair-lane 05-verify-repair-lane-runtime" id="05-verify-repair-lane-runtime">
+          <div class="05-verify-repair-lane-shape 05-verify-repair-shape-unresolved" id="05-verify-repair-runtime-shape">!</div>
+          <div class="05-verify-repair-lane-copy">
+            <div class="05-verify-repair-lane-kind">RUNTIME</div>
+            <div class="05-verify-repair-lane-title">Supported issue</div>
+          </div>
+          <div class="05-verify-repair-status-stack">
+            <div class="05-verify-repair-current 05-verify-repair-current-unresolved" id="05-verify-repair-runtime-before">UNRESOLVED</div>
+            <div class="05-verify-repair-current 05-verify-repair-current-pass 05-verify-repair-runtime-after" id="05-verify-repair-runtime-after">PASSED</div>
+          </div>
+        </article>
+
+        <article class="05-verify-repair-lane 05-verify-repair-lane-integration" id="05-verify-repair-lane-integration">
+          <div class="05-verify-repair-lane-shape 05-verify-repair-shape-untested">—</div>
+          <div class="05-verify-repair-lane-copy">
+            <div class="05-verify-repair-lane-kind">EXPORT / INTEGRATION</div>
+            <div class="05-verify-repair-lane-title">Environment boundary</div>
+          </div>
+          <div class="05-verify-repair-current 05-verify-repair-current-untested">UNTESTED</div>
+          <div class="05-verify-repair-boundary" id="05-verify-repair-boundary">REMAINS UNTESTED</div>
+        </article>
+
+        <div class="05-verify-repair-action" id="05-verify-repair-action">
+          <div class="05-verify-repair-action-glow" id="05-verify-repair-action-glow"></div>
+          <div class="05-verify-repair-action-burst" id="05-verify-repair-action-burst"></div>
+          <button class="05-verify-repair-button" id="05-verify-repair-button" type="button">
+            <span class="05-verify-repair-wrench">↗</span>
+            <span>REPAIR SUPPORTED</span>
+          </button>
+          <div class="05-verify-repair-repaired" id="05-verify-repair-repaired">
+            <span>✓</span>SUPPORTED REPAIR
+          </div>
+        </div>
+      </section>
+
+      <div class="05-verify-repair-footer">
+        <div class="05-verify-repair-footer-label">EVIDENCE BEFORE CLAIMS</div>
+        <div class="05-verify-repair-progress"><span id="05-verify-repair-progress-fill"></span></div>
+      </div>
+    </div>
+
+    <!-- approved frame video hoisted by assemble-index -->
+  </div>
+
+  <style>
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 700;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Bold.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 500;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Medium.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/Aeonik-Regular.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Aeonik Mono";
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+      src: url("assets/fonts/AeonikMono-Regular.otf") format("opentype");
+    }
+
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #0a0a0a;
+      font-family: "Aeonik", sans-serif;
+    }
+
+    [class~="05-verify-repair-ground"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    [class~="05-verify-repair-grid"] {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(50, 109, 245, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(50, 109, 245, 0.035) 1px, transparent 1px);
+      background-size: 84px 84px;
+      mask-image: linear-gradient(90deg, transparent 0%, #000 34%, #000 100%);
+    }
+
+    [class~="05-verify-repair-wash"] {
+      position: absolute;
+      width: 820px;
+      height: 820px;
+      right: -240px;
+      top: -260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(50, 109, 245, 0.12), rgba(50, 109, 245, 0) 68%);
+    }
+
+    [class~="05-verify-repair-stage"] {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    [class~="05-verify-repair-header"] {
+      position: absolute;
+      top: 62px;
+      left: 96px;
+      width: 1728px;
+      height: 146px;
+    }
+
+    [class~="05-verify-repair-kicker"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: #2f67e8;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.16em;
+    }
+
+    [class~="05-verify-repair-meta"] {
+      position: absolute;
+      top: 0;
+      right: 0;
+      color: #0062ff;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+    }
+
+    [class~="05-verify-repair-header"] h1 {
+      position: absolute;
+      top: 28px;
+      left: -4px;
+      margin: 0;
+      color: #0a0a0a;
+      font-size: 63px;
+      font-weight: 700;
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+    }
+
+    [class~="05-verify-repair-legend"] {
+      position: absolute;
+      right: 0;
+      top: 47px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    [class~="05-verify-repair-chip"] {
+      display: inline-flex;
+      min-height: 38px;
+      padding: 0 16px 0 10px;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    [class~="05-verify-repair-chip-mark"] {
+      display: inline-grid;
+      width: 21px;
+      height: 21px;
+      place-items: center;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    [class~="05-verify-repair-chip-pass"] {
+      color: #047b57;
+      border: 1.5px solid rgba(5, 150, 105, 0.35);
+      border-radius: 100px;
+    }
+
+    [class~="05-verify-repair-chip-pass"] [class~="05-verify-repair-chip-mark"] {
+      border-radius: 50%;
+      background: rgba(5, 150, 105, 0.1);
+    }
+
+    [class~="05-verify-repair-chip-unresolved"] {
+      color: #dc2626;
+      border: 1.5px solid rgba(220, 38, 38, 0.35);
+      border-radius: 10px;
+    }
+
+    [class~="05-verify-repair-chip-unresolved"] [class~="05-verify-repair-chip-mark"] {
+      border-radius: 6px;
+      background: rgba(220, 38, 38, 0.08);
+    }
+
+    [class~="05-verify-repair-chip-untested"] {
+      color: #6f6f6f;
+      border: 1.5px dashed #9a9a9a;
+      border-radius: 5px;
+    }
+
+    [class~="05-verify-repair-chip-untested"] [class~="05-verify-repair-chip-mark"] {
+      border: 1px dashed #9a9a9a;
+      border-radius: 2px;
+    }
+
+    [class~="05-verify-repair-device"] {
+      position: absolute;
+      left: 96px;
+      top: 220px;
+      width: 926px;
+      height: 602px;
+      overflow: hidden;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    [class~="05-verify-repair-chrome"] {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 27px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      background: rgba(50, 109, 245, 0.06);
+      border-bottom: 1px solid rgba(50, 109, 245, 0.14);
+    }
+
+    [class~="05-verify-repair-lights"] {
+      display: flex;
+      gap: 6px;
+      margin-left: 14px;
+    }
+
+    [class~="05-verify-repair-lights"] i {
+      display: block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(50, 109, 245, 0.4);
+    }
+
+    [class~="05-verify-repair-address"] {
+      margin-left: 14px;
+      color: #0062ff;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    [class~="05-verify-repair-live"] {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-left: auto;
+      margin-right: 14px;
+      color: #0062ff;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+    }
+
+    [class~="05-verify-repair-live"] span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #326df5;
+    }
+
+    [class~="05-verify-repair-product-still"] {
+      position: absolute;
+      left: 16px;
+      top: 27px;
+      width: 894px;
+      height: 559px;
+      object-fit: cover;
+      display: block;
+    }
+
+    [class~="05-verify-repair-device-line"] {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: #326df5;
+      z-index: 4;
+    }
+
+    [class~="05-verify-repair-model"] {
+      position: absolute;
+      top: 222px;
+      left: 1052px;
+      width: 772px;
+      height: 600px;
+    }
+
+    [class~="05-verify-repair-model-label"] {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      height: 24px;
+      color: #2f67e8;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.13em;
+    }
+
+    [class~="05-verify-repair-model-rule"] {
+      display: block;
+      flex: 1;
+      height: 1px;
+      background: rgba(50, 109, 245, 0.2);
+    }
+
+    [class~="05-verify-repair-lane"] {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 112px;
+      display: flex;
+      align-items: center;
+      padding: 0 25px;
+      box-sizing: border-box;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: rgba(50, 109, 245, 0.04);
+      overflow: hidden;
+      transform-origin: 50% 50%;
+    }
+
+    [class~="05-verify-repair-lane-static"] { top: 43px; }
+    [class~="05-verify-repair-lane-runtime"] { top: 168px; }
+    [class~="05-verify-repair-lane-integration"] { top: 293px; }
+
+    [class~="05-verify-repair-lane-shape"] {
+      flex: 0 0 auto;
+      display: grid;
+      width: 48px;
+      height: 48px;
+      place-items: center;
+      margin-right: 19px;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 19px;
+    }
+
+    [class~="05-verify-repair-shape-pass"] {
+      color: #047b57;
+      border: 1.5px solid rgba(5, 150, 105, 0.35);
+      border-radius: 50%;
+      background: rgba(5, 150, 105, 0.08);
+    }
+
+    [class~="05-verify-repair-shape-unresolved"] {
+      color: #dc2626;
+      border: 1.5px solid rgba(220, 38, 38, 0.35);
+      border-radius: 10px;
+      background: rgba(220, 38, 38, 0.07);
+    }
+
+    [class~="05-verify-repair-shape-untested"] {
+      color: #6f6f6f;
+      border: 1.5px dashed #9a9a9a;
+      border-radius: 4px;
+      background: rgba(154, 154, 154, 0.06);
+    }
+
+    [class~="05-verify-repair-lane-copy"] {
+      min-width: 0;
+    }
+
+    [class~="05-verify-repair-lane-kind"] {
+      color: #2f67e8;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 11px;
+      line-height: 1;
+      letter-spacing: 0.14em;
+    }
+
+    [class~="05-verify-repair-lane-title"] {
+      margin-top: 9px;
+      color: #0a0a0a;
+      font-size: 23px;
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    [class~="05-verify-repair-current"] {
+      margin-left: auto;
+      min-width: 126px;
+      height: 39px;
+      display: grid;
+      place-items: center;
+      box-sizing: border-box;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    [class~="05-verify-repair-current-pass"] {
+      color: #047b57;
+      border: 1.5px solid rgba(5, 150, 105, 0.35);
+      border-radius: 100px;
+      background: #ffffff;
+    }
+
+    [class~="05-verify-repair-current-unresolved"] {
+      color: #dc2626;
+      border: 1.5px solid rgba(220, 38, 38, 0.35);
+      border-radius: 10px;
+      background: #ffffff;
+    }
+
+    [class~="05-verify-repair-current-untested"] {
+      color: #6f6f6f;
+      border: 1.5px dashed #9a9a9a;
+      border-radius: 4px;
+      background: #ffffff;
+    }
+
+    [class~="05-verify-repair-status-stack"] {
+      position: relative;
+      width: 142px;
+      height: 39px;
+      margin-left: auto;
+    }
+
+    [class~="05-verify-repair-status-stack"] [class~="05-verify-repair-current"] {
+      position: absolute;
+      inset: 0;
+      min-width: 142px;
+    }
+
+    [class~="05-verify-repair-runtime-after"] {
+      opacity: 0;
+    }
+
+    [class~="05-verify-repair-boundary"] {
+      position: absolute;
+      right: 25px;
+      bottom: 8px;
+      color: #6f6f6f;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      opacity: 0;
+    }
+
+    [class~="05-verify-repair-action"] {
+      position: absolute;
+      left: 66px;
+      top: 430px;
+      width: 640px;
+      height: 112px;
+      display: grid;
+      place-items: center;
+    }
+
+    [class~="05-verify-repair-action-glow"] {
+      position: absolute;
+      inset: -90px -140px;
+      z-index: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(50, 109, 245, 0.2), rgba(50, 109, 245, 0) 70%);
+      opacity: 0;
+    }
+
+    [class~="05-verify-repair-action-burst"] {
+      position: absolute;
+      z-index: 1;
+      width: 560px;
+      height: 88px;
+      border-radius: 100px;
+      background: radial-gradient(circle, rgba(0, 98, 255, 0.5), rgba(50, 109, 245, 0) 68%);
+      filter: blur(42px);
+      opacity: 0;
+    }
+
+    [class~="05-verify-repair-button"] {
+      position: absolute;
+      inset: 6px 0 auto 0;
+      z-index: 2;
+      width: 640px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 0;
+      border: 0;
+      border-radius: 100px;
+      background: #326df5;
+      color: #ffffff;
+      font-family: "Aeonik", sans-serif;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      box-shadow: 0 18px 46px rgba(50, 109, 245, 0.22);
+      transform-origin: 50% 50%;
+    }
+
+    [class~="05-verify-repair-wrench"] {
+      display: grid;
+      width: 31px;
+      height: 31px;
+      place-items: center;
+      border: 1.5px solid rgba(255, 255, 255, 0.65);
+      border-radius: 50%;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 16px;
+    }
+
+    [class~="05-verify-repair-repaired"] {
+      position: absolute;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #ffffff;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    [class~="05-verify-repair-repaired"] span {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border: 1.5px solid rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+    }
+
+    [class~="05-verify-repair-footer"] {
+      position: absolute;
+      left: 96px;
+      top: 854px;
+      width: 1728px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    [class~="05-verify-repair-footer-label"] {
+      color: #0062ff;
+      font-family: "Aeonik Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.13em;
+      white-space: nowrap;
+    }
+
+    [class~="05-verify-repair-progress"] {
+      flex: 1;
+      height: 3px;
+      overflow: hidden;
+      border-radius: 0;
+      background: rgba(50, 109, 245, 0.1);
+    }
+
+    [class~="05-verify-repair-progress"] span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: #326df5;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+
+      const LANE_CONTENT = [
+        { id: "#\\30 5-verify-repair-lane-static", body: "Source checks", status: "Passed", hold: 0.5 },
+        { id: "#\\30 5-verify-repair-lane-runtime", body: "Supported issue", status: "Unresolved", hold: 0.62 },
+        { id: "#\\30 5-verify-repair-lane-integration", body: "Environment boundary", status: "Untested", hold: 0.84 },
+      ];
+      const BASE_DURATION = 0.45;
+      const SEC_PER_CHAR = 0.018;
+      let cumulative = 3.82;
+      const LANE_TIMELINE = LANE_CONTENT.map((entry) => {
+        const duration = BASE_DURATION + entry.body.length * SEC_PER_CHAR + entry.hold;
+        const start = cumulative;
+        cumulative += duration;
+        return { ...entry, start, end: cumulative };
+      });
+
+      tl.fromTo(
+        "#\\30 5-verify-repair-device",
+        { y: 86, opacity: 0, scale: 0.965 },
+        { y: 0, opacity: 1, scale: 1, duration: 1.05, ease: "power3.out" },
+        0,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-kicker",
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.56, ease: "power2.out" },
+        0.12,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-headline",
+        { y: 34, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.76, ease: "power3.out" },
+        0.36,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-progress-fill",
+        { width: "0%" },
+        { width: "100%", duration: 13, ease: "none" },
+        0,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-model-label",
+        { x: 24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.48, ease: "power2.out" },
+        3.58,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-legend",
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.62, ease: "power2.out" },
+        3.66,
+      );
+
+      LANE_TIMELINE.forEach((entry) => {
+        tl.fromTo(
+          entry.id,
+          { x: 54, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.68, ease: "power3.out" },
+          entry.start,
+        );
+      });
+
+      tl.to(
+        ["#\\30 5-verify-repair-lane-static", "#\\30 5-verify-repair-lane-integration"],
+        { opacity: 0.42, duration: 0.5, ease: "power2.out" },
+        7.42,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-lane-runtime",
+        {
+          scale: 1.035,
+          borderColor: "rgba(50, 109, 245, 0.72)",
+          backgroundColor: "rgba(50, 109, 245, 0.09)",
+          duration: 0.54,
+          ease: "power2.out",
+        },
+        7.42,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-action",
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" },
+        7.68,
+      );
+
+      const PRESS_START = 8.42;
+      const PRESS_DUR = 0.18;
+      const RELEASE_START = PRESS_START + PRESS_DUR;
+      tl.to(
+        "#\\30 5-verify-repair-button",
+        {
+          scale: 0.92,
+          backgroundColor: "#2457c9",
+          boxShadow: "0 5px 14px rgba(50, 109, 245, 0.18)",
+          duration: PRESS_DUR,
+          ease: "power1.in",
+        },
+        PRESS_START,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-button",
+        {
+          scale: 1,
+          backgroundColor: "#326df5",
+          boxShadow: "0 18px 46px rgba(50, 109, 245, 0.22)",
+          duration: 0.68,
+          ease: "power3.out",
+        },
+        RELEASE_START,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-action-burst",
+        { scale: 1, opacity: 0 },
+        { scale: 5, opacity: 0.58, duration: 0.56, ease: "power2.out" },
+        RELEASE_START,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-action-burst",
+        { opacity: 0, duration: 0.58, ease: "power2.in" },
+        9.12,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-action-glow",
+        { opacity: 0.26, duration: 0.78, ease: "power2.out" },
+        RELEASE_START,
+      );
+
+      tl.to(
+        "#\\30 5-verify-repair-runtime-before",
+        { y: -14, opacity: 0, duration: 0.34, ease: "power2.in" },
+        9.0,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-runtime-after",
+        { y: 14, opacity: 0, scale: 0.88 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.54, ease: "power3.out" },
+        9.18,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-runtime-shape",
+        {
+          color: "#047b57",
+          borderColor: "rgba(5, 150, 105, 0.35)",
+          backgroundColor: "rgba(5, 150, 105, 0.08)",
+          borderRadius: "50%",
+          duration: 0.42,
+          ease: "power2.out",
+        },
+        9.1,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-button > span",
+        { opacity: 0, duration: 0.22, ease: "power1.out" },
+        9.14,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-repaired",
+        { scale: 0.84, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.52, ease: "power3.out" },
+        9.24,
+      );
+
+      tl.to(
+        ["#\\30 5-verify-repair-lane-static", "#\\30 5-verify-repair-lane-integration"],
+        { opacity: 1, duration: 0.56, ease: "power2.out" },
+        10.8,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-lane-runtime",
+        {
+          scale: 1,
+          borderColor: "rgba(50, 109, 245, 0.2)",
+          backgroundColor: "rgba(50, 109, 245, 0.04)",
+          duration: 0.56,
+          ease: "power2.out",
+        },
+        10.8,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-lane-integration",
+        {
+          borderColor: "rgba(154, 154, 154, 0.72)",
+          backgroundColor: "rgba(154, 154, 154, 0.08)",
+          duration: 0.56,
+          ease: "power2.out",
+        },
+        10.8,
+      );
+      tl.fromTo(
+        "#\\30 5-verify-repair-boundary",
+        { x: 10, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.56, ease: "power2.out" },
+        10.96,
+      );
+      tl.to(
+        "#\\30 5-verify-repair-wash",
+        { x: -54, y: 28, duration: 13, ease: "sine.inOut" },
+        0,
+      );
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["05-verify-repair"] = tl;
+    })();
+  </script>
+</template>

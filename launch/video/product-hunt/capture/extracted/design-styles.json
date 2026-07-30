@@ -1,0 +1,401 @@
+{
+  "typography": [
+    {
+      "role": "heading",
+      "fontFamily": "Aeonik",
+      "fontSize": "48px",
+      "fontWeight": "700",
+      "lineHeight": "48px",
+      "letterSpacing": "-2.16px",
+      "color": "#0A0A0A",
+      "sampleText": "The first prompt is only the beginning."
+    },
+    {
+      "role": "body",
+      "fontFamily": "DM Sans",
+      "fontSize": "48px",
+      "fontWeight": "500",
+      "lineHeight": "48px",
+      "letterSpacing": "-1px",
+      "color": "#0A0A0A",
+      "sampleText": "We're building a space where ideas become systems — where fo"
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "Aeonik",
+      "fontSize": "36px",
+      "fontWeight": "700",
+      "lineHeight": "40px",
+      "letterSpacing": "-1.62px",
+      "color": "#0A0A0A",
+      "sampleText": "From prompt to working app."
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Aeonik",
+      "fontSize": "30px",
+      "fontWeight": "700",
+      "lineHeight": "36px",
+      "letterSpacing": "-1.35px",
+      "color": "#0A0A0A",
+      "sampleText": "Your app never disappears inside a proprietary editor."
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "DM Sans",
+      "fontSize": "24px",
+      "fontWeight": "600",
+      "lineHeight": "30px",
+      "letterSpacing": "normal",
+      "color": "#0A0A0A",
+      "sampleText": "Define"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "DM Sans",
+      "fontSize": "20px",
+      "fontWeight": "600",
+      "lineHeight": "28px",
+      "letterSpacing": "-0.5px",
+      "color": "#0A0A0A",
+      "sampleText": "Recover from runtime errors"
+    },
+    {
+      "role": "display",
+      "fontFamily": "DM Sans",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "#0A0A0A",
+      "sampleText": "Squid AgentThe AI app builder for React apps you own."
+    },
+    {
+      "role": "label",
+      "fontFamily": "DM Sans",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "-0.14px",
+      "color": "#FFFFFF",
+      "sampleText": ""
+    },
+    {
+      "role": "code",
+      "fontFamily": "ui-monospace",
+      "fontSize": "12px",
+      "fontWeight": "600",
+      "lineHeight": "16px",
+      "letterSpacing": "1.92px",
+      "color": "#0062FF",
+      "sampleText": "Practical AI app builder guides"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      1,
+      2,
+      4,
+      5,
+      6,
+      7,
+      8,
+      10,
+      12,
+      13,
+      16,
+      18,
+      20,
+      24,
+      40
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "8px",
+    "9px",
+    "10px",
+    "12px",
+    "14px",
+    "16px",
+    "24px",
+    "999px",
+    "9999px"
+  ],
+  "shadows": [
+    {
+      "value": "rgba(15, 23, 42, 0.38) 0px 16px 40px -22px, rgb(255, 255, 255) 0px 0px 0px 1px",
+      "count": 3
+    },
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 18px 48px -34px",
+      "count": 3
+    },
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.65) 0px 20px 60px -42px",
+      "count": 1
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Resources",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#737373",
+      "padding": "0px 12px",
+      "borderRadius": "12px",
+      "border": "0px solid rgb(228, 228, 231)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "height": "44px"
+    },
+    {
+      "label": "Pricing",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "0px 16px",
+      "borderRadius": "12px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "height": "32px"
+    },
+    {
+      "label": "Toggle theme",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#2563EB",
+      "padding": "4px",
+      "borderRadius": "9999px",
+      "border": "0px solid rgb(228, 228, 231)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "28px"
+    },
+    {
+      "label": "button",
+      "background": "#F5F5F5",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "0px",
+      "borderRadius": "14px",
+      "border": "1px solid rgba(229, 229, 229, 0.8)",
+      "boxShadow": "rgba(15, 23, 42, 0.38) 0px 16px 40px -22px, rgb(255, 255, 255) 0px 0px 0px 1px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "110.25px"
+    },
+    {
+      "label": "Gemini 3.1 Flash Lite",
+      "background": "#F5F5F5",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "4px 8px 4px 7px",
+      "borderRadius": "9px",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "27.25px"
+    },
+    {
+      "label": "Plan mode",
+      "background": "#F5F5F5",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#737373",
+      "padding": "7px 9px",
+      "borderRadius": "8px",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "boxShadow": "none",
+      "fontSize": "12.5px",
+      "fontWeight": "500",
+      "height": "34.75px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0A0A",
+      "padding": "0px",
+      "borderRadius": "19px",
+      "border": "0px solid rgb(228, 228, 231)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "148px"
+    },
+    {
+      "label": "card",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "blur(20px) saturate(1.8)",
+      "color": "#0A0A0A",
+      "padding": "0px",
+      "borderRadius": "19px",
+      "border": "1px solid rgba(0, 98, 255, 0.4)",
+      "boxShadow": "rgba(0, 98, 255, 0.05) 0px 0px 0px 3px, rgba(255, 255, 255, 0.35) 0px 1px 0px 0px inset",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "148px"
+    },
+    {
+      "label": "card",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "blur(8px)",
+      "color": "#0A0A0A",
+      "padding": "24px",
+      "borderRadius": "22px",
+      "border": "1px solid rgba(229, 229, 229, 0.7)",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.65) 0px 20px 60px -42px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "162px"
+    },
+    {
+      "label": "card",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "blur(8px)",
+      "color": "#0A0A0A",
+      "padding": "24px",
+      "borderRadius": "24px",
+      "border": "1px solid rgba(229, 229, 229, 0.7)",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 18px 48px -34px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "182px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "transparent",
+    "backgroundImage": "",
+    "backdropFilter": "",
+    "color": "#0A0A0A",
+    "padding": "12px 0px 0px",
+    "borderRadius": "0px",
+    "border": "0px solid rgb(228, 228, 231)",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "82px"
+  },
+  "chips": [
+    {
+      "label": "Guest",
+      "background": "#0CA8FF",
+      "color": "#0095FF",
+      "padding": "2px 8px",
+      "borderRadius": "9999px",
+      "border": "1px solid rgba(12, 168, 255, 0.2)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "height": "21px"
+    },
+    {
+      "label": "Responsive",
+      "background": "#326DF5",
+      "color": "#1F326F",
+      "padding": "2px 8px",
+      "borderRadius": "9999px",
+      "border": "1px solid rgba(50, 109, 245, 0.25)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "height": "21px"
+    },
+    {
+      "label": "API",
+      "background": "#0EA5E9",
+      "color": "#0369A1",
+      "padding": "2px 8px",
+      "borderRadius": "9999px",
+      "border": "1px solid rgba(14, 165, 233, 0.25)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "height": "21px"
+    },
+    {
+      "label": "Open preview",
+      "background": "#000000",
+      "color": "#FFFFFF",
+      "padding": "6px 12px",
+      "borderRadius": "9999px",
+      "border": "1px solid rgba(255, 255, 255, 0.2)",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "height": "30px"
+    }
+  ],
+  "statCells": [],
+  "tabs": [],
+  "backgrounds": [
+    {
+      "value": "linear-gradient(rgb(255, 255, 255) 0px, rgb(255, 255, 255) 100%), linear-gradient(rgba(255, 255, 255, 0) 0px, rgba(255, 255, 255, 0) 100%), radial-gradient(at 80% 55%, rgb(0, 98, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 69% 34%, rgb(12, 168, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 8% 6%, rgb(103, 232, 249) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 41% 38%, rgb(0, 98, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 86% 85%, rgb(12, 168, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 82% 18%, rgb(103, 232, 249) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 51% 4%, rgb(12, 168, 255) 0px, rgba(0, 0, 0, 0) 50%), linear-gradient(rgb(0, 98, 255) 0px, rgb(0, 98, 255) 100%)",
+      "area": 3660783
+    },
+    {
+      "value": "radial-gradient(at 80% 55%, rgb(0, 98, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 69% 34%, rgb(12, 168, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 8% 6%, rgb(103, 232, 249) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 41% 38%, rgb(0, 98, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 86% 85%, rgb(12, 168, 255) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 82% 18%, rgb(103, 232, 249) 0px, rgba(0, 0, 0, 0) 50%), radial-gradient(at 51% 4%, rgb(12, 168, 255) 0px, rgba(0, 0, 0, 0) 50%), linear-gradient(rgb(0, 98, 255) 0px, rgb(0, 98, 255) 100%)",
+      "area": 3660783
+    },
+    {
+      "value": "linear-gradient(to top, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0))",
+      "area": 2123030
+    },
+    {
+      "value": "linear-gradient(135deg, rgba(0, 0, 0, 0) 0%, rgba(0, 98, 255, 0.18) 50%, rgba(0, 0, 0, 0) 100%)",
+      "area": 97976
+    },
+    {
+      "value": "linear-gradient(160deg, rgba(229, 229, 229, 0.55), rgba(229, 229, 229, 0.15) 45%, rgba(229, 229, 229, 0.4))",
+      "area": 106176
+    },
+    {
+      "value": "linear-gradient(45deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0) 100%)",
+      "area": 63442
+    }
+  ],
+  "glass": [
+    {
+      "backdropFilter": "blur(8px)",
+      "background": "rgba(255, 255, 255, 0.8)",
+      "border": "1px solid rgba(229, 229, 229, 0.7)",
+      "borderRadius": "24px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.55) 0px 18px 48px -34px",
+      "area": 248976
+    },
+    {
+      "backdropFilter": "blur(20px) saturate(1.8)",
+      "background": "rgba(255, 255, 255, 0.9)",
+      "border": "1px solid rgba(0, 98, 255, 0.4)",
+      "borderRadius": "19px",
+      "boxShadow": "rgba(0, 98, 255, 0.05) 0px 0px 0px 3px, rgba(255, 255, 255, 0.35) 0px 1px 0px 0px inset",
+      "area": 97976
+    },
+    {
+      "backdropFilter": "blur(8px)",
+      "background": "rgba(255, 255, 255, 0.85)",
+      "border": "1px solid rgba(229, 229, 229, 0.7)",
+      "borderRadius": "22px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.65) 0px 20px 60px -42px",
+      "area": 84951
+    }
+  ]
+}

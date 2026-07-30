@@ -1,0 +1,24 @@
+{
+  "name": "FieldFlow",
+  "audience": "Non-technical small-business owners",
+  "fixture": "Deterministic fictional data",
+  "routes": [
+    "/launch-demo/fieldflow",
+    "/launch-demo/fieldflow/quote",
+    "/launch-demo/fieldflow/dashboard",
+    "/launch-demo/fieldflow/customer"
+  ],
+  "features": [
+    "Public marketing page",
+    "Service catalog",
+    "Interactive quote form",
+    "Appointment selection",
+    "Confirmation state",
+    "Lead dashboard",
+    "Search",
+    "Status and quote editing",
+    "Customer detail",
+    "Loading, error, and empty states",
+    "Mobile navigation"
+  ]
+}

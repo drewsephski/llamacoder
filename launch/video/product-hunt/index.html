@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #FFFFFF;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="72"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="el-01-first-screen"
+        class="scene"
+        data-composition-id="01-first-screen"
+        data-composition-src="compositions/frames/01-first-screen.html"
+        data-start="0"
+        data-duration="5"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-01-first-screen-voice"
+        src="assets/voice/01.wav"
+        data-start="0"
+        data-duration="5"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-02-meet-squid"
+        class="scene"
+        data-composition-id="02-meet-squid"
+        data-composition-src="compositions/frames/02-meet-squid.html"
+        data-start="5"
+        data-duration="7.4"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-02-meet-squid-voice"
+        src="assets/voice/02.wav"
+        data-start="5"
+        data-duration="7"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-03-plan-mode"
+        class="scene"
+        data-composition-id="03-plan-mode"
+        data-composition-src="compositions/frames/03-plan-mode.html"
+        data-start="12"
+        data-duration="14.5"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-03-plan-mode-voice"
+        src="assets/voice/03.wav"
+        data-start="12"
+        data-duration="14"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-04-build-iterate"
+        class="scene"
+        data-composition-id="04-build-iterate"
+        data-composition-src="compositions/frames/04-build-iterate.html"
+        data-start="26"
+        data-duration="15"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-04-build-iterate-voice"
+        src="assets/voice/04.wav"
+        data-start="26"
+        data-duration="15"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-05-verify-repair"
+        class="scene"
+        data-composition-id="05-verify-repair"
+        data-composition-src="compositions/frames/05-verify-repair.html"
+        data-start="41"
+        data-duration="13.4"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-05-verify-repair-voice"
+        src="assets/voice/05.wav"
+        data-start="41"
+        data-duration="13"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-06-own-the-code"
+        class="scene"
+        data-composition-id="06-own-the-code"
+        data-composition-src="compositions/frames/06-own-the-code.html"
+        data-start="54"
+        data-duration="12.5"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-06-own-the-code-voice"
+        src="assets/voice/06.wav"
+        data-start="54"
+        data-duration="12"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-07-close"
+        class="scene"
+        data-composition-id="07-close"
+        data-composition-src="compositions/frames/07-close.html"
+        data-start="66"
+        data-duration="6"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-07-close-voice"
+        src="assets/voice/07.wav"
+        data-start="66"
+        data-duration="6"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <video id="01-first-screen-product-video" src="assets/demos/fieldflow-demo.mp4" poster="assets/product-stills/fieldflow-app-updated.png" preload="auto" muted playsinline
+        class="clip"
+        style="position:absolute;left:390px;top:210px;width:1140px;height:642px;object-fit:cover"
+        data-start="0"
+        data-duration="5"
+        data-track-index="1001"
+      ></video>
+
+      <video id="frame-02-meet-squid-video" src="assets/footage/composer-inputs.mp4" preload="auto" muted playsinline
+        class="clip"
+        style="position:absolute;left:515px;top:78px;width:1350px;height:800px;object-fit:cover"
+        data-start="5"
+        data-duration="7"
+        data-track-index="2001"
+      ></video>
+
+      <video id="04-build-iterate-video" src="assets/footage/build-and-iterate.mp4" preload="auto" muted playsinline
+        class="clip"
+        style="position:absolute;left:350px;top:90px;width:1220px;height:738px;object-fit:cover"
+        data-start="26"
+        data-duration="8"
+        data-track-index="4001"
+      ></video>
+
+      <video id="05-verify-repair-video" src="assets/footage/verify-and-export.mp4" poster="assets/product-stills/example-quality.png" preload="auto" aria-label="Recorded Squid Agent verification workflow" muted playsinline
+        class="clip"
+        style="position:absolute;left:112px;top:247px;width:894px;height:559px;object-fit:cover"
+        data-start="41.9"
+        data-duration="12.1"
+        data-track-index="5002"
+      ></video>
+
+      <video id="f06-own-the-code-video" src="assets/footage/verify-and-export.mp4" preload="auto" muted playsinline
+        class="clip"
+        style="position:absolute;left:94px;top:170px;width:1265px;height:602px;object-fit:cover"
+        data-start="54"
+        data-duration="4.75"
+        data-track-index="6002"
+      ></video>
+
+      <video id="f07-close-video-fieldflow" src="assets/demos/fieldflow-demo.mp4" preload="auto" muted playsinline
+        class="clip"
+        style="position:absolute;left:218px;top:474px;width:440px;height:248px;object-fit:cover"
+        data-start="66"
+        data-duration="6"
+        data-track-index="7001"
+      ></video>
+
+      <video id="f07-close-video-launchops" src="assets/demos/launchops-demo.mp4" preload="auto" muted playsinline
+        class="clip"
+        style="position:absolute;left:740px;top:474px;width:440px;height:248px;object-fit:cover"
+        data-start="66"
+        data-duration="6"
+        data-track-index="7002"
+      ></video>
+
+      <video id="f07-close-video-cinder" src="assets/demos/cinder-studio-demo.mp4" preload="auto" muted playsinline
+        class="clip"
+        style="position:absolute;left:1262px;top:474px;width:440px;height:248px;object-fit:cover"
+        data-start="66"
+        data-duration="6"
+        data-track-index="7003"
+      ></video>
+
+      <!-- captions -->
+      <div
+        id="el-captions"
+        class="scene"
+        data-composition-id="captions"
+        data-composition-src="compositions/captions.html"
+        data-start="0"
+        data-duration="72"
+        data-track-index="2"
+      ></div>
+
+      <!-- SFX -->
+      <audio
+        id="el-sfx-0"
+        src="assets/sfx/impact-bass-1.mp3"
+        data-start="2.3"
+        data-duration="2.12"
+        data-track-index="20"
+        data-volume="0.18"
+      ></audio>
+      <audio
+        id="el-sfx-1"
+        src="assets/sfx/click-soft.mp3"
+        data-start="7.1"
+        data-duration="0.37"
+        data-track-index="21"
+        data-volume="0.12"
+      ></audio>
+      <audio
+        id="el-sfx-2"
+        src="assets/sfx/click-soft.mp3"
+        data-start="16.2"
+        data-duration="0.37"
+        data-track-index="22"
+        data-volume="0.1"
+      ></audio>
+      <audio
+        id="el-sfx-3"
+        src="assets/sfx/whoosh-short.mp3"
+        data-start="20.4"
+        data-duration="0.57"
+        data-track-index="23"
+        data-volume="0.1"
+      ></audio>
+      <audio
+        id="el-sfx-4"
+        src="assets/sfx/click-soft.mp3"
+        data-start="27.3"
+        data-duration="0.37"
+        data-track-index="24"
+        data-volume="0.1"
+      ></audio>
+      <audio
+        id="el-sfx-5"
+        src="assets/sfx/ping.mp3"
+        data-start="37.8"
+        data-duration="1.32"
+        data-track-index="25"
+        data-volume="0.11"
+      ></audio>
+      <audio
+        id="el-sfx-6"
+        src="assets/sfx/click-soft.mp3"
+        data-start="48.7"
+        data-duration="0.37"
+        data-track-index="26"
+        data-volume="0.1"
+      ></audio>
+      <audio
+        id="el-sfx-7"
+        src="assets/sfx/chime.mp3"
+        data-start="50.7"
+        data-duration="2.5"
+        data-track-index="27"
+        data-volume="0.1"
+      ></audio>
+      <audio
+        id="el-sfx-8"
+        src="assets/sfx/click-soft.mp3"
+        data-start="58.2"
+        data-duration="0.37"
+        data-track-index="28"
+        data-volume="0.1"
+      ></audio>
+      <audio
+        id="el-sfx-9"
+        src="assets/sfx/ping.mp3"
+        data-start="62.7"
+        data-duration="1.32"
+        data-track-index="29"
+        data-volume="0.11"
+      ></audio>
+      <audio
+        id="el-sfx-10"
+        src="assets/sfx/chime.mp3"
+        data-start="69.1"
+        data-duration="2.5"
+        data-track-index="30"
+        data-volume="0.12"
+      ></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      // ── frame transitions (injected by transitions.mjs) ──
+      (function () { var tl = window.__timelines["main"];
+        tl.to("#el-02-meet-squid", { x: -1920, duration: 0.4, ease: "power3.inOut" }, 12);
+        tl.fromTo("#el-03-plan-mode", { x: 1920, opacity: 1 }, { x: 0, duration: 0.4, ease: "power3.inOut" }, 12);
+        tl.to("#el-03-plan-mode", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 26);
+        tl.fromTo("#el-04-build-iterate", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 26);
+        tl.to("#el-05-verify-repair", { x: -1920, duration: 0.4, ease: "power3.inOut" }, 54);
+        tl.fromTo("#el-06-own-the-code", { x: 1920, opacity: 1 }, { x: 0, duration: 0.4, ease: "power3.inOut" }, 54);
+        tl.to("#el-06-own-the-code", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 66);
+        tl.fromTo("#el-07-close", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 66);
+        tl.to({}, { duration: 72 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
+      })();
+    </script>
+  </body>
+</html>

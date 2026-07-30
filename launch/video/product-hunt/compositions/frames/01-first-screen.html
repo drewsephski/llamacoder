@@ -1,0 +1,422 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Aeonik";
+      src: url("assets/fonts/Aeonik-Regular.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 400;
+      font-display: block;
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      src: url("assets/fonts/Aeonik-Medium.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 500 600;
+      font-display: block;
+    }
+
+    @font-face {
+      font-family: "Aeonik";
+      src: url("assets/fonts/Aeonik-Bold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 700;
+      font-display: block;
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      container-type: size;
+      font-family: "Aeonik", sans-serif;
+      color: #0a0a0a;
+    }
+
+    [class~="01-first-screen-bg"] {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+
+    [class~="01-first-screen-hairline"] {
+      position: absolute;
+      top: 4.5cqh;
+      left: 5cqw;
+      width: 3.125cqw;
+      height: 4px;
+      border-radius: 2px;
+      background: #326df5;
+    }
+
+    [class~="01-first-screen-opening-copy"] {
+      position: absolute;
+      z-index: 5;
+      top: 6.4cqh;
+      left: 5cqw;
+      right: 5cqw;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.55ch;
+      color: #0a0a0a;
+      font-size: 2.6cqw;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    [class~="01-first-screen-title-chunk"] {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+
+    [id="01-first-screen-product-video"] {
+      position: absolute;
+      z-index: 2;
+      left: 390px;
+      top: 210px;
+      width: 1140px;
+      height: 642px;
+      object-fit: cover;
+      transform-origin: 50% 50%;
+      background: #f6f8f5;
+      will-change: transform, opacity, filter;
+    }
+
+    [class~="01-first-screen-video-chrome"] {
+      position: absolute;
+      z-index: 3;
+      left: 390px;
+      top: 210px;
+      width: 1140px;
+      height: 642px;
+      box-sizing: border-box;
+      overflow: hidden;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      pointer-events: none;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity, filter;
+    }
+
+    [class~="01-first-screen-window-top"] {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 28px;
+      border-bottom: 1px solid rgba(50, 109, 245, 0.14);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    [class~="01-first-screen-window-dots"] {
+      position: absolute;
+      top: 11px;
+      left: 14px;
+      width: 30px;
+      height: 6px;
+      background:
+        radial-gradient(circle at 3px 3px, rgba(50, 109, 245, 0.45) 0 3px, transparent 3.2px),
+        radial-gradient(circle at 15px 3px, rgba(50, 109, 245, 0.24) 0 3px, transparent 3.2px),
+        radial-gradient(circle at 27px 3px, rgba(50, 109, 245, 0.12) 0 3px, transparent 3.2px);
+    }
+
+    [class~="01-first-screen-followup"] {
+      position: absolute;
+      z-index: 6;
+      top: 300px;
+      left: 1010px;
+      width: 700px;
+      height: 430px;
+      box-sizing: border-box;
+      padding: 42px;
+      border: 1.5px solid rgba(50, 109, 245, 0.2);
+      border-radius: 14px;
+      background: #f9fbff;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity, filter;
+    }
+
+    [class~="01-first-screen-followup-meta"] {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #326df5;
+      font-size: 15px;
+      font-weight: 650;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    [class~="01-first-screen-followup-index"] {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 82px;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 100px;
+      background: rgba(50, 109, 245, 0.08);
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    [class~="01-first-screen-prompt-box"] {
+      position: relative;
+      height: 194px;
+      margin-top: 38px;
+      padding: 32px;
+      box-sizing: border-box;
+      border: 2px solid #326df5;
+      border-radius: 12px;
+      background: #ffffff;
+    }
+
+    [class~="01-first-screen-prompt-line"] {
+      height: 14px;
+      margin-bottom: 17px;
+      border-radius: 100px;
+      background: rgba(50, 109, 245, 0.15);
+      transform-origin: 0 50%;
+      will-change: transform, opacity;
+    }
+
+    [class~="01-first-screen-prompt-line"][data-line="1"] {
+      width: 78%;
+    }
+
+    [class~="01-first-screen-prompt-line"][data-line="2"] {
+      width: 58%;
+    }
+
+    [class~="01-first-screen-prompt-line"][data-line="3"] {
+      width: 34%;
+      background: #326df5;
+    }
+
+    [class~="01-first-screen-caret"] {
+      position: absolute;
+      left: 32px;
+      bottom: 27px;
+      width: 3px;
+      height: 26px;
+      border-radius: 2px;
+      background: #326df5;
+    }
+
+    [class~="01-first-screen-followup-footer"] {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 24px;
+      color: #0062ff;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    [class~="01-first-screen-send"] {
+      width: 74px;
+      height: 34px;
+      border-radius: 100px;
+      background: #326df5;
+    }
+
+    [class~="01-first-screen-final-title"] {
+      position: absolute;
+      z-index: 10;
+      top: 335px;
+      left: 5cqw;
+      right: 5cqw;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.24em;
+      color: #0a0a0a;
+      font-size: 4.2cqw;
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity, filter;
+    }
+
+    [class~="01-first-screen-final-word"] {
+      position: relative;
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+
+    [class~="01-first-screen-not-wrap"] {
+      position: relative;
+      display: inline-block;
+    }
+
+    [class~="01-first-screen-not-underline"] {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -12px;
+      height: 8px;
+      border-radius: 6px;
+      background: #326df5;
+      transform-origin: 0 50%;
+      will-change: transform, opacity;
+    }
+
+    [class~="01-first-screen-progress"] {
+      position: absolute;
+      z-index: 12;
+      left: 0;
+      top: 888px;
+      width: 160px;
+      height: 3px;
+      background: #326df5;
+    }
+  </style>
+
+  <div id="root" data-composition-id="01-first-screen" data-start="0" data-duration="5" data-width="1920" data-height="1080">
+    <div class="clip 01-first-screen-bg" data-start="0" data-duration="5" data-track-index="0"></div>
+
+    <!-- approved frame video hoisted by assemble-index -->
+
+    <div class="01-first-screen-hairline"></div>
+
+    <div id="01-first-screen-opening-copy" class="01-first-screen-opening-copy">
+      <span id="01-first-screen-title-a" class="01-first-screen-title-chunk">The first screen</span>
+      <span id="01-first-screen-title-b" class="01-first-screen-title-chunk">is becoming easy.</span>
+    </div>
+
+    <div id="01-first-screen-video-chrome" class="01-first-screen-video-chrome">
+      <div class="01-first-screen-window-top">
+        <div class="01-first-screen-window-dots"></div>
+      </div>
+    </div>
+
+    <div id="01-first-screen-followup" class="01-first-screen-followup">
+      <div class="01-first-screen-followup-meta">
+        <span>Follow-up</span>
+        <span class="01-first-screen-followup-index">Prompt 02</span>
+      </div>
+      <div class="01-first-screen-prompt-box">
+        <div id="01-first-screen-prompt-line-1" class="01-first-screen-prompt-line" data-line="1"></div>
+        <div id="01-first-screen-prompt-line-2" class="01-first-screen-prompt-line" data-line="2"></div>
+        <div id="01-first-screen-prompt-line-3" class="01-first-screen-prompt-line" data-line="3"></div>
+        <div class="01-first-screen-caret"></div>
+      </div>
+      <div class="01-first-screen-followup-footer">
+        <span>Next change</span>
+        <span class="01-first-screen-send"></span>
+      </div>
+    </div>
+
+    <div id="01-first-screen-final-title" class="01-first-screen-final-title">
+      <span class="01-first-screen-final-word">Finishing</span>
+      <span class="01-first-screen-final-word">the</span>
+      <span class="01-first-screen-final-word">product</span>
+      <span class="01-first-screen-final-word">is</span>
+      <span class="01-first-screen-final-word 01-first-screen-not-wrap">
+        not.
+        <span id="01-first-screen-not-underline" class="01-first-screen-not-underline"></span>
+      </span>
+    </div>
+
+    <div class="01-first-screen-progress"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      const video = '[id="01-first-screen-product-video"]';
+      const chrome = '[id="01-first-screen-video-chrome"]';
+      const followup = '[id="01-first-screen-followup"]';
+      const openingCopy = '[id="01-first-screen-opening-copy"]';
+      const finalTitle = '[id="01-first-screen-final-title"]';
+
+      tl.set(finalTitle, { opacity: 0 }, 0);
+      tl.fromTo(
+        [video, chrome],
+        { opacity: 0, scale: 0.94, y: 22 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.64, ease: "power3.out" },
+        0
+      );
+      tl.fromTo(
+        '[id="01-first-screen-title-a"]',
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.46, ease: "power3.out" },
+        0.18
+      );
+      tl.fromTo(
+        '[id="01-first-screen-title-b"]',
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.46, ease: "power3.out" },
+        0.62
+      );
+      tl.to(
+        [video, chrome],
+        { y: -5, duration: 0.55, ease: "sine.inOut" },
+        1.42
+      );
+
+      tl.to(openingCopy, { x: -230, duration: 0.32, ease: "power4.in" }, 2.08);
+      tl.to(openingCopy, { opacity: 0, duration: 0.26, ease: "power1.in" }, 2.12);
+      tl.to(
+        [video, chrome],
+        { x: -355, y: 18, scale: 0.72, opacity: 0.82, duration: 0.62, ease: "power3.out" },
+        2.16
+      );
+      tl.fromTo(
+        followup,
+        { x: 230, scale: 0.72, opacity: 0 },
+        { x: 0, scale: 1, opacity: 1, duration: 0.64, ease: "power3.out" },
+        2.35
+      );
+      tl.fromTo(
+        '[class~="01-first-screen-prompt-line"]',
+        { opacity: 0, scaleX: 0.16 },
+        { opacity: 1, scaleX: 1, duration: 0.34, stagger: 0.11, ease: "power3.out" },
+        2.86
+      );
+
+      tl.to(
+        [video, chrome],
+        { scale: 0.58, filter: "blur(20px)", duration: 0.24, ease: "power3.in" },
+        3.36
+      );
+      tl.to(
+        followup,
+        { scale: 0.8, filter: "blur(20px)", duration: 0.24, ease: "power3.in" },
+        3.36
+      );
+      tl.to(
+        [video, chrome, followup],
+        { opacity: 0.15, duration: 0.24, ease: "none" },
+        3.36
+      );
+      tl.set([video, chrome, followup], { opacity: 0 }, 3.6);
+      tl.fromTo(
+        finalTitle,
+        { opacity: 0.15, scale: 1.25, filter: "blur(10px)" },
+        { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.38, ease: "expo.out", immediateRender: false },
+        3.6
+      );
+      tl.fromTo(
+        '[class~="01-first-screen-final-word"]',
+        { opacity: 0, x: 42 },
+        { opacity: 1, x: 0, duration: 0.26, stagger: 0.045, ease: "power4.out" },
+        3.6
+      );
+      tl.fromTo(
+        '[id="01-first-screen-not-underline"]',
+        { opacity: 0, scaleX: 0 },
+        { opacity: 1, scaleX: 1, duration: 0.22, ease: "power3.out" },
+        3.86
+      );
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["01-first-screen"] = tl;
+    })();
+  </script>
+</template>

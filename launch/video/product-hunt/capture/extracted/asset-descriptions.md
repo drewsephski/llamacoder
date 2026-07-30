@@ -1,0 +1,112 @@
+# Asset Descriptions
+
+## Launch-video adopted assets
+
+- assets/footage/composer-inputs.mp4 — Deterministic 1440×900 recording of the real public Squid composer. It types a FieldFlow prompt, enables Plan Mode, points to screenshot input, opens API integrations, and fills the website URL field. No account or private project data is visible.
+- assets/footage/prompt-to-plan.mp4 — Deterministic 1440×900 recording of the real public Squid example route moving from the original prompt to the approved plan. The example is explicitly labeled public and not account-required.
+- assets/footage/build-and-iterate.mp4 — Deterministic 1440×900 recording of the real public Squid example application. It shows the generated React app running, moves a task, starts its timer, and opens the app command surface to demonstrate preserved interaction.
+- assets/footage/verify-and-export.mp4 — Deterministic 1440×900 recording of the real public Squid example route showing Quality, Files, a React source file, and Download source. It must not be described as proof that every integration or project is production-ready.
+- assets/product-stills/model-picker.png — Real Squid model picker with model attributes and credit estimate.
+- assets/product-stills/example-prompt.png — Real public Squid example Prompt panel.
+- assets/product-stills/example-plan.png — Real public Squid example approved Plan panel.
+- assets/product-stills/example-quality.png — Real public Squid example Quality panel with its actual recorded states.
+- assets/product-stills/example-files.png — Real public Squid example Files panel with React source visible.
+- assets/product-stills/fieldflow-app.png — Deterministic FieldFlow launch-demo state before an edit.
+- assets/product-stills/fieldflow-app-updated.png — Deterministic FieldFlow launch-demo state after a focused edit.
+- assets/product-stills/04-verification.png — Reproducible launch composition based on Squid verification states. Unresolved and untested states remain visibly distinguished from passed checks.
+- assets/product-stills/06-code-ownership.png — Reproducible launch composition based on Squid source inspection, ZIP export, GitHub publishing, deployment handoff, and local continuation capabilities.
+- assets/demos/fieldflow-demo.mp4 — Deterministic 1280×720 screen recording of the FieldFlow quoting and scheduling showcase app.
+- assets/demos/launchops-demo.mp4 — Deterministic 1280×720 screen recording of the LaunchOps SaaS operations showcase app. Its sample data and mocked integrations are labeled.
+- assets/demos/cinder-studio-demo.mp4 — Deterministic 1280×720 screen recording of the Cinder Studio architecture showcase site using permitted local imagery.
+- assets/brand/squidagent-logo.svg — Existing Squid blue logo mark copied from the captured public site.
+
+⚠️  GEMINI_API_KEY not set — descriptions below are catalog-derived (alt text, headings, section context, filename) instead of Vision-generated. To get richer Vision descriptions on the next capture, set GEMINI_API_KEY (or GOOGLE_API_KEY) and re-run.
+
+The `logo-<hash>.svg` filename prefix is a structural hint (DOM said this SVG was inside a `<header>`, home-link `<a>`, or had an aria-label matching the page brand). To pick the actual brand logo without Vision, open the `logo-*` candidates in a previewer or rasterize them with `sharp` before referencing — composing a fake logo ships off-brand in the final video.
+
+- alwayzz-landing-hero-app-preview.jpg — 30KB, This light-themed website landing page features black text on a white background with a minimalist layout.
+- atelier-hero-landing-app-preview.jpg — 66KB, A website landing page with large white text, buttons, and navigation menus overlaid on a dark landscape background featuring a blue sky and agricultural equipment.
+- axion-studio-landing-page-hero-for-categ.jpg — 43KB, This website landing page features black text on a light, minimalist background with orange and black accents.
+- axon-landing-page-hero-showing-digital-w.jpg — 135KB, The website features a light, pastel-toned landing page with purple and pink landscape imagery, displaying bold text about digital workers and a call-to-action button.
+- cozypaws-landing-page-hero-with-pets-and.jpg — 912KB, The website features images of pets and pet products with dark green text on a light mint-green background.
+- design-rocket-certificates-landing-page-.jpg — 40KB, A person sits before a starlit night sky on this dark-mode website interface featuring text and a yellow "Enroll Now" button.
+- drew-3d-creator-portfolio-landing-page.jpg — 82KB, This website features a 3D avatar head against a dark background with light gray text and a purple button.
+- forma-landing-page-hero-for-a-digital-pr.jpg — 142KB, A website contact page features a vibrant mountain landscape background with a bright, light-colored theme and text overlay.
+- logo-5a9e094f.svg — 3KB, A blue, gradient-colored jellyfish illustration is centered on a light circular background, featuring a white code tag symbol "<>" at its center and a star-like sparkle at its top.
+- magicrings-component-integration-app-pre.jpg — 22KB, Centered on a dark background, this web interface displays a WebGL visualization of glowing cyan rings with the text "Magic Rings Integration" above it.
+- mentality-landing-page-hero-for-mental-w.jpg — 59KB, The website features black text and a metallic abstract graphic on a light background.
+- mindloop-landing-page-hero-with-an-inspi.jpg — 69KB, The website features white text on a dark background showing a surreal landscape with an astronaut and an email subscription field.
+- octagon-rankings-ufc-fighter-rankings-ap.jpg — 122KB, The image displays a dark-themed website interface showing a list of ranked UFC fighters with red text accents.
+- og-image.jpg — 91KB, The Squid Agent landing page features white text and blue UI elements on a dark, gradient background.
+- phoenix-design-lab-homepage-generated-wi.jpg — 46KB, This website landing page features two hands reaching toward a central headline against a dark, red-toned background.
+- portfolioos-homepage-generated-with-squi.jpg — 41KB, A dark-mode website landing page features white text promoting an AI-powered portfolio builder with a header navigation bar and central call-to-action buttons.
+- questly-landing-page-hero-for-ai-search-.jpg — 42KB, This light-themed website landing page features blue and white tones with a central search bar and an embedded dark-mode dashboard interface.
+- rivr-landing-page-hero-for-fluid-asset-s.jpg — 101KB, The landing page features a minimalist, light-themed interface with soft blue, grey, and metallic gold accents against a surreal, dreamlike landscape.
+- saas-hero-landing-page-app-preview.jpg — 70KB, This website landing page features dark text and a user interface overlay against a light, forest-themed background.
+- sentinel-ai-landing-page-hero-for-enterp.jpg — 56KB, This website hero section features white and green text over a dark, black-tiled background with green lighting accents.
+- skyelite-landing-page-hero-for-premium-p.jpg — 64KB, The website landing page features a dark private jet against a light, cloudy sky with black and white color tones and glowing orange engine lights.
+- slotflow-homepage-generated-with-squid.jpg — 48KB, A website hero section for "SlotFlow" features a light background with green and white color tones, displaying event planning text and an interface mockup of a potluck signup page.
+- squid-agent-workspace-showing-plan-files.jpg — 16KB, A dark-themed website with black and gray tones displays a central prompt input field for generating apps under the heading "Turn ideas into apps."
+- svg-03e2ce21.svg — 1KB, This is a violet and light purple graphic icon that resembles a stylized letter C or a person standing beneath an arch.
+- svg-26625606.svg — 6KB, A teal blue atom-shaped icon consisting of three intersecting ellipses revolving around a central solid circle.
+- svg-4a0e18db.svg — 2KB, A black-and-white, hexagonal-shaped knot icon with a swirling, geometric floral pattern.
+- svg-5d423ac8.svg — 1KB, A flat, orange flame icon.
+- svg-8c833057.svg — 1KB, A green, lightning bolt-shaped icon made of two overlapping, angled geometric segments.
+- svg-9d30a4ec.svg — 6KB, A light blue icon depicting an atom-like structure composed of three overlapping elliptical orbits centered around a solid circle.
+- svg-b0fa942a.svg — 1KB, A black circle contains a large, sans-serif letter "N" with a white-to-transparent diagonal gradient effect across its right side.
+- svg-c55cceae.svg — 1KB, A black icon depicting a single path branching into two separate, outward-pointing arrows.
+- svg-d4db43b2.svg — 0KB, This image is a solid purple parallelogram tilted toward the right.
+- svg-df125dc9.svg — 2KB, A white, geometric logo resembling a six-petaled stylized flower or knot against a dark gray background.
+- svg-e648d525.svg — 1KB, A simple white outline of a plus sign is centered on a square-shaped dark blue background.
+- svg-ec7a5563.svg — 1KB, A circular gray arc wraps around a white circular dot and a white chevron-like shape against a black background.
+- terraelix-landing-page-hero-for-plant-ba.jpg — 93KB, A website landing page with a light green gradient background features text and an image of a TerraElix supplement bottle among plants.
+- velorah-landing-page-hero-with-a-dark-un.jpg — 113KB, This website landing page features white text and a person working at a computer in a glowing, floral landscape against a dark, star-filled blue background.
+- favicon.ico — 444KB, favicon
+- svgs/logo-3116df01.svg — A simple black magnifying glass icon.
+- svgs/logo-557b6d52.svg — This is a black, minimalist icon of a person featuring a circular head above a rounded, arch-shaped torso.
+- svgs/svg-0d94e3f2.svg — A simple black downward-pointing chevron icon on a white background.
+- svgs/svg-2473eb75.svg — A white, right-pointing arrow icon against a dark gray background.
+- svgs/svg-2a843061.svg — A black, thick-lined icon of an open book.
+- svgs/svg-3fd09899-2.svg — A bold, black, right-pointing arrow icon with rounded ends.
+- svgs/svg-3fd09899-3.svg — This is a simple black right-pointing arrow icon against a white background.
+- svgs/svg-3fd09899-4.svg — A simple black right-pointing arrow icon displayed on a white background.
+- svgs/svg-3fd09899-5.svg — A solid black, right-pointing arrow icon against a white background.
+- svgs/svg-3fd09899-6.svg — The image is a minimalist black, right-pointing arrow icon against a white background.
+- svgs/svg-3fd09899-7.svg — A simple, black, right-pointing arrow icon with rounded ends.
+- svgs/svg-3fd09899-8.svg — A simple, black, right-pointing arrow icon with rounded ends.
+- svgs/svg-3fd09899.svg — A simple black arrow icon points toward the right.
+- svgs/svg-53bcb0fd.svg — A black outline icon of a magic wand surrounded by three small sparkles.
+- svgs/svg-5499dd7a.svg — This is a black, thick-outlined crescent moon icon on a white background.
+- svgs/svg-5c625026.svg — A black hamburger menu icon consisting of three horizontal, rounded-end bars.
+- svgs/svg-5ddb00f3.svg — A black-and-white icon featuring a lowercase "i" centered inside a circular border.
+- svgs/svg-6a9855b3.svg — A black line-art icon of a document page with a folded top right corner and three horizontal lines representing text.
+- svgs/svg-72054f54.svg — A white, right-pointing arrow icon against a dark gray background.
+- svgs/svg-7fadd99a.svg — A black question mark symbol centered within a black circle outline on a white background.
+- svgs/svg-8913670a.svg — A black-and-white icon featuring a lowercase "i" contained within a circular border.
+- svgs/svg-90fb35f7.svg — This black icon displays a simple bar graph with three rounded vertical bars of varying heights set against an L-shaped axis.
+- svgs/svg-9b4b2667.svg — A black outlined icon featuring a central four-pointed star flanked by a small plus sign in the upper right and a small circle in the lower left.
+- svgs/svg-9fff32b2.svg — A black cloud icon featuring a negative-space white upward-pointing arrow at its center.
+- svgs/svg-ab6431fc.svg — This black-and-white icon features a circular lifebuoy shape with four radial spokes connecting an inner ring to an outer ring.
+- svgs/svg-d1c2f418.svg — A simple white arrow points to the right against a dark gray background.
+- svgs/svg-ddf710e7.svg — This black line-art icon features a cylindrical database symbol with a lightning bolt shape overlaid on the right side.
+- svgs/svg-ebc0471a.svg — A black, minimalist vector icon of a balanced scale.
+- svgs/svg-f4ffa8b4.svg — The image is a repeating white and light gray noise texture pattern.
+- svgs/svg-fcf8403b.svg — A simple black chevron icon pointing downward.
+- fonts/5c285b27cdda1fe8-s.p.2_mbdogr7ni8i.woff2 — font file
+- fonts/Aeonik-Bold.ttf — font file
+- fonts/Aeonik-Medium.ttf — font file
+- fonts/Aeonik-Regular.ttf — font file
+- fonts/AeonikMono-Regular.otf — font file
+- fonts/c3cb240f9c892514-s.3z_x6eowsw16y.woff2 — font file
+- fonts/instrument-serif-latin-400-normal.2maraz2ovyahx.woff — font file
+- fonts/instrument-serif-latin-400-normal.3_vslfxq_--4i.woff2 — font file
+- fonts/instrument-serif-latin-ext-400-italic.2vfzl0i35o8_c.woff — font file
+- fonts/instrument-serif-latin-ext-400-italic.30flr4oxtjagu.woff2 — font file
+- fonts/instrument-serif-latin-ext-400-normal.0ordxpm0gxgw8.woff2 — font file
+- fonts/instrument-serif-latin-ext-400-normal.2z9xqimzvw6vx.woff — font file
+- fonts/inter-cyrillic-400-normal.2jms6gqb5gbhf.woff — font file
+- fonts/inter-greek-400-normal.2x8hqgpakc599.woff — font file
+- fonts/inter-greek-ext-400-normal.38g6916w0wpxs.woff — font file
+- fonts/inter-latin-ext-400-normal.0zt1v0rj9tqox.woff — font file
+- fonts/inter-latin-ext-400-normal.1aowtwjb6jex7.woff2 — font file
+- fonts/inter-vietnamese-400-normal.3206qgbkgsfc6.woff — font file

@@ -1,0 +1,13 @@
+{
+  "name": "product-hunt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.7.84 preview",
+    "check": "npx --yes hyperframes@0.7.84 check",
+    "render": "npx --yes hyperframes@0.7.84 render",
+    "export": "node scripts/export.mjs",
+    "capture": "node scripts/capture-product.mjs",
+    "publish": "npx --yes hyperframes@0.7.84 publish"
+  }
+}
