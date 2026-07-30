@@ -45,7 +45,9 @@ describe("style pack router", () => {
       /STYLE_PACK: (cobaltMinimal|terminalPhosphor|midnightCool|manifestoGeometric|swissBrutal|newsprintEditorial)/,
     );
     expect(directive).toContain("font-display");
-    expect(directive).toMatch(/className=/);
+    expect(directive).toContain("Ready-to-use class recipes");
+    expect(directive).not.toMatch(/className=/);
+    expect(directive.length).toBeLessThan(7_000);
 
     const explicit = buildActiveStylePackDirective("make it purple brutalist");
     expect(explicit).toContain("explicit aesthetic");

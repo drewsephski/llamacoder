@@ -25,6 +25,24 @@ describe("image attachment utilities", () => {
     ).toBe(image);
   });
 
+  it("preserves the clipboard item MIME type when the browser omits it from the file", () => {
+    const image = new File(["png"], "pasted-image", { type: "" });
+
+    const extracted = getClipboardImageFile({
+      items: [
+        {
+          kind: "file",
+          type: "image/png",
+          getAsFile: () => image,
+        },
+      ] as unknown as DataTransferItemList,
+      files: [] as unknown as FileList,
+    });
+
+    expect(extracted).not.toBeNull();
+    expect(extracted?.type).toBe("image/png");
+  });
+
   it("rejects unsupported images and reads valid images locally", async () => {
     const unsupported = new File(["gif"], "animation.gif", {
       type: "image/gif",

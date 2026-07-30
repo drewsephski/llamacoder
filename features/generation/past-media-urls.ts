@@ -333,20 +333,23 @@ export function buildVisualSignatureDirective(
   }
 
   return dedent`
-    ## Visual signature (LOCKED — pick exactly one)
+    ## Visual signature
 
-    Mode for this build: **${SIGNATURE_MODE_LABELS[mode]}** (\`${mode}\`)
-    Selected deterministically from the brief — do not switch mid-build or combine signatures.
+    Recommended treatment: **${SIGNATURE_MODE_LABELS[mode]}** (\`${mode}\`).
+    Apply it only to a marketing/showcase surface where it strengthens the
+    subject. A product surface, focused utility, or strong typographic opening
+    may skip cinematic treatment entirely.
 
     ${implementation}
 
-    ### Rules for every mode
-    - **One signature only** — never stack catalog video + mesh gradient + noise pattern in the same hero.
-    - **Media fidelity:** preserve the source asset's color balance. Do not add a blanket dark/color overlay as a default stylistic effect. Prefer text placement, a localized gradient, or a compact text panel; keep any necessary scrim spatially limited and as weak as contrast allows.
-    - **Palette coupling:** accents and CTAs must belong to the asset's dominant color family. If that family is unknown, use a neutral high-contrast CTA instead of guessing amber, orange, yellow, purple, or neon.
-    - **Banned generic default:** \`bg-yellow-400\`/\`bg-yellow-500\` CTA on \`bg-black\`/\`bg-neutral-950\` unless the user explicitly asked for it.
-    - Dashboard/workbench apps may skip a cinematic hero signature when the product surface IS the hero — still obey the locked mode for any marketing band present.
-    - Catalog images below the fold are optional in all modes; never use dashed placeholder divs when a catalog URL fits the section.
+    - **One signature only:** never stack video, shader, and noise.
+    - **Media fidelity:** preserve source color; use placement or a localized,
+      minimal scrim for contrast instead of blanket tinting.
+    - Couple CTAs to the dominant media palette. If unknown, use a neutral,
+      high-contrast pair rather than guessing a saturated accent.
+    - Supporting catalog images are optional. Never invent fake proof or use a
+      dashed placeholder when a relevant real asset is available.
+
   `;
 }
 

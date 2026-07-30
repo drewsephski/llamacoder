@@ -96,7 +96,7 @@ describe("ChatBox image paste", () => {
     await waitFor(() => {
       expect(createMessageMock).toHaveBeenCalledWith(
         "chat_1",
-        "Recreate the attached screenshot as closely as possible.",
+        "Recreate the attached image as closely as possible in code.",
         "user",
       );
     });

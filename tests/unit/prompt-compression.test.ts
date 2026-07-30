@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   estimateTokens,
+  getCanonicalCodingPrompt,
   getCompressedCodingPrompt,
   shouldUseCompressedPrompt,
 } from "@/lib/prompt-compression";
@@ -16,17 +17,19 @@ describe("prompt-compression", () => {
     expect(shouldUseCompressedPrompt(0, 6_000)).toBe(true);
   });
 
-  test("getCompressedCodingPrompt preserves hard technical rules", () => {
+  test("the canonical prompt stays compact without policy drift", () => {
     const prompt = getCompressedCodingPrompt();
 
-    expect(prompt).toContain("Multi-file structure");
+    expect(prompt).toBe(getCanonicalCodingPrompt());
+    expect(prompt).toContain("## Execution contract");
     expect(prompt).toContain("Every import must resolve");
-    expect(prompt).toContain("Live API safety");
-    expect(prompt).toContain("Multi-file structure, by default");
-    expect(prompt).toContain("genuinely trivial single-purpose app");
-    expect(prompt).toContain("Navigation and footer are nullable decisions");
-    expect(prompt).not.toContain("Minimum 3-5 files");
-    expect(prompt).not.toContain("Multi-file structure, always");
+    expect(prompt).toContain("### Live APIs and persistence");
+    expect(prompt).toContain("Keep trivial apps small");
+    expect(prompt).toContain(
+      "Navigation and footer may be integrated or omitted",
+    );
+    expect(prompt).toContain("## Output contract");
+    expect(prompt.length).toBeLessThan(21_000);
   });
 
   test("estimateTokens uses the 4-char heuristic", () => {

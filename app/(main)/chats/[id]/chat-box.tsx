@@ -35,11 +35,9 @@ import {
   getClipboardImageFile,
   getImageAttachmentError,
   IMAGE_ATTACHMENT_ACCEPT,
+  IMAGE_CLONE_PROMPT,
   readImageAttachmentAsDataUrl,
 } from "@/features/generation/client/image-attachment";
-
-const IMAGE_CLONE_PROMPT =
-  "Recreate the attached screenshot as closely as possible.";
 
 interface ChatBoxProps {
   chat: {
@@ -394,7 +392,17 @@ export default function ChatBox({
           </div>
         )}
 
-        <form className="relative flex w-full min-w-0" action={handleSubmit}>
+        <form
+          className="relative flex w-full min-w-0"
+          action={handleSubmit}
+          onPaste={(event) => {
+            if (disabled) return;
+            const image = getClipboardImageFile(event.clipboardData);
+            if (!image) return;
+            event.preventDefault();
+            void attachImage(image);
+          }}
+        >
           <fieldset className="w-full min-w-0" disabled={disabled}>
             <div className="chatbox-field relative flex flex-col">
               {(imageAttachment || isReadingImage) && (
@@ -459,13 +467,6 @@ export default function ChatBox({
                     if (!(target instanceof HTMLTextAreaElement)) return;
                     target.closest("form")?.requestSubmit();
                   }
-                }}
-                onPaste={(event) => {
-                  if (disabled) return;
-                  const image = getClipboardImageFile(event.clipboardData);
-                  if (!image) return;
-                  event.preventDefault();
-                  void attachImage(image);
                 }}
               />
 

@@ -3,145 +3,51 @@ import { developerCodeGenPrompt } from "@/features/generation/agent-prompts";
 import { getMainCodingPrompt, softwareArchitectPrompt } from "@/lib/prompts";
 
 describe("prompt design guidance", () => {
-  it("keeps production UI/UX guardrails in the main coding prompt", () => {
-    const prompt = getMainCodingPrompt();
+  it("keeps one concise, production-safe coding contract", () => {
+    const prompt = getMainCodingPrompt({
+      userPrompt: "Build a premium habit tracker",
+    });
 
-    expect(prompt).toContain("Build the actual product surface first");
-    expect(prompt).toContain("Ground the design in the subject");
-    expect(prompt).toContain("Avoid AI-template aesthetics");
-    expect(prompt).toContain(
-      "Spend visual boldness in one justified signature element",
-    );
-    expect(prompt).toContain("Mobile should reorganize around the core task");
-    expect(prompt).toContain("Premium UI/UX execution contract");
-    expect(prompt).toContain("Hierarchy before decoration");
-    expect(prompt).toContain("Believable product content");
-    expect(prompt).toContain("Complete interaction design");
-    expect(prompt).toContain("Functional interaction contract (mandatory)");
-    expect(prompt).toContain(
-      "inventory every visible button, link, menu item, tab, form, row action, and toggle",
-    );
-    expect(prompt).toContain("Do not emit inert controls");
-    expect(prompt).toContain("Shadcn `Dialog`");
-    expect(prompt).toContain('from "sonner"');
-    expect(prompt).toContain("Never import `@/components/ui/sonner`");
-    expect(prompt).toContain("Theme behavior contract (mandatory");
-    expect(prompt).toContain(
-      'window.matchMedia("(prefers-color-scheme: dark)")',
-    );
-    expect(prompt).toContain(
-      "Tailwind `dark:` utilities activate only when an ancestor has the `dark` class",
-    );
-    expect(prompt).toContain(
-      'document.documentElement.classList.toggle("dark", isDark)',
-    );
-    expect(prompt).toContain(
-      'setTheme((current) => (current === "dark" ? "light" : "dark"))',
-    );
-    expect(prompt).toContain(
-      "mentally click the control twice and verify dark -> light -> dark",
-    );
-    expect(prompt).toContain("document.documentElement.style.colorScheme");
-    expect(prompt).toContain('from "@/components/ui/dialog"');
-    expect(prompt).toContain('from "@/components/ui/alert-dialog"');
-    expect(prompt).toContain('import { Toaster, toast } from "sonner"');
-    expect(prompt).not.toContain('from "@/components/ui/sonner"');
-    expect(prompt).toContain("Responsive composition");
-    expect(prompt).toContain("Structural variety");
-    expect(prompt).toContain("Final design critique");
-    expect(prompt).toContain("centered hero → three equal feature cards → CTA");
-    expect(prompt).toContain("Never fabricate proof");
-    expect(prompt).toContain("fake browser bars");
-    expect(prompt).toContain("Headings and display type stay roman");
+    expect(prompt).toContain("latest explicit user instruction");
+    expect(prompt).toContain("## Execution contract");
+    expect(prompt).toContain("Every import must resolve");
+    expect(prompt).toContain("standard Tailwind v3 utilities only");
+    expect(prompt).toContain("Every visible control must have a real handler");
+    expect(prompt).toContain("Build the requested product surface first");
+    expect(prompt).toContain("Choose structure before styling");
+    expect(prompt).toContain("Do not force an effect");
+    expect(prompt).toContain("Never fabricate metrics");
     expect(prompt).toContain("320, 375, 414, and 768px");
     expect(prompt).toContain(
       "Philosophy, Hierarchy, Execution, Specificity, Restraint, and Variety",
     );
-    expect(prompt).toContain("Sandbox import contract:");
-    expect(prompt).toContain("Never use braces for a default-only component");
-    expect(prompt).toContain("Lucide React only supports these named exports");
-    expect(prompt).toContain("Never import `LucideIcon`");
-    expect(prompt).toContain("Never import `ArrowLeft`");
-    expect(prompt).toContain("Calendar as CalendarIcon");
+    expect(prompt).toContain("a bare API name/link is not a contract");
+    expect(prompt).toContain("Never replace selected API data");
+    expect(prompt).toContain('from "sonner"');
+    expect(prompt).toContain("@/lib/supabase");
+    expect(prompt).toContain("## Output contract");
+
+    expect(prompt).not.toContain("Premium UI/UX execution contract");
+    expect(prompt).not.toContain("27. Did you implement");
+    expect(prompt).not.toContain("Vary border-radius");
+    expect(prompt.length).toBeLessThan(35_000);
+  });
+
+  it("keeps design guidance contextual instead of forcing decoration", () => {
+    const prompt = getMainCodingPrompt({
+      userPrompt: "Build a focused project settings tool",
+    });
+
     expect(prompt).toContain(
-      "Do not import `UserIcon`/`CalendarIcon`/`MailIcon` as package exports",
-    );
-    expect(prompt).toContain(
-      "Every JSX component, icon, helper, hook, and constant",
-    );
-    expect(prompt).toContain("A bare API name or link is not a contract");
-    expect(prompt).toContain(
-      "must never fall back to mock, sample, placeholder",
-    );
-    expect(prompt).toContain(
-      "Never replace the selected API with web-search results",
-    );
-    expect(prompt).toContain(
-      "Treat each surface and foreground as one locked pair",
-    );
-    expect(prompt).toContain("Contrast may never fail");
-    expect(prompt).toContain("at least 4.5:1 contrast");
-    expect(prompt).toContain("component boundaries require at least 3:1");
-    expect(prompt).toContain("Hover styles must stay visually coherent");
-    expect(prompt).toContain("components/ui/button.tsx");
-    expect(prompt).toContain("run a private contrast audit");
-    expect(prompt).toContain("Explicit color fidelity contract (mandatory)");
-    expect(prompt).toContain(
-      "A color named by the user is a hard visual requirement",
-    );
-    expect(prompt).toContain("`purple` stays `purple`");
-    expect(prompt).toContain("complete, literal, static Tailwind v3 utilities");
-    expect(prompt).toContain("never use `bg-${color}-500`");
-    expect(prompt).toContain(
-      "Do not append competing utilities and rely on class order",
-    );
-    expect(prompt).toContain("Composed spatial rhythm");
-    expect(prompt).toContain("Surface and voice restraint");
-    expect(prompt).toContain("Distribution-default copy");
-    expect(prompt).toContain("Runtime Style Pack policy (mandatory)");
-    expect(prompt).toContain("server-resolved and authoritative");
-    expect(prompt).toContain("Active Style Pack directive");
-    expect(prompt).toContain("Active Style Pack directive");
-    expect(prompt).toContain("Premium composition contract (mandatory");
-    expect(prompt).toContain("hairline bento");
-    expect(prompt).toContain("three equal");
-    expect(prompt).toContain("gap-px");
-    expect(prompt).toContain("Active Style Pack surface/type system");
-    expect(prompt).toContain("Bento only for dense comparable modules");
-    expect(prompt).not.toContain(
-      "does the app use the Vercel-inspired Tailwind neutral fallback",
-    );
-    expect(prompt).not.toContain(
-      "Default to a light-first, Vercel-inspired Tailwind `neutral` system",
-    );
-    expect(prompt).toContain("Visual system coherence contract (mandatory)");
-    expect(prompt).toContain("Choose one luminosity model for the screen");
-    expect(prompt).toContain(
-      "Do not create visual drama by dropping a collection of near-black cards",
+      "A product surface, focused utility, or strong typographic opening",
     );
     expect(prompt).toContain(
-      "Never place `text-neutral-950`, `text-neutral-900`",
+      "Signature is optional when the product surface or typography is already distinctive",
     );
-    expect(prompt).toContain("uniform army of same-sized, same-colored cards");
-    expect(prompt).toContain(
-      "Reserve uppercase plus wide tracking for short tertiary labels only",
-    );
-    expect(prompt).toContain(
-      "Explicitly style every chart title, value, axis label, tick, grid line, legend, tooltip",
-    );
-    expect(prompt).toContain("one coherent luminosity model");
-    expect(prompt).toContain(
-      "Design Taste contract (mandatory for distinctive UI)",
-    );
-    expect(prompt).toContain("DESIGN_VARIANCE");
-    expect(prompt).toContain("MOTION_INTENSITY");
-    expect(prompt).toContain("VISUAL_DENSITY");
-    expect(prompt).toContain("Reading this as:");
-    expect(prompt).toContain("Em-dash and en-dash as separators are forbidden");
-    expect(prompt).toContain("Aesthetic modes");
-    expect(prompt).toContain("Swiss Industrial");
-    expect(prompt).toContain("Tactical CRT");
-    expect(prompt).toContain("Design Taste preflight");
+    expect(prompt).toContain("never force a bento, hero, media effect");
+    expect(prompt).toContain("one luminosity model");
+    expect(prompt).toContain("Headings stay roman");
+    expect(prompt).toContain("centered hero -> three equal cards -> CTA");
   });
 
   it("keeps design direction and anti-generic review in the planning prompt", () => {
@@ -319,7 +225,7 @@ describe("prompt design guidance", () => {
     });
 
     expect(prompt).toContain("STYLE_PACK: midnightCool");
-    expect(prompt).toContain("Luminosity: dark-first");
+    expect(prompt).toContain("luminosity: dark-first");
     expect(prompt).not.toContain("STYLE_PACK: kineticAwwwards");
     expect(prompt).toContain("Media fidelity");
     expect(prompt).not.toContain("## Style Pack catalog");
@@ -353,8 +259,9 @@ describe("prompt design guidance", () => {
       estimatedContextTokens: 0,
     });
 
-    expect(prompt).toContain("SquidAgent (Compressed Mode)");
-    expect(prompt).not.toContain("Premium UI/UX execution contract");
+    expect(prompt).toContain("Continuation mode:");
+    expect(prompt).toContain("## Execution contract");
+    expect(prompt).not.toContain("SquidAgent (Compressed Mode)");
   });
 
   it("switches to screenshot fidelity mode instead of Style Pack rotation", () => {

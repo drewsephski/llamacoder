@@ -9,6 +9,8 @@ const ACCEPTED_SCREENSHOT_TYPES = new Set<string>(
 );
 
 export const IMAGE_ATTACHMENT_ACCEPT = ACCEPTED_SCREENSHOT_MIME_TYPES.join(",");
+export const IMAGE_CLONE_PROMPT =
+  "Recreate the attached image as closely as possible in code.";
 
 export function getImageAttachmentError(file: File) {
   if (!ACCEPTED_SCREENSHOT_TYPES.has(file.type)) {
@@ -46,7 +48,16 @@ export function getClipboardImageFile(
   for (const item of Array.from(clipboardData.items)) {
     if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
     const file = item.getAsFile();
-    if (file) return file;
+    if (!file) continue;
+
+    if (!file.type && item.type) {
+      return new File([file], file.name || "pasted-image", {
+        type: item.type,
+        lastModified: file.lastModified,
+      });
+    }
+
+    return file;
   }
 
   return (

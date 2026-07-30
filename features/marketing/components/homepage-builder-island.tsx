@@ -65,7 +65,10 @@ import {
 import { fetchCompletionStream } from "@/features/generation/client/completion-stream";
 import { useGenerationHandoff } from "@/features/generation/client/generation-handoff-context";
 import {
+  getClipboardImageFile,
   getImageAttachmentError,
+  IMAGE_ATTACHMENT_ACCEPT,
+  IMAGE_CLONE_PROMPT,
   readImageAttachmentAsDataUrl,
 } from "@/features/generation/client/image-attachment";
 import { captureWebsiteScreenshot } from "@/features/generation/client/screenshot-capture";
@@ -1398,44 +1401,52 @@ export function HomepageBuilderIsland({
     }
   };
 
-  const handleScreenshotUpload = async (
+  const attachImage = useCallback(
+    async (file: File) => {
+      const attachmentError = getImageAttachmentError(file);
+      if (attachmentError) {
+        toast.error(attachmentError);
+        return;
+      }
+
+      setActiveTemplate(null);
+      setPrompt((currentPrompt) =>
+        currentPrompt.trim() ? currentPrompt : IMAGE_CLONE_PROMPT,
+      );
+      promptStartedAtRef.current ??= Date.now();
+      setQuality("low");
+      setScreenshotLoading(true);
+      setScreenshotUrl(undefined);
+      setScreenshotData(undefined);
+
+      try {
+        const dataUrl = await readImageAttachmentAsDataUrl(file);
+        setScreenshotData(dataUrl);
+
+        if (!isAuthenticated) return;
+
+        uploadScreenshot(file)
+          .then(({ url }) => {
+            setScreenshotUrl(url);
+          })
+          .catch((error) => {
+            console.warn("Screenshot S3 upload failed:", error);
+          });
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, "Unable to read image file."));
+      } finally {
+        setScreenshotLoading(false);
+      }
+    },
+    [isAuthenticated],
+  );
+
+  const handleScreenshotUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    const attachmentError = getImageAttachmentError(file);
-    if (attachmentError) {
-      toast.error(attachmentError);
-      event.target.value = "";
-      return;
-    }
-
-    if (prompt.length === 0) setPrompt("Build this");
-    setQuality("low");
-    setScreenshotLoading(true);
-    setScreenshotUrl(undefined);
-    setScreenshotData(undefined);
-
-    try {
-      const dataUrl = await readImageAttachmentAsDataUrl(file);
-      setScreenshotData(dataUrl);
-      setScreenshotLoading(false);
-
-      if (!isAuthenticated) return;
-
-      uploadScreenshot(file)
-        .then(({ url }) => {
-          setScreenshotUrl(url);
-        })
-        .catch((error) => {
-          console.warn("Screenshot S3 upload failed:", error);
-        });
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Unable to read image file."));
-      setScreenshotLoading(false);
-      event.target.value = "";
-    }
+    if (file) void attachImage(file);
+    event.target.value = "";
   };
 
   const handleUrlScrape = async () => {
@@ -1578,7 +1589,18 @@ export function HomepageBuilderIsland({
                   )}
                   {/* Compose box */}
                   <div className="compose-shell">
-                    <div className="compose-box w-full">
+                    <div
+                      className="compose-box w-full"
+                      onPaste={(event) => {
+                        if (screenshotLoading || isPending) return;
+                        const image = getClipboardImageFile(
+                          event.clipboardData,
+                        );
+                        if (!image) return;
+                        event.preventDefault();
+                        void attachImage(image);
+                      }}
+                    >
                       <div className="compose-box-inner relative w-full">
                         {/* Screenshot preview */}
                         {screenshotLoading && (
@@ -1905,7 +1927,7 @@ export function HomepageBuilderIsland({
                               <input
                                 id="screenshot"
                                 type="file"
-                                accept="image/png, image/jpeg, image/webp"
+                                accept={IMAGE_ATTACHMENT_ACCEPT}
                                 onChange={handleScreenshotUpload}
                                 className="hidden"
                                 ref={fileInputRef}

@@ -1419,48 +1419,22 @@ export function buildStyleCommitmentDirective(
   pack: StylePackWithFonts,
   options?: { navigation?: string; footer?: string },
 ): string {
-  const bans = GENERIC_AI_PALETTE_BANS.map((b) => `- ${b}`).join("\n");
+  const bans = [...GENERIC_AI_PALETTE_BANS, ...pack.hardBans]
+    .map((item) => `- ${item}`)
+    .join("\n");
   const fonts = pack.fontPairing;
-  const monoLine = fonts.monoClass
-    ? `\`.${fonts.monoClass}\` { font-family: '${fonts.mono ?? fonts.display}', monospace; }`
-    : "";
 
   return dedent`
-    **Full-style commitment (mandatory — partial adoption = generic output):**
-    You have ONE aesthetic world for this entire app: **${pack.id}** (${pack.hallmarkAlias}).
-    Every surface, font, radius, border weight, nav, footer, motion cue, and CTA must read as the same designed system — not a gray SaaS base with accent-colored buttons sprinkled on top.
-
-    ### Commitment rules
-    - Root \`<main>\` or outer wrapper MUST use the locked canvas classes: \`${pack.surfaceMap.canvas}\`
-    - EVERY section reuses surface/subdued/inverse roles from this pack — no one-off \`bg-zinc-900\` cards in a light pack or random \`bg-white\` panels in a dark pack
-    - EVERY h1–h3 uses the locked display type recipe; EVERY paragraph uses the locked body recipe
-    - Primary AND secondary CTAs use this pack's cheat-sheet recipes — not bare Shadcn defaults
-    - Navigation decision: ${options?.navigation ?? pack.navArchetype}
-    - Footer decision: ${options?.footer ?? pack.footerArchetype}
-    - Radius system: ${pack.radiusLock}
-    - Signature element MUST appear: ${pack.signatureElement}
-    - If luminosity is **${pack.luminosity}**, the ENTIRE app follows that model — no accidental mid-page theme flips
-
-    ### Locked font pairing (load in index.html — never default to Inter alone)
-    Add to \`index.html\` (or a global \`<style>\` block in App.tsx):
-    \`\`\`html
-    <link rel="stylesheet" href="${fonts.googleFontsUrl}" />
-    <style>
-      .${fonts.displayClass} { font-family: '${fonts.display}', sans-serif; }
-      .${fonts.bodyClass} { font-family: '${fonts.body}', sans-serif; }
-      ${monoLine}
-    </style>
-    \`\`\`
-    Apply \`${fonts.displayClass}\` on all headings/display type and \`${fonts.bodyClass}\` on body copy. Append these classes to the locked typography recipes above.
-
-    ### Generic AI defaults — hard-banned for this build
+    **Full-style commitment (mandatory):**
+    - One visual world: **${pack.id}** (${pack.hallmarkAlias}), ${pack.luminosity}.
+    - Canvas: \`${pack.surfaceMap.canvas}\`. Reuse only this pack's surface roles; never introduce a second palette or mid-page luminosity flip.
+    - Type: load ${fonts.googleFontsUrl}; use \`.${fonts.displayClass}\` for display and \`.${fonts.bodyClass}\` for body${fonts.monoClass ? `, with \`.${fonts.monoClass}\` only for data/code` : ""}.
+    - Radius: ${pack.radiusLock}. Elevation: ${pack.elevationLock}.
+    - Navigation: ${options?.navigation ?? pack.navArchetype}. Footer: ${options?.footer ?? pack.footerArchetype}.
+    - Primary and secondary actions must use complete surface + foreground recipes from this pack, not default Shadcn styling.
+    - Signature is optional when the product surface or typography is already distinctive; if used, adapt ${pack.signatureElement} to the subject and spend boldness only there.
+    - Hard bans:
     ${bans}
-
-    ### Abandonment tells (if any appear, you failed the pack)
-    - Switched to yellow-400/500 + black primary CTA mid-build
-    - Mixed a second palette family (e.g. blue buttons on a locked emerald pack)
-    - Shipped three equal icon+heading+paragraph cards instead of the composition scaffold
-    - Used Inter/system-ui as the only font with no loaded pairing
   `;
 }
 
@@ -1483,56 +1457,43 @@ export function buildActiveStylePackDirective(
       : selectStylePackId(brief);
   if (!packId) {
     return dedent`
-      **Active Style Pack directive (this build):**
-      - The brief supplies explicit aesthetic, palette, color, or reference direction.
-      - Honor that direction with the color-fidelity and Design Taste contracts.
-      - Apply composition appropriate to the resolved scope. Bento and mixed-cell boards are allowed only for dense comparable modules, never as a universal proof of craft.
-      - Still ban generic AI defaults: yellow/black CTA combo, Inter-only typography, purple mesh heroes.
+      **Active Style Pack directive (user-directed):**
+      Honor the user's explicit aesthetic and color direction. Use one coherent
+      system, preserve literal Tailwind color families, and avoid generic
+      yellow/black CTA, Inter-only type, purple-mesh, and three-card defaults.
     `;
   }
 
   const pack = getStylePack(packId);
-  const preflight = formatStylePackPreflight(pack);
-  const commitment = buildStyleCommitmentDirective(pack, options);
   const monoRole = pack.typography.mono
-    ? `\n    - mono: \`${pack.typography.mono}\``
+    ? `; mono \`${pack.typography.mono}\` via \`.${pack.fontPairing.monoClass}\``
     : "";
-  const cheat = pack.classCheatSheet.map((line) => `- ${line}`).join("\n");
+  const surfaceMap = [
+    `canvas=\`${pack.surfaceMap.canvas}\``,
+    `surface=\`${pack.surfaceMap.surface}\``,
+    `subdued=\`${pack.surfaceMap.subdued}\``,
+    `inverse=\`${pack.surfaceMap.inverse}\``,
+    `primary=\`${pack.surfaceMap.primary}\``,
+    `muted=\`${pack.surfaceMap.mutedInk}\``,
+    `overlay=\`${pack.surfaceMap.overlay}\``,
+  ].join("; ");
+  const classes = pack.classCheatSheet.map((line) => `- ${line}`).join("\n");
 
   return [
-    "**Active Style Pack directive (LOCKED for this build — do not re-route):**",
-    `- ${preflight}`,
-    `- Hallmark alias: ${pack.hallmarkAlias}`,
+    "**Active Style Pack directive (LOCKED for this build - do not re-route):**",
+    `- ${formatStylePackPreflight(pack)}`,
     `- Design Read: ${pack.designReadTemplate}`,
-    `- Aesthetic mode: ${pack.aestheticMode} | Luminosity: ${pack.luminosity}`,
-    `- Resolved macrostructure: ${options?.macrostructure ?? "infer from the product job"}. This structural decision outranks the pack's example scaffold.`,
-    "- You MUST implement this pack's SURFACE_MAP classes, font pairing, and one subject-specific signature element. Use its composition scaffold only when it fits the resolved macrostructure; never force a bento into a focused utility, component edit, editorial document, or workbench.",
-    "- Apply this pack completely in the code. Do not dump STYLE_PACK / DIALS / SURFACE_MAP lines into the user-facing reply — keep that lock private.",
-    "",
-    commitment,
-    "",
-    "### Locked surface map",
-    `- canvas: \`${pack.surfaceMap.canvas}\``,
-    `- surface: \`${pack.surfaceMap.surface}\``,
-    `- subdued: \`${pack.surfaceMap.subdued}\``,
-    `- inverse: \`${pack.surfaceMap.inverse}\``,
-    `- primary: \`${pack.surfaceMap.primary}\``,
-    `- muted: \`${pack.surfaceMap.mutedInk}\``,
-    `- overlay: \`${pack.surfaceMap.overlay}\``,
-    "",
-    "### Locked type roles",
-    `- display: \`${pack.typography.display}\` + class \`.${pack.fontPairing.displayClass}\``,
-    `- body: \`${pack.typography.body}\` + class \`.${pack.fontPairing.bodyClass}\`${monoRole}`,
-    "",
+    `- Aesthetic: ${pack.aestheticMode}; luminosity: ${pack.luminosity}; resolved macrostructure: ${options?.macrostructure ?? "infer from the product job"}.`,
+    `- Surface map: ${surfaceMap}`,
+    `- Type: display \`${pack.typography.display}\` via \`.${pack.fontPairing.displayClass}\`; body \`${pack.typography.body}\` via \`.${pack.fontPairing.bodyClass}\`${monoRole}. Load ${pack.fontPairing.googleFontsUrl}.`,
+    buildStyleCommitmentDirective(pack, options),
     "### Conditional composition reference",
-    "Use the following only when it matches the resolved scope and information architecture. Otherwise preserve the pack's visual system while implementing the resolved macrostructure:",
-    pack.compositionScaffold,
-    "",
-    "### Class cheat-sheet",
-    cheat,
-  ]
-    .filter(Boolean)
-    .join("\n");
+    `- Subject-specific cue: ${pack.signatureElement}`,
+    `- Motion: ${pack.motionRecipe}`,
+    "- Use these cues only when they serve the resolved scope. Preserve the visual system but never force a bento, hero, media effect, nav, or footer into a focused utility, component edit, editorial document, or workbench.",
+    "### Ready-to-use class recipes",
+    classes,
+  ].join("\n");
 }
 
 /**
