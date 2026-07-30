@@ -280,6 +280,23 @@ export default function App() {
     expect(config.customSetup.dependencies["qrcode.react"]).toBeUndefined();
   });
 
+  it("installs React Spline with its runtime companion", () => {
+    const config = getSandpackConfig([
+      {
+        path: "App.tsx",
+        content: [
+          'import Spline from "@splinetool/react-spline";',
+          'export default function App() { return <Spline scene="https://prod.spline.design/example/scene.splinecode" />; }',
+        ].join("\n"),
+      },
+    ]);
+
+    expect(config.customSetup.dependencies).toMatchObject({
+      "@splinetool/react-spline": "4.1.0",
+      "@splinetool/runtime": "1.12.98",
+    });
+  });
+
   it("injects form, resizable, and scroll-area wrappers with transitive dependencies", () => {
     const config = getSandpackConfig([
       {
