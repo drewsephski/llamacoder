@@ -31,6 +31,7 @@ export type GifSpec = {
   label: string;
   posterFrame: number;
   auditFrames: number[];
+  cursorAudits: Array<{ frame: number; target: string }>;
 };
 
 export const gifSpecs: GifSpec[] = [
@@ -39,18 +40,36 @@ export const gifSpecs: GifSpec[] = [
     label: "Plan before building",
     posterFrame: 78,
     auditFrames: [0, 36, 70, 101],
+    cursorAudits: [
+      { frame: 27, target: "plan-send" },
+      { frame: 36, target: "plan-answer-one" },
+      { frame: 53, target: "plan-answer-two" },
+      { frame: 98, target: "plan-approve" },
+    ],
   },
   {
     name: "screenshot-to-app",
     label: "Screenshot to editable React app",
     posterFrame: 92,
     auditFrames: [0, 25, 58, 92],
+    cursorAudits: [
+      { frame: 22, target: "screenshot-upload" },
+      { frame: 34, target: "screenshot-generate" },
+      { frame: 81, target: "screenshot-mobile" },
+    ],
   },
   {
     name: "verify-and-export",
     label: "Verify, repair, and export",
     posterFrame: 96,
     auditFrames: [0, 24, 61, 96],
+    cursorAudits: [
+      { frame: 18, target: "nav-quality" },
+      { frame: 39, target: "verify-repair" },
+      { frame: 80, target: "verify-export" },
+      { frame: 96, target: "verify-zip" },
+      { frame: 103, target: "verify-github" },
+    ],
   },
 ];
 
@@ -250,6 +269,43 @@ async function auditRenderedFrame(page: Page, spec: GifSpec, frame: number) {
   }
 }
 
+async function auditCursorAlignment(page: Page, spec: GifSpec, frame: number) {
+  const expected = spec.cursorAudits.find((audit) => audit.frame === frame);
+  if (!expected) return;
+  const result = await page.evaluate((targetName) => {
+    const root = document.querySelector<HTMLElement>(".launch-gif-app");
+    const cursor = document.querySelector<HTMLElement>(".launch-gif-cursor");
+    const target = root?.querySelector<HTMLElement>(
+      `[data-cursor-target="${targetName}"]`,
+    );
+    if (!root || !cursor || !target) {
+      return { error: `Missing cursor or target ${targetName}`, distance: 0 };
+    }
+    const rootRect = root.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const cursorX = rootRect.left + Number.parseFloat(cursor.style.left);
+    const cursorY = rootRect.top + Number.parseFloat(cursor.style.top);
+    const targetX = targetRect.left + targetRect.width / 2;
+    const targetY = targetRect.top + targetRect.height / 2;
+    return {
+      error:
+        cursor.dataset.cursorTarget === targetName
+          ? null
+          : `Cursor declares ${cursor.dataset.cursorTarget ?? "no target"}`,
+      distance: Math.hypot(cursorX - targetX, cursorY - targetY),
+    };
+  }, expected.target);
+
+  if (result.error) {
+    throw new Error(`${spec.name} frame ${frame}: ${result.error}.`);
+  }
+  if (result.distance > 2) {
+    throw new Error(
+      `${spec.name} frame ${frame}: cursor misses ${expected.target} by ${result.distance.toFixed(1)}px.`,
+    );
+  }
+}
+
 async function recordSpec(browser: Browser, spec: GifSpec) {
   const frameDirectory = path.join(gifTemporaryDirectory, spec.name);
   await rm(frameDirectory, { recursive: true, force: true });
@@ -273,6 +329,7 @@ async function recordSpec(browser: Browser, spec: GifSpec) {
     if (spec.auditFrames.includes(frame)) {
       await auditRenderedFrame(page, spec, frame);
     }
+    await auditCursorAlignment(page, spec, frame);
     await page.screenshot({
       path: path.join(
         frameDirectory,

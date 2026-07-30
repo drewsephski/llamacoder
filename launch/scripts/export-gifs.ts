@@ -320,10 +320,10 @@ async function main() {
       "## Readability and privacy gates",
       "",
       "- Critical on-screen labels are at least 18 px and remain inside the 1270×760 frame.",
+      "- Every click is anchored to its rendered control and must land within 2 px during capture.",
       "- Each exported GIF is decoded at 6.5 seconds into its matching `*-display-check.png` for native-size visual review.",
       "- All names, projects, screenshots, files, and verification results are deterministic fictional fixtures.",
       "- The capture routes perform no network calls beyond the local renderer and expose no account, project, or provider credentials.",
-      "",
     ].join("\n");
     await writeFile(
       path.join(gifOutputDirectory, "file-size-report.md"),
@@ -353,6 +353,8 @@ async function main() {
         ],
         privacy:
           "Deterministic fictional launch fixtures only; no authenticated data.",
+        cursorAlignment:
+          "DOM-anchored click targets with a maximum 2 px capture tolerance.",
       },
       assets,
     };

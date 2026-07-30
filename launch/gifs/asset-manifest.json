@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-30T15:12:40.573Z",
+  "generatedAt": "2026-07-30T18:29:45.852Z",
   "command": "pnpm launch:export-gifs",
   "profile": {
     "width": 1270,
@@ -19,14 +19,15 @@
       "components/quality-report-panel.tsx",
       "app/(main)/chats/[id]/code-viewer.tsx"
     ],
-    "privacy": "Deterministic fictional launch fixtures only; no authenticated data."
+    "privacy": "Deterministic fictional launch fixtures only; no authenticated data.",
+    "cursorAlignment": "DOM-anchored click targets with a maximum 2 px capture tolerance."
   },
   "assets": [
     {
       "path": "launch/gifs/plan-mode.mp4",
       "format": "mp4",
-      "bytes": 265753,
-      "sha256": "497de6b422cac35b5368a35aa63b0ea54646bf3737d2e9a58a9aca425ec191f5",
+      "bytes": 311573,
+      "sha256": "7f77e880e8f808d92e3f24821e5914bad8668d94191e192104a3bc53839d65c5",
       "width": 1270,
       "height": 760,
       "durationSeconds": 10,
@@ -35,8 +36,8 @@
     {
       "path": "launch/gifs/plan-mode.gif",
       "format": "gif",
-      "bytes": 1807368,
-      "sha256": "6e7e8b815f861c4eb6b18ae26031a2d85c3a6ca32fa70b5fb6b4e046e46bd705",
+      "bytes": 2288880,
+      "sha256": "97d377d947bb96a2721dcf872b3fe4e98539a15f60b87fe4220f6e89f8aa0fd6",
       "width": 1270,
       "height": 760,
       "durationSeconds": 10,
@@ -46,8 +47,8 @@
     {
       "path": "launch/gifs/plan-mode.webp",
       "format": "webp",
-      "bytes": 453126,
-      "sha256": "75314f7e0c196a28803ec7eb85606b602897d8a10f8921a09fa7a9a9f90ba64c",
+      "bytes": 529548,
+      "sha256": "fbfb12341b17e4a2b42666d95d1ad35f9b965dfdfd022674e3d2e679c95c2c8a",
       "width": 1270,
       "height": 760,
       "durationSeconds": 9.96,
@@ -57,8 +58,8 @@
     {
       "path": "launch/gifs/plan-mode-poster.png",
       "format": "png",
-      "bytes": 75629,
-      "sha256": "580e55f9fda6a5d1bd0a7afc296270a4ae25969d09314a8bea45f214b21e9e7f",
+      "bytes": 116832,
+      "sha256": "01bc2e2e1b5a23aa22f142df5ec28ca0f9068662564efdb0d357c4d0c59bc25e",
       "width": 1270,
       "height": 760,
       "framesPerSecond": 25
@@ -66,8 +67,8 @@
     {
       "path": "launch/gifs/plan-mode-display-check.png",
       "format": "png",
-      "bytes": 144160,
-      "sha256": "ad325b08033a8bcc7babc96ed9aba10a0b063564cf44968566de354ca545d960",
+      "bytes": 176375,
+      "sha256": "7fb101412e88e413a062c1cb9b605f953ce487f8c20d0746ffab480107eab8fd",
       "width": 1270,
       "height": 760,
       "framesPerSecond": 25
@@ -75,8 +76,8 @@
     {
       "path": "launch/gifs/screenshot-to-app.mp4",
       "format": "mp4",
-      "bytes": 309090,
-      "sha256": "52a67587126e3e36848b8ebf4de37a91baa5b9531901656e6fb2ab05c655c9c1",
+      "bytes": 342604,
+      "sha256": "b5137228431189bf4f4a86bea8e07b5795665f0a01db68f484c748aaf01e907f",
       "width": 1270,
       "height": 760,
       "durationSeconds": 10,
@@ -85,8 +86,8 @@
     {
       "path": "launch/gifs/screenshot-to-app.gif",
       "format": "gif",
-      "bytes": 2364834,
-      "sha256": "39750611930b754ebbe3729fc1cb97b8856ad660bbf5bc0d58887a580dcc1bad",
+      "bytes": 2610221,
+      "sha256": "5f4f5bcb4b12fadb73b6a79515466489c4bd4c28d14e268adb57f0a0126eb74b",
       "width": 1270,
       "height": 760,
       "durationSeconds": 10,
@@ -96,8 +97,8 @@
     {
       "path": "launch/gifs/screenshot-to-app.webp",
       "format": "webp",
-      "bytes": 519614,
-      "sha256": "69d4c655863cdd763b1f943b2207d56494b305844598af0e2acb0f97e5e5d0e5",
+      "bytes": 584206,
+      "sha256": "48c8e0f55d259b916e9936e789c8664d26b4148ecd63df1176355892e36af6c5",
       "width": 1270,
       "height": 760,
       "durationSeconds": 9.96,
@@ -107,8 +108,8 @@
     {
       "path": "launch/gifs/screenshot-to-app-poster.png",
       "format": "png",
-      "bytes": 118334,
-      "sha256": "db5d64e4200859a060b8808602ef7846e405162b591f84e293e891b646a7a605",
+      "bytes": 125984,
+      "sha256": "36e76174c6eb13c7d5c748b0e124ec0abfe9b47158f08b298fa95c7ded246996",
       "width": 1270,
       "height": 760,
       "framesPerSecond": 25
@@ -116,8 +117,8 @@
     {
       "path": "launch/gifs/screenshot-to-app-display-check.png",
       "format": "png",
-      "bytes": 167343,
-      "sha256": "0448f995f72acbbeffa37d5bbd76aac5cd75caaf842140a9ccaf5b8f2a6a751e",
+      "bytes": 181799,
+      "sha256": "96a8bb2b4db00d19c6f397bbfcaf77fa3b638c66e79f72fe5ff9c107a97cefd8",
       "width": 1270,
       "height": 760,
       "framesPerSecond": 25
@@ -125,8 +126,8 @@
     {
       "path": "launch/gifs/verify-and-export.mp4",
       "format": "mp4",
-      "bytes": 283960,
-      "sha256": "3151c09f44d064c58c8360b24e14e8314f289b375733619599d93bcd894527b7",
+      "bytes": 339851,
+      "sha256": "5cc0c45f7cea5d971a87908432950f7c93f9ac0c08b98c909ef810689c4297dd",
       "width": 1270,
       "height": 760,
       "durationSeconds": 10,
@@ -135,8 +136,8 @@
     {
       "path": "launch/gifs/verify-and-export.gif",
       "format": "gif",
-      "bytes": 2157421,
-      "sha256": "1c6b094884e187ece2b15e3ba0f84a6648f69b907fec1e5f4e4ae8187733d9e7",
+      "bytes": 2407903,
+      "sha256": "c65054b24fdd752d1e842b4b82cf765d1fe00ac447f0c6dd66845924e6e7f844",
       "width": 1270,
       "height": 760,
       "durationSeconds": 10,
@@ -146,8 +147,8 @@
     {
       "path": "launch/gifs/verify-and-export.webp",
       "format": "webp",
-      "bytes": 464390,
-      "sha256": "e9f1d161b503b8a145eab77a3e4736392fb3332607f4f79eb083d0f3191b918e",
+      "bytes": 538208,
+      "sha256": "281ea6e5500b5e755661d3a68caeca477f510ea496bbf07484476018281f74f6",
       "width": 1270,
       "height": 760,
       "durationSeconds": 9.96,
@@ -157,8 +158,8 @@
     {
       "path": "launch/gifs/verify-and-export-poster.png",
       "format": "png",
-      "bytes": 119277,
-      "sha256": "56745ed5780e7bbe85dcb596686f4a4f68692c328a0f50bdbe98e8d844960705",
+      "bytes": 138203,
+      "sha256": "dca984b5734981ef2813c37e39a7c0c808a3d10327552accf6faa59aa5f84b0f",
       "width": 1270,
       "height": 760,
       "framesPerSecond": 25
@@ -166,8 +167,8 @@
     {
       "path": "launch/gifs/verify-and-export-display-check.png",
       "format": "png",
-      "bytes": 148021,
-      "sha256": "84a9a228ed6eec0f6bfa91d0883cd52eecc7bdc17dd35d5d6bea524f3a15d10b",
+      "bytes": 156803,
+      "sha256": "eef7d0eaa71d4a90ce8711f36555ec5cf8e269b9b2c2c7cad051ad4c30d669d2",
       "width": 1270,
       "height": 760,
       "framesPerSecond": 25

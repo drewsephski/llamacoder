@@ -16,6 +16,10 @@ shipping Plan Review, question flow, screenshot import, preview device switcher,
 quality report, repair, and export surfaces without requiring authentication or
 loading private project data.
 
+Cursor movement is resolved from the rendered control bounds rather than fixed
+canvas coordinates. The capture fails if a click lands more than 2 px from its
+named target.
+
 Output profile:
 
 - 1270×760, matching Product Hunt's recommended gallery image dimensions

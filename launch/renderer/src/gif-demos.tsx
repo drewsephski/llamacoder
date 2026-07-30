@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -49,6 +49,98 @@ function mix(start: number, end: number, amount: number) {
   return start + (end - start) * eased;
 }
 
+type CursorPoint = {
+  frame: number;
+  x: number;
+  y: number;
+  target?: string;
+  anchorX?: number;
+  anchorY?: number;
+};
+
+type CursorClick = {
+  frame: number;
+  target: string;
+};
+
+const PLAN_CURSOR_POINTS: CursorPoint[] = [
+  { frame: 0, x: 1140, y: 680 },
+  { frame: 27, x: 1090, y: 212, target: "plan-send" },
+  { frame: 36, x: 380, y: 525, target: "plan-answer-one" },
+  { frame: 53, x: 380, y: 525, target: "plan-answer-two" },
+  {
+    frame: 72,
+    x: 820,
+    y: 520,
+    target: "plan-review",
+    anchorX: 0.72,
+    anchorY: 0.62,
+  },
+  { frame: 98, x: 1010, y: 620, target: "plan-approve" },
+  { frame: 119, x: 1140, y: 680 },
+];
+
+const PLAN_CURSOR_CLICKS: CursorClick[] = [
+  { frame: 27, target: "plan-send" },
+  { frame: 36, target: "plan-answer-one" },
+  { frame: 53, target: "plan-answer-two" },
+  { frame: 98, target: "plan-approve" },
+];
+
+const SCREENSHOT_CURSOR_POINTS: CursorPoint[] = [
+  { frame: 0, x: 1135, y: 680 },
+  { frame: 22, x: 290, y: 315, target: "screenshot-upload" },
+  { frame: 34, x: 290, y: 590, target: "screenshot-generate" },
+  {
+    frame: 64,
+    x: 1000,
+    y: 560,
+    target: "screenshot-preview",
+    anchorX: 0.76,
+    anchorY: 0.7,
+  },
+  { frame: 81, x: 1180, y: 112, target: "screenshot-mobile" },
+  {
+    frame: 104,
+    x: 1010,
+    y: 530,
+    target: "screenshot-preview",
+    anchorX: 0.72,
+    anchorY: 0.58,
+  },
+  { frame: 119, x: 1135, y: 680 },
+];
+
+const SCREENSHOT_CURSOR_CLICKS: CursorClick[] = [
+  { frame: 22, target: "screenshot-upload" },
+  { frame: 34, target: "screenshot-generate" },
+  { frame: 81, target: "screenshot-mobile" },
+];
+
+const VERIFY_CURSOR_POINTS: CursorPoint[] = [
+  { frame: 0, x: 1138, y: 680 },
+  { frame: 18, x: 42, y: 270, target: "nav-quality" },
+  { frame: 39, x: 1060, y: 550, target: "verify-repair" },
+  {
+    frame: 64,
+    x: 780,
+    y: 112,
+    target: "verify-runtime",
+  },
+  { frame: 80, x: 790, y: 705, target: "verify-export" },
+  { frame: 96, x: 470, y: 470, target: "verify-zip" },
+  { frame: 103, x: 795, y: 470, target: "verify-github" },
+  { frame: 119, x: 1138, y: 680 },
+];
+
+const VERIFY_CURSOR_CLICKS: CursorClick[] = [
+  { frame: 18, target: "nav-quality" },
+  { frame: 39, target: "verify-repair" },
+  { frame: 80, target: "verify-export" },
+  { frame: 96, target: "verify-zip" },
+  { frame: 103, target: "verify-github" },
+];
+
 function cursorPath(
   frame: number,
   points: Array<{ frame: number; x: number; y: number }>,
@@ -74,20 +166,76 @@ function DemoCursor({
   clicks,
 }: {
   frame: number;
-  points: Array<{ frame: number; x: number; y: number }>;
-  clicks: number[];
+  points: CursorPoint[];
+  clicks: CursorClick[];
 }) {
-  const position = cursorPath(frame, points);
-  const clicking = clicks.some((click) => Math.abs(frame - click) <= 2);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const focusRef = useRef<HTMLDivElement>(null);
+  const activeClick = clicks.find(
+    (click) => Math.abs(frame - click.frame) <= 5,
+  );
+  const clicking = Boolean(
+    activeClick && Math.abs(frame - activeClick.frame) <= 2,
+  );
+
+  useLayoutEffect(() => {
+    const cursor = cursorRef.current;
+    const focusElement = focusRef.current;
+    const root = cursor?.closest<HTMLElement>(".launch-gif-app");
+    if (!cursor || !focusElement || !root) return;
+    const rootRect = root.getBoundingClientRect();
+    const resolveTarget = (targetName: string) =>
+      root.querySelector<HTMLElement>(`[data-cursor-target="${targetName}"]`);
+    const resolvedPoints = points.map((point) => {
+      if (!point.target) {
+        return { frame: point.frame, x: point.x, y: point.y };
+      }
+      const target = resolveTarget(point.target);
+      if (!target) return { frame: point.frame, x: point.x, y: point.y };
+      const rect = target.getBoundingClientRect();
+      return {
+        frame: point.frame,
+        x: rect.left - rootRect.left + rect.width * (point.anchorX ?? 0.5),
+        y: rect.top - rootRect.top + rect.height * (point.anchorY ?? 0.5),
+      };
+    });
+    const focusTarget = activeClick ? resolveTarget(activeClick.target) : null;
+    const focusRect = focusTarget?.getBoundingClientRect();
+    const position = cursorPath(frame, resolvedPoints);
+    cursor.style.left = `${position.x}px`;
+    cursor.style.top = `${position.y}px`;
+    if (focusRect && focusTarget) {
+      focusElement.style.display = "block";
+      focusElement.style.left = `${focusRect.left - rootRect.left - 5}px`;
+      focusElement.style.top = `${focusRect.top - rootRect.top - 5}px`;
+      focusElement.style.width = `${focusRect.width + 10}px`;
+      focusElement.style.height = `${focusRect.height + 10}px`;
+      focusElement.style.borderRadius = `${Number.parseFloat(getComputedStyle(focusTarget).borderRadius) + 5}px`;
+    } else {
+      focusElement.style.display = "none";
+    }
+  }, [activeClick, frame, points]);
+
+  const fallbackPosition = cursorPath(frame, points);
   return (
-    <div
-      className={`launch-gif-cursor ${clicking ? "is-clicking" : ""}`}
-      style={{ left: position.x, top: position.y }}
-      aria-hidden="true"
-    >
-      <MousePointer2 />
-      <span />
-    </div>
+    <>
+      <div
+        ref={focusRef}
+        className={`launch-gif-focus ${clicking ? "is-clicking" : ""}`}
+        style={{ display: "none" }}
+        aria-hidden="true"
+      />
+      <div
+        ref={cursorRef}
+        className={`launch-gif-cursor ${clicking ? "is-clicking" : ""}`}
+        style={{ left: fallbackPosition.x, top: fallbackPosition.y }}
+        data-cursor-target={clicking ? activeClick?.target : undefined}
+        aria-hidden="true"
+      >
+        <MousePointer2 />
+        <span />
+      </div>
+    </>
   );
 }
 
@@ -110,13 +258,26 @@ function IntroCover({ frame, label }: { frame: number; label: string }) {
   );
 }
 
-function ProductHeader({ label }: { label: string }) {
+function ProductHeader({
+  label,
+  step,
+  stage,
+}: {
+  label: string;
+  step: string;
+  stage: string;
+}) {
   return (
     <header className="launch-gif-header">
       <BrandLockup />
-      <div className="launch-gif-label" data-critical-copy>
+      <div className="launch-gif-label">
         <Sparkles />
-        {label}
+        <span>
+          <strong data-critical-copy>{label}</strong>
+          <small>
+            <b>{step}</b> {stage}
+          </small>
+        </span>
       </div>
       <div className="launch-gif-project">
         <span>FF</span>
@@ -136,7 +297,10 @@ function Rail({ active = "Build" }: { active?: "Build" | "Quality" }) {
       <div>
         <FileCode2 /> <span>Files</span>
       </div>
-      <div className={active === "Quality" ? "is-active" : ""}>
+      <div
+        className={active === "Quality" ? "is-active" : ""}
+        data-cursor-target="nav-quality"
+      >
         <ShieldCheck /> <span>Quality</span>
       </div>
       <div>
@@ -153,10 +317,18 @@ function PlanModeDemo({ frame }: { frame: number }) {
   const secondAnswered = frame >= 55;
   const showingPlan = frame >= 62;
   const approved = frame >= 100;
+  const guide =
+    frame < 29
+      ? { step: "01 / 04", stage: "Describe the product" }
+      : frame < 58
+        ? { step: "02 / 04", stage: "Answer focused questions" }
+        : frame < 94
+          ? { step: "03 / 04", stage: "Review the structured plan" }
+          : { step: "04 / 04", stage: "Approve and start building" };
 
   return (
     <div className="launch-gif-app plan-mode-demo">
-      <ProductHeader label="Plan before building" />
+      <ProductHeader label="Plan before building" {...guide} />
       <div className="launch-gif-workspace">
         <Rail />
         <main className="plan-chat">
@@ -174,7 +346,10 @@ function PlanModeDemo({ frame }: { frame: number }) {
               {prompt.slice(0, typedLength)}
               {frame < 27 && <i className="typing-caret" />}
             </p>
-            <button className={frame >= 27 ? "is-sent" : ""}>
+            <button
+              className={frame >= 27 ? "is-sent" : ""}
+              data-cursor-target="plan-send"
+            >
               {frame >= 27 ? <Check /> : <ArrowRight />}
             </button>
           </section>
@@ -212,6 +387,13 @@ function PlanModeDemo({ frame }: { frame: number }) {
                       <button
                         key={answer}
                         className={selected ? "is-selected" : ""}
+                        data-cursor-target={
+                          index === 0
+                            ? firstAnswered
+                              ? "plan-answer-two"
+                              : "plan-answer-one"
+                            : undefined
+                        }
                       >
                         <span>{selected ? <Check /> : index + 1}</span>
                         {answer}
@@ -225,6 +407,7 @@ function PlanModeDemo({ frame }: { frame: number }) {
           ) : (
             <section
               className={`plan-review-card ${approved ? "is-approved" : ""}`}
+              data-cursor-target="plan-review"
             >
               <div className="plan-review-heading">
                 <span>
@@ -275,7 +458,10 @@ function PlanModeDemo({ frame }: { frame: number }) {
               </div>
               <div className="plan-actions">
                 <button>Edit plan</button>
-                <button className="primary-action">
+                <button
+                  className="primary-action"
+                  data-cursor-target="plan-approve"
+                >
                   {approved ? (
                     <>
                       <Check /> Plan approved
@@ -293,16 +479,8 @@ function PlanModeDemo({ frame }: { frame: number }) {
       </div>
       <DemoCursor
         frame={frame}
-        clicks={[27, 36, 53, 98]}
-        points={[
-          { frame: 0, x: 1140, y: 670 },
-          { frame: 24, x: 1115, y: 214 },
-          { frame: 35, x: 535, y: 526 },
-          { frame: 52, x: 535, y: 526 },
-          { frame: 79, x: 945, y: 650 },
-          { frame: 98, x: 1040, y: 658 },
-          { frame: 119, x: 1140, y: 670 },
-        ]}
+        clicks={PLAN_CURSOR_CLICKS}
+        points={PLAN_CURSOR_POINTS}
       />
       <IntroCover frame={frame} label="Plan before building" />
     </div>
@@ -340,10 +518,18 @@ function ScreenshotToAppDemo({ frame }: { frame: number }) {
   const complete = frame >= 55;
   const mobile = frame >= 83;
   const buildProgress = Math.round(progress(frame, 35, 53) * 100);
+  const guide =
+    frame < 25
+      ? { step: "01 / 04", stage: "Add a visual reference" }
+      : frame < 55
+        ? { step: "02 / 04", stage: "Generate editable React" }
+        : frame < 80
+          ? { step: "03 / 04", stage: "Inspect the desktop build" }
+          : { step: "04 / 04", stage: "Check the responsive layout" };
 
   return (
     <div className="launch-gif-app screenshot-demo">
-      <ProductHeader label="Screenshot to editable React app" />
+      <ProductHeader label="Screenshot to editable React app" {...guide} />
       <div className="launch-gif-workspace">
         <Rail />
         <main className="screenshot-workspace">
@@ -354,7 +540,10 @@ function ScreenshotToAppDemo({ frame }: { frame: number }) {
               Squid reads the layout, visual system, and responsive intent—then
               returns editable React code.
             </p>
-            <div className={`upload-zone ${uploaded ? "has-file" : ""}`}>
+            <div
+              className={`upload-zone ${uploaded ? "has-file" : ""}`}
+              data-cursor-target="screenshot-upload"
+            >
               {uploaded ? (
                 <>
                   <ReferencePreview compact />
@@ -380,6 +569,7 @@ function ScreenshotToAppDemo({ frame }: { frame: number }) {
             </div>
             <button
               className={`generate-button ${generating ? "is-generating" : ""}`}
+              data-cursor-target="screenshot-generate"
             >
               {generating ? (
                 <>
@@ -424,7 +614,10 @@ function ScreenshotToAppDemo({ frame }: { frame: number }) {
                 <button className={!mobile ? "is-active" : ""}>
                   <Monitor /> Desktop
                 </button>
-                <button className={mobile ? "is-active" : ""}>
+                <button
+                  className={mobile ? "is-active" : ""}
+                  data-cursor-target="screenshot-mobile"
+                >
                   <Smartphone /> Mobile
                 </button>
               </div>
@@ -445,7 +638,10 @@ function ScreenshotToAppDemo({ frame }: { frame: number }) {
                   </small>
                 </div>
               ) : (
-                <div className="generated-browser">
+                <div
+                  className="generated-browser"
+                  data-cursor-target="screenshot-preview"
+                >
                   <ReferencePreview />
                   {frame >= 58 && (
                     <span className="editable-badge">
@@ -460,16 +656,8 @@ function ScreenshotToAppDemo({ frame }: { frame: number }) {
       </div>
       <DemoCursor
         frame={frame}
-        clicks={[22, 34, 81]}
-        points={[
-          { frame: 0, x: 1135, y: 675 },
-          { frame: 21, x: 420, y: 315 },
-          { frame: 33, x: 421, y: 594 },
-          { frame: 70, x: 1020, y: 600 },
-          { frame: 81, x: 1110, y: 111 },
-          { frame: 105, x: 1028, y: 560 },
-          { frame: 119, x: 1135, y: 675 },
-        ]}
+        clicks={SCREENSHOT_CURSOR_CLICKS}
+        points={SCREENSHOT_CURSOR_POINTS}
       />
       <IntroCover frame={frame} label="Screenshot to editable React app" />
     </div>
@@ -516,16 +704,27 @@ function MiniAppPreview({ repaired }: { repaired: boolean }) {
 }
 
 function VerifyAndExportDemo({ frame }: { frame: number }) {
+  const qualityOpened = frame >= 20;
   const repairing = frame >= 40 && frame < 57;
   const repaired = frame >= 57;
   const exportOpen = frame >= 83;
   const zipVerified = frame >= 98;
+  const guide =
+    frame < 20
+      ? { step: "01 / 05", stage: "Open verification" }
+      : frame < 40
+        ? { step: "02 / 05", stage: "Review the detected issue" }
+        : frame < 60
+          ? { step: "03 / 05", stage: "Repair and re-run checks" }
+          : frame < 83
+            ? { step: "04 / 05", stage: "Confirm the updated state" }
+            : { step: "05 / 05", stage: "Choose an export handoff" };
 
   return (
     <div className="launch-gif-app verification-demo">
-      <ProductHeader label="Verify, repair, and export" />
+      <ProductHeader label="Verify, repair, and export" {...guide} />
       <div className="launch-gif-workspace">
-        <Rail active="Quality" />
+        <Rail active={qualityOpened ? "Quality" : "Build"} />
         <main className="verification-workspace">
           <section className="verification-preview">
             <div className="preview-toolbar">
@@ -537,7 +736,10 @@ function VerifyAndExportDemo({ frame }: { frame: number }) {
               <span className="preview-address">
                 preview.squid.run/fieldflow
               </span>
-              <span className={`runtime-chip ${repaired ? "is-passed" : ""}`}>
+              <span
+                className={`runtime-chip ${repaired ? "is-passed" : ""}`}
+                data-cursor-target="verify-runtime"
+              >
                 {repaired ? <CheckCircle2 /> : <CircleAlert />}
                 {repaired ? "Runtime passed" : "1 issue found"}
               </span>
@@ -552,77 +754,98 @@ function VerifyAndExportDemo({ frame }: { frame: number }) {
               <span>
                 <Play /> 6 controls checked
               </span>
-              <button className="export-trigger">
+              <button
+                className="export-trigger"
+                data-cursor-target="verify-export"
+              >
                 <Download /> Export
               </button>
             </div>
           </section>
-          <aside className={`quality-panel ${repaired ? "is-passed" : ""}`}>
-            <div className="quality-heading">
-              <span>{repaired ? <CheckCircle2 /> : <ShieldCheck />}</span>
-              <div>
-                <small>QUALITY REPORT</small>
-                <h1 data-critical-copy>
-                  {repaired ? "Ready to ship" : "One issue needs review"}
-                </h1>
+          <aside
+            className={`quality-panel ${repaired ? "is-passed" : ""} ${qualityOpened ? "is-open" : "is-closed"}`}
+          >
+            {!qualityOpened ? (
+              <div className="quality-closed-state">
+                <span>
+                  <ShieldCheck />
+                </span>
+                <small>QUALITY</small>
+                <h1 data-critical-copy>Open verification</h1>
+                <p>Check the rendered app before you export the source.</p>
               </div>
-            </div>
-            <div className="quality-summary">
-              <div>
-                <strong>12</strong>
-                <small>Files</small>
-              </div>
-              <div>
-                <strong>18</strong>
-                <small>Imports</small>
-              </div>
-              <div>
-                <strong>{repaired ? "0" : "1"}</strong>
-                <small>Issues</small>
-              </div>
-            </div>
-            <div className={`issue-card ${repaired ? "is-resolved" : ""}`}>
-              <span>{repaired ? <CheckCircle2 /> : <CircleAlert />}</span>
-              <div>
-                <strong>
-                  {repaired
-                    ? "Accessible name added"
-                    : "Missing accessible name"}
-                </strong>
-                <p>
-                  {repaired
-                    ? "The project link now has a clear label."
-                    : "One icon-only project link needs an aria-label."}
-                </p>
-                <code>src/components/ProjectCard.tsx</code>
-              </div>
-            </div>
-            <button className="repair-button">
-              {repairing ? (
-                <>
-                  <span className="mini-spinner" /> Repairing issue…
-                </>
-              ) : repaired ? (
-                <>
-                  <Check /> Repair complete
-                </>
-              ) : (
-                <>
-                  <WandSparkles /> Run repair
-                </>
-              )}
-            </button>
-            <div className="quality-checks">
-              <span>
-                <Check /> Static checks passed
-              </span>
-              <span>
-                <Check /> No horizontal overflow
-              </span>
-              <span className={repaired ? "is-complete" : ""}>
-                <Check /> Runtime interaction passed
-              </span>
-            </div>
+            ) : (
+              <>
+                <div className="quality-heading">
+                  <span>{repaired ? <CheckCircle2 /> : <ShieldCheck />}</span>
+                  <div>
+                    <small>QUALITY REPORT</small>
+                    <h1 data-critical-copy>
+                      {repaired ? "Ready to ship" : "One issue needs review"}
+                    </h1>
+                  </div>
+                </div>
+                <div className="quality-summary">
+                  <div>
+                    <strong>12</strong>
+                    <small>Files</small>
+                  </div>
+                  <div>
+                    <strong>18</strong>
+                    <small>Imports</small>
+                  </div>
+                  <div>
+                    <strong>{repaired ? "0" : "1"}</strong>
+                    <small>Issues</small>
+                  </div>
+                </div>
+                <div className={`issue-card ${repaired ? "is-resolved" : ""}`}>
+                  <span>{repaired ? <CheckCircle2 /> : <CircleAlert />}</span>
+                  <div>
+                    <strong>
+                      {repaired
+                        ? "Accessible name added"
+                        : "Missing accessible name"}
+                    </strong>
+                    <p>
+                      {repaired
+                        ? "The project link now has a clear label."
+                        : "One icon-only project link needs an aria-label."}
+                    </p>
+                    <code>src/components/ProjectCard.tsx</code>
+                  </div>
+                </div>
+                <button
+                  className="repair-button"
+                  data-cursor-target="verify-repair"
+                >
+                  {repairing ? (
+                    <>
+                      <span className="mini-spinner" /> Repairing issue…
+                    </>
+                  ) : repaired ? (
+                    <>
+                      <Check /> Repair complete
+                    </>
+                  ) : (
+                    <>
+                      <WandSparkles /> Run repair
+                    </>
+                  )}
+                </button>
+                <div className="quality-checks">
+                  <span>
+                    <Check /> Static checks passed
+                  </span>
+                  <span>
+                    <Check /> No horizontal overflow
+                  </span>
+                  <span className={repaired ? "is-complete" : ""}>
+                    <Check /> Runtime interaction passed
+                  </span>
+                </div>
+              </>
+            )}
           </aside>
         </main>
       </div>
@@ -645,7 +868,10 @@ function VerifyAndExportDemo({ frame }: { frame: number }) {
             </div>
             <p>Take the editable React source wherever you build next.</p>
             <div className="export-options">
-              <button className={zipVerified ? "is-complete" : ""}>
+              <button
+                className={zipVerified ? "is-complete" : ""}
+                data-cursor-target="verify-zip"
+              >
                 <span>
                   <Download />
                 </span>
@@ -653,7 +879,7 @@ function VerifyAndExportDemo({ frame }: { frame: number }) {
                 <small>Source, setup, and quality report</small>
                 {zipVerified && <CheckCircle2 />}
               </button>
-              <button>
+              <button data-cursor-target="verify-github">
                 <span className="github-mark">
                   <Github />
                 </span>
@@ -672,17 +898,8 @@ function VerifyAndExportDemo({ frame }: { frame: number }) {
 
       <DemoCursor
         frame={frame}
-        clicks={[18, 39, 80, 96, 103]}
-        points={[
-          { frame: 0, x: 1138, y: 674 },
-          { frame: 17, x: 120, y: 246 },
-          { frame: 38, x: 1060, y: 556 },
-          { frame: 65, x: 965, y: 620 },
-          { frame: 79, x: 775, y: 700 },
-          { frame: 95, x: 472, y: 474 },
-          { frame: 103, x: 795, y: 474 },
-          { frame: 119, x: 1138, y: 674 },
-        ]}
+        clicks={VERIFY_CURSOR_CLICKS}
+        points={VERIFY_CURSOR_POINTS}
       />
       <IntroCover frame={frame} label="Verify, repair, and export" />
     </div>
