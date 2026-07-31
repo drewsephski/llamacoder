@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { sandpackState } = vi.hoisted(() => ({
   sandpackState: {
@@ -24,7 +24,9 @@ vi.mock("@codesandbox/sandpack-react/unstyled", () => ({
     </div>
   ),
   SandpackPreview: ({ className }: { className?: string }) => (
-    <div className={className} data-testid="sandpack-preview" />
+    <div className={className} data-testid="sandpack-preview">
+      <iframe className="sp-preview-iframe" title="Generated preview" />
+    </div>
   ),
   useSandpack: () => ({ sandpack: sandpackState }),
 }));
@@ -36,6 +38,16 @@ vi.mock("@/lib/sandpack-config", () => ({
 import CodeRunnerReact from "@/components/code-runner-react";
 
 describe("CodeRunnerReact", () => {
+  beforeEach(() => {
+    sandpackState.error = null;
+    sandpackState.status = "idle";
+    getSandpackConfigMock.mockClear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("passes updated Supabase runtime configuration into Sandpack", () => {
     const files = [
       {
@@ -152,5 +164,198 @@ describe("CodeRunnerReact", () => {
       status: "error",
       error: "TypeError: failed to render",
     });
+  });
+
+  it("requires the compiled-app handshake, healthy Sandpack state, and stabilization before ready", () => {
+    vi.useFakeTimers();
+    const onPreviewHealthChange = vi.fn();
+    const onPreviewLifecycleChange = vi.fn();
+    const files = [
+      {
+        path: "App.tsx",
+        content: "export default function App() { return null; }",
+      },
+    ];
+    const { rerender } = render(
+      <CodeRunnerReact
+        files={files}
+        onPreviewHealthChange={onPreviewHealthChange}
+        onPreviewLifecycleChange={onPreviewLifecycleChange}
+      />,
+    );
+
+    sandpackState.status = "done";
+    rerender(
+      <CodeRunnerReact
+        files={files}
+        onPreviewHealthChange={onPreviewHealthChange}
+        onPreviewLifecycleChange={onPreviewLifecycleChange}
+      />,
+    );
+    expect(screen.getByTestId("preview-status-overlay")).toHaveAttribute(
+      "data-preview-status",
+      "compiling",
+    );
+
+    sandpackState.status = "running";
+    rerender(
+      <CodeRunnerReact
+        files={files}
+        onPreviewHealthChange={onPreviewHealthChange}
+        onPreviewLifecycleChange={onPreviewLifecycleChange}
+      />,
+    );
+
+    const iframe = screen
+      .getByTitle("Generated preview")
+      .closest("iframe") as HTMLIFrameElement;
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          source: iframe.contentWindow,
+          data: { source: "squid-preview-inspector", type: "ready" },
+        }),
+      );
+    });
+    act(() => vi.advanceTimersByTime(1_499));
+    expect(onPreviewHealthChange).not.toHaveBeenCalledWith({
+      status: "working",
+    });
+
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByTestId("preview-status-overlay")).toHaveAttribute(
+      "data-preview-status",
+      "ready",
+    );
+    expect(onPreviewLifecycleChange).toHaveBeenLastCalledWith({
+      status: "ready",
+    });
+    expect(onPreviewHealthChange).toHaveBeenCalledWith({ status: "working" });
+
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(screen.getByTestId("preview-status-overlay")).toHaveAttribute(
+      "data-preview-status",
+      "ready",
+    );
+  });
+
+  it("ignores a ready message from a different runner iframe", () => {
+    vi.useFakeTimers();
+    sandpackState.status = "done";
+    render(
+      <>
+        <CodeRunnerReact
+          files={[{ path: "App.tsx", content: "export default 1" }]}
+        />
+        <CodeRunnerReact
+          files={[{ path: "App.tsx", content: "export default 2" }]}
+        />
+      </>,
+    );
+    const iframes = screen.getAllByTitle("Generated preview");
+    const overlays = screen.getAllByTestId("preview-status-overlay");
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          source: (iframes[0] as HTMLIFrameElement).contentWindow,
+          data: { source: "squid-preview-inspector", type: "ready" },
+        }),
+      );
+    });
+    act(() => vi.advanceTimersByTime(1_500));
+
+    expect(overlays[0]).toHaveAttribute("data-preview-status", "ready");
+    expect(overlays[1]).toHaveAttribute("data-preview-status", "compiling");
+  });
+
+  it("reports a terminal timeout and retry remounts a fresh attempt", () => {
+    vi.useFakeTimers();
+    sandpackState.status = "done";
+    const onPreviewLifecycleChange = vi.fn();
+    render(
+      <CodeRunnerReact
+        files={[{ path: "App.tsx", content: "export default 1" }]}
+        onPreviewLifecycleChange={onPreviewLifecycleChange}
+      />,
+    );
+
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(screen.getByTestId("preview-status-overlay")).toHaveAttribute(
+      "data-preview-status",
+      "timeout",
+    );
+    expect(onPreviewLifecycleChange).toHaveBeenCalledWith({
+      status: "timeout",
+      error: "The preview timed out while compiling.",
+    });
+
+    sandpackState.status = "idle";
+    const configCallsBeforeRetry = getSandpackConfigMock.mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Retry preview" }));
+
+    expect(getSandpackConfigMock.mock.calls.length).toBeGreaterThan(
+      configCallsBeforeRetry,
+    );
+    expect(screen.getByTestId("preview-status-overlay")).toHaveAttribute(
+      "data-preview-status",
+      "loading",
+    );
+    expect(onPreviewLifecycleChange).toHaveBeenLastCalledWith({
+      status: "loading",
+    });
+  });
+
+  it("renders one accessible live status and hides the spinner announcement", () => {
+    render(
+      <CodeRunnerReact
+        files={[{ path: "App.tsx", content: "export default 1" }]}
+      />,
+    );
+
+    const overlay = screen.getByTestId("preview-status-overlay");
+    expect(within(overlay).getAllByRole("status")).toHaveLength(1);
+    expect(within(overlay).getByText("Loading preview")).toBeInTheDocument();
+    expect(
+      overlay.querySelector('[data-slot="comet-spinner"]'),
+    ).toHaveAttribute("aria-hidden", "true");
+    expect(overlay).toHaveClass("motion-reduce:transition-none");
+  });
+
+  it("fails unsupported imports before Sandpack starts and routes the diagnostic to repair", () => {
+    const onPreviewHealthChange = vi.fn();
+    const onRequestFix = vi.fn();
+
+    render(
+      <CodeRunnerReact
+        files={[
+          {
+            path: "App.tsx",
+            content: 'import axios from "axios"; export default axios;',
+          },
+        ]}
+        onPreviewHealthChange={onPreviewHealthChange}
+        onRequestFix={onRequestFix}
+      />,
+    );
+
+    expect(screen.queryByTestId("sandpack-provider")).not.toBeInTheDocument();
+    expect(screen.getByTestId("preview-status-overlay")).toHaveAttribute(
+      "data-preview-status",
+      "error",
+    );
+    expect(
+      screen.getByText(/Unsupported external package "axios"/),
+    ).toBeInTheDocument();
+    expect(onPreviewHealthChange).toHaveBeenCalledWith({
+      status: "error",
+      error: expect.stringContaining('Unsupported external package "axios"'),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Fix error" }));
+    expect(onRequestFix).toHaveBeenCalledWith(
+      expect.stringContaining('Unsupported external package "axios"'),
+    );
+    expect(getSandpackConfigMock).not.toHaveBeenCalled();
   });
 });

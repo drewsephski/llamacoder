@@ -58,6 +58,7 @@ describe("/api/gallery", () => {
     expect(prismaMock.galleryPublication.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ isPublished: true }),
+        take: 6,
       }),
     );
     await expect(response.json()).resolves.toEqual({ apps: [] });
@@ -148,6 +149,9 @@ describe("/api/gallery", () => {
 
     expect(response.status).toBe(200);
     expect(body.images).toHaveLength(8);
+    expect(
+      prismaMock.galleryPublication.findMany.mock.calls.at(-1)?.[0],
+    ).not.toHaveProperty("take");
     expect(body.images.at(-1)).toEqual(
       expect.objectContaining({
         title: "Project 8",

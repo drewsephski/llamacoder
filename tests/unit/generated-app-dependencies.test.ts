@@ -3,7 +3,13 @@ import { developerCodeGenPrompt } from "@/features/generation/agent-prompts";
 import { buildGeneratedFilesRepairPrompt } from "@/lib/generated-files";
 import { getMainCodingPrompt, softwareArchitectPrompt } from "@/lib/prompts";
 import { dependencies } from "@/lib/sandpack-config";
-import { getRequiredGeneratedAppDependencies } from "@/lib/generated-app-dependencies";
+import {
+  extractGeneratedAppImportSources,
+  generatedAppDependencies,
+  generatedAppDependencyManifest,
+  getRequiredGeneratedAppDependencies,
+  preflightGeneratedAppImports,
+} from "@/lib/generated-app-dependencies";
 
 describe("generated app dependencies", () => {
   it("pins the complete generated-app capability set", () => {
@@ -78,6 +84,143 @@ describe("generated app dependencies", () => {
       "@splinetool/react-spline": "4.1.0",
       "@splinetool/runtime": "1.12.98",
     });
+  });
+
+  it("keeps companion metadata and version truth in one typed manifest", () => {
+    expect(
+      generatedAppDependencyManifest["@splinetool/react-spline"],
+    ).toMatchObject({
+      version: "4.1.0",
+      companions: ["@splinetool/runtime"],
+      capabilities: ["three-dimensional"],
+    });
+    expect(generatedAppDependencies["@splinetool/react-spline"]).toBe(
+      generatedAppDependencyManifest["@splinetool/react-spline"].version,
+    );
+    expect(generatedAppDependencies["@splinetool/runtime"]).toBe(
+      generatedAppDependencyManifest["@splinetool/runtime"].version,
+    );
+  });
+
+  it.each([
+    {
+      name: "static imports",
+      code: 'import { useForm } from "react-hook-form";',
+      expected: { "react-hook-form": "7.81.0" },
+    },
+    {
+      name: "re-exports",
+      code: 'export { z } from "zod";',
+      expected: { zod: "4.4.3" },
+    },
+    {
+      name: "literal dynamic imports",
+      code: 'const load = () => import("@xyflow/react");',
+      expected: { "@xyflow/react": "12.11.2" },
+    },
+    {
+      name: "scoped package subpaths",
+      code: 'import { zodResolver } from "@hookform/resolvers/zod";',
+      expected: { "@hookform/resolvers": "5.4.0" },
+    },
+    {
+      name: "Spline subpaths and companions",
+      code: 'import Spline from "@splinetool/react-spline/next";',
+      expected: {
+        "@splinetool/react-spline": "4.1.0",
+        "@splinetool/runtime": "1.12.98",
+      },
+    },
+  ])("selects deterministic dependencies for $name", ({ code, expected }) => {
+    const result = preflightGeneratedAppImports([{ path: "App.tsx", code }]);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.dependencies).toEqual(expected);
+    expect(Object.keys(result.dependencies)).toEqual(
+      Object.keys(result.dependencies).toSorted(),
+    );
+  });
+
+  it("parses imports without matching comments or ordinary strings", () => {
+    const sources = extractGeneratedAppImportSources(`
+      // import fake from "axios";
+      const example = 'import("server-only-widget")';
+      import { motion } from "framer-motion";
+      void example;
+    `);
+
+    expect(Array.from(sources)).toEqual(["framer-motion"]);
+  });
+
+  it.each([
+    {
+      name: "unsupported packages",
+      code: 'import axios from "axios";',
+      diagnosticCode: "UNSUPPORTED_EXTERNAL_IMPORT",
+      message: 'Unsupported external package "axios" imported from "axios"',
+    },
+    {
+      name: "node protocol built-ins",
+      code: 'import fs from "node:fs";',
+      diagnosticCode: "UNSUPPORTED_NODE_BUILTIN",
+      message: 'Node.js built-in module "node:fs"',
+    },
+    {
+      name: "bare node built-ins",
+      code: 'import path from "path";',
+      diagnosticCode: "UNSUPPORTED_NODE_BUILTIN",
+      message: 'Node.js built-in module "path"',
+    },
+    {
+      name: "URL imports",
+      code: 'import widget from "https://cdn.example.com/widget.js";',
+      diagnosticCode: "UNSUPPORTED_URL_IMPORT",
+      message: 'URL import "https://cdn.example.com/widget.js" is unsupported',
+    },
+    {
+      name: "nonliteral dynamic imports",
+      code: "const load = (name: string) => import(name);",
+      diagnosticCode: "NON_LITERAL_DYNAMIC_IMPORT",
+      message: "Dynamic imports must use a string literal",
+    },
+  ])(
+    "returns an actionable diagnostic for $name",
+    ({ code, diagnosticCode, message }) => {
+      const result = preflightGeneratedAppImports([{ path: "App.tsx", code }]);
+
+      expect(result.diagnostics).toEqual([
+        expect.objectContaining({
+          path: "App.tsx",
+          code: diagnosticCode,
+          message: expect.stringContaining(message),
+        }),
+      ]);
+    },
+  );
+
+  it("defers parser failures for incomplete streamed files", () => {
+    expect(
+      preflightGeneratedAppImports([
+        {
+          path: "App.tsx",
+          code: 'import { motion } from "framer-motion',
+        },
+      ]),
+    ).toMatchObject({ dependencies: {}, diagnostics: [] });
+  });
+
+  it("treats React imports as template-provided instead of unsupported", () => {
+    expect(
+      preflightGeneratedAppImports([
+        {
+          path: "App.tsx",
+          code: [
+            'import { useState } from "react";',
+            'import { createRoot } from "react-dom/client";',
+          ].join("\n"),
+        },
+      ]),
+    ).toMatchObject({ dependencies: {}, diagnostics: [] });
   });
 
   it("exposes every capability to direct, plan, and repair generation", () => {

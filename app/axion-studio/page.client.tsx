@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, Clock, Link as LinkIcon, Menu, X } from "lucide-react";
+import Image from "next/image";
 import {
   ChromaFlow,
   FilmGrain,
@@ -23,6 +24,11 @@ const images = {
   large:
     "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260516_090133_c157d30b-a99a-4477-bec1-a446149ec3f2.png&w=1280&q=85",
 } as const;
+
+const smallImageSizes =
+  "(min-width: 1024px) 26vw, (min-width: 640px) 45vw, 100vw";
+const largeImageSizes =
+  "(min-width: 1024px) 48vw, (min-width: 640px) 55vw, 100vw";
 
 const projects = [
   {
@@ -387,30 +393,36 @@ function About() {
             </ArrowButton>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
-            <img
+            <Image
               alt="Axion Studio creative work"
               className="aspect-[438/346] w-full rounded-xl object-cover sm:w-[45%] sm:rounded-2xl"
-              decoding="async"
+              height={346}
               loading="lazy"
+              sizes={smallImageSizes}
               src={images.small}
+              width={438}
             />
-            <img
+            <Image
               alt="Axion Studio digital experience"
               className="aspect-[3/2] w-full rounded-xl object-cover sm:w-[55%] sm:rounded-2xl"
-              decoding="async"
+              height={2}
               loading="lazy"
+              sizes={largeImageSizes}
               src={images.large}
+              width={3}
             />
           </div>
         </div>
 
         <div className="hidden grid-cols-[26%_1fr_48%] items-end gap-6 lg:grid xl:gap-8">
-          <img
+          <Image
             alt="Axion Studio creative work"
             className="aspect-[438/346] w-full rounded-2xl object-cover"
-            decoding="async"
+            height={346}
             loading="lazy"
+            sizes={smallImageSizes}
             src={images.small}
+            width={438}
           />
           <div className="flex h-full flex-col justify-end gap-7 pb-1">
             <p className="whitespace-nowrap text-base font-medium leading-[1.65] text-gray-900">
@@ -426,12 +438,14 @@ function About() {
               About our studio
             </ArrowButton>
           </div>
-          <img
+          <Image
             alt="Axion Studio digital experience"
             className="aspect-[3/2] w-full rounded-2xl object-cover"
-            decoding="async"
+            height={2}
             loading="lazy"
+            sizes={largeImageSizes}
             src={images.large}
+            width={3}
           />
         </div>
       </div>

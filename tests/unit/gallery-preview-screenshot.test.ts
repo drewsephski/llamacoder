@@ -70,4 +70,41 @@ describe("capturePreviewScreenshot", () => {
       "Preview iframe is not available.",
     );
   });
+
+  it("captures from the requested runner when multiple previews are mounted", async () => {
+    document.body.innerHTML = `
+      <div data-runner="workspace"><iframe class="sp-preview-iframe"></iframe></div>
+      <div data-runner="publish"><iframe class="sp-preview-iframe"></iframe></div>
+    `;
+    const root = document.querySelector<HTMLElement>('[data-runner="publish"]');
+    const iframe = root?.querySelector<HTMLIFrameElement>(".sp-preview-iframe");
+    if (!root || !iframe) throw new Error("Missing scoped preview iframe");
+
+    const contentWindow = { postMessage: vi.fn() } as unknown as Window;
+    Object.defineProperty(iframe, "contentWindow", {
+      value: contentWindow,
+      configurable: true,
+    });
+
+    const promise = capturePreviewScreenshot({ root });
+    const requestId = (contentWindow.postMessage as ReturnType<typeof vi.fn>)
+      .mock.calls[0]?.[0]?.requestId;
+    const buffer = Uint8Array.from([0xff, 0xd8]).buffer;
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        source: contentWindow,
+        data: {
+          source: "squid-preview-inspector",
+          type: "screenshot",
+          requestId,
+          buffer,
+          mimeType: "image/jpeg",
+        },
+      }),
+    );
+
+    await expect(promise).resolves.toEqual(
+      expect.objectContaining({ type: "image/jpeg", size: 2 }),
+    );
+  });
 });

@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import { generatedAppDependencies } from "@/lib/generated-app-dependencies";
+import { isSupportedGeneratedAppPackage } from "@/lib/generated-app-dependencies";
 import {
   normalizeGeneratedFiles,
   type GeneratedFile,
@@ -301,7 +301,7 @@ async function fetchRegistryItem(url: string, address: string) {
 function validatePackageDependencies(dependencies: string[], address: string) {
   const packages = dependencies.map(getPackageName);
   const unsupported = packages.filter(
-    (dependency) => !generatedAppDependencies[dependency],
+    (dependency) => !isSupportedGeneratedAppPackage(dependency),
   );
   if (unsupported.length > 0) {
     throw new ComponentRegistryError(

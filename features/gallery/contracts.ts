@@ -15,6 +15,7 @@ export const gallerySearchSchema = z.object({
     .optional()
     .transform((value) => value === "true"),
   sort: z.enum(["newest", "oldest"]).catch("newest"),
+  cursor: z.string().trim().max(1200).catch(""),
 });
 
 export type PublishProjectInput = z.infer<typeof publishProjectSchema>;

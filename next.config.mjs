@@ -94,7 +94,10 @@ const nextConfig = {
   },
   images: {
     localPatterns: [{ pathname: "/**" }],
-    remotePatterns: [{ protocol: "https", hostname: "svgl.app" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "images.higgs.ai" },
+      { protocol: "https", hostname: "svgl.app" },
+    ],
   },
   turbopack: {
     root: process.cwd(),

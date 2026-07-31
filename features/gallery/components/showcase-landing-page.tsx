@@ -68,7 +68,10 @@ export function ShowcaseLandingPage({ landing }: { landing: ShowcaseLanding }) {
                 key={highlight}
                 className="flex items-start gap-2 rounded-md border border-dashed border-border px-2.5 py-2 text-sm leading-5 text-foreground/80"
               >
-                <span className="mt-2 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: landing.accent }} />
+                <span
+                  className="mt-2 size-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: landing.accent }}
+                />
                 {highlight}
               </li>
             ))}
@@ -80,8 +83,8 @@ export function ShowcaseLandingPage({ landing }: { landing: ShowcaseLanding }) {
             Built to copy
           </p>
           <p className="mt-2 text-sm leading-6 text-foreground/80">
-            Use the generated prompt below as your starting brief. It targets real
-            interaction behavior, not UI chrome.
+            Use the generated prompt below as your starting brief. It targets
+            real interaction behavior, not UI chrome.
           </p>
         </div>
 
@@ -117,7 +120,7 @@ export function ShowcaseLandingPage({ landing }: { landing: ShowcaseLanding }) {
 
       <div className="w-full lg:pl-[360px]">
         <main className="h-dvh min-h-[720px] w-full min-w-0 overflow-hidden bg-muted">
-          <CodeRunner files={landing.files} />
+          <CodeRunner files={landing.files} showStatusOverlay />
         </main>
       </div>
     </div>

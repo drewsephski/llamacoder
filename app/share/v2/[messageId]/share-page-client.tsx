@@ -169,7 +169,7 @@ export function SharePageClient({
           aria-label="Generated app preview"
           className="flex h-dvh min-h-[520px] w-full min-w-0 items-stretch overflow-hidden bg-muted/20"
         >
-          <CodeRunner files={files} />
+          <CodeRunner files={files} showStatusOverlay />
         </main>
       </div>
     </div>

@@ -198,12 +198,8 @@ export default function App() {
     expect(inspector).toContain('message.type === "capture-screenshot"');
     expect(inspector).toContain('type: "screenshot"');
     expect(inspector).toContain("captureWithSafeCanvasPatterns");
-    expect(inspector).toContain(
-      'typeof source.getContext === "function" &&',
-    );
-    expect(inspector).toContain(
-      "source.width === 0 || source.height === 0",
-    );
+    expect(inspector).toContain('typeof source.getContext === "function" &&');
+    expect(inspector).toContain("source.width === 0 || source.height === 0");
     expect(inspector).toContain(
       "prototype.createPattern = originalCreatePattern",
     );
@@ -285,7 +281,7 @@ export default function App() {
       {
         path: "App.tsx",
         content: [
-          'import Spline from "@splinetool/react-spline";',
+          'import Spline from "@splinetool/react-spline/next";',
           'export default function App() { return <Spline scene="https://prod.spline.design/example/scene.splinecode" />; }',
         ].join("\n"),
       },

@@ -1,5 +1,6 @@
 import { getExtensionForLanguage, getLanguageOfFile } from "@/lib/utils";
 import { generatedAppRepairCapabilityRules } from "@/lib/generated-app-capabilities";
+import { preflightGeneratedAppImports } from "@/lib/generated-app-dependencies";
 import {
   analyzeGeneratedApiIntegration,
   type GeneratedApiIntegrationReport,
@@ -266,6 +267,12 @@ export function validateGeneratedFiles(
       message: "Missing App.tsx entry file.",
     });
   }
+
+  diagnostics.push(
+    ...preflightGeneratedAppImports(files).diagnostics.map(
+      ({ path, message }) => ({ path, message }),
+    ),
+  );
 
   for (const file of files) {
     for (const source of extractImportSources(file.code)) {
