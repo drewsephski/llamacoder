@@ -671,15 +671,3 @@ export async function reconcileCheckoutSessionForUser({
 
   return fulfillCheckoutSession(session);
 }
-
-export async function markSubscriptionStatus(
-  subscriptionId: string,
-  status: string,
-) {
-  const prisma = getPrisma();
-
-  await prisma.subscription.updateMany({
-    where: { stripeSubscriptionId: subscriptionId },
-    data: { status },
-  });
-}
