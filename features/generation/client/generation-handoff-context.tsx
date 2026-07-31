@@ -4,7 +4,6 @@ import {
   createContext,
   type ReactNode,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -60,17 +59,12 @@ export function useGenerationHandoffStream() {
     streamPromise: handedOffStreamPromise,
     setStreamPromise: setHandedOffStreamPromise,
   } = useGenerationHandoff();
-  const [streamPromise, setStreamPromise] = useState<
+  const [ownedStreamPromise, setStreamPromise] = useState<
     Promise<CompletionStream> | undefined
-  >(handedOffStreamPromise);
-
-  useEffect(() => {
-    if (!handedOffStreamPromise) return;
-
-    // Never replace a stream that this page is already consuming. The handoff
-    // is cleared by the consumer once it claims that exact stream.
-    setStreamPromise((current) => current ?? handedOffStreamPromise);
-  }, [handedOffStreamPromise]);
+  >();
+  // A stream explicitly owned by this page wins. Otherwise the current
+  // context handoff is adopted without copying props into state in an effect.
+  const streamPromise = ownedStreamPromise ?? handedOffStreamPromise;
 
   return {
     streamPromise,

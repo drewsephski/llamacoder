@@ -31,7 +31,7 @@ describe("Supabase technical walkthrough", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Generated code is not a backend.",
+        name: "Detect the backend before writing code",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("generation held")).toBeInTheDocument();
