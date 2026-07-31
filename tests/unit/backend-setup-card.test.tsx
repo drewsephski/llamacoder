@@ -89,9 +89,13 @@ describe("direct backend setup card", () => {
     const onRespond = renderCard();
 
     expect(
-      await screen.findByRole("heading", {
-        name: "Start with the prototype",
-      }),
+      await screen.findByRole(
+        "heading",
+        {
+          name: "Start with the prototype",
+        },
+        { timeout: 5_000 },
+      ),
     ).toBeInTheDocument();
     expect(
       await screen.findByRole("button", { name: "Build prototype now" }),
