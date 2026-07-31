@@ -5,7 +5,6 @@ import {
   fulfillCheckoutSession,
   fulfillPaidInvoice,
   hasProcessedStripeEvent,
-  markSubscriptionStatus,
   recordProcessedStripeEvent,
   syncSubscriptionFromStripe,
 } from "@/lib/billing/stripe-fulfillment";
@@ -59,16 +58,16 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : "Unknown signature error";
     console.error("[Stripe Webhook] Signature verification failed:", message);
     return NextResponse.json(
-      { error: `Webhook signature verification failed: ${message}` },
+      { error: "Webhook signature verification failed" },
       { status: 400 },
     );
   }
 
-  if (await hasProcessedStripeEvent(event.id)) {
-    return NextResponse.json({ received: true, duplicate: true });
-  }
-
   try {
+    if (await hasProcessedStripeEvent(event.id)) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
     switch (event.type) {
       case "checkout.session.completed":
       case "checkout.session.async_payment_succeeded": {
@@ -112,19 +111,24 @@ export async function POST(request: NextRequest) {
         const invoice = await retrieveInvoiceFromInvoicePayment(
           event.data.object,
         );
-        if (invoice) {
-          const result = await fulfillPaidInvoice(invoice, event.id);
-          await recordOperationalEvent({
-            name: "stripe_invoice_payment_fulfilled",
-            level: "info",
-            operation: event.type,
-            status: "success",
-            metadata: {
-              eventId: event.id,
-              summary: JSON.stringify(result).slice(0, 500),
-            },
-          });
+
+        if (!invoice) {
+          throw new Error(
+            `Stripe InvoicePayment event ${event.id} has no invoice`,
+          );
         }
+
+        const result = await fulfillPaidInvoice(invoice, event.id);
+        await recordOperationalEvent({
+          name: "stripe_invoice_payment_fulfilled",
+          level: "info",
+          operation: event.type,
+          status: "success",
+          metadata: {
+            eventId: event.id,
+            summary: JSON.stringify(result).slice(0, 500),
+          },
+        });
         break;
       }
 
@@ -179,7 +183,10 @@ export async function POST(request: NextRequest) {
             : null);
 
         if (subscriptionId) {
-          await markSubscriptionStatus(subscriptionId, "past_due");
+          await syncSubscriptionFromStripe({
+            subscriptionId,
+            fallbackCustomerId: getStripeId(invoice.customer),
+          });
         }
         break;
       }

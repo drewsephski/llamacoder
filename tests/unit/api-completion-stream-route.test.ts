@@ -510,8 +510,8 @@ describe("/api/get-next-completion-stream-promise", () => {
     );
 
     const call = streamTextMock.mock.calls[0][0];
-    expect(call.system).toContain("Premium UI/UX execution contract");
-    expect(call.system).toContain("Structural variety");
+    expect(call.system).toContain("## Execution contract");
+    expect(call.system).toContain("### Design method");
     expect(call.system).not.toBe("system");
     expect(call.messages).toHaveLength(9);
     expect(call.messages.at(-1)).toMatchObject({
@@ -689,8 +689,8 @@ describe("/api/get-next-completion-stream-promise", () => {
       "Decide whether web_search or fetch_url is needed",
     );
     expect(generationCall.system).not.toContain("MUST call web_search");
-    expect(generationCall.system).toContain("Premium UI/UX execution contract");
-    expect(generationCall.system).toContain("Structural variety");
+    expect(generationCall.system).toContain("## Execution contract");
+    expect(generationCall.system).toContain("### Design method");
     expect(generationCall.system).not.toBe("system");
     expect(
       generationCall.messages.every(
@@ -2205,7 +2205,9 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
 
     const chunks = await collectUIChunks(
-      await POST(request({ messageId: "msg_reopen_supabase", model: "model_1" })),
+      await POST(
+        request({ messageId: "msg_reopen_supabase", model: "model_1" }),
+      ),
     );
 
     expect(classifyPersistenceIntentMock).toHaveBeenCalledOnce();
@@ -2716,8 +2718,8 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
       expect(reserveCreditHoldMock).not.toHaveBeenCalled();
       expect(generateTextMock).not.toHaveBeenCalled();
       const call = streamTextMock.mock.calls[0][0];
-      expect(call.system).toContain("Premium UI/UX execution contract");
-      expect(call.system).toContain("Structural variety");
+      expect(call.system).toContain("## Execution contract");
+      expect(call.system).toContain("### Design method");
       expect(call.system).not.toContain("system prompt");
       expect(call.messages).toHaveLength(1);
       expect(call.messages[0].content).toContain(

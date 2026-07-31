@@ -89,7 +89,9 @@ describe("HomepageBuilderIsland image paste", () => {
       </HomepageBuilderIsland>,
     );
 
-    const prompt = screen.getByPlaceholderText("Build me a budgeting app...");
+    const prompt = screen.getByPlaceholderText(
+      "Describe the prototype you want...",
+    );
     const image = new File(["png"], "pasted.png", { type: "image/png" });
 
     fireEvent.paste(prompt, {

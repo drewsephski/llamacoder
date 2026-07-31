@@ -4,12 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  createMessageMock,
+  createUserMessageMock,
   fetchCompletionStreamMock,
   onNewStreamPromiseMock,
   refreshMock,
 } = vi.hoisted(() => ({
-  createMessageMock: vi.fn(),
+  createUserMessageMock: vi.fn(),
   fetchCompletionStreamMock: vi.fn(),
   onNewStreamPromiseMock: vi.fn(),
   refreshMock: vi.fn(),
@@ -18,8 +18,8 @@ const {
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: refreshMock }),
 }));
-vi.mock("@/features/generation/server/actions", () => ({
-  createMessage: createMessageMock,
+vi.mock("@/features/generation/client/messages", () => ({
+  createUserMessage: createUserMessageMock,
 }));
 vi.mock("@/features/generation/client/completion-stream", () => ({
   fetchCompletionStream: fetchCompletionStreamMock,
@@ -57,7 +57,7 @@ import ChatBox from "@/app/(main)/chats/[id]/chat-box";
 
 describe("ChatBox image paste", () => {
   beforeEach(() => {
-    createMessageMock.mockResolvedValue({ id: "message_1" });
+    createUserMessageMock.mockResolvedValue({ messageId: "message_1" });
     fetchCompletionStreamMock.mockReturnValue(Promise.resolve({}));
   });
 
@@ -94,10 +94,9 @@ describe("ChatBox image paste", () => {
     await userEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(createMessageMock).toHaveBeenCalledWith(
+      expect(createUserMessageMock).toHaveBeenCalledWith(
         "chat_1",
         "Recreate the attached image as closely as possible in code.",
-        "user",
       );
     });
     expect(fetchCompletionStreamMock).toHaveBeenCalledWith({

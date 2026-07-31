@@ -18,10 +18,9 @@ describe("API selection dialog", () => {
     await userEvent.click(screen.getByRole("button", { name: "Choose APIs" }));
     const search = screen.getByRole("textbox", { name: "Search APIs" });
 
-    await userEvent.type(search, "currency");
+    fireEvent.change(search, { target: { value: "currency" } });
     await userEvent.click(screen.getByRole("button", { name: /Frankfurter/i }));
-    await userEvent.clear(search);
-    await userEvent.type(search, "weather service");
+    fireEvent.change(search, { target: { value: "weather service" } });
     await userEvent.click(
       screen.getByRole("button", { name: /National Weather Service/i }),
     );
