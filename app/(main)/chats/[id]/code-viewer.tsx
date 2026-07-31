@@ -982,7 +982,7 @@ export default function CodeViewer({
                   ) : null}
                   {supabaseProvisionMutation.isPending
                     ? "Creating project"
-                    : "Create for instant signup testing"}
+                    : "Create with verified email"}
                 </Button>
               )}
             {showSupabaseConnectCta &&
@@ -1013,7 +1013,7 @@ export default function CodeViewer({
                     supabaseProvisioningOperation?.errorMessage ?? undefined
                   }
                 >
-                  Retry prototype setup
+                  Retry Supabase setup
                 </Button>
               )}
             {showSupabaseConnectCta &&
@@ -1027,7 +1027,7 @@ export default function CodeViewer({
                   disabled={supabaseProvisionMutation.isPending}
                   onClick={() => supabaseProvisionMutation.mutate()}
                 >
-                  Resume prototype setup
+                  Resume Supabase setup
                 </Button>
               )}
             {showSupabaseConnectCta &&

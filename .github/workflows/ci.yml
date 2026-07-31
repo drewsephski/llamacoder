@@ -13,6 +13,20 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -29,3 +43,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test:unit
+      - run: pnpm db:deploy
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      - run: pnpm test:integration
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          INTEGRATION_ENCRYPTION_KEY: 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
