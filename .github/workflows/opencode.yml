@@ -32,9 +32,10 @@ jobs:
       - name: Run OpenCode review
         uses: anomalyco/opencode/github@7902e04c3a67f7c69726bc955efb46e29214c797 # v1.18.10
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          TOKEN: ${{ github.token }}
         with:
           model: opencode-go/grok-4.5
           agent: github-review
           share: false
+          use_github_token: true
