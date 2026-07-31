@@ -40,9 +40,6 @@ jobs:
       - run: pnpm validate:schema
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm test:unit
       - run: pnpm db:deploy
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
@@ -50,3 +47,6 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
           INTEGRATION_ENCRYPTION_KEY: 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test:unit
