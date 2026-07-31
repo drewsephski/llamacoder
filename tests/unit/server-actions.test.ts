@@ -49,10 +49,10 @@ const {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-    message: { create: vi.fn() },
+    message: { create: vi.fn(), findFirst: vi.fn() },
     projectIntegration: { findMany: vi.fn() },
     creditHold: { findUnique: vi.fn() },
-    generationRun: { updateMany: vi.fn() },
+    generationRun: { findFirst: vi.fn(), updateMany: vi.fn() },
   },
 }));
 
@@ -103,8 +103,13 @@ import {
 
 describe("server actions", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    getModelCreditHoldCostMock.mockReturnValue(1);
+    getModelCreditCostMock.mockReturnValue(1);
     getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
+    notFoundMock.mockImplementation(() => {
+      throw new Error("NEXT_NOT_FOUND");
+    });
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback(txMock),
     );
@@ -131,7 +136,11 @@ describe("server actions", () => {
     txMock.generationRun.updateMany.mockResolvedValue({ count: 1 });
     txMock.generationLog.create.mockResolvedValue({});
     prismaMock.message.create.mockResolvedValue({ id: "user_msg_2" });
+    prismaMock.message.findFirst.mockResolvedValue({ files: null });
     prismaMock.projectIntegration.findMany.mockResolvedValue([]);
+    prismaMock.generationRun.findFirst.mockResolvedValue({
+      messageId: "user_1",
+    });
     prismaMock.generationRun.updateMany.mockResolvedValue({ count: 1 });
     releaseCreditHoldMock.mockResolvedValue({ success: true });
   });

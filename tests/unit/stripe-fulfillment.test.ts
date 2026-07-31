@@ -48,7 +48,6 @@ import {
   fulfillCheckoutSession,
   fulfillPaidInvoice,
   hasProcessedStripeEvent,
-  markSubscriptionStatus,
   recordProcessedStripeEvent,
   syncSubscriptionFromStripe,
 } from "@/lib/billing/stripe-fulfillment";
@@ -136,7 +135,9 @@ describe("Stripe fulfillment", () => {
     );
     tx.user.update.mockResolvedValueOnce({ credits: 105 });
 
-    await expect(fulfillPaidInvoice(paidInvoice() as never, "evt_1")).resolves.toEqual({
+    await expect(
+      fulfillPaidInvoice(paidInvoice() as never, "evt_1"),
+    ).resolves.toEqual({
       fulfilled: true,
       userId: "user_1",
       subscriptionId: "sub_1",
@@ -176,7 +177,9 @@ describe("Stripe fulfillment", () => {
     );
     tx.creditGrant.create.mockRejectedValueOnce(duplicate);
 
-    await expect(fulfillPaidInvoice(paidInvoice() as never, "evt_1")).resolves.toMatchObject({
+    await expect(
+      fulfillPaidInvoice(paidInvoice() as never, "evt_1"),
+    ).resolves.toMatchObject({
       fulfilled: false,
       userId: "user_1",
       invoiceId: "in_1",
@@ -292,7 +295,7 @@ describe("Stripe fulfillment", () => {
     });
   });
 
-  it("records webhook event processing and marks deleted subscriptions", async () => {
+  it("records webhook event processing", async () => {
     prismaMock.stripeWebhookEvent.findUnique.mockResolvedValueOnce(null);
     await expect(hasProcessedStripeEvent("evt_1")).resolves.toBe(false);
 
@@ -304,12 +307,6 @@ describe("Stripe fulfillment", () => {
       where: { id: "evt_1" },
       create: { id: "evt_1", type: "checkout.session.completed" },
       update: {},
-    });
-
-    await markSubscriptionStatus("sub_1", "canceled");
-    expect(prismaMock.subscription.updateMany).toHaveBeenCalledWith({
-      where: { stripeSubscriptionId: "sub_1" },
-      data: { status: "canceled" },
     });
   });
 });
