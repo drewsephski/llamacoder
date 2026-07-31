@@ -23,6 +23,7 @@
     "validate:schema": "prisma validate",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:launch": "RUN_LAUNCH_E2E=1 playwright test tests/e2e/launch-flow.spec.ts --workers=1",
