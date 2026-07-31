@@ -12,13 +12,13 @@ describe("OnboardingWizard", () => {
       <OnboardingWizard isOpen onClose={onClose} onComplete={onComplete} />,
     );
 
-    expect(screen.getByText("Describe the product")).toBeInTheDocument();
+    expect(screen.getByText("Describe the prototype")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByText("Plan first, then build")).toBeInTheDocument();
+    expect(screen.getByText("Build first, then react")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByText("Preview, refine, export")).toBeInTheDocument();
+    expect(screen.getByText("Share it, then make it real")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Start building/i }));
     expect(onComplete).toHaveBeenCalledTimes(1);
