@@ -17,12 +17,12 @@ const fadeUp = (delay: number) => ({
 });
 
 const PARAGRAPH_ONE =
-  "We're building a space where ideas become systems — where founders find leverage, builders find speed, and every prompt becomes a product worth shipping.";
+  "The best way to understand an idea is to use it — turn the prompt into a working prototype, then put it in front of people.";
 
 const PARAGRAPH_TWO =
-  "A platform where planning, generation, and verification flow together — with less guesswork, less friction, and more working software for everyone involved.";
+  "Keep the code, refine the interaction, and add a backend only after the prototype shows you what the real product needs.";
 
-const HIGHLIGHTED_WORDS = ["ideas", "become", "systems"] as const;
+const HIGHLIGHTED_WORDS = ["working", "prototype"] as const;
 
 function RevealWord({
   children,

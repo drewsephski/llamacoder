@@ -285,13 +285,12 @@ export function SupabaseTechnicalWalkthrough() {
                 Squid × Supabase · implementation walkthrough
               </div>
               <h1 className="mt-8 max-w-4xl text-balance text-[clamp(3.25rem,8vw,7.25rem)] font-medium leading-[0.86] tracking-[-0.067em]">
-                Generated code is not a backend.
+                When the prototype needs a real backend.
               </h1>
               <p className="mt-8 max-w-2xl text-pretty text-lg leading-8 text-[#52657c] dark:text-[#9fb1c4] sm:text-xl sm:leading-9">
-                Squid holds database-backed generation until a real Supabase
-                project is connected, approved, and read back as verified. This
-                walkthrough shows the control plane, the trust boundary, and the
-                receipt that unlocks generation.
+                Start with the working experience. When persistent or multi-user
+                data becomes essential, Squid connects, approves, and verifies a
+                real Supabase project before presenting the backend as ready.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <button

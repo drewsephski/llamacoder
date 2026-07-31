@@ -33,9 +33,9 @@ type SearchEntry = {
 const fixedEntries: readonly SearchEntry[] = [
   {
     href: "/",
-    title: "AI React app builder with exportable code",
+    title: "Fast AI React prototype builder",
     description:
-      "Research, plan, build, verify, restore, and export production-ready React apps.",
+      "Generate, refine, verify, share, and export polished React prototypes.",
     section: "Product",
   },
   {

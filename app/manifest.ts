@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Squid Agent",
     short_name: "Squid",
     description:
-      "Research, plan, build, verify, and ship portable React apps with visible sources, versions, quality checks, and credit use.",
+      "Generate, refine, verify, share, and export polished React prototypes with visible versions, quality checks, and credit use.",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -17,7 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/squidagent-logo.svg",
         sizes: "any",
         type: "image/svg+xml",
-      purpose: "maskable",
+        purpose: "maskable",
       },
       {
         src: "/squidagent-logo-192.png",

@@ -72,14 +72,14 @@ const homepageSummaryProviders: readonly Provider[] = [
 const homepageSummaryRows: readonly ComparisonRow[] = [
   {
     stage: "Planning",
-    feature: "Structured product interview",
-    detail: "Turn ambiguity into an approved plan before code generation.",
+    feature: "Optional structured planning",
+    detail: "Generate directly or resolve ambiguity before code generation.",
     values: {
       lovable: { status: "no", text: "Prompt-first workflow" },
       bolt: { status: "no", text: "Prompt-first workflow" },
       base44: { status: "no", text: "Prompt-first workflow" },
       v0: { status: "no", text: "Prompt-first workflow" },
-      squid: { status: "yes", text: "Plan mode with approval gate" },
+      squid: { status: "yes", text: "Optional Plan mode with approval gate" },
     },
   },
   {
@@ -334,7 +334,7 @@ export function AiBuilderFeatureComparison({
                   : "mt-3 max-w-3xl text-balance text-2xl font-semibold tracking-[-0.025em] sm:text-3xl"
               }
             >
-              The first prompt is the easy part.
+              Fast should still leave you with something solid.
             </h2>
           </div>
           <p
@@ -345,7 +345,7 @@ export function AiBuilderFeatureComparison({
             }
           >
             {isHomepage
-              ? "Squid’s philosophy is planning first, verification before handoff, and code you can take anywhere."
+              ? "Squid starts with the working prototype, verifies the result, and gives you code you can take anywhere."
               : "Choose the workflow that stays clear when a build fails, costs more than expected, or needs to leave the platform."}
           </p>
         </div>

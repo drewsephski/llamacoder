@@ -6,10 +6,10 @@ import { DEFAULT_OG_IMAGE, SITE_URL } from "@/lib/seo";
 import "./homepage.css";
 
 const appBaseUrl = SITE_URL;
-const appHomeTitle = "AI React App Builder with Exportable Code";
+const appHomeTitle = "Fast AI React Prototype Builder";
 const appHomeSocialTitle = `${appHomeTitle} | Squid Agent`;
 const appHomeDescription =
-  "Build production-ready React apps from prompts, screenshots, or live sites. Squid Agent researches, plans, verifies, restores, and exports code you own.";
+  "Turn prompts, screenshots, or live sites into polished React prototypes. Refine the working preview, share it, and export code you own.";
 
 export const metadata: Metadata = {
   title: {
@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   keywords: [
     "AI app builder",
     "AI React app builder",
+    "AI prototype builder",
+    "React prototype generator",
     "Squid Agent",
     "React app builder",
     "React code generator",
@@ -43,7 +45,7 @@ export const metadata: Metadata = {
         url: `${appBaseUrl}${DEFAULT_OG_IMAGE}`,
         width: 1200,
         height: 630,
-        alt: "Squid Agent AI React app builder workflow",
+        alt: "Squid Agent AI React prototype builder workflow",
       },
     ],
   },

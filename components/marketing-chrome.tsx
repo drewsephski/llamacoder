@@ -41,7 +41,7 @@ export function MarketingHeader() {
           <Button asChild size="sm" className="rounded-lg">
             <Link href="/" className="whitespace-nowrap">
               <span className="sm:hidden">Build</span>
-              <span className="hidden sm:inline">Build with Squid</span>
+              <span className="hidden sm:inline">Build a prototype</span>
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </Button>
@@ -66,8 +66,8 @@ export function MarketingFooter() {
             <span className="font-semibold tracking-tight">Squid Agent</span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">
-            Generate exportable React apps with visible credit estimates,
-            reversible checkpoints, and inspectable quality reports.
+            Generate polished React prototypes with live previews, reversible
+            checkpoints, and source code you can take anywhere.
           </p>
           <div className="mt-5 flex items-center gap-2">
             <a
@@ -108,7 +108,7 @@ export function MarketingFooter() {
         <FooterColumn
           title="Product"
           links={[
-            { href: "/", label: "Build an app" },
+            { href: "/", label: "Build a prototype" },
             { href: "/gallery", label: "Gallery" },
             { href: "/docs", label: "Documentation" },
             { href: "/search", label: "Search resources" },

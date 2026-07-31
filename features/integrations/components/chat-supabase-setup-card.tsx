@@ -546,12 +546,12 @@ export function ChatSupabaseSetupCard({
         </span>
         <div className="min-w-0">
           <p className="font-medium text-foreground">
-            {usesSupabase ? "Building resumed" : "UI-only build selected"}
+            {usesSupabase ? "Building resumed" : "Prototype build selected"}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {usesSupabase
               ? "Supabase is ready. Continuing your build with authentication and persistent data."
-              : "The interface will use browser-only data for now."}
+              : "The prototype will use browser-only data for now. You can connect a backend later."}
           </p>
         </div>
       </div>
@@ -571,14 +571,14 @@ export function ChatSupabaseSetupCard({
             {resumed
               ? "Building resumed"
               : uiOnly
-                ? "UI-only build selected"
+                ? "Prototype build selected"
                 : "Setup replaced by a newer request"}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {resumed
               ? "Supabase is ready. Continuing your build with authentication and persistent data."
               : uiOnly
-                ? "The interface will use browser-only data for now."
+                ? "The prototype will use browser-only data for now. You can connect a backend later."
                 : "This card is complete and cannot repeat provider actions."}
           </p>
         </div>
@@ -622,7 +622,7 @@ export function ChatSupabaseSetupCard({
 
   const statusLabel =
     state === "connection_required"
-      ? "Recommended"
+      ? "Prototype first"
       : state
         ? state.replaceAll("_", " ")
         : "Checking status";
@@ -630,12 +630,14 @@ export function ChatSupabaseSetupCard({
     state === "ready" || state === "runtime_ready"
       ? "Supabase is ready"
       : state === "connection_required"
-        ? "Add a database"
+        ? "Start with the prototype"
         : request.title;
   const connectionMessage =
     state === "authorizing"
       ? "Finish authorizing Supabase in the secure window. This card will update automatically."
-      : (view?.message ?? request.description);
+      : state === "connection_required"
+        ? "Build the working interface with browser-local demo data now. Connect Supabase later when the idea is ready for persistent or multi-user data."
+        : (view?.message ?? request.description);
 
   return (
     <section
@@ -703,20 +705,20 @@ export function ChatSupabaseSetupCard({
               type="button"
               size="sm"
               className="w-full sm:w-auto"
+              onClick={() => void onRespond(request, "build_ui_only")}
+            >
+              Build prototype now
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full text-muted-foreground sm:w-auto"
               onClick={startOAuth}
               aria-label="Set up Supabase"
             >
               <Plug className="size-3.5" aria-hidden="true" />
-              Connect Supabase
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="w-full text-muted-foreground sm:w-auto"
-              onClick={() => void onRespond(request, "build_ui_only")}
-            >
-              Build UI only
+              Connect Supabase first
             </Button>
           </div>
         ) : state === "authorization_required" ? (
@@ -758,7 +760,7 @@ export function ChatSupabaseSetupCard({
               className="text-muted-foreground"
               onClick={() => void onRespond(request, "build_ui_only")}
             >
-              Build UI only
+              Continue as prototype
             </Button>
           </div>
         ) : state === "project_setup_required" ||
@@ -791,7 +793,7 @@ export function ChatSupabaseSetupCard({
                 className="w-full text-muted-foreground sm:w-auto"
                 onClick={() => void onRespond(request, "build_ui_only")}
               >
-                Build UI only
+                Continue as prototype
               </Button>
             ) : null}
           </div>
@@ -846,7 +848,7 @@ export function ChatSupabaseSetupCard({
                 className="text-muted-foreground"
                 onClick={() => void onRespond(request, "build_ui_only")}
               >
-                Build UI only
+                Continue as prototype
               </Button>
             </div>
           </div>
@@ -886,8 +888,9 @@ export function ChatSupabaseSetupCard({
                 Why is this optional?
               </summary>
               <p className="mt-1.5 max-w-md leading-5">
-                UI-only builds keep data in this browser. Supabase keeps it
-                available across sessions, users, and devices.
+                Prototypes keep demo data in this browser so you can validate
+                the experience first. Supabase makes it persistent across
+                sessions, users, and devices when you are ready.
               </p>
             </details>
             <ProjectIntegrationsPanel

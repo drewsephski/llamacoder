@@ -26,7 +26,7 @@ const Footer = memo(({ showPageLinks = false }: FooterProps) => {
       <footer className="mt-auto w-full px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-10 sm:px-6 sm:pb-8 sm:pt-16">
         <div className="mx-auto w-full max-w-6xl border-t border-border/70 pt-8 sm:pt-10">
           <p className="max-w-[26ch] text-3xl font-medium leading-[1.05] tracking-[-0.035em] text-foreground sm:text-4xl">
-            Research, build, verify, and ship React apps with code you own.
+            Prototype the idea. Keep the React code when it clicks.
           </p>
 
           <div className="mt-10 flex flex-col gap-5 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
@@ -79,7 +79,7 @@ const Footer = memo(({ showPageLinks = false }: FooterProps) => {
         </span>
         <span className="text-border">·</span>
         <span className="text-xs text-muted-foreground/60">
-          Turn ideas into apps
+          Turn ideas into prototypes
         </span>
       </div>
       <SocialLinks />

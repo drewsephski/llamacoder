@@ -20,9 +20,9 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const title = "Squid Agent: AI React App Builder";
+const title = "Squid Agent: Fast AI React Prototype Builder";
 const description =
-  "Research the live web, approve a plan, build and verify React apps, restore versions, connect APIs, deploy to Vercel, and export code you own.";
+  "Turn an idea, screenshot, or URL into a polished React prototype. Refine the live result, share it, and export code you own.";
 const url = `${SITE_URL}/`;
 const ogimage = `${SITE_URL}${DEFAULT_OG_IMAGE}`;
 const browserIconPng192 = "/squidagent-logo-192.png";
@@ -46,6 +46,8 @@ export const metadata: Metadata = {
   },
   keywords: [
     "AI app builder",
+    "AI prototype builder",
+    "React prototype generator",
     "exportable React code",
     "React app generator",
     "AI React builder",

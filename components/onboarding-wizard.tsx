@@ -16,37 +16,37 @@ const ONBOARDING_STORAGE_KEY = "squid_onboarding_completed_v1";
 const ONBOARDING_STEPS = [
   {
     id: "describe",
-    title: "Describe the product",
+    title: "Describe the prototype",
     description:
-      "Start with who it is for, the one job the first screen must do, and any must-have data or actions.",
+      "Start with who it is for, the one job the first screen must do, and the interaction you want to test.",
     bullets: [
       "Name the audience and primary workflow.",
-      "Mention screens, states, and edge cases you care about.",
+      "Mention the screens and states that make the idea believable.",
       "Attach a screenshot or URL when visual accuracy matters.",
     ],
     icon: Sparkles,
   },
   {
-    id: "plan",
-    title: "Plan first, then build",
+    id: "build",
+    title: "Build first, then react",
     description:
-      "Use Plan mode when scope is fuzzy. Squid turns the idea into an approved plan before generating code.",
+      "Squid moves directly into a working React preview by default. Use Plan first only when the scope is genuinely unclear.",
     bullets: [
-      "Plan mode interviews you, then waits for approval.",
-      "Build fast skips straight to code when the prompt is already clear.",
-      "You can switch modes before starting a project.",
+      "Direct mode gets the prototype on screen immediately.",
+      "Plan first asks consequential questions before generating.",
+      "You can refine the working result in chat either way.",
     ],
     icon: Compass,
   },
   {
-    id: "ship",
-    title: "Preview, refine, export",
+    id: "promote",
+    title: "Share it, then make it real",
     description:
-      "Every saved version runs in a live preview. Repair broken previews for free, then export verified source code.",
+      "Share the prototype or export its source. Connect databases and external services only when the idea is ready for them.",
     bullets: [
       "Iterate in chat with small follow-up requests.",
-      "Check runtime verification before handoff.",
-      "Export ZIP or publish to GitHub when you are ready.",
+      "Check the responsive preview before sharing.",
+      "Promote the prototype without rebuilding from scratch.",
     ],
     icon: ClipboardCheck,
   },

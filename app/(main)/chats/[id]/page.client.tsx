@@ -5,13 +5,13 @@ import {
   createAgentUserMessage,
 } from "@/features/generation/server/agent-actions";
 import {
-  createMessage,
   createPreviewRepairMessage,
   createValidationRepairMessage,
   releaseReservedCreditHold,
   restoreSelectedFilesAsCheckpoint,
   restoreVersionAsCheckpoint,
 } from "@/features/generation/server/actions";
+import { createUserMessage } from "@/features/generation/client/messages";
 import { saveProject } from "@/features/projects/server/actions";
 import LogoSmall from "@/components/icons/logo-small";
 import {
@@ -1271,13 +1271,12 @@ export default function PageClient({ chat }: { chat: Chat }) {
               onRequestTargetedEdit={(prompt: string) => {
                 startTransition(async () => {
                   try {
-                    const message = await createMessage(
+                    const { messageId } = await createUserMessage(
                       chat.id,
                       prompt,
-                      "user",
                     );
                     const streamPromise = fetchCompletionStream({
-                      messageId: message.id,
+                      messageId,
                       model: chat.model,
                     });
                     setStreamPromise(streamPromise);

@@ -4,7 +4,7 @@ const brandIdentityFaqs = [
   {
     question: "What is Squid Agent?",
     answer:
-      "Squid Agent is an export-first AI app builder for React with plan mode, version checkpoints, usage visibility, and verified handoff.",
+      "Squid Agent is a prototype-first AI builder for React with live previews, version checkpoints, source ownership, and verified handoff.",
     link: {
       href: "/what-is-squid-agent",
       label: "Read the identity page",
@@ -13,7 +13,7 @@ const brandIdentityFaqs = [
   {
     question: "Is Squid Agent related to Squid AI (getsquid.ai)?",
     answer:
-      "No. Squid Agent focuses on React export and verification for production handoff; it is intentionally distinct from Squid AI and its chatbot-first workflow.",
+      "No. Squid Agent focuses on fast React prototyping, export, and verification; it is intentionally distinct from Squid AI and its chatbot-first workflow.",
     link: {
       href: "/compare/squid-vs-getsquid-ai",
       label: "See the comparison",

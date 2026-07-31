@@ -13,7 +13,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { createMessage } from "@/features/generation/server/actions";
 import { MODELS } from "@/lib/constants";
 import { toast } from "sonner";
 import { PricingModal } from "@/features/billing/components/pricing-modal";
@@ -38,6 +37,7 @@ import {
   IMAGE_CLONE_PROMPT,
   readImageAttachmentAsDataUrl,
 } from "@/features/generation/client/image-attachment";
+import { createUserMessage } from "@/features/generation/client/messages";
 
 interface ChatBoxProps {
   chat: {
@@ -187,9 +187,9 @@ export default function ChatBox({
 
     startTransition(async () => {
       try {
-        const message = await createMessage(chat.id, nextPrompt, "user");
+        const { messageId } = await createUserMessage(chat.id, nextPrompt);
         const streamPromise = fetchCompletionStream({
-          messageId: message.id,
+          messageId,
           model: chat.model,
           screenshotData: imageAttachment?.dataUrl,
         });

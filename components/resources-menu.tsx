@@ -67,9 +67,9 @@ export const resourceLinks: ResourceLink[] = [
   },
   {
     href: "/supabase",
-    label: "Supabase walkthrough",
+    label: "Promote with Supabase",
     shortLabel: "Supabase",
-    description: "OAuth, RLS, and backend verification",
+    description: "Turn a validated prototype into a connected app",
     icon: DatabaseZap,
   },
   {

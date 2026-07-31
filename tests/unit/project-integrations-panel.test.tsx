@@ -46,11 +46,11 @@ describe("project integrations panel", () => {
 
     renderPanel("composer");
     await userEvent.click(
-      screen.getByRole("button", { name: "Choose APIs for this app" }),
+      screen.getByRole("button", { name: "Make this prototype real" }),
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Project integrations" }),
+      await screen.findByRole("heading", { name: "Promote this prototype" }),
     ).toBeInTheDocument();
   });
 
@@ -72,7 +72,7 @@ describe("project integrations panel", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Project integrations" }),
+      await screen.findByRole("heading", { name: "Promote this prototype" }),
     ).toBeInTheDocument();
   });
 
@@ -117,7 +117,7 @@ describe("project integrations panel", () => {
 
     renderPanel();
     await userEvent.click(
-      screen.getByRole("button", { name: /integrations/i }),
+      screen.getByRole("button", { name: /make this prototype real/i }),
     );
     const search = await screen.findByRole("textbox", { name: "Search APIs" });
     await userEvent.type(search, "currency");
@@ -131,7 +131,7 @@ describe("project integrations panel", () => {
       screen.getByRole("button", { name: "Use in this app" }),
     ).toBeEnabled();
     expect(
-      screen.getByText(/Your choices become project context/),
+      screen.getByText(/Connected services become project context/),
     ).toBeInTheDocument();
   });
 
@@ -196,7 +196,7 @@ describe("project integrations panel", () => {
 
     renderPanel();
     await userEvent.click(
-      screen.getByRole("button", { name: /integrations/i }),
+      screen.getByRole("button", { name: /make this prototype real/i }),
     );
 
     expect(
@@ -271,7 +271,7 @@ describe("project integrations panel", () => {
 
     renderPanel();
     await userEvent.click(
-      screen.getByRole("button", { name: /integrations/i }),
+      screen.getByRole("button", { name: /make this prototype real/i }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Configure" }),
@@ -369,7 +369,7 @@ describe("project integrations panel", () => {
 
     renderPanel();
     await userEvent.click(
-      screen.getByRole("button", { name: /integrations/i }),
+      screen.getByRole("button", { name: /make this prototype real/i }),
     );
 
     expect(
@@ -449,7 +449,7 @@ describe("project integrations panel", () => {
 
     renderPanel();
     await userEvent.click(
-      screen.getByRole("button", { name: /integrations/i }),
+      screen.getByRole("button", { name: /make this prototype real/i }),
     );
 
     expect(
@@ -557,7 +557,7 @@ describe("project integrations panel", () => {
 
     renderPanel();
     await userEvent.click(
-      screen.getByRole("button", { name: /integrations/i }),
+      screen.getByRole("button", { name: /make this prototype real/i }),
     );
     expect(await screen.findByText("Existing Tasks")).toBeInTheDocument();
     expect(

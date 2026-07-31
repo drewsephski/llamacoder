@@ -89,21 +89,21 @@ describe("direct backend setup card", () => {
     const onRespond = renderCard();
 
     expect(
-      screen.getByRole("heading", {
-        name: "Add a database",
+      await screen.findByRole("heading", {
+        name: "Start with the prototype",
       }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByRole("button", { name: "Build UI only" }),
+      await screen.findByRole("button", { name: "Build prototype now" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Set up Supabase" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Recommended")).toBeInTheDocument();
+    expect(screen.getByText("Prototype first")).toBeInTheDocument();
     expect(screen.queryByText(/choose the decisions/i)).not.toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Build UI only" }),
+      screen.getByRole("button", { name: "Build prototype now" }),
     );
     expect(onRespond).toHaveBeenCalledWith(request, "build_ui_only");
   });
@@ -163,7 +163,7 @@ describe("direct backend setup card", () => {
       },
     });
 
-    expect(screen.getByText("UI-only build selected")).toBeInTheDocument();
+    expect(screen.getByText("Prototype build selected")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

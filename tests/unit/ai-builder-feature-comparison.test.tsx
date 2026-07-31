@@ -30,10 +30,10 @@ describe("AI builder feature comparison", () => {
       screen.getByRole("heading", { name: "Squid Agent", level: 3 }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByText("Structured product interview").length,
+      screen.getAllByText("Optional structured planning").length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getAllByText("Plan mode with approval gate").length,
+      screen.getAllByText("Optional Plan mode with approval gate").length,
     ).toBeGreaterThan(0);
     expect(
       screen.getByRole("link", { name: /See full comparison/i }),

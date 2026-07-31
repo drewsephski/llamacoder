@@ -6,7 +6,7 @@ const pageUrl = absoluteUrl(path);
 const siteUrl = SITE_URL;
 const title = "What is Squid Agent?";
 const description =
-  "Squid Agent is an export-first AI app builder for React that emphasizes planning, checkpoints, transparent usage, and verifiable handoff to your own codebase.";
+  "Squid Agent is a prototype-first AI builder that turns prompts and references into polished, editable React interfaces with code you can keep.";
 const socialImage =
   "/api/og?card=article&kind=guide&title=What+is+Squid+Agent%3F&v=4";
 
@@ -50,8 +50,8 @@ const structuredData = [
     disambiguatingDescription:
       "Squid Agent is not Squid AI (getsquid.ai). It focuses on exportable React app generation, explicit usage visibility, and quality checks before handoff.",
     featureList: [
-      "Research-backed generation from prompts, screenshots, and website references",
-      "Plan mode with explicit approval before generation",
+      "Direct generation from prompts, screenshots, and website references",
+      "Optional Plan mode for ambiguous ideas",
       "Version checkpoints and scoped restores",
       "Generated file diagnostics and export verification",
       "Download-ready React bundles for local workflows",
@@ -64,7 +64,7 @@ const structuredData = [
     name: "Squid Agent",
     url: siteUrl,
     description:
-      "A product team building an export-first AI app builder for React with checkpoints and verifiable handoff.",
+      "A product team building a prototype-first AI builder for React with fast iteration, checkpoints, and verifiable handoff.",
     sameAs: [
       "https://github.com/drewsephski/llamacoder",
       `${siteUrl}/docs`,
@@ -89,7 +89,7 @@ const structuredData = [
         name: "Who is Squid Agent for?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Founders, designers, and teams who want to rapidly generate React applications while keeping generated code inspectable, portable, and auditable.",
+          text: "Founders, designers, and teams who want to test product ideas quickly while keeping the generated React code inspectable and portable.",
         },
       },
       {
@@ -97,7 +97,7 @@ const structuredData = [
         name: "What makes Squid Agent different?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Squid Agent combines planning, generation, repair visibility, usage tracking, and export quality checks into one workflow before you hand off code.",
+          text: "Squid Agent combines fast direct generation, a live preview, conversational iteration, repair visibility, and export quality checks in one workflow.",
         },
       },
     ],
@@ -142,17 +142,17 @@ export default function WhatIsSquidAgentPage() {
         What is Squid Agent?
       </h1>
       <p className="mt-6 max-w-3xl text-pretty text-lg text-muted-foreground">
-        Squid Agent is an export-first AI app builder for React that takes you
-        from plan to handoff. It surfaces plan mode, usage visibility,
-        checkpoints, and verification signals so you can trust generated code
-        before you ship.
+        Squid Agent is a prototype-first AI builder for React. It gets the idea
+        into a working preview quickly, keeps every file inspectable, and gives
+        you a clean path to refine, share, export, or connect real services
+        later.
       </p>
 
       <section className="mt-10 rounded-2xl border border-border bg-muted/40 p-6">
         <h2 className="text-2xl font-semibold">Not Squid AI (getsquid.ai)</h2>
         <p className="mt-3 text-muted-foreground">
           This is intentionally separate from Squid AI. This page is for Squid
-          Agent&apos;s export workflow, model usage transparency, and quality
+          Agent&apos;s prototype workflow, model usage transparency, and quality
           handoff model.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -183,9 +183,9 @@ export default function WhatIsSquidAgentPage() {
         <article className="rounded-2xl border border-border p-6">
           <h2 className="text-xl font-semibold">What Squid Agent does best</h2>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-muted-foreground">
-            <li>Plan mode for explicit approval before generation.</li>
+            <li>Fast prompt, screenshot, and URL-to-prototype generation.</li>
+            <li>Optional Plan mode when the idea needs clarification.</li>
             <li>Version checkpoints and scoped restores.</li>
-            <li>Credit visibility from estimate to final ledger.</li>
             <li>Verified exports with supporting project files.</li>
           </ul>
         </article>
@@ -209,7 +209,7 @@ export default function WhatIsSquidAgentPage() {
             </li>
             <li>
               <Link href="/" className="text-primary">
-                Start with our homepage workflow
+                Build your first prototype
               </Link>
             </li>
           </ul>

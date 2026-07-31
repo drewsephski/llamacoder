@@ -9,12 +9,12 @@ export const homepageFaq = [
   {
     question: "What is Squid Agent?",
     answer:
-      "Squid Agent is an AI app builder that takes a project from research and planning through generation, iteration, verification, and shipping. It keeps the sources, decisions, React code, quality results, versions, integrations, and credit use visible throughout the process.",
+      "Squid Agent is an AI prototype builder that turns prompts, screenshots, and website references into working React interfaces. You can refine the live result, inspect every file, share it, and export the code.",
   },
   {
     question: "Who is Squid Agent for?",
     answer:
-      "Squid Agent is built for founders, builders, designers, and product teams who want to prototype full React apps quickly while keeping the generated code inspectable, editable, and portable.",
+      "Squid Agent is built for founders, designers, builders, and product teams who want to test product ideas quickly without throwing away the generated React code.",
   },
   {
     question: "Can Squid Agent research current documentation and APIs?",
@@ -24,7 +24,7 @@ export const homepageFaq = [
   {
     question: "What does Plan mode do?",
     answer:
-      "Plan mode asks a compact set of consequential questions, turns your answers into a structured product specification, and presents the plan for review. You can revise it, resolve open decisions, and explicitly approve it before code generation starts.",
+      "Plan mode is optional. Turn it on when the idea is still ambiguous and you want Squid to ask consequential questions before generating. Leave it off to move directly into a prototype.",
   },
   {
     question: "Can I keep editing after the first generation?",
@@ -44,7 +44,7 @@ export const homepageFaq = [
   {
     question: "How do APIs and connected services work?",
     answer:
-      "Choose APIs before a build, then connect supported services with project-scoped credentials, separate development and production settings, and health checks. Public browser-safe APIs can work directly; services that require secrets stay behind an explicit server and setup boundary rather than being presented as falsely complete.",
+      "Start with a prototype and connect services when the core experience is working. Public browser-safe APIs can work directly; databases, secrets, and privileged services stay behind an explicit setup boundary and are never presented as complete before they are connected.",
   },
   {
     question: "Can Squid Agent publish or export my app?",
@@ -71,14 +71,14 @@ export const homepageStructuredData = [
     name: "Squid Agent",
     alternateName: ["SquidAgent", "Squid Agent App Builder"],
     disambiguatingDescription:
-      "Squid Agent is not Squid AI (getsquid.ai). It is an AI app builder focused on exportable React applications with plan mode, checkpoints, usage visibility, and verification before handoff.",
+      "Squid Agent is not Squid AI (getsquid.ai). It is a prototype-first AI builder focused on polished React interfaces, fast iteration, code ownership, and verification before handoff.",
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Web",
     url: `${SITE_URL}/`,
     image: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
     screenshot: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
     description:
-      "AI app builder that researches, plans, generates, verifies, and ships portable React applications from prompts, screenshots, and website references.",
+      "AI prototype builder that generates, refines, verifies, shares, and exports portable React interfaces from prompts, screenshots, and website references.",
     creator: { "@id": `${SITE_URL}/#organization` },
     isPartOf: { "@id": `${SITE_URL}/#website` },
     offers: {
@@ -89,10 +89,11 @@ export const homepageStructuredData = [
     },
     featureList: [
       "Prompt-to-React app generation",
+      "Prototype-first direct generation",
       "Screenshot-to-code generation",
       "Website reference capture",
       "Live web research for current documentation and APIs",
-      "Guided Plan mode with explicit approval before code generation",
+      "Optional guided Plan mode for ambiguous ideas",
       "Source-aware follow-up and selected-element editing",
       "Static and runtime quality verification",
       "Automatic preview repair",

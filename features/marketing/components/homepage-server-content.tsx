@@ -247,8 +247,8 @@ const shippedProjects = [
 ] as const;
 
 export function HomepageLandingPagesSection() {
-  const buildHref = `/?plan=1&prompt=${encodeURIComponent(
-    "Build your version in 90 seconds: choose audience, style, key interactions, and success criteria before generating a verified React landing page.",
+  const buildHref = `/?prompt=${encodeURIComponent(
+    "Build a polished interactive prototype with a clear audience, strong visual direction, responsive states, and the core interaction working in the preview.",
   )}&source=${encodeURIComponent("/example")}`;
 
   return (
@@ -264,12 +264,12 @@ export function HomepageLandingPagesSection() {
             id="homepage-landing-pages-heading"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            Apps that do more than look good.
+            Prototypes that already feel real.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            From expressive landing pages to authenticated SaaS products, every
-            project is generated as a real React codebase you can inspect, edit,
-            and own.
+            Explore polished landing pages, dashboards, and product concepts.
+            Every prototype is generated as real React code you can inspect,
+            refine, share, and own.
           </p>
         </div>
 
@@ -293,11 +293,11 @@ export function HomepageLandingPagesSection() {
 
         <div className="mt-10 flex flex-col gap-5 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-            Start with a clear goal, turn on plan mode, and move into generation
-            with checkpoints for restore and export.
+            Start with the core experience. Add the backend and external
+            services later, after the prototype proves what the product needs.
           </p>
           <Button asChild size="lg" className="whitespace-nowrap rounded-xl">
-            <Link href={buildHref}>Build your version in 90 seconds</Link>
+            <Link href={buildHref}>Build your prototype</Link>
           </Button>
         </div>
       </div>
@@ -321,13 +321,13 @@ export function HomepageResearchSection() {
               id="homepage-research-heading"
               className="mt-4 font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
             >
-              Choose well. Build deliberately. Ship code you can keep.
+              Prototype quickly. Keep the code when it clicks.
             </h2>
           </div>
           <p className="max-w-2xl text-base leading-7 text-muted-foreground lg:justify-self-end">
-            Learn the complete AI app workflow—from selecting a builder and
-            translating visual references to reviewing generated React,
-            recovering versions, and exporting a production-ready project.
+            Learn how to choose a builder, translate visual references, review
+            generated React, recover versions, and turn a promising prototype
+            into a durable project.
           </p>
         </div>
 
@@ -377,12 +377,12 @@ export function HomepageBuiltWithSquidSection() {
       <div className="mx-auto w-full max-w-6xl border-y border-border/70 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl">
-            Real projects shipped from prompts.
+            Real prototypes built from prompts.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Explore sites and tools built with Squid. Inspect a complete public
-            workspace, remix the project, or download the source and continue in
-            your own stack.
+            Explore sites and tools built with Squid. Open a public workspace,
+            remix the idea, or download the source and continue in your own
+            stack.
           </p>
           <Link
             href="/example"
@@ -504,11 +504,12 @@ export function HomepageFaqSection() {
             id="squid-agent-faq"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            Know what happens from prompt to production.
+            Know what happens from prompt to prototype.
           </h2>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
-            Research, planning, iteration, quality, recovery, integrations,
-            deployment, ownership, and credits, without hidden steps.
+            Direct generation, optional planning, iteration, verification,
+            sharing, ownership, and the path to real services—without hidden
+            steps.
           </p>
         </div>
 

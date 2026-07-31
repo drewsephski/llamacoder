@@ -6,9 +6,9 @@ import { SupabaseTechnicalWalkthrough } from "@/components/supabase-technical-wa
 import { SITE_URL, createPageMetadata } from "@/lib/seo";
 
 const path = "/supabase";
-const title = "How Squid Verifies Supabase Backends";
+const title = "Promote a Squid Prototype with Supabase";
 const description =
-  "A technical walkthrough of Squid's Supabase control plane: OAuth, project provisioning, explicit database approval, RLS verification, and browser-safe generated apps.";
+  "A technical walkthrough for promoting a validated Squid prototype with Supabase: OAuth, project provisioning, explicit database approval, RLS verification, and browser-safe generated apps.";
 
 export const metadata = createPageMetadata({
   title,

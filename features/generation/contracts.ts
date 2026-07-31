@@ -1,4 +1,12 @@
 import { z } from "zod";
+
+export const createUserMessageRequestSchema = z.object({
+  text: z.string().trim().min(1, "Message is required").max(8000),
+});
+
+export const createUserMessageResponseSchema = z.object({
+  messageId: z.string().min(1),
+});
 import { agentActionSchema } from "@/features/generation/agent-contracts";
 
 export const generationPhaseSchema = z.enum([

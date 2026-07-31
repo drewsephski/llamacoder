@@ -93,12 +93,6 @@ import {
   type GalleryHeroImage,
 } from "@/features/gallery/client/hero-image-rotation";
 
-const ApiSelectionDialog = dynamic(() =>
-  import("@/features/integrations/components/api-selection-dialog").then(
-    (module) => module.ApiSelectionDialog,
-  ),
-);
-
 const PROMPT_TEXTAREA_MAX_HEIGHT_PX = 360;
 const PROMPT_TEXTAREA_VIEWPORT_RATIO = 0.42;
 const HelpPanel = dynamic(
@@ -139,34 +133,34 @@ const BUILD_LAUNCH_ANIMATION_MS = 1750;
 const homepageNarrativeBlocks = [
   {
     stage: "01",
-    label: "Define",
+    label: "Create",
     side: "left",
-    question: "Define",
-    body: "Squid interviews you and converts an ambiguous idea into a structured product plan.",
+    question: "Create",
+    body: "Start with a prompt, screenshot, or URL and move directly into a working React prototype.",
     media: {
-      video: "/launch/gifs/plan-mode.mp4",
-      poster: "/launch/gifs/plan-mode-poster.png",
-      alt: "Squid Plan Mode turning an ambiguous product idea into interview answers and an approved architecture plan",
+      video: "/launch/gifs/screenshot-to-app.mp4",
+      poster: "/launch/gifs/screenshot-to-app-poster.png",
+      alt: "Squid turning a visual reference into editable React code and a working responsive preview",
     },
   },
   {
     stage: "02",
-    label: "Build",
+    label: "Refine",
     side: "right",
-    question: "Build",
-    body: "Multiple agents generate the interface, application logic, assets, and integrations.",
+    question: "Refine",
+    body: "Shape the interface in conversation while Squid preserves the parts that already work.",
     media: {
-      video: "/launch/gifs/screenshot-to-app.mp4",
-      poster: "/launch/gifs/screenshot-to-app-poster.png",
-      alt: "Squid turning a visual reference into editable React code and switching the generated preview from desktop to mobile",
+      video: "/launch/gifs/plan-mode.mp4",
+      poster: "/launch/gifs/plan-mode-poster.png",
+      alt: "Squid refining a product brief before updating the generated prototype",
     },
   },
   {
     stage: "03",
-    label: "Verify and ship",
+    label: "Share or promote",
     side: "left",
-    question: "Verify and ship",
-    body: "Squid renders, tests, repairs, and prepares the project for deployment.",
+    question: "Share or promote",
+    body: "Share the prototype, export every file, or connect real services when the idea is ready for more.",
     media: {
       video: "/launch/gifs/verify-and-export.mp4",
       poster: "/launch/gifs/verify-and-export-poster.png",
@@ -176,46 +170,38 @@ const homepageNarrativeBlocks = [
 ] as const;
 
 const homepageOwnershipCopy = {
-  title: "Your app never disappears inside a proprietary editor.",
-  body: "Inspect every file, connect your own services, export the code, or deploy it wherever you choose.",
+  title: "A fast prototype without a throwaway codebase.",
+  body: "Inspect every file, share the result, export the React project, or connect real services later. The prototype stays useful whichever path you choose.",
 } as const;
 
 const homepageFlowSteps = [
   {
-    label: "Idea",
-    title: "Describe what you want",
+    label: "Brief",
+    title: "Give Squid the shape of the idea",
     detail:
-      "Use a prompt, screenshot, or URL. Squid turns rough intent into a buildable brief.",
-    artifacts: ["Prompt captured", "Goal clarified", "Build brief ready"],
+      "Use a prompt, screenshot, or URL. A clear direction is enough to start.",
+    artifacts: ["Prompt captured", "Reference attached", "Direction clear"],
     icon: Lightbulb,
   },
   {
-    label: "Research",
-    title: "Research the real world",
+    label: "Generate",
+    title: "Move directly into the prototype",
     detail:
-      "Sources, APIs, and constraints become visible context before the first line of code.",
-    artifacts: ["Sources collected", "API fit checked", "Constraints surfaced"],
-    icon: Search,
-  },
-  {
-    label: "Plan",
-    title: "See the plan before the build",
-    detail:
-      "Review consequential choices and steer the architecture while changes are still cheap.",
-    artifacts: ["Architecture mapped", "Tradeoffs exposed", "Plan approved"],
-    icon: MapIcon,
-  },
-  {
-    label: "Build",
-    title: "Generate a working app",
-    detail:
-      "The interface, logic, and files arrive together in an inspectable workspace.",
-    artifacts: ["React files created", "Preview running", "Source inspectable"],
+      "Squid generates the interface, interactions, and files together in an inspectable workspace.",
+    artifacts: ["React files created", "Interactions wired", "Source visible"],
     icon: Code2,
   },
   {
+    label: "Preview",
+    title: "See the idea working",
+    detail:
+      "The responsive preview gives you something concrete to react to, test, and show.",
+    artifacts: ["Preview running", "Mobile checked", "Idea tangible"],
+    icon: Search,
+  },
+  {
     label: "Refine",
-    title: "Refine in conversation",
+    title: "Change it in conversation",
     detail:
       "Ask for changes in plain language while Squid preserves the parts that already work.",
     artifacts: ["Request understood", "Change scoped", "Version saved"],
@@ -230,16 +216,24 @@ const homepageFlowSteps = [
     icon: ShieldCheck,
   },
   {
-    label: "Ship",
-    title: "Ship the whole project",
+    label: "Share",
+    title: "Put the prototype in front of people",
     detail:
-      "Deploy when ready, export every file, and keep a transparent record of how it was built.",
-    artifacts: ["Bundle portable", "Deployment ready", "History preserved"],
+      "Share it for feedback or export the complete React project to keep building anywhere.",
+    artifacts: ["Link shareable", "Bundle portable", "History preserved"],
     icon: Rocket,
+  },
+  {
+    label: "Promote",
+    title: "Make it real when it earns it",
+    detail:
+      "Connect a database, authentication, or APIs after the prototype proves what the product needs.",
+    artifacts: ["Services optional", "Setup explicit", "Prototype preserved"],
+    icon: MapIcon,
   },
 ] as const;
 
-/** Open left→right rail for the 7-step Idea→Ship journey. */
+/** Open left→right rail for the 7-step prototype journey. */
 const HOMEPAGE_FLOW_VIEWBOX = { width: 720, height: 140 } as const;
 const homepageFlowRailPoints = [
   { x: 48, y: 78 },
@@ -931,7 +925,6 @@ export function HomepageBuilderIsland({
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [quality, setQuality] = useState("low");
-  const [selectedProviderIds, setSelectedProviderIds] = useState<string[]>([]);
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
     undefined,
   );
@@ -1495,13 +1488,13 @@ export function HomepageBuilderIsland({
                 <h1 className="animate-fade-up">
                   <span className="hero-brand">Squid Agent</span>
                   <span className="hero-headline">
-                    The AI app builder for React apps you <em>own</em>.
+                    Your fastest path to a polished React <em>prototype</em>.
                   </span>
                 </h1>
 
                 <p className="hero-support animate-fade-up-1">
-                  Research live sources, approve the plan, then generate,
-                  verify, and export production-ready React code.
+                  Start with a prompt, screenshot, or URL. Get a working
+                  interface, refine it in chat, then share or export the code.
                 </p>
               </div>
 
@@ -1539,7 +1532,6 @@ export function HomepageBuilderIsland({
                         quality: submittedQuality,
                         screenshotData,
                         screenshotUrl,
-                        providerIds: selectedProviderIds,
                       });
                       toast.info("Create an account to start building");
                       router.push(
@@ -1560,7 +1552,6 @@ export function HomepageBuilderIsland({
                       quality: submittedQuality,
                       screenshotUrl,
                       screenshotData,
-                      providerIds: selectedProviderIds,
                     });
                     if (created) {
                       clearPendingProject();
@@ -1665,7 +1656,7 @@ export function HomepageBuilderIsland({
                             >
                               <Textarea
                                 ref={textareaRef}
-                                placeholder="Build me a budgeting app..."
+                                placeholder="Describe the prototype you want..."
                                 required
                                 name="prompt"
                                 className="min-h-[118px] resize-none overflow-y-hidden border-0 bg-transparent px-4 pt-4 text-base leading-relaxed transition-[height] duration-200 ease-out placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:min-h-[90px] sm:text-[15px]"
@@ -1901,13 +1892,13 @@ export function HomepageBuilderIsland({
                               }
                               title={
                                 quality === "high"
-                                  ? "Ask clarifying questions and approve a plan before code generation (recommended)"
+                                  ? "Ask clarifying questions and approve a plan before code generation"
                                   : "Skip planning and generate code immediately"
                               }
                               className={`plan-mode-toggle ${quality === "high" ? "is-active" : ""}`}
                             >
                               <Sparkles className="size-3" aria-hidden="true" />
-                              <span>Plan mode</span>
+                              <span>Plan first</span>
                             </button>
 
                             <div className="toolbar-divider mx-0.5 sm:mx-1" />
@@ -1966,7 +1957,7 @@ export function HomepageBuilderIsland({
                               }
                               className="build-btn group"
                             >
-                              Build
+                              Build prototype
                               <Spinner
                                 loading={isCheckingEligibility || isPending}
                               >
@@ -2004,11 +1995,9 @@ export function HomepageBuilderIsland({
                       <WandSparkles className="size-3.5" aria-hidden="true" />
                       <span>Prompt Enhancer</span>
                     </button>
-                    <ApiSelectionDialog
-                      selectedProviderIds={selectedProviderIds}
-                      onSelectionChange={setSelectedProviderIds}
-                      standaloneTrigger
-                    />
+                    <span className="prototype-first-note">
+                      Prototype first. Connect services later.
+                    </span>
                   </div>
 
                   {/* Prompt starters */}
@@ -2052,7 +2041,7 @@ export function HomepageBuilderIsland({
                     className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10"
                     data-hero-popout-exclude="clone"
                   >
-                    <div className="or-divider mb-4">or clone a site</div>
+                    <div className="or-divider mb-4">or start from a site</div>
 
                     <div className="flex justify-center">
                       <div
@@ -2093,7 +2082,7 @@ export function HomepageBuilderIsland({
                           <button
                             type="button"
                             onClick={handleUrlScrape}
-                            aria-label="Clone website"
+                            aria-label="Use website as a prototype reference"
                             className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                           >
                             <ArrowRightIcon className="size-3" />
@@ -2341,11 +2330,12 @@ function HomepageAnswerSection() {
             id="squid-agent-overview"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            The first prompt is only the beginning.
+            Get to something you can see, use, and share.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            Squid turns your idea into a plan, builds the system, verifies it in
-            a real runtime, and keeps iterating until it works.
+            Start with the interface and the core interaction. Refine the
+            working prototype, verify it, then decide whether to share, export,
+            or connect real services.
           </p>
         </div>
 
@@ -2486,7 +2476,7 @@ function HomepageAnswerSection() {
             href="/example"
             className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            See a demo
+            Try the live prototype
             <ArrowRightIcon className="size-4" />
           </Link>
         </div>
@@ -2640,12 +2630,12 @@ function HomepageFlowSection() {
             id="squid-agent-stages"
             className="font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
           >
-            Your idea keeps moving. <br /> You stay in control.
+            Prototype now. <br /> Add complexity when it earns it.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            Move from a rough idea to a shipped app without losing the context,
-            decisions, or code along the way. Select a stage to see what Squid
-            handles and where you stay in control.
+            Move from rough intent to a working React prototype without a
+            backend setup detour. Select a stage to see how the prototype can
+            grow without becoming throwaway work.
           </p>
         </div>
 
@@ -2850,7 +2840,7 @@ function HomepageFlowSection() {
             href="/example"
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition-[background-color,box-shadow] hover:bg-blue-600 hover:shadow-md hover:shadow-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
           >
-            Explore the full workflow
+            Open the live example
             <ArrowRightIcon className="size-4" />
           </Link>
         </div>

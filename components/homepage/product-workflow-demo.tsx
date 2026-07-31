@@ -6,7 +6,6 @@ import {
   CheckIcon,
   ChevronDownIcon,
   Code2,
-  FileCode2,
   MessageSquare,
   Rocket,
   ShieldCheck,
@@ -19,25 +18,13 @@ import { useReducedMotion } from "framer-motion";
 const productWorkflowSteps = [
   {
     label: "Prompt",
-    title: "Enter a product idea",
-    detail: "Describe the app, paste a URL, or attach a screenshot.",
+    title: "Describe the prototype",
+    detail: "Start with an idea, paste a URL, or attach a screenshot.",
     icon: Sparkles,
   },
   {
-    label: "Interview",
-    title: "Answer clarification questions",
-    detail: "Squid asks only the decisions that change architecture or scope.",
-    icon: MessageSquare,
-  },
-  {
-    label: "Plan",
-    title: "Review the generated plan",
-    detail: "Approve the structured spec before any code is written.",
-    icon: FileCode2,
-  },
-  {
-    label: "Build",
-    title: "Watch files appear",
+    label: "Generate",
+    title: "Move directly into the build",
     detail:
       "React components, routes, and logic land in an inspectable workspace.",
     icon: Code2,
@@ -50,15 +37,22 @@ const productWorkflowSteps = [
     icon: CheckIcon,
   },
   {
-    label: "Repair",
-    title: "Recover from runtime errors",
+    label: "Refine",
+    title: "Shape the working result",
+    detail:
+      "Ask for focused changes while Squid preserves the parts that already work.",
+    icon: MessageSquare,
+  },
+  {
+    label: "Verify",
+    title: "Check the prototype before sharing",
     detail:
       "Squid detects preview failures and attempts automatic repair loops.",
     icon: ShieldCheck,
   },
   {
-    label: "Ship",
-    title: "Deploy or export the project",
+    label: "Share",
+    title: "Share, deploy, or export",
     detail:
       "Publish to GitHub, deploy to Vercel, or download every source file.",
     icon: Rocket,
@@ -113,11 +107,11 @@ export function ProductWorkflowDemo() {
               id="product-workflow-demo-heading"
               className="mt-3 font-display text-3xl leading-[1.02] tracking-tight text-foreground sm:text-4xl"
             >
-              From prompt to working app.
+              From prompt to working prototype.
             </h2>
             <p className="mt-4 text-base leading-7 text-muted-foreground">
-              Squid is not a one-shot generator. It interviews, plans, builds,
-              verifies, repairs, and prepares your project to ship.
+              Generate directly, react to the live result, refine it in chat,
+              and keep every file when the direction is right.
             </p>
 
             <article
@@ -189,7 +183,7 @@ export function ProductWorkflowDemo() {
               <Macbook
                 className="scale-125 sm:scale-150"
                 screenImageSrc="/macbook-squid-home.webp"
-                screenImageAlt="Squid Agent workspace showing plan, files, preview, and quality report"
+                screenImageAlt="Squid Agent workspace showing generated files, a live prototype preview, and a quality report"
               />
             </div>
           </div>

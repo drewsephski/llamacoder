@@ -1145,9 +1145,9 @@ export function ProjectIntegrationsPanel({
           <button
             type="button"
             className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Choose APIs for this app"
+            aria-label="Make this prototype real"
           >
-            <Plug className="size-3.5" /> APIs
+            <Plug className="size-3.5" /> Make it real
           </button>
         ) : (
           <Button
@@ -1155,23 +1155,23 @@ export function ProjectIntegrationsPanel({
             variant="outline"
             size="sm"
             className="code-toolbar-adaptive-button gap-1.5"
-            aria-label="Project integrations"
-            title="Integrations"
+            aria-label="Make this prototype real"
+            title="Connect services"
           >
             <Plug className="size-3.5" />
-            <span className="code-toolbar-adaptive-label">Integrations</span>
+            <span className="code-toolbar-adaptive-label">Make it real</span>
           </Button>
         )}
       </DialogTrigger>
       <DialogContent size="workspace" className="max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plug className="size-5 text-primary" /> Project integrations
+            <Plug className="size-5 text-primary" /> Promote this prototype
           </DialogTitle>
           <DialogDescription>
-            Choose the APIs this app should use. Squid gives the AI their
-            reviewed implementation rules; credentials stay encrypted and are
-            never included in generated source or exports.
+            Connect a database or external service when the prototype has proved
+            what it needs. Squid keeps credentials encrypted and never includes
+            them in generated source or exports.
           </DialogDescription>
         </DialogHeader>
 
@@ -1453,11 +1453,11 @@ export function ProjectIntegrationsPanel({
                     >
                       {editingBindingId
                         ? "Update connection"
-                        : "Choose APIs for this app"}
+                        : "Connect a service"}
                     </h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Your choices become project context for planning, code
-                      generation, and runtime checks.
+                      Connected services become project context for future code
+                      changes and runtime checks.
                     </p>
                   </div>
                   {editingBindingId && (

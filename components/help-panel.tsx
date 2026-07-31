@@ -21,14 +21,14 @@ interface HelpPanelProps {
 }
 
 const HOW_IT_WORKS = [
-  "Describe what you want to build.",
-  "Pick a model and quality mode.",
+  "Describe the prototype you want to see.",
+  "Pick a model; leave Plan first off for direct generation.",
   "Attach a screenshot or URL when visual accuracy matters.",
-  "Build, review, then refine in chat.",
+  "Build, use the preview, then refine in chat.",
 ];
 
 const USE_CASES = [
-  "Prototype product ideas.",
+  "Test product ideas before committing to a backend.",
   "Create landing pages, dashboards, forms, calculators, and tools.",
   "Convert references into editable React code.",
   "Explore UI directions quickly.",
@@ -71,7 +71,7 @@ export function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
             <div className="min-w-0">
               <DialogTitle>Help</DialogTitle>
               <DialogDescription className="mt-0.5 line-clamp-2 text-xs sm:text-sm">
-                Turn clear app ideas into editable React projects.
+                Turn clear ideas into working, editable React prototypes.
               </DialogDescription>
             </div>
           </div>
