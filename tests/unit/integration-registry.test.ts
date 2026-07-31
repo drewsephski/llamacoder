@@ -86,12 +86,13 @@ describe("integration registry", () => {
 
   it("registers Octagon as a browser-safe MMA data provider", () => {
     expect(getIntegrationProvider("octagon")).toMatchObject({
-      name: "UFC API",
+      name: "Octagon API",
       auth: "none",
       runtime: "browser",
       corsCompatible: true,
       commercialUse: "review_required",
       baseUrl: "https://api.octagon-api.com",
+      verifiedAt: "2026-07-31",
     });
     expect(
       findIntegrationProviders("Build an MMA fighter rankings app").map(
@@ -105,9 +106,21 @@ describe("integration registry", () => {
     ).toBe("octagon");
 
     const guidance = buildIntegrationProviderGuidance(["octagon"]);
+    expect(guidance).toContain("GET /rankings");
+    expect(guidance).toContain("GET /fighters");
+    expect(guidance).toContain("GET /fighter/{fighterId}");
     expect(guidance).toContain("/division/{divisionId}");
-    expect(guidance).toContain("fighter measurements and records are strings");
-    expect(guidance).toContain("detail endpoints may return 404");
+    expect(guidance).toContain(
+      "none; no path or query parameters are documented",
+    );
+    expect(guidance).toContain("Object.entries(response)");
+    expect(guidance).toContain("encodeURIComponent");
+    expect(guidance).toContain(
+      'HTTP 404 with { message: "Fighter not found" }',
+    );
+    expect(guidance).toContain("There is no rank field");
+    expect(guidance).toContain("Fighter measurements and records are strings");
+    expect(guidance).toContain("None accepts documented query parameters");
     expect(guidance).toContain(
       "call that provider at runtime and treat its response as the product data source",
     );
@@ -142,10 +155,7 @@ describe("integration registry", () => {
   );
 
   it.each([
-    [
-      "https://api.artic.edu/api/v1/artworks/27992",
-      "art-institute-chicago",
-    ],
+    ["https://api.artic.edu/api/v1/artworks/27992", "art-institute-chicago"],
     [
       "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
       "usgs-earthquakes",
@@ -217,6 +227,8 @@ describe("integration registry", () => {
     expect(guidance).toContain("not high-traffic commercial infrastructure");
     expect(guidance).toContain("crowdsourced and potentially incomplete");
     expect(guidance).toContain("licenses vary by publisher");
-    expect(guidance).toContain("must not be used to make medical-care decisions");
+    expect(guidance).toContain(
+      "must not be used to make medical-care decisions",
+    );
   });
 });

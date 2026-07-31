@@ -1,19 +1,43 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { plausibleMock } = vi.hoisted(() => ({
+const { getSessionMock, plausibleMock, routerPushMock } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
   plausibleMock: vi.fn(),
+  routerPushMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: routerPushMock }),
 }));
 vi.mock("next-plausible", () => ({
   usePlausible: () => plausibleMock,
 }));
 vi.mock("next/dynamic", () => ({
-  default: () => () => null,
+  default: (loader: () => Promise<unknown>) => {
+    if (loader.toString().includes("api-selection-dialog")) {
+      return function MockApiSelectionDialog({
+        selectedProviderIds,
+        onSelectionChange,
+      }: {
+        selectedProviderIds: string[];
+        onSelectionChange: (providerIds: string[]) => void;
+      }) {
+        return (
+          <button
+            type="button"
+            aria-label={`Open Integrations, ${selectedProviderIds.length} selected`}
+            onClick={() => onSelectionChange(["frankfurter"])}
+          >
+            Integrations
+          </button>
+        );
+      };
+    }
+
+    return () => null;
+  },
 }));
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
@@ -63,6 +87,9 @@ vi.mock("@/lib/queries", () => ({
 vi.mock("@/features/generation/client/generation-handoff-context", () => ({
   useGenerationHandoff: () => ({ setStreamPromise: vi.fn() }),
 }));
+vi.mock("@/lib/auth-client", () => ({
+  authClient: { getSession: getSessionMock },
+}));
 vi.mock("@/features/gallery/client/hero-image-rotation", () => ({
   buildGalleryHeroImageDeck: () => [],
 }));
@@ -71,6 +98,10 @@ import { HomepageBuilderIsland } from "@/features/marketing/components/homepage-
 
 describe("HomepageBuilderIsland image paste", () => {
   beforeEach(() => {
+    getSessionMock.mockResolvedValue({ data: null });
+    plausibleMock.mockReset();
+    routerPushMock.mockReset();
+    window.sessionStorage.clear();
     vi.stubGlobal(
       "matchMedia",
       vi.fn(() => ({
@@ -116,5 +147,45 @@ describe("HomepageBuilderIsland image paste", () => {
     expect(
       document.querySelector<HTMLButtonElement>("#builder button[type=submit]"),
     ).toBeEnabled();
+  });
+
+  it("keeps selected integrations when sign-up interrupts project creation", async () => {
+    render(
+      <HomepageBuilderIsland workflowContent={null}>
+        <div />
+      </HomepageBuilderIsland>,
+    );
+
+    fireEvent.change(
+      screen.getByPlaceholderText("Describe the prototype you want..."),
+      { target: { value: "Build a currency dashboard" } },
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open Integrations, 0 selected",
+      }),
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "Open Integrations, 1 selected",
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        "#builder button[type=submit]",
+      )!,
+    );
+
+    await waitFor(() => {
+      expect(
+        JSON.parse(
+          window.sessionStorage.getItem("squid:pending-project") ?? "null",
+        ),
+      ).toEqual(expect.objectContaining({ providerIds: ["frankfurter"] }));
+    });
+    expect(routerPushMock).toHaveBeenCalledWith(
+      expect.stringContaining("/sign-up?callbackUrl="),
+    );
   });
 });

@@ -8,6 +8,24 @@ export type IntegrationCategory =
   | "communication"
   | "deployment";
 
+export type IntegrationEndpointParameter = {
+  name: string;
+  in: "path" | "query";
+  required: boolean;
+  type: string;
+  description: string;
+};
+
+export type IntegrationEndpointContract = {
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  purpose: string;
+  parameters: readonly IntegrationEndpointParameter[];
+  responseShape: string;
+  errorBehavior?: string;
+  usageNotes?: readonly string[];
+};
+
 export type IntegrationProvider = {
   id: string;
   name: string;
@@ -29,6 +47,7 @@ export type IntegrationProvider = {
   guidance: string;
   exampleEndpoint: string | null;
   implementationGuidance: string;
+  endpointContracts?: readonly IntegrationEndpointContract[];
   verifiedAt: string;
 };
 
@@ -114,7 +133,7 @@ const providers = [
   },
   {
     id: "octagon",
-    name: "UFC API",
+    name: "Octagon API",
     category: "data",
     description:
       "MMA rankings, weight divisions, fighter profiles, and career records.",
@@ -149,8 +168,72 @@ const providers = [
       "Treat rankings and profiles as third-party MMA data rather than an official or real-time UFC feed. Confirm image and data usage rights before commercial publication.",
     exampleEndpoint: "https://api.octagon-api.com/rankings",
     implementationGuidance:
-      "Use /rankings for division and rank lists, /division/{divisionId} for a focused division, and /fighter/{fighterId} for details. Discover IDs from live ranking responses instead of hard-coding documentation examples. Validate rankings as arrays of {id, categoryName, champion, fighters}; fighter measurements and records are strings, and detail endpoints may return 404 when a fighter leaves the dataset.",
-    verifiedAt: "2026-07-14",
+      "The complete documented API surface is GET /rankings, GET /fighters, GET /fighter/{fighterId}, and GET /division/{divisionId}. None accepts documented query parameters: implement search, filtering, sorting, and pagination locally after fetching the appropriate collection instead of inventing q, search, page, limit, event, or fight routes. Discover fighterId and divisionId values from live /rankings or /fighters responses, URL-encode path values, and never derive IDs from display names. /fighters is an object keyed by fighterId, not an array. Fighter measurements and records are strings; fields may be empty or absent, and octagonDebut is display text rather than an ISO date. Treat images as third-party URLs with separate usage rights.",
+    endpointContracts: [
+      {
+        method: "GET",
+        path: "/rankings",
+        purpose: "Fetch every ranked division and its ordered fighter list.",
+        parameters: [],
+        responseShape:
+          "Array<{ id: string; categoryName: string; champion: { id: string; championName: string }; fighters: Array<{ id: string; name: string }> }>",
+        usageNotes: [
+          "There is no rank field. Preserve fighters array order and derive a displayed contender position from index + 1; render champion separately.",
+          "Use returned division and fighter ids as opaque path identifiers for detail requests.",
+        ],
+      },
+      {
+        method: "GET",
+        path: "/fighters",
+        purpose: "Fetch the complete fighter directory for client-side search.",
+        parameters: [],
+        responseShape:
+          "Record<fighterId, { category: string; draws: string; imgUrl: string; losses: string; name: string; nickname: string; wins: string; status: string; placeOfBirth: string; trainsAt?: string; fightingStyle?: string; age: string; height: string; weight: string; octagonDebut: string; reach: string; legReach: string }>",
+        usageNotes: [
+          "Convert with Object.entries(response) when an array is needed; retain each object key as fighterId.",
+          "Search and filter this response locally because the API documents no search or pagination parameters.",
+        ],
+      },
+      {
+        method: "GET",
+        path: "/fighter/{fighterId}",
+        purpose: "Fetch one fighter profile.",
+        parameters: [
+          {
+            name: "fighterId",
+            in: "path",
+            required: true,
+            type: "string",
+            description:
+              "Opaque id from a /rankings champion/fighter entry or a key in /fighters; pass through encodeURIComponent",
+          },
+        ],
+        responseShape:
+          "{ category: string; draws: string; imgUrl: string; losses: string; name: string; nickname: string; wins: string; status: string; placeOfBirth: string; trainsAt?: string; fightingStyle?: string; age: string; height: string; weight: string; octagonDebut: string; reach: string; legReach: string }",
+        errorBehavior:
+          'HTTP 404 with { message: "Fighter not found" } when the id is missing or stale.',
+      },
+      {
+        method: "GET",
+        path: "/division/{divisionId}",
+        purpose: "Fetch one ranked division.",
+        parameters: [
+          {
+            name: "divisionId",
+            in: "path",
+            required: true,
+            type: "string",
+            description:
+              "Opaque id from a /rankings entry; pass through encodeURIComponent",
+          },
+        ],
+        responseShape:
+          "{ id: string; categoryName: string; champion: { id: string; championName: string }; fighters: Array<{ id: string; name: string }> }",
+        errorBehavior:
+          'HTTP 404 with { message: "Division not found" } when the id is missing or stale.',
+      },
+    ],
+    verifiedAt: "2026-07-31",
   },
   {
     id: "art-institute-chicago",
@@ -885,5 +968,29 @@ export function buildIntegrationProviderGuidance(providerIds: string[]) {
 }
 
 function formatIntegrationProviderForPrompt(provider: IntegrationProvider) {
-  return `- ${provider.name} [${provider.id}]: policy=${provider.policyStatus}; auth=${provider.auth}; runtime=${provider.runtime}; commercialUse=${provider.commercialUse}; docs=${provider.docsUrl}; base=${provider.baseUrl}${provider.exampleEndpoint ? `; example=${provider.exampleEndpoint}` : ""}. ${provider.guidance} Implementation: ${provider.implementationGuidance}${provider.attribution ? ` Attribution: ${provider.attribution}` : ""}${provider.limits ? ` Limits: ${provider.limits}` : ""}`;
+  const endpointContract = provider.endpointContracts?.length
+    ? [
+        " Exact reviewed endpoints:",
+        ...provider.endpointContracts.map((endpoint) => {
+          const parameters = endpoint.parameters.length
+            ? endpoint.parameters
+                .map(
+                  (parameter) =>
+                    `${parameter.in} ${parameter.name}: ${parameter.type}${parameter.required ? " (required)" : " (optional)"} — ${parameter.description}`,
+                )
+                .join("; ")
+            : "none; no path or query parameters are documented";
+          const notes = endpoint.usageNotes?.length
+            ? ` Notes: ${endpoint.usageNotes.join(" ")}`
+            : "";
+          const errorBehavior = endpoint.errorBehavior
+            ? ` Errors: ${endpoint.errorBehavior}`
+            : "";
+
+          return `  - ${endpoint.method} ${endpoint.path}: ${endpoint.purpose} Parameters: ${parameters}. Response: ${endpoint.responseShape}.${errorBehavior}${notes}`;
+        }),
+      ].join("\n")
+    : "";
+
+  return `- ${provider.name} [${provider.id}]: policy=${provider.policyStatus}; auth=${provider.auth}; runtime=${provider.runtime}; commercialUse=${provider.commercialUse}; docs=${provider.docsUrl}; base=${provider.baseUrl}${provider.exampleEndpoint ? `; example=${provider.exampleEndpoint}` : ""}. ${provider.guidance} Implementation: ${provider.implementationGuidance}${provider.attribution ? ` Attribution: ${provider.attribution}` : ""}${provider.limits ? ` Limits: ${provider.limits}` : ""}${endpointContract}`;
 }

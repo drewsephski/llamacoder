@@ -740,6 +740,59 @@ describe("generated file normalization", () => {
     );
   });
 
+  it("enforces Octagon's exact reviewed paths and parameters", () => {
+    const validFiles = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { loadFighter } from "./api"; export default function App() { return <button onClick={() => loadFighter("ilia-topuria")}>Load</button>; }',
+      },
+      {
+        path: "api.ts",
+        code: "export const loadFighter = (fighterId: string) => fetch(`https://api.octagon-api.com/fighter/${encodeURIComponent(fighterId)}`);",
+      },
+      {
+        path: "integrations.ts",
+        code: 'export const integrations = [{ providerId: "octagon", baseUrl: "https://api.octagon-api.com" }];',
+      },
+    ]);
+
+    expect(validateSelectedApiUsage(validFiles, ["octagon"])).toEqual([]);
+
+    const files = normalizeGeneratedFiles([
+      {
+        path: "App.tsx",
+        code: 'import { load } from "./api"; export default function App() { return <button onClick={load}>Load</button>; }',
+      },
+      {
+        path: "api.ts",
+        code: [
+          'export const load = () => fetch("https://api.octagon-api.com/division/lightweight");',
+          'export const loadEvents = () => fetch("https://api.octagon-api.com/events");',
+          'export const search = () => fetch("https://api.octagon-api.com/fighters?search=topuria");',
+        ].join("\n"),
+      },
+      {
+        path: "integrations.ts",
+        code: 'export const integrations = [{ providerId: "octagon" }];',
+      },
+    ]);
+
+    expect(validateSelectedApiUsage(files, ["octagon"])).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining(
+            "is not in the reviewed endpoint contract",
+          ),
+        }),
+        expect.objectContaining({
+          message: expect.stringContaining(
+            "uses undocumented query parameter: search",
+          ),
+        }),
+      ]),
+    );
+  });
+
   it("requires selected Supabase apps to import the protected client adapter", () => {
     const validFiles = normalizeGeneratedFiles([
       {

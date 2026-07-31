@@ -66,7 +66,7 @@ describe("API selection dialog", () => {
       screen.getByRole("textbox", { name: "Search APIs" }),
       "MMA rankings",
     );
-    await userEvent.click(screen.getByRole("button", { name: /UFC API/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Octagon API/i }));
     await userEvent.click(screen.getByRole("button", { name: "Use 1 API" }));
 
     expect(onSelectionChange).toHaveBeenCalledWith(["octagon"]);

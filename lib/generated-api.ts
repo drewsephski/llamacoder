@@ -791,6 +791,24 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function normalizeEndpointPath(pathname: string) {
+  const normalized = pathname.replace(/\/+$/, "");
+  return normalized || "/";
+}
+
+function matchesEndpointContractPath(pathname: string, contractPath: string) {
+  const actualSegments = normalizeEndpointPath(pathname).split("/");
+  const contractSegments = normalizeEndpointPath(contractPath).split("/");
+  if (actualSegments.length !== contractSegments.length) return false;
+
+  return contractSegments.every((segment, index) => {
+    if (/^\{[^{}]+\}$/.test(segment)) {
+      return actualSegments[index].length > 0;
+    }
+    return actualSegments[index] === segment;
+  });
+}
+
 export function validateSelectedApiUsage(
   files: SourceFile[],
   providerIds: string[],
@@ -881,6 +899,57 @@ export function validateSelectedApiUsage(
       if (usesReviewedOrigin && !usesReviewedBasePath) {
         issues.push({
           message: `${provider.name} endpoint ${endpoint} is outside the reviewed base URL ${provider.baseUrl}. Do not invent or use legacy API versions.`,
+        });
+      }
+
+      const reviewedEndpointContracts = provider.endpointContracts;
+      const isProviderBaseMetadata =
+        normalizeEndpointPath(endpointUrl.pathname) ===
+          normalizeEndpointPath(baseUrl.pathname) &&
+        endpointUrl.search.length === 0;
+      if (
+        !usesReviewedOrigin ||
+        isProviderBaseMetadata ||
+        !reviewedEndpointContracts?.length
+      ) {
+        continue;
+      }
+
+      const endpointContract = reviewedEndpointContracts.find((contract) =>
+        matchesEndpointContractPath(endpointUrl.pathname, contract.path),
+      );
+      if (!endpointContract) {
+        issues.push({
+          message: `${provider.name} endpoint ${endpoint} is not in the reviewed endpoint contract. Use only ${reviewedEndpointContracts.map((contract) => `${contract.method} ${contract.path}`).join(", ")}.`,
+        });
+        continue;
+      }
+
+      const reviewedQueryParameters = new Set(
+        endpointContract.parameters
+          .filter((parameter) => parameter.in === "query")
+          .map((parameter) => parameter.name),
+      );
+      const undocumentedQueryParameters = Array.from(
+        endpointUrl.searchParams.keys(),
+      ).filter((parameter) => !reviewedQueryParameters.has(parameter));
+      if (undocumentedQueryParameters.length > 0) {
+        issues.push({
+          message: `${provider.name} endpoint ${endpoint} uses undocumented query parameter${undocumentedQueryParameters.length === 1 ? "" : "s"}: ${undocumentedQueryParameters.join(", ")}.`,
+        });
+      }
+
+      const missingRequiredQueryParameters = endpointContract.parameters
+        .filter(
+          (parameter) =>
+            parameter.in === "query" &&
+            parameter.required &&
+            !endpointUrl.searchParams.has(parameter.name),
+        )
+        .map((parameter) => parameter.name);
+      if (missingRequiredQueryParameters.length > 0) {
+        issues.push({
+          message: `${provider.name} endpoint ${endpoint} is missing required query parameter${missingRequiredQueryParameters.length === 1 ? "" : "s"}: ${missingRequiredQueryParameters.join(", ")}.`,
         });
       }
     }

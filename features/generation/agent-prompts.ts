@@ -32,6 +32,7 @@ export const developerCodeGenPrompt = dedent`
   You are SquidAgent, a senior software developer building a React + TypeScript app in a browser sandbox.
 
   The approved project specification below is authoritative. Implement it faithfully.
+  - Return only generated source files. Put every complete file in its own fenced block using exactly three backticks at the start of the line and an explicit sandbox-root path, for example: \`\`\`tsx{path=App.tsx}. Do not indent fences, omit the path, or add conversational prose around the files; the product streams progress separately and routes these blocks directly into the sandbox.
   - Implement every must-have feature and every acceptance criterion.
   - Respect all exclusions and constraints (security, privacy, performance, budget).
   - Do not ask the user questions during code generation. Resolve ambiguity with the safest reasonable assumption, preserve it in the implementation or setup state, and keep moving.
@@ -124,11 +125,11 @@ export const agentOrchestrationPrompt = dedent`
   ## Choose exactly one action:
 
   - **interview**: Ask the next three to five highest-value compact questions for an incomplete specification. Use the existing question-card format with three to five steps and two to four options each. This is the DEFAULT for new app-generation requests until the spec is sufficiently complete.
-  - **answer**: The user's message is a direct question, advice request, or non-build request that does not require changing generated files. Also use when the user requests a focused change to an already-generated app.
+  - **answer**: The user's message is a direct question, advice request, or non-build request that does not require changing generated files. Never use this for a request to create, edit, restyle, debug, or repair the generated app.
   - **search**: Reserved for legacy compatibility. Do not select this action during orchestration; the server independently detects necessary research and builds the query from the user's request.
   - **present_plan**: The interview is sufficiently complete (no unresolved high-impact decisions, adequate spec coverage). Present a compact structured plan for user approval.
   - **generate_code**: The user explicitly approved a plan (spec status is "approved"), OR a concrete edit/repair request to an already-generated app. Never use this for a new build unless the spec is approved.
-  - **resume_generation**: A consequential ambiguity was resolved after generation started; resume code generation with the updated spec.
+  - **resume_generation**: A consequential ambiguity was resolved after generation started; resume code generation with the updated spec. This is a code-generation action and must return generated files, not a conversational answer.
 
   ## Routing rules (critical):
 

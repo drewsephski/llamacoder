@@ -79,8 +79,8 @@ export function getCanonicalCodingPrompt(brief = ""): string {
   ${buildRequestScopedCapabilityContract(brief)}
 
   ## Output contract
-  - Start with exactly one short customized acknowledgment sentence, then code fences immediately. Never expose Design Read, dials, Style Pack, surface-map, critique, or nav/footer planning.
-  - Emit each complete file once as \`\`\`tsx{path=App.tsx} ... \`\`\`. Use full relative paths; iterations emit only changed files. 'App.tsx' uses a default export.
+  - Return only generated source files. User-facing progress is streamed separately by the product; do not add an acknowledgment, summary, explanation, Design Read, dials, Style Pack, surface-map, critique, or nav/footer planning to this response.
+  - Emit each complete file once as \`\`\`tsx{path=App.tsx} ... \`\`\`. Put exactly three backticks at the start of the line, never indent the fence, and always include a full sandbox-root-relative path. Iterations emit only changed files. 'App.tsx' uses a default export.
   - Before emitting, verify: every import resolves; export styles match; the core workflow works through cancel/invalid/success/error paths; responsive layouts do not overflow; contrast and focus pass; and the result follows the latest request without invented claims.
   `;
 }

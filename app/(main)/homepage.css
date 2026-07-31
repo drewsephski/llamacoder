@@ -518,16 +518,6 @@ body[data-scroll-locked] {
   gap: 8px;
   margin-top: 6px;
 }
-.prototype-first-note {
-  display: inline-flex;
-  min-height: 36px;
-  align-items: center;
-  padding: 6px 10px;
-  color: hsl(var(--muted-foreground) / 0.82);
-  font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
-  font-size: 11.5px;
-  font-weight: 500;
-}
 .prompt-enhance-action,
 .integration-modal-trigger {
   display: inline-flex;

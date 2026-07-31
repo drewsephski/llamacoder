@@ -32,7 +32,7 @@ import {
 import {
   extractAllCodeBlocks,
   generateIntelligentFilename,
-  getExtensionForLanguage,
+  parseReplySegments,
   toTitleCase,
 } from "@/lib/utils";
 import { parseAppSpec } from "@/features/generation/app-spec";
@@ -42,6 +42,7 @@ import {
   readGeneratedFilesStats,
   type GeneratedFile,
 } from "@/lib/generated-files";
+import { preflightGeneratedAppImports } from "@/lib/generated-app-dependencies";
 import { buildExportBundle, getExportFilename } from "@/lib/export-bundle";
 import {
   buildTargetedPreviewEditPrompt,
@@ -85,22 +86,6 @@ const SyntaxHighlighter = dynamic(
     ssr: false,
   },
 );
-
-function parseCodeFenceTag(tag: string) {
-  const langMatch = tag.match(/^([A-Za-z0-9]+)/);
-  const language = langMatch ? langMatch[1] : "text";
-  const pathMatch = tag.match(/(?:\{\s*)?path\s*=\s*([^}\s]+)(?:\s*\})?/);
-  const filenameMatch = tag.match(
-    /(?:\{\s*)?filename\s*=\s*([^}\s]+)(?:\s*\})?/,
-  );
-  const path = pathMatch
-    ? pathMatch[1]
-    : filenameMatch
-      ? filenameMatch[1]
-      : `file.${getExtensionForLanguage(language)}`;
-
-  return { language, path };
-}
 
 function getIntegrationConfigValue(
   integration: ProjectIntegrationView,
@@ -150,36 +135,9 @@ function extractLatestStreamBlock(
   input: string,
 ): { code: string; language: string; path: string } | undefined {
   if (!input) return undefined;
-  const lines = input.split("\n");
-  const codeFenceRegex = /^```([^\n]*)$/;
-
-  let openTag: string | null = null;
-  let codeBuffer: string[] = [];
-  let latestComplete:
-    | { code: string; language: string; path: string }
-    | undefined;
-
-  for (const line of lines) {
-    const match = line.match(codeFenceRegex);
-    if (match && !openTag) {
-      openTag = match[1] || "";
-      codeBuffer = [];
-    } else if (match && openTag) {
-      const { language, path } = parseCodeFenceTag(openTag);
-      latestComplete = { code: codeBuffer.join("\n"), language, path };
-      openTag = null;
-      codeBuffer = [];
-    } else if (openTag) {
-      codeBuffer.push(line);
-    }
-  }
-
-  const candidate = openTag
-    ? {
-        code: codeBuffer.join("\n"),
-        ...parseCodeFenceTag(openTag),
-      }
-    : latestComplete;
+  const candidate = parseReplySegments(input)
+    .filter((segment) => segment.type === "file")
+    .at(-1);
   if (!candidate) return undefined;
 
   const normalized = normalizeGeneratedFiles([candidate])[0];
@@ -286,23 +244,30 @@ export default function CodeViewer({
     [chat.messages],
   );
 
-  // Effective files:
-  // - While streaming: use the last message's cumulative files overlaid with streamed partials
-  // - When displaying a message: use that message's cumulative files directly
+  const baseFiles = useMemo(() => {
+    if (streamText) {
+      const lastMessage = assistantMessages.at(-1);
+      return lastMessage ? getMessageGeneratedFiles(lastMessage) : [];
+    }
+    return message ? getMessageGeneratedFiles(message) : [];
+  }, [assistantMessages, message, streamText]);
+
+  // The code tab can safely show the latest partial file. The sandbox receives
+  // only completed, import-resolvable snapshots so token-level updates do not
+  // repeatedly boot a syntactically incomplete application.
   const files = useMemo(
+    () => (streamText ? mergeFiles(baseFiles, mergedStreamFiles) : baseFiles),
+    [baseFiles, mergedStreamFiles, streamText],
+  );
+  const previewFiles = useMemo(
+    () => (streamText ? mergeFiles(baseFiles, streamAllFiles) : baseFiles),
+    [baseFiles, streamAllFiles, streamText],
+  );
+  const isPreviewSnapshotReady = useMemo(
     () =>
-      streamText
-        ? (() => {
-            const lastMessage = assistantMessages.at(-1);
-            const baseFiles = lastMessage
-              ? getMessageGeneratedFiles(lastMessage)
-              : [];
-            return mergeFiles(baseFiles, mergedStreamFiles);
-          })()
-        : message
-          ? getMessageGeneratedFiles(message)
-          : [],
-    [assistantMessages, mergedStreamFiles, message, streamText],
+      previewFiles.some((file) => file.path === "App.tsx") &&
+      preflightGeneratedAppImports(previewFiles).diagnostics.length === 0,
+    [previewFiles],
   );
 
   // Prefer the latest streamed file while streaming; otherwise, App.tsx or first tsx
@@ -1171,7 +1136,7 @@ export default function CodeViewer({
           </StickToBottom>
         ) : (
           <>
-            {files.length > 0 && isSupabaseRuntimePending ? (
+            {previewFiles.length > 0 && isSupabaseRuntimePending ? (
               <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
                 <div
                   className="flex max-w-sm flex-col items-center gap-3 px-6 text-center"
@@ -1203,7 +1168,7 @@ export default function CodeViewer({
                   )}
                 </div>
               </div>
-            ) : files.length > 0 ? (
+            ) : isPreviewSnapshotReady ? (
               <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
                 <CodeRunner
                   onRequestFix={onRequestFix}
@@ -1219,10 +1184,29 @@ export default function CodeViewer({
                   previewTestNonce={previewTestNonce}
                   onPreviewTestReport={handlePreviewTestReport}
                   language={language}
-                  files={files.map((f) => ({ path: f.path, content: f.code }))}
+                  files={previewFiles.map((f) => ({
+                    path: f.path,
+                    content: f.code,
+                  }))}
                   supabaseRuntime={supabaseRuntime}
                   key={refresh}
                 />
+              </div>
+            ) : streamText ? (
+              <div
+                className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="flex flex-col items-center gap-3 px-6 text-center">
+                  <CometSpinner
+                    className="size-5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Assembling a runnable preview…
+                  </p>
+                </div>
               </div>
             ) : null}
           </>

@@ -1084,6 +1084,17 @@ export async function POST(req: Request) {
               });
             }
 
+            // Orchestration is advisory at this boundary. A concrete mutation
+            // to an existing generated project must never fall through to the
+            // conversational prompt, where source would be rendered as chat.
+            if (
+              conversationHasCode &&
+              action.action === "answer" &&
+              !shouldAnswerWithoutCode(latestUserContent)
+            ) {
+              return { action: "generate_code" };
+            }
+
             if (action.action === "request_backend_setup") {
               return buildDirectBackendSetupRequest({
                 messageId,
@@ -1419,7 +1430,9 @@ export async function POST(req: Request) {
             transient: true,
           });
 
-          const isCodeGeneration = agentAction.action === "generate_code";
+          const isCodeGeneration =
+            agentAction.action === "generate_code" ||
+            agentAction.action === "resume_generation";
           if (isCodeGeneration) {
             // System prompts are persisted with chats for reproducibility, but
             // code generation should always use the current safety and design

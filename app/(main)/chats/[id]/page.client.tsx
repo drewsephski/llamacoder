@@ -15,8 +15,8 @@ import { createUserMessage } from "@/features/generation/client/messages";
 import { saveProject } from "@/features/projects/server/actions";
 import LogoSmall from "@/components/icons/logo-small";
 import {
+  extractChatNarration,
   parseReplySegments,
-  extractFirstCodeBlock,
   extractAllCodeBlocks,
 } from "@/lib/utils";
 import {
@@ -114,6 +114,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
   const plausible = usePlausible();
   const { streamPromise, setStreamPromise } = useGenerationHandoffStream();
   const [streamText, setStreamText] = useState("");
+  const [streamChatText, setStreamChatText] = useState("");
+  const [streamResponseKind, setStreamResponseKind] = useState<
+    "answer" | "app" | null
+  >(null);
   const [reasoningText, setReasoningText] = useState("");
   const [streamSources, setStreamSources] = useState<SourceUrl[]>([]);
   const [researchActivity, setResearchActivity] =
@@ -125,9 +129,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     chat.messages.some(
       (message: Message) =>
         message.role === "assistant" &&
-        (Array.isArray(message.files)
-          ? message.files.length > 0
-          : Boolean(extractFirstCodeBlock(message.content))),
+        getMessageGeneratedFiles(message).length > 0,
     ),
   );
   const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
@@ -156,9 +158,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     chat.messages
       .filter(
         (m: Message) =>
-          m.role === "assistant" &&
-          (getMessageGeneratedFiles(m).length > 0 ||
-            extractFirstCodeBlock(m.content)),
+          m.role === "assistant" && getMessageGeneratedFiles(m).length > 0,
       )
       .at(-1),
   );
@@ -306,6 +306,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
     let reader: ReadableStreamDefaultReader<UIMessageChunk> | null = null;
     let renderFrame: number | null = null;
     let pendingText = "";
+    let pendingChatText = "";
     let pendingReasoning = "";
     let pendingSources: SourceUrl[] = [];
 
@@ -320,6 +321,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
       renderFrame = window.requestAnimationFrame(() => {
         renderFrame = null;
         setStreamText(pendingText);
+        setStreamChatText(pendingChatText);
         setReasoningText(pendingReasoning);
         setStreamSources(pendingSources);
       });
@@ -350,6 +352,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
       try {
         setReasoningText("");
+        setStreamChatText("");
+        setStreamResponseKind(null);
         setStreamSources([]);
         setResearchActivity(null);
         setGenerationStatus(DEFAULT_GENERATION_STATUS);
@@ -384,6 +388,14 @@ export default function PageClient({ chat }: { chat: Chat }) {
             const parsedAction = agentActionSchema.safeParse(event.data);
             if (parsedAction.success) {
               completedAgentAction = parsedAction.data;
+              const responseKind =
+                parsedAction.data.action === "answer" ? "answer" : "app";
+              setStreamResponseKind(responseKind);
+              pendingChatText =
+                responseKind === "answer"
+                  ? fullText
+                  : extractChatNarration(fullText);
+              scheduleStreamRender();
             }
             continue;
           }
@@ -441,6 +453,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
           fullText += event.delta;
           pendingText = fullText;
+          pendingChatText =
+            completedAgentAction?.action === "answer"
+              ? fullText
+              : extractChatNarration(fullText);
           scheduleStreamRender();
           if (!hasEnteredWritingPhase) {
             hasEnteredWritingPhase = true;
@@ -457,7 +473,6 @@ export default function PageClient({ chat }: { chat: Chat }) {
           ) {
             didPushToCode = true;
             setIsShowingCodeViewer(true);
-            setActiveTab("code");
           }
 
           if (
@@ -468,6 +483,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           ) {
             didPushToPreview = true;
             setIsShowingCodeViewer(true);
+            setActiveTab("preview");
           }
         }
 
@@ -478,6 +494,10 @@ export default function PageClient({ chat }: { chat: Chat }) {
             if (run.partialText.trim()) {
               fullText = run.partialText;
               pendingText = fullText;
+              pendingChatText =
+                completedAgentAction?.action === "answer"
+                  ? fullText
+                  : extractChatNarration(fullText);
               scheduleStreamRender();
             }
             serverRunPhase = run.phase;
@@ -738,6 +758,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
             repairRequestInFlightRef.current = false;
           }
           setStreamText("");
+          setStreamChatText("");
+          setStreamResponseKind(null);
           setReasoningText("");
           setStreamSources([]);
           setResearchActivity(null);
@@ -790,6 +812,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           await releaseReservedCreditHold(creditHoldId);
         }
         setStreamPromise(undefined);
+        setStreamResponseKind(null);
         setReasoningText("");
         setStreamSources([]);
         setResearchActivity(null);
@@ -1123,7 +1146,8 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
           <ChatLog
             chat={chat}
-            streamText={streamText}
+            streamText={streamChatText}
+            streamResponseKind={streamResponseKind}
             reasoningText={reasoningText}
             generationStatus={generationStatus}
             researchActivity={researchActivity}

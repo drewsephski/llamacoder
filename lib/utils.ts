@@ -25,7 +25,9 @@ export function extractFirstCodeBlock(input: string) {
   //    - Then we look for a closing backticks on its own line (\n```).
   // The 'm' (multiline) flag isn't strictly necessary here, but can help if input is multiline.
   // The '([\s\S]*?)' is a common trick to match across multiple lines non-greedily.
-  const match = input.match(/```([^\n]*)\n([\s\S]*?)\n```/);
+  const match = input.match(
+    /^ {0,3}```(?!`)([^\n]*?)[ \t]*\r?\n([\s\S]*?)\r?\n {0,3}```[ \t]*$/m,
+  );
 
   if (match) {
     const fenceTag = match[1] || ""; // e.g. "tsx{filename=Calculator.tsx}"
@@ -60,7 +62,8 @@ export function extractAllCodeBlocks(input: string): Array<{
   path: string;
   fullMatch: string;
 }> {
-  const codeBlockRegex = /```([^\n]*)\n([\s\S]*?)\n```/g;
+  const codeBlockRegex =
+    /^ {0,3}```(?!`)([^\n]*?)[ \t]*\r?\n([\s\S]*?)\r?\n {0,3}```[ \t]*$/gm;
   const files: Array<{
     code: string;
     language: string;
@@ -111,8 +114,11 @@ export type ReplySegment =
 
 export function parseReplySegments(markdown: string): ReplySegment[] {
   const segments: ReplySegment[] = [];
-  const lines = markdown.split("\n");
-  const fenceRegex = /^```([^\n]*)$/; // opening or closing fence line
+  const lines = markdown.split(/\r?\n/);
+  // CommonMark permits up to three leading spaces before a fenced block.
+  // Streamdown accepts that syntax too, so the generated-file parser must not
+  // be stricter than the chat renderer or source code will leak into chat.
+  const fenceRegex = /^ {0,3}```(?!`)([^\n]*?)[ \t]*$/;
 
   let textBuffer: string[] = [];
   let codeBuffer: string[] = [];
@@ -129,12 +135,12 @@ export function parseReplySegments(markdown: string): ReplySegment[] {
 
   for (const line of lines) {
     const match = line.match(fenceRegex);
-    if (match && !openTag) {
+    if (match && openTag === null) {
       // Opening fence
       openTag = match[1] || "";
       flushText();
       codeBuffer = [];
-    } else if (match && openTag) {
+    } else if (match && openTag !== null) {
       // Closing fence
       const { language, path } = parseTag(openTag);
       segments.push({
@@ -146,7 +152,7 @@ export function parseReplySegments(markdown: string): ReplySegment[] {
       });
       openTag = null;
       codeBuffer = [];
-    } else if (openTag) {
+    } else if (openTag !== null) {
       codeBuffer.push(line);
     } else {
       textBuffer.push(line);
@@ -154,7 +160,7 @@ export function parseReplySegments(markdown: string): ReplySegment[] {
   }
 
   // If a code fence remains open, emit a partial file segment
-  if (openTag) {
+  if (openTag !== null) {
     const { language, path } = parseTag(openTag);
     segments.push({
       type: "file",
@@ -170,6 +176,25 @@ export function parseReplySegments(markdown: string): ReplySegment[] {
   return segments.filter(
     (r) => r.type !== "text" || (r.type === "text" && r.content.length > 0),
   );
+}
+
+/**
+ * Returns only user-facing narration from a generated-app stream. Application
+ * files remain available to the workspace through the unmodified raw stream.
+ * A trailing partial fence marker is withheld so token-by-token streaming does
+ * not briefly flash backticks in the chat before the opening fence completes.
+ */
+export function extractChatNarration(markdown: string) {
+  const narration = parseReplySegments(markdown)
+    .filter(
+      (segment): segment is Extract<ReplySegment, { type: "text" }> =>
+        segment.type === "text",
+    )
+    .map((segment) => segment.content)
+    .join("\n\n")
+    .replace(/(?:^|\n) {0,3}`{1,3}[^`\n]*$/, "");
+
+  return narration.trim();
 }
 
 // Enhanced filename generation for when models don't provide filenames

@@ -3,7 +3,6 @@
 import type { Chat, Message } from "./page";
 import {
   parseReplySegments,
-  extractFirstCodeBlock,
   extractAllCodeBlocks,
   toTitleCase,
 } from "@/lib/utils";
@@ -51,6 +50,7 @@ export default function ChatLog({
   chat,
   activeMessage,
   streamText,
+  streamResponseKind,
   reasoningText,
   generationStatus,
   researchActivity,
@@ -71,6 +71,7 @@ export default function ChatLog({
   chat: Chat;
   activeMessage?: Message;
   streamText: string;
+  streamResponseKind: "answer" | "app" | null;
   reasoningText: string;
   generationStatus: GenerationStatus;
   researchActivity: ResearchActivity | null;
@@ -106,11 +107,7 @@ export default function ChatLog({
   onPreviewRecoveryAction?: () => void;
 }) {
   const assistantMessages = chat.messages.filter(
-    (m) =>
-      m.role === "assistant" &&
-      (getMessageGeneratedFiles(m).length > 0 ||
-        extractFirstCodeBlock(m.content) ||
-        extractAllCodeBlocks(m.content).length > 0),
+    (m) => m.role === "assistant" && getMessageGeneratedFiles(m).length > 0,
   );
   const assistantMessageIndex = useMemo(
     () =>
@@ -205,7 +202,7 @@ export default function ChatLog({
                   duration={1.5}
                   className="text-[15px] font-medium text-muted-foreground"
                 >
-                  Thinking...
+                  {generationStatus.label}
                 </TextShimmer>
               </div>
             )}
@@ -239,6 +236,7 @@ export default function ChatLog({
                 isActive={true}
                 previousMessage={assistantMessages.at(-1)}
                 isStreaming={true}
+                forceTextResponse={streamResponseKind === "answer"}
                 sources={streamSources}
                 onClarificationCompleteAction={onClarificationCompleteAction}
                 onInterviewCompleteAction={onInterviewCompleteAction}
@@ -352,6 +350,7 @@ function AssistantMessage({
   onMessageClickAction = () => {},
   previousMessage,
   isStreaming = false,
+  forceTextResponse = false,
   interactionResponse,
   sources,
   onClarificationCompleteAction,
@@ -369,6 +368,7 @@ function AssistantMessage({
   onMessageClickAction?: (v: Message) => void;
   previousMessage?: Message;
   isStreaming?: boolean;
+  forceTextResponse?: boolean;
   interactionResponse?: AgentMessageMetadata;
   sources?: SourceUrl[];
   onClarificationCompleteAction: (
@@ -468,6 +468,19 @@ function AssistantMessage({
     );
   }
 
+  if (forceTextResponse || metadata?.kind === "agent_response") {
+    const responseSources =
+      sources ?? (metadata?.kind === "agent_response" ? metadata.sources : []);
+    return (
+      <div className="flex min-w-0 max-w-full flex-col gap-3 overflow-x-hidden">
+        <MessageResponse className="prose min-w-0 max-w-full break-words text-foreground [overflow-wrap:anywhere] dark:prose-invert [&_pre]:max-w-full">
+          {content}
+        </MessageResponse>
+        <MessageSources sources={responseSources} />
+      </div>
+    );
+  }
+
   const allFiles = (
     message
       ? getMessageGeneratedFiles(message)
@@ -518,8 +531,7 @@ function AssistantMessage({
   );
 
   const displayFileCount = fileSegments.length;
-  const messageSources =
-    sources ?? (metadata?.kind === "agent_response" ? metadata.sources : []);
+  const messageSources = sources ?? [];
 
   if (displayFileCount > 0) {
     // Handle single-file replies with interleaved text and one file

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractAllCodeBlocks,
+  extractChatNarration,
   extractFirstCodeBlock,
   generateIntelligentFilename,
   getExtensionForLanguage,
@@ -12,7 +13,7 @@ import {
 describe("markdown/code parsing utilities", () => {
   it("extracts the first code block with language and filename metadata", () => {
     const result = extractFirstCodeBlock(
-      'Intro\n```tsx{filename=Widget.tsx}\nexport const x = 1;\n```\nOutro',
+      "Intro\n```tsx{filename=Widget.tsx}\nexport const x = 1;\n```\nOutro",
     );
 
     expect(result).toMatchObject({
@@ -47,9 +48,13 @@ describe("markdown/code parsing utilities", () => {
   it("parses interleaved reply segments and emits partial streaming fences", () => {
     expect(
       parseReplySegments(
-        ["Before", "```tsx{path=App.tsx}", "export default function App() {}", "```", "After"].join(
-          "\n",
-        ),
+        [
+          "Before",
+          "```tsx{path=App.tsx}",
+          "export default function App() {}",
+          "```",
+          "After",
+        ].join("\n"),
       ),
     ).toEqual([
       { type: "text", content: "Before" },
@@ -63,7 +68,9 @@ describe("markdown/code parsing utilities", () => {
       { type: "text", content: "After" },
     ]);
 
-    expect(parseReplySegments("```ts{path=lib/x.ts}\nexport const x = 1;")).toEqual([
+    expect(
+      parseReplySegments("```ts{path=lib/x.ts}\nexport const x = 1;"),
+    ).toEqual([
       {
         type: "file",
         language: "ts",
@@ -74,8 +81,65 @@ describe("markdown/code parsing utilities", () => {
     ]);
   });
 
+  it("accepts CommonMark-indented generated file fences", () => {
+    const response = [
+      "Implemented the requested change.",
+      "   ```tsx{path=App.tsx}",
+      "export default function App() { return <main />; }",
+      "   ```   ",
+    ].join("\n");
+
+    expect(extractAllCodeBlocks(response)).toMatchObject([
+      {
+        language: "tsx",
+        path: "App.tsx",
+        code: "export default function App() { return <main />; }",
+      },
+    ]);
+    expect(parseReplySegments(response)).toEqual([
+      { type: "text", content: "Implemented the requested change." },
+      {
+        type: "file",
+        language: "tsx",
+        path: "App.tsx",
+        code: "export default function App() { return <main />; }",
+        isPartial: false,
+      },
+    ]);
+  });
+
+  it("separates generated files from streaming chat narration", () => {
+    expect(
+      extractChatNarration(
+        [
+          "Building the polished launch page now.",
+          "```tsx{path=App.tsx}",
+          "export default function App() { return <main />; }",
+          "```",
+          "Wiring the responsive navigation next.",
+        ].join("\n"),
+      ),
+    ).toBe(
+      "Building the polished launch page now.\n\nWiring the responsive navigation next.",
+    );
+
+    expect(extractChatNarration("Working on the app\n``")).toBe(
+      "Working on the app",
+    );
+    expect(
+      extractChatNarration(
+        "```tsx{path=App.tsx}\nexport default function App() {",
+      ),
+    ).toBe("");
+  });
+
   it("derives deterministic filenames and language extensions", () => {
-    expect(generateIntelligentFilename("export default function FancyCard() {}", "tsx")).toEqual({
+    expect(
+      generateIntelligentFilename(
+        "export default function FancyCard() {}",
+        "tsx",
+      ),
+    ).toEqual({
       name: "fancy-card",
       extension: "tsx",
     });

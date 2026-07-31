@@ -93,6 +93,12 @@ import {
   type GalleryHeroImage,
 } from "@/features/gallery/client/hero-image-rotation";
 
+const ApiSelectionDialog = dynamic(() =>
+  import("@/features/integrations/components/api-selection-dialog").then(
+    (module) => module.ApiSelectionDialog,
+  ),
+);
+
 const PROMPT_TEXTAREA_MAX_HEIGHT_PX = 360;
 const PROMPT_TEXTAREA_VIEWPORT_RATIO = 0.42;
 const HelpPanel = dynamic(
@@ -925,6 +931,7 @@ export function HomepageBuilderIsland({
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [quality, setQuality] = useState("low");
+  const [selectedProviderIds, setSelectedProviderIds] = useState<string[]>([]);
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
     undefined,
   );
@@ -1532,6 +1539,7 @@ export function HomepageBuilderIsland({
                         quality: submittedQuality,
                         screenshotData,
                         screenshotUrl,
+                        providerIds: selectedProviderIds,
                       });
                       toast.info("Create an account to start building");
                       router.push(
@@ -1552,6 +1560,7 @@ export function HomepageBuilderIsland({
                       quality: submittedQuality,
                       screenshotUrl,
                       screenshotData,
+                      providerIds: selectedProviderIds,
                     });
                     if (created) {
                       clearPendingProject();
@@ -1995,9 +2004,11 @@ export function HomepageBuilderIsland({
                       <WandSparkles className="size-3.5" aria-hidden="true" />
                       <span>Prompt Enhancer</span>
                     </button>
-                    <span className="prototype-first-note">
-                      Prototype first. Connect services later.
-                    </span>
+                    <ApiSelectionDialog
+                      selectedProviderIds={selectedProviderIds}
+                      onSelectionChange={setSelectedProviderIds}
+                      standaloneTrigger
+                    />
                   </div>
 
                   {/* Prompt starters */}

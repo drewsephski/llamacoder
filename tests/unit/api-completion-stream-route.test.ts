@@ -1780,6 +1780,134 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     );
   });
 
+  it("keeps existing-project mutations on the code-generation path in plan mode", async () => {
+    const content = "Restyle the existing primary button with a cobalt fill";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_existing_edit",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+          appSpec: createEmptyAppSpec(),
+          prompt: "Build a launch page",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a launch page" },
+      {
+        role: "assistant",
+        content:
+          "```tsx{path=App.tsx}\nexport default function App() { return <button>Launch</button>; }\n```",
+        files: [
+          {
+            path: "App.tsx",
+            language: "tsx",
+            code: "export default function App() { return <button>Launch</button>; }",
+          },
+        ],
+      },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: { action: "answer" },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_existing_edit" },
+    });
+    mockGeneration({
+      text: '```tsx{path=App.tsx}\nexport default function App() { return <button className="bg-blue-600 text-white">Launch</button>; }\n```',
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_existing_edit", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: { action: "generate_code" },
+          transient: true,
+        }),
+      ]),
+    );
+    expect(streamTextMock).toHaveBeenCalledOnce();
+    expect(streamTextMock.mock.calls[0][0].system).toContain(
+      "Return only generated source files",
+    );
+  });
+
+  it("treats resume_generation as code generation", async () => {
+    const content = "Continue with the responsive direction we just resolved";
+    prismaMock.message.findUnique.mockResolvedValueOnce(
+      buildMessage({
+        id: "msg_resume_generation",
+        content,
+        chat: {
+          id: "chat_1",
+          userId: "user_1",
+          model: "model_1",
+          quality: "high",
+          appSpec: createEmptyAppSpec(),
+          prompt: "Build a launch page",
+        },
+      }),
+    );
+    prismaMock.message.findMany.mockResolvedValueOnce([
+      { role: "system", content: "system" },
+      { role: "user", content: "Build a launch page" },
+      {
+        role: "assistant",
+        content:
+          "```tsx{path=App.tsx}\nexport default function App() { return <main />; }\n```",
+        files: [
+          {
+            path: "App.tsx",
+            language: "tsx",
+            code: "export default function App() { return <main />; }",
+          },
+        ],
+      },
+      { role: "user", content },
+    ]);
+    generateTextMock.mockResolvedValueOnce({
+      output: { action: "resume_generation" },
+      usage: undefined,
+      finishReason: "stop",
+      providerMetadata: undefined,
+      response: { id: "orchestration_resume" },
+    });
+    mockGeneration({
+      text: '```tsx{path=App.tsx}\nexport default function App() { return <main className="min-h-screen" />; }\n```',
+    });
+
+    const response = await POST(
+      request({ messageId: "msg_resume_generation", model: "model_1" }),
+    );
+    const chunks = await collectUIChunks(response);
+
+    expect(chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "data-agent-action",
+          data: { action: "resume_generation" },
+          transient: true,
+        }),
+      ]),
+    );
+    expect(streamTextMock).toHaveBeenCalledOnce();
+    expect(streamTextMock.mock.calls[0][0].system).toContain(
+      "Return only generated source files",
+    );
+  });
+
   it("uses a focused backend setup handoff instead of question cards in direct mode", async () => {
     const content =
       "Build a task manager with Supabase auth and database-backed tasks";

@@ -122,6 +122,7 @@ export default function ChatPanelQaPage() {
         <ChatLog
           chat={chat}
           streamText=""
+          streamResponseKind={null}
           reasoningText=""
           generationStatus={DEFAULT_GENERATION_STATUS}
           researchActivity={null}
