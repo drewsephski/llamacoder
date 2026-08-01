@@ -248,9 +248,10 @@ body[data-scroll-locked] {
 }
 
 .hero-brand {
-  display: block;
+  display: flex;
+  justify-content: center;
   font-family: "Aeonik", var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 300;
   font-size: clamp(2.85rem, 8.5vw, 4.75rem);
   line-height: 0.9;
   letter-spacing: -0.06em;

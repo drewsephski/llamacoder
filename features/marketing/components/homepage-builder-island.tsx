@@ -53,6 +53,7 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { KineticText } from "@/components/ui/kinetic-text";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserCredits, useUserSession, useCreateChat } from "@/lib/queries";
 import { getMarketingStarterPrompt } from "@/lib/marketing-pages";
@@ -1493,7 +1494,11 @@ export function HomepageBuilderIsland({
               {/* Hero copy */}
               <div className="hero-copy" data-hero-popout-exclude="copy">
                 <h1 className="animate-fade-up">
-                  <span className="hero-brand">Squid Agent</span>
+                  <KineticText
+                    as="span"
+                    className="hero-brand"
+                    text="Squid Agent"
+                  />
                   <span className="hero-headline">
                     Build the prototype. <em>Prove what works.</em>
                   </span>
