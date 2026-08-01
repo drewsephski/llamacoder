@@ -142,7 +142,7 @@ const homepageNarrativeBlocks = [
     stage: "01",
     label: "Create",
     side: "left",
-    question: "Create",
+    question: "Screenshot to editable React app",
     body: "Start with a prompt, screenshot, or URL and move directly into a working React prototype.",
     media: {
       video: "/launch/gifs/screenshot-to-app.mp4",
@@ -154,7 +154,7 @@ const homepageNarrativeBlocks = [
     stage: "02",
     label: "Refine",
     side: "right",
-    question: "Refine",
+    question: "Plan before building",
     body: "Shape the interface in conversation while Squid preserves the parts that already work.",
     media: {
       video: "/launch/gifs/plan-mode.mp4",
@@ -166,7 +166,7 @@ const homepageNarrativeBlocks = [
     stage: "03",
     label: "Share or promote",
     side: "left",
-    question: "Share or promote",
+    question: "Verify, repair, and export",
     body: "Share the prototype, export every file, or connect real services when the idea is ready for more.",
     media: {
       video: "/launch/gifs/verify-and-export.mp4",
@@ -2518,38 +2518,44 @@ function HomepageWorkflowMedia({
       aria-labelledby={titleId}
       className={`workflow-media-card relative overflow-hidden rounded-[24px] border border-border/70 bg-background/80 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur ${className}`}
     >
-      {reduceMotion ? (
-        <Image
-          src={block.media.poster}
-          alt={block.media.alt}
-          width={1270}
-          height={760}
-          sizes="(min-width: 768px) 440px, calc(100vw - 2rem)"
-          className="block h-auto w-full"
-        />
-      ) : (
-        <video
-          className="block h-auto w-full"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-          poster={block.media.poster}
-          aria-label={block.media.alt}
-          disablePictureInPicture
-          disableRemotePlayback
-          tabIndex={-1}
+      <div className="workflow-media-frame overflow-hidden">
+        {reduceMotion ? (
+          <Image
+            src={block.media.poster}
+            alt={block.media.alt}
+            width={1270}
+            height={760}
+            sizes="(min-width: 768px) 440px, calc(100vw - 2rem)"
+            className="block h-auto w-full"
+          />
+        ) : (
+          <video
+            className="block h-auto w-full"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            poster={block.media.poster}
+            aria-label={block.media.alt}
+            disablePictureInPicture
+            disableRemotePlayback
+            tabIndex={-1}
+          >
+            <source src={block.media.video} type="video/mp4" />
+          </video>
+        )}
+      </div>
+      <div className="border-t border-border/60 px-4 py-3.5 sm:px-5">
+        <h3
+          id={titleId}
+          className="text-sm font-medium leading-5 text-foreground/90"
         >
-          <source src={block.media.video} type="video/mp4" />
-        </video>
-      )}
-      <div className="sr-only">
-        <p>
-          {block.stage} — {block.label}
+          {block.question}
+        </h3>
+        <p className="sr-only">
+          {block.label}. {block.body}
         </p>
-        <h3 id={titleId}>{block.question}</h3>
-        <p>{block.body}</p>
       </div>
     </article>
   );
