@@ -5,29 +5,33 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative backface-hidden will-change-transform box-border",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-[color,background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground border-primary/80 border-b-[4px] hover:bg-primary/90 hover:-translate-y-[1px] hover:border-b-[6px] active:bg-primary/85 active:border-b-[2px] active:translate-y-[2px]",
+          "border border-primary/80 bg-primary text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 hover:shadow-md hover:shadow-primary/20 active:bg-primary/85 active:shadow-none",
         destructive:
-          "bg-destructive text-destructive-foreground border-destructive/80 border-b-[4px] hover:bg-destructive/90 hover:-translate-y-[1px] hover:border-b-[6px] active:bg-destructive/85 active:border-b-[2px] active:translate-y-[2px]",
+          "border border-destructive/80 bg-destructive text-destructive-foreground shadow-sm shadow-destructive/20 hover:bg-destructive/90 hover:shadow-md hover:shadow-destructive/20 active:bg-destructive/85 active:shadow-none",
         outline:
-          "bg-background text-foreground border-input border-b-[4px] hover:bg-accent hover:text-accent-foreground hover:-translate-y-[1px] hover:border-b-[6px] active:bg-accent/85 active:border-b-[2px] active:translate-y-[2px]",
+          "border border-input bg-background text-foreground shadow-sm hover:border-foreground/15 hover:bg-accent hover:text-accent-foreground hover:shadow-md active:bg-accent/80 active:shadow-none",
         secondary:
-          "bg-secondary text-secondary-foreground border-secondary/80 border-b-[4px] hover:bg-secondary/90 hover:text-secondary-foreground hover:-translate-y-[1px] hover:border-b-[6px] active:bg-secondary/85 active:border-b-[2px] active:translate-y-[2px]",
+          "border border-border/60 bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:text-secondary-foreground hover:shadow-md active:bg-secondary/70 active:shadow-none",
         navCta:
-          "bg-nav-button text-foreground border-none hover:bg-nav-button/80 active:scale-[0.97]",
+          "border border-border/50 bg-nav-button text-foreground shadow-sm hover:bg-nav-button/80 hover:shadow-md active:shadow-none",
         ghost:
-          "bg-transparent text-foreground border-transparent border-b-[4px] hover:bg-accent/80 hover:text-accent-foreground hover:-translate-y-[1px] hover:border-b-[6px] active:bg-accent/90 active:border-b-[2px] active:translate-y-[2px]",
-        link: "bg-transparent text-primary border-transparent border-b-[4px] hover:text-primary/90 hover:underline hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:translate-y-[2px]",
+          "border border-transparent bg-transparent text-foreground shadow-none hover:bg-accent/80 hover:text-accent-foreground active:bg-accent",
+        link: "bg-transparent text-primary shadow-none underline-offset-4 hover:text-primary/90 hover:underline",
       },
       size: {
-        default: "h-10 px-6",
-        sm: "h-8 px-4 text-xs",
-        lg: "h-12 px-8",
-        icon: "h-9 w-9",
+        xs: "h-8 rounded-md px-3 text-xs",
+        sm: "h-9 px-3.5",
+        default: "h-10 px-5",
+        lg: "h-11 px-6 text-base",
+        icon: "size-10",
+        "icon-xs": "size-8 rounded-md",
+        "icon-sm": "size-9",
+        "icon-lg": "size-11",
       },
     },
     defaultVariants: {
@@ -48,6 +52,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
+        data-slot="button"
+        data-variant={variant ?? "default"}
+        data-size={size ?? "default"}
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}

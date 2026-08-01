@@ -4,6 +4,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DataGrid, type DataGridColumn } from "@/components/reui/data-grid";
 import { Filters } from "@/components/reui/filters";
+import { IconStack } from "@/components/reui/icon-stack";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { UsageLedger } from "@/features/billing/components/usage-ledger";
 
 type Row = { id: string; name: string; credits: number };
@@ -24,6 +32,28 @@ const columns: DataGridColumn<Row>[] = [
 ];
 
 describe("ReUI app adapters", () => {
+  it("renders a decorative icon stack inside an accessible empty state", () => {
+    const { container } = render(
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia>
+            <IconStack aria-hidden="true">
+              <span>Decorative icon</span>
+            </IconStack>
+          </EmptyMedia>
+          <EmptyTitle>Choose how to start</EmptyTitle>
+          <EmptyDescription>Start from a real project brief.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>,
+    );
+
+    expect(screen.getByText("Choose how to start")).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="icon-stack"]')).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+  });
+
   it("sorts data-grid rows from the column header", () => {
     render(
       <DataGrid

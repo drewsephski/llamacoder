@@ -14,7 +14,6 @@ import {
   Sparkles,
   Edit3,
   ArrowRight,
-  Layers,
   Coins,
   Check,
   Zap,
@@ -31,9 +30,29 @@ import {
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/reui/alert";
 import { Badge } from "@/components/reui/badge";
 import { Frame, FramePanel } from "@/components/reui/frame";
-import { IconTile } from "@/components/reui/icon-tile";
+import { IconStack } from "@/components/reui/icon-stack";
 import { MODELS } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { getDashboardData } from "@/features/projects/server/dashboard-query";
@@ -153,13 +172,13 @@ export async function DashboardPage({
                 disabled
                 className="min-h-11 cursor-not-allowed opacity-50 sm:min-h-10"
               >
-                <Plus className="h-4 w-4" />
+                <Plus data-icon="inline-start" />
                 Limit Reached
               </Button>
             ) : (
               <Button asChild className="min-h-11 sm:min-h-10">
                 <Link href="/">
-                  <Plus className="h-4 w-4" />
+                  <Plus data-icon="inline-start" />
                   New Project
                 </Link>
               </Button>
@@ -169,10 +188,7 @@ export async function DashboardPage({
 
         {/* Milestones Section */}
         <div className="mb-8">
-          <div className="mb-4 flex items-center gap-3">
-            <IconTile variant="soft" size="sm">
-              <Zap />
-            </IconTile>
+          <div className="mb-4">
             <h2 className="text-lg font-medium">Your Progress</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -217,20 +233,34 @@ export async function DashboardPage({
                     <span className="text-sm text-muted-foreground">
                       Available Credits
                     </span>
-                    <div className="relative hidden sm:block">
-                      <Info className="peer h-3.5 w-3.5 cursor-help text-muted-foreground/60" />
-                      <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-56 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
-                        Free accounts receive {TIERS.free.monthlyCredits}{" "}
-                        starter credits after email verification. Generations
-                        charge only after a version saves successfully.{" "}
-                        <Link
-                          href="/dashboard/usage"
-                          className="font-medium underline underline-offset-2"
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            className="-my-2 hidden sm:inline-flex"
+                            aria-label="How available credits work"
+                          >
+                            <Info aria-hidden="true" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          align="start"
+                          sideOffset={8}
+                          className="max-w-64"
                         >
-                          View usage ledger
-                        </Link>
-                      </div>
-                    </div>
+                          <p className="text-pretty leading-relaxed">
+                            Free accounts receive {TIERS.free.monthlyCredits}{" "}
+                            starter credits after email verification.
+                            Generations charge only after a version saves
+                            successfully. See Usage for the full ledger.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Coins className="h-4 w-4 text-amber-500" />
@@ -251,27 +281,28 @@ export async function DashboardPage({
         </div>
 
         {researchProject && !researchState?.submission && (
-          <section className="mb-8 flex flex-col gap-5 border-y border-primary/25 bg-primary/[0.035] px-1 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-            <div className="flex gap-3">
-              <IconTile variant="soft" size="sm" className="mt-0.5">
+          <Frame spacing="xs" className="mb-8 bg-info/10">
+            <FramePanel className="p-0 shadow-none">
+              <Alert
+                variant="info"
+                className="border-0 bg-transparent px-4 py-4 sm:grid-cols-[1rem_1fr_auto] sm:px-5"
+              >
                 <MessageSquareText />
-              </IconTile>
-              <div>
-                <h2 className="font-semibold">
-                  Help improve Squid and earn 15 credits
-                </h2>
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                <AlertTitle>Help improve Squid and earn 15 credits</AlertTitle>
+                <AlertDescription className="max-w-2xl">
                   Tell us what worked, what broke, and what would make your
                   project launch-ready. Honest criticism is encouraged.
-                </p>
-              </div>
-            </div>
-            <Button asChild variant="outline" className="shrink-0">
-              <Link href={`/feedback?project=${researchProject.id}`}>
-                Share feedback <ArrowRight />
-              </Link>
-            </Button>
-          </section>
+                </AlertDescription>
+                <AlertAction>
+                  <Button asChild variant="outline" className="shrink-0">
+                    <Link href={`/feedback?project=${researchProject.id}`}>
+                      Share feedback <ArrowRight data-icon="inline-end" />
+                    </Link>
+                  </Button>
+                </AlertAction>
+              </Alert>
+            </FramePanel>
+          </Frame>
         )}
 
         {/* Upgrade Banner - show limit-reached when free user hits limit */}
@@ -284,9 +315,6 @@ export async function DashboardPage({
         {/* Projects Section */}
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
-            <IconTile variant="soft" size="sm">
-              <Layers />
-            </IconTile>
             <h2 className="text-lg font-medium">Your Projects</h2>
             <Badge
               radius="full"
@@ -303,206 +331,222 @@ export async function DashboardPage({
           </div>
           {!hasProjects ? (
             /* Empty State */
-            <div className="rounded-2xl border border-border bg-card">
-              <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                <IconTile variant="frame" size="xl" className="mb-6">
-                  <Layers className="text-muted-foreground" />
-                </IconTile>
-                <h2 className="mb-2 text-xl font-semibold">
-                  Choose how to start
-                </h2>
-                <p className="mb-6 max-w-sm text-balance text-muted-foreground">
-                  Begin with a proven brief, a visual reference, or a project
-                  you can remix.
-                </p>
-                <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-                  <Button
-                    asChild
-                    className="h-auto justify-start gap-3 p-4 text-left"
-                  >
-                    <Link href="/?starter=kanban-board">
-                      <Blocks className="h-5 w-5 shrink-0" />
-                      <span>
-                        <span className="block">Start from a template</span>
-                        <span className="mt-0.5 block text-xs font-normal opacity-75">
-                          Prefill a complete brief
+            <Frame spacing="sm" className="bg-muted/30">
+              <FramePanel className="p-0 shadow-none">
+                <Empty className="border-0 px-6 py-12 sm:py-16">
+                  <EmptyHeader>
+                    <EmptyMedia>
+                      <IconStack
+                        aria-hidden="true"
+                        className="w-22 h-24 text-primary"
+                      >
+                        <Blocks className="size-5 text-primary" />
+                      </IconStack>
+                    </EmptyMedia>
+                    <EmptyTitle className="text-xl">
+                      Choose how to start
+                    </EmptyTitle>
+                    <EmptyDescription>
+                      Begin with a proven brief, a visual reference, or a
+                      project you can remix.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  <EmptyContent className="w-full max-w-3xl gap-3 sm:grid sm:grid-cols-3">
+                    <Button
+                      asChild
+                      className="h-auto w-full justify-start gap-3 p-4 text-left"
+                    >
+                      <Link href="/?starter=kanban-board">
+                        <Blocks data-icon="inline-start" />
+                        <span>
+                          <span className="block">Start from a template</span>
+                          <span className="mt-0.5 block text-xs font-normal opacity-75">
+                            Prefill a complete brief
+                          </span>
                         </span>
-                      </span>
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    asChild
-                    className="h-auto justify-start gap-3 p-4 text-left"
-                  >
-                    <Link href="/?import=screenshot">
-                      <ImagePlus className="h-5 w-5 shrink-0" />
-                      <span>
-                        <span className="block">Import a screenshot</span>
-                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                          Recreate a visual reference
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="h-auto w-full justify-start gap-3 p-4 text-left"
+                    >
+                      <Link href="/?import=screenshot">
+                        <ImagePlus data-icon="inline-start" />
+                        <span>
+                          <span className="block">Import a screenshot</span>
+                          <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                            Recreate a visual reference
+                          </span>
                         </span>
-                      </span>
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    asChild
-                    className="h-auto justify-start gap-3 p-4 text-left"
-                  >
-                    <Link href="/#built-with-squid">
-                      <Sparkles className="h-5 w-5 shrink-0" />
-                      <span>
-                        <span className="block">Remix an example</span>
-                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                          Explore public projects
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="h-auto w-full justify-start gap-3 p-4 text-left"
+                    >
+                      <Link href="/#built-with-squid">
+                        <Sparkles data-icon="inline-start" />
+                        <span>
+                          <span className="block">Remix an example</span>
+                          <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                            Explore public projects
+                          </span>
                         </span>
-                      </span>
-                    </Link>
-                  </Button>
-                </div>
-                <Link
-                  href="/?upgrade=true"
-                  className="mt-5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  Compare plans and pricing
-                </Link>
-              </div>
-            </div>
+                      </Link>
+                    </Button>
+                  </EmptyContent>
+                  <Link
+                    href="/?upgrade=true"
+                    className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+                  >
+                    Compare plans and pricing
+                  </Link>
+                </Empty>
+              </FramePanel>
+            </Frame>
           ) : (
             <>
               {/* Projects Grid */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((project) => (
-                  <div
+                  <Frame
                     key={project.id}
-                    className="group relative flex flex-col rounded-xl border border-border bg-card transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+                    spacing="xs"
+                    className="group h-full bg-muted/30 transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm"
                   >
-                    <div className="flex flex-1 flex-col p-4 sm:p-5">
-                      {/* Header */}
-                      <div className="mb-4 flex items-start justify-between gap-2">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-md border px-2 py-0.5 text-xs font-medium ${getModelBadgeClass(project.model)}`}
-                          >
-                            {getModelLabel(project.model)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            Updated{" "}
-                            {new Date(project.lastActivityAt).toLocaleString(
-                              undefined,
-                              {
-                                month: "short",
-                                day: "numeric",
-                                hour: "numeric",
-                                minute: "2-digit",
-                              },
-                            )}
-                          </span>
-                        </div>
-                        <ProjectCardActions
-                          projectId={project.id}
-                          projectTitle={project.title}
-                        />
-                      </div>
-
-                      {/* Title */}
-                      <Link href={`/chats/${project.id}`} className="mb-1">
-                        <h3 className="line-clamp-2 font-medium leading-snug">
-                          {project.title}
-                        </h3>
-                      </Link>
-
-                      {/* Meta */}
-                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>
-                            {project.quality === "high"
-                              ? "High quality"
-                              : "Fast"}
-                          </span>
-                        </div>
-                        {/* Status Badge */}
-                        {project.plan && !project.hasCode && (
-                          <Badge variant="info-light" radius="full">
-                            <FileText className="h-3 w-3" />
-                            <span>Planned</span>
-                          </Badge>
-                        )}
-                        {project.hasCode && (
-                          <Badge variant="secondary" radius="full">
-                            <Code2 className="h-3 w-3" />
-                            <span>Generated</span>
-                          </Badge>
-                        )}
-                        {project.verification.staticChecks === "passed" && (
-                          <Badge variant="success-light" radius="full">
-                            <Check className="h-3 w-3" />
-                            <span>Static checks passed</span>
-                          </Badge>
-                        )}
-                        {project.verification.staticChecks === "warnings" && (
-                          <Badge variant="warning-light" radius="full">
-                            <TriangleAlert className="h-3 w-3" />
-                            <span>Static warnings</span>
-                          </Badge>
-                        )}
-                        {project.verification.runtime === "passed" && (
-                          <Badge variant="info-light" radius="full">
-                            <FlaskConical className="h-3 w-3" />
-                            <span>Runtime verified</span>
-                          </Badge>
-                        )}
-                        {project.verification.export === "verified" && (
-                          <Badge variant="success-light" radius="full">
-                            <ShieldCheck className="h-3 w-3" />
-                            <span>Export verified</span>
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Action Footer */}
-                    <div className="border-t border-border px-5 py-3">
-                      <Link
-                        href={`/chats/${project.id}`}
-                        className="flex items-center justify-between text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        <span>Continue building</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </div>
-
-                    {/* Expandable Rename */}
-                    <details className="border-t border-border">
-                      <summary className="cursor-pointer list-none px-5 py-2.5 text-center text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50">
-                        <span className="flex items-center justify-center gap-1.5">
-                          <Edit3 className="h-3 w-3" />
-                          Rename
-                        </span>
-                      </summary>
-                      <form
-                        action={handleRename}
-                        className="border-t border-border bg-muted/30 p-4"
-                      >
-                        <input type="hidden" name="chatId" value={project.id} />
-                        <div className="flex flex-col gap-2 min-[420px]:flex-row">
-                          <input
-                            type="text"
-                            name="newTitle"
-                            placeholder="New title..."
-                            defaultValue={project.title}
-                            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                            required
+                    <FramePanel className="flex h-full flex-col p-0 shadow-none">
+                      <div className="flex flex-1 flex-col p-4 sm:p-5">
+                        {/* Header */}
+                        <div className="mb-4 flex items-start justify-between gap-2">
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <span
+                              className={`rounded-md border px-2 py-0.5 text-xs font-medium ${getModelBadgeClass(project.model)}`}
+                            >
+                              {getModelLabel(project.model)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Updated{" "}
+                              {new Date(project.lastActivityAt).toLocaleString(
+                                undefined,
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </span>
+                          </div>
+                          <ProjectCardActions
+                            projectId={project.id}
+                            projectTitle={project.title}
                           />
-                          <Button type="submit" size="sm">
-                            Save
-                          </Button>
                         </div>
-                      </form>
-                    </details>
-                  </div>
+
+                        {/* Title */}
+                        <Link href={`/chats/${project.id}`} className="mb-1">
+                          <h3 className="line-clamp-2 font-medium leading-snug">
+                            {project.title}
+                          </h3>
+                        </Link>
+
+                        {/* Meta */}
+                        <div className="mt-auto flex flex-wrap items-center gap-2 pt-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>
+                              {project.quality === "high"
+                                ? "High quality"
+                                : "Fast"}
+                            </span>
+                          </div>
+                          {/* Status Badge */}
+                          {project.plan && !project.hasCode && (
+                            <Badge variant="info-light" radius="full">
+                              <FileText className="h-3 w-3" />
+                              <span>Planned</span>
+                            </Badge>
+                          )}
+                          {project.hasCode && (
+                            <Badge variant="secondary" radius="full">
+                              <Code2 className="h-3 w-3" />
+                              <span>Generated</span>
+                            </Badge>
+                          )}
+                          {project.verification.staticChecks === "passed" && (
+                            <Badge variant="success-light" radius="full">
+                              <Check className="h-3 w-3" />
+                              <span>Static checks passed</span>
+                            </Badge>
+                          )}
+                          {project.verification.staticChecks === "warnings" && (
+                            <Badge variant="warning-light" radius="full">
+                              <TriangleAlert className="h-3 w-3" />
+                              <span>Static warnings</span>
+                            </Badge>
+                          )}
+                          {project.verification.runtime === "passed" && (
+                            <Badge variant="info-light" radius="full">
+                              <FlaskConical className="h-3 w-3" />
+                              <span>Runtime verified</span>
+                            </Badge>
+                          )}
+                          {project.verification.export === "verified" && (
+                            <Badge variant="success-light" radius="full">
+                              <ShieldCheck className="h-3 w-3" />
+                              <span>Export verified</span>
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Footer */}
+                      <div className="border-t border-border px-5 py-3">
+                        <Link
+                          href={`/chats/${project.id}`}
+                          className="flex items-center justify-between rounded-sm text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <span>Continue building</span>
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+
+                      {/* Expandable Rename */}
+                      <details className="border-t border-border">
+                        <summary className="cursor-pointer list-none px-5 py-2.5 text-center text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+                          <span className="flex items-center justify-center gap-1.5">
+                            <Edit3 className="h-3 w-3" />
+                            Rename
+                          </span>
+                        </summary>
+                        <form
+                          action={handleRename}
+                          className="border-t border-border bg-muted/30 p-4"
+                        >
+                          <input
+                            type="hidden"
+                            name="chatId"
+                            value={project.id}
+                          />
+                          <div className="flex flex-col gap-2 min-[420px]:flex-row">
+                            <input
+                              type="text"
+                              name="newTitle"
+                              placeholder="New title..."
+                              defaultValue={project.title}
+                              className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                              required
+                            />
+                            <Button type="submit" size="sm">
+                              Save
+                            </Button>
+                          </div>
+                        </form>
+                      </details>
+                    </FramePanel>
+                  </Frame>
                 ))}
               </div>
 
@@ -567,13 +611,13 @@ export async function DashboardPage({
                     variant="outline"
                     className="cursor-not-allowed opacity-50"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus data-icon="inline-start" />
                     Limit Reached
                   </Button>
                 ) : (
                   <Button asChild variant="outline">
                     <Link href="/">
-                      <Plus className="h-4 w-4" />
+                      <Plus data-icon="inline-start" />
                       Start another project
                     </Link>
                   </Button>
@@ -585,164 +629,167 @@ export async function DashboardPage({
 
         {/* Pricing Section */}
         <div className="mx-auto mb-10 max-w-5xl">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Crown className="h-4 w-4 text-primary" />
-            </div>
+          <div className="mb-6">
             <h2 className="text-lg font-medium">Pricing Plans</h2>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {/* Free Plan */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="mb-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold">Free</h3>
+            <Frame spacing="xs" className="h-full bg-muted/30">
+              <FramePanel className="flex h-full flex-col p-6 shadow-none">
+                <div className="mb-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold">Free</h3>
+                  </div>
+                  <p className="text-3xl font-bold">
+                    $0
+                    <span className="text-lg font-normal text-muted-foreground">
+                      /month
+                    </span>
+                  </p>
                 </div>
-                <p className="text-3xl font-bold">
-                  $0
-                  <span className="text-lg font-normal text-muted-foreground">
-                    /month
-                  </span>
-                </p>
-              </div>
-              <ul className="mb-6 space-y-3">
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>5 starter credits</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Free AI model only</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Community support</span>
-                </li>
-              </ul>
-              <Button variant="outline" className="w-full" disabled>
-                {currentTier === "free" ? "Current Plan" : "Included"}
-              </Button>
-            </div>
+                <ul className="mb-6 flex-1 space-y-3">
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>5 starter credits</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Free AI model only</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Community support</span>
+                  </li>
+                </ul>
+                <Button variant="outline" className="w-full" disabled>
+                  {currentTier === "free" ? "Current Plan" : "Included"}
+                </Button>
+              </FramePanel>
+            </Frame>
 
             {/* Pro Plan */}
-            <div className="relative rounded-xl border-2 border-primary bg-card p-6">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                Popular
+            <Frame
+              spacing="xs"
+              className="h-full border-primary bg-primary/10 shadow-sm"
+            >
+              <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
+                <Badge radius="full">Popular</Badge>
               </div>
-              <div className="mb-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Pro</h3>
+              <FramePanel className="flex h-full flex-col p-6 shadow-none">
+                <div className="mb-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">Pro</h3>
+                  </div>
+                  <p className="text-3xl font-bold">
+                    $9
+                    <span className="text-lg font-normal text-muted-foreground">
+                      /month
+                    </span>
+                  </p>
                 </div>
-                <p className="text-3xl font-bold">
-                  $9
-                  <span className="text-lg font-normal text-muted-foreground">
-                    /month
-                  </span>
-                </p>
-              </div>
-              <ul className="mb-6 space-y-3">
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>100 credits/month</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Rollover up to 200</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Starter, Efficient, and Advanced models</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Priority support</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Advanced features</span>
-                </li>
-              </ul>
-              {currentTier === "pro" ? (
-                <StripePortalButton variant="outline" className="w-full">
-                  Manage subscription
-                </StripePortalButton>
-              ) : currentTier === "pro_plus" ? (
-                <Button disabled variant="outline" className="w-full">
-                  Included in Pro Plus
-                </Button>
-              ) : (
-                <StripeCheckoutButton
-                  checkout={{ plan: "pro" }}
-                  className="w-full"
-                >
-                  Upgrade to Pro
-                </StripeCheckoutButton>
-              )}
-            </div>
+                <ul className="mb-6 flex-1 space-y-3">
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>100 credits/month</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Rollover up to 200</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Starter, Efficient, and Advanced models</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Priority support</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Advanced features</span>
+                  </li>
+                </ul>
+                {currentTier === "pro" ? (
+                  <StripePortalButton variant="outline" className="w-full">
+                    Manage subscription
+                  </StripePortalButton>
+                ) : currentTier === "pro_plus" ? (
+                  <Button disabled variant="outline" className="w-full">
+                    Included in Pro Plus
+                  </Button>
+                ) : (
+                  <StripeCheckoutButton
+                    checkout={{ plan: "pro" }}
+                    className="w-full"
+                  >
+                    Upgrade to Pro
+                  </StripeCheckoutButton>
+                )}
+              </FramePanel>
+            </Frame>
 
             {/* Pro Plus Plan */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="mb-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <Crown className="h-5 w-5 text-amber-500" />
-                  <h3 className="text-lg font-semibold">Pro Plus</h3>
+            <Frame spacing="xs" className="h-full bg-muted/30">
+              <FramePanel className="flex h-full flex-col p-6 shadow-none">
+                <div className="mb-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-amber-500" />
+                    <h3 className="text-lg font-semibold">Pro Plus</h3>
+                  </div>
+                  <p className="text-3xl font-bold">
+                    $29
+                    <span className="text-lg font-normal text-muted-foreground">
+                      /month
+                    </span>
+                  </p>
                 </div>
-                <p className="text-3xl font-bold">
-                  $29
-                  <span className="text-lg font-normal text-muted-foreground">
-                    /month
-                  </span>
-                </p>
-              </div>
-              <ul className="mb-6 space-y-3">
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>500 credits/month</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>All models, including Premium</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Priority support</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Credit rollover up to 1,000</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-green-500" />
-                  <span>Advanced features</span>
-                </li>
-              </ul>
-              {currentTier === "pro_plus" ? (
-                <StripePortalButton variant="outline" className="w-full">
-                  Manage subscription
-                </StripePortalButton>
-              ) : (
-                <StripeCheckoutButton
-                  checkout={{ plan: "pro_plus" }}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {currentTier === "pro"
-                    ? "Upgrade to Pro Plus"
-                    : "Get Pro Plus"}
-                </StripeCheckoutButton>
-              )}
-            </div>
+                <ul className="mb-6 flex-1 space-y-3">
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>500 credits/month</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>All models, including Premium</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Priority support</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Credit rollover up to 1,000</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Advanced features</span>
+                  </li>
+                </ul>
+                {currentTier === "pro_plus" ? (
+                  <StripePortalButton variant="outline" className="w-full">
+                    Manage subscription
+                  </StripePortalButton>
+                ) : (
+                  <StripeCheckoutButton
+                    checkout={{ plan: "pro_plus" }}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {currentTier === "pro"
+                      ? "Upgrade to Pro Plus"
+                      : "Get Pro Plus"}
+                  </StripeCheckoutButton>
+                )}
+              </FramePanel>
+            </Frame>
           </div>
         </div>
 
         {/* Credit Packs Section */}
         <div className="mx-auto mb-10 max-w-5xl">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Coins className="h-4 w-4 text-primary" />
-            </div>
+          <div className="mb-6">
             <div>
               <h2 className="text-lg font-medium">Credit Packs</h2>
               <p className="text-sm text-muted-foreground">
@@ -757,48 +804,53 @@ export async function DashboardPage({
               const isBestValue = "bestValue" in pack && pack.bestValue;
 
               return (
-                <div
+                <Frame
                   key={key}
-                  className={`relative rounded-xl border bg-card p-6 ${
+                  spacing="xs"
+                  className={`h-full ${
                     isBestValue || isPopular
-                      ? "border-2 border-primary"
-                      : "border-border"
+                      ? "border-primary bg-primary/10 shadow-sm"
+                      : "bg-muted/30"
                   }`}
                 >
                   {(isBestValue || isPopular) && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                      {isBestValue ? "Best Value" : "Most Popular"}
+                    <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
+                      <Badge radius="full">
+                        {isBestValue ? "Best Value" : "Most Popular"}
+                      </Badge>
                     </div>
                   )}
-                  <div className="mb-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <Coins className="h-5 w-5 text-primary" />
-                      <h3 className="text-lg font-semibold">{pack.label}</h3>
+                  <FramePanel className="flex h-full flex-col p-6 shadow-none">
+                    <div className="mb-4">
+                      <div className="mb-2 flex items-center gap-2">
+                        <Coins className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-semibold">{pack.label}</h3>
+                      </div>
+                      <p className="text-3xl font-bold">${pack.price}</p>
                     </div>
-                    <p className="text-3xl font-bold">${pack.price}</p>
-                  </div>
-                  <ul className="mb-6 space-y-3">
-                    <li className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span>{pack.credits} credits</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span>Works with all smarter models</span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span>No subscription required</span>
-                    </li>
-                  </ul>
-                  <StripeCheckoutButton
-                    checkout={{ pack: key }}
-                    variant={isPopular ? "default" : "outline"}
-                    className="w-full"
-                  >
-                    Buy Credits
-                  </StripeCheckoutButton>
-                </div>
+                    <ul className="mb-6 flex-1 space-y-3">
+                      <li className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span>{pack.credits} credits</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span>Works with all smarter models</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span>No subscription required</span>
+                      </li>
+                    </ul>
+                    <StripeCheckoutButton
+                      checkout={{ pack: key }}
+                      variant={isPopular ? "default" : "outline"}
+                      className="w-full"
+                    >
+                      Buy Credits
+                    </StripeCheckoutButton>
+                  </FramePanel>
+                </Frame>
               );
             })}
           </div>

@@ -3,11 +3,8 @@ import { getPrisma } from "@/lib/prisma";
 import { getEntitlementTier, type TierKey } from "@/lib/billing";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Coins, FileText, ReceiptText } from "lucide-react";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { Badge } from "@/components/reui/badge";
-import { IconTile } from "@/components/reui/icon-tile";
 import { UsageLedger } from "@/features/billing/components/usage-ledger";
 import { createNoIndexMetadata } from "@/lib/seo";
 
@@ -85,10 +82,7 @@ export default async function UsagePage() {
 
       <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
         <header className="mb-8">
-          <IconTile variant="soft">
-            <ReceiptText />
-          </IconTile>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Usage ledger
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
@@ -100,10 +94,7 @@ export default async function UsagePage() {
 
         <section className="rounded-2xl border border-border bg-card">
           <div className="border-b border-border p-4 sm:p-5">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              <h2 className="font-semibold">Generation charges</h2>
-            </div>
+            <h2 className="font-semibold">Generation charges</h2>
           </div>
           {generationLogs.length === 0 ? (
             <EmptyState text="No successful generations have been charged yet." />
@@ -129,10 +120,7 @@ export default async function UsagePage() {
 
         <section className="mt-8 rounded-2xl border border-border bg-card">
           <div className="border-b border-border p-4 sm:p-5">
-            <div className="flex items-center gap-2">
-              <Coins className="h-4 w-4 text-amber-500" />
-              <h2 className="font-semibold">Credit history</h2>
-            </div>
+            <h2 className="font-semibold">Credit history</h2>
           </div>
           {creditHistory.length === 0 ? (
             <EmptyState text="No credit purchases, grants, refunds, or usage records yet." />

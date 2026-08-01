@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
-  CloudCog,
   CircleDollarSign,
   Database,
   ExternalLink,
@@ -401,10 +400,7 @@ function FeedbackAdminSetup({ signedInEmail }: { signedInEmail: string }) {
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
         <header className="max-w-3xl">
-          <IconTile variant="solid" size="lg">
-            <CloudCog />
-          </IconTile>
-          <h1 className="mt-6 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
             Connect feedback operations
           </h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
