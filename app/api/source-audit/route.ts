@@ -5,7 +5,8 @@ import { consumeRateLimit } from "@/features/security/server/rate-limit";
 import { analyzeSourceBundle } from "@/features/source-audit/analyze";
 import {
   fetchPublicGitHubArchive,
-  MAX_AUDIT_ARCHIVE_BYTES,
+  MAX_AUDIT_UPLOAD_BYTES,
+  MAX_GITHUB_ARCHIVE_BYTES,
   readSourceArchive,
   SourceArchiveError,
 } from "@/features/source-audit/server/archive";
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       const declaredLength = Number(
         request.headers.get("content-length") ?? "0",
       );
-      if (declaredLength > MAX_AUDIT_ARCHIVE_BYTES + 256_000) {
+      if (declaredLength > MAX_AUDIT_UPLOAD_BYTES + 256_000) {
         throw new SourceArchiveError(
           "Upload is larger than the 4 MB limit.",
           413,
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
-      if (file.size > MAX_AUDIT_ARCHIVE_BYTES) {
+      if (file.size > MAX_AUDIT_UPLOAD_BYTES) {
         throw new SourceArchiveError(
           "Archive is larger than the 4 MB limit.",
           413,
@@ -93,8 +94,13 @@ export async function POST(request: NextRequest) {
       source = { kind: "zip", label: file.name };
     }
 
-    const files = await readSourceArchive(archive);
-    const report = analyzeSourceBundle({ files, source });
+    const { files, inspection } = await readSourceArchive(archive, {
+      maxArchiveBytes:
+        source.kind === "github"
+          ? MAX_GITHUB_ARCHIVE_BYTES
+          : MAX_AUDIT_UPLOAD_BYTES,
+    });
+    const report = analyzeSourceBundle({ files, source, inspection });
     return NextResponse.json(
       { report },
       { headers: { "Cache-Control": "no-store" } },

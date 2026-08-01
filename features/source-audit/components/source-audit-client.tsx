@@ -132,7 +132,8 @@ export function SourceAuditClient() {
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Squid downloads the default branch from github.com. Private
-            repositories are not supported by this public tool.
+            repositories are not supported. Repository archives may be up to 25
+            MB; generated output and media assets are excluded from inspection.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Input

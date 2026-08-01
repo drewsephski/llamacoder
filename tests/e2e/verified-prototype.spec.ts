@@ -63,6 +63,10 @@ test("source audit accepts a ZIP and renders explicit static findings", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/audit");
 
+  await expect(
+    page.getByText(/repository archives may be up to 25 MB/i),
+  ).toBeVisible();
+
   await page.locator('input[type="file"]').setInputFiles({
     name: "prototype.zip",
     mimeType: "application/zip",

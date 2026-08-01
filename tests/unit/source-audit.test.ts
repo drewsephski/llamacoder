@@ -91,4 +91,26 @@ describe("analyzeSourceBundle", () => {
         ?.details,
     ).toContain("Lovable coupling detected");
   });
+
+  it("discloses when a large repository was only partially inspected", () => {
+    const report = analyzeSourceBundle({
+      source: { kind: "github", label: "owner/large-repo" },
+      files: [
+        file(
+          "package.json",
+          JSON.stringify({ scripts: { build: "vite build" } }),
+        ),
+        file("src/App.tsx", "export default function App(){return <main /> }"),
+      ],
+      inspection: {
+        eligibleFiles: 950,
+        inspectedFiles: 600,
+        skippedFiles: 350,
+      },
+    });
+
+    expect(report.scope).toContain(
+      "600 of 950 supported files were inspected; 350 were skipped by bounded file-count, file-size, or total-text limits.",
+    );
+  });
 });

@@ -33,10 +33,16 @@ const PLATFORM_COUPLING_PATTERNS = [
 export function analyzeSourceBundle({
   files,
   source,
+  inspection,
   auditedAt = new Date(),
 }: {
   files: AuditableSourceFile[];
   source: SourceAuditReport["source"];
+  inspection?: {
+    eligibleFiles: number;
+    inspectedFiles: number;
+    skippedFiles: number;
+  };
   auditedAt?: Date;
 }): SourceAuditReport {
   const rootPrefix = findSharedRoot(files.map((file) => file.path));
@@ -180,6 +186,11 @@ export function analyzeSourceBundle({
     findings,
     scope: [
       "Static archive inspection only; Squid did not install dependencies or execute the project.",
+      ...(inspection && inspection.skippedFiles > 0
+        ? [
+            `${inspection.inspectedFiles} of ${inspection.eligibleFiles} supported files were inspected; ${inspection.skippedFiles} were skipped by bounded file-count, file-size, or total-text limits.`,
+          ]
+        : []),
       "The scan does not access deployment settings, provider dashboards, databases, or production traffic.",
       "Possible credential values are never included in the report.",
     ],

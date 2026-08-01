@@ -4,19 +4,25 @@ import JSZip from "jszip";
 
 import type { AuditableSourceFile } from "@/features/source-audit/contracts";
 
-export const MAX_AUDIT_ARCHIVE_BYTES = 4 * 1024 * 1024;
-const MAX_UNCOMPRESSED_BYTES = 3 * 1024 * 1024;
-const MAX_FILE_BYTES = 350 * 1024;
-const MAX_FILES = 140;
+export const MAX_AUDIT_UPLOAD_BYTES = 4 * 1024 * 1024;
+export const MAX_GITHUB_ARCHIVE_BYTES = 25 * 1024 * 1024;
+const MAX_UNCOMPRESSED_BYTES = 12 * 1024 * 1024;
+const MAX_FILE_BYTES = 750 * 1024;
+const MAX_FILES = 600;
 const ALLOWED_FILE_PATTERN =
   /(?:^|\/)(?:\.env\.example|[^/]+\.(?:[cm]?[jt]sx?|css|scss|json|html|md|toml|ya?ml|lock))$/i;
 const IGNORED_SEGMENT_PATTERN =
   /(?:^|\/)(?:node_modules|\.git|\.next|dist|build|coverage|public\/assets)(?:\/|$)/i;
 
-export async function readSourceArchive(data: ArrayBuffer) {
-  if (data.byteLength === 0 || data.byteLength > MAX_AUDIT_ARCHIVE_BYTES) {
+export async function readSourceArchive(
+  data: ArrayBuffer,
+  {
+    maxArchiveBytes = MAX_AUDIT_UPLOAD_BYTES,
+  }: { maxArchiveBytes?: number } = {},
+) {
+  if (data.byteLength === 0 || data.byteLength > maxArchiveBytes) {
     throw new SourceArchiveError(
-      "Archive must be a non-empty ZIP smaller than 4 MB.",
+      `Archive must be a non-empty ZIP no larger than ${formatMegabytes(maxArchiveBytes)} MB.`,
       413,
     );
   }
@@ -44,38 +50,31 @@ export async function readSourceArchive(data: ArrayBuffer) {
       400,
     );
   }
-  if (entries.length > MAX_FILES) {
-    throw new SourceArchiveError(
-      `Archive contains more than ${MAX_FILES} inspectable files.`,
-      413,
-    );
-  }
-
-  const declaredBytes = entries.reduce(
-    (sum, entry) => sum + getDeclaredUncompressedSize(entry),
-    0,
-  );
-  if (declaredBytes > MAX_UNCOMPRESSED_BYTES) {
-    throw new SourceArchiveError(
-      "Archive expands beyond the 3 MB inspection limit.",
-      413,
-    );
-  }
-
   const files: AuditableSourceFile[] = [];
   let extractedBytes = 0;
-  for (const entry of entries) {
+  const prioritizedEntries = entries.toSorted(
+    (left, right) =>
+      getEntryPriority(left.name) - getEntryPriority(right.name) ||
+      left.name.localeCompare(right.name),
+  );
+  for (const entry of prioritizedEntries) {
+    if (files.length >= MAX_FILES) break;
     const declaredSize = getDeclaredUncompressedSize(entry);
     if (declaredSize > MAX_FILE_BYTES) continue;
+    if (
+      declaredSize > 0 &&
+      extractedBytes + declaredSize > MAX_UNCOMPRESSED_BYTES
+    ) {
+      continue;
+    }
     const content = await entry.async("string");
     const bytes = new TextEncoder().encode(content).byteLength;
+    if (
+      bytes > MAX_FILE_BYTES ||
+      extractedBytes + bytes > MAX_UNCOMPRESSED_BYTES
+    )
+      continue;
     extractedBytes += bytes;
-    if (bytes > MAX_FILE_BYTES || extractedBytes > MAX_UNCOMPRESSED_BYTES) {
-      throw new SourceArchiveError(
-        "Archive expands beyond the inspection limits.",
-        413,
-      );
-    }
     files.push({ path: entry.name, content, bytes });
   }
 
@@ -85,7 +84,14 @@ export async function readSourceArchive(data: ArrayBuffer) {
       413,
     );
   }
-  return files;
+  return {
+    files,
+    inspection: {
+      eligibleFiles: entries.length,
+      inspectedFiles: files.length,
+      skippedFiles: entries.length - files.length,
+    },
+  };
 }
 
 export async function fetchPublicGitHubArchive(value: string) {
@@ -120,7 +126,7 @@ export async function fetchPublicGitHubArchive(value: string) {
     `https://codeload.github.com/${parsed.owner}/${parsed.repo}/zip/refs/heads/${encodeURIComponent(repository.default_branch)}`,
     {
       headers: { "User-Agent": "Squid-Source-Audit" },
-      signal: AbortSignal.timeout(12_000),
+      signal: AbortSignal.timeout(20_000),
       cache: "no-store",
     },
   );
@@ -139,8 +145,11 @@ export async function fetchPublicGitHubArchive(value: string) {
 
 async function readBoundedResponse(response: Response) {
   const contentLength = Number(response.headers.get("content-length") ?? "0");
-  if (contentLength > MAX_AUDIT_ARCHIVE_BYTES) {
-    throw new SourceArchiveError("Repository ZIP is larger than 4 MB.", 413);
+  if (contentLength > MAX_GITHUB_ARCHIVE_BYTES) {
+    throw new SourceArchiveError(
+      `Repository ZIP is larger than ${formatMegabytes(MAX_GITHUB_ARCHIVE_BYTES)} MB.`,
+      413,
+    );
   }
   const reader = response.body?.getReader();
   if (!reader)
@@ -151,9 +160,12 @@ async function readBoundedResponse(response: Response) {
     const { done, value } = await reader.read();
     if (done) break;
     bytes += value.byteLength;
-    if (bytes > MAX_AUDIT_ARCHIVE_BYTES) {
+    if (bytes > MAX_GITHUB_ARCHIVE_BYTES) {
       await reader.cancel();
-      throw new SourceArchiveError("Repository ZIP is larger than 4 MB.", 413);
+      throw new SourceArchiveError(
+        `Repository ZIP is larger than ${formatMegabytes(MAX_GITHUB_ARCHIVE_BYTES)} MB.`,
+        413,
+      );
     }
     chunks.push(value);
   }
@@ -212,6 +224,34 @@ function getDeclaredUncompressedSize(entry: JSZip.JSZipObject) {
   return typeof internal._data?.uncompressedSize === "number"
     ? internal._data.uncompressedSize
     : 0;
+}
+
+function getEntryPriority(path: string) {
+  const normalized = path.toLowerCase();
+  const basename = normalized.split("/").at(-1) ?? normalized;
+  if (
+    basename === "package.json" ||
+    basename === ".env.example" ||
+    /^(?:pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?)$/.test(
+      basename,
+    )
+  ) {
+    return 0;
+  }
+  if (
+    /(?:^|\/)(?:src\/main\.[jt]sx?|src\/app\.[jt]sx?|app\/page\.tsx|pages\/index\.tsx|index\.html)$/.test(
+      normalized,
+    )
+  ) {
+    return 1;
+  }
+  if (/\.[cm]?[jt]sx?$/.test(normalized)) return 2;
+  if (/\.(?:css|scss|html)$/.test(normalized)) return 3;
+  return 4;
+}
+
+function formatMegabytes(bytes: number) {
+  return bytes / (1024 * 1024);
 }
 
 export class SourceArchiveError extends Error {
