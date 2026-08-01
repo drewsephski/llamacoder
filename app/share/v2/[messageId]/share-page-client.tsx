@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Copy,
+  ClipboardCheck,
   Download,
   Eye,
   GitFork,
@@ -30,6 +31,7 @@ type SharePageClientProps = {
   allowStarterDownloads?: boolean;
   publicReference?: string;
   galleryHref?: string;
+  passportStatus?: "verified" | "review" | "failed";
 };
 
 export function SharePageClient({
@@ -42,6 +44,7 @@ export function SharePageClient({
   allowStarterDownloads = false,
   publicReference = messageId,
   galleryHref,
+  passportStatus,
 }: SharePageClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -89,6 +92,7 @@ export function SharePageClient({
   };
 
   const downloadHref = `/api/export/${encodeURIComponent(publicReference)}?starter=1`;
+  const passportHref = `/share/v2/${encodeURIComponent(publicReference)}/passport`;
 
   return (
     <div
@@ -141,6 +145,17 @@ export function SharePageClient({
             <Copy className="size-4" />
             {didCopy ? "Copied" : "Copy prompt"}
           </Button>
+          {passportStatus && (
+            <Button asChild variant="outline">
+              <a
+                href={passportHref}
+                onClick={() => recordShareEvent(messageId, "passport_open")}
+              >
+                <ClipboardCheck className="size-4" />
+                Build passport · {passportStatus}
+              </a>
+            </Button>
+          )}
           {allowStarterDownloads && (
             <Button asChild variant="outline">
               <a
@@ -183,7 +198,9 @@ function recordShareEvent(
     | "copy_prompt"
     | "download_starter"
     | "remix_click"
-    | "remix_created",
+    | "remix_created"
+    | "passport_open"
+    | "passport_download",
 ) {
   fetch("/api/share-events", {
     method: "POST",

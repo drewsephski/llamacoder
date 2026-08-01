@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ban, KeyRound, Search, Server, ShieldCheck, Zap } from "lucide-react";
+import { Ban, KeyRound, Server, ShieldCheck, Zap } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/reui/badge";
+import { Filters } from "@/components/reui/filters";
+import { IconTile } from "@/components/reui/icon-tile";
 import type { IntegrationProviderSummary } from "@/features/integrations/contracts";
 import { cn } from "@/lib/utils";
 
@@ -76,34 +78,15 @@ export function ProviderCatalog({
 
   return (
     <div className="mt-4 grid gap-3">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          className="pl-9"
-          placeholder="Search APIs by name or feature"
-          aria-label="Search APIs"
-        />
-      </div>
-      <div className="flex flex-wrap gap-2" aria-label="API catalog filters">
-        {filters.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            onClick={() => setFilter(item.value)}
-            aria-pressed={filter === item.value}
-            className={cn(
-              "min-h-8 rounded-full border px-3 text-xs font-medium transition-colors",
-              filter === item.value
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <Filters
+        query={query}
+        onQueryChange={setQuery}
+        queryLabel="Search APIs"
+        value={filter}
+        onValueChange={(value) => setFilter(value as CatalogFilter)}
+        options={filters}
+        suggestions={providers.map((provider) => provider.name)}
+      />
       {visibleProviders.length ? (
         <div className="grid max-h-72 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
           {visibleProviders.map((provider) => {
@@ -137,21 +120,31 @@ export function ProviderCatalog({
                     </p>
                   </div>
                   {provider.runtime === "server" && (
-                    <Server
-                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                    <IconTile
+                      variant="outline"
+                      size="xs"
                       aria-label="Server runtime"
-                    />
+                    >
+                      <Server />
+                    </IconTile>
                   )}
                 </div>
-                <div
-                  className={cn(
-                    "mt-3 flex items-center gap-1.5 text-xs font-medium",
-                    setup.className,
-                  )}
+                <Badge
+                  radius="full"
+                  variant={
+                    provider.setup === "blocked"
+                      ? "destructive-light"
+                      : provider.setup === "instant"
+                        ? "success-light"
+                        : provider.setup === "oauth"
+                          ? "info-light"
+                          : "warning-light"
+                  }
+                  className="mt-3"
                 >
                   <SetupIcon className="size-3.5" />
                   {setup.label}
-                </div>
+                </Badge>
               </button>
             );
           })}

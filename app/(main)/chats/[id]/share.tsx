@@ -260,7 +260,8 @@ export function Share({
           <DialogHeader>
             <DialogTitle className="text-xl">Publish to gallery</DialogTitle>
             <DialogDescription>
-              Create a public page for this version of your app.
+              Create a public page for this exact revision, including its Build
+              Passport and recorded verification evidence.
             </DialogDescription>
           </DialogHeader>
 

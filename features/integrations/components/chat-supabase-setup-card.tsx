@@ -57,6 +57,14 @@ import {
 } from "@/features/integrations/supabase-backend";
 import { fetchJson } from "@/features/shared/client/http";
 import { CometSpinner } from "@/components/loading-ui/comet-spinner";
+import {
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperNav,
+  StepperSeparator,
+  StepperTitle,
+} from "@/components/reui/stepper";
 
 function setupQueryKey(projectId: string, interactionId: string) {
   return ["chat-supabase-setup", projectId, interactionId] as const;
@@ -108,32 +116,28 @@ function SetupProgress({
     { label: "Ready" },
   ];
   return (
-    <ol className="mt-3 grid gap-2 sm:grid-cols-4" aria-label="Setup progress">
-      {steps.map((step, index) => {
-        const completed = index < activeIndex || activeIndex === 3;
-        const active = index === activeIndex && activeIndex < 3;
-        return (
-          <li
-            key={step.label}
-            className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground"
-          >
-            <span
-              className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${
-                completed
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
-                  : active
-                    ? "border-blue-500/40 bg-blue-500/10 text-blue-600"
-                    : "border-border bg-muted/40"
-              }`}
-              aria-hidden="true"
-            >
-              {completed ? <Check className="size-3" /> : index + 1}
-            </span>
-            <span className="truncate sm:whitespace-normal">{step.label}</span>
-          </li>
-        );
-      })}
-    </ol>
+    <Stepper
+      value={activeIndex + 1}
+      className="mt-3"
+      aria-label="Setup progress"
+      indicators={{ completed: <Check className="size-3" /> }}
+    >
+      <StepperNav>
+        {steps.map((step, index) => {
+          return (
+            <StepperItem key={step.label} step={index + 1}>
+              <div className="flex min-w-0 items-center gap-2">
+                <StepperIndicator>{index + 1}</StepperIndicator>
+                <StepperTitle className="hidden truncate text-xs font-normal text-muted-foreground sm:block sm:whitespace-normal">
+                  {step.label}
+                </StepperTitle>
+              </div>
+              {index < steps.length - 1 ? <StepperSeparator /> : null}
+            </StepperItem>
+          );
+        })}
+      </StepperNav>
+    </Stepper>
   );
 }
 

@@ -13,6 +13,7 @@ import {
   FileText,
   Info,
   LifeBuoy,
+  ScanSearch,
   Search,
   Scale,
   type LucideIcon,
@@ -30,6 +31,13 @@ type ResourceLink = {
 };
 
 export const resourceLinks: ResourceLink[] = [
+  {
+    href: "/audit",
+    label: "Audit an AI-built app",
+    shortLabel: "Audit",
+    description: "Check a GitHub repo or exported ZIP before handoff",
+    icon: ScanSearch,
+  },
   {
     href: "/search",
     label: "Search",

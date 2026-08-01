@@ -9,7 +9,17 @@ export const homepageFaq = [
   {
     question: "What is Squid Agent?",
     answer:
-      "Squid Agent is an AI prototype builder that turns prompts, screenshots, and website references into working React interfaces. You can refine the live result, inspect every file, share it, and export the code.",
+      "Squid Agent is a verified-prototype builder that turns prompts, screenshots, and website references into working React interfaces. Each revision can carry separate source, runtime, service, and export evidence so reviewers can see what passed and what still needs validation.",
+  },
+  {
+    question: "What is a Squid Build Passport?",
+    answer:
+      "A Build Passport is a revision-specific evidence record. It reports source checks, preview runtime results, portable export verification, external-service readiness, and explicit limitations without collapsing those claims into one vague score.",
+  },
+  {
+    question: "Can Squid audit an app made with another AI builder?",
+    answer:
+      "Yes. The free source audit accepts a public GitHub repository or exported ZIP and checks project structure, reproducible build signals, environment documentation, recognized platform coupling, and obvious client-side credential assignments. It is a static inspection and does not claim to prove production behavior.",
   },
   {
     question: "Who is Squid Agent for?",
@@ -71,14 +81,14 @@ export const homepageStructuredData = [
     name: "Squid Agent",
     alternateName: ["SquidAgent", "Squid Agent App Builder"],
     disambiguatingDescription:
-      "Squid Agent is not Squid AI (getsquid.ai). It is a prototype-first AI builder focused on polished React interfaces, fast iteration, code ownership, and verification before handoff.",
+      "Squid Agent is not Squid AI (getsquid.ai). It is a verified-prototype builder focused on React interfaces, revision evidence, code ownership, and trustworthy handoff.",
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Web",
     url: `${SITE_URL}/`,
     image: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
     screenshot: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
     description:
-      "AI prototype builder that generates, refines, verifies, shares, and exports portable React interfaces from prompts, screenshots, and website references.",
+      "Verified AI prototype builder that generates, refines, checks, shares, audits, and exports portable React interfaces from prompts, screenshots, website references, and existing source archives.",
     creator: { "@id": `${SITE_URL}/#organization` },
     isPartOf: { "@id": `${SITE_URL}/#website` },
     offers: {
@@ -96,6 +106,8 @@ export const homepageStructuredData = [
       "Optional guided Plan mode for ambiguous ideas",
       "Source-aware follow-up and selected-element editing",
       "Static and runtime quality verification",
+      "Revision-specific Build Passports",
+      "Public GitHub and ZIP source audits",
       "Automatic preview repair",
       "Version diffs and selective file restore",
       "Project-scoped API and service connections",

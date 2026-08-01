@@ -39,6 +39,7 @@ describe("SharePageClient", () => {
           { path: "App.tsx", content: "export default function App() {}" },
         ]}
         allowRemixes={false}
+        passportStatus="review"
         galleryHref="/gallery"
       />,
     );
@@ -64,5 +65,8 @@ describe("SharePageClient", () => {
       "overflow-hidden",
     );
     expect(screen.getByTestId("code-runner")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /build passport · review/i }),
+    ).toHaveAttribute("href", "/share/v2/message_1/passport");
   });
 });

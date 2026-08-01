@@ -15,6 +15,7 @@ export type RateLimitOperation =
   | "remix"
   | "screenshot"
   | "share_event"
+  | "source_audit"
   | "upload";
 
 type RateLimitOptions = {

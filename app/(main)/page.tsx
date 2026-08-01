@@ -1,4 +1,3 @@
-import { AiBuilderFeatureComparison } from "@/components/ai-builder-feature-comparison";
 import Footer from "@/components/footer";
 import { ProductWorkflowDemo } from "@/components/homepage/product-workflow-demo";
 import { HomepageScrollStatement } from "@/components/homepage/scroll-statement";
@@ -9,6 +8,7 @@ import {
   HomepageFaqSection,
   HomepageLandingPagesSection,
   HomepageResearchSection,
+  HomepageVerificationSection,
 } from "@/features/marketing/components/homepage-server-content";
 import { homepageStructuredData } from "@/features/marketing/homepage-seo";
 
@@ -33,9 +33,9 @@ export default function Home() {
           </>
         }
       >
+        <HomepageVerificationSection />
         <HomepageLandingPagesSection />
         <HomepageResearchSection />
-        <AiBuilderFeatureComparison variant="homepage" />
         <HomepageBuiltWithSquidSection />
         <HomepageFaqSection />
         <HoverBrandLogo />

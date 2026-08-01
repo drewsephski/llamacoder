@@ -1,6 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ExternalLink,
+  FileCheck2,
+  FlaskConical,
+  PackageCheck,
+  ScanSearch,
+} from "lucide-react";
 
 import { DraggableProjectRail } from "@/components/homepage/draggable-project-rail";
 import { ShowcaseProjectCard } from "@/components/homepage/showcase-project-card";
@@ -9,6 +17,13 @@ import { BorderGlow } from "@/components/ui/border-glow";
 import { homepageFaq } from "@/features/marketing/homepage-seo";
 
 const researchLinks = [
+  {
+    href: "/audit",
+    eyebrow: "Inspect a project",
+    title: "Audit an AI-built app",
+    description:
+      "Check a public GitHub repository or exported ZIP for structure, portability, environment setup, and obvious client-secret exposure.",
+  },
   {
     href: "/compare",
     eyebrow: "Choose a tool",
@@ -50,6 +65,33 @@ const researchLinks = [
     title: "Evaluate AI-generated React",
     description:
       "Inspect the file graph, TypeScript, state, responsive behavior, accessibility, recovery path, and production build.",
+  },
+] as const;
+
+const verificationStages = [
+  {
+    icon: FileCheck2,
+    label: "Source",
+    title: "Inspect the generated files",
+    body: "Check imports, protected paths, accessibility basics, and browser API safety without hiding the unresolved findings.",
+  },
+  {
+    icon: FlaskConical,
+    label: "Runtime",
+    title: "Test the actual preview",
+    body: "Record the viewport, interactive elements, overflow, unnamed controls, and runtime errors for one exact revision.",
+  },
+  {
+    icon: PackageCheck,
+    label: "Handoff",
+    title: "Verify the portable export",
+    body: "Package source, dependencies, setup notes, deployment starters, and a machine-readable evidence report.",
+  },
+  {
+    icon: CheckCircle2,
+    label: "Passport",
+    title: "Share what was—and was not—proven",
+    body: "Give reviewers one revision-specific record instead of a vague production-ready claim.",
   },
 ] as const;
 
@@ -245,6 +287,67 @@ const shippedProjects = [
     capabilities: ["Responsive", "Database", "Auth"] as const,
   },
 ] as const;
+
+export function HomepageVerificationSection() {
+  return (
+    <section
+      aria-labelledby="homepage-verification-heading"
+      className="relative z-10 w-full px-4 pb-16 sm:px-6 sm:pb-24"
+    >
+      <div className="mx-auto grid w-full max-w-6xl gap-10 border-y border-border/70 py-12 sm:py-16 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:gap-16">
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <p className="font-mono-jb text-xs font-semibold uppercase tracking-[0.16em] text-[#0062FF] dark:text-[#0CA8FF]">
+            Squid Verified
+          </p>
+          <h2
+            id="homepage-verification-heading"
+            className="mt-4 max-w-xl font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
+          >
+            A prototype you can defend, not just demo.
+          </h2>
+          <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground">
+            Every check stays separate and revision-specific. Squid tells you
+            what passed, what needs review, and what still requires production
+            or real-user evidence.
+          </p>
+          <Button asChild variant="outline" className="mt-7 rounded-xl">
+            <Link href="/audit">
+              <ScanSearch className="size-4" />
+              Audit an existing app
+            </Link>
+          </Button>
+        </div>
+
+        <div className="divide-y divide-border border-y border-border">
+          {verificationStages.map((stage, index) => {
+            const Icon = stage.icon;
+            return (
+              <article
+                key={stage.label}
+                className="grid gap-4 py-6 sm:grid-cols-[48px_minmax(0,1fr)] sm:py-8"
+              >
+                <div className="flex size-10 items-center justify-center rounded-lg border border-border bg-muted/30">
+                  <Icon className="size-4" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-mono-jb text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    0{index + 1} · {stage.label}
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold tracking-tight">
+                    {stage.title}
+                  </h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    {stage.body}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export function HomepageLandingPagesSection() {
   const buildHref = `/?prompt=${encodeURIComponent(

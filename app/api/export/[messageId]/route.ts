@@ -12,6 +12,7 @@ import {
   canAccessPublicArtifact,
   resolvePublicArtifact,
 } from "@/features/public-artifacts/server/access";
+import { getBuildPassportForMessage } from "@/features/verification/server/build-passport";
 
 type RouteContext = {
   params: Promise<{ messageId: string }>;
@@ -127,7 +128,17 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     }
 
     const bundle = buildExportBundle(exportable.files);
-    return createZipResponse(bundle.files, getExportFilename(bundle.appTitle));
+    const passport = await getBuildPassportForMessage(exportable.message);
+    return createZipResponse(
+      [
+        ...bundle.files,
+        {
+          path: "squid-build-passport.json",
+          content: JSON.stringify(passport, null, 2),
+        },
+      ],
+      getExportFilename(bundle.appTitle),
+    );
   } catch (error: unknown) {
     await recordOperationalEvent({
       name: "export_failed",
@@ -260,6 +271,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
         report: bundle.verificationReport,
       },
     });
+    const passport = await getBuildPassportForMessage(exportable.message);
 
     return NextResponse.json({
       artifactId: artifact.id,
@@ -267,6 +279,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       status: bundle.verificationReport.status,
       manifest: bundle.manifest,
       report: bundle.verificationReport,
+      passport,
       downloadUrl: `/api/export/${messageId}`,
     });
   } catch (error: unknown) {

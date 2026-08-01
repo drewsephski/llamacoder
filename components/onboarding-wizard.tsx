@@ -9,7 +9,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ClipboardCheck, Compass, Sparkles } from "lucide-react";
+import { IconTile } from "@/components/reui/icon-tile";
+import {
+  Stepper,
+  StepperDescription,
+  StepperIndicator,
+  StepperItem,
+  StepperNav,
+  StepperSeparator,
+  StepperTitle,
+  StepperTrigger,
+} from "@/components/reui/stepper";
+import {
+  ArrowRight,
+  Check,
+  ClipboardCheck,
+  Compass,
+  Sparkles,
+} from "lucide-react";
 
 const ONBOARDING_STORAGE_KEY = "squid_onboarding_completed_v1";
 
@@ -118,9 +135,9 @@ export function OnboardingWizard({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <IconTile variant="soft" size="default">
               <StepIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-            </div>
+            </IconTile>
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 Step {stepIndex + 1} of {ONBOARDING_STEPS.length}
@@ -133,17 +150,33 @@ export function OnboardingWizard({
           </div>
         </DialogHeader>
 
-        <ol className="flex gap-2" aria-label="Onboarding progress">
-          {ONBOARDING_STEPS.map((candidate, index) => (
-            <li
-              key={candidate.id}
-              className={`h-1.5 flex-1 rounded-full ${
-                index <= stepIndex ? "bg-primary" : "bg-muted"
-              }`}
-              aria-hidden="true"
-            />
-          ))}
-        </ol>
+        <Stepper
+          value={stepIndex + 1}
+          onValueChange={(value) => setStepIndex(value - 1)}
+          aria-label="Onboarding progress"
+          indicators={{ completed: <Check className="size-3.5" /> }}
+        >
+          <StepperNav>
+            {ONBOARDING_STEPS.map((candidate, index) => (
+              <StepperItem key={candidate.id} step={index + 1}>
+                <StepperTrigger
+                  aria-label={`Go to step ${index + 1}: ${candidate.title}`}
+                >
+                  <StepperIndicator>{index + 1}</StepperIndicator>
+                  <span className="sr-only sm:not-sr-only sm:block sm:text-left">
+                    <StepperTitle>
+                      {candidate.id.charAt(0).toUpperCase() + candidate.id.slice(1)}
+                    </StepperTitle>
+                    <StepperDescription>Step {index + 1}</StepperDescription>
+                  </span>
+                </StepperTrigger>
+                {index < ONBOARDING_STEPS.length - 1 ? (
+                  <StepperSeparator />
+                ) : null}
+              </StepperItem>
+            ))}
+          </StepperNav>
+        </Stepper>
 
         <ul className="space-y-2 py-1">
           {step.bullets.map((bullet) => (

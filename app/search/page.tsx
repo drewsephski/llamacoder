@@ -32,10 +32,17 @@ type SearchEntry = {
 
 const fixedEntries: readonly SearchEntry[] = [
   {
-    href: "/",
-    title: "Fast AI React prototype builder",
+    href: "/audit",
+    title: "Free AI app source audit",
     description:
-      "Generate, refine, verify, share, and export polished React prototypes.",
+      "Inspect a public GitHub repository or exported ZIP for portability, structure, environment setup, and obvious client-secret exposure.",
+    section: "Product",
+  },
+  {
+    href: "/",
+    title: "Verified AI React prototype builder",
+    description:
+      "Generate, refine, verify, share, and export React prototypes with revision-specific evidence.",
     section: "Product",
   },
   {

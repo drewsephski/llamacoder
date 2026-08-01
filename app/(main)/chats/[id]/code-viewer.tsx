@@ -76,6 +76,8 @@ import {
 } from "@/features/integrations/supabase-browser-runtime";
 import { DEFAULT_SUPABASE_AUTH_MODE } from "@/features/integrations/supabase-backend";
 import { CometSpinner } from "@/components/loading-ui/comet-spinner";
+import { BuildPassportDialog } from "@/components/build-passport-dialog";
+import { buildBuildPassport } from "@/features/verification/build-passport";
 
 const CodeRunner = dynamic(() => import("@/components/code-runner"), {
   ssr: false,
@@ -332,6 +334,42 @@ export default function CodeViewer({
     useState<RuntimeVerificationReport | null>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [showSupabaseEnvDialog, setShowSupabaseEnvDialog] = useState(false);
+  const buildPassport = useMemo(() => {
+    if (!message) return null;
+    return buildBuildPassport({
+      message: {
+        id: message.id,
+        content: message.content,
+        files: message.files,
+        createdAt: message.createdAt,
+        chat: { id: chat.id, title: chat.title, prompt: chat.prompt },
+      },
+      runtimeEvidence: previewTestReport
+        ? {
+            status: previewTestReport.status,
+            report: previewTestReport,
+            createdAt: new Date(previewTestReport.checkedAt),
+          }
+        : null,
+      exportEvidence: verifiedExportStatus
+        ? {
+            status: verifiedExportStatus,
+            report: exportBundle.verificationReport,
+            fileCount: exportBundle.files.length,
+            createdAt: new Date(),
+          }
+        : null,
+    });
+  }, [
+    chat.id,
+    chat.prompt,
+    chat.title,
+    exportBundle.files.length,
+    exportBundle.verificationReport,
+    message,
+    previewTestReport,
+    verifiedExportStatus,
+  ]);
 
   useEffect(() => {
     setVerifiedExportStatus(
@@ -887,6 +925,9 @@ export default function CodeViewer({
                 exportStatus={verifiedExportStatus}
                 runtimeVerification={previewTestReport}
               />
+            )}
+            {!disabledControls && buildPassport && (
+              <BuildPassportDialog passport={buildPassport} />
             )}
             {chat.userId && (
               <ProjectIntegrationsPanel

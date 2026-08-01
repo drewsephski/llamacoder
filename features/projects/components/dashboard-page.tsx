@@ -31,6 +31,9 @@ import {
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/reui/badge";
+import { Frame, FramePanel } from "@/components/reui/frame";
+import { IconTile } from "@/components/reui/icon-tile";
 import { MODELS } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { getDashboardData } from "@/features/projects/server/dashboard-query";
@@ -167,88 +170,92 @@ export async function DashboardPage({
         {/* Milestones Section */}
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Zap className="h-4 w-4 text-primary" />
-            </div>
+            <IconTile variant="soft" size="sm">
+              <Zap />
+            </IconTile>
             <h2 className="text-lg font-medium">Your Progress</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Projects Created
-                </span>
-                <span
-                  className={`text-sm font-medium ${
-                    !hasActiveSubscription &&
-                    totalProjects >= FREE_PROJECT_LIMIT
-                      ? "text-red-600 dark:text-red-400"
-                      : ""
-                  }`}
-                >
-                  {hasActiveSubscription
-                    ? totalProjects
-                    : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className={`h-full transition-all ${
-                    !hasActiveSubscription &&
-                    totalProjects >= FREE_PROJECT_LIMIT
-                      ? "bg-red-500"
-                      : "bg-primary"
-                  }`}
-                  style={{
-                    width: `${hasActiveSubscription ? 100 : (totalProjects / FREE_PROJECT_LIMIT) * 100}%`,
-                  }}
-                />
-              </div>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
+            <Frame spacing="xs" className="bg-muted/30">
+              <FramePanel className="p-4 shadow-none sm:p-5">
+                <div className="mb-3 flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Available Credits
+                    Projects Created
                   </span>
-                  <div className="relative hidden sm:block">
-                    <Info className="peer h-3.5 w-3.5 cursor-help text-muted-foreground/60" />
-                    <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-56 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
-                      Free accounts receive {TIERS.free.monthlyCredits} starter
-                      credits after email verification. Generations charge only
-                      after a version saves successfully.{" "}
-                      <Link
-                        href="/dashboard/usage"
-                        className="font-medium underline underline-offset-2"
-                      >
-                        View usage ledger
-                      </Link>
+                  <span
+                    className={`text-sm font-medium ${
+                      !hasActiveSubscription &&
+                      totalProjects >= FREE_PROJECT_LIMIT
+                        ? "text-red-600 dark:text-red-400"
+                        : ""
+                    }`}
+                  >
+                    {hasActiveSubscription
+                      ? totalProjects
+                      : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full transition-all ${
+                      !hasActiveSubscription &&
+                      totalProjects >= FREE_PROJECT_LIMIT
+                        ? "bg-red-500"
+                        : "bg-primary"
+                    }`}
+                    style={{
+                      width: `${hasActiveSubscription ? 100 : (totalProjects / FREE_PROJECT_LIMIT) * 100}%`,
+                    }}
+                  />
+                </div>
+              </FramePanel>
+            </Frame>
+            <Frame spacing="xs" className="bg-muted/30">
+              <FramePanel className="p-4 shadow-none sm:p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Available Credits
+                    </span>
+                    <div className="relative hidden sm:block">
+                      <Info className="peer h-3.5 w-3.5 cursor-help text-muted-foreground/60" />
+                      <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-56 rounded-xl bg-popover px-3 py-2.5 text-xs text-popover-foreground opacity-0 shadow-xl ring-1 ring-border/50 transition-opacity peer-hover:opacity-100">
+                        Free accounts receive {TIERS.free.monthlyCredits}{" "}
+                        starter credits after email verification. Generations
+                        charge only after a version saves successfully.{" "}
+                        <Link
+                          href="/dashboard/usage"
+                          className="font-medium underline underline-offset-2"
+                        >
+                          View usage ledger
+                        </Link>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <Coins className="h-4 w-4 text-amber-500" />
+                    <span className="text-sm font-medium">{userCredits}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Coins className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm font-medium">{userCredits}</span>
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-amber-500 transition-all"
+                    style={{
+                      width: `${Math.min((creditBarValue / creditScale) * 100, 100)}%`,
+                    }}
+                  />
                 </div>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full bg-amber-500 transition-all"
-                  style={{
-                    width: `${Math.min((creditBarValue / creditScale) * 100, 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
+              </FramePanel>
+            </Frame>
           </div>
         </div>
 
         {researchProject && !researchState?.submission && (
           <section className="mb-8 flex flex-col gap-5 border-y border-primary/25 bg-primary/[0.035] px-1 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="flex gap-3">
-              <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <MessageSquareText className="size-4" />
-              </div>
+              <IconTile variant="soft" size="sm" className="mt-0.5">
+                <MessageSquareText />
+              </IconTile>
               <div>
                 <h2 className="font-semibold">
                   Help improve Squid and earn 15 credits
@@ -277,29 +284,30 @@ export async function DashboardPage({
         {/* Projects Section */}
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Layers className="h-4 w-4 text-primary" />
-            </div>
+            <IconTile variant="soft" size="sm">
+              <Layers />
+            </IconTile>
             <h2 className="text-lg font-medium">Your Projects</h2>
-            <span
-              className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+            <Badge
+              radius="full"
+              variant={
                 !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
-                  ? "border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400"
-                  : "border-border bg-muted text-muted-foreground"
-              }`}
+                  ? "destructive-light"
+                  : "secondary"
+              }
             >
               {hasActiveSubscription
                 ? totalProjects
                 : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
-            </span>
+            </Badge>
           </div>
           {!hasProjects ? (
             /* Empty State */
             <div className="rounded-2xl border border-border bg-card">
               <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-                  <Layers className="h-7 w-7 text-muted-foreground" />
-                </div>
+                <IconTile variant="frame" size="xl" className="mb-6">
+                  <Layers className="text-muted-foreground" />
+                </IconTile>
                 <h2 className="mb-2 text-xl font-semibold">
                   Choose how to start
                 </h2>
@@ -417,40 +425,40 @@ export async function DashboardPage({
                         </div>
                         {/* Status Badge */}
                         {project.plan && !project.hasCode && (
-                          <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-600 dark:text-blue-400">
+                          <Badge variant="info-light" radius="full">
                             <FileText className="h-3 w-3" />
                             <span>Planned</span>
-                          </div>
+                          </Badge>
                         )}
                         {project.hasCode && (
-                          <div className="flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-foreground">
+                          <Badge variant="secondary" radius="full">
                             <Code2 className="h-3 w-3" />
                             <span>Generated</span>
-                          </div>
+                          </Badge>
                         )}
                         {project.verification.staticChecks === "passed" && (
-                          <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-600 dark:text-blue-400">
+                          <Badge variant="success-light" radius="full">
                             <Check className="h-3 w-3" />
                             <span>Static checks passed</span>
-                          </div>
+                          </Badge>
                         )}
                         {project.verification.staticChecks === "warnings" && (
-                          <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+                          <Badge variant="warning-light" radius="full">
                             <TriangleAlert className="h-3 w-3" />
                             <span>Static warnings</span>
-                          </div>
+                          </Badge>
                         )}
                         {project.verification.runtime === "passed" && (
-                          <div className="flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-violet-600 dark:text-violet-400">
+                          <Badge variant="info-light" radius="full">
                             <FlaskConical className="h-3 w-3" />
                             <span>Runtime verified</span>
-                          </div>
+                          </Badge>
                         )}
                         {project.verification.export === "verified" && (
-                          <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-600 dark:text-emerald-400">
+                          <Badge variant="success-light" radius="full">
                             <ShieldCheck className="h-3 w-3" />
                             <span>Export verified</span>
-                          </div>
+                          </Badge>
                         )}
                       </div>
                     </div>

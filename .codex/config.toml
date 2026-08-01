@@ -5,3 +5,5 @@ mcp_servers.genie.args = ["mcp"]
 
 mcp_servers.kibo-ui.command = "npx"
 mcp_servers.kibo-ui.args = ["-y", "mcp-remote", "https://www.kibo-ui.com/api/mcp/mcp"]
+
+mcp_servers.reui.url = "https://mcp.reui.io"

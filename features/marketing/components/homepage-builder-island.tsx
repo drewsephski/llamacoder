@@ -1495,13 +1495,14 @@ export function HomepageBuilderIsland({
                 <h1 className="animate-fade-up">
                   <span className="hero-brand">Squid Agent</span>
                   <span className="hero-headline">
-                    Your fastest path to a polished React <em>prototype</em>.
+                    Build the prototype. <em>Prove what works.</em>
                   </span>
                 </h1>
 
                 <p className="hero-support animate-fade-up-1">
-                  Start with a prompt, screenshot, or URL. Get a working
-                  interface, refine it in chat, then share or export the code.
+                  Start with a prompt, screenshot, or URL. Get a working React
+                  interface, revision-specific evidence, and code you can hand
+                  off without guessing.
                 </p>
               </div>
 

@@ -18,6 +18,8 @@ const shareEventSchema = z.object({
     "remix_click",
     "remix_created",
     "referral_credit_granted",
+    "passport_open",
+    "passport_download",
   ]),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });

@@ -13,6 +13,10 @@
         "mcp-remote",
         "https://www.kibo-ui.com/api/mcp/mcp"
       ]
+    },
+    "reui": {
+      "type": "http",
+      "url": "https://mcp.reui.io"
     }
   }
 }

@@ -6,10 +6,10 @@ import { DEFAULT_OG_IMAGE, SITE_URL } from "@/lib/seo";
 import "./homepage.css";
 
 const appBaseUrl = SITE_URL;
-const appHomeTitle = "Fast AI React Prototype Builder";
+const appHomeTitle = "Verified AI React Prototype Builder";
 const appHomeSocialTitle = `${appHomeTitle} | Squid Agent`;
 const appHomeDescription =
-  "Turn prompts, screenshots, or live sites into polished React prototypes. Refine the working preview, share it, and export code you own.";
+  "Turn prompts, screenshots, or live sites into React prototypes with revision-specific source, runtime, and export evidence.";
 
 export const metadata: Metadata = {
   title: {
@@ -33,6 +33,8 @@ export const metadata: Metadata = {
     "plan mode",
     "AI design system",
     "preview verification",
+    "AI app source audit",
+    "build passport",
     "exportable React code",
   ],
   openGraph: {

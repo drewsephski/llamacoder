@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { TreeSurface } from "@/components/reui/tree"
 
 type TreeViewElement = {
   id: string
@@ -259,7 +260,9 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
           direction,
         }}
       >
-        <div className={cn("size-full", className)}>
+        <TreeSurface
+          className={cn("size-full border-0 shadow-none", className)}
+        >
           <ScrollArea
             ref={ref}
             className="relative h-full px-2"
@@ -275,7 +278,7 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
               {treeChildren}
             </AccordionPrimitive.Root>
           </ScrollArea>
-        </div>
+        </TreeSurface>
       </TreeContext.Provider>
     )
   }
@@ -294,7 +297,7 @@ const TreeIndicator = forwardRef<
       dir={direction}
       ref={ref}
       className={cn(
-        "bg-muted absolute left-1.5 h-full w-px rounded-md py-3 duration-300 ease-in-out hover:bg-slate-300 rtl:right-1.5",
+        "absolute left-1.5 h-full w-px rounded-md bg-muted py-3 duration-300 ease-in-out hover:bg-slate-300 rtl:right-1.5",
         className
       )}
       {...props}
@@ -349,7 +352,7 @@ const Folder = forwardRef<
         <AccordionPrimitive.Trigger asChild>
           <motion.button
             className={cn(
-              `flex w-full items-center gap-1 rounded-md text-sm px-1 py-0.5`,
+              `flex w-full items-center gap-1 rounded-md px-1 py-0.5 text-sm`,
               className,
               {
                 "bg-muted": isSelected && isSelectable,
@@ -371,10 +374,17 @@ const Folder = forwardRef<
               transition={{ duration: 0.2 }}
             >
               {expandedItems?.includes(value)
-                ? (openIcon ?? <FolderOpenIcon className="size-4 text-primary" />)
+                ? (openIcon ?? (
+                    <FolderOpenIcon className="size-4 text-primary" />
+                  ))
                 : (closeIcon ?? <FolderIcon className="size-4 text-primary" />)}
             </motion.div>
-            <span className={cn("transition-colors duration-200", isSelected && "font-medium")}>
+            <span
+              className={cn(
+                "transition-colors duration-200",
+                isSelected && "font-medium"
+              )}
+            >
               {element}
             </span>
           </motion.button>
@@ -394,9 +404,7 @@ const Folder = forwardRef<
               className="ml-5 flex flex-col gap-1 py-1 rtl:mr-5"
               value={expandedItems}
             >
-              <AnimatePresence mode="popLayout">
-                {children}
-              </AnimatePresence>
+              <AnimatePresence mode="popLayout">{children}</AnimatePresence>
             </AccordionPrimitive.Root>
           </motion.div>
         </AccordionPrimitive.Content>
@@ -447,7 +455,7 @@ const File = forwardRef<
         whileHover={isSelectable ? { x: 2 } : undefined}
         whileTap={isSelectable ? { scale: 0.98 } : undefined}
         className={cn(
-          "flex w-fit items-center gap-1 rounded-md pr-1 text-sm duration-200 ease-in-out rtl:pr-0 rtl:pl-1",
+          "flex w-fit items-center gap-1 rounded-md pr-1 text-sm duration-200 ease-in-out rtl:pl-1 rtl:pr-0",
           {
             "bg-muted": isSelected && isSelectable,
           },
@@ -518,7 +526,7 @@ const CollapseButton = forwardRef<
   return (
     <Button
       variant={"ghost"}
-      className={cn("absolute right-2 bottom-1 h-8 w-fit p-1", className)}
+      className={cn("absolute bottom-1 right-2 h-8 w-fit p-1", className)}
       onClick={
         expandedItems && expandedItems.length > 0
           ? closeAll

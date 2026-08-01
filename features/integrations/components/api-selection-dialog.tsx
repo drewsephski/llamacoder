@@ -5,6 +5,9 @@ import { Plug, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/reui/badge";
+import { Frame, FramePanel } from "@/components/reui/frame";
+import { IconTile } from "@/components/reui/icon-tile";
 import {
   Dialog,
   DialogContent,
@@ -88,16 +91,19 @@ export function ApiSelectionDialog({
             {standaloneTrigger ? "Integrations" : "APIs"}
           </span>
           {selectedProviderIds.length > 0 && (
-            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+            <Badge variant="primary-light" radius="full" size="sm">
               {selectedProviderIds.length}
-            </span>
+            </Badge>
           )}
         </button>
       </DialogTrigger>
       <DialogContent size="workspace" className="max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plug className="size-5 text-primary" /> Integrations
+            <IconTile variant="soft" size="sm">
+              <Plug />
+            </IconTile>{" "}
+            Integrations
           </DialogTitle>
           <DialogDescription>
             Select the services Squid should plan and generate around. APIs that
@@ -112,27 +118,36 @@ export function ApiSelectionDialog({
           onSelect={toggleProvider}
         />
 
-        <div className="min-h-12 rounded-lg border border-border/70 bg-muted/20 p-3">
-          {selectedProviders.length ? (
-            <div className="flex flex-wrap gap-2">
-              {selectedProviders.map((provider) => (
-                <button
-                  key={provider.id}
-                  type="button"
-                  onClick={() => toggleProvider(provider.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
-                  aria-label={`Remove ${provider.name}`}
-                >
-                  {provider.name} <X className="size-3" />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs leading-6 text-muted-foreground">
-              No APIs selected. Squid can still recommend one during planning.
-            </p>
-          )}
-        </div>
+        <Frame spacing="xs" className="min-h-12 bg-muted/20">
+          <FramePanel className="p-3 shadow-none">
+            {selectedProviders.length ? (
+              <div className="flex flex-wrap gap-2">
+                {selectedProviders.map((provider) => (
+                  <Badge
+                    key={provider.id}
+                    variant="outline"
+                    radius="full"
+                    className="gap-1.5"
+                  >
+                    {provider.name}
+                    <button
+                      type="button"
+                      onClick={() => toggleProvider(provider.id)}
+                      aria-label={`Remove ${provider.name}`}
+                      className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs leading-6 text-muted-foreground">
+                No APIs selected. Squid can still recommend one during planning.
+              </p>
+            )}
+          </FramePanel>
+        </Frame>
 
         <DialogFooter className="gap-2 sm:space-x-0">
           {draftProviderIds.length > 0 && (

@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Coins, FileText, ReceiptText } from "lucide-react";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
+import { Badge } from "@/components/reui/badge";
+import { IconTile } from "@/components/reui/icon-tile";
+import { UsageLedger } from "@/features/billing/components/usage-ledger";
 import { createNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = createNoIndexMetadata({
@@ -82,9 +85,9 @@ export default async function UsagePage() {
 
       <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
         <header className="mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <ReceiptText className="h-5 w-5 text-primary" />
-          </div>
+          <IconTile variant="soft">
+            <ReceiptText />
+          </IconTile>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
             Usage ledger
           </h1>
@@ -105,146 +108,22 @@ export default async function UsagePage() {
           {generationLogs.length === 0 ? (
             <EmptyState text="No successful generations have been charged yet." />
           ) : (
-            <>
-              <div className="divide-y divide-border md:hidden">
-                {generationLogs.map((log) => (
-                  <article key={log.id} className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        {log.chatId ? (
-                          <Link
-                            href={`/chats/${log.chatId}`}
-                            className="font-medium leading-snug hover:underline"
-                          >
-                            {chatTitleById.get(log.chatId) ?? "Project"}
-                          </Link>
-                        ) : (
-                          <span className="font-medium text-muted-foreground">
-                            No linked project
-                          </span>
-                        )}
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {formatDate(log.createdAt)}
-                        </p>
-                      </div>
-                      <span className="shrink-0 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-                        {formatLabel(log.status)}
-                      </span>
-                    </div>
-
-                    <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                      <div className="min-w-0">
-                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Model
-                        </dt>
-                        <dd className="mt-1 break-words text-foreground">
-                          {log.modelId}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Phase
-                        </dt>
-                        <dd className="mt-1">
-                          {formatLabel(log.phase ?? "generation")}
-                        </dd>
-                      </div>
-                    </dl>
-
-                    <dl className="mt-4 grid grid-cols-3 rounded-lg bg-muted/40 p-3 text-center">
-                      <div>
-                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                          Estimate
-                        </dt>
-                        <dd className="mt-1 font-medium tabular-nums">
-                          {log.estimatedCredits ?? log.creditsUsed}
-                        </dd>
-                      </div>
-                      <div className="border-x border-border">
-                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                          Actual
-                        </dt>
-                        <dd className="mt-1 font-medium tabular-nums">
-                          {log.actualCredits ?? log.creditsUsed}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                          Refund
-                        </dt>
-                        <dd className="mt-1 font-medium tabular-nums">
-                          {log.refundedCredits}
-                        </dd>
-                      </div>
-                    </dl>
-                  </article>
-                ))}
-              </div>
-
-              <div className="hidden overflow-x-auto overscroll-x-contain md:block">
-                <table className="w-full min-w-[760px] text-sm">
-                  <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="px-5 py-3 font-medium">Date</th>
-                      <th className="px-5 py-3 font-medium">Project</th>
-                      <th className="px-5 py-3 font-medium">Model</th>
-                      <th className="px-5 py-3 font-medium">Phase</th>
-                      <th className="px-5 py-3 text-right font-medium">
-                        Estimate
-                      </th>
-                      <th className="px-5 py-3 text-right font-medium">
-                        Actual
-                      </th>
-                      <th className="px-5 py-3 text-right font-medium">
-                        Refund
-                      </th>
-                      <th className="px-5 py-3 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {generationLogs.map((log) => (
-                      <tr key={log.id}>
-                        <td className="px-5 py-4 text-muted-foreground">
-                          {formatDate(log.createdAt)}
-                        </td>
-                        <td className="px-5 py-4">
-                          {log.chatId ? (
-                            <Link
-                              href={`/chats/${log.chatId}`}
-                              className="font-medium hover:underline"
-                            >
-                              {chatTitleById.get(log.chatId) ?? "Project"}
-                            </Link>
-                          ) : (
-                            <span className="text-muted-foreground">None</span>
-                          )}
-                        </td>
-                        <td className="max-w-[180px] truncate px-5 py-4 text-muted-foreground">
-                          {log.modelId}
-                        </td>
-                        <td className="px-5 py-4 text-muted-foreground">
-                          {formatLabel(log.phase ?? "generation")}
-                        </td>
-                        <td className="px-5 py-4 text-right tabular-nums">
-                          {log.estimatedCredits ?? log.creditsUsed}
-                        </td>
-                        <td className="px-5 py-4 text-right tabular-nums">
-                          {log.actualCredits ?? log.creditsUsed}
-                        </td>
-                        <td className="px-5 py-4 text-right tabular-nums">
-                          {log.refundedCredits}
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-                            {formatLabel(log.status)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
+            <UsageLedger
+              rows={generationLogs.map((log) => ({
+                id: log.id,
+                createdAt: log.createdAt.toISOString(),
+                chatId: log.chatId,
+                projectTitle: log.chatId
+                  ? (chatTitleById.get(log.chatId) ?? "Project")
+                  : null,
+                modelId: log.modelId,
+                phase: log.phase ?? "generation",
+                estimatedCredits: log.estimatedCredits ?? log.creditsUsed,
+                actualCredits: log.actualCredits ?? log.creditsUsed,
+                refundedCredits: log.refundedCredits,
+                status: log.status,
+              }))}
+            />
           )}
         </section>
 
@@ -278,16 +157,14 @@ export default async function UsagePage() {
                   <div className="text-muted-foreground">
                     {formatLabel(row.type)}
                   </div>
-                  <div
-                    className={`text-right font-semibold tabular-nums ${
-                      row.amount >= 0
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-foreground"
-                    }`}
+                  <Badge
+                    variant={row.amount >= 0 ? "success-light" : "secondary"}
+                    radius="full"
+                    className="justify-self-end font-semibold tabular-nums"
                   >
                     {row.amount > 0 ? "+" : ""}
                     {row.amount}
-                  </div>
+                  </Badge>
                 </div>
               ))}
             </div>

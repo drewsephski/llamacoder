@@ -5,6 +5,18 @@ import { AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { usePlausible } from "next-plausible";
 
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/reui/alert";
+import { Badge } from "@/components/reui/badge";
+import { Frame, FramePanel } from "@/components/reui/frame";
+import { IconTile } from "@/components/reui/icon-tile";
+import {
+  Timeline,
+  TimelineContent,
+  TimelineIndicator,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineTitle,
+} from "@/components/reui/timeline";
 import {
   Dialog,
   DialogContent,
@@ -68,20 +80,24 @@ export function QualityReportPanel({
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className={`code-toolbar-adaptive-button inline-flex h-8 gap-1.5 px-2.5 text-xs ${
-          report.status === "passed"
-            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300"
-            : "border-amber-500/30 bg-amber-500/10 text-amber-800 hover:bg-amber-500/15 dark:text-amber-300"
-        }`}
+        className="code-toolbar-adaptive-button inline-flex h-8 gap-1.5 px-2.5 text-xs"
         aria-label={`Open quality report: ${report.status}`}
         title={`Quality ${report.status === "passed" ? "passed" : "review"}`}
       >
-        {report.status === "passed" ? (
-          <CheckCircle2 className="size-3.5" />
-        ) : (
-          <AlertTriangle className="size-3.5" />
-        )}
-        <span className="code-toolbar-adaptive-label">
+        <Badge
+          variant={
+            report.status === "passed" ? "success-light" : "warning-light"
+          }
+          radius="full"
+          className="pointer-events-none"
+        >
+          {report.status === "passed" ? (
+            <CheckCircle2 className="size-3.5" />
+          ) : (
+            <AlertTriangle className="size-3.5" />
+          )}
+        </Badge>
+        <span className="code-toolbar-adaptive-label text-foreground">
           Quality {report.status === "passed" ? "passed" : "review"}
         </span>
       </Button>
@@ -89,7 +105,9 @@ export function QualityReportPanel({
       <DialogContent size="workspace" className="max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-5 text-primary" />
+            <IconTile variant="soft" size="sm">
+              <ShieldCheck />
+            </IconTile>
             Static quality report
           </DialogTitle>
           <DialogDescription>
@@ -110,13 +128,12 @@ export function QualityReportPanel({
                 ["Resolved imports", report.importsResolved],
                 ["Protected paths", report.protectedPathsBlocked],
               ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-lg border border-border/70 bg-muted/30 p-3"
-                >
-                  <dt className="text-xs text-muted-foreground">{label}</dt>
-                  <dd className="mt-1 text-lg font-semibold">{value}</dd>
-                </div>
+                <Frame key={label} spacing="xs" className="bg-muted/30">
+                  <FramePanel className="p-3 shadow-none">
+                    <dt className="text-xs text-muted-foreground">{label}</dt>
+                    <dd className="mt-1 text-lg font-semibold">{value}</dd>
+                  </FramePanel>
+                </Frame>
               ))}
             </dl>
           </section>
@@ -126,42 +143,48 @@ export function QualityReportPanel({
               What needs review
             </h3>
             {warningsByFile.length === 0 ? (
-              <p className="mt-2 flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
-                <CheckCircle2 className="size-4" /> No static diagnostics or
-                baseline accessibility warnings were found.
-              </p>
+              <Alert variant="success" className="mt-2">
+                <CheckCircle2 />
+                <AlertTitle>Static checks passed</AlertTitle>
+                <AlertDescription>
+                  No static diagnostics or baseline accessibility warnings were
+                  found.
+                </AlertDescription>
+              </Alert>
             ) : (
               <div className="mt-3 grid gap-2">
                 {warningsByFile.map(([path, warnings]) => (
-                  <div
-                    key={path}
-                    className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3"
-                  >
-                    <p className="font-mono text-xs font-semibold">{path}</p>
-                    <ul className="mt-2 grid gap-1 text-sm text-muted-foreground">
-                      {warnings.map((warning, index) => (
-                        <li key={`${warning}-${index}`}>• {warning}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <Alert key={path} variant="warning">
+                    <AlertTriangle />
+                    <AlertTitle className="font-mono text-xs">
+                      {path}
+                    </AlertTitle>
+                    <AlertDescription>
+                      <ul className="grid gap-1">
+                        {warnings.map((warning, index) => (
+                          <li key={`${warning}-${index}`}>• {warning}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
                 ))}
               </div>
             )}
           </section>
 
-          <section
+          <Alert
             aria-labelledby="quality-api"
-            className={`rounded-lg border p-3 ${
+            variant={
               apiStatus === "verified"
-                ? "border-emerald-500/25 bg-emerald-500/5"
+                ? "success"
                 : apiStatus === "setup_required"
-                  ? "border-amber-500/25 bg-amber-500/5"
+                  ? "warning"
                   : apiStatus === "blocked"
-                    ? "border-destructive/25 bg-destructive/5"
-                    : "border-border/70 bg-muted/30"
-            }`}
+                    ? "destructive"
+                    : "default"
+            }
           >
-            <h3
+            <AlertTitle
               id="quality-api"
               className="flex items-center gap-2 text-sm font-semibold"
             >
@@ -173,47 +196,50 @@ export function QualityReportPanel({
                 <ShieldCheck className="size-4 text-muted-foreground" />
               )}
               {apiStatusLabel}
-            </h3>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              {report.apiIntegration.requestsDetected} request
-              {report.apiIntegration.requestsDetected === 1 ? "" : "s"} detected
-              {report.apiIntegration.environmentVariables.length
-                ? `; ${report.apiIntegration.environmentVariables.length} publishable environment value${report.apiIntegration.environmentVariables.length === 1 ? "" : "s"} must be configured.`
-                : "."}
-            </p>
-            {report.apiIntegration.providers.length > 0 && (
-              <div className="mt-3 grid gap-2">
-                {report.apiIntegration.providers.map((provider) => (
-                  <div
-                    key={provider.id}
-                    className="rounded-md border border-border/70 bg-background/70 px-3 py-2"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-semibold">{provider.name}</p>
-                      <span className="text-xs text-muted-foreground">
-                        {provider.policyStatus} · {provider.runtime}
-                      </span>
-                    </div>
-                    <a
-                      href={provider.docsUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-1 block truncate text-xs text-primary underline-offset-4 hover:underline"
+            </AlertTitle>
+            <AlertDescription>
+              <p className="text-xs leading-5">
+                {report.apiIntegration.requestsDetected} request
+                {report.apiIntegration.requestsDetected === 1 ? "" : "s"}{" "}
+                detected
+                {report.apiIntegration.environmentVariables.length
+                  ? `; ${report.apiIntegration.environmentVariables.length} publishable environment value${report.apiIntegration.environmentVariables.length === 1 ? "" : "s"} must be configured.`
+                  : "."}
+              </p>
+              {report.apiIntegration.providers.length > 0 && (
+                <div className="mt-3 grid gap-2">
+                  {report.apiIntegration.providers.map((provider) => (
+                    <div
+                      key={provider.id}
+                      className="rounded-md border border-border/70 bg-background/70 px-3 py-2"
                     >
-                      Official documentation
-                    </a>
-                  </div>
-                ))}
-              </div>
-            )}
-            {report.apiIntegration.policyWarnings.length > 0 && (
-              <ul className="mt-3 grid gap-1 text-xs leading-5 text-muted-foreground">
-                {report.apiIntegration.policyWarnings.map((warning) => (
-                  <li key={warning}>• {warning}</li>
-                ))}
-              </ul>
-            )}
-          </section>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-semibold">{provider.name}</p>
+                        <span className="text-xs text-muted-foreground">
+                          {provider.policyStatus} · {provider.runtime}
+                        </span>
+                      </div>
+                      <a
+                        href={provider.docsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 block truncate text-xs text-primary underline-offset-4 hover:underline"
+                      >
+                        Official documentation
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {report.apiIntegration.policyWarnings.length > 0 && (
+                <ul className="mt-3 grid gap-1 text-xs leading-5 text-muted-foreground">
+                  {report.apiIntegration.policyWarnings.map((warning) => (
+                    <li key={warning}>• {warning}</li>
+                  ))}
+                </ul>
+              )}
+            </AlertDescription>
+          </Alert>
 
           <section aria-labelledby="quality-not-tested">
             <h3 id="quality-not-tested" className="text-sm font-semibold">
@@ -226,53 +252,73 @@ export function QualityReportPanel({
             </p>
           </section>
 
-          <section
-            className="rounded-lg border border-border/70 p-3"
-            aria-label="Runtime verification"
-          >
-            <h3 className="text-sm font-semibold">Runtime verification</h3>
-            {runtimeVerification ? (
-              <div className="mt-2 grid gap-1 text-sm text-muted-foreground">
-                <p>
-                  Status:{" "}
-                  <span className="font-medium text-foreground">
-                    {runtimeVerification.status}
-                  </span>{" "}
-                  at {runtimeVerification.viewport.width}×
-                  {runtimeVerification.viewport.height}
-                </p>
-                <p>
-                  {runtimeVerification.clickableElements} interactive controls ·{" "}
-                  {runtimeVerification.unnamedClickableElements} without an
-                  accessible name
-                </p>
-                <p>
-                  {runtimeVerification.horizontalOverflow
-                    ? "Horizontal overflow detected"
-                    : "No horizontal overflow detected"}
-                  {runtimeVerification.runtimeError
-                    ? ` · ${runtimeVerification.runtimeError}`
-                    : " · no preview runtime error"}
-                </p>
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Not run for this version. Open the preview and choose Test.
-              </p>
-            )}
-          </section>
-
-          <section
-            className="rounded-lg border border-border/70 p-3"
-            aria-label="Export verification"
-          >
-            <p className="text-sm font-medium">
-              Export verification: {exportStatus ?? "not run"}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Export verification runs when you download the source bundle.
-            </p>
-          </section>
+          <Frame spacing="sm">
+            <FramePanel className="shadow-none">
+              <Timeline
+                value={exportStatus ? 2 : runtimeVerification ? 1 : 0}
+                aria-label="Verification history"
+              >
+                <TimelineItem step={1}>
+                  <TimelineIndicator
+                    className={
+                      runtimeVerification
+                        ? "border-success bg-success"
+                        : undefined
+                    }
+                  />
+                  <TimelineTitle>Runtime verification</TimelineTitle>
+                  <TimelineContent>
+                    {runtimeVerification ? (
+                      <div className="grid gap-1">
+                        <p>
+                          Status:{" "}
+                          <span className="font-medium text-foreground">
+                            {runtimeVerification.status}
+                          </span>{" "}
+                          at {runtimeVerification.viewport.width}×
+                          {runtimeVerification.viewport.height}
+                        </p>
+                        <p>
+                          {runtimeVerification.clickableElements} interactive
+                          controls ·{" "}
+                          {runtimeVerification.unnamedClickableElements} without
+                          an accessible name
+                        </p>
+                        <p>
+                          {runtimeVerification.horizontalOverflow
+                            ? "Horizontal overflow detected"
+                            : "No horizontal overflow detected"}
+                          {runtimeVerification.runtimeError
+                            ? ` · ${runtimeVerification.runtimeError}`
+                            : " · no preview runtime error"}
+                        </p>
+                      </div>
+                    ) : (
+                      <p>
+                        Not run for this version. Open the preview and choose
+                        Test.
+                      </p>
+                    )}
+                  </TimelineContent>
+                  <TimelineSeparator />
+                </TimelineItem>
+                <TimelineItem step={2}>
+                  <TimelineIndicator
+                    className={
+                      exportStatus === "verified"
+                        ? "border-success bg-success"
+                        : undefined
+                    }
+                  />
+                  <TimelineTitle>Export verification</TimelineTitle>
+                  <TimelineContent>
+                    <p>Export verification: {exportStatus ?? "not run"}</p>
+                    <p>Runs when you download the source bundle.</p>
+                  </TimelineContent>
+                </TimelineItem>
+              </Timeline>
+            </FramePanel>
+          </Frame>
         </div>
       </DialogContent>
     </Dialog>

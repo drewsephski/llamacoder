@@ -8,6 +8,7 @@ import {
 } from "@/features/gallery/social-metadata";
 import { SharePageClient } from "./share-page-client";
 import { resolvePublicArtifact } from "@/features/public-artifacts/server/access";
+import { getBuildPassportForMessage } from "@/features/verification/server/build-passport";
 
 export async function generateMetadata({
   params,
@@ -53,6 +54,7 @@ export default async function SharePage({
   if (files.length === 0) {
     notFound();
   }
+  const passport = await getBuildPassportForMessage(message);
 
   return (
     <SharePageClient
@@ -64,6 +66,7 @@ export default async function SharePage({
       allowRemixes={artifact.allowRemixes}
       allowStarterDownloads={artifact.allowStarterDownloads}
       publicReference={artifact.token ?? message.id}
+      passportStatus={passport.overallStatus}
     />
   );
 }

@@ -29,6 +29,12 @@ export function MarketingHeader() {
           className="hidden items-center gap-7 md:flex"
         >
           <Link
+            href="/audit"
+            className="inline-flex min-h-11 items-center whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            Audit an app
+          </Link>
+          <Link
             href="/gallery"
             className="inline-flex min-h-11 items-center whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
@@ -66,7 +72,7 @@ export function MarketingFooter() {
             <span className="font-semibold tracking-tight">Squid Agent</span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">
-            Generate polished React prototypes with live previews, reversible
+            Build React prototypes with revision-specific evidence, reversible
             checkpoints, and source code you can take anywhere.
           </p>
           <div className="mt-5 flex items-center gap-2">
@@ -93,6 +99,7 @@ export function MarketingFooter() {
         <FooterColumn
           title="Research"
           links={[
+            { href: "/audit", label: "Audit an AI-built app" },
             { href: "/compare", label: "AI builder comparisons" },
             { href: "/blog", label: "AI app builder guides" },
             {

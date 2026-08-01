@@ -17,6 +17,24 @@ import {
 import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/reui/alert";
+import { Badge } from "@/components/reui/badge";
+import { Frame, FramePanel } from "@/components/reui/frame";
+import { IconTile } from "@/components/reui/icon-tile";
+import {
+  Stepper,
+  StepperDescription,
+  StepperIndicator,
+  StepperItem,
+  StepperNav,
+  StepperSeparator,
+  StepperTitle,
+} from "@/components/reui/stepper";
 import { getCurrentSession } from "@/features/auth/server/session";
 import {
   RESEARCH_FEEDBACK_CATEGORIES,
@@ -34,7 +52,6 @@ import { isGoogleSheetsFeedbackSyncConfigured } from "@/features/feedback/server
 import { isFeedbackNotificationConfigured } from "@/features/feedback/server/notification";
 import { getPrisma } from "@/lib/prisma";
 import { createNoIndexMetadata } from "@/lib/seo";
-import { cn } from "@/lib/utils";
 
 export const metadata = createNoIndexMetadata({
   title: "Feedback Review",
@@ -157,17 +174,19 @@ export default async function AdminFeedbackPage({
         </header>
 
         {(params.message || params.error) && (
-          <div
+          <Alert
+            variant={params.error ? "destructive" : "success"}
+            className="mt-6"
             role="status"
-            className={cn(
-              "mt-6 border-l-4 px-4 py-3 text-sm",
-              params.error
-                ? "border-destructive bg-destructive/5 text-destructive"
-                : "border-emerald-500 bg-emerald-500/5 text-foreground",
-            )}
           >
-            {params.error || params.message}
-          </div>
+            {params.error ? <XCircle /> : <CheckCircle2 />}
+            <AlertTitle>
+              {params.error ? "Action failed" : "Action complete"}
+            </AlertTitle>
+            <AlertDescription>
+              {params.error || params.message}
+            </AlertDescription>
+          </Alert>
         )}
 
         <section className="grid border-b border-border sm:grid-cols-3">
@@ -207,140 +226,139 @@ export default async function AdminFeedbackPage({
         ) : (
           <div className="space-y-8">
             {submissions.map((submission) => (
-              <article
-                key={submission.id}
-                className="overflow-hidden rounded-xl border border-border bg-background"
-              >
-                <div className="grid gap-4 border-b border-border bg-muted/25 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusLabel status={submission.status} />
-                      <span className="text-xs text-muted-foreground">
-                        {submission.rewardTrack === "extended"
-                          ? "25–40 credit track"
-                          : "15 credit track"}
-                      </span>
-                    </div>
-                    <h2 className="mt-3 truncate text-xl font-semibold tracking-tight">
-                      {submission.chat.title}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {submission.accountEmail} · Submitted{" "}
-                      {submission.createdAt.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link
-                        href={`/chats/${submission.chat.id}`}
-                        target="_blank"
-                      >
-                        Project <ExternalLink />
-                      </Link>
-                    </Button>
-                    {submission.mediaUrl && (
-                      <Button asChild variant="outline" size="sm">
-                        <a
-                          href={submission.mediaUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Evidence <ExternalLink />
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
-                  <div className="min-w-0 px-5 py-6 sm:px-6">
-                    <dl className="grid gap-x-8 gap-y-7 md:grid-cols-2">
-                      <Answer
-                        label="What they tried to build"
-                        value={submission.buildGoal}
-                      />
-                      <Answer
-                        label="Previous tools"
-                        value={submission.previousTools}
-                      />
-                      <Answer
-                        label="Most confusing or frustrating"
-                        value={submission.frustration}
-                      />
-                      <Answer
-                        label="Better than expected"
-                        value={submission.betterThanExpected}
-                      />
-                      <Answer
-                        label="Closest to abandoning"
-                        value={submission.abandonmentPoint}
-                      />
-                      <Answer
-                        label="Launch blocker"
-                        value={submission.launchBlocker}
-                      />
-                      <Answer
-                        label="Single improvement"
-                        value={submission.singleImprovement}
-                      />
-                      <Answer
-                        label="Willingness to pay"
-                        value={`${submission.paymentIntent} · $${submission.monthlyPriceUsd}/month`}
-                      />
-                    </dl>
-                  </div>
-
-                  <aside className="border-t border-border bg-muted/15 px-5 py-6 sm:px-6 lg:border-l lg:border-t-0">
-                    <div className="space-y-3 text-sm">
-                      <DeliveryStatus
-                        label="Google Sheet"
-                        status={submission.sheetSyncStatus}
-                        error={submission.sheetSyncError}
-                        submissionId={submission.id}
-                        channel="sheet"
-                      />
-                      <DeliveryStatus
-                        label="Email alert"
-                        status={submission.notificationStatus}
-                        error={submission.notificationError}
-                        submissionId={submission.id}
-                        channel="notification"
-                      />
-                      <p className="text-muted-foreground">
-                        Follow-up allowed:{" "}
-                        {submission.followUpConsent ? "Yes" : "No"}
+              <Frame key={submission.id} dense>
+                <FramePanel className="p-0 shadow-none">
+                  <div className="grid gap-4 border-b border-border bg-muted/25 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusLabel status={submission.status} />
+                        <span className="text-xs text-muted-foreground">
+                          {submission.rewardTrack === "extended"
+                            ? "25–40 credit track"
+                            : "15 credit track"}
+                        </span>
+                      </div>
+                      <h2 className="mt-3 truncate text-xl font-semibold tracking-tight">
+                        {submission.chat.title}
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {submission.accountEmail} · Submitted{" "}
+                        {submission.createdAt.toLocaleString()}
                       </p>
                     </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link
+                          href={`/chats/${submission.chat.id}`}
+                          target="_blank"
+                        >
+                          Project <ExternalLink />
+                        </Link>
+                      </Button>
+                      {submission.mediaUrl && (
+                        <Button asChild variant="outline" size="sm">
+                          <a
+                            href={submission.mediaUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Evidence <ExternalLink />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
 
-                    {submission.status === "pending" ? (
-                      <ReviewForm
-                        submissionId={submission.id}
-                        rewardTrack={submission.rewardTrack}
-                      />
-                    ) : (
-                      <div className="mt-7 border-t border-border pt-5 text-sm">
-                        <p className="font-medium">
-                          {submission.status === "approved"
-                            ? `${submission.rewardAmount} credits awarded`
-                            : "No credits awarded"}
-                        </p>
-                        <p className="mt-2 text-muted-foreground">
-                          {categoryLabel(submission.primaryCategory)}
-                        </p>
-                        {submission.reviewNotes && (
-                          <p className="mt-3 leading-6 text-muted-foreground">
-                            {submission.reviewNotes}
-                          </p>
-                        )}
-                        <p className="mt-3 text-xs text-muted-foreground">
-                          {submission.reviewedByEmail} ·{" "}
-                          {submission.reviewedAt?.toLocaleString()}
+                  <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
+                    <div className="min-w-0 px-5 py-6 sm:px-6">
+                      <dl className="grid gap-x-8 gap-y-7 md:grid-cols-2">
+                        <Answer
+                          label="What they tried to build"
+                          value={submission.buildGoal}
+                        />
+                        <Answer
+                          label="Previous tools"
+                          value={submission.previousTools}
+                        />
+                        <Answer
+                          label="Most confusing or frustrating"
+                          value={submission.frustration}
+                        />
+                        <Answer
+                          label="Better than expected"
+                          value={submission.betterThanExpected}
+                        />
+                        <Answer
+                          label="Closest to abandoning"
+                          value={submission.abandonmentPoint}
+                        />
+                        <Answer
+                          label="Launch blocker"
+                          value={submission.launchBlocker}
+                        />
+                        <Answer
+                          label="Single improvement"
+                          value={submission.singleImprovement}
+                        />
+                        <Answer
+                          label="Willingness to pay"
+                          value={`${submission.paymentIntent} · $${submission.monthlyPriceUsd}/month`}
+                        />
+                      </dl>
+                    </div>
+
+                    <aside className="border-t border-border bg-muted/15 px-5 py-6 sm:px-6 lg:border-l lg:border-t-0">
+                      <div className="space-y-3 text-sm">
+                        <DeliveryStatus
+                          label="Google Sheet"
+                          status={submission.sheetSyncStatus}
+                          error={submission.sheetSyncError}
+                          submissionId={submission.id}
+                          channel="sheet"
+                        />
+                        <DeliveryStatus
+                          label="Email alert"
+                          status={submission.notificationStatus}
+                          error={submission.notificationError}
+                          submissionId={submission.id}
+                          channel="notification"
+                        />
+                        <p className="text-muted-foreground">
+                          Follow-up allowed:{" "}
+                          {submission.followUpConsent ? "Yes" : "No"}
                         </p>
                       </div>
-                    )}
-                  </aside>
-                </div>
-              </article>
+
+                      {submission.status === "pending" ? (
+                        <ReviewForm
+                          submissionId={submission.id}
+                          rewardTrack={submission.rewardTrack}
+                        />
+                      ) : (
+                        <div className="mt-7 border-t border-border pt-5 text-sm">
+                          <p className="font-medium">
+                            {submission.status === "approved"
+                              ? `${submission.rewardAmount} credits awarded`
+                              : "No credits awarded"}
+                          </p>
+                          <p className="mt-2 text-muted-foreground">
+                            {categoryLabel(submission.primaryCategory)}
+                          </p>
+                          {submission.reviewNotes && (
+                            <p className="mt-3 leading-6 text-muted-foreground">
+                              {submission.reviewNotes}
+                            </p>
+                          )}
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            {submission.reviewedByEmail} ·{" "}
+                            {submission.reviewedAt?.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </aside>
+                  </div>
+                </FramePanel>
+              </Frame>
             ))}
           </div>
         )}
@@ -383,9 +401,9 @@ function FeedbackAdminSetup({ signedInEmail }: { signedInEmail: string }) {
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
         <header className="max-w-3xl">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <CloudCog className="size-5" />
-          </div>
+          <IconTile variant="solid" size="lg">
+            <CloudCog />
+          </IconTile>
           <h1 className="mt-6 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
             Connect feedback operations
           </h1>
@@ -395,26 +413,28 @@ function FeedbackAdminSetup({ signedInEmail }: { signedInEmail: string }) {
           </p>
         </header>
 
-        <section className="mt-10 grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3">
-          <SetupStep
-            number="01"
-            icon={KeyRound}
-            title="Allow your account"
-            body={`Add ${signedInEmail} to FEEDBACK_ADMIN_EMAILS. Other signed-in accounts will be redirected away from this page.`}
-          />
-          <SetupStep
-            number="02"
-            icon={FileSpreadsheet}
-            title="Share the tracker"
-            body="Enable the Google Sheets API, create a service account JSON key, then share the tracker with its client_email as an Editor."
-          />
-          <SetupStep
-            number="03"
-            icon={Database}
-            title="Deploy and verify"
-            body="Deploy the Prisma migrations and environment variables, then return here to review and award credits."
-          />
-        </section>
+        <Stepper value={1} className="mt-10" aria-label="Feedback setup steps">
+          <StepperNav className="grid gap-3 md:grid-cols-3">
+            <SetupStep
+              step={1}
+              icon={KeyRound}
+              title="Allow your account"
+              body={`Add ${signedInEmail} to FEEDBACK_ADMIN_EMAILS. Other signed-in accounts will be redirected away from this page.`}
+            />
+            <SetupStep
+              step={2}
+              icon={FileSpreadsheet}
+              title="Share the tracker"
+              body="Enable the Google Sheets API, create a service account JSON key, then share the tracker with its client_email as an Editor."
+            />
+            <SetupStep
+              step={3}
+              icon={Database}
+              title="Deploy and verify"
+              body="Deploy the Prisma migrations and environment variables, then return here to review and award credits."
+            />
+          </StepperNav>
+        </Stepper>
 
         <section className="mt-8 rounded-xl border border-border bg-muted/20 p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
@@ -452,25 +472,34 @@ function FeedbackAdminSetup({ signedInEmail }: { signedInEmail: string }) {
 }
 
 function SetupStep({
-  number,
+  step,
   icon: Icon,
   title,
   body,
 }: {
-  number: string;
+  step: number;
   icon: typeof KeyRound;
   title: string;
   body: string;
 }) {
   return (
-    <div className="bg-background p-5 sm:p-6">
-      <div className="flex items-center justify-between text-muted-foreground">
-        <Icon className="size-5" />
-        <span className="text-xs font-semibold tabular-nums">{number}</span>
-      </div>
-      <h2 className="mt-8 font-semibold">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>
-    </div>
+    <StepperItem step={step} className="block">
+      <Frame className="h-full" spacing="xs">
+        <FramePanel className="p-5 shadow-none sm:p-6">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <IconTile variant="soft" size="sm">
+              <Icon />
+            </IconTile>
+            <StepperIndicator>{String(step).padStart(2, "0")}</StepperIndicator>
+          </div>
+          <StepperTitle className="mt-8 font-semibold">{title}</StepperTitle>
+          <StepperDescription className="mt-2 leading-6">
+            {body}
+          </StepperDescription>
+        </FramePanel>
+      </Frame>
+      {step < 3 ? <StepperSeparator className="hidden" /> : null}
+    </StepperItem>
   );
 }
 
@@ -484,10 +513,13 @@ function IntegrationState({
   configured: boolean;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5">
+    <Badge
+      variant={configured ? "success-light" : "warning-light"}
+      radius="full"
+    >
       <Icon className="size-4" />
       {label}: {configured ? "Connected" : "Not configured"}
-    </span>
+    </Badge>
   );
 }
 
@@ -513,18 +545,18 @@ function Metric({
 
 function StatusLabel({ status }: { status: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex rounded-full px-2.5 py-1 text-xs font-medium",
+    <Badge
+      radius="full"
+      variant={
         status === "approved"
-          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+          ? "success-light"
           : status === "rejected"
-            ? "bg-destructive/10 text-destructive"
-            : "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-      )}
+            ? "destructive-light"
+            : "warning-light"
+      }
     >
       {status}
-    </span>
+    </Badge>
   );
 }
 
@@ -630,11 +662,22 @@ function DeliveryStatus({
 }) {
   const retryable = status === "failed" || status === "disabled";
   return (
-    <div>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground">
-          {label}: <span className="text-foreground">{status}</span>
-        </span>
+    <Alert
+      variant={
+        status === "failed"
+          ? "destructive"
+          : status === "sent" || status === "synced"
+            ? "success"
+            : "default"
+      }
+    >
+      {status === "failed" ? <XCircle /> : <CheckCircle2 />}
+      <AlertTitle>{label}</AlertTitle>
+      <AlertDescription>
+        {status}
+        {error ? ` · ${error}` : ""}
+      </AlertDescription>
+      <AlertAction>
         {retryable && (
           <form action={retryResearchFeedbackDeliveryAction}>
             <input type="hidden" name="submissionId" value={submissionId} />
@@ -650,11 +693,8 @@ function DeliveryStatus({
             </Button>
           </form>
         )}
-      </div>
-      {error && (
-        <p className="mt-1 text-xs leading-5 text-destructive">{error}</p>
-      )}
-    </div>
+      </AlertAction>
+    </Alert>
   );
 }
 

@@ -16,6 +16,7 @@
   },
   "registries": {
     "@magicui": "https://magicui.design/r/{name}",
-    "@tool-ui": "https://www.tool-ui.com/r/{name}.json"
+    "@tool-ui": "https://www.tool-ui.com/r/{name}.json",
+    "@reui": "https://reui.io/r/radix-nova/{name}.json"
   }
 }

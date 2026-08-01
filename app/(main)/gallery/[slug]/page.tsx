@@ -13,6 +13,7 @@ import { ShowcaseLandingPage } from "@/features/gallery/components/showcase-land
 import { getShowcaseGame } from "@/features/gallery/showcase-games";
 import { getShowcaseLanding } from "@/features/gallery/showcase-landings";
 import { SITE_URL } from "@/lib/seo";
+import { getBuildPassportForMessage } from "@/features/verification/server/build-passport";
 
 export async function generateMetadata({
   params,
@@ -97,6 +98,10 @@ export default async function GalleryProjectPage({
   if (!result) notFound();
 
   const { publication, files } = result;
+  const passport = await getBuildPassportForMessage({
+    ...publication.message,
+    chat: publication.chat,
+  });
   return (
     <>
       <GalleryProjectStructuredData
@@ -122,6 +127,7 @@ export default async function GalleryProjectPage({
             publication.publicArtifact?.token ?? publication.messageId
           }
           galleryHref="/gallery"
+          passportStatus={passport.overallStatus}
         />
       </div>
     </>
