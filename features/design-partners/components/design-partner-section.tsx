@@ -1,17 +1,12 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import {
-  AlertCircle,
-  ArrowRight,
-  Check,
-  CircleCheck,
-  Loader2,
-} from "lucide-react";
+import { AlertCircle, ArrowRight, Check, CircleCheck } from "lucide-react";
 import { usePlausible } from "next-plausible";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CometSpinner } from "@/components/loading-ui/comet-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { readAcquisitionAttribution } from "@/features/acquisition/contracts";
 import { cn } from "@/lib/utils";
@@ -313,7 +308,7 @@ export function DesignPartnerSection() {
                 className="mt-7 w-full rounded-xl sm:w-auto"
               >
                 {status === "submitting" ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  <CometSpinner className="size-4" aria-hidden="true" />
                 ) : (
                   <ArrowRight className="size-4" aria-hidden="true" />
                 )}

@@ -124,4 +124,19 @@ describe("design partner homepage surface", () => {
     await waitFor(() => expect(screen.getByLabelText(/^name/i)).toHaveFocus());
     expect(screen.queryByText(/expected string/i)).not.toBeInTheDocument();
   });
+
+  it("uses the enhanced loader while submitting", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      () => new Promise<Response>(() => undefined),
+    );
+    const { container } = render(<DesignPartnerSection />);
+
+    fireEvent.click(screen.getByRole("button", { name: /apply to partner/i }));
+
+    expect(await screen.findByText("Submitting")).toBeVisible();
+    expect(
+      container.querySelector('[data-slot="comet-spinner"]'),
+    ).toBeInTheDocument();
+    expect(container.querySelector(".lucide-loader-circle")).toBeNull();
+  });
 });
