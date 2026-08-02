@@ -1,13 +1,20 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ArrowRight, Check, CircleCheck, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  CircleCheck,
+  Loader2,
+} from "lucide-react";
 import { usePlausible } from "next-plausible";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { readAcquisitionAttribution } from "@/features/acquisition/contracts";
+import { cn } from "@/lib/utils";
 
 const roleOptions = [
   ["freelance_designer", "Freelance designer"],
@@ -81,8 +88,26 @@ export function DesignPartnerSection() {
     } | null;
     if (!response.ok) {
       setStatus("idle");
-      setIssues(result?.issues ?? {});
-      setMessage(result?.message ?? "Check the form and try again.");
+      const nextIssues = result?.issues ?? {};
+      setIssues(nextIssues);
+      setMessage(
+        result?.message ??
+          "Some details need your attention. Review the fields marked below.",
+      );
+      const firstFieldName = Object.keys(nextIssues)[0];
+      if (firstFieldName) {
+        window.requestAnimationFrame(() => {
+          document
+            .getElementById("design-partner-form-error")
+            ?.scrollIntoView?.({
+              behavior: "smooth",
+              block: "center",
+            });
+          document
+            .getElementById(firstFieldName)
+            ?.focus({ preventScroll: true });
+        });
+      }
       return;
     }
 
@@ -100,10 +125,10 @@ export function DesignPartnerSection() {
     <section
       id="design-partner-program"
       aria-labelledby="design-partner-heading"
-      className="relative z-10 scroll-mt-24 border-y border-border/70 bg-muted/25 px-4 py-16 sm:px-6 sm:py-24"
+      className="relative z-10 scroll-mt-28 overflow-x-clip border-y border-border/70 bg-muted/25 px-3 py-14 sm:px-6 sm:py-24"
     >
-      <div className="mx-auto grid w-full max-w-6xl gap-12 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:gap-16">
-        <div className="lg:sticky lg:top-24 lg:self-start">
+      <div className="mx-auto grid w-full min-w-0 max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:gap-16">
+        <div className="min-w-0 px-1 lg:sticky lg:top-24 lg:self-start lg:px-0">
           <p className="font-mono-jb text-xs font-semibold uppercase tracking-[0.16em] text-[#0062FF] dark:text-[#0CA8FF]">
             Design partner program
           </p>
@@ -142,7 +167,7 @@ export function DesignPartnerSection() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-background p-5 shadow-sm sm:p-8">
+        <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-background p-4 shadow-sm sm:rounded-2xl sm:p-8">
           {status === "success" ? (
             <div className="flex min-h-[520px] flex-col items-start justify-center">
               <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -157,8 +182,22 @@ export function DesignPartnerSection() {
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} noValidate>
-              <div className="grid gap-5 sm:grid-cols-2">
+            <form onSubmit={handleSubmit} noValidate className="min-w-0">
+              {message ? (
+                <div
+                  id="design-partner-form-error"
+                  role="alert"
+                  className="mb-6 flex scroll-mt-24 items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm leading-6 text-foreground"
+                >
+                  <AlertCircle
+                    className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400"
+                    aria-hidden="true"
+                  />
+                  <p>{message}</p>
+                </div>
+              ) : null}
+
+              <div className="grid min-w-0 gap-5 sm:grid-cols-2">
                 <Field label="Name" name="name" issues={issues} required>
                   <Input id="name" name="name" autoComplete="name" required />
                 </Field>
@@ -267,12 +306,6 @@ export function DesignPartnerSection() {
                 </p>
               ) : null}
 
-              {message ? (
-                <p role="alert" className="mt-5 text-sm text-destructive">
-                  {message}
-                </p>
-              ) : null}
-
               <Button
                 type="submit"
                 size="lg"
@@ -311,16 +344,27 @@ function Field({
 }) {
   const issue = issues[name]?.[0];
   return (
-    <div>
+    <div
+      className={cn(
+        "min-w-0",
+        issue &&
+          "[&_input]:border-red-500/70 [&_select]:border-red-500/70 [&_textarea]:border-red-500/70",
+      )}
+      data-field-error={issue ? "true" : undefined}
+    >
       <label htmlFor={name} className="text-sm font-medium text-foreground">
         {label}
         {required ? <span className="text-destructive"> *</span> : null}
       </label>
-      <div className="mt-2">{children}</div>
+      <div className="mt-2 min-w-0">{children}</div>
       {hint && !issue ? (
         <p className="mt-2 text-xs leading-5 text-muted-foreground">{hint}</p>
       ) : null}
-      {issue ? <p className="mt-2 text-sm text-destructive">{issue}</p> : null}
+      {issue ? (
+        <p className="mt-2 text-sm leading-5 text-red-600 dark:text-red-400">
+          {issue}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -340,7 +384,7 @@ function SelectField({
       name={name}
       defaultValue=""
       required
-      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="flex h-10 w-full min-w-0 max-w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <option value="" disabled>
         Select one

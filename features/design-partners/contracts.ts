@@ -43,9 +43,18 @@ const optionalUrl = z
   );
 
 export const designPartnerApplicationSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  email: z.string().trim().toLowerCase().email().max(320),
-  role: z.enum(DESIGN_PARTNER_ROLES),
+  name: z
+    .string({ error: "Enter your name." })
+    .trim()
+    .min(2, { message: "Name must be at least 2 characters." })
+    .max(120, { message: "Name must be 120 characters or fewer." }),
+  email: z
+    .string({ error: "Enter your work email." })
+    .trim()
+    .toLowerCase()
+    .email({ message: "Enter a valid email address." })
+    .max(320, { message: "Email must be 320 characters or fewer." }),
+  role: z.enum(DESIGN_PARTNER_ROLES, { error: "Choose your role." }),
   companyName: z
     .string()
     .trim()
@@ -53,10 +62,24 @@ export const designPartnerApplicationSchema = z.object({
     .optional()
     .transform((value) => value || undefined),
   portfolioUrl: optionalUrl,
-  projectSummary: z.string().trim().min(40).max(1_500),
-  timeline: z.enum(DESIGN_PARTNER_TIMELINES),
-  preferredContact: z.enum(DESIGN_PARTNER_CONTACT_METHODS),
-  permissionToContact: z.literal(true),
+  projectSummary: z
+    .string({ error: "Tell us what you want to prototype." })
+    .trim()
+    .min(40, {
+      message: "Add a little more detail, at least 40 characters.",
+    })
+    .max(1_500, {
+      message: "Keep the project description under 1,500 characters.",
+    }),
+  timeline: z.enum(DESIGN_PARTNER_TIMELINES, {
+    error: "Choose the project timing.",
+  }),
+  preferredContact: z.enum(DESIGN_PARTNER_CONTACT_METHODS, {
+    error: "Choose how you would like us to reply.",
+  }),
+  permissionToContact: z.literal(true, {
+    error: "Confirm that we may contact you about this application.",
+  }),
   attribution: acquisitionAttributionSchema.optional(),
   website: z.string().max(0).optional(),
 });

@@ -89,6 +89,13 @@ describe("POST /api/design-partners", () => {
     );
 
     expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      message:
+        "Some details need your attention. Review the fields marked below.",
+      issues: {
+        projectSummary: ["Add a little more detail, at least 40 characters."],
+      },
+    });
     expect(mocks.submitDesignPartnerApplication).not.toHaveBeenCalled();
   });
 

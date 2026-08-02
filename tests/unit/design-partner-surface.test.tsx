@@ -91,4 +91,37 @@ describe("design partner homepage surface", () => {
       ),
     );
   });
+
+  it("shows clear field guidance and focuses the first invalid field", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          message:
+            "Some details need your attention. Review the fields marked below.",
+          issues: {
+            name: ["Name must be at least 2 characters."],
+            email: ["Enter a valid email address."],
+            role: ["Choose your role."],
+          },
+        }),
+        { status: 400 },
+      ),
+    );
+    render(<DesignPartnerSection />);
+
+    fireEvent.click(screen.getByRole("button", { name: /apply to partner/i }));
+
+    expect(
+      await screen.findByText(
+        "Some details need your attention. Review the fields marked below.",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText("Name must be at least 2 characters."),
+    ).toBeVisible();
+    expect(screen.getByText("Enter a valid email address.")).toBeVisible();
+    expect(screen.getByText("Choose your role.")).toBeVisible();
+    await waitFor(() => expect(screen.getByLabelText(/^name/i)).toHaveFocus());
+    expect(screen.queryByText(/expected string/i)).not.toBeInTheDocument();
+  });
 });

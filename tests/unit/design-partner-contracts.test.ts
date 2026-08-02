@@ -40,4 +40,34 @@ describe("design partner application schema", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("returns helpful messages for an empty application", () => {
+    const result = designPartnerApplicationSchema.safeParse({
+      name: "",
+      email: "",
+      role: "",
+      companyName: "",
+      portfolioUrl: "",
+      projectSummary: "",
+      timeline: "",
+      preferredContact: "",
+      permissionToContact: false,
+      website: "",
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.flatten().fieldErrors).toMatchObject({
+      name: ["Name must be at least 2 characters."],
+      email: ["Enter a valid email address."],
+      role: ["Choose your role."],
+      projectSummary: ["Add a little more detail, at least 40 characters."],
+      timeline: ["Choose the project timing."],
+      preferredContact: ["Choose how you would like us to reply."],
+      permissionToContact: [
+        "Confirm that we may contact you about this application.",
+      ],
+    });
+  });
 });

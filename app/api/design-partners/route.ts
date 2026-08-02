@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return Response.json(
       {
-        message: "Check the highlighted fields and try again.",
+        message:
+          "Some details need your attention. Review the fields marked below.",
         issues: parsed.error.flatten().fieldErrors,
       },
       { status: 400 },

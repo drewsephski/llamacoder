@@ -18,6 +18,10 @@ function recipients() {
     .filter(Boolean);
 }
 
+export function isDesignPartnerNotificationConfigured() {
+  return Boolean(process.env.RESEND_API_KEY?.trim() && recipients().length > 0);
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
