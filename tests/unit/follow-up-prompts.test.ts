@@ -14,6 +14,12 @@ vi.mock("@/lib/openrouter", () => ({
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
   getOpenRouterProviderOptions: vi.fn(),
+  getOpenRouterReasoningSelection: vi.fn(() => ({
+    enabled: false,
+    visible: false,
+    mandatory: false,
+    effort: "none",
+  })),
 }));
 
 import {

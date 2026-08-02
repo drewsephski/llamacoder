@@ -4,10 +4,11 @@ import {
   getModelReasoningCapability,
   type ReasoningEffort,
 } from "@/lib/constants";
-import { getModelTokenPricing, hasModelPricing } from "@/lib/billing/config";
+import { getOpenRouterMaxPrice, hasModelPricing } from "@/lib/billing/config";
 import { getModelWithFallbacks } from "@/lib/model-fallbacks";
 import { assertGenerationAvailable } from "@/lib/provider-controls";
 import { getErrorMessage } from "@/features/shared/errors";
+import type { SystemModelMessage } from "ai";
 
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
 export const GENERATED_CODE_MAX_TOKENS = 16000;
@@ -24,6 +25,7 @@ type OpenRouterProviderOptions = {
 };
 type OpenRouterRoutingOptions = {
   enforceMaxPrice?: boolean;
+  sort?: "price" | "throughput" | "latency";
 };
 
 export type GenerationQuality = "high" | "low";
@@ -56,7 +58,7 @@ export function createAppOpenRouter({
   }
 
   if (process.env.HELICONE_API_KEY) {
-    options.baseURL = "https://together.helicone.ai/v1";
+    options.baseURL = "https://openrouter.helicone.ai/api/v1";
     options.headers = {
       "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
       "Helicone-Property-appname": "SquidAgent",
@@ -80,6 +82,25 @@ export function getOpenRouterModelRoute(model: string) {
   };
 }
 
+export function getCacheableSystemPrompt(
+  model: string,
+  content: string | undefined,
+): string | SystemModelMessage | undefined {
+  if (!content) return content;
+  const { primary } = getOpenRouterModelRoute(model);
+  if (!primary.startsWith("anthropic/")) return content;
+
+  return {
+    role: "system",
+    content,
+    providerOptions: {
+      openrouter: {
+        cacheControl: { type: "ephemeral" },
+      },
+    },
+  };
+}
+
 export function createOpenRouterModel(
   openrouter: OpenRouterClient,
   model: string,
@@ -92,7 +113,7 @@ export function createOpenRouterModel(
     throw new Error(`UNPRICED_MODEL:${model}`);
   }
 
-  const tokenPricing = getModelTokenPricing(primary);
+  const maxPrice = getOpenRouterMaxPrice(primary);
   const configuredProvider = settings.provider;
   const enforceMaxPrice = routing.enforceMaxPrice !== false;
 
@@ -100,13 +121,13 @@ export function createOpenRouterModel(
     ...settings,
     models: fallbacks,
     provider: {
-      sort: "price",
+      sort: routing.sort ?? "price",
       ...configuredProvider,
       ...(enforceMaxPrice
         ? {
             max_price: {
-              prompt: tokenPricing.inputPricePerMillion,
-              completion: tokenPricing.outputPricePerMillion,
+              prompt: maxPrice.inputPricePerMillion,
+              completion: maxPrice.outputPricePerMillion,
               ...configuredProvider?.max_price,
             },
           }
@@ -127,6 +148,10 @@ type OpenRouterUsageMetadata = {
     completionTokensDetails?: { reasoningTokens?: unknown };
   };
 };
+
+export type OpenRouterUsageSummary = ReturnType<
+  typeof getOpenRouterUsageMetadata
+>;
 
 export function getOpenRouterUsageMetadata(providerMetadata: unknown) {
   if (!providerMetadata || typeof providerMetadata !== "object") return null;
@@ -153,6 +178,41 @@ export function getOpenRouterUsageMetadata(providerMetadata: unknown) {
       usage?.completionTokensDetails?.reasoningTokens,
     ),
     totalTokens: asFiniteNumber(usage?.totalTokens),
+  };
+}
+
+export function aggregateOpenRouterUsageMetadata(
+  providerMetadataByStep: readonly unknown[],
+) {
+  const summaries = providerMetadataByStep
+    .map(getOpenRouterUsageMetadata)
+    .filter((summary) => summary !== null);
+  if (summaries.length === 0) return null;
+
+  const sum = (
+    select: (summary: NonNullable<OpenRouterUsageSummary>) =>
+      | number
+      | undefined,
+  ) => {
+    const values = summaries
+      .map(select)
+      .filter((value): value is number => value !== undefined);
+    return values.length > 0
+      ? values.reduce((total, value) => total + value, 0)
+      : undefined;
+  };
+
+  return {
+    provider: summaries.findLast((summary) => summary.provider)?.provider,
+    providerCostUsd: sum((summary) => summary.providerCostUsd),
+    upstreamInferenceCostUsd: sum(
+      (summary) => summary.upstreamInferenceCostUsd,
+    ),
+    inputTokens: sum((summary) => summary.inputTokens),
+    cachedInputTokens: sum((summary) => summary.cachedInputTokens),
+    outputTokens: sum((summary) => summary.outputTokens),
+    reasoningTokens: sum((summary) => summary.reasoningTokens),
+    totalTokens: sum((summary) => summary.totalTokens),
   };
 }
 

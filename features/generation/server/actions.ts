@@ -3,6 +3,7 @@
 import type { Message } from "@prisma/client";
 import { getPrisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { getCurrentSession } from "@/features/auth/server/session";
 import {
   checkCreditAvailability,
@@ -40,6 +41,29 @@ import { shouldAnswerWithoutCode } from "@/features/generation/research-intent";
 import { finalizeGeneratedCodeFromText } from "@/features/generation/server/code-generation-pipeline";
 
 const MAX_CONTRACT_REPAIR_ATTEMPTS = 2;
+
+function scheduleFollowUpPrompts({
+  prisma,
+  messageId,
+  chat,
+  assistantContent,
+  files,
+}: {
+  prisma: ReturnType<typeof getPrisma>;
+  messageId: string;
+  chat: Parameters<typeof generateFollowUpPrompts>[0]["chat"];
+  assistantContent: string;
+  files: GeneratedFile[];
+}) {
+  after(async () => {
+    const prompts = await generateFollowUpPrompts({
+      chat,
+      assistantContent,
+      files,
+    });
+    await saveMessageFollowUpPrompts(prisma, messageId, prompts);
+  });
+}
 
 type ContractRepairMetadata = {
   kind: "contract_repair";
@@ -352,15 +376,6 @@ export async function createMessage(
       throw contractViolationError(selectedApiDiagnostics);
     }
   }
-  const followUpPrompts =
-    role === "assistant"
-      ? await generateFollowUpPrompts({
-          chat,
-          assistantContent: text,
-          files: normalizedFiles,
-        })
-      : null;
-
   const messageData = {
     role,
     content: text,
@@ -431,9 +446,13 @@ export async function createMessage(
       return newMessage;
     });
 
-    if (followUpPrompts) {
-      await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
-    }
+    scheduleFollowUpPrompts({
+      prisma,
+      messageId: newMessage.id,
+      chat,
+      assistantContent: text,
+      files: normalizedFiles,
+    });
 
     return newMessage;
   }
@@ -481,10 +500,6 @@ export async function createMessage(
       data: { ...messageData, position: currentMaxPosition + 1 },
     });
   });
-
-  if (followUpPrompts) {
-    await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
-  }
 
   if (assistantHasFiles) {
     await prisma.chat.update({
@@ -892,12 +907,6 @@ export async function createFreeRepairAssistantMessage(
       throw contractViolationError(diagnostics);
     }
   }
-  const followUpPrompts = await generateFollowUpPrompts({
-    chat,
-    assistantContent: text,
-    files: normalizedFiles,
-  });
-
   const newMessage = await prisma.$transaction(async (tx) => {
     const rootRun = contractRepair
       ? await tx.generationRun.findFirst({
@@ -1040,7 +1049,13 @@ export async function createFreeRepairAssistantMessage(
     return newMessage;
   });
 
-  await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
+  scheduleFollowUpPrompts({
+    prisma,
+    messageId: newMessage.id,
+    chat,
+    assistantContent: text,
+    files: normalizedFiles,
+  });
 
   return newMessage;
 }
@@ -1086,12 +1101,6 @@ export async function restoreVersionAsCheckpoint({
       : 0;
   const explanation = `Version ${newVersion} was created by restoring version ${oldVersion}.`;
   const content = `${explanation}\n\n${formatGeneratedFilesMarkdown(restoredFiles)}`;
-  const followUpPrompts = await generateFollowUpPrompts({
-    chat,
-    assistantContent: content,
-    files: restoredFiles,
-  });
-
   const newMessage = await prisma.message.create({
     data: {
       role: "assistant",
@@ -1104,7 +1113,13 @@ export async function restoreVersionAsCheckpoint({
     },
   });
 
-  await saveMessageFollowUpPrompts(prisma, newMessage.id, followUpPrompts);
+  scheduleFollowUpPrompts({
+    prisma,
+    messageId: newMessage.id,
+    chat,
+    assistantContent: content,
+    files: restoredFiles,
+  });
 
   await prisma.chat.update({
     where: { id: chatId },

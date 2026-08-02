@@ -40,7 +40,7 @@ const productWorkflowSteps = [
     label: "Refine",
     title: "Shape the working result",
     detail:
-      "Ask for focused changes while Squid preserves the parts that already work.",
+      "Ask for focused changes while Squid preserves the parts that work.",
     icon: MessageSquare,
   },
   {

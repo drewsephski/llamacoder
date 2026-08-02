@@ -23,6 +23,13 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/openrouter", () => ({
   createAppOpenRouter: vi.fn(() => "openrouter"),
   createOpenRouterModel: vi.fn(() => "model"),
+  getOpenRouterProviderOptions: vi.fn(),
+  getOpenRouterReasoningSelection: vi.fn(() => ({
+    enabled: false,
+    visible: false,
+    mandatory: false,
+    effort: "none",
+  })),
 }));
 
 vi.mock("@/features/security/server/rate-limit", () => ({

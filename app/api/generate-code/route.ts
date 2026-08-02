@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 import { getMainCodingPrompt } from "@/lib/prompts";
 import { resolveEffectiveBrief } from "@/features/generation/effective-brief";
@@ -21,6 +21,7 @@ import {
   GENERATED_CODE_MAX_TOKENS,
   createAppOpenRouter,
   createOpenRouterModel,
+  getCacheableSystemPrompt,
   getAIErrorMessage,
   getOpenRouterProviderOptions,
 } from "@/lib/openrouter";
@@ -260,25 +261,30 @@ export async function POST(request: NextRequest) {
     const generateCode = (userContent: string) =>
       generateText({
         model: createOpenRouterModel(openrouter, chat.model, {
-          maxTokens: GENERATED_CODE_MAX_TOKENS,
           usage: { include: true },
+        }, {
+          sort: "throughput",
         }),
+        maxOutputTokens: GENERATED_CODE_MAX_TOKENS,
         providerOptions: getOpenRouterProviderOptions(
           chat.model,
           chat.quality === "high" ? "high" : "low",
         ),
-        system: [
-          getMainCodingPrompt({
-            designScoreSummary: latestDesignScores,
-            userPrompt: effectiveBrief.latestUserRequest,
-            effectiveBrief,
-            pastMediaCatalog,
-            messageCount: 1,
-          }),
-          componentRegistryPrompt,
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
+        system: getCacheableSystemPrompt(
+          chat.model,
+          [
+            getMainCodingPrompt({
+              designScoreSummary: latestDesignScores,
+              userPrompt: effectiveBrief.latestUserRequest,
+              effectiveBrief,
+              pastMediaCatalog,
+              messageCount: 1,
+            }),
+            componentRegistryPrompt,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
+        ),
         messages: [
           {
             role: "user",
@@ -340,12 +346,6 @@ export async function POST(request: NextRequest) {
       },
     } = pipelineResult;
 
-    const followUpPrompts = await generateFollowUpPrompts({
-      chat,
-      assistantContent: content,
-      files: generatedFiles,
-    });
-
     const message = await persistInitialGenerationResult({
       userId: session.user.id,
       chat,
@@ -366,7 +366,14 @@ export async function POST(request: NextRequest) {
     reservedHoldId = undefined;
     generationStarted = false;
 
-    await saveMessageFollowUpPrompts(prisma, message.id, followUpPrompts);
+    after(async () => {
+      const followUpPrompts = await generateFollowUpPrompts({
+        chat,
+        assistantContent: content,
+        files: generatedFiles,
+      });
+      await saveMessageFollowUpPrompts(prisma, message.id, followUpPrompts);
+    });
 
     return NextResponse.json({
       success: true,

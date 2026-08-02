@@ -153,6 +153,7 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 vi.mock("@/lib/openrouter", () => ({
   GENERATED_CODE_MAX_TOKENS: 16000,
   VISION_ANALYSIS_MODEL: "google/gemini-3.1-flash-lite",
+  getCacheableSystemPrompt: vi.fn((_model: string, content: string) => content),
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>

@@ -40,6 +40,7 @@ jobs:
       - run: pnpm validate:schema
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      - run: pnpm validate:model-pricing
       - run: pnpm db:deploy
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci

@@ -4,7 +4,10 @@ import type {
   GenerationQuality,
   OpenRouterReasoningSelection,
 } from "@/lib/openrouter";
-import { getOpenRouterUsageMetadata } from "@/lib/openrouter";
+import {
+  aggregateOpenRouterUsageMetadata,
+  getOpenRouterUsageMetadata,
+} from "@/lib/openrouter";
 import { getPrisma } from "@/lib/prisma";
 import { recordOperationalEvent } from "@/lib/observability";
 
@@ -12,8 +15,8 @@ type TelemetryStatus = "completed" | "error" | "aborted";
 
 type RequestTelemetryOptions = {
   userId?: string;
-  chatId: string;
-  messageId: string;
+  chatId?: string;
+  messageId?: string;
   modelId: string;
   creditHoldId?: string;
   requestKind?:
@@ -23,7 +26,9 @@ type RequestTelemetryOptions = {
     | "title"
     | "classification"
     | "orchestration"
-    | "search";
+    | "search"
+    | "prompt_enhancement"
+    | "follow_up_suggestions";
   quality: GenerationQuality;
   reasoning: OpenRouterReasoningSelection;
 };
@@ -57,6 +62,7 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
     usage,
     finishReason,
     providerMetadata,
+    providerMetadataByStep,
     providerRequestId,
     provider,
     error,
@@ -65,6 +71,7 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
     usage?: LanguageModelUsage;
     finishReason?: string;
     providerMetadata?: unknown;
+    providerMetadataByStep?: readonly unknown[];
     providerRequestId?: string;
     provider?: string;
     error?: unknown;
@@ -79,7 +86,9 @@ export function createRequestTelemetry(options: RequestTelemetryOptions) {
           ? error
           : undefined;
 
-    const openRouterUsage = getOpenRouterUsageMetadata(providerMetadata);
+    const openRouterUsage = providerMetadataByStep?.length
+      ? aggregateOpenRouterUsageMetadata(providerMetadataByStep)
+      : getOpenRouterUsageMetadata(providerMetadata);
     const inputTokens = openRouterUsage?.inputTokens ?? usage?.inputTokens;
     const outputTokens = openRouterUsage?.outputTokens ?? usage?.outputTokens;
     const reasoningTokens =

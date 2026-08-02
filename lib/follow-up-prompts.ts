@@ -1,6 +1,5 @@
 import "server-only";
 
-import { generateText } from "ai";
 import { z } from "zod";
 import { FREE_MODEL } from "@/lib/constants";
 import {
@@ -8,8 +7,11 @@ import {
   createOpenRouterModel,
   getAIErrorMessage,
   getOpenRouterProviderOptions,
+  getOpenRouterReasoningSelection,
 } from "@/lib/openrouter";
 import type { GeneratedFile } from "@/lib/generated-files";
+import { runAuxiliaryGeneration } from "@/features/generation/server/auxiliary-generation";
+import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
 
 const FOLLOW_UP_PROMPT_COUNT = 3;
 const CANDIDATE_COUNT = 5;
@@ -183,14 +185,28 @@ export async function generateFollowUpPrompts({
         ? `\n\nDo NOT repeat these previous follow-up prompts:\n${previousPrompts.map((p) => `- "${p}"`).join("\n")}`
         : "";
 
-    const response = await generateText({
-      model: createOpenRouterModel(openrouter, FREE_MODEL, {
-        maxTokens: 400,
-      }),
-      providerOptions: getOpenRouterProviderOptions(FREE_MODEL),
-      temperature: 0.5,
-      system: dedentSystemPrompt(previousContext),
-      prompt: buildPromptContext({ chat, assistantContent, files }),
+    const reasoning = getOpenRouterReasoningSelection(FREE_MODEL, "low");
+    const telemetry = createRequestTelemetry({
+      chatId: chat.id,
+      modelId: FREE_MODEL,
+      requestKind: "follow_up_suggestions",
+      quality: "low",
+      reasoning,
+    });
+
+    const response = await runAuxiliaryGeneration({
+      maxOutputTokens: 400,
+      timeoutMs: 8_000,
+      telemetry,
+      request: {
+        model: createOpenRouterModel(openrouter, FREE_MODEL, {
+          usage: { include: true },
+        }),
+        providerOptions: getOpenRouterProviderOptions(FREE_MODEL),
+        temperature: 0.5,
+        system: dedentSystemPrompt(previousContext),
+        prompt: buildPromptContext({ chat, assistantContent, files }),
+      },
     });
 
     const allCandidates = parsePromptsJson(response.text);

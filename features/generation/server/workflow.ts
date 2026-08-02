@@ -153,6 +153,14 @@ export async function finalizeOwnedGenerationRun({
     );
   }
 
+  if (run.phase === "continuation_required") {
+    throw new GenerationWorkflowError(
+      "RUN_NOT_READY",
+      run.errorMessage ||
+        "The model reached its output limit before the app was complete. Continue or retry before saving this version.",
+    );
+  }
+
   const claimed = await prisma.generationRun.updateMany({
     where: {
       id: run.id,

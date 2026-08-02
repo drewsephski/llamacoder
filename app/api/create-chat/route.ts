@@ -2,7 +2,6 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 import { getMainCodingPrompt } from "@/lib/prompts";
 import { resolvePastMediaCatalogForPrompt } from "@/features/generation/server/past-media-library";
-import { generateText } from "ai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { FREE_MODEL, MODELS, isPlanModeAvailable } from "@/lib/constants";
@@ -33,6 +32,7 @@ import {
   acquisitionAttributionSchema,
   acquisitionChatFields,
 } from "@/features/acquisition/contracts";
+import { runAuxiliaryGeneration } from "@/features/generation/server/auxiliary-generation";
 
 const IMAGE_DATA_URL_PATTERN = new RegExp(
   `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
@@ -342,23 +342,19 @@ export async function POST(request: NextRequest) {
           quality: "low",
           reasoning: getOpenRouterReasoningSelection(FREE_MODEL, "low"),
         });
-        const responseForChatTitle = await generateText({
-          model: createOpenRouterModel(openrouter, FREE_MODEL, {
-            maxTokens: 32,
-            usage: { include: true },
-          }),
-          providerOptions: getOpenRouterProviderOptions(FREE_MODEL, "low"),
-          system:
-            "Create a succinct 3-5 word title for this app-building conversation. Return only the title.",
-          prompt,
-        });
-
-        await titleTelemetry.record({
-          status: "completed",
-          usage: responseForChatTitle.usage,
-          finishReason: responseForChatTitle.finishReason,
-          providerMetadata: responseForChatTitle.providerMetadata,
-          providerRequestId: responseForChatTitle.response?.id,
+        const responseForChatTitle = await runAuxiliaryGeneration({
+          maxOutputTokens: 32,
+          timeoutMs: 8_000,
+          telemetry: titleTelemetry,
+          request: {
+            model: createOpenRouterModel(openrouter, FREE_MODEL, {
+              usage: { include: true },
+            }),
+            providerOptions: getOpenRouterProviderOptions(FREE_MODEL, "low"),
+            system:
+              "Create a succinct 3-5 word title for this app-building conversation. Return only the title.",
+            prompt,
+          },
         });
 
         await prisma.chat.update({

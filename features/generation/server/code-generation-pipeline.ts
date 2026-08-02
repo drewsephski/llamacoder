@@ -209,7 +209,10 @@ export function finalizeGeneratedCodeFromText(
   };
 }
 
-export function getCodeGenerationRunFinalizeState(text: string): {
+export function getCodeGenerationRunFinalizeState(
+  text: string,
+  finishReason?: string,
+): {
   status: "recoverable" | "failed";
   phase: string;
   label: string;
@@ -217,6 +220,17 @@ export function getCodeGenerationRunFinalizeState(text: string): {
   errorMessage?: string;
   completedAt?: Date;
 } {
+  if (finishReason === "length") {
+    return {
+      status: "recoverable",
+      phase: "continuation_required",
+      label: "Generation reached the model limit",
+      partialText: text,
+      errorMessage:
+        "The model reached its output limit before the app was complete. Continue or retry before saving this version.",
+    };
+  }
+
   if (!text.trim()) {
     return {
       status: "failed",

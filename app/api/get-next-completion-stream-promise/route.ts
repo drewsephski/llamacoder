@@ -14,6 +14,7 @@ import {
   GENERATED_CODE_MAX_TOKENS,
   createAppOpenRouter,
   createOpenRouterModel,
+  getCacheableSystemPrompt,
   getAIErrorMessage,
   getAIErrorStatus,
   getOpenRouterReasoningSelection,
@@ -620,20 +621,6 @@ export async function POST(req: Request) {
       sessionId: message.chatId,
       sessionName: "SquidAgent Chat",
     });
-    const reasoning = getOpenRouterReasoningSelection(
-      executionModel,
-      executionQuality,
-    );
-    const telemetry = createRequestTelemetry({
-      userId: session.user.id,
-      chatId: message.chatId,
-      messageId,
-      modelId: executionModel,
-      creditHoldId: holdId,
-      requestKind: isFreeRepairRequest ? "free_repair" : "generation",
-      quality: executionQuality,
-      reasoning,
-    });
     const persistenceReasoning = getOpenRouterReasoningSelection(
       FREE_MODEL,
       "low",
@@ -655,7 +642,6 @@ export async function POST(req: Request) {
           try {
             const result = await classifyPersistenceIntent({
               model: createOpenRouterModel(openrouter, FREE_MODEL, {
-                maxTokens: 720,
                 usage: { include: true },
               }),
               recentUserRequests: persistenceClassifierRequests,
@@ -691,7 +677,10 @@ export async function POST(req: Request) {
               });
             } else {
               persistenceTelemetry?.markFirstByte();
-              void persistenceTelemetry?.record({ status: "completed" });
+              void persistenceTelemetry?.record({
+                status: "completed",
+                ...result.telemetry,
+              });
             }
             return result;
           } catch (error) {
@@ -718,6 +707,20 @@ export async function POST(req: Request) {
       execute: async ({ writer }) => {
         let persistedPartialText = "";
         let codegenModel = executionModel;
+        let reasoning = getOpenRouterReasoningSelection(
+          executionModel,
+          executionQuality,
+        );
+        let telemetry = createRequestTelemetry({
+          userId: session.user.id,
+          chatId: message.chatId,
+          messageId,
+          modelId: executionModel,
+          creditHoldId: holdId,
+          requestKind: isFreeRepairRequest ? "free_repair" : "generation",
+          quality: executionQuality,
+          reasoning,
+        });
         let lastSnapshotLength = 0;
         const persistTerminalFailure = async ({
           error,
@@ -1208,9 +1211,10 @@ export async function POST(req: Request) {
 
               const orchestrationResult = await generateText({
                 model: createOpenRouterModel(openrouter, orchestrationModel, {
-                  maxTokens: 1_200,
                   usage: { include: true },
                 }),
+                maxOutputTokens: 1_200,
+                maxRetries: 1,
                 providerOptions: orchestrationReasoning.providerOptions,
                 abortSignal: req.signal,
                 timeout: { totalMs: 45_000 },
@@ -1433,6 +1437,24 @@ export async function POST(req: Request) {
           const isCodeGeneration =
             agentAction.action === "generate_code" ||
             agentAction.action === "resume_generation";
+          codegenModel =
+            screenshotData && isCodeGeneration && !isFreeRepairRequest
+              ? resolveVisionCapableCodingModel(executionModel)
+              : executionModel;
+          reasoning = getOpenRouterReasoningSelection(
+            codegenModel,
+            executionQuality,
+          );
+          telemetry = createRequestTelemetry({
+            userId: session.user.id,
+            chatId: message.chatId,
+            messageId,
+            modelId: codegenModel,
+            creditHoldId: holdId,
+            requestKind: isFreeRepairRequest ? "free_repair" : "generation",
+            quality: executionQuality,
+            reasoning,
+          });
           if (isCodeGeneration) {
             // System prompts are persisted with chats for reproducibility, but
             // code generation should always use the current safety and design
@@ -1830,8 +1852,6 @@ export async function POST(req: Request) {
               label: "Attaching your reference image",
             });
 
-            codegenModel = resolveVisionCapableCodingModel(executionModel);
-
             const lastUserMessageIndex = guardedMessages.findLastIndex(
               (candidate) => candidate.role === "user",
             );
@@ -1856,17 +1876,20 @@ export async function POST(req: Request) {
 
           const result = streamText({
             model: createOpenRouterModel(openrouter, codegenModel, {
-              maxTokens: isCodeGeneration ? GENERATED_CODE_MAX_TOKENS : 4_000,
               usage: { include: true },
+            }, {
+              sort: isCodeGeneration ? "throughput" : "latency",
             }),
+            maxOutputTokens: isCodeGeneration
+              ? GENERATED_CODE_MAX_TOKENS
+              : 4_000,
             providerOptions: reasoning.providerOptions,
             abortSignal: req.signal,
             timeout: { totalMs: 270_000, chunkMs: 60_000 },
-            system: systemInstruction,
+            system: getCacheableSystemPrompt(codegenModel, systemInstruction),
             messages: toModelMessages(
               clampMessagesToBillingBudget(guardedMessages),
             ),
-            temperature: 0.4,
             tools: exaTools ?? undefined,
             toolChoice: exaTools ? "auto" : undefined,
             stopWhen: exaTools ? stepCountIs(5) : undefined,
@@ -1939,9 +1962,10 @@ export async function POST(req: Request) {
               }
             },
             async onFinish({
-              usage,
+              totalUsage,
               finishReason,
               providerMetadata,
+              steps,
               response,
               model: completedModel,
             }) {
@@ -1955,9 +1979,12 @@ export async function POST(req: Request) {
                 await telemetry.record({
                   status: "error",
                   error: emptyOutputError,
-                  usage,
+                  usage: totalUsage,
                   finishReason,
                   providerMetadata,
+                  providerMetadataByStep: steps.map(
+                    (step) => step.providerMetadata,
+                  ),
                   providerRequestId: response?.id,
                   provider: completedModel.provider,
                 });
@@ -1988,14 +2015,20 @@ export async function POST(req: Request) {
               }
               await telemetry.record({
                 status: finishReason === "error" ? "error" : "completed",
-                usage,
+                usage: totalUsage,
                 finishReason,
                 providerMetadata,
+                providerMetadataByStep: steps.map(
+                  (step) => step.providerMetadata,
+                ),
                 providerRequestId: response?.id,
                 provider: completedModel.provider,
               });
               const finalizeState = isCodeGeneration
-                ? getCodeGenerationRunFinalizeState(persistedPartialText)
+                ? getCodeGenerationRunFinalizeState(
+                    persistedPartialText,
+                    finishReason,
+                  )
                 : {
                     status: "recoverable" as const,
                     phase: "finalizing",
@@ -2013,6 +2046,22 @@ export async function POST(req: Request) {
                   completedAt: finalizeState.completedAt,
                 },
               });
+              if (finishReason === "length") {
+                await recordOperationalEvent({
+                  name: "generation_length_truncated",
+                  level: "warn",
+                  userId: session.user.id,
+                  operation: "completion_stream",
+                  status: "recoverable",
+                  metadata: {
+                    chatId: message.chat.id,
+                    generationRunId: generationRun.id,
+                    model: codegenModel,
+                    outputCharacters: persistedPartialText.length,
+                    researchStepCount: steps.length,
+                  },
+                });
+              }
             },
             async onAbort() {
               await telemetry.record({ status: "aborted" });
@@ -2039,7 +2088,7 @@ export async function POST(req: Request) {
                 metadata: {
                   chatId: message.chat.id,
                   generationRunId: generationRun.id,
-                  model: executionModel,
+                  model: codegenModel,
                 },
               });
               await persistTerminalFailure({ error });

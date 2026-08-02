@@ -1,12 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { AlertCircle, ArrowRight, Check, CircleCheck } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  CircleCheck,
+} from "lucide-react";
 import { usePlausible } from "next-plausible";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CometSpinner } from "@/components/loading-ui/comet-spinner";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { readAcquisitionAttribution } from "@/features/acquisition/contracts";
 import { cn } from "@/lib/utils";
@@ -33,19 +50,160 @@ const contactOptions = [
 ] as const;
 
 type FieldIssues = Record<string, string[] | undefined>;
+type PreferredContact = (typeof contactOptions)[number][0];
+type FormValues = {
+  name: string;
+  email: string;
+  role: string;
+  companyName: string;
+  portfolioUrl: string;
+  projectSummary: string;
+  timeline: string;
+  preferredContact: string;
+  permissionToContact: boolean;
+};
+type FormValueName = keyof FormValues;
+
+const initialValues: FormValues = {
+  name: "",
+  email: "",
+  role: "",
+  companyName: "",
+  portfolioUrl: "",
+  projectSummary: "",
+  timeline: "",
+  preferredContact: "",
+  permissionToContact: false,
+};
+
+const formSteps = [
+  {
+    eyebrow: "Start with the basics",
+    title: "Who should we follow up with?",
+    description: "Use the details you check most often for project work.",
+  },
+  {
+    eyebrow: "A little context",
+    title: "Tell us how you work.",
+    description: "This helps us understand the perspective you bring.",
+  },
+  {
+    eyebrow: "The useful part",
+    title: "What should we prototype?",
+    description:
+      "A rough brief is enough. Focus on the decision it should unlock.",
+  },
+  {
+    eyebrow: "Plan the follow-up",
+    title: "When and where should we reply?",
+    description: "Choose the timing and channel that work best for you.",
+  },
+  {
+    eyebrow: "Ready to send",
+    title: "One last confirmation.",
+    description:
+      "Review the essentials, then send your brief to the Squid team.",
+  },
+] as const;
+
+const stepFields: ReadonlyArray<ReadonlyArray<FormValueName>> = [
+  ["name", "email"],
+  ["role", "companyName"],
+  ["portfolioUrl", "projectSummary"],
+  ["timeline", "preferredContact"],
+  ["permissionToContact"],
+];
+
+const fieldStep: Partial<Record<FormValueName, number>> = {
+  name: 0,
+  email: 0,
+  role: 1,
+  companyName: 1,
+  portfolioUrl: 2,
+  projectSummary: 2,
+  timeline: 3,
+  preferredContact: 3,
+  permissionToContact: 4,
+};
+
+const lastStep = formSteps.length - 1;
+const fieldControlClass =
+  "h-12 rounded-xl bg-muted/25 px-4 shadow-none transition-colors hover:bg-muted/40 focus-visible:bg-background";
+
+const stepMotionVariants = {
+  enter: (direction: number) => ({
+    opacity: 0,
+    x: direction > 0 ? 28 : -28,
+  }),
+  center: { opacity: 1, x: 0 },
+  exit: (direction: number) => ({
+    opacity: 0,
+    x: direction > 0 ? -20 : 20,
+  }),
+};
 
 export function DesignPartnerSection() {
   const plausible = usePlausible();
+  const reduceMotion = useReducedMotion();
   const [status, setStatus] = useState<"idle" | "submitting" | "success">(
     "idle",
   );
   const [message, setMessage] = useState<string | null>(null);
   const [issues, setIssues] = useState<FieldIssues>({});
+  const [values, setValues] = useState<FormValues>(initialValues);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [preferredContact, setPreferredContact] =
+    useState<PreferredContact>("email");
+
+  function updateValue<Name extends FormValueName>(
+    name: Name,
+    value: FormValues[Name],
+  ) {
+    setValues((current) => ({ ...current, [name]: value }));
+    setIssues((current) => {
+      if (!current[name]) return current;
+      const next = { ...current };
+      delete next[name];
+      return next;
+    });
+  }
+
+  function showStepIssues(step: number) {
+    const nextStepIssues = validateStep(step, values);
+    if (Object.keys(nextStepIssues).length === 0) return false;
+
+    setIssues((current) => {
+      const next = { ...current };
+      for (const field of stepFields[step]) delete next[field];
+      return { ...next, ...nextStepIssues };
+    });
+    focusField(Object.keys(nextStepIssues)[0]);
+    return true;
+  }
+
+  function goToNextStep() {
+    if (showStepIssues(currentStep)) return;
+    setMessage(null);
+    setDirection(1);
+    setCurrentStep((step) => Math.min(step + 1, lastStep));
+  }
+
+  function goToPreviousStep() {
+    setMessage(null);
+    setDirection(-1);
+    setCurrentStep((step) => Math.max(step - 1, 0));
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
+    if (currentStep < lastStep) {
+      goToNextStep();
+      return;
+    }
+    if (showStepIssues(currentStep)) return;
+
+    const formData = new FormData(event.currentTarget);
     setStatus("submitting");
     setMessage(null);
     setIssues({});
@@ -54,15 +212,7 @@ export function DesignPartnerSection() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: formData.get("name"),
-        email: formData.get("email"),
-        role: formData.get("role"),
-        companyName: formData.get("companyName"),
-        portfolioUrl: formData.get("portfolioUrl"),
-        projectSummary: formData.get("projectSummary"),
-        timeline: formData.get("timeline"),
-        preferredContact: formData.get("preferredContact"),
-        permissionToContact: formData.get("permissionToContact") === "on",
+        ...values,
         website: formData.get("website"),
         attribution: readAcquisitionAttribution({
           url: new URL(window.location.href),
@@ -91,28 +241,37 @@ export function DesignPartnerSection() {
       );
       const firstFieldName = Object.keys(nextIssues)[0];
       if (firstFieldName) {
-        window.requestAnimationFrame(() => {
-          document
-            .getElementById("design-partner-form-error")
-            ?.scrollIntoView?.({
-              behavior: "smooth",
-              block: "center",
-            });
-          document
-            .getElementById(firstFieldName)
-            ?.focus({ preventScroll: true });
-        });
+        const nextStep = fieldStep[firstFieldName as FormValueName];
+        if (nextStep !== undefined) {
+          setDirection(nextStep < currentStep ? -1 : 1);
+          setCurrentStep(nextStep);
+        }
+        window.requestAnimationFrame(() =>
+          window.requestAnimationFrame(() => {
+            document
+              .getElementById("design-partner-form-error")
+              ?.scrollIntoView?.({
+                behavior: "smooth",
+                block: "center",
+              });
+            document
+              .getElementById(firstFieldName)
+              ?.focus({ preventScroll: true });
+          }),
+        );
       }
       return;
     }
 
     plausible("Design Partner Application Submitted", {
       props: {
-        role: String(formData.get("role") ?? "unknown"),
-        timeline: String(formData.get("timeline") ?? "unknown"),
+        role: values.role || "unknown",
+        timeline: values.timeline || "unknown",
       },
     });
-    form.reset();
+    if (contactOptions.some(([value]) => value === values.preferredContact)) {
+      setPreferredContact(values.preferredContact as PreferredContact);
+    }
     setStatus("success");
   }
 
@@ -164,118 +323,164 @@ export function DesignPartnerSection() {
 
         <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-background p-4 shadow-sm sm:rounded-2xl sm:p-8">
           {status === "success" ? (
-            <div className="flex min-h-[520px] flex-col items-start justify-center">
-              <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <CircleCheck className="size-6" aria-hidden="true" />
-              </span>
-              <h3 className="mt-6 text-2xl font-semibold tracking-tight">
-                Your brief is in.
-              </h3>
-              <p className="mt-3 max-w-md leading-7 text-muted-foreground">
-                We will review the project and contact you if it is a strong fit
-                for an upcoming working session.
-              </p>
-            </div>
+            <article
+              aria-live="polite"
+              className="relative isolate flex min-h-[520px] flex-col overflow-hidden rounded-lg bg-muted/35 p-5 sm:rounded-xl sm:p-8"
+            >
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-24 -top-24 -z-10 size-72 rounded-full bg-[#0062FF]/10 blur-3xl dark:bg-[#0CA8FF]/10"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-[#0062FF]/60 to-transparent dark:via-[#0CA8FF]/60"
+              />
+
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-full border border-[#0062FF]/20 bg-[#0062FF]/10 text-[#0062FF] dark:border-[#0CA8FF]/25 dark:bg-[#0CA8FF]/10 dark:text-[#0CA8FF]">
+                  <CircleCheck className="size-5" aria-hidden="true" />
+                </span>
+                <p className="font-mono-jb text-xs font-semibold uppercase tracking-[0.14em] text-[#0062FF] dark:text-[#0CA8FF]">
+                  Application received
+                </p>
+              </div>
+
+              <div className="mt-10 max-w-xl sm:mt-12">
+                <h3 className="max-w-lg font-display text-3xl leading-[1.05] tracking-tight text-foreground sm:text-4xl">
+                  Your brief is in. We’ll take it from here.
+                </h3>
+                <p className="mt-4 max-w-lg text-base leading-7 text-muted-foreground">
+                  The Squid team will review the project and reach out if a
+                  focused prototype can help move the decision forward.
+                </p>
+              </div>
+
+              <ol className="mt-9 grid gap-px overflow-hidden rounded-lg border border-border/70 bg-border/70 sm:grid-cols-2">
+                <li className="bg-background/90 p-5">
+                  <span className="font-mono-jb text-xs text-muted-foreground">
+                    01
+                  </span>
+                  <h4 className="mt-4 text-sm font-semibold text-foreground">
+                    We review the brief
+                  </h4>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    We look for a clear decision a working prototype can unlock.
+                  </p>
+                </li>
+                <li className="bg-background/90 p-5">
+                  <span className="font-mono-jb text-xs text-muted-foreground">
+                    02
+                  </span>
+                  <h4 className="mt-4 text-sm font-semibold text-foreground">
+                    We follow up directly
+                  </h4>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    If it is a fit, we’ll contact you via{" "}
+                    {getContactLabel(preferredContact)} to plan the session.
+                  </p>
+                </li>
+              </ol>
+
+              <div className="mt-auto flex flex-col gap-4 border-t border-border/70 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-6 text-muted-foreground">
+                  No additional action is needed.
+                </p>
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                  <Link href="/gallery">
+                    See what Squid can build
+                    <ArrowUpRight className="size-4" aria-hidden="true" />
+                  </Link>
+                </Button>
+              </div>
+            </article>
           ) : (
-            <form onSubmit={handleSubmit} noValidate className="min-w-0">
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="flex min-h-[620px] min-w-0 flex-col"
+            >
+              <div className="border-b border-border/70 pb-6">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="font-mono-jb text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                    Step {String(currentStep + 1).padStart(2, "0")} of{" "}
+                    {String(formSteps.length).padStart(2, "0")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    About 3 minutes
+                  </p>
+                </div>
+                <div
+                  role="progressbar"
+                  aria-label="Application progress"
+                  aria-valuemin={1}
+                  aria-valuemax={formSteps.length}
+                  aria-valuenow={currentStep + 1}
+                  className="mt-4 h-1 overflow-hidden rounded-full bg-muted"
+                >
+                  <motion.div
+                    className="h-full origin-left rounded-full bg-primary"
+                    initial={false}
+                    animate={{ scaleX: (currentStep + 1) / formSteps.length }}
+                    transition={{
+                      duration: reduceMotion ? 0 : 0.35,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                  />
+                </div>
+              </div>
+
               {message ? (
                 <div
                   id="design-partner-form-error"
                   role="alert"
-                  className="mb-6 flex scroll-mt-24 items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm leading-6 text-foreground"
+                  className="mt-6 flex scroll-mt-24 items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm leading-6 text-foreground"
                 >
                   <AlertCircle
-                    className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400"
+                    className="mt-0.5 size-4 shrink-0 text-destructive"
                     aria-hidden="true"
                   />
                   <p>{message}</p>
                 </div>
               ) : null}
 
-              <div className="grid min-w-0 gap-5 sm:grid-cols-2">
-                <Field label="Name" name="name" issues={issues} required>
-                  <Input id="name" name="name" autoComplete="name" required />
-                </Field>
-                <Field label="Work email" name="email" issues={issues} required>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                  />
-                </Field>
-                <Field label="Your role" name="role" issues={issues} required>
-                  <SelectField id="role" name="role" options={roleOptions} />
-                </Field>
-                <Field
-                  label="Company or studio"
-                  name="companyName"
-                  issues={issues}
-                >
-                  <Input
-                    id="companyName"
-                    name="companyName"
-                    autoComplete="organization"
-                  />
-                </Field>
-                <div className="sm:col-span-2">
-                  <Field
-                    label="Portfolio or company URL"
-                    name="portfolioUrl"
-                    issues={issues}
+              <div className="relative min-h-[430px] flex-1 overflow-hidden py-8">
+                <AnimatePresence mode="wait" initial={false} custom={direction}>
+                  <motion.div
+                    key={currentStep}
+                    custom={direction}
+                    variants={stepMotionVariants}
+                    initial={reduceMotion ? "center" : "enter"}
+                    animate="center"
+                    exit={reduceMotion ? "center" : "exit"}
+                    transition={{
+                      duration: reduceMotion ? 0 : 0.28,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="min-w-0"
                   >
-                    <Input
-                      id="portfolioUrl"
-                      name="portfolioUrl"
-                      type="url"
-                      inputMode="url"
-                      placeholder="https://"
+                    <header className="mb-8">
+                      <p className="text-sm font-medium text-primary">
+                        {formSteps[currentStep].eyebrow}
+                      </p>
+                      <h3
+                        id={`design-partner-step-${currentStep}`}
+                        className="mt-2 max-w-lg font-display text-3xl leading-[1.08] tracking-tight text-foreground"
+                      >
+                        {formSteps[currentStep].title}
+                      </h3>
+                      <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+                        {formSteps[currentStep].description}
+                      </p>
+                    </header>
+
+                    <WizardStep
+                      step={currentStep}
+                      values={values}
+                      issues={issues}
+                      onValueChange={updateValue}
                     />
-                  </Field>
-                </div>
-                <div className="sm:col-span-2">
-                  <Field
-                    label="What would you like to prototype?"
-                    name="projectSummary"
-                    issues={issues}
-                    hint="Include the audience, the decision this prototype should unlock, and any deadline."
-                    required
-                  >
-                    <Textarea
-                      id="projectSummary"
-                      name="projectSummary"
-                      rows={6}
-                      minLength={40}
-                      maxLength={1500}
-                      required
-                    />
-                  </Field>
-                </div>
-                <Field
-                  label="Project timing"
-                  name="timeline"
-                  issues={issues}
-                  required
-                >
-                  <SelectField
-                    id="timeline"
-                    name="timeline"
-                    options={timelineOptions}
-                  />
-                </Field>
-                <Field
-                  label="Preferred reply"
-                  name="preferredContact"
-                  issues={issues}
-                  required
-                >
-                  <SelectField
-                    id="preferredContact"
-                    name="preferredContact"
-                    options={contactOptions}
-                  />
-                </Field>
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
               <div className="sr-only" aria-hidden="true">
@@ -283,43 +488,409 @@ export function DesignPartnerSection() {
                 <input id="website" name="website" tabIndex={-1} />
               </div>
 
-              <label className="mt-6 flex cursor-pointer items-start gap-3 text-sm leading-6 text-muted-foreground">
-                <input
-                  name="permissionToContact"
-                  type="checkbox"
-                  required
-                  className="mt-1 size-4 rounded border-border accent-[#0062FF]"
-                />
-                <span>
-                  Squid Agent may contact me about this application and the
-                  proposed working session.
-                </span>
-              </label>
-              {issues.permissionToContact?.[0] ? (
-                <p className="mt-2 text-sm text-destructive">
-                  {issues.permissionToContact[0]}
-                </p>
-              ) : null}
-
-              <Button
-                type="submit"
-                size="lg"
-                disabled={status === "submitting"}
-                className="mt-7 w-full rounded-xl sm:w-auto"
-              >
-                {status === "submitting" ? (
-                  <CometSpinner className="size-4" aria-hidden="true" />
+              <footer className="flex items-center justify-between gap-3 border-t border-border/70 pt-6">
+                {currentStep > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={goToPreviousStep}
+                    disabled={status === "submitting"}
+                  >
+                    <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+                    Back
+                  </Button>
                 ) : (
-                  <ArrowRight className="size-4" aria-hidden="true" />
+                  <p className="hidden text-xs text-muted-foreground sm:block">
+                    Your answers stay private.
+                  </p>
                 )}
-                {status === "submitting" ? "Submitting" : "Apply to partner"}
-              </Button>
+
+                {currentStep < lastStep ? (
+                  <Button type="button" size="lg" onClick={goToNextStep}>
+                    Continue
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={status === "submitting"}
+                    className="min-w-40"
+                  >
+                    {status === "submitting" ? (
+                      <CometSpinner
+                        data-icon="inline-start"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ArrowRight data-icon="inline-start" aria-hidden="true" />
+                    )}
+                    {status === "submitting"
+                      ? "Submitting"
+                      : "Apply to partner"}
+                  </Button>
+                )}
+              </footer>
             </form>
           )}
         </div>
       </div>
     </section>
   );
+}
+
+function getContactLabel(value: PreferredContact) {
+  return contactOptions.find(([option]) => option === value)?.[1] ?? "email";
+}
+
+function WizardStep({
+  step,
+  values,
+  issues,
+  onValueChange,
+}: {
+  step: number;
+  values: FormValues;
+  issues: FieldIssues;
+  onValueChange: <Name extends FormValueName>(
+    name: Name,
+    value: FormValues[Name],
+  ) => void;
+}) {
+  if (step === 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Field label="Name" name="name" issues={issues} required>
+          <Input
+            id="name"
+            value={values.name}
+            onChange={(event) => onValueChange("name", event.target.value)}
+            autoComplete="name"
+            minLength={2}
+            maxLength={120}
+            aria-invalid={Boolean(issues.name)}
+            aria-describedby={issues.name ? "name-error" : undefined}
+            className={fieldControlClass}
+            required
+          />
+        </Field>
+        <Field label="Work email" name="email" issues={issues} required>
+          <Input
+            id="email"
+            value={values.email}
+            onChange={(event) => onValueChange("email", event.target.value)}
+            type="email"
+            autoComplete="email"
+            maxLength={320}
+            aria-invalid={Boolean(issues.email)}
+            aria-describedby={issues.email ? "email-error" : undefined}
+            className={fieldControlClass}
+            required
+          />
+        </Field>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Field label="Your role" name="role" issues={issues} required>
+          <EnhancedSelectField
+            id="role"
+            value={values.role}
+            onValueChange={(value) => onValueChange("role", value)}
+            options={roleOptions}
+            placeholder="Choose the closest match"
+            invalid={Boolean(issues.role)}
+          />
+        </Field>
+        <Field
+          label="Company or studio"
+          name="companyName"
+          issues={issues}
+          hint="Optional"
+        >
+          <Input
+            id="companyName"
+            value={values.companyName}
+            onChange={(event) =>
+              onValueChange("companyName", event.target.value)
+            }
+            autoComplete="organization"
+            maxLength={160}
+            aria-invalid={Boolean(issues.companyName)}
+            aria-describedby={
+              issues.companyName ? "companyName-error" : undefined
+            }
+            className={fieldControlClass}
+          />
+        </Field>
+      </div>
+    );
+  }
+
+  if (step === 2) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Field
+          label="Portfolio or company URL"
+          name="portfolioUrl"
+          issues={issues}
+          hint="Optional, but useful for context"
+        >
+          <Input
+            id="portfolioUrl"
+            value={values.portfolioUrl}
+            onChange={(event) =>
+              onValueChange("portfolioUrl", event.target.value)
+            }
+            type="url"
+            inputMode="url"
+            placeholder="https://"
+            maxLength={2048}
+            aria-invalid={Boolean(issues.portfolioUrl)}
+            aria-describedby={
+              issues.portfolioUrl ? "portfolioUrl-error" : undefined
+            }
+            className={fieldControlClass}
+          />
+        </Field>
+        <Field
+          label="What would you like to prototype?"
+          name="projectSummary"
+          issues={issues}
+          hint={`${values.projectSummary.length.toLocaleString()}/1,500 · Include the audience, the decision to unlock, and any deadline.`}
+          required
+        >
+          <Textarea
+            id="projectSummary"
+            value={values.projectSummary}
+            onChange={(event) =>
+              onValueChange("projectSummary", event.target.value)
+            }
+            rows={7}
+            minLength={40}
+            maxLength={1500}
+            aria-invalid={Boolean(issues.projectSummary)}
+            aria-describedby={
+              issues.projectSummary ? "projectSummary-error" : undefined
+            }
+            className="resize-none rounded-xl bg-muted/25 p-4 text-base leading-7 shadow-none transition-colors hover:bg-muted/40 focus-visible:bg-background"
+            required
+          />
+        </Field>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Field label="Project timing" name="timeline" issues={issues} required>
+          <EnhancedSelectField
+            id="timeline"
+            value={values.timeline}
+            onValueChange={(value) => onValueChange("timeline", value)}
+            options={timelineOptions}
+            placeholder="Choose a timeframe"
+            invalid={Boolean(issues.timeline)}
+          />
+        </Field>
+        <Field
+          label="Preferred reply"
+          name="preferredContact"
+          issues={issues}
+          required
+        >
+          <EnhancedSelectField
+            id="preferredContact"
+            value={values.preferredContact}
+            onValueChange={(value) => onValueChange("preferredContact", value)}
+            options={contactOptions}
+            placeholder="Choose a reply channel"
+            invalid={Boolean(issues.preferredContact)}
+          />
+        </Field>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <dl className="grid gap-px overflow-hidden rounded-xl border border-border/70 bg-border/70 sm:grid-cols-3">
+        {[
+          ["Role", getOptionLabel(roleOptions, values.role)],
+          ["Timing", getOptionLabel(timelineOptions, values.timeline)],
+          [
+            "Reply via",
+            getOptionLabel(contactOptions, values.preferredContact),
+          ],
+        ].map(([label, value]) => (
+          <div key={label} className="bg-muted/25 p-4">
+            <dt className="text-xs text-muted-foreground">{label}</dt>
+            <dd className="mt-1.5 text-sm font-medium text-foreground">
+              {value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <Field
+        label="Permission to contact"
+        name="permissionToContact"
+        issues={issues}
+        required
+      >
+        <label
+          htmlFor="permissionToContact"
+          className={cn(
+            "flex cursor-pointer items-start gap-4 rounded-xl border border-border bg-muted/25 p-4 text-sm leading-6 text-muted-foreground transition-colors hover:bg-muted/40",
+            issues.permissionToContact && "border-destructive/60",
+          )}
+        >
+          <input
+            id="permissionToContact"
+            type="checkbox"
+            checked={values.permissionToContact}
+            onChange={(event) =>
+              onValueChange("permissionToContact", event.target.checked)
+            }
+            aria-invalid={Boolean(issues.permissionToContact)}
+            aria-describedby={
+              issues.permissionToContact
+                ? "permissionToContact-error"
+                : undefined
+            }
+            className="mt-1 size-4 shrink-0 rounded border-border accent-primary"
+            required
+          />
+          <span>
+            Squid Agent may contact me about this application and the proposed
+            working session.
+          </span>
+        </label>
+      </Field>
+    </div>
+  );
+}
+
+function EnhancedSelectField({
+  id,
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  invalid,
+}: {
+  id: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: ReadonlyArray<readonly [string, string]>;
+  placeholder: string;
+  invalid: boolean;
+}) {
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger
+        id={id}
+        aria-invalid={invalid}
+        aria-describedby={invalid ? `${id}-error` : undefined}
+        className="h-12 rounded-xl bg-muted/25 px-4 text-base shadow-none transition-colors hover:bg-muted/40 data-[state=open]:border-primary/50 data-[state=open]:bg-background"
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent
+        position="popper"
+        className="rounded-xl border-border/80 bg-popover/95 p-1 shadow-xl backdrop-blur-md"
+      >
+        <SelectGroup>
+          {options.map(([optionValue, label]) => (
+            <SelectItem
+              key={optionValue}
+              value={optionValue}
+              className="cursor-pointer rounded-lg py-3 pl-9 pr-3 text-sm focus:bg-accent"
+            >
+              {label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
+
+function getOptionLabel(
+  options: ReadonlyArray<readonly [string, string]>,
+  value: string,
+) {
+  return options.find(([option]) => option === value)?.[1] ?? "Not selected";
+}
+
+function validateStep(step: number, values: FormValues): FieldIssues {
+  const nextIssues: FieldIssues = {};
+
+  if (step === 0) {
+    const name = values.name.trim();
+    const email = values.email.trim();
+    if (name.length < 2) {
+      nextIssues.name = ["Name must be at least 2 characters."];
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextIssues.email = ["Enter a valid email address."];
+    }
+  }
+
+  if (step === 1 && !values.role) {
+    nextIssues.role = ["Choose your role."];
+  }
+
+  if (step === 2) {
+    const url = values.portfolioUrl.trim();
+    if (url) {
+      try {
+        const parsedUrl = new URL(url);
+        if (
+          !(["http:", "https:"] as const).includes(
+            parsedUrl.protocol as "http:" | "https:",
+          )
+        ) {
+          nextIssues.portfolioUrl = ["Use a valid http or https URL."];
+        }
+      } catch {
+        nextIssues.portfolioUrl = ["Use a valid http or https URL."];
+      }
+    }
+    const summaryLength = values.projectSummary.trim().length;
+    if (summaryLength < 40) {
+      nextIssues.projectSummary = [
+        "Add a little more detail, at least 40 characters.",
+      ];
+    }
+  }
+
+  if (step === 3) {
+    if (!values.timeline) {
+      nextIssues.timeline = ["Choose the project timing."];
+    }
+    if (!values.preferredContact) {
+      nextIssues.preferredContact = ["Choose how you would like us to reply."];
+    }
+  }
+
+  if (step === 4 && !values.permissionToContact) {
+    nextIssues.permissionToContact = [
+      "Confirm that we may contact you about this application.",
+    ];
+  }
+
+  return nextIssues;
+}
+
+function focusField(fieldName: string) {
+  window.requestAnimationFrame(() => {
+    document.getElementById(fieldName)?.focus({ preventScroll: true });
+  });
 }
 
 function Field({
@@ -356,39 +927,13 @@ function Field({
         <p className="mt-2 text-xs leading-5 text-muted-foreground">{hint}</p>
       ) : null}
       {issue ? (
-        <p className="mt-2 text-sm leading-5 text-red-600 dark:text-red-400">
+        <p
+          id={`${name}-error`}
+          className="mt-2 text-sm leading-5 text-destructive"
+        >
           {issue}
         </p>
       ) : null}
     </div>
-  );
-}
-
-function SelectField({
-  id,
-  name,
-  options,
-}: {
-  id: string;
-  name: string;
-  options: ReadonlyArray<readonly [string, string]>;
-}) {
-  return (
-    <select
-      id={id}
-      name={name}
-      defaultValue=""
-      required
-      className="flex h-10 w-full min-w-0 max-w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      <option value="" disabled>
-        Select one
-      </option>
-      {options.map(([value, label]) => (
-        <option key={value} value={value}>
-          {label}
-        </option>
-      ))}
-    </select>
   );
 }

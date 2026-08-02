@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateText } from "ai";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { createAppOpenRouter, createOpenRouterModel } from "@/lib/openrouter";
+import {
+  createAppOpenRouter,
+  createOpenRouterModel,
+  getOpenRouterProviderOptions,
+  getOpenRouterReasoningSelection,
+} from "@/lib/openrouter";
 import { DEFAULT_MODEL } from "@/lib/constants";
 import { promptBuilderSystemPrompt } from "@/lib/prompts";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import { runAuxiliaryGeneration } from "@/features/generation/server/auxiliary-generation";
+import { createRequestTelemetry } from "@/features/generation/server/request-telemetry";
 
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 4_000;
@@ -92,14 +98,28 @@ export async function POST(request: NextRequest) {
     }));
     messages.push({ role: "user" as const, content: prompt });
 
-    const model = createOpenRouterModel(openrouter, DEFAULT_MODEL, {
-      maxTokens: 4096,
+    const reasoning = getOpenRouterReasoningSelection(DEFAULT_MODEL, "low");
+    const telemetry = createRequestTelemetry({
+      userId: session.user.id,
+      modelId: DEFAULT_MODEL,
+      requestKind: "prompt_enhancement",
+      quality: "low",
+      reasoning,
     });
 
-    const { text } = await generateText({
-      model,
-      system: promptBuilderSystemPrompt,
-      messages,
+    const { text } = await runAuxiliaryGeneration({
+      maxOutputTokens: 4_096,
+      timeoutMs: 15_000,
+      telemetry,
+      request: {
+        model: createOpenRouterModel(openrouter, DEFAULT_MODEL, {
+          usage: { include: true },
+        }),
+        providerOptions: getOpenRouterProviderOptions(DEFAULT_MODEL, "low"),
+        abortSignal: request.signal,
+        system: promptBuilderSystemPrompt,
+        messages,
+      },
     });
 
     if (!text || text.trim().length === 0) {

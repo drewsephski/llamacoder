@@ -14,6 +14,8 @@ const {
   prismaMock,
   saveMessageFollowUpPromptsMock,
   txMock,
+  afterMock,
+  afterTasks,
 } = vi.hoisted(() => ({
   consumeCreditsForGenerationMock: vi.fn(),
   consumeRateLimitMock: vi.fn(),
@@ -28,6 +30,8 @@ const {
     message: { create: vi.fn() },
     chat: { update: vi.fn() },
   },
+  afterMock: vi.fn(),
+  afterTasks: [] as Array<() => Promise<void> | void>,
   prismaMock: {
     chat: { findUnique: vi.fn(), updateMany: vi.fn() },
     message: { findMany: vi.fn() },
@@ -46,6 +50,11 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
 }));
+
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, after: afterMock };
+});
 
 vi.mock("@/lib/prisma", () => ({
   getPrisma: () => prismaMock,
@@ -66,6 +75,7 @@ vi.mock("@/lib/openrouter", () => ({
   GENERATED_CODE_MAX_TOKENS: 16000,
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: vi.fn(() => "openrouter-model"),
+  getCacheableSystemPrompt: vi.fn((_model: string, content: string) => content),
   getAIErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
   getOpenRouterProviderOptions: vi.fn(() => ({
@@ -131,6 +141,10 @@ const invalidImportGeneratedApp = [
 describe("/api/generate-code", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    afterTasks.length = 0;
+    afterMock.mockImplementation((task: () => Promise<void> | void) => {
+      afterTasks.push(task);
+    });
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5 });
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback(txMock),
@@ -207,6 +221,8 @@ describe("/api/generate-code", () => {
         ]),
       }),
     });
+    expect(generateFollowUpPromptsMock).not.toHaveBeenCalled();
+    await afterTasks[0]();
     expect(saveMessageFollowUpPromptsMock).toHaveBeenCalledWith(
       prismaMock,
       "assistant_1",

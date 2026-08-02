@@ -16,6 +16,8 @@ const {
   releaseCreditHoldMock,
   saveMessageFollowUpPromptsMock,
   txMock,
+  afterMock,
+  afterTasks,
 } = vi.hoisted(() => ({
   checkCreditAvailabilityMock: vi.fn(),
   consumeCreditsForGenerationMock: vi.fn(),
@@ -41,6 +43,8 @@ const {
     generationLog: { create: vi.fn() },
     generationRun: { findFirst: vi.fn(), updateMany: vi.fn() },
   },
+  afterMock: vi.fn(),
+  afterTasks: [] as Array<() => Promise<void> | void>,
   prismaMock: {
     $transaction: vi.fn(),
     chat: {
@@ -63,6 +67,11 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
 }));
+
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, after: afterMock };
+});
 
 vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
@@ -104,6 +113,10 @@ import {
 describe("server actions", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    afterTasks.length = 0;
+    afterMock.mockImplementation((task: () => Promise<void> | void) => {
+      afterTasks.push(task);
+    });
     getModelCreditHoldCostMock.mockReturnValue(1);
     getModelCreditCostMock.mockReturnValue(1);
     getSessionMock.mockResolvedValue({ user: { id: "user_1" } });
@@ -273,6 +286,8 @@ describe("server actions", () => {
         position: 2,
       }),
     });
+    expect(generateFollowUpPromptsMock).not.toHaveBeenCalled();
+    await afterTasks[0]();
     expect(saveMessageFollowUpPromptsMock).toHaveBeenCalledWith(
       prismaMock,
       "assistant_1",
@@ -755,6 +770,8 @@ describe("server actions", () => {
         ]),
       }),
     });
+    expect(generateFollowUpPromptsMock).not.toHaveBeenCalled();
+    await afterTasks[0]();
     expect(saveMessageFollowUpPromptsMock).toHaveBeenCalledWith(
       prismaMock,
       "assistant_1",

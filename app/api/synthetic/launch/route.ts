@@ -35,9 +35,11 @@ export async function GET(request: Request) {
     });
     const result = await generateText({
       model: createOpenRouterModel(openrouter, model, {
-        maxTokens: 16,
         usage: { include: true },
       }),
+      maxOutputTokens: 16,
+      maxRetries: 1,
+      timeout: { totalMs: 10_000 },
       prompt: "Reply with exactly: SQUID_SYNTHETIC_OK",
     });
     if (!result.text.includes("SQUID_SYNTHETIC_OK")) {

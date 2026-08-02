@@ -140,8 +140,10 @@ export type ModelTokenPricing = {
   outputPricePerMillion: number;
 };
 
+export const DEFAULT_OPENROUTER_MAX_PRICE_MARGIN_PERCENT = 15;
+
 export const MODEL_TOKEN_PRICING: Record<string, ModelTokenPricing> = {
-  [FREE_MODEL]: { inputPricePerMillion: 0.09, outputPricePerMillion: 0.18 },
+  [FREE_MODEL]: { inputPricePerMillion: 0.14, outputPricePerMillion: 0.28 },
   [LEGACY_FREE_MODEL]: {
     inputPricePerMillion: 0.09,
     outputPricePerMillion: 0.18,
@@ -166,7 +168,10 @@ export const MODEL_TOKEN_PRICING: Record<string, ModelTokenPricing> = {
     inputPricePerMillion: 0.435,
     outputPricePerMillion: 0.87,
   },
-  "z-ai/glm-5.2": { inputPricePerMillion: 0.84, outputPricePerMillion: 2.64 },
+  "z-ai/glm-5.2": {
+    inputPricePerMillion: 0.2842,
+    outputPricePerMillion: 0.8932,
+  },
   [DEFAULT_MODEL]: {
     inputPricePerMillion: 0.25,
     outputPricePerMillion: 1.5,
@@ -228,6 +233,23 @@ export function getModelTokenPricing(modelId: string): ModelTokenPricing {
   }
 
   return pricing;
+}
+
+export function getOpenRouterMaxPrice(modelId: string): ModelTokenPricing {
+  const pricing = getModelTokenPricing(modelId);
+  const configuredMargin = Number.parseFloat(
+    process.env.OPENROUTER_MAX_PRICE_MARGIN_PERCENT || "",
+  );
+  const marginPercent = Number.isFinite(configuredMargin)
+    ? Math.min(100, Math.max(0, configuredMargin))
+    : DEFAULT_OPENROUTER_MAX_PRICE_MARGIN_PERCENT;
+  const multiplier = 1 + marginPercent / 100;
+  const roundUp = (value: number) => Math.ceil(value * multiplier * 1e6) / 1e6;
+
+  return {
+    inputPricePerMillion: roundUp(pricing.inputPricePerMillion),
+    outputPricePerMillion: roundUp(pricing.outputPricePerMillion),
+  };
 }
 
 function requireModelPricing(modelId: string): ModelPricing {

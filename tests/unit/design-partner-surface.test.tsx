@@ -12,10 +12,51 @@ vi.mock("next-plausible", () => ({
   usePlausible: () => plausible,
 }));
 
+async function chooseOption(label: RegExp, option: RegExp) {
+  fireEvent.click(await screen.findByLabelText(label));
+  fireEvent.click(await screen.findByRole("option", { name: option }));
+}
+
+async function completeApplication() {
+  fireEvent.change(screen.getByLabelText(/^name/i), {
+    target: { value: "Avery Morgan" },
+  });
+  fireEvent.change(screen.getByLabelText(/work email/i), {
+    target: { value: "avery@example.com" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+  await chooseOption(/your role/i, /freelance designer/i);
+  fireEvent.change(screen.getByLabelText(/company or studio/i), {
+    target: { value: "Morgan Product Studio" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+  fireEvent.change(await screen.findByLabelText(/portfolio or company url/i), {
+    target: { value: "https://example.com/work" },
+  });
+  fireEvent.change(screen.getByLabelText(/what would you like to prototype/i), {
+    target: {
+      value:
+        "A reviewable React prototype for a client onboarding workflow before our next stakeholder session.",
+    },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+  await chooseOption(/project timing/i, /this month/i);
+  await chooseOption(/preferred reply/i, /^email$/i);
+  fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+  fireEvent.click(
+    await screen.findByRole("checkbox", { name: /may contact me/i }),
+  );
+}
+
 describe("design partner homepage surface", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     plausible.mockReset();
+    Element.prototype.scrollIntoView = vi.fn();
     window.history.replaceState(
       {},
       "",
@@ -39,40 +80,22 @@ describe("design partner homepage surface", () => {
       );
     render(<DesignPartnerSection />);
 
-    fireEvent.change(screen.getByLabelText(/^name/i), {
-      target: { value: "Avery Morgan" },
-    });
-    fireEvent.change(screen.getByLabelText(/work email/i), {
-      target: { value: "avery@example.com" },
-    });
-    fireEvent.change(screen.getByLabelText(/your role/i), {
-      target: { value: "freelance_designer" },
-    });
-    fireEvent.change(screen.getByLabelText(/company or studio/i), {
-      target: { value: "Morgan Product Studio" },
-    });
-    fireEvent.change(screen.getByLabelText(/portfolio or company url/i), {
-      target: { value: "https://example.com/work" },
-    });
-    fireEvent.change(
-      screen.getByLabelText(/what would you like to prototype/i),
-      {
-        target: {
-          value:
-            "A reviewable React prototype for a client onboarding workflow before our next stakeholder session.",
-        },
-      },
-    );
-    fireEvent.change(screen.getByLabelText(/project timing/i), {
-      target: { value: "this_month" },
-    });
-    fireEvent.change(screen.getByLabelText(/preferred reply/i), {
-      target: { value: "email" },
-    });
-    fireEvent.click(screen.getByRole("checkbox", { name: /may contact me/i }));
+    await completeApplication();
     fireEvent.click(screen.getByRole("button", { name: /apply to partner/i }));
 
-    await screen.findByText("Your brief is in.");
+    await screen.findByRole("heading", {
+      name: "Your brief is in. We’ll take it from here.",
+    });
+    expect(screen.getByText("Application received")).toBeVisible();
+    expect(
+      screen.getByText(/we’ll contact you via Email to plan the session/i),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: /see what Squid can build/i }),
+    ).toHaveAttribute("href", "/gallery");
+    expect(
+      screen.queryByRole("button", { name: /apply to partner/i }),
+    ).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledOnce();
     const [, request] = fetchMock.mock.calls[0];
     expect(JSON.parse(String(request?.body))).toMatchObject({
@@ -92,37 +115,38 @@ describe("design partner homepage surface", () => {
     );
   });
 
-  it("shows clear field guidance and focuses the first invalid field", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          message:
-            "Some details need your attention. Review the fields marked below.",
-          issues: {
-            name: ["Name must be at least 2 characters."],
-            email: ["Enter a valid email address."],
-            role: ["Choose your role."],
-          },
-        }),
-        { status: 400 },
-      ),
-    );
+  it("shows clear guidance and focuses the first invalid question", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch");
     render(<DesignPartnerSection />);
 
-    fireEvent.click(screen.getByRole("button", { name: /apply to partner/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     expect(
-      await screen.findByText(
-        "Some details need your attention. Review the fields marked below.",
-      ),
-    ).toBeVisible();
-    expect(
-      screen.getByText("Name must be at least 2 characters."),
+      await screen.findByText("Name must be at least 2 characters."),
     ).toBeVisible();
     expect(screen.getByText("Enter a valid email address.")).toBeVisible();
-    expect(screen.getByText("Choose your role.")).toBeVisible();
     await waitFor(() => expect(screen.getByLabelText(/^name/i)).toHaveFocus());
-    expect(screen.queryByText(/expected string/i)).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText(/step 01 of 05/i)).toBeVisible();
+  });
+
+  it("keeps answers when moving backward through the guided form", async () => {
+    render(<DesignPartnerSection />);
+
+    fireEvent.change(screen.getByLabelText(/^name/i), {
+      target: { value: "Avery Morgan" },
+    });
+    fireEvent.change(screen.getByLabelText(/work email/i), {
+      target: { value: "avery@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    fireEvent.click(await screen.findByRole("button", { name: /back/i }));
+
+    expect(await screen.findByLabelText(/^name/i)).toHaveValue("Avery Morgan");
+    expect(screen.getByLabelText(/work email/i)).toHaveValue(
+      "avery@example.com",
+    );
   });
 
   it("uses the enhanced loader while submitting", async () => {
@@ -131,6 +155,7 @@ describe("design partner homepage surface", () => {
     );
     const { container } = render(<DesignPartnerSection />);
 
+    await completeApplication();
     fireEvent.click(screen.getByRole("button", { name: /apply to partner/i }));
 
     expect(await screen.findByText("Submitting")).toBeVisible();

@@ -95,6 +95,7 @@ import {
   buildGalleryHeroImageDeck,
   type GalleryHeroImage,
 } from "@/features/gallery/client/hero-image-rotation";
+import { WorkflowMediaCard } from "@/components/homepage/workflow-media-card";
 
 const ApiSelectionDialog = dynamic(() =>
   import("@/features/integrations/components/api-selection-dialog").then(
@@ -149,6 +150,7 @@ const homepageNarrativeBlocks = [
     media: {
       video: "/launch/gifs/screenshot-to-app.mp4",
       poster: "/launch/gifs/screenshot-to-app-poster.png",
+      fallback: "create",
       alt: "Squid turning a visual reference into editable React code and a working responsive preview",
     },
   },
@@ -161,6 +163,7 @@ const homepageNarrativeBlocks = [
     media: {
       video: "/launch/gifs/plan-mode.mp4",
       poster: "/launch/gifs/plan-mode-poster.png",
+      fallback: "plan",
       alt: "Squid refining a product brief before updating the generated prototype",
     },
   },
@@ -173,6 +176,7 @@ const homepageNarrativeBlocks = [
     media: {
       video: "/launch/gifs/verify-and-export.mp4",
       poster: "/launch/gifs/verify-and-export-poster.png",
+      fallback: "verify",
       alt: "Squid detecting and repairing a runtime issue before opening verified ZIP and GitHub export options",
     },
   },
@@ -2525,50 +2529,18 @@ function HomepageWorkflowMedia({
   const titleId = `workflow-media-${block.stage}`;
 
   return (
-    <article
-      aria-labelledby={titleId}
-      className={`workflow-media-card relative overflow-hidden rounded-[24px] border border-border/70 bg-background/80 shadow-[0_18px_48px_-34px_rgba(0,0,0,0.55)] backdrop-blur ${className}`}
-    >
-      <div className="workflow-media-frame overflow-hidden">
-        {reduceMotion ? (
-          <Image
-            src={block.media.poster}
-            alt={block.media.alt}
-            width={1270}
-            height={760}
-            sizes="(min-width: 768px) 440px, calc(100vw - 2rem)"
-            className="block h-auto w-full"
-          />
-        ) : (
-          <video
-            className="block h-auto w-full"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            poster={block.media.poster}
-            aria-label={block.media.alt}
-            disablePictureInPicture
-            disableRemotePlayback
-            tabIndex={-1}
-          >
-            <source src={block.media.video} type="video/mp4" />
-          </video>
-        )}
-      </div>
-      <div className="border-t border-border/60 px-4 py-3.5 sm:px-5">
-        <h3
-          id={titleId}
-          className="text-sm font-medium leading-5 text-foreground/90"
-        >
-          {block.question}
-        </h3>
-        <p className="sr-only">
-          {block.label}. {block.body}
-        </p>
-      </div>
-    </article>
+    <WorkflowMediaCard
+      titleId={titleId}
+      title={block.question}
+      label={block.label}
+      description={block.body}
+      videoSrc={block.media.video}
+      posterSrc={block.media.poster}
+      alt={block.media.alt}
+      fallback={block.media.fallback}
+      className={className}
+      reduceMotion={reduceMotion}
+    />
   );
 }
 

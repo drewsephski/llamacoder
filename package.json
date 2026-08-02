@@ -22,6 +22,7 @@
     "lint": "eslint . && tsc --noEmit --noUnusedLocals",
     "typecheck": "tsc --noEmit",
     "validate:schema": "prisma validate",
+    "validate:model-pricing": "tsx scripts/validate-openrouter-pricing.ts",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",

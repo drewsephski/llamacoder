@@ -1,6 +1,6 @@
 import "server-only";
 
-import { generateText, Output } from "ai";
+import { generateText, Output, type LanguageModelUsage } from "ai";
 
 import {
   createPersistenceClassificationFallback,
@@ -32,7 +32,18 @@ Set requirements.authentication for per-user/private data or sign-in, requiremen
 Use the recent requests together: a later message can add persistence needs to an earlier static app or override an earlier UI-only decision. Keep the rationale short and concrete. Return at most four normalized entities, with the smallest useful field and relationship set for a real schema. Use field descriptions such as "title: text" or "completed_at: timestamp". Use an empty entity array only when persistence is not needed.`;
 
 export type PersistenceClassificationResult =
-  | { outcome: "classified"; intent: DataPersistenceIntent }
+  | {
+      outcome: "classified";
+      intent: DataPersistenceIntent;
+      telemetry?: {
+        usage: LanguageModelUsage;
+        finishReason: string;
+        providerMetadata?: unknown;
+        providerMetadataByStep: readonly unknown[];
+        providerRequestId?: string;
+        provider?: string;
+      };
+    }
   | { outcome: "fallback"; intent: DataPersistenceIntent; error: unknown };
 
 export async function classifyPersistenceIntent({
@@ -42,6 +53,7 @@ export async function classifyPersistenceIntent({
   abortSignal,
   timeoutMs = 8_000,
   maxAttempts = 2,
+  maxOutputTokens = 720,
   existingAppContext,
 }: {
   model: Parameters<typeof generateText>[0]["model"];
@@ -50,6 +62,7 @@ export async function classifyPersistenceIntent({
   abortSignal?: AbortSignal;
   timeoutMs?: number;
   maxAttempts?: number;
+  maxOutputTokens?: number;
   existingAppContext?: string;
 }): Promise<PersistenceClassificationResult> {
   const requests = recentUserRequests
@@ -83,6 +96,8 @@ export async function classifyPersistenceIntent({
         providerOptions,
         abortSignal,
         timeout: { totalMs: timeoutMs },
+        maxOutputTokens,
+        maxRetries: 1,
         output: Output.object({ schema: persistenceJudgmentSchema }),
         system: PERSISTENCE_CLASSIFIER_SYSTEM_PROMPT,
         prompt,
@@ -91,6 +106,16 @@ export async function classifyPersistenceIntent({
       return {
         outcome: "classified",
         intent: persistenceJudgmentToIntent(result.output),
+        telemetry: {
+          usage: result.totalUsage ?? result.usage,
+          finishReason: result.finishReason,
+          providerMetadata: result.providerMetadata,
+          providerMetadataByStep: (result.steps ?? []).map(
+            (step) => step.providerMetadata,
+          ),
+          providerRequestId: result.response?.id,
+          provider: result.steps?.at(-1)?.model.provider,
+        },
       };
     } catch (error) {
       lastError = error;
