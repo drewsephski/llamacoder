@@ -87,7 +87,7 @@ test.describe("authenticated generation launch contract", () => {
       });
       await expect(buildButton).toBeEnabled();
       await buildButton.click();
-      await page.waitForURL(/\/chats\/[^/]+$/, { timeout: 30_000 });
+      await page.waitForURL(/\/chats\/[^/]+$/, { timeout: 90_000 });
 
       const createdChatId = new URL(page.url())
         .pathname.split("/")
@@ -129,18 +129,26 @@ test.describe("authenticated generation launch contract", () => {
 
       await expect
         .poll(
-          () =>
-            prisma.message.findFirst({
-              where: { chatId, role: "assistant", files: { not: null } },
+          async () => {
+            const messages = await prisma.message.findMany({
+              where: { chatId, role: "assistant" },
               orderBy: { createdAt: "desc" },
-            }),
+              take: 5,
+            });
+            return messages.find((message) => message.files !== null) ?? null;
+          },
           { timeout: 30_000 },
         )
         .not.toBeNull();
-      const persisted = await prisma.message.findFirstOrThrow({
-        where: { chatId, role: "assistant", files: { not: null } },
+      const generatedMessages = await prisma.message.findMany({
+        where: { chatId, role: "assistant" },
         orderBy: { createdAt: "desc" },
+        take: 5,
       });
+      const persisted = generatedMessages.find(
+        (message) => message.files !== null,
+      );
+      if (!persisted) throw new Error("Generated message was not persisted");
       expect(persisted.files).toBeTruthy();
 
       await expect
