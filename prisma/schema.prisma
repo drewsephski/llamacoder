@@ -18,32 +18,39 @@ model GeneratedApp {
 }
 
 model Chat {
-  id                    String                       @id @default(nanoid(16))
-  model                 String
-  quality               String
-  prompt                String
-  title                 String
-  llamaCoderVersion     String                       @default("v2")
-  shadcn                Boolean
-  plan                  String?
-  appSpec               Json?
-  hasCode               Boolean                      @default(false)
-  generationStatus      String                       @default("idle")
-  generationStartedAt   DateTime?
-  sourceMessageId       String?
-  sourceChatId          String?
-  referrerUserId        String?
-  createdAt             DateTime                     @default(now())
-  userId                String?
-  user                  User?                        @relation(fields: [userId], references: [id])
-  messages              Message[]
-  projectIntegrations   ProjectIntegration[]
-  integrationOperations IntegrationOperation[]
-  generationRuns        GenerationRun[]
-  runtimeVerifications  RuntimeVerification[]
-  galleryPublication    GalleryPublication?
-  publicArtifacts       PublicArtifact[]
-  researchFeedback      ResearchFeedbackSubmission[]
+  id                     String                       @id @default(nanoid(16))
+  model                  String
+  quality                String
+  prompt                 String
+  title                  String
+  llamaCoderVersion      String                       @default("v2")
+  shadcn                 Boolean
+  plan                   String?
+  appSpec                Json?
+  hasCode                Boolean                      @default(false)
+  generationStatus       String                       @default("idle")
+  generationStartedAt    DateTime?
+  sourceMessageId        String?
+  sourceChatId           String?
+  referrerUserId         String?
+  acquisitionSource      String?
+  acquisitionMedium      String?
+  acquisitionCampaign    String?
+  acquisitionContent     String?
+  acquisitionTerm        String?
+  acquisitionReferrer    String?
+  acquisitionLandingPath String?
+  createdAt              DateTime                     @default(now())
+  userId                 String?
+  user                   User?                        @relation(fields: [userId], references: [id])
+  messages               Message[]
+  projectIntegrations    ProjectIntegration[]
+  integrationOperations  IntegrationOperation[]
+  generationRuns         GenerationRun[]
+  runtimeVerifications   RuntimeVerification[]
+  galleryPublication     GalleryPublication?
+  publicArtifacts        PublicArtifact[]
+  researchFeedback       ResearchFeedbackSubmission[]
 
   @@index([createdAt])
   @@index([userId])
@@ -51,6 +58,7 @@ model Chat {
   @@index([sourceMessageId])
   @@index([sourceChatId])
   @@index([referrerUserId])
+  @@index([acquisitionSource, createdAt])
 }
 
 model Message {
@@ -320,6 +328,37 @@ model ResearchFeedbackSubmission {
   @@index([chatId])
   @@index([status, createdAt])
   @@index([sheetSyncStatus, updatedAt])
+}
+
+model DesignPartnerApplication {
+  id                     String    @id @default(nanoid(16))
+  name                   String
+  email                  String
+  role                   String
+  companyName            String?
+  portfolioUrl           String?
+  projectSummary         String
+  timeline               String
+  preferredContact       String
+  permissionToContact    Boolean   @default(false)
+  status                 String    @default("new")
+  acquisitionSource      String?
+  acquisitionMedium      String?
+  acquisitionCampaign    String?
+  acquisitionContent     String?
+  acquisitionTerm        String?
+  acquisitionReferrer    String?
+  acquisitionLandingPath String?
+  notificationStatus     String    @default("pending")
+  notificationError      String?
+  notifiedAt             DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([email, createdAt])
+  @@index([status, createdAt])
+  @@index([acquisitionSource, createdAt])
+  @@index([notificationStatus, updatedAt])
 }
 
 model IntegrationConnection {

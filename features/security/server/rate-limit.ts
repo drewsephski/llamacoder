@@ -6,6 +6,7 @@ export type RateLimitOperation =
   | "checkout"
   | "completion"
   | "create_project"
+  | "design_partner"
   | "enhance_prompt"
   | "export"
   | "feedback"

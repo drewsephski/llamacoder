@@ -29,6 +29,10 @@ import { getIntegrationProvider } from "@/features/integrations/registry";
 import type { IntegrationProvider } from "@/features/integrations/registry";
 import { MAX_PROJECT_API_SELECTIONS } from "@/features/projects/contracts";
 import { getGenerationAvailability } from "@/lib/provider-controls";
+import {
+  acquisitionAttributionSchema,
+  acquisitionChatFields,
+} from "@/features/acquisition/contracts";
 
 const IMAGE_DATA_URL_PATTERN = new RegExp(
   `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
@@ -52,6 +56,7 @@ const createChatSchema = z.object({
     )
     .regex(IMAGE_DATA_URL_PATTERN, "Image must be a PNG, JPEG, or WebP file.")
     .optional(),
+  acquisition: acquisitionAttributionSchema.optional(),
 });
 
 function createFallbackTitle(prompt: string) {
@@ -97,6 +102,7 @@ export async function POST(request: NextRequest) {
       model,
       quality: requestedQuality,
       providerIds = [],
+      acquisition,
     } = parsed.data;
     const selectedModel = MODELS.find((m) => m.value === model);
 
@@ -230,6 +236,7 @@ export async function POST(request: NextRequest) {
           title: fallbackTitle,
           shadcn: true,
           userId: session.user.id,
+          ...acquisitionChatFields(acquisition),
           messages: {
             createMany: {
               data: [

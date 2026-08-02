@@ -13,7 +13,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updatedAt="July 27, 2026"
+      updatedAt="August 2, 2026"
       intro="This policy explains what Squid Agent collects, why it is used, and how product data is handled when you generate, preview, save, and export React apps."
       sections={[
         {
@@ -23,6 +23,7 @@ export default function PrivacyPage() {
             "Prompts, screenshots, and generated files are used to create and maintain your projects.",
             "Billing and credit records are used to show balances, usage history, and plan status.",
             "Analytics may include page paths, referrers, coarse location, browser and device attributes, and aggregate interaction events used to understand traffic and product reliability.",
+            "Design partner applications may include your contact information, role, company, portfolio URL, project brief, preferred contact method, timeline, and campaign attribution.",
           ],
         },
         {

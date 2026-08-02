@@ -75,6 +75,8 @@ import {
 import { captureWebsiteScreenshot } from "@/features/generation/client/screenshot-capture";
 import { getErrorMessage } from "@/features/shared/errors";
 import type { CreateProjectRequest } from "@/features/projects/contracts";
+import { readAcquisitionAttribution } from "@/features/acquisition/contracts";
+import { DesignPartnerBanner } from "@/features/design-partners/components/design-partner-banner";
 import {
   clearPendingProject,
   readPendingProject,
@@ -1486,6 +1488,7 @@ export function HomepageBuilderIsland({
     <>
       <div className="font-sans-dm relative flex min-h-svh w-full flex-col overflow-x-clip">
         <Header onHelpClick={() => setShowHelpPanel(true)} />
+        <DesignPartnerBanner />
 
         <main>
           <div className="hero-shell" data-testid="hero-shell">
@@ -1546,6 +1549,10 @@ export function HomepageBuilderIsland({
                         screenshotData,
                         screenshotUrl,
                         providerIds: selectedProviderIds,
+                        acquisition: readAcquisitionAttribution({
+                          url: new URL(window.location.href),
+                          referrer: document.referrer,
+                        }),
                       });
                       toast.info("Create an account to start building");
                       router.push(
@@ -1567,6 +1574,10 @@ export function HomepageBuilderIsland({
                       screenshotUrl,
                       screenshotData,
                       providerIds: selectedProviderIds,
+                      acquisition: readAcquisitionAttribution({
+                        url: new URL(window.location.href),
+                        referrer: document.referrer,
+                      }),
                     });
                     if (created) {
                       clearPendingProject();

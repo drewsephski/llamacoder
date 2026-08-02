@@ -11,6 +11,7 @@ const landingLinks = [
   { href: "/gallery", label: "Gallery" },
   { href: "/blog", label: "Blog" },
   { href: "/example", label: "Example" },
+  { href: "/#design-partner-program", label: "Design partner program" },
   { href: "/docs", label: "Docs" },
   { href: "/search", label: "Search" },
   { href: "/prisma", label: "Creative React example" },

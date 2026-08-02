@@ -2,6 +2,7 @@ import Footer from "@/components/footer";
 import { ProductWorkflowDemo } from "@/components/homepage/product-workflow-demo";
 import { HomepageScrollStatement } from "@/components/homepage/scroll-statement";
 import HoverBrandLogo from "@/components/ui/hover-brand-logo";
+import { DesignPartnerSection } from "@/features/design-partners/components/design-partner-section";
 import { HomepageBuilderIsland } from "@/features/marketing/components/homepage-builder-island";
 import {
   HomepageBuiltWithSquidSection,
@@ -37,6 +38,7 @@ export default function Home() {
         <HomepageLandingPagesSection />
         <HomepageResearchSection />
         <HomepageBuiltWithSquidSection />
+        <DesignPartnerSection />
         <HomepageFaqSection />
         <HoverBrandLogo />
       </HomepageBuilderIsland>

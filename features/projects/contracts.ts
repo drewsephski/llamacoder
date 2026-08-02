@@ -8,6 +8,7 @@ import {
   MAX_SCREENSHOT_SIZE_MB,
 } from "@/lib/constants";
 import type { GenerationRecoveryMode } from "@/features/generation/recovery";
+import { acquisitionAttributionSchema } from "@/features/acquisition/contracts";
 
 const imageDataUrlPattern = new RegExp(
   `^data:(${ACCEPTED_SCREENSHOT_MIME_TYPES.join("|")});base64,`,
@@ -33,6 +34,7 @@ export const createProjectRequestSchema = z.object({
     )
     .regex(imageDataUrlPattern, "Image must be a PNG, JPEG, or WebP file.")
     .optional(),
+  acquisition: acquisitionAttributionSchema.optional(),
 });
 
 export type CreateProjectRequest = z.infer<typeof createProjectRequestSchema>;

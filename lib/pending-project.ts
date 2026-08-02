@@ -9,6 +9,15 @@ export type PendingProject = {
   providerIds?: string[];
   screenshotUrl?: string;
   screenshotData?: string;
+  acquisition?: {
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    content?: string;
+    term?: string;
+    referrer?: string;
+    landingPath?: string;
+  };
 };
 
 export function savePendingProject(project: PendingProject) {
