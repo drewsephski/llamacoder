@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/axion-studio/layout,_N_T_/axion-studio/page,_N_T_/axion-studio"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/axion-studio/__PAGE__",
+    "/axion-studio",
+    "/_index",
+    "/_head"
+  ]
+}

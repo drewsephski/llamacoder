@@ -1,0 +1,3 @@
+{
+  "/api/integrations/oauth/[provider]/start/route": "app/api/integrations/oauth/[provider]/start/route.js"
+}

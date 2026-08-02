@@ -64,7 +64,9 @@ export function buildFinalGenerationFiles({
   generatedText,
 }: {
   requestMessage: Pick<Message, "id" | "files" | "position">;
-  messages: Array<Pick<Message, "id" | "role" | "content" | "files" | "position">>;
+  messages: Array<
+    Pick<Message, "id" | "role" | "content" | "files" | "position">
+  >;
   generatedText: string;
 }) {
   const metadata = requestMessage.files as GenerationRequestMetadata | null;
@@ -237,15 +239,10 @@ export async function finalizeOwnedGenerationRun({
           files,
           { generationRunId: run.id },
         )
-      : await saveStreamedAssistantMessage(
-          run.chatId,
-          run.partialText,
-          files,
-          {
-            creditHoldId: run.creditHoldId ?? undefined,
-            generationRunId: run.id,
-          },
-        );
+      : await saveStreamedAssistantMessage(run.chatId, run.partialText, files, {
+          creditHoldId: run.creditHoldId ?? undefined,
+          generationRunId: run.id,
+        });
   } catch (error) {
     await prisma.generationRun.updateMany({
       where: {
@@ -292,7 +289,9 @@ export async function persistInitialGenerationResult({
         role: "assistant",
         content,
         files: generatedFiles.length
-          ? (JSON.parse(JSON.stringify(generatedFiles)) as Prisma.InputJsonValue)
+          ? (JSON.parse(
+              JSON.stringify(generatedFiles),
+            ) as Prisma.InputJsonValue)
           : undefined,
         chatId: chat.id,
         position: 2,

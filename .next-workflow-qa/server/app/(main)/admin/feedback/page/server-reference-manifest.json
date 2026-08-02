@@ -1,0 +1,29 @@
+{
+  "node": {
+    "4031b2409051f2d61e0176567b6e01ec53deedb859": {
+      "workers": {
+        "app/(main)/admin/feedback/page": {
+          "moduleId": 888322,
+          "async": false,
+          "exportedName": "retryResearchFeedbackDeliveryAction",
+          "filename": "features/feedback/server/admin-actions.ts"
+        }
+      },
+      "exportedName": "retryResearchFeedbackDeliveryAction",
+      "filename": "features/feedback/server/admin-actions.ts"
+    },
+    "40964dd997a670d728924cadefae531f5a115e8e3e": {
+      "workers": {
+        "app/(main)/admin/feedback/page": {
+          "moduleId": 888322,
+          "async": false,
+          "exportedName": "reviewResearchFeedbackAction",
+          "filename": "features/feedback/server/admin-actions.ts"
+        }
+      },
+      "exportedName": "reviewResearchFeedbackAction",
+      "filename": "features/feedback/server/admin-actions.ts"
+    }
+  },
+  "edge": {}
+}

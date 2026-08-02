@@ -1,0 +1,3 @@
+{
+  "/api/get-next-completion-stream-promise/route": "app/api/get-next-completion-stream-promise/route.js"
+}

@@ -671,10 +671,7 @@ export async function createValidationRepairMessage(
   const registryFiles = normalizeGeneratedFiles(
     parseStoredGeneratedFiles(sourceRequestMetadata?.registryFiles),
   );
-  const normalizedFiles = normalizeGeneratedFiles([
-    ...files,
-    ...registryFiles,
-  ]);
+  const normalizedFiles = normalizeGeneratedFiles([...files, ...registryFiles]);
   const diagnostics = await getGeneratedAppContractDiagnostics(
     prisma,
     chatId,

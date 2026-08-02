@@ -711,16 +711,7 @@ export async function POST(req: Request) {
           executionModel,
           executionQuality,
         );
-        let telemetry = createRequestTelemetry({
-          userId: session.user.id,
-          chatId: message.chatId,
-          messageId,
-          modelId: executionModel,
-          creditHoldId: holdId,
-          requestKind: isFreeRepairRequest ? "free_repair" : "generation",
-          quality: executionQuality,
-          reasoning,
-        });
+        let telemetry: ReturnType<typeof createRequestTelemetry> | undefined;
         let lastSnapshotLength = 0;
         const persistTerminalFailure = async ({
           error,
@@ -1337,9 +1328,13 @@ export async function POST(req: Request) {
 
               await orchestrationTelemetry.record({
                 status: "completed",
-                usage: orchestrationResult.usage,
+                usage:
+                  orchestrationResult.totalUsage ?? orchestrationResult.usage,
                 finishReason: orchestrationResult.finishReason,
                 providerMetadata: orchestrationResult.providerMetadata,
+                providerMetadataByStep: (orchestrationResult.steps ?? []).map(
+                  (step) => step.providerMetadata,
+                ),
                 providerRequestId: orchestrationResult.response?.id,
               });
             } catch (error) {
@@ -1455,6 +1450,7 @@ export async function POST(req: Request) {
             quality: executionQuality,
             reasoning,
           });
+          const activeTelemetry = telemetry;
           if (isCodeGeneration) {
             // System prompts are persisted with chats for reproducibility, but
             // code generation should always use the current safety and design
@@ -1875,11 +1871,16 @@ export async function POST(req: Request) {
           );
 
           const result = streamText({
-            model: createOpenRouterModel(openrouter, codegenModel, {
-              usage: { include: true },
-            }, {
-              sort: isCodeGeneration ? "throughput" : "latency",
-            }),
+            model: createOpenRouterModel(
+              openrouter,
+              codegenModel,
+              {
+                usage: { include: true },
+              },
+              {
+                sort: isCodeGeneration ? "throughput" : "latency",
+              },
+            ),
             maxOutputTokens: isCodeGeneration
               ? GENERATED_CODE_MAX_TOKENS
               : 4_000,
@@ -1945,7 +1946,7 @@ export async function POST(req: Request) {
                 chunk.type === "reasoning-delta" ||
                 chunk.type === "text-delta"
               ) {
-                telemetry.markChunk(chunk.type);
+                activeTelemetry.markChunk(chunk.type);
               }
               if (chunk.type === "text-delta") {
                 persistedPartialText += chunk.text;
@@ -1962,6 +1963,7 @@ export async function POST(req: Request) {
               }
             },
             async onFinish({
+              usage,
               totalUsage,
               finishReason,
               providerMetadata,
@@ -1969,6 +1971,8 @@ export async function POST(req: Request) {
               response,
               model: completedModel,
             }) {
+              const aggregateUsage = totalUsage ?? usage;
+              const completedSteps = steps ?? [];
               const hasOutput = persistedPartialText.trim().length > 0;
               if (!hasOutput) {
                 const emptyOutputError = new Error(
@@ -1976,13 +1980,13 @@ export async function POST(req: Request) {
                     ? "The model provider failed before returning a response."
                     : "The model completed without returning an answer.",
                 );
-                await telemetry.record({
+                await activeTelemetry.record({
                   status: "error",
                   error: emptyOutputError,
-                  usage: totalUsage,
+                  usage: aggregateUsage,
                   finishReason,
                   providerMetadata,
-                  providerMetadataByStep: steps.map(
+                  providerMetadataByStep: completedSteps.map(
                     (step) => step.providerMetadata,
                   ),
                   providerRequestId: response?.id,
@@ -2013,12 +2017,12 @@ export async function POST(req: Request) {
                   .filter(Boolean)
                   .join("\n\n");
               }
-              await telemetry.record({
+              await activeTelemetry.record({
                 status: finishReason === "error" ? "error" : "completed",
-                usage: totalUsage,
+                usage: aggregateUsage,
                 finishReason,
                 providerMetadata,
-                providerMetadataByStep: steps.map(
+                providerMetadataByStep: completedSteps.map(
                   (step) => step.providerMetadata,
                 ),
                 providerRequestId: response?.id,
@@ -2058,13 +2062,13 @@ export async function POST(req: Request) {
                     generationRunId: generationRun.id,
                     model: codegenModel,
                     outputCharacters: persistedPartialText.length,
-                    researchStepCount: steps.length,
+                    researchStepCount: completedSteps.length,
                   },
                 });
               }
             },
             async onAbort() {
-              await telemetry.record({ status: "aborted" });
+              await activeTelemetry.record({ status: "aborted" });
               await persistTerminalFailure({
                 error: new Error(
                   "The connection closed before the result was saved.",
@@ -2077,7 +2081,7 @@ export async function POST(req: Request) {
                 "OpenRouter streaming error:",
                 getAIErrorMessage(error),
               );
-              await telemetry.record({ status: "error", error });
+              await activeTelemetry.record({ status: "error", error });
               await recordOperationalEvent({
                 name: "generation_failed",
                 level: "error",
@@ -2104,7 +2108,7 @@ export async function POST(req: Request) {
             .pipeThrough(
               new TransformStream({
                 transform(event, controller) {
-                  telemetry.markFirstByte();
+                  activeTelemetry.markFirstByte();
                   controller.enqueue(event);
                 },
               }),
@@ -2112,7 +2116,7 @@ export async function POST(req: Request) {
 
           writer.merge(observedStream);
         } catch (error) {
-          await telemetry.record({ status: "error", error });
+          await telemetry?.record({ status: "error", error });
           await persistTerminalFailure({ error });
           await recordOperationalEvent({
             name: "generation_failed",

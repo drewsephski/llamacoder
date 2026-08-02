@@ -36,6 +36,13 @@ vi.mock("@/features/security/server/rate-limit", () => ({
   consumeRateLimit: consumeRateLimitMock,
 }));
 
+vi.mock("@/features/generation/server/request-telemetry", () => ({
+  createRequestTelemetry: vi.fn(() => ({
+    markFirstByte: vi.fn(),
+    record: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 import { POST } from "@/app/api/enhance-prompt/route";
 
 function request(body: unknown) {
@@ -91,6 +98,14 @@ describe("POST /api/enhance-prompt", () => {
       expect.objectContaining({
         userId: "user_1",
         operation: "enhance_prompt",
+      }),
+    );
+    expect(generateTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxOutputTokens: 4_096,
+        maxRetries: 1,
+        timeout: { totalMs: 15_000 },
+        abortSignal: expect.any(AbortSignal),
       }),
     );
   });

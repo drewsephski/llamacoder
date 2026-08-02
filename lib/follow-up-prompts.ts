@@ -1,5 +1,6 @@
 import "server-only";
 
+import { Output } from "ai";
 import { z } from "zod";
 import { FREE_MODEL } from "@/lib/constants";
 import {
@@ -204,12 +205,14 @@ export async function generateFollowUpPrompts({
         }),
         providerOptions: getOpenRouterProviderOptions(FREE_MODEL),
         temperature: 0.5,
+        output: Output.object({ schema: followUpPromptsSchema }),
         system: dedentSystemPrompt(previousContext),
         prompt: buildPromptContext({ chat, assistantContent, files }),
       },
     });
 
-    const allCandidates = parsePromptsJson(response.text);
+    const parsedOutput = followUpPromptsSchema.safeParse(response.output);
+    const allCandidates = parsedOutput.success ? parsedOutput.data.prompts : [];
 
     const ranked = allCandidates
       .map((candidate) => ({
@@ -314,22 +317,6 @@ function buildPromptContext({
     ].join("\n"),
     MAX_CONTEXT_LENGTH,
   );
-}
-
-function parsePromptsJson(text: string): string[] {
-  const trimmed = text.trim();
-  const jsonText =
-    trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1]?.trim() || trimmed;
-
-  try {
-    const json = JSON.parse(jsonText);
-    if (Array.isArray(json)) return json.filter((p) => typeof p === "string");
-
-    const parsed = followUpPromptsSchema.safeParse(json);
-    return parsed.success ? parsed.data.prompts : [];
-  } catch {
-    return [];
-  }
 }
 
 /**

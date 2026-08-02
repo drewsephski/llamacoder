@@ -1,0 +1,3778 @@
+module.exports=[644799,(a,b,c)=>{"use strict";Object.defineProperty(c,"__esModule",{value:!0});class d{constructor(a,b,c){this.line=void 0,this.column=void 0,this.index=void 0,this.line=a,this.column=b,this.index=c}}class e{constructor(a,b){this.start=void 0,this.end=void 0,this.filename=void 0,this.identifierName=void 0,this.start=a,this.end=b}}function f(a,b){let{line:c,column:e,index:f}=a;return new d(c,e+b,f+b)}let g="BABEL_PARSER_SOURCETYPE_MODULE_REQUIRED",h={ArrayPattern:"array destructuring pattern",AssignmentExpression:"assignment expression",AssignmentPattern:"assignment expression",ArrowFunctionExpression:"arrow function expression",ConditionalExpression:"conditional expression",CatchClause:"catch clause",ForOfStatement:"for-of statement",ForInStatement:"for-in statement",ForStatement:"for-loop",FormalParameters:"function parameter list",Identifier:"identifier",ImportSpecifier:"import specifier",ImportDefaultSpecifier:"import default specifier",ImportNamespaceSpecifier:"import namespace specifier",ObjectPattern:"object destructuring pattern",ParenthesizedExpression:"parenthesized expression",RestElement:"rest element",UpdateExpression:{true:"prefix operation",false:"postfix operation"},VariableDeclarator:"variable declaration",YieldExpression:"yield expression"},i=a=>"UpdateExpression"===a.type?h.UpdateExpression[`${a.prefix}`]:h[a.type],j=new Set(["ArrowFunctionExpression","AssignmentExpression","ConditionalExpression","YieldExpression"]);var k=Object.assign({PipeBodyIsTighter:"Unexpected yield after pipeline body; any yield expression acting as Hack-style pipe body must be parenthesized due to its loose operator precedence.",PipeTopicRequiresHackPipes:'Topic reference is used, but the pipelineOperator plugin was not passed a "proposal": "hack" or "smart" option.',PipeTopicUnbound:"Topic reference is unbound; it must be inside a pipe body.",PipeTopicUnconfiguredToken:({token:a})=>`Invalid topic token ${a}. In order to use ${a} as a topic reference, the pipelineOperator plugin must be configured with { "proposal": "hack", "topicToken": "${a}" }.`,PipeTopicUnused:"Hack-style pipe body does not contain a topic reference; Hack-style pipes must use topic at least once.",PipeUnparenthesizedBody:({type:a})=>`Hack-style pipe body cannot be an unparenthesized ${i({type:a})}; please wrap it in parentheses.`},{PipelineBodyNoArrow:'Unexpected arrow "=>" after pipeline body; arrow function in pipeline body must be parenthesized.',PipelineBodySequenceExpression:"Pipeline body may not be a comma-separated sequence expression.",PipelineHeadSequenceExpression:"Pipeline head should not be a comma-separated sequence expression.",PipelineTopicUnused:"Pipeline is in topic style but does not use topic reference.",PrimaryTopicNotAllowed:"Topic reference was used in a lexical context without topic binding.",PrimaryTopicRequiresSmartPipeline:'Topic reference is used, but the pipelineOperator plugin was not passed a "proposal": "hack" or "smart" option.'});let l=["message"];function m(a,b,c){Object.defineProperty(a,b,{enumerable:!1,configurable:!0,value:c})}function n(a,b){if(Array.isArray(a))return b=>n(b,a[0]);let c={};for(let e of Object.keys(a)){let f=a[e],g="string"==typeof f?{message:()=>f}:"function"==typeof f?{message:f}:f,{message:h}=g,i=function(a,b){if(null==a)return{};var c={};for(var d in a)if(({}).hasOwnProperty.call(a,d)){if(-1!==b.indexOf(d))continue;c[d]=a[d]}return c}(g,l),j="string"==typeof h?()=>h:h;c[e]=function({toMessage:a,code:b,reasonCode:c,syntaxPlugin:e}){let f="MissingPlugin"===c||"MissingOneOfPlugins"===c,g={AccessorCannotDeclareThisParameter:"AccesorCannotDeclareThisParameter",AccessorCannotHaveTypeParameters:"AccesorCannotHaveTypeParameters",ConstInitializerMustBeStringOrNumericLiteralOrLiteralEnumReference:"ConstInitiailizerMustBeStringOrNumericLiteralOrLiteralEnumReference",SetAccessorCannotHaveOptionalParameter:"SetAccesorCannotHaveOptionalParameter",SetAccessorCannotHaveRestParameter:"SetAccesorCannotHaveRestParameter",SetAccessorCannotHaveReturnType:"SetAccesorCannotHaveReturnType"};return g[c]&&(c=g[c]),function g(h,i){let j=SyntaxError();return j.code=b,j.reasonCode=c,j.loc=h,j.pos=h.index,j.syntaxPlugin=e,f&&(j.missingPlugin=i.missingPlugin),m(j,"clone",function(a={}){var b;let{line:c,column:e,index:f}=null!=(b=a.loc)?b:h;return g(new d(c,e,f),Object.assign({},i,a.details))}),m(j,"details",i),Object.defineProperty(j,"message",{configurable:!0,get(){let b=`${a(i)} (${h.line}:${h.column})`;return this.message=b,b},set(a){Object.defineProperty(this,"message",{value:a,writable:!0})}}),j}}(Object.assign({code:"BABEL_PARSER_SYNTAX_ERROR",reasonCode:e,toMessage:j},b?{syntaxPlugin:b}:{},i))}return c}let o=Object.assign({},n({ImportMetaOutsideModule:{message:"import.meta may appear only with 'sourceType: \"module\"'",code:g},ImportOutsideModule:{message:"'import' and 'export' may appear only with 'sourceType: \"module\"'",code:g}}),n({AccessorIsGenerator:({kind:a})=>`A ${a}ter cannot be a generator.`,ArgumentsInClass:"'arguments' is only allowed in functions and class methods.",AsyncFunctionInSingleStatementContext:"Async functions can only be declared at the top level or inside a block.",AwaitBindingIdentifier:"Can not use 'await' as identifier inside an async function.",AwaitBindingIdentifierInStaticBlock:"Can not use 'await' as identifier inside a static block.",AwaitExpressionFormalParameter:"'await' is not allowed in async function parameters.",AwaitUsingNotInAsyncContext:"'await using' is only allowed within async functions and at the top levels of modules.",AwaitNotInAsyncContext:"'await' is only allowed within async functions and at the top levels of modules.",BadGetterArity:"A 'get' accessor must not have any formal parameters.",BadSetterArity:"A 'set' accessor must have exactly one formal parameter.",BadSetterRestParameter:"A 'set' accessor function argument must not be a rest parameter.",ConstructorClassField:"Classes may not have a field named 'constructor'.",ConstructorClassPrivateField:"Classes may not have a private field named '#constructor'.",ConstructorIsAccessor:"Class constructor may not be an accessor.",ConstructorIsAsync:"Constructor can't be an async function.",ConstructorIsGenerator:"Constructor can't be a generator.",DeclarationMissingInitializer:({kind:a})=>`Missing initializer in ${a} declaration.`,DecoratorArgumentsOutsideParentheses:"Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'.",DecoratorBeforeExport:"Decorators must be placed *before* the 'export' keyword. Remove the 'decoratorsBeforeExport: true' option to use the 'export @decorator class {}' syntax.",DecoratorsBeforeAfterExport:"Decorators can be placed *either* before or after the 'export' keyword, but not in both locations at the same time.",DecoratorConstructor:"Decorators can't be used with a constructor. Did you mean '@dec class { ... }'?",DecoratorExportClass:"Decorators must be placed *after* the 'export' keyword. Remove the 'decoratorsBeforeExport: false' option to use the '@decorator export class {}' syntax.",DecoratorSemicolon:"Decorators must not be followed by a semicolon.",DecoratorStaticBlock:"Decorators can't be used with a static block.",DeferImportRequiresNamespace:'Only `import defer * as x from "./module"` is valid.',DeletePrivateField:"Deleting a private field is not allowed.",DestructureNamedImport:"ES2015 named imports do not destructure. Use another statement for destructuring after the import.",DuplicateConstructor:"Duplicate constructor in the same class.",DuplicateDefaultExport:"Only one default export allowed per module.",DuplicateExport:({exportName:a})=>`\`${a}\` has already been exported. Exported identifiers must be unique.`,DuplicateProto:"Redefinition of __proto__ property.",DuplicateRegExpFlags:"Duplicate regular expression flag.",ElementAfterRest:"Rest element must be last element.",EscapedCharNotAnIdentifier:"Invalid Unicode escape.",ExportBindingIsString:({localName:a,exportName:b})=>`A string literal cannot be used as an exported binding without \`from\`.
+- Did you mean \`export { '${a}' as '${b}' } from 'some-module'\`?`,ExportDefaultFromAsIdentifier:"'from' is not allowed as an identifier after 'export default'.",ForInOfLoopInitializer:({type:a})=>`'${"ForInStatement"===a?"for-in":"for-of"}' loop variable declaration may not have an initializer.`,ForInUsing:"For-in loop may not start with 'using' declaration.",ForOfAsync:"The left-hand side of a for-of loop may not be 'async'.",ForOfLet:"The left-hand side of a for-of loop may not start with 'let'.",GeneratorInSingleStatementContext:"Generators can only be declared at the top level or inside a block.",IllegalBreakContinue:({type:a})=>`Unsyntactic ${"BreakStatement"===a?"break":"continue"}.`,IllegalLanguageModeDirective:"Illegal 'use strict' directive in function with non-simple parameter list.",IllegalReturn:"'return' outside of function.",ImportAttributesUseAssert:"The `assert` keyword in import attributes is deprecated and it has been replaced by the `with` keyword. You can enable the `deprecatedImportAssert` parser plugin to suppress this error.",ImportBindingIsString:({importName:a})=>`A string literal cannot be used as an imported binding.
+- Did you mean \`import { "${a}" as foo }\`?`,ImportCallArity:"`import()` requires exactly one or two arguments.",ImportCallNotNewExpression:"Cannot use new with import(...).",ImportCallSpreadArgument:"`...` is not allowed in `import()`.",ImportJSONBindingNotDefault:"A JSON module can only be imported with `default`.",ImportReflectionHasAssertion:"`import module x` cannot have assertions.",ImportReflectionNotBinding:'Only `import module x from "./module"` is valid.',IncompatibleRegExpUVFlags:"The 'u' and 'v' regular expression flags cannot be enabled at the same time.",InvalidBigIntLiteral:"Invalid BigIntLiteral.",InvalidCodePoint:"Code point out of bounds.",InvalidCoverDiscardElement:"'void' must be followed by an expression when not used in a binding position.",InvalidCoverInitializedName:"Invalid shorthand property initializer.",InvalidDecimal:"Invalid decimal.",InvalidDigit:({radix:a})=>`Expected number in radix ${a}.`,InvalidEscapeSequence:"Bad character escape sequence.",InvalidEscapeSequenceTemplate:"Invalid escape sequence in template.",InvalidEscapedReservedWord:({reservedWord:a})=>`Escape sequence in keyword ${a}.`,InvalidIdentifier:({identifierName:a})=>`Invalid identifier ${a}.`,InvalidLhs:({ancestor:a})=>`Invalid left-hand side in ${i(a)}.`,InvalidLhsBinding:({ancestor:a})=>`Binding invalid left-hand side in ${i(a)}.`,InvalidLhsOptionalChaining:({ancestor:a})=>`Invalid optional chaining in the left-hand side of ${i(a)}.`,InvalidNumber:"Invalid number.",InvalidOrMissingExponent:"Floating-point numbers require a valid exponent after the 'e'.",InvalidOrUnexpectedToken:({unexpected:a})=>`Unexpected character '${a}'.`,InvalidParenthesizedAssignment:"Invalid parenthesized assignment pattern.",InvalidPrivateFieldResolution:({identifierName:a})=>`Private name #${a} is not defined.`,InvalidPropertyBindingPattern:"Binding member expression.",InvalidRecordProperty:"Only properties and spread elements are allowed in record definitions.",InvalidRestAssignmentPattern:"Invalid rest operator's argument.",LabelRedeclaration:({labelName:a})=>`Label '${a}' is already declared.`,LetInLexicalBinding:"'let' is disallowed as a lexically bound name.",LineTerminatorBeforeArrow:"No line break is allowed before '=>'.",MalformedRegExpFlags:"Invalid regular expression flag.",MissingClassName:"A class name is required.",MissingEqInAssignment:"Only '=' operator can be used for specifying default value.",MissingSemicolon:"Missing semicolon.",MissingPlugin:({missingPlugin:a})=>`This experimental syntax requires enabling the parser plugin: ${a.map(a=>JSON.stringify(a)).join(", ")}.`,MissingOneOfPlugins:({missingPlugin:a})=>`This experimental syntax requires enabling one of the following parser plugin(s): ${a.map(a=>JSON.stringify(a)).join(", ")}.`,MissingUnicodeEscape:"Expecting Unicode escape sequence \\uXXXX.",MixingCoalesceWithLogical:"Nullish coalescing operator(??) requires parens when mixing with logical operators.",ModuleAttributeDifferentFromType:"The only accepted module attribute is `type`.",ModuleAttributeInvalidValue:"Only string literals are allowed as module attribute values.",ModuleAttributesWithDuplicateKeys:({key:a})=>`Duplicate key "${a}" is not allowed in module attributes.`,ModuleExportNameHasLoneSurrogate:({surrogateCharCode:a})=>`An export name cannot include a lone surrogate, found '\\u${a.toString(16)}'.`,ModuleExportUndefined:({localName:a})=>`Export '${a}' is not defined.`,MultipleDefaultsInSwitch:"Multiple default clauses.",NewlineAfterThrow:"Illegal newline after throw.",NoCatchOrFinally:"Missing catch or finally clause.",NumberIdentifier:"Identifier directly after number.",NumericSeparatorInEscapeSequence:"Numeric separators are not allowed inside unicode escape sequences or hex escape sequences.",ObsoleteAwaitStar:"'await*' has been removed from the async functions proposal. Use Promise.all() instead.",OptionalChainingNoNew:"Constructors in/after an Optional Chain are not allowed.",OptionalChainingNoTemplate:"Tagged Template Literals are not allowed in optionalChain.",OverrideOnConstructor:"'override' modifier cannot appear on a constructor declaration.",ParamDupe:"Argument name clash.",PatternHasAccessor:"Object pattern can't contain getter or setter.",PatternHasMethod:"Object pattern can't contain methods.",PrivateInExpectedIn:({identifierName:a})=>`Private names are only allowed in property accesses (\`obj.#${a}\`) or in \`in\` expressions (\`#${a} in obj\`).`,PrivateNameRedeclaration:({identifierName:a})=>`Duplicate private name #${a}.`,RecordExpressionBarIncorrectEndSyntaxType:"Record expressions ending with '|}' are only allowed when the 'syntaxType' option of the 'recordAndTuple' plugin is set to 'bar'.",RecordExpressionBarIncorrectStartSyntaxType:"Record expressions starting with '{|' are only allowed when the 'syntaxType' option of the 'recordAndTuple' plugin is set to 'bar'.",RecordExpressionHashIncorrectStartSyntaxType:"Record expressions starting with '#{' are only allowed when the 'syntaxType' option of the 'recordAndTuple' plugin is set to 'hash'.",RecordNoProto:"'__proto__' is not allowed in Record expressions.",RestTrailingComma:"Unexpected trailing comma after rest element.",SloppyFunction:"In non-strict mode code, functions can only be declared at top level or inside a block.",SloppyFunctionAnnexB:"In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement.",SourcePhaseImportRequiresDefault:'Only `import source x from "./module"` is valid.',StaticPrototype:"Classes may not have static property named prototype.",SuperNotAllowed:"`super()` is only valid inside a class constructor of a subclass. Maybe a typo in the method name ('constructor') or not extending another class?",SuperPrivateField:"Private fields can't be accessed on super.",TrailingDecorator:"Decorators must be attached to a class element.",TupleExpressionBarIncorrectEndSyntaxType:"Tuple expressions ending with '|]' are only allowed when the 'syntaxType' option of the 'recordAndTuple' plugin is set to 'bar'.",TupleExpressionBarIncorrectStartSyntaxType:"Tuple expressions starting with '[|' are only allowed when the 'syntaxType' option of the 'recordAndTuple' plugin is set to 'bar'.",TupleExpressionHashIncorrectStartSyntaxType:"Tuple expressions starting with '#[' are only allowed when the 'syntaxType' option of the 'recordAndTuple' plugin is set to 'hash'.",UnexpectedArgumentPlaceholder:"Unexpected argument placeholder.",UnexpectedAwaitAfterPipelineBody:'Unexpected "await" after pipeline body; await must have parentheses in minimal proposal.',UnexpectedDigitAfterHash:"Unexpected digit after hash token.",UnexpectedImportExport:"'import' and 'export' may only appear at the top level.",UnexpectedKeyword:({keyword:a})=>`Unexpected keyword '${a}'.`,UnexpectedLeadingDecorator:"Leading decorators must be attached to a class declaration.",UnexpectedLexicalDeclaration:"Lexical declaration cannot appear in a single-statement context.",UnexpectedNewTarget:"`new.target` can only be used in functions or class properties.",UnexpectedNumericSeparator:"A numeric separator is only allowed between two digits.",UnexpectedPrivateField:"Unexpected private name.",UnexpectedReservedWord:({reservedWord:a})=>`Unexpected reserved word '${a}'.`,UnexpectedSuper:"'super' is only allowed in object methods and classes.",UnexpectedToken:({expected:a,unexpected:b})=>`Unexpected token${b?` '${b}'.`:""}${a?`, expected "${a}"`:""}`,UnexpectedTokenUnaryExponentiation:"Illegal expression. Wrap left hand side or entire exponentiation in parentheses.",UnexpectedUsingDeclaration:"Using declaration cannot appear in the top level when source type is `script` or in the bare case statement.",UnexpectedVoidPattern:"Unexpected void binding.",UnsupportedBind:"Binding should be performed on object property.",UnsupportedDecoratorExport:"A decorated export must export a class declaration.",UnsupportedDefaultExport:"Only expressions, functions or classes are allowed as the `default` export.",UnsupportedImport:"`import` can only be used in `import()` or `import.meta`.",UnsupportedMetaProperty:({target:a,onlyValidPropertyName:b})=>`The only valid meta property for ${a} is ${a}.${b}.`,UnsupportedParameterDecorator:"Decorators cannot be used to decorate parameters.",UnsupportedPropertyDecorator:"Decorators cannot be used to decorate object literal properties.",UnsupportedSuper:"'super' can only be used with function calls (i.e. super()) or in property accesses (i.e. super.prop or super[prop]).",UnterminatedComment:"Unterminated comment.",UnterminatedRegExp:"Unterminated regular expression.",UnterminatedString:"Unterminated string constant.",UnterminatedTemplate:"Unterminated template.",UsingDeclarationExport:"Using declaration cannot be exported.",UsingDeclarationHasBindingPattern:"Using declaration cannot have destructuring patterns.",VarRedeclaration:({identifierName:a})=>`Identifier '${a}' has already been declared.`,VoidPatternCatchClauseParam:"A void binding can not be the catch clause parameter. Use `try { ... } catch { ... }` if you want to discard the caught error.",VoidPatternInitializer:"A void binding may not have an initializer.",YieldBindingIdentifier:"Can not use 'yield' as identifier inside a generator.",YieldInParameter:"Yield expression is not allowed in formal parameters.",YieldNotInGeneratorFunction:"'yield' is only allowed within generator functions.",ZeroDigitNumericSeparator:"Numeric separator can not be used after leading 0."}),n({StrictDelete:"Deleting local variable in strict mode.",StrictEvalArguments:({referenceName:a})=>`Assigning to '${a}' in strict mode.`,StrictEvalArgumentsBinding:({bindingName:a})=>`Binding '${a}' in strict mode.`,StrictFunction:"In strict mode code, functions can only be declared at top level or inside a block.",StrictNumericEscape:"The only valid numeric escape in strict mode is '\\0'.",StrictOctalLiteral:"Legacy octal literals are not allowed in strict mode.",StrictWith:"'with' in strict mode."}),n({ParseExpressionEmptyInput:"Unexpected parseExpression() input: The input is empty or contains only comments.",ParseExpressionExpectsEOF:({unexpected:a})=>`Unexpected parseExpression() input: The input should contain exactly one expression, but the first expression is followed by the unexpected character \`${String.fromCodePoint(a)}\`.`}),n`pipelineOperator`(k)),{defineProperty:p}=Object,q=(a,b)=>{a&&p(a,b,{enumerable:!1,value:a[b]})};function r(a){return q(a.loc.start,"index"),q(a.loc.end,"index"),a}class s{constructor(a,b){this.token=void 0,this.preserveSpace=void 0,this.token=a,this.preserveSpace=!!b}}let t={brace:new s("{"),j_oTag:new s("<tag"),j_cTag:new s("</tag"),j_expr:new s("<tag>...</tag>",!0)};t.template=new s("`",!0);class u{constructor(a,b={}){this.label=void 0,this.keyword=void 0,this.beforeExpr=void 0,this.startsExpr=void 0,this.rightAssociative=void 0,this.isLoop=void 0,this.isAssign=void 0,this.prefix=void 0,this.postfix=void 0,this.binop=void 0,this.label=a,this.keyword=b.keyword,this.beforeExpr=!!b.beforeExpr,this.startsExpr=!!b.startsExpr,this.rightAssociative=!!b.rightAssociative,this.isLoop=!!b.isLoop,this.isAssign=!!b.isAssign,this.prefix=!!b.prefix,this.postfix=!!b.postfix,this.binop=null!=b.binop?b.binop:null,this.updateContext=null}}let v=new Map;function w(a,b={}){b.keyword=a;let c=F(a,b);return v.set(a,c),c}function x(a,b){return F(a,{beforeExpr:!0,binop:b})}let y=-1,z=[],A=[],B=[],C=[],D=[],E=[];function F(a,b={}){var c,d,e,f;return++y,A.push(a),B.push(null!=(c=b.binop)?c:-1),C.push(null!=(d=b.beforeExpr)&&d),D.push(null!=(e=b.startsExpr)&&e),E.push(null!=(f=b.prefix)&&f),z.push(new u(a,b)),y}function G(a,b={}){var c,d,e,f;return++y,v.set(a,y),A.push(a),B.push(null!=(c=b.binop)?c:-1),C.push(null!=(d=b.beforeExpr)&&d),D.push(null!=(e=b.startsExpr)&&e),E.push(null!=(f=b.prefix)&&f),z.push(new u("name",b)),y}let H={bracketL:F("[",{beforeExpr:!0,startsExpr:!0}),bracketHashL:F("#[",{beforeExpr:!0,startsExpr:!0}),bracketBarL:F("[|",{beforeExpr:!0,startsExpr:!0}),bracketR:F("]"),bracketBarR:F("|]"),braceL:F("{",{beforeExpr:!0,startsExpr:!0}),braceBarL:F("{|",{beforeExpr:!0,startsExpr:!0}),braceHashL:F("#{",{beforeExpr:!0,startsExpr:!0}),braceR:F("}"),braceBarR:F("|}"),parenL:F("(",{beforeExpr:!0,startsExpr:!0}),parenR:F(")"),comma:F(",",{beforeExpr:!0}),semi:F(";",{beforeExpr:!0}),colon:F(":",{beforeExpr:!0}),doubleColon:F("::",{beforeExpr:!0}),dot:F("."),question:F("?",{beforeExpr:!0}),questionDot:F("?."),arrow:F("=>",{beforeExpr:!0}),template:F("template"),ellipsis:F("...",{beforeExpr:!0}),backQuote:F("`",{startsExpr:!0}),dollarBraceL:F("${",{beforeExpr:!0,startsExpr:!0}),templateTail:F("...`",{startsExpr:!0}),templateNonTail:F("...${",{beforeExpr:!0,startsExpr:!0}),at:F("@"),hash:F("#",{startsExpr:!0}),interpreterDirective:F("#!..."),eq:F("=",{beforeExpr:!0,isAssign:!0}),assign:F("_=",{beforeExpr:!0,isAssign:!0}),slashAssign:F("_=",{beforeExpr:!0,isAssign:!0}),xorAssign:F("_=",{beforeExpr:!0,isAssign:!0}),moduloAssign:F("_=",{beforeExpr:!0,isAssign:!0}),incDec:F("++/--",{prefix:!0,postfix:!0,startsExpr:!0}),bang:F("!",{beforeExpr:!0,prefix:!0,startsExpr:!0}),tilde:F("~",{beforeExpr:!0,prefix:!0,startsExpr:!0}),doubleCaret:F("^^",{startsExpr:!0}),doubleAt:F("@@",{startsExpr:!0}),pipeline:x("|>",0),nullishCoalescing:x("??",1),logicalOR:x("||",1),logicalAND:x("&&",2),bitwiseOR:x("|",3),bitwiseXOR:x("^",4),bitwiseAND:x("&",5),equality:x("==/!=/===/!==",6),lt:x("</>/<=/>=",7),gt:x("</>/<=/>=",7),relational:x("</>/<=/>=",7),bitShift:x("<</>>/>>>",8),bitShiftL:x("<</>>/>>>",8),bitShiftR:x("<</>>/>>>",8),plusMin:F("+/-",{beforeExpr:!0,binop:9,prefix:!0,startsExpr:!0}),modulo:F("%",{binop:10,startsExpr:!0}),star:F("*",{binop:10}),slash:x("/",10),exponent:F("**",{beforeExpr:!0,binop:11,rightAssociative:!0}),_in:w("in",{beforeExpr:!0,binop:7}),_instanceof:w("instanceof",{beforeExpr:!0,binop:7}),_break:w("break"),_case:w("case",{beforeExpr:!0}),_catch:w("catch"),_continue:w("continue"),_debugger:w("debugger"),_default:w("default",{beforeExpr:!0}),_else:w("else",{beforeExpr:!0}),_finally:w("finally"),_function:w("function",{startsExpr:!0}),_if:w("if"),_return:w("return",{beforeExpr:!0}),_switch:w("switch"),_throw:w("throw",{beforeExpr:!0,prefix:!0,startsExpr:!0}),_try:w("try"),_var:w("var"),_const:w("const"),_with:w("with"),_new:w("new",{beforeExpr:!0,startsExpr:!0}),_this:w("this",{startsExpr:!0}),_super:w("super",{startsExpr:!0}),_class:w("class",{startsExpr:!0}),_extends:w("extends",{beforeExpr:!0}),_export:w("export"),_import:w("import",{startsExpr:!0}),_null:w("null",{startsExpr:!0}),_true:w("true",{startsExpr:!0}),_false:w("false",{startsExpr:!0}),_typeof:w("typeof",{beforeExpr:!0,prefix:!0,startsExpr:!0}),_void:w("void",{beforeExpr:!0,prefix:!0,startsExpr:!0}),_delete:w("delete",{beforeExpr:!0,prefix:!0,startsExpr:!0}),_do:w("do",{isLoop:!0,beforeExpr:!0}),_for:w("for",{isLoop:!0}),_while:w("while",{isLoop:!0}),_as:G("as",{startsExpr:!0}),_assert:G("assert",{startsExpr:!0}),_async:G("async",{startsExpr:!0}),_await:G("await",{startsExpr:!0}),_defer:G("defer",{startsExpr:!0}),_from:G("from",{startsExpr:!0}),_get:G("get",{startsExpr:!0}),_let:G("let",{startsExpr:!0}),_meta:G("meta",{startsExpr:!0}),_of:G("of",{startsExpr:!0}),_sent:G("sent",{startsExpr:!0}),_set:G("set",{startsExpr:!0}),_source:G("source",{startsExpr:!0}),_static:G("static",{startsExpr:!0}),_using:G("using",{startsExpr:!0}),_yield:G("yield",{startsExpr:!0}),_asserts:G("asserts",{startsExpr:!0}),_checks:G("checks",{startsExpr:!0}),_exports:G("exports",{startsExpr:!0}),_global:G("global",{startsExpr:!0}),_implements:G("implements",{startsExpr:!0}),_intrinsic:G("intrinsic",{startsExpr:!0}),_infer:G("infer",{startsExpr:!0}),_is:G("is",{startsExpr:!0}),_mixins:G("mixins",{startsExpr:!0}),_proto:G("proto",{startsExpr:!0}),_require:G("require",{startsExpr:!0}),_satisfies:G("satisfies",{startsExpr:!0}),_keyof:G("keyof",{startsExpr:!0}),_readonly:G("readonly",{startsExpr:!0}),_unique:G("unique",{startsExpr:!0}),_abstract:G("abstract",{startsExpr:!0}),_declare:G("declare",{startsExpr:!0}),_enum:G("enum",{startsExpr:!0}),_module:G("module",{startsExpr:!0}),_namespace:G("namespace",{startsExpr:!0}),_interface:G("interface",{startsExpr:!0}),_type:G("type",{startsExpr:!0}),_opaque:G("opaque",{startsExpr:!0}),name:F("name",{startsExpr:!0}),placeholder:F("%%",{startsExpr:!0}),string:F("string",{startsExpr:!0}),num:F("num",{startsExpr:!0}),bigint:F("bigint",{startsExpr:!0}),decimal:F("decimal",{startsExpr:!0}),regexp:F("regexp",{startsExpr:!0}),privateName:F("#name",{startsExpr:!0}),eof:F("eof"),jsxName:F("jsxName"),jsxText:F("jsxText",{beforeExpr:!0}),jsxTagStart:F("jsxTagStart",{startsExpr:!0}),jsxTagEnd:F("jsxTagEnd")};function I(a){return a>=93&&a<=133}function J(a){return a>=58&&a<=133}function K(a){return a>=58&&a<=137}function L(a){return a>=129&&a<=131}function M(a){return a>=58&&a<=92}function N(a){return a>=24&&a<=25}z[8].updateContext=a=>{a.pop()},z[5].updateContext=z[7].updateContext=z[23].updateContext=a=>{a.push(t.brace)},z[22].updateContext=a=>{a[a.length-1]===t.template?a.pop():a.push(t.template)},z[143].updateContext=a=>{a.push(t.j_expr,t.j_oTag)};let O="ªµºÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮͰ-ʹͶͷͺ-ͽͿΆΈ-ΊΌΎ-ΡΣ-ϵϷ-ҁҊ-ԯԱ-Ֆՙՠ-ֈא-תׯ-ײؠ-يٮٯٱ-ۓەۥۦۮۯۺ-ۼۿܐܒ-ܯݍ-ޥޱߊ-ߪߴߵߺࠀ-ࠕࠚࠤࠨࡀ-ࡘࡠ-ࡪࡰ-ࢇࢉ-࢏ࢠ-ࣉऄ-हऽॐक़-ॡॱ-ঀঅ-ঌএঐও-নপ-রলশ-হঽৎড়ঢ়য়-ৡৰৱৼਅ-ਊਏਐਓ-ਨਪ-ਰਲਲ਼ਵਸ਼ਸਹਖ਼-ੜਫ਼ੲ-ੴઅ-ઍએ-ઑઓ-નપ-રલળવ-હઽૐૠૡૹଅ-ଌଏଐଓ-ନପ-ରଲଳଵ-ହଽଡ଼ଢ଼ୟ-ୡୱஃஅ-ஊஎ-ஐஒ-கஙசஜஞடணதந-பம-ஹௐఅ-ఌఎ-ఐఒ-నప-హఽౘ-ౚ౜ౝౠౡಀಅ-ಌಎ-ಐಒ-ನಪ-ಳವ-ಹಽ೜-ೞೠೡೱೲഄ-ഌഎ-ഐഒ-ഺഽൎൔ-ൖൟ-ൡൺ-ൿඅ-ඖක-නඳ-රලව-ෆก-ะาำเ-ๆກຂຄຆ-ຊຌ-ຣລວ-ະາຳຽເ-ໄໆໜ-ໟༀཀ-ཇཉ-ཬྈ-ྌက-ဪဿၐ-ၕၚ-ၝၡၥၦၮ-ၰၵ-ႁႎႠ-ჅჇჍა-ჺჼ-ቈቊ-ቍቐ-ቖቘቚ-ቝበ-ኈኊ-ኍነ-ኰኲ-ኵኸ-ኾዀዂ-ዅወ-ዖዘ-ጐጒ-ጕጘ-ፚᎀ-ᎏᎠ-Ᏽᏸ-ᏽᐁ-ᙬᙯ-ᙿᚁ-ᚚᚠ-ᛪᛮ-ᛸᜀ-ᜑᜟ-ᜱᝀ-ᝑᝠ-ᝬᝮ-ᝰក-ឳៗៜᠠ-ᡸᢀ-ᢨᢪᢰ-ᣵᤀ-ᤞᥐ-ᥭᥰ-ᥴᦀ-ᦫᦰ-ᧉᨀ-ᨖᨠ-ᩔᪧᬅ-ᬳᭅ-ᭌᮃ-ᮠᮮᮯᮺ-ᯥᰀ-ᰣᱍ-ᱏᱚ-ᱽᲀ-ᲊᲐ-ᲺᲽ-Ჿᳩ-ᳬᳮ-ᳳᳵᳶᳺᴀ-ᶿḀ-ἕἘ-Ἕἠ-ὅὈ-Ὅὐ-ὗὙὛὝὟ-ώᾀ-ᾴᾶ-ᾼιῂ-ῄῆ-ῌῐ-ΐῖ-Ίῠ-Ῥῲ-ῴῶ-ῼⁱⁿₐ-ₜℂℇℊ-ℓℕ℘-ℝℤΩℨK-ℹℼ-ℿⅅ-ⅉⅎⅠ-ↈⰀ-ⳤⳫ-ⳮⳲⳳⴀ-ⴥⴧⴭⴰ-ⵧⵯⶀ-ⶖⶠ-ⶦⶨ-ⶮⶰ-ⶶⶸ-ⶾⷀ-ⷆⷈ-ⷎⷐ-ⷖⷘ-ⷞ々-〇〡-〩〱-〵〸-〼ぁ-ゖ゛-ゟァ-ヺー-ヿㄅ-ㄯㄱ-ㆎㆠ-ㆿㇰ-ㇿ㐀-䶿一-ꒌꓐ-ꓽꔀ-ꘌꘐ-ꘟꘪꘫꙀ-ꙮꙿ-ꚝꚠ-ꛯꜗ-ꜟꜢ-ꞈꞋ-Ƛ꟱-ꠁꠃ-ꠅꠇ-ꠊꠌ-ꠢꡀ-ꡳꢂ-ꢳꣲ-ꣷꣻꣽꣾꤊ-ꤥꤰ-ꥆꥠ-ꥼꦄ-ꦲꧏꧠ-ꧤꧦ-ꧯꧺ-ꧾꨀ-ꨨꩀ-ꩂꩄ-ꩋꩠ-ꩶꩺꩾ-ꪯꪱꪵꪶꪹ-ꪽꫀꫂꫛ-ꫝꫠ-ꫪꫲ-ꫴꬁ-ꬆꬉ-ꬎꬑ-ꬖꬠ-ꬦꬨ-ꬮꬰ-ꭚꭜ-ꭩꭰ-ꯢ가-힣ힰ-ퟆퟋ-ퟻ豈-舘並-龎ﬀ-ﬆﬓ-ﬗיִײַ-ﬨשׁ-זּטּ-לּמּנּסּףּפּצּ-ﮱﯓ-ﴽﵐ-ﶏﶒ-ﷇﷰ-ﷻﹰ-ﹴﹶ-ﻼＡ-Ｚａ-ｚｦ-ﾾￂ-ￇￊ-ￏￒ-ￗￚ-ￜ",P="·̀-ͯ·҃-֑҇-ׇֽֿׁׂׅׄؐ-ًؚ-٩ٰۖ-ۜ۟-۪ۤۧۨ-ۭ۰-۹ܑܰ-݊ަ-ް߀-߉߫-߽߳ࠖ-࠙ࠛ-ࠣࠥ-ࠧࠩ-࡙࠭-࡛ࢗ-࢟࣊-ࣣ࣡-ःऺ-़ा-ॏ॑-ॗॢॣ०-९ঁ-ঃ়া-ৄেৈো-্ৗৢৣ০-৯৾ਁ-ਃ਼ਾ-ੂੇੈੋ-੍ੑ੦-ੱੵઁ-ઃ઼ા-ૅે-ૉો-્ૢૣ૦-૯ૺ-૿ଁ-ଃ଼ା-ୄେୈୋ-୍୕-ୗୢୣ୦-୯ஂா-ூெ-ைொ-்ௗ௦-௯ఀ-ఄ఼ా-ౄె-ైొ-్ౕౖౢౣ౦-౯ಁ-ಃ಼ಾ-ೄೆ-ೈೊ-್ೕೖೢೣ೦-೯ೳഀ-ഃ഻഼ാ-ൄെ-ൈൊ-്ൗൢൣ൦-൯ඁ-ඃ්ා-ුූෘ-ෟ෦-෯ෲෳัิ-ฺ็-๎๐-๙ັິ-ຼ່-໎໐-໙༘༙༠-༩༹༵༷༾༿ཱ-྄྆྇ྍ-ྗྙ-ྼ࿆ါ-ှ၀-၉ၖ-ၙၞ-ၠၢ-ၤၧ-ၭၱ-ၴႂ-ႍႏ-ႝ፝-፟፩-፱ᜒ-᜕ᜲ-᜴ᝒᝓᝲᝳ឴-៓៝០-៩᠋-᠍᠏-᠙ᢩᤠ-ᤫᤰ-᤻᥆-᥏᧐-᧚ᨗ-ᨛᩕ-ᩞ᩠-᩿᩼-᪉᪐-᪙᪰-᪽ᪿ-᫝᫠-᫫ᬀ-ᬄ᬴-᭄᭐-᭙᭫-᭳ᮀ-ᮂᮡ-ᮭ᮰-᮹᯦-᯳ᰤ-᰷᱀-᱉᱐-᱙᳐-᳔᳒-᳨᳭᳴᳷-᳹᷀-᷿‌‍‿⁀⁔⃐-⃥⃜⃡-⃰⳯-⵿⳱ⷠ-〪ⷿ-゙゚〯・꘠-꘩꙯ꙴ-꙽ꚞꚟ꛰꛱ꠂ꠆ꠋꠣ-ꠧ꠬ꢀꢁꢴ-ꣅ꣐-꣙꣠-꣱ꣿ-꤉ꤦ-꤭ꥇ-꥓ꦀ-ꦃ꦳-꧀꧐-꧙ꧥ꧰-꧹ꨩ-ꨶꩃꩌꩍ꩐-꩙ꩻ-ꩽꪰꪲ-ꪴꪷꪸꪾ꪿꫁ꫫ-ꫯꫵ꫶ꯣ-ꯪ꯬꯭꯰-꯹ﬞ︀-️︠-︯︳︴﹍-﹏０-９＿･",Q=RegExp("["+O+"]"),R=RegExp("["+O+P+"]");O=P=null;let S=[0,11,2,25,2,18,2,1,2,14,3,13,35,122,70,52,268,28,4,48,48,31,14,29,6,37,11,29,3,35,5,7,2,4,43,157,19,35,5,35,5,39,9,51,13,10,2,14,2,6,2,1,2,10,2,14,2,6,2,1,4,51,13,310,10,21,11,7,25,5,2,41,2,8,70,5,3,0,2,43,2,1,4,0,3,22,11,22,10,30,66,18,2,1,11,21,11,25,7,25,39,55,7,1,65,0,16,3,2,2,2,28,43,28,4,28,36,7,2,27,28,53,11,21,11,18,14,17,111,72,56,50,14,50,14,35,39,27,10,22,251,41,7,1,17,5,57,28,11,0,9,21,43,17,47,20,28,22,13,52,58,1,3,0,14,44,33,24,27,35,30,0,3,0,9,34,4,0,13,47,15,3,22,0,2,0,36,17,2,24,20,1,64,6,2,0,2,3,2,14,2,9,8,46,39,7,3,1,3,21,2,6,2,1,2,4,4,0,19,0,13,4,31,9,2,0,3,0,2,37,2,0,26,0,2,0,45,52,19,3,21,2,31,47,21,1,2,0,185,46,42,3,37,47,21,0,60,42,14,0,72,26,38,6,186,43,117,63,32,7,3,0,3,7,2,1,2,23,16,0,2,0,95,7,3,38,17,0,2,0,29,0,11,39,8,0,22,0,12,45,20,0,19,72,200,32,32,8,2,36,18,0,50,29,113,6,2,1,2,37,22,0,26,5,2,1,2,31,15,0,24,43,261,18,16,0,2,12,2,33,125,0,80,921,103,110,18,195,2637,96,16,1071,18,5,26,3994,6,582,6842,29,1763,568,8,30,18,78,18,29,19,47,17,3,32,20,6,18,433,44,212,63,33,24,3,24,45,74,6,0,67,12,65,1,2,0,15,4,10,7381,42,31,98,114,8702,3,2,6,2,1,2,290,16,0,30,2,3,0,15,3,9,395,2309,106,6,12,4,8,8,9,5991,84,2,70,2,1,3,0,3,1,3,3,2,11,2,0,2,6,2,64,2,3,3,7,2,6,2,27,2,3,2,4,2,0,4,6,2,339,3,24,2,24,2,30,2,24,2,30,2,24,2,30,2,24,2,30,2,24,2,7,1845,30,7,5,262,61,147,44,11,6,17,0,322,29,19,43,485,27,229,29,3,0,208,30,2,2,2,1,2,6,3,4,10,1,225,6,2,3,2,1,2,14,2,196,60,67,8,0,1205,3,2,26,2,1,2,0,3,0,2,9,2,3,2,0,2,0,7,0,5,0,2,0,2,0,2,2,2,1,2,0,3,0,2,0,2,0,2,0,2,0,2,1,2,0,3,3,2,6,2,3,2,3,2,0,2,9,2,16,6,2,2,4,2,16,4421,42719,33,4381,3,5773,3,7472,16,621,2467,541,1507,4938,6,8489],T=[509,0,227,0,150,4,294,9,1368,2,2,1,6,3,41,2,5,0,166,1,574,3,9,9,7,9,32,4,318,1,78,5,71,10,50,3,123,2,54,14,32,10,3,1,11,3,46,10,8,0,46,9,7,2,37,13,2,9,6,1,45,0,13,2,49,13,9,3,2,11,83,11,7,0,3,0,158,11,6,9,7,3,56,1,2,6,3,1,3,2,10,0,11,1,3,6,4,4,68,8,2,0,3,0,2,3,2,4,2,0,15,1,83,17,10,9,5,0,82,19,13,9,214,6,3,8,28,1,83,16,16,9,82,12,9,9,7,19,58,14,5,9,243,14,166,9,71,5,2,1,3,3,2,0,2,1,13,9,120,6,3,6,4,0,29,9,41,6,2,3,9,0,10,10,47,15,199,7,137,9,54,7,2,7,17,9,57,21,2,13,123,5,4,0,2,1,2,6,2,0,9,9,49,4,2,1,2,4,9,9,55,9,266,3,10,1,2,0,49,6,4,4,14,10,5350,0,7,14,11465,27,2343,9,87,9,39,4,60,6,26,9,535,9,470,0,2,54,8,3,82,0,12,1,19628,1,4178,9,519,45,3,22,543,4,4,5,9,7,3,6,31,3,149,2,1418,49,513,54,5,49,9,0,15,0,23,4,2,14,1361,6,2,16,3,6,2,1,2,4,101,0,161,6,10,9,357,0,62,13,499,13,245,1,2,9,233,0,3,0,8,1,6,0,475,6,110,6,6,9,4759,9,787719,239];function U(a,b){let c=65536;for(let d=0,e=b.length;d<e&&!((c+=b[d])>a);d+=2)if((c+=b[d+1])>=a)return!0;return!1}function V(a){return a<65?36===a:a<=90||(a<97?95===a:a<=122||(a<=65535?a>=170&&Q.test(String.fromCharCode(a)):U(a,S)))}function W(a){return a<48?36===a:a<58||!(a<65)&&(a<=90||(a<97?95===a:a<=122||(a<=65535?a>=170&&R.test(String.fromCharCode(a)):U(a,S)||U(a,T))))}let X=new Set(["break","case","catch","continue","debugger","default","do","else","finally","for","function","if","return","switch","throw","try","var","const","while","with","new","this","super","class","extends","export","import","null","true","false","in","instanceof","typeof","void","delete"]),Y=new Set(["implements","interface","let","package","private","protected","public","static","yield"]),Z=new Set(["eval","arguments"]);function $(a,b){return b&&"await"===a||"enum"===a}function _(a,b){return $(a,b)||Y.has(a)}function aa(a,b){return _(a,b)||Z.has(a)}let ab=new Set(["break","case","catch","continue","debugger","default","do","else","finally","for","function","if","return","switch","throw","try","var","const","while","with","new","this","super","class","extends","export","import","null","true","false","in","instanceof","typeof","void","delete","implements","interface","let","package","private","protected","public","static","yield","eval","arguments","enum","await"]);class ac{constructor(a){this.flags=0,this.names=new Map,this.firstLexicalName="",this.flags=a}}class ad{constructor(a,b){this.parser=void 0,this.scopeStack=[],this.inModule=void 0,this.undefinedExports=new Map,this.parser=a,this.inModule=b}get inTopLevel(){return(1&this.currentScope().flags)>0}get inFunction(){return(2&this.currentVarScopeFlags())>0}get allowSuper(){return(16&this.currentThisScopeFlags())>0}get allowDirectSuper(){return(32&this.currentThisScopeFlags())>0}get allowNewTarget(){return(512&this.currentThisScopeFlags())>0}get inClass(){return(64&this.currentThisScopeFlags())>0}get inClassAndNotInNonArrowFunction(){let a=this.currentThisScopeFlags();return(64&a)>0&&(2&a)==0}get inStaticBlock(){for(let a=this.scopeStack.length-1;;a--){let{flags:b}=this.scopeStack[a];if(128&b)return!0;if(1731&b)return!1}}get inNonArrowFunction(){return(2&this.currentThisScopeFlags())>0}get inBareCaseStatement(){return(256&this.currentScope().flags)>0}get treatFunctionsAsVar(){return this.treatFunctionsAsVarInScope(this.currentScope())}createScope(a){return new ac(a)}enter(a){this.scopeStack.push(this.createScope(a))}exit(){return this.scopeStack.pop().flags}treatFunctionsAsVarInScope(a){return!!(130&a.flags||!this.parser.inModule&&1&a.flags)}declareName(a,b,c){let d=this.currentScope();if(8&b||16&b){this.checkRedeclarationInScope(d,a,b,c);let e=d.names.get(a)||0;16&b?e|=4:(d.firstLexicalName||(d.firstLexicalName=a),e|=2),d.names.set(a,e),8&b&&this.maybeExportDefined(d,a)}else if(4&b)for(let e=this.scopeStack.length-1;e>=0&&(d=this.scopeStack[e],this.checkRedeclarationInScope(d,a,b,c),d.names.set(a,1|(d.names.get(a)||0)),this.maybeExportDefined(d,a),!(1667&d.flags));--e);this.parser.inModule&&1&d.flags&&this.undefinedExports.delete(a)}maybeExportDefined(a,b){this.parser.inModule&&1&a.flags&&this.undefinedExports.delete(b)}checkRedeclarationInScope(a,b,c,d){this.isRedeclaredInScope(a,b,c)&&this.parser.raise(o.VarRedeclaration,d,{identifierName:b})}isRedeclaredInScope(a,b,c){if(!(1&c))return!1;if(8&c)return a.names.has(b);let d=a.names.get(b)||0;return 16&c?(2&d)>0||!this.treatFunctionsAsVarInScope(a)&&(1&d)>0:(2&d)>0&&!(8&a.flags&&a.firstLexicalName===b)||!this.treatFunctionsAsVarInScope(a)&&(4&d)>0}checkLocalExport(a){let{name:b}=a;this.scopeStack[0].names.has(b)||this.undefinedExports.set(b,a.loc.start)}currentScope(){return this.scopeStack[this.scopeStack.length-1]}currentVarScopeFlags(){for(let a=this.scopeStack.length-1;;a--){let{flags:b}=this.scopeStack[a];if(1667&b)return b}}currentThisScopeFlags(){for(let a=this.scopeStack.length-1;;a--){let{flags:b}=this.scopeStack[a];if(1731&b&&!(4&b))return b}}}class ae extends ac{constructor(...a){super(...a),this.declareFunctions=new Set}}class af extends ad{createScope(a){return new ae(a)}declareName(a,b,c){let d=this.currentScope();if(2048&b){this.checkRedeclarationInScope(d,a,b,c),this.maybeExportDefined(d,a),d.declareFunctions.add(a);return}super.declareName(a,b,c)}isRedeclaredInScope(a,b,c){if(super.isRedeclaredInScope(a,b,c))return!0;if(2048&c&&!a.declareFunctions.has(b)){let c=a.names.get(b);return(4&c)>0||(2&c)>0}return!1}checkLocalExport(a){this.scopeStack[0].declareFunctions.has(a.name)||super.checkLocalExport(a)}}let ag=new Set(["_","any","bool","boolean","empty","extends","false","interface","mixed","null","number","static","string","true","typeof","void"]),ah=n`flow`({AmbiguousConditionalArrow:"Ambiguous expression: wrap the arrow functions in parentheses to disambiguate.",AmbiguousDeclareModuleKind:"Found both `declare module.exports` and `declare export` in the same module. Modules can only have 1 since they are either an ES module or they are a CommonJS module.",AssignReservedType:({reservedType:a})=>`Cannot overwrite reserved type ${a}.`,DeclareClassElement:"The `declare` modifier can only appear on class fields.",DeclareClassFieldInitializer:"Initializers are not allowed in fields with the `declare` modifier.",DuplicateDeclareModuleExports:"Duplicate `declare module.exports` statement.",EnumBooleanMemberNotInitialized:({memberName:a,enumName:b})=>`Boolean enum members need to be initialized. Use either \`${a} = true,\` or \`${a} = false,\` in enum \`${b}\`.`,EnumDuplicateMemberName:({memberName:a,enumName:b})=>`Enum member names need to be unique, but the name \`${a}\` has already been used before in enum \`${b}\`.`,EnumInconsistentMemberValues:({enumName:a})=>`Enum \`${a}\` has inconsistent member initializers. Either use no initializers, or consistently use literals (either booleans, numbers, or strings) for all member initializers.`,EnumInvalidExplicitType:({invalidEnumType:a,enumName:b})=>`Enum type \`${a}\` is not valid. Use one of \`boolean\`, \`number\`, \`string\`, or \`symbol\` in enum \`${b}\`.`,EnumInvalidExplicitTypeUnknownSupplied:({enumName:a})=>`Supplied enum type is not valid. Use one of \`boolean\`, \`number\`, \`string\`, or \`symbol\` in enum \`${a}\`.`,EnumInvalidMemberInitializerPrimaryType:({enumName:a,memberName:b,explicitType:c})=>`Enum \`${a}\` has type \`${c}\`, so the initializer of \`${b}\` needs to be a ${c} literal.`,EnumInvalidMemberInitializerSymbolType:({enumName:a,memberName:b})=>`Symbol enum members cannot be initialized. Use \`${b},\` in enum \`${a}\`.`,EnumInvalidMemberInitializerUnknownType:({enumName:a,memberName:b})=>`The enum member initializer for \`${b}\` needs to be a literal (either a boolean, number, or string) in enum \`${a}\`.`,EnumInvalidMemberName:({enumName:a,memberName:b,suggestion:c})=>`Enum member names cannot start with lowercase 'a' through 'z'. Instead of using \`${b}\`, consider using \`${c}\`, in enum \`${a}\`.`,EnumNumberMemberNotInitialized:({enumName:a,memberName:b})=>`Number enum members need to be initialized, e.g. \`${b} = 1\` in enum \`${a}\`.`,EnumStringMemberInconsistentlyInitialized:({enumName:a})=>`String enum members need to consistently either all use initializers, or use no initializers, in enum \`${a}\`.`,GetterMayNotHaveThisParam:"A getter cannot have a `this` parameter.",ImportReflectionHasImportType:"An `import module` declaration can not use `type` or `typeof` keyword.",ImportTypeShorthandOnlyInPureImport:"The `type` and `typeof` keywords on named imports can only be used on regular `import` statements. It cannot be used with `import type` or `import typeof` statements.",InexactInsideExact:"Explicit inexact syntax cannot appear inside an explicit exact object type.",InexactInsideNonObject:"Explicit inexact syntax cannot appear in class or interface definitions.",InexactVariance:"Explicit inexact syntax cannot have variance.",InvalidNonTypeImportInDeclareModule:"Imports within a `declare module` body must always be `import type` or `import typeof`.",MissingTypeParamDefault:"Type parameter declaration needs a default, since a preceding type parameter declaration has a default.",NestedDeclareModule:"`declare module` cannot be used inside another `declare module`.",NestedFlowComment:"Cannot have a flow comment inside another flow comment.",PatternIsOptional:Object.assign({message:"A binding pattern parameter cannot be optional in an implementation signature."},{reasonCode:"OptionalBindingPattern"}),SetterMayNotHaveThisParam:"A setter cannot have a `this` parameter.",SpreadVariance:"Spread properties cannot have variance.",ThisParamAnnotationRequired:"A type annotation is required for the `this` parameter.",ThisParamBannedInConstructor:"Constructors cannot have a `this` parameter; constructors don't bind `this` like other functions.",ThisParamMayNotBeOptional:"The `this` parameter cannot be optional.",ThisParamMustBeFirst:"The `this` parameter must be the first function parameter.",ThisParamNoDefault:"The `this` parameter may not have a default value.",TypeBeforeInitializer:"Type annotations must come before default assignments, e.g. instead of `age = 25: number` use `age: number = 25`.",TypeCastInPattern:"The type cast expression is expected to be wrapped with parenthesis.",UnexpectedExplicitInexactInObject:"Explicit inexact syntax must appear at the end of an inexact object.",UnexpectedReservedType:({reservedType:a})=>`Unexpected reserved type ${a}.`,UnexpectedReservedUnderscore:"`_` is only allowed as a type argument to call or new.",UnexpectedSpaceBetweenModuloChecks:"Spaces between `%` and `checks` are not allowed here.",UnexpectedSpreadType:"Spread operator cannot appear in class or interface definitions.",UnexpectedSubtractionOperand:'Unexpected token, expected "number" or "bigint".',UnexpectedTokenAfterTypeParameter:"Expected an arrow function after this type parameter declaration.",UnexpectedTypeParameterBeforeAsyncArrowFunction:"Type parameters must come after the async keyword, e.g. instead of `<T> async () => {}`, use `async <T>() => {}`.",UnsupportedDeclareExportKind:({unsupportedExportKind:a,suggestion:b})=>`\`declare export ${a}\` is not supported. Use \`${b}\` instead.`,UnsupportedStatementInDeclareModule:"Only declares and type imports are allowed inside declare module.",UnterminatedFlowComment:"Unterminated flow-comment."});function ai(a){return"type"===a.importKind||"typeof"===a.importKind}let aj={const:"declare export var",let:"declare export var",type:"export type",interface:"export interface"},ak=/\*?\s*@((?:no)?flow)\b/,al={__proto__:null,quot:'"',amp:"&",apos:"'",lt:"<",gt:">",nbsp:" ",iexcl:"¡",cent:"¢",pound:"£",curren:"¤",yen:"¥",brvbar:"¦",sect:"§",uml:"¨",copy:"©",ordf:"ª",laquo:"«",not:"¬",shy:"­",reg:"®",macr:"¯",deg:"°",plusmn:"±",sup2:"²",sup3:"³",acute:"´",micro:"µ",para:"¶",middot:"·",cedil:"¸",sup1:"¹",ordm:"º",raquo:"»",frac14:"¼",frac12:"½",frac34:"¾",iquest:"¿",Agrave:"À",Aacute:"Á",Acirc:"Â",Atilde:"Ã",Auml:"Ä",Aring:"Å",AElig:"Æ",Ccedil:"Ç",Egrave:"È",Eacute:"É",Ecirc:"Ê",Euml:"Ë",Igrave:"Ì",Iacute:"Í",Icirc:"Î",Iuml:"Ï",ETH:"Ð",Ntilde:"Ñ",Ograve:"Ò",Oacute:"Ó",Ocirc:"Ô",Otilde:"Õ",Ouml:"Ö",times:"×",Oslash:"Ø",Ugrave:"Ù",Uacute:"Ú",Ucirc:"Û",Uuml:"Ü",Yacute:"Ý",THORN:"Þ",szlig:"ß",agrave:"à",aacute:"á",acirc:"â",atilde:"ã",auml:"ä",aring:"å",aelig:"æ",ccedil:"ç",egrave:"è",eacute:"é",ecirc:"ê",euml:"ë",igrave:"ì",iacute:"í",icirc:"î",iuml:"ï",eth:"ð",ntilde:"ñ",ograve:"ò",oacute:"ó",ocirc:"ô",otilde:"õ",ouml:"ö",divide:"÷",oslash:"ø",ugrave:"ù",uacute:"ú",ucirc:"û",uuml:"ü",yacute:"ý",thorn:"þ",yuml:"ÿ",OElig:"Œ",oelig:"œ",Scaron:"Š",scaron:"š",Yuml:"Ÿ",fnof:"ƒ",circ:"ˆ",tilde:"˜",Alpha:"Α",Beta:"Β",Gamma:"Γ",Delta:"Δ",Epsilon:"Ε",Zeta:"Ζ",Eta:"Η",Theta:"Θ",Iota:"Ι",Kappa:"Κ",Lambda:"Λ",Mu:"Μ",Nu:"Ν",Xi:"Ξ",Omicron:"Ο",Pi:"Π",Rho:"Ρ",Sigma:"Σ",Tau:"Τ",Upsilon:"Υ",Phi:"Φ",Chi:"Χ",Psi:"Ψ",Omega:"Ω",alpha:"α",beta:"β",gamma:"γ",delta:"δ",epsilon:"ε",zeta:"ζ",eta:"η",theta:"θ",iota:"ι",kappa:"κ",lambda:"λ",mu:"μ",nu:"ν",xi:"ξ",omicron:"ο",pi:"π",rho:"ρ",sigmaf:"ς",sigma:"σ",tau:"τ",upsilon:"υ",phi:"φ",chi:"χ",psi:"ψ",omega:"ω",thetasym:"ϑ",upsih:"ϒ",piv:"ϖ",ensp:" ",emsp:" ",thinsp:" ",zwnj:"‌",zwj:"‍",lrm:"‎",rlm:"‏",ndash:"–",mdash:"—",lsquo:"‘",rsquo:"’",sbquo:"‚",ldquo:"“",rdquo:"”",bdquo:"„",dagger:"†",Dagger:"‡",bull:"•",hellip:"…",permil:"‰",prime:"′",Prime:"″",lsaquo:"‹",rsaquo:"›",oline:"‾",frasl:"⁄",euro:"€",image:"ℑ",weierp:"℘",real:"ℜ",trade:"™",alefsym:"ℵ",larr:"←",uarr:"↑",rarr:"→",darr:"↓",harr:"↔",crarr:"↵",lArr:"⇐",uArr:"⇑",rArr:"⇒",dArr:"⇓",hArr:"⇔",forall:"∀",part:"∂",exist:"∃",empty:"∅",nabla:"∇",isin:"∈",notin:"∉",ni:"∋",prod:"∏",sum:"∑",minus:"−",lowast:"∗",radic:"√",prop:"∝",infin:"∞",ang:"∠",and:"∧",or:"∨",cap:"∩",cup:"∪",int:"∫",there4:"∴",sim:"∼",cong:"≅",asymp:"≈",ne:"≠",equiv:"≡",le:"≤",ge:"≥",sub:"⊂",sup:"⊃",nsub:"⊄",sube:"⊆",supe:"⊇",oplus:"⊕",otimes:"⊗",perp:"⊥",sdot:"⋅",lceil:"⌈",rceil:"⌉",lfloor:"⌊",rfloor:"⌋",lang:"〈",rang:"〉",loz:"◊",spades:"♠",clubs:"♣",hearts:"♥",diams:"♦"},am=RegExp(/\r\n|[\r\n\u2028\u2029]/.source,"g");function an(a){switch(a){case 10:case 13:case 8232:case 8233:return!0;default:return!1}}function ao(a,b,c){for(let d=b;d<c;d++)if(an(a.charCodeAt(d)))return!0;return!1}let ap=/(?:\s|\/\/.*|\/\*[^]*?\*\/)*/g,aq=/(?:[^\S\n\r\u2028\u2029]|\/\/.*|\/\*.*?\*\/)*/g,ar=n`jsx`({AttributeIsEmpty:"JSX attributes must only be assigned a non-empty expression.",MissingClosingTagElement:({openingTagName:a})=>`Expected corresponding JSX closing tag for <${a}>.`,MissingClosingTagFragment:"Expected corresponding JSX closing tag for <>.",UnexpectedSequenceExpression:"Sequence expressions cannot be directly nested inside JSX. Did you mean to wrap it in parentheses (...)?",UnexpectedToken:({unexpected:a,HTMLEntity:b})=>`Unexpected token \`${a}\`. Did you mean \`${b}\` or \`{'${a}'}\`?`,UnsupportedJsxValue:"JSX value should be either an expression or a quoted JSX text.",UnterminatedJsxContent:"Unterminated JSX contents.",UnwrappedAdjacentJSXElements:"Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>?"});function as(a){return!!a&&("JSXOpeningFragment"===a.type||"JSXClosingFragment"===a.type)}function at(a){if("JSXIdentifier"===a.type)return a.name;if("JSXNamespacedName"===a.type)return a.namespace.name+":"+a.name.name;if("JSXMemberExpression"===a.type)return at(a.object)+"."+at(a.property);throw Error("Node had unexpected type: "+a.type)}class au extends ac{constructor(...a){super(...a),this.tsNames=new Map}}class av extends ad{constructor(...a){super(...a),this.importsStack=[]}createScope(a){return this.importsStack.push(new Set),new au(a)}enter(a){1024===a&&this.importsStack.push(new Set),super.enter(a)}exit(){let a=super.exit();return 1024===a&&this.importsStack.pop(),a}hasImport(a,b){let c=this.importsStack.length;if(this.importsStack[c-1].has(a))return!0;if(!b&&c>1){for(let b=0;b<c-1;b++)if(this.importsStack[b].has(a))return!0}return!1}declareName(a,b,c){if(4096&b){this.hasImport(a,!0)&&this.parser.raise(o.VarRedeclaration,c,{identifierName:a}),this.importsStack[this.importsStack.length-1].add(a);return}let d=this.currentScope(),e=d.tsNames.get(a)||0;if(1024&b){this.maybeExportDefined(d,a),d.tsNames.set(a,16|e);return}super.declareName(a,b,c),2&b&&(1&b||(this.checkRedeclarationInScope(d,a,b,c),this.maybeExportDefined(d,a)),e|=1),256&b&&(e|=2),512&b&&(e|=4),128&b&&(e|=8),e&&d.tsNames.set(a,e)}isRedeclaredInScope(a,b,c){let d=a.tsNames.get(b);if((2&d)>0)return!(256&c)||!!(512&c)!=(4&d)>0;if(128&c&&(8&d)>0)if(2&a.names.get(b))return!!(1&c);else return!1;return!!(2&c)&&(1&d)>0||super.isRedeclaredInScope(a,b,c)}checkLocalExport(a){let{name:b}=a;if(this.hasImport(b))return;let c=this.scopeStack.length;for(let a=c-1;a>=0;a--){let c=this.scopeStack[a].tsNames.get(b);if((1&c)>0||(16&c)>0)return}super.checkLocalExport(a)}}class aw{constructor(){this.stacks=[]}enter(a){this.stacks.push(a)}exit(){this.stacks.pop()}currentFlags(){return this.stacks[this.stacks.length-1]}get hasAwait(){return(2&this.currentFlags())>0}get hasYield(){return(1&this.currentFlags())>0}get hasReturn(){return(4&this.currentFlags())>0}get hasIn(){return(8&this.currentFlags())>0}}function ax(a,b){return 2*!!a|!!b}class ay{constructor(){this.sawUnambiguousESM=!1,this.ambiguousScriptDifferentAst=!1}sourceToOffsetPos(a){return a+this.startIndex}offsetToSourcePos(a){return a-this.startIndex}hasPlugin(a){if("string"==typeof a)return this.plugins.has(a);{let[b,c]=a;if(!this.hasPlugin(b))return!1;let d=this.plugins.get(b);for(let a of Object.keys(c))if((null==d?void 0:d[a])!==c[a])return!1;return!0}}getPluginOption(a,b){var c;return null==(c=this.plugins.get(a))?void 0:c[b]}}function az(a,b){void 0===a.trailingComments?a.trailingComments=b:a.trailingComments.unshift(...b)}function aA(a,b){void 0===a.innerComments?a.innerComments=b:a.innerComments.unshift(...b)}function aB(a,b,c){let d=null,e=b.length;for(;null===d&&e>0;)d=b[--e];null===d||d.start>c.start?aA(a,c.comments):az(d,c.comments)}class aC extends ay{addComment(a){this.filename&&(a.loc.filename=this.filename);let{commentsLen:b}=this.state;this.comments.length!==b&&(this.comments.length=b),this.comments.push(a),this.state.commentsLen++}processComment(a){let{commentStack:b}=this.state,c=b.length;if(0===c)return;let d=c-1,e=b[d];e.start===a.end&&(e.leadingNode=a,d--);let{start:f}=a;for(;d>=0;d--){let c=b[d],e=c.end;if(e>f)c.containingNode=a,this.finalizeComment(c),b.splice(d,1);else{e===f&&(c.trailingNode=a);break}}}finalizeComment(a){var b,c;let{comments:d}=a;if(null!==a.leadingNode||null!==a.trailingNode)null!==a.leadingNode&&az(a.leadingNode,d),null!==a.trailingNode&&(c=a.trailingNode,void 0===c.leadingComments?c.leadingComments=d:c.leadingComments.unshift(...d));else{let c=a.containingNode,e=a.start;if(44===this.input.charCodeAt(this.offsetToSourcePos(e)-1))switch(c.type){case"ObjectExpression":case"ObjectPattern":aB(c,c.properties,a);break;case"CallExpression":case"NewExpression":case"OptionalCallExpression":aB(c,c.arguments,a);break;case"ImportExpression":aB(c,[c.source,null!=(b=c.options)?b:null],a);break;case"FunctionDeclaration":case"FunctionExpression":case"ArrowFunctionExpression":case"ObjectMethod":case"ClassMethod":case"ClassPrivateMethod":case"TSTypeParameterDeclaration":aB(c,c.params,a);break;case"ArrayExpression":case"ArrayPattern":aB(c,c.elements,a);break;case"ExportNamedDeclaration":case"ImportDeclaration":aB(c,c.specifiers,a);break;case"TSEnumDeclaration":case"TSEnumBody":aB(c,c.members,a);break;case"TSInterfaceBody":aB(c,c.body,a);break;default:if("RecordExpression"===c.type){aB(c,c.properties,a);break}if("TupleExpression"===c.type){aB(c,c.elements,a);break}aA(c,d)}else aA(c,d)}}finalizeRemainingComments(){let{commentStack:a}=this.state;for(let b=a.length-1;b>=0;b--)this.finalizeComment(a[b]);this.state.commentStack=[]}resetPreviousNodeTrailingComments(a){let{commentStack:b}=this.state,{length:c}=b;if(0===c)return;let d=b[c-1];d.leadingNode===a&&(d.leadingNode=null)}takeSurroundingComments(a,b,c){let{commentStack:d}=this.state,e=d.length;if(0===e)return;let f=e-1;for(;f>=0;f--){let e=d[f],g=e.end;if(e.start===c)e.leadingNode=a;else if(g===b)e.trailingNode=a;else if(g<b)break}}}class aD{constructor(){this.flags=1024,this.startIndex=void 0,this.curLine=void 0,this.lineStart=void 0,this.startLoc=void 0,this.endLoc=void 0,this.errors=[],this.potentialArrowAt=-1,this.noArrowAt=[],this.noArrowParamsConversionAt=[],this.topicContext={maxNumOfResolvableTopics:0,maxTopicIndex:null},this.labels=[],this.commentsLen=0,this.commentStack=[],this.pos=0,this.type=140,this.value=null,this.start=0,this.end=0,this.lastTokEndLoc=null,this.lastTokStartLoc=null,this.context=[t.brace],this.firstInvalidTemplateEscapePos=null,this.strictErrors=new Map,this.tokensLength=0}get strict(){return(1&this.flags)>0}set strict(a){a?this.flags|=1:this.flags&=-2}init({strictMode:a,sourceType:b,startIndex:c,startLine:e,startColumn:f}){this.strict=!1!==a&&(!0===a||"module"===b),this.startIndex=c,this.curLine=e,this.lineStart=-f,this.startLoc=this.endLoc=new d(e,f,c)}get maybeInArrowParameters(){return(2&this.flags)>0}set maybeInArrowParameters(a){a?this.flags|=2:this.flags&=-3}get inType(){return(4&this.flags)>0}set inType(a){a?this.flags|=4:this.flags&=-5}get noAnonFunctionType(){return(8&this.flags)>0}set noAnonFunctionType(a){a?this.flags|=8:this.flags&=-9}get hasFlowComment(){return(16&this.flags)>0}set hasFlowComment(a){a?this.flags|=16:this.flags&=-17}get isAmbientContext(){return(32&this.flags)>0}set isAmbientContext(a){a?this.flags|=32:this.flags&=-33}get inAbstractClass(){return(64&this.flags)>0}set inAbstractClass(a){a?this.flags|=64:this.flags&=-65}get inDisallowConditionalTypesContext(){return(128&this.flags)>0}set inDisallowConditionalTypesContext(a){a?this.flags|=128:this.flags&=-129}get soloAwait(){return(256&this.flags)>0}set soloAwait(a){a?this.flags|=256:this.flags&=-257}get inFSharpPipelineDirectBody(){return(512&this.flags)>0}set inFSharpPipelineDirectBody(a){a?this.flags|=512:this.flags&=-513}get canStartJSXElement(){return(1024&this.flags)>0}set canStartJSXElement(a){a?this.flags|=1024:this.flags&=-1025}get containsEsc(){return(2048&this.flags)>0}set containsEsc(a){a?this.flags|=2048:this.flags&=-2049}get hasTopLevelAwait(){return(4096&this.flags)>0}set hasTopLevelAwait(a){a?this.flags|=4096:this.flags&=-4097}curPosition(){return new d(this.curLine,this.pos-this.lineStart,this.pos+this.startIndex)}clone(){let a=new aD;return a.flags=this.flags,a.startIndex=this.startIndex,a.curLine=this.curLine,a.lineStart=this.lineStart,a.startLoc=this.startLoc,a.endLoc=this.endLoc,a.errors=this.errors.slice(),a.potentialArrowAt=this.potentialArrowAt,a.noArrowAt=this.noArrowAt.slice(),a.noArrowParamsConversionAt=this.noArrowParamsConversionAt.slice(),a.topicContext=this.topicContext,a.labels=this.labels.slice(),a.commentsLen=this.commentsLen,a.commentStack=this.commentStack.slice(),a.pos=this.pos,a.type=this.type,a.value=this.value,a.start=this.start,a.end=this.end,a.lastTokEndLoc=this.lastTokEndLoc,a.lastTokStartLoc=this.lastTokStartLoc,a.context=this.context.slice(),a.firstInvalidTemplateEscapePos=this.firstInvalidTemplateEscapePos,a.strictErrors=this.strictErrors,a.tokensLength=this.tokensLength,a}}let aE={decBinOct:new Set([46,66,69,79,95,98,101,111]),hex:new Set([46,88,95,120])},aF=a=>48===a||49===a,aG=a=>a>=48&&a<=55,aH=a=>a>=48&&a<=57,aI=a=>a>=48&&a<=57||a>=65&&a<=70||a>=97&&a<=102;function aJ(a,b,c,d,e,f){let g=c,h=d,i=e,j="",k=null,l=c,{length:m}=b;for(;;){var n,o,p,q;if(c>=m){f.unterminated(g,h,i),j+=b.slice(l,c);break}let r=b.charCodeAt(c);if(n=a,o=r,p=b,q=c,"template"===n?96===o||36===o&&123===p.charCodeAt(q+1):o===("double"===n?34:39)){j+=b.slice(l,c);break}if(92===r){j+=b.slice(l,c);let g=function(a,b,c,d,e,f){let g=!e;b++;let h=a=>({pos:b,ch:a,lineStart:c,curLine:d}),i=a.charCodeAt(b++);switch(i){case 110:return h("\n");case 114:return h("\r");case 120:{let e;return{code:e,pos:b}=aK(a,b,c,d,2,!1,g,f),h(null===e?null:String.fromCharCode(e))}case 117:{let e;return{code:e,pos:b}=aM(a,b,c,d,g,f),h(null===e?null:String.fromCodePoint(e))}case 116:return h("	");case 98:return h("\b");case 118:return h("\v");case 102:return h("\f");case 13:10===a.charCodeAt(b)&&++b;case 10:c=b,++d;case 8232:case 8233:return h("");case 56:case 57:if(e)return h(null);f.strictNumericEscape(b-1,c,d);default:if(i>=48&&i<=55){let g=b-1,i=/^[0-7]+/.exec(a.slice(g,b+2))[0],j=parseInt(i,8);j>255&&(j=parseInt(i=i.slice(0,-1),8)),b+=i.length-1;let k=a.charCodeAt(b);if("0"!==i||56===k||57===k)if(e)return h(null);else f.strictNumericEscape(g,c,d);return h(String.fromCharCode(j))}return h(String.fromCharCode(i))}}(b,c,d,e,"template"===a,f);null!==g.ch||k?j+=g.ch:k={pos:c,lineStart:d,curLine:e},({pos:c,lineStart:d,curLine:e}=g),l=c}else 8232===r||8233===r?(++c,++e,d=c):10===r||13===r?"template"===a?(j+=b.slice(l,c)+"\n",++c,13===r&&10===b.charCodeAt(c)&&++c,++e,l=d=c):f.unterminated(g,h,i):++c}return{pos:c,str:j,firstInvalidLoc:k,lineStart:d,curLine:e,containsInvalid:!!k}}function aK(a,b,c,d,e,f,g,h){let i,j=b;return{n:i,pos:b}=aL(a,b,c,d,16,e,f,!1,h,!g),null===i&&(g?h.invalidEscapeSequence(j,c,d):b=j-1),{code:i,pos:b}}function aL(a,b,c,d,e,f,g,h,i,j){let k=b,l=16===e?aE.hex:aE.decBinOct,m=16===e?aI:10===e?aH:8===e?aG:aF,n=!1,o=0;for(let k=0,p=null==f?1/0:f;k<p;++k){let f,k=a.charCodeAt(b);if(95===k&&"bail"!==h){let e=a.charCodeAt(b-1),f=a.charCodeAt(b+1);if(h){if(Number.isNaN(f)||!m(f)||l.has(e)||l.has(f)){if(j)return{n:null,pos:b};i.unexpectedNumericSeparator(b,c,d)}}else{if(j)return{n:null,pos:b};i.numericSeparatorInEscapeSequence(b,c,d)}++b;continue}if(k>=97)f=k-97+10;else if(k>=65)f=k-65+10;else f=k>=48&&k<=57?k-48:1/0;if(f>=e)if(f<=9&&j)return{n:null,pos:b};else if(f<=9&&i.invalidDigit(b,c,d,e))f=0;else if(g)f=0,n=!0;else break;++b,o=o*e+f}return b===k||null!=f&&b-k!==f||n?{n:null,pos:b}:{n:o,pos:b}}function aM(a,b,c,d,e,f){let g;if(123===a.charCodeAt(b)){if(++b,{code:g,pos:b}=aK(a,b,c,d,a.indexOf("}",b)-b,!0,e,f),++b,null!==g&&g>1114111)if(!e)return{code:null,pos:b};else f.invalidCodePoint(b,c,d)}else({code:g,pos:b}=aK(a,b,c,d,4,!1,e,f));return{code:g,pos:b}}function aN(a,b,c){return new d(c,a-b,a)}let aO=new Set([103,109,115,105,121,117,100,118]);class aP{constructor(a){const b=a.startIndex||0;this.type=a.type,this.value=a.value,this.start=b+a.start,this.end=b+a.end,this.loc=new e(a.startLoc,a.endLoc)}}class aQ extends aC{constructor(a,b){super(),this.isLookahead=void 0,this.tokens=[],this.errorHandlers_readInt={invalidDigit:(a,b,c,d)=>!!(2048&this.optionFlags)&&(this.raise(o.InvalidDigit,aN(a,b,c),{radix:d}),!0),numericSeparatorInEscapeSequence:this.errorBuilder(o.NumericSeparatorInEscapeSequence),unexpectedNumericSeparator:this.errorBuilder(o.UnexpectedNumericSeparator)},this.errorHandlers_readCodePoint=Object.assign({},this.errorHandlers_readInt,{invalidEscapeSequence:this.errorBuilder(o.InvalidEscapeSequence),invalidCodePoint:this.errorBuilder(o.InvalidCodePoint)}),this.errorHandlers_readStringContents_string=Object.assign({},this.errorHandlers_readCodePoint,{strictNumericEscape:(a,b,c)=>{this.recordStrictModeErrors(o.StrictNumericEscape,aN(a,b,c))},unterminated:(a,b,c)=>{throw this.raise(o.UnterminatedString,aN(a-1,b,c))}}),this.errorHandlers_readStringContents_template=Object.assign({},this.errorHandlers_readCodePoint,{strictNumericEscape:this.errorBuilder(o.StrictNumericEscape),unterminated:(a,b,c)=>{throw this.raise(o.UnterminatedTemplate,aN(a,b,c))}}),this.state=new aD,this.state.init(a),this.input=b,this.length=b.length,this.comments=[],this.isLookahead=!1}pushToken(a){this.tokens.length=this.state.tokensLength,this.tokens.push(a),++this.state.tokensLength}next(){this.checkKeywordEscapes(),256&this.optionFlags&&this.pushToken(new aP(this.state)),this.state.lastTokEndLoc=this.state.endLoc,this.state.lastTokStartLoc=this.state.startLoc,this.nextToken()}eat(a){return!!this.match(a)&&(this.next(),!0)}match(a){return this.state.type===a}createLookaheadState(a){return{pos:a.pos,value:null,type:a.type,start:a.start,end:a.end,context:[this.curContext()],inType:a.inType,startLoc:a.startLoc,lastTokEndLoc:a.lastTokEndLoc,curLine:a.curLine,lineStart:a.lineStart,curPosition:a.curPosition}}lookahead(){let a=this.state;this.state=this.createLookaheadState(a),this.isLookahead=!0,this.nextToken(),this.isLookahead=!1;let b=this.state;return this.state=a,b}nextTokenStart(){return this.nextTokenStartSince(this.state.pos)}nextTokenStartSince(a){return ap.lastIndex=a,ap.test(this.input)?ap.lastIndex:a}lookaheadCharCode(){return this.lookaheadCharCodeSince(this.state.pos)}lookaheadCharCodeSince(a){return this.input.charCodeAt(this.nextTokenStartSince(a))}nextTokenInLineStart(){return this.nextTokenInLineStartSince(this.state.pos)}nextTokenInLineStartSince(a){return aq.lastIndex=a,aq.test(this.input)?aq.lastIndex:a}lookaheadInLineCharCode(){return this.input.charCodeAt(this.nextTokenInLineStart())}codePointAtPos(a){let b=this.input.charCodeAt(a);if((64512&b)==55296&&++a<this.input.length){let c=this.input.charCodeAt(a);(64512&c)==56320&&(b=65536+((1023&b)<<10)+(1023&c))}return b}setStrict(a){this.state.strict=a,a&&(this.state.strictErrors.forEach(([a,b])=>this.raise(a,b)),this.state.strictErrors.clear())}curContext(){return this.state.context[this.state.context.length-1]}nextToken(){(this.skipSpace(),this.state.start=this.state.pos,this.isLookahead||(this.state.startLoc=this.state.curPosition()),this.state.pos>=this.length)?this.finishToken(140):this.getTokenFromCode(this.codePointAtPos(this.state.pos))}skipBlockComment(a){let b;this.isLookahead||(b=this.state.curPosition());let c=this.state.pos,d=this.input.indexOf(a,c+2);if(-1===d)throw this.raise(o.UnterminatedComment,this.state.curPosition());for(this.state.pos=d+a.length,am.lastIndex=c+2;am.test(this.input)&&am.lastIndex<=d;)++this.state.curLine,this.state.lineStart=am.lastIndex;if(this.isLookahead)return;let f={type:"CommentBlock",value:this.input.slice(c+2,d),start:this.sourceToOffsetPos(c),end:this.sourceToOffsetPos(d+a.length),loc:new e(b,this.state.curPosition())};return 256&this.optionFlags&&this.pushToken(f),f}skipLineComment(a){let b,c=this.state.pos;this.isLookahead||(b=this.state.curPosition());let d=this.input.charCodeAt(this.state.pos+=a);if(this.state.pos<this.length)for(;!an(d)&&++this.state.pos<this.length;)d=this.input.charCodeAt(this.state.pos);if(this.isLookahead)return;let f=this.state.pos,g={type:"CommentLine",value:this.input.slice(c+a,f),start:this.sourceToOffsetPos(c),end:this.sourceToOffsetPos(f),loc:new e(b,this.state.curPosition())};return 256&this.optionFlags&&this.pushToken(g),g}skipSpace(){let a=this.state.pos,b=4096&this.optionFlags?[]:null;a:for(;this.state.pos<this.length;){let c=this.input.charCodeAt(this.state.pos);switch(c){case 32:case 160:case 9:++this.state.pos;break;case 13:10===this.input.charCodeAt(this.state.pos+1)&&++this.state.pos;case 10:case 8232:case 8233:++this.state.pos,++this.state.curLine,this.state.lineStart=this.state.pos;break;case 47:switch(this.input.charCodeAt(this.state.pos+1)){case 42:{let a=this.skipBlockComment("*/");void 0!==a&&(this.addComment(a),null==b||b.push(a));break}case 47:{let a=this.skipLineComment(2);void 0!==a&&(this.addComment(a),null==b||b.push(a));break}default:break a}break;default:if(function(a){switch(a){case 9:case 11:case 12:case 32:case 160:case 5760:case 8192:case 8193:case 8194:case 8195:case 8196:case 8197:case 8198:case 8199:case 8200:case 8201:case 8202:case 8239:case 8287:case 12288:case 65279:return!0;default:return!1}}(c))++this.state.pos;else if(45===c&&!this.inModule&&8192&this.optionFlags){let c=this.state.pos;if(45===this.input.charCodeAt(c+1)&&62===this.input.charCodeAt(c+2)&&(0===a||this.state.lineStart>a)){let a=this.skipLineComment(3);void 0!==a&&(this.addComment(a),null==b||b.push(a))}else break a}else if(60===c&&!this.inModule&&8192&this.optionFlags){let a=this.state.pos;if(33===this.input.charCodeAt(a+1)&&45===this.input.charCodeAt(a+2)&&45===this.input.charCodeAt(a+3)){let a=this.skipLineComment(4);void 0!==a&&(this.addComment(a),null==b||b.push(a))}else break a}else break a}}if((null==b?void 0:b.length)>0){let c=this.state.pos,d={start:this.sourceToOffsetPos(a),end:this.sourceToOffsetPos(c),comments:b,leadingNode:null,trailingNode:null,containingNode:null};this.state.commentStack.push(d)}}finishToken(a,b){this.state.end=this.state.pos,this.state.endLoc=this.state.curPosition();let c=this.state.type;this.state.type=a,this.state.value=b,this.isLookahead||this.updateContext(c)}replaceToken(a){this.state.type=a,this.updateContext()}readToken_numberSign(){if(0===this.state.pos&&this.readToken_interpreter())return;let a=this.state.pos+1,b=this.codePointAtPos(a);if(b>=48&&b<=57)throw this.raise(o.UnexpectedDigitAfterHash,this.state.curPosition());if(123===b||91===b&&this.hasPlugin("recordAndTuple")){if(this.expectPlugin("recordAndTuple"),"bar"===this.getPluginOption("recordAndTuple","syntaxType"))throw this.raise(123===b?o.RecordExpressionHashIncorrectStartSyntaxType:o.TupleExpressionHashIncorrectStartSyntaxType,this.state.curPosition());this.state.pos+=2,123===b?this.finishToken(7):this.finishToken(1)}else V(b)?(++this.state.pos,this.finishToken(139,this.readWord1(b))):92===b?(++this.state.pos,this.finishToken(139,this.readWord1())):this.finishOp(27,1)}readToken_dot(){let a=this.input.charCodeAt(this.state.pos+1);a>=48&&a<=57?this.readNumber(!0):46===a&&46===this.input.charCodeAt(this.state.pos+2)?(this.state.pos+=3,this.finishToken(21)):(++this.state.pos,this.finishToken(16))}readToken_slash(){61===this.input.charCodeAt(this.state.pos+1)?this.finishOp(31,2):this.finishOp(56,1)}readToken_interpreter(){if(0!==this.state.pos||this.length<2)return!1;let a=this.input.charCodeAt(this.state.pos+1);if(33!==a)return!1;let b=this.state.pos;for(this.state.pos+=1;!an(a)&&++this.state.pos<this.length;)a=this.input.charCodeAt(this.state.pos);let c=this.input.slice(b+2,this.state.pos);return this.finishToken(28,c),!0}readToken_mult_modulo(a){let b=42===a?55:54,c=1,d=this.input.charCodeAt(this.state.pos+1);42===a&&42===d&&(c++,d=this.input.charCodeAt(this.state.pos+2),b=57),61!==d||this.state.inType||(c++,b=37===a?33:30),this.finishOp(b,c)}readToken_pipe_amp(a){let b=this.input.charCodeAt(this.state.pos+1);if(b===a)return void(61===this.input.charCodeAt(this.state.pos+2)?this.finishOp(30,3):this.finishOp(124===a?41:42,2));if(124===a){if(62===b)return void this.finishOp(39,2);if(this.hasPlugin("recordAndTuple")&&125===b){if("bar"!==this.getPluginOption("recordAndTuple","syntaxType"))throw this.raise(o.RecordExpressionBarIncorrectEndSyntaxType,this.state.curPosition());this.state.pos+=2,this.finishToken(9);return}if(this.hasPlugin("recordAndTuple")&&93===b){if("bar"!==this.getPluginOption("recordAndTuple","syntaxType"))throw this.raise(o.TupleExpressionBarIncorrectEndSyntaxType,this.state.curPosition());this.state.pos+=2,this.finishToken(4);return}}61===b?this.finishOp(30,2):this.finishOp(124===a?43:45,1)}readToken_caret(){let a=this.input.charCodeAt(this.state.pos+1);61!==a||this.state.inType?94===a&&this.hasPlugin(["pipelineOperator",{proposal:"hack",topicToken:"^^"}])?(this.finishOp(37,2),94===this.input.codePointAt(this.state.pos)&&this.unexpected()):this.finishOp(44,1):this.finishOp(32,2)}readToken_atSign(){64===this.input.charCodeAt(this.state.pos+1)&&this.hasPlugin(["pipelineOperator",{proposal:"hack",topicToken:"@@"}])?this.finishOp(38,2):this.finishOp(26,1)}readToken_plus_min(a){let b=this.input.charCodeAt(this.state.pos+1);b===a?this.finishOp(34,2):61===b?this.finishOp(30,2):this.finishOp(53,1)}readToken_lt(){let{pos:a}=this.state,b=this.input.charCodeAt(a+1);60===b?61===this.input.charCodeAt(a+2)?this.finishOp(30,3):this.finishOp(51,2):61===b?this.finishOp(49,2):this.finishOp(47,1)}readToken_gt(){let{pos:a}=this.state,b=this.input.charCodeAt(a+1);if(62===b){let b=62===this.input.charCodeAt(a+2)?3:2;return 61===this.input.charCodeAt(a+b)?void this.finishOp(30,b+1):void this.finishOp(52,b)}61===b?this.finishOp(49,2):this.finishOp(48,1)}readToken_eq_excl(a){let b=this.input.charCodeAt(this.state.pos+1);if(61===b)return void this.finishOp(46,61===this.input.charCodeAt(this.state.pos+2)?3:2);if(61===a&&62===b){this.state.pos+=2,this.finishToken(19);return}this.finishOp(61===a?29:35,1)}readToken_question(){let a=this.input.charCodeAt(this.state.pos+1),b=this.input.charCodeAt(this.state.pos+2);63===a?61===b?this.finishOp(30,3):this.finishOp(40,2):46!==a||b>=48&&b<=57?(++this.state.pos,this.finishToken(17)):(this.state.pos+=2,this.finishToken(18))}getTokenFromCode(a){switch(a){case 46:this.readToken_dot();return;case 40:++this.state.pos,this.finishToken(10);return;case 41:++this.state.pos,this.finishToken(11);return;case 59:++this.state.pos,this.finishToken(13);return;case 44:++this.state.pos,this.finishToken(12);return;case 91:if(this.hasPlugin("recordAndTuple")&&124===this.input.charCodeAt(this.state.pos+1)){if("bar"!==this.getPluginOption("recordAndTuple","syntaxType"))throw this.raise(o.TupleExpressionBarIncorrectStartSyntaxType,this.state.curPosition());this.state.pos+=2,this.finishToken(2)}else++this.state.pos,this.finishToken(0);return;case 93:++this.state.pos,this.finishToken(3);return;case 123:if(this.hasPlugin("recordAndTuple")&&124===this.input.charCodeAt(this.state.pos+1)){if("bar"!==this.getPluginOption("recordAndTuple","syntaxType"))throw this.raise(o.RecordExpressionBarIncorrectStartSyntaxType,this.state.curPosition());this.state.pos+=2,this.finishToken(6)}else++this.state.pos,this.finishToken(5);return;case 125:++this.state.pos,this.finishToken(8);return;case 58:this.hasPlugin("functionBind")&&58===this.input.charCodeAt(this.state.pos+1)?this.finishOp(15,2):(++this.state.pos,this.finishToken(14));return;case 63:this.readToken_question();return;case 96:this.readTemplateToken();return;case 48:{let a=this.input.charCodeAt(this.state.pos+1);if(120===a||88===a)return void this.readRadixNumber(16);if(111===a||79===a)return void this.readRadixNumber(8);if(98===a||66===a)return void this.readRadixNumber(2)}case 49:case 50:case 51:case 52:case 53:case 54:case 55:case 56:case 57:this.readNumber(!1);return;case 34:case 39:this.readString(a);return;case 47:this.readToken_slash();return;case 37:case 42:this.readToken_mult_modulo(a);return;case 124:case 38:this.readToken_pipe_amp(a);return;case 94:this.readToken_caret();return;case 43:case 45:this.readToken_plus_min(a);return;case 60:this.readToken_lt();return;case 62:this.readToken_gt();return;case 61:case 33:this.readToken_eq_excl(a);return;case 126:this.finishOp(36,1);return;case 64:this.readToken_atSign();return;case 35:this.readToken_numberSign();return;case 92:this.readWord();return;default:if(V(a))return void this.readWord(a)}throw this.raise(o.InvalidOrUnexpectedToken,this.state.curPosition(),{unexpected:String.fromCodePoint(a)})}finishOp(a,b){let c=this.input.slice(this.state.pos,this.state.pos+b);this.state.pos+=b,this.finishToken(a,c)}readRegexp(){let a,b,c=this.state.startLoc,d=this.state.start+1,{pos:e}=this.state;for(;;++e){if(e>=this.length)throw this.raise(o.UnterminatedRegExp,f(c,1));let d=this.input.charCodeAt(e);if(an(d))throw this.raise(o.UnterminatedRegExp,f(c,1));if(a)a=!1;else{if(91===d)b=!0;else if(93===d&&b)b=!1;else if(47===d&&!b)break;a=92===d}}let g=this.input.slice(d,e);++e;let h="",i=()=>f(c,e+2-d);for(;e<this.length;){let a=this.codePointAtPos(e),b=String.fromCharCode(a);if(aO.has(a))118===a?h.includes("u")&&this.raise(o.IncompatibleRegExpUVFlags,i()):117===a&&h.includes("v")&&this.raise(o.IncompatibleRegExpUVFlags,i()),h.includes(b)&&this.raise(o.DuplicateRegExpFlags,i());else if(W(a)||92===a)this.raise(o.MalformedRegExpFlags,i());else break;++e,h+=b}this.state.pos=e,this.finishToken(138,{pattern:g,flags:h})}readInt(a,b,c=!1,d=!0){let{n:e,pos:f}=aL(this.input,this.state.pos,this.state.lineStart,this.state.curLine,a,b,c,d,this.errorHandlers_readInt,!1);return this.state.pos=f,e}readRadixNumber(a){let b=this.state.pos,c=this.state.curPosition(),d=!1;this.state.pos+=2;let e=this.readInt(a);null==e&&this.raise(o.InvalidDigit,f(c,2),{radix:a});let g=this.input.charCodeAt(this.state.pos);if(110===g)++this.state.pos,d=!0;else if(109===g)throw this.raise(o.InvalidDecimal,c);if(V(this.codePointAtPos(this.state.pos)))throw this.raise(o.NumberIdentifier,this.state.curPosition());if(d){let a=this.input.slice(b,this.state.pos).replace(/[_n]/g,"");this.finishToken(136,a);return}this.finishToken(135,e)}readNumber(a){let b=this.state.pos,c=this.state.curPosition(),d=!1,e=!1,g=!1,h=!1;a||null!==this.readInt(10)||this.raise(o.InvalidNumber,this.state.curPosition());let i=this.state.pos-b>=2&&48===this.input.charCodeAt(b);if(i){let a=this.input.slice(b,this.state.pos);if(this.recordStrictModeErrors(o.StrictOctalLiteral,c),!this.state.strict){let b=a.indexOf("_");b>0&&this.raise(o.ZeroDigitNumericSeparator,f(c,b))}h=i&&!/[89]/.test(a)}let j=this.input.charCodeAt(this.state.pos);if(46!==j||h||(++this.state.pos,this.readInt(10),d=!0,j=this.input.charCodeAt(this.state.pos)),69!==j&&101!==j||h||((43===(j=this.input.charCodeAt(++this.state.pos))||45===j)&&++this.state.pos,null===this.readInt(10)&&this.raise(o.InvalidOrMissingExponent,c),d=!0,g=!0,j=this.input.charCodeAt(this.state.pos)),110===j&&((d||i)&&this.raise(o.InvalidBigIntLiteral,c),++this.state.pos,e=!0),109===j){this.expectPlugin("decimal",this.state.curPosition()),(g||i)&&this.raise(o.InvalidDecimal,c),++this.state.pos;var k=!0}if(V(this.codePointAtPos(this.state.pos)))throw this.raise(o.NumberIdentifier,this.state.curPosition());let l=this.input.slice(b,this.state.pos).replace(/[_mn]/g,"");if(e)return void this.finishToken(136,l);if(k)return void this.finishToken(137,l);let m=h?parseInt(l,8):parseFloat(l);this.finishToken(135,m)}readCodePoint(a){let{code:b,pos:c}=aM(this.input,this.state.pos,this.state.lineStart,this.state.curLine,a,this.errorHandlers_readCodePoint);return this.state.pos=c,b}readString(a){let{str:b,pos:c,curLine:d,lineStart:e}=aJ(34===a?"double":"single",this.input,this.state.pos+1,this.state.lineStart,this.state.curLine,this.errorHandlers_readStringContents_string);this.state.pos=c+1,this.state.lineStart=e,this.state.curLine=d,this.finishToken(134,b)}readTemplateContinuation(){this.match(8)||this.unexpected(null,8),this.state.pos--,this.readTemplateToken()}readTemplateToken(){let a=this.input[this.state.pos],{str:b,firstInvalidLoc:c,pos:e,curLine:f,lineStart:g}=aJ("template",this.input,this.state.pos+1,this.state.lineStart,this.state.curLine,this.errorHandlers_readStringContents_template);this.state.pos=e+1,this.state.lineStart=g,this.state.curLine=f,c&&(this.state.firstInvalidTemplateEscapePos=new d(c.curLine,c.pos-c.lineStart,this.sourceToOffsetPos(c.pos))),96===this.input.codePointAt(e)?this.finishToken(24,c?null:a+b+"`"):(this.state.pos++,this.finishToken(25,c?null:a+b+"${"))}recordStrictModeErrors(a,b){let c=b.index;this.state.strict&&!this.state.strictErrors.has(c)?this.raise(a,b):this.state.strictErrors.set(c,[a,b])}readWord1(a){this.state.containsEsc=!1;let b="",c=this.state.pos,d=this.state.pos;for(void 0!==a&&(this.state.pos+=a<=65535?1:2);this.state.pos<this.length;){let a=this.codePointAtPos(this.state.pos);if(W(a))this.state.pos+=a<=65535?1:2;else if(92===a){this.state.containsEsc=!0,b+=this.input.slice(d,this.state.pos);let a=this.state.curPosition(),e=this.state.pos===c?V:W;if(117!==this.input.charCodeAt(++this.state.pos)){this.raise(o.MissingUnicodeEscape,this.state.curPosition()),d=this.state.pos-1;continue}++this.state.pos;let f=this.readCodePoint(!0);null!==f&&(e(f)||this.raise(o.EscapedCharNotAnIdentifier,a),b+=String.fromCodePoint(f)),d=this.state.pos}else break}return b+this.input.slice(d,this.state.pos)}readWord(a){let b=this.readWord1(a),c=v.get(b);void 0!==c?this.finishToken(c,A[c]):this.finishToken(132,b)}checkKeywordEscapes(){let{type:a}=this.state;M(a)&&this.state.containsEsc&&this.raise(o.InvalidEscapedReservedWord,this.state.startLoc,{reservedWord:A[a]})}raise(a,b,c={}){let e=a(b instanceof d?b:b.loc.start,c);if(!(2048&this.optionFlags))throw e;return this.isLookahead||this.state.errors.push(e),e}raiseOverwrite(a,b,c={}){let e=b instanceof d?b:b.loc.start,f=e.index,g=this.state.errors;for(let b=g.length-1;b>=0;b--){let d=g[b];if(d.loc.index===f)return g[b]=a(e,c);if(d.loc.index<f)break}return this.raise(a,b,c)}updateContext(a){}unexpected(a,b){throw this.raise(o.UnexpectedToken,null!=a?a:this.state.startLoc,{expected:b?A[b]:null})}expectPlugin(a,b){if(this.hasPlugin(a))return!0;throw this.raise(o.MissingPlugin,null!=b?b:this.state.startLoc,{missingPlugin:[a]})}expectOnePlugin(a){if(!a.some(a=>this.hasPlugin(a)))throw this.raise(o.MissingOneOfPlugins,this.state.startLoc,{missingPlugin:a})}errorBuilder(a){return(b,c,d)=>{this.raise(a,aN(b,c,d))}}}class aR{constructor(){this.privateNames=new Set,this.loneAccessors=new Map,this.undefinedPrivateNames=new Map}}class aS{constructor(a){this.parser=void 0,this.stack=[],this.undefinedPrivateNames=new Map,this.parser=a}current(){return this.stack[this.stack.length-1]}enter(){this.stack.push(new aR)}exit(){let a=this.stack.pop(),b=this.current();for(let[c,d]of Array.from(a.undefinedPrivateNames))b?b.undefinedPrivateNames.has(c)||b.undefinedPrivateNames.set(c,d):this.parser.raise(o.InvalidPrivateFieldResolution,d,{identifierName:c})}declarePrivateName(a,b,c){let{privateNames:d,loneAccessors:e,undefinedPrivateNames:f}=this.current(),g=d.has(a);if(3&b){let c=g&&e.get(a);if(c){let d=4&b;(g=(3&c)==(3&b)||(4&c)!==d)||e.delete(a)}else g||e.set(a,b)}g&&this.parser.raise(o.PrivateNameRedeclaration,c,{identifierName:a}),d.add(a),f.delete(a)}usePrivateName(a,b){let c;for(c of this.stack)if(c.privateNames.has(a))return;c?c.undefinedPrivateNames.set(a,b):this.parser.raise(o.InvalidPrivateFieldResolution,b,{identifierName:a})}}class aT{constructor(a=0){this.type=a}canBeArrowParameterDeclaration(){return 2===this.type||1===this.type}isCertainlyParameterDeclaration(){return 3===this.type}}class aU extends aT{constructor(a){super(a),this.declarationErrors=new Map}recordDeclarationError(a,b){let c=b.index;this.declarationErrors.set(c,[a,b])}clearDeclarationError(a){this.declarationErrors.delete(a)}iterateErrors(a){this.declarationErrors.forEach(a)}}class aV{constructor(a){this.parser=void 0,this.stack=[new aT],this.parser=a}enter(a){this.stack.push(a)}exit(){this.stack.pop()}recordParameterInitializerError(a,b){let c=b.loc.start,{stack:d}=this,e=d.length-1,f=d[e];for(;!f.isCertainlyParameterDeclaration();){if(!f.canBeArrowParameterDeclaration())return;f.recordDeclarationError(a,c),f=d[--e]}this.parser.raise(a,c)}recordArrowParameterBindingError(a,b){let{stack:c}=this,d=c[c.length-1],e=b.loc.start;if(d.isCertainlyParameterDeclaration())this.parser.raise(a,e);else{if(!d.canBeArrowParameterDeclaration())return;d.recordDeclarationError(a,e)}}recordAsyncArrowParametersError(a){let{stack:b}=this,c=b.length-1,d=b[c];for(;d.canBeArrowParameterDeclaration();)2===d.type&&d.recordDeclarationError(o.AwaitBindingIdentifier,a),d=b[--c]}validateAsPattern(){let{stack:a}=this,b=a[a.length-1];b.canBeArrowParameterDeclaration()&&b.iterateErrors(([b,c])=>{this.parser.raise(b,c);let d=a.length-2,e=a[d];for(;e.canBeArrowParameterDeclaration();)e.clearDeclarationError(c.index),e=a[--d]})}}class aW extends aQ{addExtra(a,b,c,d=!0){if(!a)return;let{extra:e}=a;null==e&&(a.extra=e={}),d?e[b]=c:Object.defineProperty(e,b,{enumerable:d,value:c})}isContextual(a){return this.state.type===a&&!this.state.containsEsc}isUnparsedContextual(a,b){if(this.input.startsWith(b,a)){let c=this.input.charCodeAt(a+b.length);return!(W(c)||(64512&c)==55296)}return!1}isLookaheadContextual(a){let b=this.nextTokenStart();return this.isUnparsedContextual(b,a)}eatContextual(a){return!!this.isContextual(a)&&(this.next(),!0)}expectContextual(a,b){if(!this.eatContextual(a)){if(null!=b)throw this.raise(b,this.state.startLoc);this.unexpected(null,a)}}canInsertSemicolon(){return this.match(140)||this.match(8)||this.hasPrecedingLineBreak()}hasPrecedingLineBreak(){return ao(this.input,this.offsetToSourcePos(this.state.lastTokEndLoc.index),this.state.start)}hasFollowingLineBreak(){return ao(this.input,this.state.end,this.nextTokenStart())}isLineTerminator(){return this.eat(13)||this.canInsertSemicolon()}semicolon(a=!0){(a?this.isLineTerminator():this.eat(13))||this.raise(o.MissingSemicolon,this.state.lastTokEndLoc)}expect(a,b){this.eat(a)||this.unexpected(b,a)}tryParse(a,b=this.state.clone()){let c={node:null};try{let d=a((a=null)=>{throw c.node=a,c});if(this.state.errors.length>b.errors.length){let a=this.state;return this.state=b,this.state.tokensLength=a.tokensLength,{node:d,error:a.errors[b.errors.length],thrown:!1,aborted:!1,failState:a}}return{node:d,error:null,thrown:!1,aborted:!1,failState:null}}catch(d){let a=this.state;if(this.state=b,d instanceof SyntaxError)return{node:null,error:d,thrown:!0,aborted:!1,failState:a};if(d===c)return{node:c.node,error:null,thrown:!1,aborted:!0,failState:a};throw d}}checkExpressionErrors(a,b){if(!a)return!1;let{shorthandAssignLoc:c,doubleProtoLoc:d,privateKeyLoc:e,optionalParametersLoc:f,voidPatternLoc:g}=a,h=!!c||!!d||!!f||!!e||!!g;if(!b)return h;null!=c&&this.raise(o.InvalidCoverInitializedName,c),null!=d&&this.raise(o.DuplicateProto,d),null!=e&&this.raise(o.UnexpectedPrivateField,e),null!=f&&this.unexpected(f),null!=g&&this.raise(o.InvalidCoverDiscardElement,g)}isLiteralPropertyName(){return K(this.state.type)}isPrivateName(a){return"PrivateName"===a.type}getPrivateNameSV(a){return a.id.name}hasPropertyAsPrivateName(a){return("MemberExpression"===a.type||"OptionalMemberExpression"===a.type)&&this.isPrivateName(a.property)}isObjectProperty(a){return"ObjectProperty"===a.type}isObjectMethod(a){return"ObjectMethod"===a.type}initializeScopes(a="module"===this.options.sourceType){let b=this.state.labels;this.state.labels=[];let c=this.exportedIdentifiers;this.exportedIdentifiers=new Set;let d=this.inModule;this.inModule=a;let e=this.scope,f=this.getScopeHandler();this.scope=new f(this,a);let g=this.prodParam;this.prodParam=new aw;let h=this.classScope;this.classScope=new aS(this);let i=this.expressionScope;return this.expressionScope=new aV(this),()=>{this.state.labels=b,this.exportedIdentifiers=c,this.inModule=d,this.scope=e,this.prodParam=g,this.classScope=h,this.expressionScope=i}}enterInitialScopes(){let a=0;(this.inModule||1&this.optionFlags)&&(a|=2),32&this.optionFlags&&(a|=1);let b=!this.inModule&&"commonjs"===this.options.sourceType;(b||2&this.optionFlags)&&(a|=4),this.prodParam.enter(a);let c=b?514:1;4&this.optionFlags&&(c|=512),this.scope.enter(c)}checkDestructuringPrivate(a){let{privateKeyLoc:b}=a;null!==b&&this.expectPlugin("destructuringPrivate",b)}}class aX{constructor(){this.shorthandAssignLoc=null,this.doubleProtoLoc=null,this.privateKeyLoc=null,this.optionalParametersLoc=null,this.voidPatternLoc=null}}class aY{constructor(a,b,c){this.type="",this.start=b,this.end=0,this.loc=new e(c),(null==a?void 0:a.optionFlags)&128&&(this.range=[b,0]),null!=a&&a.filename&&(this.loc.filename=a.filename)}}let aZ=aY.prototype;aZ.__clone=function(){let a=new aY(void 0,this.start,this.loc.start),b=Object.keys(this);for(let c=0,d=b.length;c<d;c++){let d=b[c];"leadingComments"!==d&&"trailingComments"!==d&&"innerComments"!==d&&(a[d]=this[d])}return a};class a$ extends aW{startNode(){let a=this.state.startLoc;return new aY(this,a.index,a)}startNodeAt(a){return new aY(this,a.index,a)}startNodeAtNode(a){return this.startNodeAt(a.loc.start)}finishNode(a,b){return this.finishNodeAt(a,b,this.state.lastTokEndLoc)}finishNodeAt(a,b,c){return a.type=b,a.end=c.index,a.loc.end=c,128&this.optionFlags&&(a.range[1]=c.index),4096&this.optionFlags&&this.processComment(a),a}resetStartLocation(a,b){a.start=b.index,a.loc.start=b,128&this.optionFlags&&(a.range[0]=b.index)}resetEndLocation(a,b=this.state.lastTokEndLoc){a.end=b.index,a.loc.end=b,128&this.optionFlags&&(a.range[1]=b.index)}resetStartLocationFromNode(a,b){this.resetStartLocation(a,b.loc.start)}castNodeTo(a,b){return a.type=b,a}cloneIdentifier(a){let{type:b,start:c,end:d,loc:e,range:f,name:g}=a,h=Object.create(aZ);return h.type=b,h.start=c,h.end=d,h.loc=e,h.range=f,h.name=g,a.extra&&(h.extra=a.extra),h}cloneStringLiteral(a){let{type:b,start:c,end:d,loc:e,range:f,extra:g}=a,h=Object.create(aZ);return h.type=b,h.start=c,h.end=d,h.loc=e,h.range=f,h.extra=g,h.value=a.value,h}}let a_=a=>"ParenthesizedExpression"===a.type?a_(a.expression):a;class a0 extends a${toAssignable(a,b=!1){var c,d,e;let f;switch(("ParenthesizedExpression"===a.type||null!=(c=a.extra)&&c.parenthesized)&&(f=a_(a),b?"Identifier"===f.type?this.expressionScope.recordArrowParameterBindingError(o.InvalidParenthesizedAssignment,a):"CallExpression"!==f.type&&"MemberExpression"!==f.type&&!this.isOptionalMemberExpression(f)&&this.raise(o.InvalidParenthesizedAssignment,a):this.raise(o.InvalidParenthesizedAssignment,a)),a.type){case"Identifier":case"ObjectPattern":case"ArrayPattern":case"AssignmentPattern":case"RestElement":case"VoidPattern":break;case"ObjectExpression":this.castNodeTo(a,"ObjectPattern");for(let c=0,d=a.properties.length,f=d-1;c<d;c++){let d=a.properties[c],g=c===f;this.toAssignableObjectExpressionProp(d,g,b),g&&"RestElement"===d.type&&null!=(e=a.extra)&&e.trailingCommaLoc&&this.raise(o.RestTrailingComma,a.extra.trailingCommaLoc)}break;case"ObjectProperty":{let{key:c,value:d}=a;this.isPrivateName(c)&&this.classScope.usePrivateName(this.getPrivateNameSV(c),c.loc.start),this.toAssignable(d,b);break}case"SpreadElement":throw Error("Internal @babel/parser error (this is a bug, please report it). SpreadElement should be converted by .toAssignable's caller.");case"ArrayExpression":this.castNodeTo(a,"ArrayPattern"),this.toAssignableList(a.elements,null==(d=a.extra)?void 0:d.trailingCommaLoc,b);break;case"AssignmentExpression":"="!==a.operator&&this.raise(o.MissingEqInAssignment,a.left.loc.end),this.castNodeTo(a,"AssignmentPattern"),delete a.operator,"VoidPattern"===a.left.type&&this.raise(o.VoidPatternInitializer,a.left),this.toAssignable(a.left,b);break;case"ParenthesizedExpression":this.toAssignable(f,b)}}toAssignableObjectExpressionProp(a,b,c){if("ObjectMethod"===a.type)this.raise("get"===a.kind||"set"===a.kind?o.PatternHasAccessor:o.PatternHasMethod,a.key);else if("SpreadElement"===a.type){this.castNodeTo(a,"RestElement");let d=a.argument;this.checkToRestConversion(d,!1),this.toAssignable(d,c),b||this.raise(o.RestTrailingComma,a)}else this.toAssignable(a,c)}toAssignableList(a,b,c){let d=a.length-1;for(let e=0;e<=d;e++){let f=a[e];f&&(this.toAssignableListItem(a,e,c),"RestElement"===f.type&&(e<d?this.raise(o.RestTrailingComma,f):b&&this.raise(o.RestTrailingComma,b)))}}toAssignableListItem(a,b,c){let d=a[b];if("SpreadElement"===d.type){this.castNodeTo(d,"RestElement");let a=d.argument;this.checkToRestConversion(a,!0),this.toAssignable(a,c)}else this.toAssignable(d,c)}isAssignable(a,b){switch(a.type){case"Identifier":case"ObjectPattern":case"ArrayPattern":case"AssignmentPattern":case"RestElement":case"VoidPattern":return!0;case"ObjectExpression":{let b=a.properties.length-1;return a.properties.every((a,c)=>"ObjectMethod"!==a.type&&(c===b||"SpreadElement"!==a.type)&&this.isAssignable(a))}case"ObjectProperty":return this.isAssignable(a.value);case"SpreadElement":return this.isAssignable(a.argument);case"ArrayExpression":return a.elements.every(a=>null===a||this.isAssignable(a));case"AssignmentExpression":return"="===a.operator;case"ParenthesizedExpression":return this.isAssignable(a.expression);case"MemberExpression":case"OptionalMemberExpression":return!b;default:return!1}}toReferencedList(a,b){return a}toReferencedListDeep(a,b){for(let c of(this.toReferencedList(a,b),a))(null==c?void 0:c.type)==="ArrayExpression"&&this.toReferencedListDeep(c.elements)}parseSpread(a){let b=this.startNode();return this.next(),b.argument=this.parseMaybeAssignAllowIn(a,void 0),this.finishNode(b,"SpreadElement")}parseRestBinding(){let a=this.startNode();this.next();let b=this.parseBindingAtom();return"VoidPattern"===b.type&&this.raise(o.UnexpectedVoidPattern,b),a.argument=b,this.finishNode(a,"RestElement")}parseBindingAtom(){switch(this.state.type){case 0:{let a=this.startNode();return this.next(),a.elements=this.parseBindingList(3,93,1),this.finishNode(a,"ArrayPattern")}case 5:return this.parseObjectLike(8,!0);case 88:return this.parseVoidPattern(null)}return this.parseIdentifier()}parseBindingList(a,b,c){let d=1&c,e=[],f=!0;for(;!this.eat(a);)if(f?f=!1:this.expect(12),d&&this.match(12))e.push(null);else if(this.eat(a))break;else if(this.match(21)){let d=this.parseRestBinding();if((this.hasPlugin("flow")||2&c)&&(d=this.parseFunctionParamType(d)),e.push(d),!this.checkCommaAfterRest(b)){this.expect(a);break}}else{let a=[];if(2&c)for(this.match(26)&&this.hasPlugin("decorators")&&this.raise(o.UnsupportedParameterDecorator,this.state.startLoc);this.match(26);)a.push(this.parseDecorator());e.push(this.parseBindingElement(c,a))}return e}parseBindingRestProperty(a){return this.next(),this.hasPlugin("discardBinding")&&this.match(88)?(a.argument=this.parseVoidPattern(null),this.raise(o.UnexpectedVoidPattern,a.argument)):a.argument=this.parseIdentifier(),this.checkCommaAfterRest(125),this.finishNode(a,"RestElement")}parseBindingProperty(){let{type:a,startLoc:b}=this.state;if(21===a)return this.parseBindingRestProperty(this.startNode());let c=this.startNode();return 139===a?(this.expectPlugin("destructuringPrivate",b),this.classScope.usePrivateName(this.state.value,b),c.key=this.parsePrivateName()):this.parsePropertyName(c),c.method=!1,this.parseObjPropValue(c,b,!1,!1,!0,!1)}parseBindingElement(a,b){let c=this.parseMaybeDefault();return(this.hasPlugin("flow")||2&a)&&this.parseFunctionParamType(c),b.length&&(c.decorators=b,this.resetStartLocationFromNode(c,b[0])),this.parseMaybeDefault(c.loc.start,c)}parseFunctionParamType(a){return a}parseMaybeDefault(a,b){if(null!=a||(a=this.state.startLoc),b=null!=b?b:this.parseBindingAtom(),!this.eat(29))return b;let c=this.startNodeAt(a);return"VoidPattern"===b.type&&this.raise(o.VoidPatternInitializer,b),c.left=b,c.right=this.parseMaybeAssignAllowIn(),this.finishNode(c,"AssignmentPattern")}isValidLVal(a,b,c,d){switch(a){case"AssignmentPattern":return"left";case"RestElement":return"argument";case"ObjectProperty":return"value";case"ParenthesizedExpression":return"expression";case"ArrayPattern":return"elements";case"ObjectPattern":return"properties";case"VoidPattern":return!0;case"CallExpression":if(!b&&!this.state.strict&&8192&this.optionFlags)return!0}return!1}isOptionalMemberExpression(a){return"OptionalMemberExpression"===a.type}checkLVal(a,b,c=64,d=!1,e=!1,f=!1,g=!1){var h;let i,j,k=a.type;if(this.isObjectMethod(a))return;let l=this.isOptionalMemberExpression(a);if(l||"MemberExpression"===k){l&&(this.expectPlugin("optionalChainingAssign",a.loc.start),"AssignmentExpression"!==b.type&&this.raise(o.InvalidLhsOptionalChaining,a,{ancestor:b})),64!==c&&this.raise(o.InvalidPropertyBindingPattern,a);return}if("Identifier"===k){this.checkIdentifier(a,c,e);let{name:b}=a;d&&(d.has(b)?this.raise(o.ParamDupe,a):d.add(b));return}"VoidPattern"===k&&"CatchClause"===b.type&&this.raise(o.VoidPatternCatchClauseParam,a);let m=a_(a);g||(g="CallExpression"===m.type&&("Import"===m.callee.type||"Super"===m.callee.type));let n=this.isValidLVal(k,g,!(f||null!=(h=a.extra)&&h.parenthesized)&&"AssignmentExpression"===b.type,c);if(!0===n)return;if(!1===n){let d=64===c?o.InvalidLhs:o.InvalidLhsBinding;this.raise(d,a,{ancestor:b});return}"string"==typeof n?(i=n,j="ParenthesizedExpression"===k):[i,j]=n;let p="ArrayPattern"===k||"ObjectPattern"===k?{type:k}:b,q=a[i];if(Array.isArray(q))for(let a of q)a&&this.checkLVal(a,p,c,d,e,j,!0);else q&&this.checkLVal(q,p,c,d,e,j,g)}checkIdentifier(a,b,c=!1){var d;this.state.strict&&(c?aa(a.name,this.inModule):(d=a.name,Z.has(d)))&&(64===b?this.raise(o.StrictEvalArguments,a,{referenceName:a.name}):this.raise(o.StrictEvalArgumentsBinding,a,{bindingName:a.name})),8192&b&&"let"===a.name&&this.raise(o.LetInLexicalBinding,a),64&b||this.declareNameFromIdentifier(a,b)}declareNameFromIdentifier(a,b){this.scope.declareName(a.name,b,a.loc.start)}checkToRestConversion(a,b){switch(a.type){case"ParenthesizedExpression":this.checkToRestConversion(a.expression,b);break;case"Identifier":case"MemberExpression":break;case"ArrayExpression":case"ObjectExpression":if(b)break;default:this.raise(o.InvalidRestAssignmentPattern,a)}}checkCommaAfterRest(a){return!!this.match(12)&&(this.raise(this.lookaheadCharCode()===a?o.RestTrailingComma:o.ElementAfterRest,this.state.startLoc),!0)}}let a1=/in(?:stanceof)?|as|satisfies/y;function a2(a){if(!a)throw Error("Assert fail")}let a3=n`typescript`({AbstractMethodHasImplementation:({methodName:a})=>`Method '${a}' cannot have an implementation because it is marked abstract.`,AbstractPropertyHasInitializer:({propertyName:a})=>`Property '${a}' cannot have an initializer because it is marked abstract.`,AccessorCannotBeOptional:"An 'accessor' property cannot be declared optional.",AccessorCannotDeclareThisParameter:"'get' and 'set' accessors cannot declare 'this' parameters.",AccessorCannotHaveTypeParameters:"An accessor cannot have type parameters.",ClassMethodHasDeclare:"Class methods cannot have the 'declare' modifier.",ClassMethodHasReadonly:"Class methods cannot have the 'readonly' modifier.",ConstInitializerMustBeStringOrNumericLiteralOrLiteralEnumReference:"A 'const' initializer in an ambient context must be a string or numeric literal or literal enum reference.",ConstructorHasTypeParameters:"Type parameters cannot appear on a constructor declaration.",DeclareAccessor:({kind:a})=>`'declare' is not allowed in ${a}ters.`,DeclareClassFieldHasInitializer:"Initializers are not allowed in ambient contexts.",DeclareFunctionHasImplementation:"An implementation cannot be declared in ambient contexts.",DuplicateAccessibilityModifier:({modifier:a})=>`Accessibility modifier already seen: '${a}'.`,DuplicateModifier:({modifier:a})=>`Duplicate modifier: '${a}'.`,EmptyHeritageClauseType:({token:a})=>`'${a}' list cannot be empty.`,EmptyTypeArguments:"Type argument list cannot be empty.",EmptyTypeParameters:"Type parameter list cannot be empty.",ExpectedAmbientAfterExportDeclare:"'export declare' must be followed by an ambient declaration.",ImportAliasHasImportType:"An import alias can not use 'import type'.",ImportReflectionHasImportType:"An `import module` declaration can not use `type` modifier",IncompatibleModifiers:({modifiers:a})=>`'${a[0]}' modifier cannot be used with '${a[1]}' modifier.`,IndexSignatureHasAbstract:"Index signatures cannot have the 'abstract' modifier.",IndexSignatureHasAccessibility:({modifier:a})=>`Index signatures cannot have an accessibility modifier ('${a}').`,IndexSignatureHasDeclare:"Index signatures cannot have the 'declare' modifier.",IndexSignatureHasOverride:"'override' modifier cannot appear on an index signature.",IndexSignatureHasStatic:"Index signatures cannot have the 'static' modifier.",InitializerNotAllowedInAmbientContext:"Initializers are not allowed in ambient contexts.",InvalidHeritageClauseType:({token:a})=>`'${a}' list can only include identifiers or qualified-names with optional type arguments.`,InvalidModifierOnAwaitUsingDeclaration:a=>`'${a}' modifier cannot appear on an await using declaration.`,InvalidModifierOnTypeMember:({modifier:a})=>`'${a}' modifier cannot appear on a type member.`,InvalidModifierOnTypeParameter:({modifier:a})=>`'${a}' modifier cannot appear on a type parameter.`,InvalidModifierOnTypeParameterPositions:({modifier:a})=>`'${a}' modifier can only appear on a type parameter of a class, interface or type alias.`,InvalidModifierOnUsingDeclaration:a=>`'${a}' modifier cannot appear on a using declaration.`,InvalidModifiersOrder:({orderedModifiers:a})=>`'${a[0]}' modifier must precede '${a[1]}' modifier.`,InvalidPropertyAccessAfterInstantiationExpression:"Invalid property access after an instantiation expression. You can either wrap the instantiation expression in parentheses, or delete the type arguments.",InvalidTupleMemberLabel:"Tuple members must be labeled with a simple identifier.",MissingInterfaceName:"'interface' declarations must be followed by an identifier.",NonAbstractClassHasAbstractMethod:"Abstract methods can only appear within an abstract class.",NonClassMethodPropertyHasAbstractModifier:"'abstract' modifier can only appear on a class, method, or property declaration.",OptionalTypeBeforeRequired:"A required element cannot follow an optional element.",OverrideNotInSubClass:"This member cannot have an 'override' modifier because its containing class does not extend another class.",PatternIsOptional:"A binding pattern parameter cannot be optional in an implementation signature.",PrivateElementHasAbstract:"Private elements cannot have the 'abstract' modifier.",PrivateElementHasAccessibility:({modifier:a})=>`Private elements cannot have an accessibility modifier ('${a}').`,ReadonlyForMethodSignature:"'readonly' modifier can only appear on a property declaration or index signature.",ReservedArrowTypeParam:"This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma, as in `<T,>() => ...`.",ReservedTypeAssertion:"This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead.",SetAccessorCannotHaveOptionalParameter:"A 'set' accessor cannot have an optional parameter.",SetAccessorCannotHaveRestParameter:"A 'set' accessor cannot have rest parameter.",SetAccessorCannotHaveReturnType:"A 'set' accessor cannot have a return type annotation.",SingleTypeParameterWithoutTrailingComma:({typeParameterName:a})=>`Single type parameter ${a} should have a trailing comma. Example usage: <${a},>.`,StaticBlockCannotHaveModifier:"Static class blocks cannot have any modifier.",TupleOptionalAfterType:"A labeled tuple optional element must be declared using a question mark after the name and before the colon (`name?: type`), rather than after the type (`name: type?`).",TypeAnnotationAfterAssign:"Type annotations must come before default assignments, e.g. instead of `age = 25: number` use `age: number = 25`.",TypeImportCannotSpecifyDefaultAndNamed:"A type-only import can specify a default import or named bindings, but not both.",TypeModifierIsUsedInTypeExports:"The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.",TypeModifierIsUsedInTypeImports:"The 'type' modifier cannot be used on a named import when 'import type' is used on its import statement.",UnexpectedParameterModifier:"A parameter property is only allowed in a constructor implementation.",UnexpectedReadonly:"'readonly' type modifier is only permitted on array and tuple literal types.",UnexpectedTypeAnnotation:"Did not expect a type annotation here.",UnexpectedTypeCastInParameter:"Unexpected type cast in parameter position.",UnsupportedImportTypeArgument:"Argument in a type import must be a string literal.",UnsupportedParameterPropertyKind:"A parameter property may not be declared using a binding pattern.",UnsupportedSignatureParameterKind:({type:a})=>`Name in a signature must be an Identifier, ObjectPattern or ArrayPattern, instead got ${a}.`,UsingDeclarationInAmbientContext:a=>`'${a}' declarations are not allowed in ambient contexts.`});function a4(a){return"private"===a||"public"===a||"protected"===a}function a5(a,b){return b?"Literal"===a.type&&("number"==typeof a.value||"bigint"in a):"NumericLiteral"===a.type||"BigIntLiteral"===a.type}let a6=n`placeholders`({ClassNameIsRequired:"A class name is required.",UnexpectedSpace:"Unexpected space in placeholder."}),a7=["minimal","fsharp","hack","smart"],a8=["^^","@@","^","%","#"],a9={estree:a=>class extends a{parse(){let a=r(super.parse());return 256&this.optionFlags&&(a.tokens=a.tokens.map(r)),a}parseRegExpLiteral({pattern:a,flags:b}){let c=null;try{c=new RegExp(a,b)}catch(a){}let d=this.estreeParseLiteral(c);return d.regex={pattern:a,flags:b},d}parseBigIntLiteral(a){let b;try{b=BigInt(a)}catch(a){b=null}let c=this.estreeParseLiteral(b);return c.bigint=String(c.value||a),c}parseDecimalLiteral(a){let b=this.estreeParseLiteral(null);return b.decimal=String(b.value||a),b}estreeParseLiteral(a){return this.parseLiteral(a,"Literal")}parseStringLiteral(a){return this.estreeParseLiteral(a)}parseNumericLiteral(a){return this.estreeParseLiteral(a)}parseNullLiteral(){return this.estreeParseLiteral(null)}parseBooleanLiteral(a){return this.estreeParseLiteral(a)}estreeParseChainExpression(a,b){let c=this.startNodeAtNode(a);return c.expression=a,this.finishNodeAt(c,"ChainExpression",b)}directiveToStmt(a){let b=a.value;delete a.value,this.castNodeTo(b,"Literal"),b.raw=b.extra.raw,b.value=b.extra.expressionValue;let c=this.castNodeTo(a,"ExpressionStatement");return c.expression=b,c.directive=b.extra.rawValue,delete b.extra,c}fillOptionalPropertiesForTSESLint(a){}cloneEstreeStringLiteral(a){let{start:b,end:c,loc:d,range:e,raw:f,value:g}=a,h=Object.create(a.constructor.prototype);return h.type="Literal",h.start=b,h.end=c,h.loc=d,h.range=e,h.raw=f,h.value=g,h}initFunction(a,b){super.initFunction(a,b),a.expression=!1}checkDeclaration(a){null!=a&&this.isObjectProperty(a)?this.checkDeclaration(a.value):super.checkDeclaration(a)}getObjectOrClassMethodParams(a){return a.value.params}isValidDirective(a){var b;return"ExpressionStatement"===a.type&&"Literal"===a.expression.type&&"string"==typeof a.expression.value&&!(null!=(b=a.expression.extra)&&b.parenthesized)}parseBlockBody(a,b,c,d,e){super.parseBlockBody(a,b,c,d,e);let f=a.directives.map(a=>this.directiveToStmt(a));a.body=f.concat(a.body),delete a.directives}parsePrivateName(){let a=super.parsePrivateName();return this.getPluginOption("estree","classFeatures")?this.convertPrivateNameToPrivateIdentifier(a):a}convertPrivateNameToPrivateIdentifier(a){let b=super.getPrivateNameSV(a);return delete a.id,a.name=b,this.castNodeTo(a,"PrivateIdentifier")}isPrivateName(a){return this.getPluginOption("estree","classFeatures")?"PrivateIdentifier"===a.type:super.isPrivateName(a)}getPrivateNameSV(a){return this.getPluginOption("estree","classFeatures")?a.name:super.getPrivateNameSV(a)}parseLiteral(a,b){let c=super.parseLiteral(a,b);return c.raw=c.extra.raw,delete c.extra,c}parseFunctionBody(a,b,c=!1){super.parseFunctionBody(a,b,c),a.expression="BlockStatement"!==a.body.type}parseMethod(a,b,c,d,e,f,g=!1){let h=this.startNode();h.kind=a.kind,h=super.parseMethod(h,b,c,d,e,f,g),delete h.kind;let{typeParameters:i}=a;return(i&&(delete a.typeParameters,h.typeParameters=i,this.resetStartLocationFromNode(h,i)),a.value=this.castNodeTo(h,"FunctionExpression"),"ClassPrivateMethod"===f&&(a.computed=!1),"ObjectMethod"===f)?("method"===a.kind&&(a.kind="init"),a.shorthand=!1,this.finishNode(a,"Property")):this.finishNode(a,"MethodDefinition")}nameIsConstructor(a){return"Literal"===a.type?"constructor"===a.value:super.nameIsConstructor(a)}parseClassProperty(...a){let b=super.parseClassProperty(...a);return this.getPluginOption("estree","classFeatures")&&this.castNodeTo(b,"PropertyDefinition"),b}parseClassPrivateProperty(...a){let b=super.parseClassPrivateProperty(...a);return this.getPluginOption("estree","classFeatures")&&(this.castNodeTo(b,"PropertyDefinition"),b.computed=!1),b}parseClassAccessorProperty(a){let b=super.parseClassAccessorProperty(a);return this.getPluginOption("estree","classFeatures")&&(b.abstract&&this.hasPlugin("typescript")?(delete b.abstract,this.castNodeTo(b,"TSAbstractAccessorProperty")):this.castNodeTo(b,"AccessorProperty")),b}parseObjectProperty(a,b,c,d){let e=super.parseObjectProperty(a,b,c,d);return e&&(e.kind="init",this.castNodeTo(e,"Property")),e}finishObjectProperty(a){return a.kind="init",this.finishNode(a,"Property")}isValidLVal(a,b,c,d){return"Property"===a?"value":super.isValidLVal(a,b,c,d)}isAssignable(a,b){return null!=a&&this.isObjectProperty(a)?this.isAssignable(a.value,b):super.isAssignable(a,b)}toAssignable(a,b=!1){if(null!=a&&this.isObjectProperty(a)){let{key:c,value:d}=a;this.isPrivateName(c)&&this.classScope.usePrivateName(this.getPrivateNameSV(c),c.loc.start),this.toAssignable(d,b)}else super.toAssignable(a,b)}toAssignableObjectExpressionProp(a,b,c){"Property"===a.type&&("get"===a.kind||"set"===a.kind)?this.raise(o.PatternHasAccessor,a.key):"Property"===a.type&&a.method?this.raise(o.PatternHasMethod,a.key):super.toAssignableObjectExpressionProp(a,b,c)}finishCallExpression(a,b){let c=super.finishCallExpression(a,b);if("Import"===c.callee.type){var d,e;this.castNodeTo(c,"ImportExpression"),c.source=c.arguments[0],c.options=null!=(d=c.arguments[1])?d:null,c.attributes=null!=(e=c.arguments[1])?e:null,delete c.arguments,delete c.callee}else"OptionalCallExpression"===c.type?this.castNodeTo(c,"CallExpression"):c.optional=!1;return c}toReferencedArguments(a){"ImportExpression"!==a.type&&super.toReferencedArguments(a)}parseExport(a,b){let c=this.state.lastTokStartLoc,d=super.parseExport(a,b);switch(d.type){case"ExportAllDeclaration":d.exported=null;break;case"ExportNamedDeclaration":1===d.specifiers.length&&"ExportNamespaceSpecifier"===d.specifiers[0].type&&(this.castNodeTo(d,"ExportAllDeclaration"),d.exported=d.specifiers[0].exported,delete d.specifiers);case"ExportDefaultDeclaration":{var e;let{declaration:a}=d;(null==a?void 0:a.type)==="ClassDeclaration"&&(null==(e=a.decorators)?void 0:e.length)>0&&a.start===d.start&&this.resetStartLocation(d,c)}}return d}stopParseSubscript(a,b){let c=super.stopParseSubscript(a,b);return b.optionalChainMember?this.estreeParseChainExpression(c,a.loc.end):c}parseMember(a,b,c,d,e){let f=super.parseMember(a,b,c,d,e);return"OptionalMemberExpression"===f.type?this.castNodeTo(f,"MemberExpression"):f.optional=!1,f}isOptionalMemberExpression(a){return"ChainExpression"===a.type?"MemberExpression"===a.expression.type:super.isOptionalMemberExpression(a)}hasPropertyAsPrivateName(a){return"ChainExpression"===a.type&&(a=a.expression),super.hasPropertyAsPrivateName(a)}isObjectProperty(a){return"Property"===a.type&&"init"===a.kind&&!a.method}isObjectMethod(a){return"Property"===a.type&&(a.method||"get"===a.kind||"set"===a.kind)}castNodeTo(a,b){let c=super.castNodeTo(a,b);return this.fillOptionalPropertiesForTSESLint(c),c}cloneIdentifier(a){let b=super.cloneIdentifier(a);return this.fillOptionalPropertiesForTSESLint(b),b}cloneStringLiteral(a){return"Literal"===a.type?this.cloneEstreeStringLiteral(a):super.cloneStringLiteral(a)}finishNodeAt(a,b,c){return r(super.finishNodeAt(a,b,c))}finishNode(a,b){let c=super.finishNode(a,b);return this.fillOptionalPropertiesForTSESLint(c),c}resetStartLocation(a,b){super.resetStartLocation(a,b),r(a)}resetEndLocation(a,b=this.state.lastTokEndLoc){super.resetEndLocation(a,b),r(a)}},jsx:a=>class extends a{jsxReadToken(){let a="",b=this.state.pos;for(;;){if(this.state.pos>=this.length)throw this.raise(ar.UnterminatedJsxContent,this.state.startLoc);let c=this.input.charCodeAt(this.state.pos);switch(c){case 60:case 123:if(this.state.pos===this.state.start)return void(60===c&&this.state.canStartJSXElement?(++this.state.pos,this.finishToken(143)):super.getTokenFromCode(c));a+=this.input.slice(b,this.state.pos),this.finishToken(142,a);return;case 38:a+=this.input.slice(b,this.state.pos),a+=this.jsxReadEntity(),b=this.state.pos;break;default:an(c)?(a+=this.input.slice(b,this.state.pos),a+=this.jsxReadNewLine(!0),b=this.state.pos):++this.state.pos}}}jsxReadNewLine(a){let b,c=this.input.charCodeAt(this.state.pos);return++this.state.pos,13===c&&10===this.input.charCodeAt(this.state.pos)?(++this.state.pos,b=a?"\n":"\r\n"):b=String.fromCharCode(c),++this.state.curLine,this.state.lineStart=this.state.pos,b}jsxReadString(a){let b="",c=++this.state.pos;for(;;){if(this.state.pos>=this.length)throw this.raise(o.UnterminatedString,this.state.startLoc);let d=this.input.charCodeAt(this.state.pos);if(d===a)break;38===d?(b+=this.input.slice(c,this.state.pos),b+=this.jsxReadEntity(),c=this.state.pos):an(d)?(b+=this.input.slice(c,this.state.pos),b+=this.jsxReadNewLine(!1),c=this.state.pos):++this.state.pos}b+=this.input.slice(c,this.state.pos++),this.finishToken(134,b)}jsxReadEntity(){let a=++this.state.pos;if(35===this.codePointAtPos(this.state.pos)){++this.state.pos;let a=10;120===this.codePointAtPos(this.state.pos)&&(a=16,++this.state.pos);let b=this.readInt(a,void 0,!1,"bail");if(null!==b&&59===this.codePointAtPos(this.state.pos))return++this.state.pos,String.fromCodePoint(b)}else{let b=0,c=!1;for(;b++<10&&this.state.pos<this.length&&!(c=59===this.codePointAtPos(this.state.pos));)++this.state.pos;if(c){let b=al[this.input.slice(a,this.state.pos)];if(++this.state.pos,b)return b}}return this.state.pos=a,"&"}jsxReadWord(){let a,b=this.state.pos;do a=this.input.charCodeAt(++this.state.pos);while(W(a)||45===a)this.finishToken(141,this.input.slice(b,this.state.pos))}jsxParseIdentifier(){let a=this.startNode();return this.match(141)?a.name=this.state.value:M(this.state.type)?a.name=A[this.state.type]:this.unexpected(),this.next(),this.finishNode(a,"JSXIdentifier")}jsxParseNamespacedName(){let a=this.state.startLoc,b=this.jsxParseIdentifier();if(!this.eat(14))return b;let c=this.startNodeAt(a);return c.namespace=b,c.name=this.jsxParseIdentifier(),this.finishNode(c,"JSXNamespacedName")}jsxParseElementName(){let a=this.state.startLoc,b=this.jsxParseNamespacedName();if("JSXNamespacedName"===b.type)return b;for(;this.eat(16);){let c=this.startNodeAt(a);c.object=b,c.property=this.jsxParseIdentifier(),b=this.finishNode(c,"JSXMemberExpression")}return b}jsxParseAttributeValue(){let a;switch(this.state.type){case 5:return a=this.startNode(),this.setContext(t.brace),this.next(),"JSXEmptyExpression"===(a=this.jsxParseExpressionContainer(a,t.j_oTag)).expression.type&&this.raise(ar.AttributeIsEmpty,a),a;case 143:case 134:return this.parseExprAtom();default:throw this.raise(ar.UnsupportedJsxValue,this.state.startLoc)}}jsxParseEmptyExpression(){let a=this.startNodeAt(this.state.lastTokEndLoc);return this.finishNodeAt(a,"JSXEmptyExpression",this.state.startLoc)}jsxParseSpreadChild(a){return this.next(),a.expression=this.parseExpression(),this.setContext(t.j_expr),this.state.canStartJSXElement=!0,this.expect(8),this.finishNode(a,"JSXSpreadChild")}jsxParseExpressionContainer(a,b){return this.match(8)?a.expression=this.jsxParseEmptyExpression():a.expression=this.parseExpression(),this.setContext(b),this.state.canStartJSXElement=!0,this.expect(8),this.finishNode(a,"JSXExpressionContainer")}jsxParseAttribute(){let a=this.startNode();return this.match(5)?(this.setContext(t.brace),this.next(),this.expect(21),a.argument=this.parseMaybeAssignAllowIn(),this.setContext(t.j_oTag),this.state.canStartJSXElement=!0,this.expect(8),this.finishNode(a,"JSXSpreadAttribute")):(a.name=this.jsxParseNamespacedName(),a.value=this.eat(29)?this.jsxParseAttributeValue():null,this.finishNode(a,"JSXAttribute"))}jsxParseOpeningElementAt(a){let b=this.startNodeAt(a);return this.eat(144)?this.finishNode(b,"JSXOpeningFragment"):(b.name=this.jsxParseElementName(),this.jsxParseOpeningElementAfterName(b))}jsxParseOpeningElementAfterName(a){let b=[];for(;!this.match(56)&&!this.match(144);)b.push(this.jsxParseAttribute());return a.attributes=b,a.selfClosing=this.eat(56),this.expect(144),this.finishNode(a,"JSXOpeningElement")}jsxParseClosingElementAt(a){let b=this.startNodeAt(a);return this.eat(144)?this.finishNode(b,"JSXClosingFragment"):(b.name=this.jsxParseElementName(),this.expect(144),this.finishNode(b,"JSXClosingElement"))}jsxParseElementAt(a){let b=this.startNodeAt(a),c=[],d=this.jsxParseOpeningElementAt(a),e=null;if(!d.selfClosing){b:for(;;)switch(this.state.type){case 143:if(a=this.state.startLoc,this.next(),this.eat(56)){e=this.jsxParseClosingElementAt(a);break b}c.push(this.jsxParseElementAt(a));break;case 142:c.push(this.parseLiteral(this.state.value,"JSXText"));break;case 5:{let a=this.startNode();this.setContext(t.brace),this.next(),this.match(21)?c.push(this.jsxParseSpreadChild(a)):c.push(this.jsxParseExpressionContainer(a,t.j_expr));break}default:this.unexpected()}as(d)&&!as(e)&&null!==e?this.raise(ar.MissingClosingTagFragment,e):!as(d)&&as(e)?this.raise(ar.MissingClosingTagElement,e,{openingTagName:at(d.name)}):as(d)||as(e)||at(e.name)===at(d.name)||this.raise(ar.MissingClosingTagElement,e,{openingTagName:at(d.name)})}if(as(d)?(b.openingFragment=d,b.closingFragment=e):(b.openingElement=d,b.closingElement=e),b.children=c,this.match(47))throw this.raise(ar.UnwrappedAdjacentJSXElements,this.state.startLoc);return as(d)?this.finishNode(b,"JSXFragment"):this.finishNode(b,"JSXElement")}jsxParseElement(){let a=this.state.startLoc;return this.next(),this.jsxParseElementAt(a)}setContext(a){let{context:b}=this.state;b[b.length-1]=a}parseExprAtom(a){return this.match(143)?this.jsxParseElement():this.match(47)&&33!==this.input.charCodeAt(this.state.pos)?(this.replaceToken(143),this.jsxParseElement()):super.parseExprAtom(a)}skipSpace(){this.curContext().preserveSpace||super.skipSpace()}getTokenFromCode(a){let b=this.curContext();if(b===t.j_expr)return void this.jsxReadToken();if(b===t.j_oTag||b===t.j_cTag){if(V(a))return void this.jsxReadWord();if(62===a){++this.state.pos,this.finishToken(144);return}if((34===a||39===a)&&b===t.j_oTag)return void this.jsxReadString(a)}if(60===a&&this.state.canStartJSXElement&&33!==this.input.charCodeAt(this.state.pos+1)){++this.state.pos,this.finishToken(143);return}super.getTokenFromCode(a)}updateContext(a){let{context:b,type:c}=this.state;if(56===c&&143===a)b.splice(-2,2,t.j_cTag),this.state.canStartJSXElement=!1;else if(143===c)b.push(t.j_oTag);else if(144===c){let c=b[b.length-1];c===t.j_oTag&&56===a||c===t.j_cTag?(b.pop(),this.state.canStartJSXElement=b[b.length-1]===t.j_expr):(this.setContext(t.j_expr),this.state.canStartJSXElement=!0)}else this.state.canStartJSXElement=C[c]}},flow:a=>class extends a{constructor(...a){super(...a),this.flowPragma=void 0}getScopeHandler(){return af}shouldParseTypes(){return this.getPluginOption("flow","all")||"flow"===this.flowPragma}finishToken(a,b){134!==a&&13!==a&&28!==a&&void 0===this.flowPragma&&(this.flowPragma=null),super.finishToken(a,b)}addComment(a){if(void 0===this.flowPragma){let b=ak.exec(a.value);if(b)if("flow"===b[1])this.flowPragma="flow";else if("noflow"===b[1])this.flowPragma="noflow";else throw Error("Unexpected flow pragma")}super.addComment(a)}flowParseTypeInitialiser(a){let b=this.state.inType;this.state.inType=!0,this.expect(a||14);let c=this.flowParseType();return this.state.inType=b,c}flowParsePredicate(){let a=this.startNode(),b=this.state.startLoc;return(this.next(),this.expectContextual(110),this.state.lastTokStartLoc.index>b.index+1&&this.raise(ah.UnexpectedSpaceBetweenModuloChecks,b),this.eat(10))?(a.value=super.parseExpression(),this.expect(11),this.finishNode(a,"DeclaredPredicate")):this.finishNode(a,"InferredPredicate")}flowParseTypeAndPredicateInitialiser(){let a=this.state.inType;this.state.inType=!0,this.expect(14);let b=null,c=null;return this.match(54)?(this.state.inType=a,c=this.flowParsePredicate()):(b=this.flowParseType(),this.state.inType=a,this.match(54)&&(c=this.flowParsePredicate())),[b,c]}flowParseDeclareClass(a){return this.next(),this.flowParseInterfaceish(a,!0),this.finishNode(a,"DeclareClass")}flowParseDeclareFunction(a){this.next();let b=a.id=this.parseIdentifier(),c=this.startNode(),d=this.startNode();this.match(47)?c.typeParameters=this.flowParseTypeParameterDeclaration():c.typeParameters=null,this.expect(10);let e=this.flowParseFunctionTypeParams();return c.params=e.params,c.rest=e.rest,c.this=e._this,this.expect(11),[c.returnType,a.predicate]=this.flowParseTypeAndPredicateInitialiser(),d.typeAnnotation=this.finishNode(c,"FunctionTypeAnnotation"),b.typeAnnotation=this.finishNode(d,"TypeAnnotation"),this.resetEndLocation(b),this.semicolon(),this.scope.declareName(a.id.name,2048,a.id.loc.start),this.finishNode(a,"DeclareFunction")}flowParseDeclare(a,b){if(this.match(80))return this.flowParseDeclareClass(a);if(this.match(68))return this.flowParseDeclareFunction(a);if(this.match(74))return this.flowParseDeclareVariable(a);if(this.eatContextual(127))if(this.match(16))return this.flowParseDeclareModuleExports(a);else return b&&this.raise(ah.NestedDeclareModule,this.state.lastTokStartLoc),this.flowParseDeclareModule(a);if(this.isContextual(130))return this.flowParseDeclareTypeAlias(a);else if(this.isContextual(131))return this.flowParseDeclareOpaqueType(a);else if(this.isContextual(129))return this.flowParseDeclareInterface(a);else if(this.match(82))return this.flowParseDeclareExportDeclaration(a,b);throw this.unexpected()}flowParseDeclareVariable(a){return this.next(),a.id=this.flowParseTypeAnnotatableIdentifier(),this.scope.declareName(a.id.name,5,a.id.loc.start),this.semicolon(),this.finishNode(a,"DeclareVariable")}flowParseDeclareModule(a){this.scope.enter(0),this.match(134)?a.id=super.parseExprAtom():a.id=this.parseIdentifier();let b=a.body=this.startNode(),c=b.body=[];for(this.expect(5);!this.match(8);){let a=this.startNode();this.match(83)?(this.next(),this.isContextual(130)||this.match(87)||this.raise(ah.InvalidNonTypeImportInDeclareModule,this.state.lastTokStartLoc),c.push(super.parseImport(a))):(this.expectContextual(125,ah.UnsupportedStatementInDeclareModule),c.push(this.flowParseDeclare(a,!0)))}this.scope.exit(),this.expect(8),this.finishNode(b,"BlockStatement");let d=null,e=!1;return c.forEach(a=>{"DeclareExportAllDeclaration"!==a.type&&("DeclareExportDeclaration"!==a.type||a.declaration&&("TypeAlias"===a.declaration.type||"InterfaceDeclaration"===a.declaration.type))?"DeclareModuleExports"===a.type&&(e&&this.raise(ah.DuplicateDeclareModuleExports,a),"ES"===d&&this.raise(ah.AmbiguousDeclareModuleKind,a),d="CommonJS",e=!0):("CommonJS"===d&&this.raise(ah.AmbiguousDeclareModuleKind,a),d="ES")}),a.kind=d||"CommonJS",this.finishNode(a,"DeclareModule")}flowParseDeclareExportDeclaration(a,b){if(this.expect(82),this.eat(65))return this.match(68)||this.match(80)?a.declaration=this.flowParseDeclare(this.startNode()):(a.declaration=this.flowParseType(),this.semicolon()),a.default=!0,this.finishNode(a,"DeclareExportDeclaration");if(this.match(75)||this.isLet()||(this.isContextual(130)||this.isContextual(129))&&!b){let a=this.state.value;throw this.raise(ah.UnsupportedDeclareExportKind,this.state.startLoc,{unsupportedExportKind:a,suggestion:aj[a]})}if(this.match(74)||this.match(68)||this.match(80)||this.isContextual(131))return a.declaration=this.flowParseDeclare(this.startNode()),a.default=!1,this.finishNode(a,"DeclareExportDeclaration");if(this.match(55)||this.match(5)||this.isContextual(129)||this.isContextual(130)||this.isContextual(131))return"ExportNamedDeclaration"===(a=this.parseExport(a,null)).type?(a.default=!1,delete a.exportKind,this.castNodeTo(a,"DeclareExportDeclaration")):this.castNodeTo(a,"DeclareExportAllDeclaration");throw this.unexpected()}flowParseDeclareModuleExports(a){return this.next(),this.expectContextual(111),a.typeAnnotation=this.flowParseTypeAnnotation(),this.semicolon(),this.finishNode(a,"DeclareModuleExports")}flowParseDeclareTypeAlias(a){this.next();let b=this.flowParseTypeAlias(a);return this.castNodeTo(b,"DeclareTypeAlias"),b}flowParseDeclareOpaqueType(a){this.next();let b=this.flowParseOpaqueType(a,!0);return this.castNodeTo(b,"DeclareOpaqueType"),b}flowParseDeclareInterface(a){return this.next(),this.flowParseInterfaceish(a,!1),this.finishNode(a,"DeclareInterface")}flowParseInterfaceish(a,b){if(a.id=this.flowParseRestrictedIdentifier(!b,!0),this.scope.declareName(a.id.name,b?17:8201,a.id.loc.start),this.match(47)?a.typeParameters=this.flowParseTypeParameterDeclaration():a.typeParameters=null,a.extends=[],this.eat(81))do a.extends.push(this.flowParseInterfaceExtends());while(!b&&this.eat(12))if(b){if(a.implements=[],a.mixins=[],this.eatContextual(117))do a.mixins.push(this.flowParseInterfaceExtends());while(this.eat(12))if(this.eatContextual(113))do a.implements.push(this.flowParseInterfaceExtends());while(this.eat(12))}a.body=this.flowParseObjectType({allowStatic:b,allowExact:!1,allowSpread:!1,allowProto:b,allowInexact:!1})}flowParseInterfaceExtends(){let a=this.startNode();return a.id=this.flowParseQualifiedTypeIdentifier(),this.match(47)?a.typeParameters=this.flowParseTypeParameterInstantiation():a.typeParameters=null,this.finishNode(a,"InterfaceExtends")}flowParseInterface(a){return this.flowParseInterfaceish(a,!1),this.finishNode(a,"InterfaceDeclaration")}checkNotUnderscore(a){"_"===a&&this.raise(ah.UnexpectedReservedUnderscore,this.state.startLoc)}checkReservedType(a,b,c){ag.has(a)&&this.raise(c?ah.AssignReservedType:ah.UnexpectedReservedType,b,{reservedType:a})}flowParseRestrictedIdentifierName(a,b){return this.checkReservedType(this.state.value,this.state.startLoc,b),this.parseIdentifierName(a)}flowParseRestrictedIdentifier(a,b){let c=this.startNode(),d=this.flowParseRestrictedIdentifierName(a,b);return this.createIdentifier(c,d)}flowParseTypeAlias(a){return a.id=this.flowParseRestrictedIdentifier(!1,!0),this.scope.declareName(a.id.name,8201,a.id.loc.start),this.match(47)?a.typeParameters=this.flowParseTypeParameterDeclaration():a.typeParameters=null,a.right=this.flowParseTypeInitialiser(29),this.semicolon(),this.finishNode(a,"TypeAlias")}flowParseOpaqueType(a,b){return this.expectContextual(130),a.id=this.flowParseRestrictedIdentifier(!0,!0),this.scope.declareName(a.id.name,8201,a.id.loc.start),this.match(47)?a.typeParameters=this.flowParseTypeParameterDeclaration():a.typeParameters=null,a.supertype=null,this.match(14)&&(a.supertype=this.flowParseTypeInitialiser(14)),a.impltype=null,b||(a.impltype=this.flowParseTypeInitialiser(29)),this.semicolon(),this.finishNode(a,"OpaqueType")}flowParseTypeParameterBound(){if(this.match(14)||this.isContextual(81)){let a=this.startNode();return this.next(),a.typeAnnotation=this.flowParseType(),this.finishNode(a,"TypeAnnotation")}}flowParseTypeParameter(a=!1){let b=this.state.startLoc,c=this.startNode(),d=this.flowParseVariance();return c.name=this.flowParseRestrictedIdentifierName(),c.variance=d,c.bound=this.flowParseTypeParameterBound(),this.match(29)?(this.eat(29),c.default=this.flowParseType()):a&&this.raise(ah.MissingTypeParamDefault,b),this.finishNode(c,"TypeParameter")}flowParseTypeParameterDeclaration(){let a=this.state.inType,b=this.startNode();b.params=[],this.state.inType=!0,this.match(47)||this.match(143)?this.next():this.unexpected();let c=!1;do{let a=this.flowParseTypeParameter(c);b.params.push(a),a.default&&(c=!0),this.match(48)||this.expect(12)}while(!this.match(48))return this.expect(48),this.state.inType=a,this.finishNode(b,"TypeParameterDeclaration")}flowInTopLevelContext(a){if(this.curContext()===t.brace)return a();{let b=this.state.context;this.state.context=[b[0]];try{return a()}finally{this.state.context=b}}}flowParseTypeParameterInstantiationInExpression(){if(47===this.reScan_lt())return this.flowParseTypeParameterInstantiation()}flowParseTypeParameterInstantiation(){let a=this.startNode(),b=this.state.inType;return this.state.inType=!0,a.params=[],this.flowInTopLevelContext(()=>{this.expect(47);let b=this.state.noAnonFunctionType;for(this.state.noAnonFunctionType=!1;!this.match(48);)a.params.push(this.flowParseType()),this.match(48)||this.expect(12);this.state.noAnonFunctionType=b}),this.state.inType=b,this.state.inType||this.curContext()!==t.brace||this.reScan_lt_gt(),this.expect(48),this.finishNode(a,"TypeParameterInstantiation")}flowParseTypeParameterInstantiationCallOrNew(){if(47!==this.reScan_lt())return null;let a=this.startNode(),b=this.state.inType;for(a.params=[],this.state.inType=!0,this.expect(47);!this.match(48);)a.params.push(this.flowParseTypeOrImplicitInstantiation()),this.match(48)||this.expect(12);return this.expect(48),this.state.inType=b,this.finishNode(a,"TypeParameterInstantiation")}flowParseInterfaceType(){let a=this.startNode();if(this.expectContextual(129),a.extends=[],this.eat(81))do a.extends.push(this.flowParseInterfaceExtends());while(this.eat(12))return a.body=this.flowParseObjectType({allowStatic:!1,allowExact:!1,allowSpread:!1,allowProto:!1,allowInexact:!1}),this.finishNode(a,"InterfaceTypeAnnotation")}flowParseObjectPropertyKey(){return this.match(135)||this.match(134)?super.parseExprAtom():this.parseIdentifier(!0)}flowParseObjectTypeIndexer(a,b,c){return a.static=b,14===this.lookahead().type?(a.id=this.flowParseObjectPropertyKey(),a.key=this.flowParseTypeInitialiser()):(a.id=null,a.key=this.flowParseType()),this.expect(3),a.value=this.flowParseTypeInitialiser(),a.variance=c,this.finishNode(a,"ObjectTypeIndexer")}flowParseObjectTypeInternalSlot(a,b){return a.static=b,a.id=this.flowParseObjectPropertyKey(),this.expect(3),this.expect(3),this.match(47)||this.match(10)?(a.method=!0,a.optional=!1,a.value=this.flowParseObjectTypeMethodish(this.startNodeAt(a.loc.start))):(a.method=!1,this.eat(17)&&(a.optional=!0),a.value=this.flowParseTypeInitialiser()),this.finishNode(a,"ObjectTypeInternalSlot")}flowParseObjectTypeMethodish(a){for(a.params=[],a.rest=null,a.typeParameters=null,a.this=null,this.match(47)&&(a.typeParameters=this.flowParseTypeParameterDeclaration()),this.expect(10),this.match(78)&&(a.this=this.flowParseFunctionTypeParam(!0),a.this.name=null,this.match(11)||this.expect(12));!this.match(11)&&!this.match(21);)a.params.push(this.flowParseFunctionTypeParam(!1)),this.match(11)||this.expect(12);return this.eat(21)&&(a.rest=this.flowParseFunctionTypeParam(!1)),this.expect(11),a.returnType=this.flowParseTypeInitialiser(),this.finishNode(a,"FunctionTypeAnnotation")}flowParseObjectTypeCallProperty(a,b){let c=this.startNode();return a.static=b,a.value=this.flowParseObjectTypeMethodish(c),this.finishNode(a,"ObjectTypeCallProperty")}flowParseObjectType({allowStatic:a,allowExact:b,allowSpread:c,allowProto:d,allowInexact:e}){let f,g,h=this.state.inType;this.state.inType=!0;let i=this.startNode();i.callProperties=[],i.properties=[],i.indexers=[],i.internalSlots=[];let j=!1;for(b&&this.match(6)?(this.expect(6),f=9,g=!0):(this.expect(5),f=8,g=!1),i.exact=g;!this.match(f);){let b=!1,f=null,h=null,k=this.startNode();if(d&&this.isContextual(118)){let b=this.lookahead();14!==b.type&&17!==b.type&&(this.next(),f=this.state.startLoc,a=!1)}if(a&&this.isContextual(106)){let a=this.lookahead();14!==a.type&&17!==a.type&&(this.next(),b=!0)}let l=this.flowParseVariance();if(this.eat(0))null!=f&&this.unexpected(f),this.eat(0)?(l&&this.unexpected(l.loc.start),i.internalSlots.push(this.flowParseObjectTypeInternalSlot(k,b))):i.indexers.push(this.flowParseObjectTypeIndexer(k,b,l));else if(this.match(10)||this.match(47))null!=f&&this.unexpected(f),l&&this.unexpected(l.loc.start),i.callProperties.push(this.flowParseObjectTypeCallProperty(k,b));else{let a="init";(this.isContextual(99)||this.isContextual(104))&&K(this.lookahead().type)&&(a=this.state.value,this.next());let d=this.flowParseObjectTypeProperty(k,b,f,l,a,c,null!=e?e:!g);null===d?(j=!0,h=this.state.lastTokStartLoc):i.properties.push(d)}this.flowObjectTypeSemicolon(),!h||this.match(8)||this.match(9)||this.raise(ah.UnexpectedExplicitInexactInObject,h)}this.expect(f),c&&(i.inexact=j);let k=this.finishNode(i,"ObjectTypeAnnotation");return this.state.inType=h,k}flowParseObjectTypeProperty(a,b,c,d,e,f,g){if(this.eat(21))return this.match(12)||this.match(13)||this.match(8)||this.match(9)?(f?g||this.raise(ah.InexactInsideExact,this.state.lastTokStartLoc):this.raise(ah.InexactInsideNonObject,this.state.lastTokStartLoc),d&&this.raise(ah.InexactVariance,d),null):(f||this.raise(ah.UnexpectedSpreadType,this.state.lastTokStartLoc),null!=c&&this.unexpected(c),d&&this.raise(ah.SpreadVariance,d),a.argument=this.flowParseType(),this.finishNode(a,"ObjectTypeSpreadProperty"));{a.key=this.flowParseObjectPropertyKey(),a.static=b,a.proto=null!=c,a.kind=e;let g=!1;return this.match(47)||this.match(10)?(a.method=!0,null!=c&&this.unexpected(c),d&&this.unexpected(d.loc.start),a.value=this.flowParseObjectTypeMethodish(this.startNodeAt(a.loc.start)),("get"===e||"set"===e)&&this.flowCheckGetterSetterParams(a),!f&&"constructor"===a.key.name&&a.value.this&&this.raise(ah.ThisParamBannedInConstructor,a.value.this)):("init"!==e&&this.unexpected(),a.method=!1,this.eat(17)&&(g=!0),a.value=this.flowParseTypeInitialiser(),a.variance=d),a.optional=g,this.finishNode(a,"ObjectTypeProperty")}}flowCheckGetterSetterParams(a){let b=+("get"!==a.kind),c=a.value.params.length+ +!!a.value.rest;a.value.this&&this.raise("get"===a.kind?ah.GetterMayNotHaveThisParam:ah.SetterMayNotHaveThisParam,a.value.this),c!==b&&this.raise("get"===a.kind?o.BadGetterArity:o.BadSetterArity,a),"set"===a.kind&&a.value.rest&&this.raise(o.BadSetterRestParameter,a)}flowObjectTypeSemicolon(){this.eat(13)||this.eat(12)||this.match(8)||this.match(9)||this.unexpected()}flowParseQualifiedTypeIdentifier(a,b){null!=a||(a=this.state.startLoc);let c=b||this.flowParseRestrictedIdentifier(!0);for(;this.eat(16);){let b=this.startNodeAt(a);b.qualification=c,b.id=this.flowParseRestrictedIdentifier(!0),c=this.finishNode(b,"QualifiedTypeIdentifier")}return c}flowParseGenericType(a,b){let c=this.startNodeAt(a);return c.typeParameters=null,c.id=this.flowParseQualifiedTypeIdentifier(a,b),this.match(47)&&(c.typeParameters=this.flowParseTypeParameterInstantiation()),this.finishNode(c,"GenericTypeAnnotation")}flowParseTypeofType(){let a=this.startNode();return this.expect(87),a.argument=this.flowParsePrimaryType(),this.finishNode(a,"TypeofTypeAnnotation")}flowParseTupleType(){let a=this.startNode();for(a.types=[],this.expect(0);this.state.pos<this.length&&!this.match(3)&&(a.types.push(this.flowParseType()),!this.match(3));)this.expect(12);return this.expect(3),this.finishNode(a,"TupleTypeAnnotation")}flowParseFunctionTypeParam(a){let b=null,c=!1,d=null,e=this.startNode(),f=this.lookahead(),g=78===this.state.type;return 14===f.type||17===f.type?(g&&!a&&this.raise(ah.ThisParamMustBeFirst,e),b=this.parseIdentifier(g),this.eat(17)&&(c=!0,g&&this.raise(ah.ThisParamMayNotBeOptional,e)),d=this.flowParseTypeInitialiser()):d=this.flowParseType(),e.name=b,e.optional=c,e.typeAnnotation=d,this.finishNode(e,"FunctionTypeParam")}reinterpretTypeAsFunctionTypeParam(a){let b=this.startNodeAt(a.loc.start);return b.name=null,b.optional=!1,b.typeAnnotation=a,this.finishNode(b,"FunctionTypeParam")}flowParseFunctionTypeParams(a=[]){let b=null,c=null;for(this.match(78)&&((c=this.flowParseFunctionTypeParam(!0)).name=null,this.match(11)||this.expect(12));!this.match(11)&&!this.match(21);)a.push(this.flowParseFunctionTypeParam(!1)),this.match(11)||this.expect(12);return this.eat(21)&&(b=this.flowParseFunctionTypeParam(!1)),{params:a,rest:b,_this:c}}flowIdentToTypeAnnotation(a,b,c){switch(c.name){case"any":return this.finishNode(b,"AnyTypeAnnotation");case"bool":case"boolean":return this.finishNode(b,"BooleanTypeAnnotation");case"mixed":return this.finishNode(b,"MixedTypeAnnotation");case"empty":return this.finishNode(b,"EmptyTypeAnnotation");case"number":return this.finishNode(b,"NumberTypeAnnotation");case"string":return this.finishNode(b,"StringTypeAnnotation");case"symbol":return this.finishNode(b,"SymbolTypeAnnotation");default:return this.checkNotUnderscore(c.name),this.flowParseGenericType(a,c)}}flowParsePrimaryType(){let a,b,c=this.state.startLoc,d=this.startNode(),e=!1,f=this.state.noAnonFunctionType;switch(this.state.type){case 5:return this.flowParseObjectType({allowStatic:!1,allowExact:!1,allowSpread:!0,allowProto:!1,allowInexact:!0});case 6:return this.flowParseObjectType({allowStatic:!1,allowExact:!0,allowSpread:!0,allowProto:!1,allowInexact:!1});case 0:return this.state.noAnonFunctionType=!1,b=this.flowParseTupleType(),this.state.noAnonFunctionType=f,b;case 47:{let b=this.startNode();return b.typeParameters=this.flowParseTypeParameterDeclaration(),this.expect(10),b.params=(a=this.flowParseFunctionTypeParams()).params,b.rest=a.rest,b.this=a._this,this.expect(11),this.expect(19),b.returnType=this.flowParseType(),this.finishNode(b,"FunctionTypeAnnotation")}case 10:{let c=this.startNode();if(this.next(),!this.match(11)&&!this.match(21))if(I(this.state.type)||this.match(78)){let a=this.lookahead().type;e=17!==a&&14!==a}else e=!0;if(e){if(this.state.noAnonFunctionType=!1,b=this.flowParseType(),this.state.noAnonFunctionType=f,this.state.noAnonFunctionType||!(this.match(12)||this.match(11)&&19===this.lookahead().type))return this.expect(11),b;this.eat(12)}return c.params=(a=b?this.flowParseFunctionTypeParams([this.reinterpretTypeAsFunctionTypeParam(b)]):this.flowParseFunctionTypeParams()).params,c.rest=a.rest,c.this=a._this,this.expect(11),this.expect(19),c.returnType=this.flowParseType(),c.typeParameters=null,this.finishNode(c,"FunctionTypeAnnotation")}case 134:return this.parseLiteral(this.state.value,"StringLiteralTypeAnnotation");case 85:case 86:return d.value=this.match(85),this.next(),this.finishNode(d,"BooleanLiteralTypeAnnotation");case 53:if("-"===this.state.value){if(this.next(),this.match(135))return this.parseLiteralAtNode(-this.state.value,"NumberLiteralTypeAnnotation",d);if(this.match(136))return this.parseLiteralAtNode(-this.state.value,"BigIntLiteralTypeAnnotation",d);throw this.raise(ah.UnexpectedSubtractionOperand,this.state.startLoc)}break;case 135:return this.parseLiteral(this.state.value,"NumberLiteralTypeAnnotation");case 136:return this.parseLiteral(this.state.value,"BigIntLiteralTypeAnnotation");case 88:return this.next(),this.finishNode(d,"VoidTypeAnnotation");case 84:return this.next(),this.finishNode(d,"NullLiteralTypeAnnotation");case 78:return this.next(),this.finishNode(d,"ThisTypeAnnotation");case 55:return this.next(),this.finishNode(d,"ExistsTypeAnnotation");case 87:return this.flowParseTypeofType();default:if(M(this.state.type)){let a=A[this.state.type];return this.next(),super.createIdentifier(d,a)}if(I(this.state.type)){if(this.isContextual(129))return this.flowParseInterfaceType();return this.flowIdentToTypeAnnotation(c,d,this.parseIdentifier())}}throw this.unexpected()}flowParsePostfixType(){let a=this.state.startLoc,b=this.flowParsePrimaryType(),c=!1;for(;(this.match(0)||this.match(18))&&!this.canInsertSemicolon();){let d=this.startNodeAt(a),e=this.eat(18);c=c||e,this.expect(0),!e&&this.match(3)?(d.elementType=b,this.next(),b=this.finishNode(d,"ArrayTypeAnnotation")):(d.objectType=b,d.indexType=this.flowParseType(),this.expect(3),c?(d.optional=e,b=this.finishNode(d,"OptionalIndexedAccessType")):b=this.finishNode(d,"IndexedAccessType"))}return b}flowParsePrefixType(){let a=this.startNode();return this.eat(17)?(a.typeAnnotation=this.flowParsePrefixType(),this.finishNode(a,"NullableTypeAnnotation")):this.flowParsePostfixType()}flowParseAnonFunctionWithoutParens(){let a=this.flowParsePrefixType();if(!this.state.noAnonFunctionType&&this.eat(19)){let b=this.startNodeAt(a.loc.start);return b.params=[this.reinterpretTypeAsFunctionTypeParam(a)],b.rest=null,b.this=null,b.returnType=this.flowParseType(),b.typeParameters=null,this.finishNode(b,"FunctionTypeAnnotation")}return a}flowParseIntersectionType(){let a=this.startNode();this.eat(45);let b=this.flowParseAnonFunctionWithoutParens();for(a.types=[b];this.eat(45);)a.types.push(this.flowParseAnonFunctionWithoutParens());return 1===a.types.length?b:this.finishNode(a,"IntersectionTypeAnnotation")}flowParseUnionType(){let a=this.startNode();this.eat(43);let b=this.flowParseIntersectionType();for(a.types=[b];this.eat(43);)a.types.push(this.flowParseIntersectionType());return 1===a.types.length?b:this.finishNode(a,"UnionTypeAnnotation")}flowParseType(){let a=this.state.inType;this.state.inType=!0;let b=this.flowParseUnionType();return this.state.inType=a,b}flowParseTypeOrImplicitInstantiation(){if(132!==this.state.type||"_"!==this.state.value)return this.flowParseType();{let a=this.state.startLoc,b=this.parseIdentifier();return this.flowParseGenericType(a,b)}}flowParseTypeAnnotation(){let a=this.startNode();return a.typeAnnotation=this.flowParseTypeInitialiser(),this.finishNode(a,"TypeAnnotation")}flowParseTypeAnnotatableIdentifier(){let a=this.startNode(),b=this.parseIdentifierName();return this.match(14)&&(a.typeAnnotation=this.flowParseTypeAnnotation()),this.createIdentifier(a,b)}typeCastToParameter(a){return a.expression.typeAnnotation=a.typeAnnotation,this.resetEndLocation(a.expression,a.typeAnnotation.loc.end),a.expression}flowParseVariance(){let a=null;return this.match(53)?(a=this.startNode(),"+"===this.state.value?a.kind="plus":a.kind="minus",this.next(),this.finishNode(a,"Variance")):a}parseFunctionBody(a,b,c=!1){b?this.forwardNoArrowParamsConversionAt(a,()=>super.parseFunctionBody(a,!0,c)):super.parseFunctionBody(a,!1,c)}parseFunctionBodyAndFinish(a,b,c=!1){if(this.match(14)){let b=this.startNode();[b.typeAnnotation,a.predicate]=this.flowParseTypeAndPredicateInitialiser(),a.returnType=b.typeAnnotation?this.finishNode(b,"TypeAnnotation"):null}return super.parseFunctionBodyAndFinish(a,b,c)}parseStatementLike(a){if(this.state.strict&&this.isContextual(129)){if(J(this.lookahead().type)){let a=this.startNode();return this.next(),this.flowParseInterface(a)}}else if(this.isContextual(126)){let a=this.startNode();return this.next(),this.flowParseEnumDeclaration(a)}let b=super.parseStatementLike(a);return void 0!==this.flowPragma||this.isValidDirective(b)||(this.flowPragma=null),b}parseExpressionStatement(a,b,c){if("Identifier"===b.type){if("declare"===b.name){if(this.match(80)||I(this.state.type)||this.match(68)||this.match(74)||this.match(82))return this.flowParseDeclare(a)}else if(I(this.state.type)){if("interface"===b.name)return this.flowParseInterface(a);else if("type"===b.name)return this.flowParseTypeAlias(a);else if("opaque"===b.name)return this.flowParseOpaqueType(a,!1)}}return super.parseExpressionStatement(a,b,c)}shouldParseExportDeclaration(){let{type:a}=this.state;return 126===a||L(a)?!this.state.containsEsc:super.shouldParseExportDeclaration()}isExportDefaultSpecifier(){let{type:a}=this.state;return 126===a||L(a)?this.state.containsEsc:super.isExportDefaultSpecifier()}parseExportDefaultExpression(){if(this.isContextual(126)){let a=this.startNode();return this.next(),this.flowParseEnumDeclaration(a)}return super.parseExportDefaultExpression()}parseConditional(a,b,c){if(!this.match(17))return a;if(this.state.maybeInArrowParameters){let b=this.lookaheadCharCode();if(44===b||61===b||58===b||41===b)return this.setOptionalParametersError(c),a}this.expect(17);let d=this.state.clone(),e=this.state.noArrowAt,f=this.startNodeAt(b),{consequent:g,failed:h}=this.tryParseConditionalConsequent(),[i,j]=this.getArrowLikeExpressions(g);if(h||j.length>0){let a=[...e];if(j.length>0){this.state=d,this.state.noArrowAt=a;for(let b=0;b<j.length;b++)a.push(j[b].start);({consequent:g,failed:h}=this.tryParseConditionalConsequent()),[i,j]=this.getArrowLikeExpressions(g)}h&&i.length>1&&this.raise(ah.AmbiguousConditionalArrow,d.startLoc),h&&1===i.length&&(this.state=d,a.push(i[0].start),this.state.noArrowAt=a,{consequent:g,failed:h}=this.tryParseConditionalConsequent())}return this.getArrowLikeExpressions(g,!0),this.state.noArrowAt=e,this.expect(14),f.test=a,f.consequent=g,f.alternate=this.forwardNoArrowParamsConversionAt(f,()=>this.parseMaybeAssign(void 0,void 0)),this.finishNode(f,"ConditionalExpression")}tryParseConditionalConsequent(){this.state.noArrowParamsConversionAt.push(this.state.start);let a=this.parseMaybeAssignAllowIn(),b=!this.match(14);return this.state.noArrowParamsConversionAt.pop(),{consequent:a,failed:b}}getArrowLikeExpressions(a,b){let c=[a],d=[];for(;0!==c.length;){let a=c.pop();"ArrowFunctionExpression"===a.type&&"BlockStatement"!==a.body.type?(a.typeParameters||!a.returnType?this.finishArrowValidation(a):d.push(a),c.push(a.body)):"ConditionalExpression"===a.type&&(c.push(a.consequent),c.push(a.alternate))}return b?(d.forEach(a=>this.finishArrowValidation(a)),[d,[]]):function(a,b){let c=[],d=[];for(let e=0;e<a.length;e++)(b(a[e],e,a)?c:d).push(a[e]);return[c,d]}(d,a=>a.params.every(a=>this.isAssignable(a,!0)))}finishArrowValidation(a){var b;this.toAssignableList(a.params,null==(b=a.extra)?void 0:b.trailingCommaLoc,!1),this.scope.enter(518),super.checkParams(a,!1,!0),this.scope.exit()}forwardNoArrowParamsConversionAt(a,b){let c;return this.state.noArrowParamsConversionAt.includes(this.offsetToSourcePos(a.start))?(this.state.noArrowParamsConversionAt.push(this.state.start),c=b(),this.state.noArrowParamsConversionAt.pop()):c=b(),c}parseParenItem(a,b){let c=super.parseParenItem(a,b);if(this.eat(17)&&(c.optional=!0,this.resetEndLocation(a)),this.match(14)){let a=this.startNodeAt(b);return a.expression=c,a.typeAnnotation=this.flowParseTypeAnnotation(),this.finishNode(a,"TypeCastExpression")}return c}assertModuleNodeAllowed(a){("ImportDeclaration"!==a.type||"type"!==a.importKind&&"typeof"!==a.importKind)&&("ExportNamedDeclaration"!==a.type||"type"!==a.exportKind)&&("ExportAllDeclaration"!==a.type||"type"!==a.exportKind)&&super.assertModuleNodeAllowed(a)}parseExportDeclaration(a){if(this.isContextual(130)){a.exportKind="type";let b=this.startNode();return(this.next(),this.match(5))?(a.specifiers=this.parseExportSpecifiers(!0),super.parseExportFrom(a),null):this.flowParseTypeAlias(b)}if(this.isContextual(131)){a.exportKind="type";let b=this.startNode();return this.next(),this.flowParseOpaqueType(b,!1)}if(this.isContextual(129)){a.exportKind="type";let b=this.startNode();return this.next(),this.flowParseInterface(b)}{if(!this.isContextual(126))return super.parseExportDeclaration(a);a.exportKind="value";let b=this.startNode();return this.next(),this.flowParseEnumDeclaration(b)}}eatExportStar(a){return!!super.eatExportStar(a)||!!this.isContextual(130)&&55===this.lookahead().type&&(a.exportKind="type",this.next(),this.next(),!0)}maybeParseExportNamespaceSpecifier(a){let{startLoc:b}=this.state,c=super.maybeParseExportNamespaceSpecifier(a);return c&&"type"===a.exportKind&&this.unexpected(b),c}parseClassId(a,b,c){super.parseClassId(a,b,c),this.match(47)&&(a.typeParameters=this.flowParseTypeParameterDeclaration())}parseClassMember(a,b,c){let{startLoc:d}=this.state;if(this.isContextual(125)){if(super.parseClassMemberFromModifier(a,b))return;b.declare=!0}super.parseClassMember(a,b,c),b.declare&&("ClassProperty"!==b.type&&"ClassPrivateProperty"!==b.type&&"PropertyDefinition"!==b.type?this.raise(ah.DeclareClassElement,d):b.value&&this.raise(ah.DeclareClassFieldInitializer,b.value))}isIterator(a){return"iterator"===a||"asyncIterator"===a}readIterator(){let a=super.readWord1(),b="@@"+a;this.isIterator(a)&&this.state.inType||this.raise(o.InvalidIdentifier,this.state.curPosition(),{identifierName:b}),this.finishToken(132,b)}getTokenFromCode(a){let b=this.input.charCodeAt(this.state.pos+1);if(123===a&&124===b)this.finishOp(6,2);else if(this.state.inType&&(62===a||60===a))this.finishOp(62===a?48:47,1);else if(this.state.inType&&63===a)46===b?this.finishOp(18,2):this.finishOp(17,1);else{var c;(c=this.input.charCodeAt(this.state.pos+2),64===a&&64===b&&V(c))?(this.state.pos+=2,this.readIterator()):super.getTokenFromCode(a)}}isAssignable(a,b){return"TypeCastExpression"===a.type?this.isAssignable(a.expression,b):super.isAssignable(a,b)}toAssignable(a,b=!1){b||"AssignmentExpression"!==a.type||"TypeCastExpression"!==a.left.type||(a.left=this.typeCastToParameter(a.left)),super.toAssignable(a,b)}toAssignableList(a,b,c){for(let b=0;b<a.length;b++){let c=a[b];(null==c?void 0:c.type)==="TypeCastExpression"&&(a[b]=this.typeCastToParameter(c))}super.toAssignableList(a,b,c)}toReferencedList(a,b){for(let d=0;d<a.length;d++){var c;let e=a[d];e&&"TypeCastExpression"===e.type&&!(null!=(c=e.extra)&&c.parenthesized)&&(a.length>1||!b)&&this.raise(ah.TypeCastInPattern,e.typeAnnotation)}return a}parseArrayLike(a,b,c){let d=super.parseArrayLike(a,b,c);return null==c||this.state.maybeInArrowParameters||this.toReferencedList(d.elements),d}isValidLVal(a,b,c,d){return"TypeCastExpression"===a||super.isValidLVal(a,b,c,d)}parseClassProperty(a){return this.match(14)&&(a.typeAnnotation=this.flowParseTypeAnnotation()),super.parseClassProperty(a)}parseClassPrivateProperty(a){return this.match(14)&&(a.typeAnnotation=this.flowParseTypeAnnotation()),super.parseClassPrivateProperty(a)}isClassMethod(){return this.match(47)||super.isClassMethod()}isClassProperty(){return this.match(14)||super.isClassProperty()}isNonstaticConstructor(a){return!this.match(14)&&super.isNonstaticConstructor(a)}pushClassMethod(a,b,c,d,e,f){if(b.variance&&this.unexpected(b.variance.loc.start),delete b.variance,this.match(47)&&(b.typeParameters=this.flowParseTypeParameterDeclaration()),super.pushClassMethod(a,b,c,d,e,f),b.params&&e){let a=b.params;a.length>0&&this.isThisParam(a[0])&&this.raise(ah.ThisParamBannedInConstructor,b)}else if("MethodDefinition"===b.type&&e&&b.value.params){let a=b.value.params;a.length>0&&this.isThisParam(a[0])&&this.raise(ah.ThisParamBannedInConstructor,b)}}pushClassPrivateMethod(a,b,c,d){b.variance&&this.unexpected(b.variance.loc.start),delete b.variance,this.match(47)&&(b.typeParameters=this.flowParseTypeParameterDeclaration()),super.pushClassPrivateMethod(a,b,c,d)}parseClassSuper(a){if(super.parseClassSuper(a),a.superClass&&(this.match(47)||this.match(51))&&(a.superTypeParameters=this.flowParseTypeParameterInstantiationInExpression()),this.isContextual(113)){this.next();let b=a.implements=[];do{let a=this.startNode();a.id=this.flowParseRestrictedIdentifier(!0),this.match(47)?a.typeParameters=this.flowParseTypeParameterInstantiation():a.typeParameters=null,b.push(this.finishNode(a,"ClassImplements"))}while(this.eat(12))}}checkGetterSetterParams(a){super.checkGetterSetterParams(a);let b=this.getObjectOrClassMethodParams(a);if(b.length>0){let c=b[0];this.isThisParam(c)&&"get"===a.kind?this.raise(ah.GetterMayNotHaveThisParam,c):this.isThisParam(c)&&this.raise(ah.SetterMayNotHaveThisParam,c)}}parsePropertyNamePrefixOperator(a){a.variance=this.flowParseVariance()}parseObjPropValue(a,b,c,d,e,f,g){let h;a.variance&&this.unexpected(a.variance.loc.start),delete a.variance,this.match(47)&&!f&&(h=this.flowParseTypeParameterDeclaration(),this.match(10)||this.unexpected());let i=super.parseObjPropValue(a,b,c,d,e,f,g);return h&&((i.value||i).typeParameters=h),i}parseFunctionParamType(a){return this.eat(17)&&("Identifier"!==a.type&&this.raise(ah.PatternIsOptional,a),this.isThisParam(a)&&this.raise(ah.ThisParamMayNotBeOptional,a),a.optional=!0),this.match(14)?a.typeAnnotation=this.flowParseTypeAnnotation():this.isThisParam(a)&&this.raise(ah.ThisParamAnnotationRequired,a),this.match(29)&&this.isThisParam(a)&&this.raise(ah.ThisParamNoDefault,a),this.resetEndLocation(a),a}parseMaybeDefault(a,b){let c=super.parseMaybeDefault(a,b);return"AssignmentPattern"===c.type&&c.typeAnnotation&&c.right.start<c.typeAnnotation.start&&this.raise(ah.TypeBeforeInitializer,c.typeAnnotation),c}checkImportReflection(a){super.checkImportReflection(a),a.module&&"value"!==a.importKind&&this.raise(ah.ImportReflectionHasImportType,a.specifiers[0].loc.start)}parseImportSpecifierLocal(a,b,c){b.local=ai(a)?this.flowParseRestrictedIdentifier(!0,!0):this.parseIdentifier(),a.specifiers.push(this.finishImportSpecifier(b,c))}isPotentialImportPhase(a){if(super.isPotentialImportPhase(a))return!0;if(this.isContextual(130)){if(!a)return!0;let b=this.lookaheadCharCode();return 123===b||42===b}return!a&&this.isContextual(87)}applyImportPhase(a,b,c,d){(super.applyImportPhase(a,b,c,d),b)?!c&&this.match(65)||(a.exportKind="type"===c?c:"value"):("type"===c&&this.match(55)&&this.unexpected(),a.importKind="type"===c||"typeof"===c?c:"value")}parseImportSpecifier(a,b,c,d,e){let f=a.imported,g=null;"Identifier"===f.type&&("type"===f.name?g="type":"typeof"===f.name&&(g="typeof"));let h=!1;if(this.isContextual(93)&&!this.isLookaheadContextual("as")){let b=this.parseIdentifier(!0);null===g||J(this.state.type)?(a.imported=f,a.importKind=null,a.local=this.parseIdentifier()):(a.imported=b,a.importKind=g,a.local=this.cloneIdentifier(b))}else{if(null!==g&&J(this.state.type))a.imported=this.parseIdentifier(!0),a.importKind=g;else{if(b)throw this.raise(o.ImportBindingIsString,a,{importName:f.value});a.imported=f,a.importKind=null}this.eatContextual(93)?a.local=this.parseIdentifier():(h=!0,a.local=this.cloneIdentifier(a.imported))}let i=ai(a);return c&&i&&this.raise(ah.ImportTypeShorthandOnlyInPureImport,a),(c||i)&&this.checkReservedType(a.local.name,a.local.loc.start,!0),!h||c||i||this.checkReservedWord(a.local.name,a.loc.start,!0,!0),this.finishImportSpecifier(a,"ImportSpecifier")}parseBindingAtom(){return 78===this.state.type?this.parseIdentifier(!0):super.parseBindingAtom()}parseFunctionParams(a,b){let c=a.kind;"get"!==c&&"set"!==c&&this.match(47)&&(a.typeParameters=this.flowParseTypeParameterDeclaration()),super.parseFunctionParams(a,b)}parseVarId(a,b){super.parseVarId(a,b),this.match(14)&&(a.id.typeAnnotation=this.flowParseTypeAnnotation(),this.resetEndLocation(a.id))}parseAsyncArrowFromCallExpression(a,b){if(this.match(14)){let b=this.state.noAnonFunctionType;this.state.noAnonFunctionType=!0,a.returnType=this.flowParseTypeAnnotation(),this.state.noAnonFunctionType=b}return super.parseAsyncArrowFromCallExpression(a,b)}shouldParseAsyncArrow(){return this.match(14)||super.shouldParseAsyncArrow()}parseMaybeAssign(a,b){var c,d,e;let f,g=null;if(this.hasPlugin("jsx")&&(this.match(143)||this.match(47))){if(g=this.state.clone(),!(f=this.tryParse(()=>super.parseMaybeAssign(a,b),g)).error)return f.node;let{context:c}=this.state,d=c[c.length-1];(d===t.j_oTag||d===t.j_expr)&&c.pop()}if(null!=(c=f)&&c.error||this.match(47)){let c;g=g||this.state.clone();let h=this.tryParse(d=>{var e;c=this.flowParseTypeParameterDeclaration();let f=this.forwardNoArrowParamsConversionAt(c,()=>{let d=super.parseMaybeAssign(a,b);return this.resetStartLocationFromNode(d,c),d});null!=(e=f.extra)&&e.parenthesized&&d();let g=this.maybeUnwrapTypeCastExpression(f);return"ArrowFunctionExpression"!==g.type&&d(),g.typeParameters=c,this.resetStartLocationFromNode(g,c),f},g),i=null;if(h.node&&"ArrowFunctionExpression"===this.maybeUnwrapTypeCastExpression(h.node).type){if(!h.error&&!h.aborted)return h.node.async&&this.raise(ah.UnexpectedTypeParameterBeforeAsyncArrowFunction,c),h.node;i=h.node}if(null!=(d=f)&&d.node)return this.state=f.failState,f.node;if(i)return this.state=h.failState,i;if(null!=(e=f)&&e.thrown)throw f.error;if(h.thrown)throw h.error;throw this.raise(ah.UnexpectedTokenAfterTypeParameter,c)}return super.parseMaybeAssign(a,b)}parseArrow(a){if(this.match(14)){let b=this.tryParse(()=>{let b=this.state.noAnonFunctionType;this.state.noAnonFunctionType=!0;let c=this.startNode();return[c.typeAnnotation,a.predicate]=this.flowParseTypeAndPredicateInitialiser(),this.state.noAnonFunctionType=b,this.canInsertSemicolon()&&this.unexpected(),this.match(19)||this.unexpected(),c});if(b.thrown)return null;b.error&&(this.state=b.failState),a.returnType=b.node.typeAnnotation?this.finishNode(b.node,"TypeAnnotation"):null}return super.parseArrow(a)}shouldParseArrow(a){return this.match(14)||super.shouldParseArrow(a)}setArrowFunctionParameters(a,b){this.state.noArrowParamsConversionAt.includes(this.offsetToSourcePos(a.start))?a.params=b:super.setArrowFunctionParameters(a,b)}checkParams(a,b,c,d=!0){if(!(c&&this.state.noArrowParamsConversionAt.includes(this.offsetToSourcePos(a.start)))){for(let b=0;b<a.params.length;b++)this.isThisParam(a.params[b])&&b>0&&this.raise(ah.ThisParamMustBeFirst,a.params[b]);super.checkParams(a,b,c,d)}}parseParenAndDistinguishExpression(a){return super.parseParenAndDistinguishExpression(a&&!this.state.noArrowAt.includes(this.sourceToOffsetPos(this.state.start)))}parseSubscripts(a,b,c){if("Identifier"===a.type&&"async"===a.name&&this.state.noArrowAt.includes(b.index)){this.next();let c=this.startNodeAt(b);c.callee=a,c.arguments=super.parseCallExpressionArguments(),a=this.finishNode(c,"CallExpression")}else if("Identifier"===a.type&&"async"===a.name&&this.match(47)){let d=this.state.clone(),e=this.tryParse(a=>this.parseAsyncArrowWithTypeParameters(b)||a(),d);if(!e.error&&!e.aborted)return e.node;let f=this.tryParse(()=>super.parseSubscripts(a,b,c),d);if(f.node&&!f.error)return f.node;if(e.node)return this.state=e.failState,e.node;if(f.node)return this.state=f.failState,f.node;throw e.error||f.error}return super.parseSubscripts(a,b,c)}parseSubscript(a,b,c,d){if(this.match(18)&&this.isLookaheadToken_lt()){if(d.optionalChainMember=!0,c)return d.stop=!0,a;this.next();let e=this.startNodeAt(b);return e.callee=a,e.typeArguments=this.flowParseTypeParameterInstantiationInExpression(),this.expect(10),e.arguments=this.parseCallExpressionArguments(),e.optional=!0,this.finishCallExpression(e,!0)}if(!c&&this.shouldParseTypes()&&(this.match(47)||this.match(51))){let c=this.startNodeAt(b);c.callee=a;let e=this.tryParse(()=>(c.typeArguments=this.flowParseTypeParameterInstantiationCallOrNew(),this.expect(10),c.arguments=super.parseCallExpressionArguments(),d.optionalChainMember&&(c.optional=!1),this.finishCallExpression(c,d.optionalChainMember)));if(e.node)return e.error&&(this.state=e.failState),e.node}return super.parseSubscript(a,b,c,d)}parseNewCallee(a){super.parseNewCallee(a);let b=null;this.shouldParseTypes()&&this.match(47)&&(b=this.tryParse(()=>this.flowParseTypeParameterInstantiationCallOrNew()).node),a.typeArguments=b}parseAsyncArrowWithTypeParameters(a){let b=this.startNodeAt(a);if(this.parseFunctionParams(b,!1),this.parseArrow(b))return super.parseArrowExpression(b,void 0,!0)}readToken_mult_modulo(a){let b=this.input.charCodeAt(this.state.pos+1);if(42===a&&47===b&&this.state.hasFlowComment){this.state.hasFlowComment=!1,this.state.pos+=2,this.nextToken();return}super.readToken_mult_modulo(a)}readToken_pipe_amp(a){let b=this.input.charCodeAt(this.state.pos+1);124===a&&125===b?this.finishOp(9,2):super.readToken_pipe_amp(a)}parseTopLevel(a,b){let c=super.parseTopLevel(a,b);return this.state.hasFlowComment&&this.raise(ah.UnterminatedFlowComment,this.state.curPosition()),c}skipBlockComment(){if(this.hasPlugin("flowComments")&&this.skipFlowComment()){if(this.state.hasFlowComment)throw this.raise(ah.NestedFlowComment,this.state.startLoc);this.hasFlowCommentCompletion();let a=this.skipFlowComment();a&&(this.state.pos+=a,this.state.hasFlowComment=!0);return}return super.skipBlockComment(this.state.hasFlowComment?"*-/":"*/")}skipFlowComment(){let{pos:a}=this.state,b=2;for(;[32,9].includes(this.input.charCodeAt(a+b));)b++;let c=this.input.charCodeAt(b+a),d=this.input.charCodeAt(b+a+1);return 58===c&&58===d?b+2:"flow-include"===this.input.slice(b+a,b+a+12)?b+12:58===c&&58!==d&&b}hasFlowCommentCompletion(){if(-1===this.input.indexOf("*/",this.state.pos))throw this.raise(o.UnterminatedComment,this.state.curPosition())}flowEnumErrorBooleanMemberNotInitialized(a,{enumName:b,memberName:c}){this.raise(ah.EnumBooleanMemberNotInitialized,a,{memberName:c,enumName:b})}flowEnumErrorInvalidMemberInitializer(a,b){return this.raise(b.explicitType?"symbol"===b.explicitType?ah.EnumInvalidMemberInitializerSymbolType:ah.EnumInvalidMemberInitializerPrimaryType:ah.EnumInvalidMemberInitializerUnknownType,a,b)}flowEnumErrorNumberMemberNotInitialized(a,b){this.raise(ah.EnumNumberMemberNotInitialized,a,b)}flowEnumErrorStringMemberInconsistentlyInitialized(a,b){this.raise(ah.EnumStringMemberInconsistentlyInitialized,a,b)}flowEnumMemberInit(){let a=this.state.startLoc,b=()=>this.match(12)||this.match(8);switch(this.state.type){case 135:{let c=this.parseNumericLiteral(this.state.value);if(b())return{type:"number",loc:c.loc.start,value:c};return{type:"invalid",loc:a}}case 134:{let c=this.parseStringLiteral(this.state.value);if(b())return{type:"string",loc:c.loc.start,value:c};return{type:"invalid",loc:a}}case 85:case 86:{let c=this.parseBooleanLiteral(this.match(85));if(b())return{type:"boolean",loc:c.loc.start,value:c};return{type:"invalid",loc:a}}default:return{type:"invalid",loc:a}}}flowEnumMemberRaw(){let a=this.state.startLoc;return{id:this.parseIdentifier(!0),init:this.eat(29)?this.flowEnumMemberInit():{type:"none",loc:a}}}flowEnumCheckExplicitTypeMismatch(a,b,c){let{explicitType:d}=b;null!==d&&d!==c&&this.flowEnumErrorInvalidMemberInitializer(a,b)}flowEnumMembers({enumName:a,explicitType:b}){let c=new Set,d={booleanMembers:[],numberMembers:[],stringMembers:[],defaultedMembers:[]},e=!1;for(;!this.match(8);){if(this.eat(21)){e=!0;break}let f=this.startNode(),{id:g,init:h}=this.flowEnumMemberRaw(),i=g.name;if(""===i)continue;/^[a-z]/.test(i)&&this.raise(ah.EnumInvalidMemberName,g,{memberName:i,suggestion:i[0].toUpperCase()+i.slice(1),enumName:a}),c.has(i)&&this.raise(ah.EnumDuplicateMemberName,g,{memberName:i,enumName:a}),c.add(i);let j={enumName:a,explicitType:b,memberName:i};switch(f.id=g,h.type){case"boolean":this.flowEnumCheckExplicitTypeMismatch(h.loc,j,"boolean"),f.init=h.value,d.booleanMembers.push(this.finishNode(f,"EnumBooleanMember"));break;case"number":this.flowEnumCheckExplicitTypeMismatch(h.loc,j,"number"),f.init=h.value,d.numberMembers.push(this.finishNode(f,"EnumNumberMember"));break;case"string":this.flowEnumCheckExplicitTypeMismatch(h.loc,j,"string"),f.init=h.value,d.stringMembers.push(this.finishNode(f,"EnumStringMember"));break;case"invalid":throw this.flowEnumErrorInvalidMemberInitializer(h.loc,j);case"none":switch(b){case"boolean":this.flowEnumErrorBooleanMemberNotInitialized(h.loc,j);break;case"number":this.flowEnumErrorNumberMemberNotInitialized(h.loc,j);break;default:d.defaultedMembers.push(this.finishNode(f,"EnumDefaultedMember"))}}this.match(8)||this.expect(12)}return{members:d,hasUnknownMembers:e}}flowEnumStringMembers(a,b,{enumName:c}){if(0===a.length)return b;if(0===b.length)return a;if(b.length>a.length){for(let b of a)this.flowEnumErrorStringMemberInconsistentlyInitialized(b,{enumName:c});return b}for(let a of b)this.flowEnumErrorStringMemberInconsistentlyInitialized(a,{enumName:c});return a}flowEnumParseExplicitType({enumName:a}){if(!this.eatContextual(102))return null;if(!I(this.state.type))throw this.raise(ah.EnumInvalidExplicitTypeUnknownSupplied,this.state.startLoc,{enumName:a});let{value:b}=this.state;return this.next(),"boolean"!==b&&"number"!==b&&"string"!==b&&"symbol"!==b&&this.raise(ah.EnumInvalidExplicitType,this.state.startLoc,{enumName:a,invalidEnumType:b}),b}flowEnumBody(a,b){let c=b.name,d=b.loc.start,e=this.flowEnumParseExplicitType({enumName:c});this.expect(5);let{members:f,hasUnknownMembers:g}=this.flowEnumMembers({enumName:c,explicitType:e});switch(a.hasUnknownMembers=g,e){case"boolean":return a.explicitType=!0,a.members=f.booleanMembers,this.expect(8),this.finishNode(a,"EnumBooleanBody");case"number":return a.explicitType=!0,a.members=f.numberMembers,this.expect(8),this.finishNode(a,"EnumNumberBody");case"string":return a.explicitType=!0,a.members=this.flowEnumStringMembers(f.stringMembers,f.defaultedMembers,{enumName:c}),this.expect(8),this.finishNode(a,"EnumStringBody");case"symbol":return a.members=f.defaultedMembers,this.expect(8),this.finishNode(a,"EnumSymbolBody");default:{let b=()=>(a.members=[],this.expect(8),this.finishNode(a,"EnumStringBody"));a.explicitType=!1;let e=f.booleanMembers.length,g=f.numberMembers.length,h=f.stringMembers.length,i=f.defaultedMembers.length;if(!e&&!g&&!h&&!i)return b();if(!e&&!g)return a.members=this.flowEnumStringMembers(f.stringMembers,f.defaultedMembers,{enumName:c}),this.expect(8),this.finishNode(a,"EnumStringBody");if(g||h||!(e>=i))if(e||h||!(g>=i))return this.raise(ah.EnumInconsistentMemberValues,d,{enumName:c}),b();else{for(let a of f.defaultedMembers)this.flowEnumErrorNumberMemberNotInitialized(a.loc.start,{enumName:c,memberName:a.id.name});return a.members=f.numberMembers,this.expect(8),this.finishNode(a,"EnumNumberBody")}else{for(let a of f.defaultedMembers)this.flowEnumErrorBooleanMemberNotInitialized(a.loc.start,{enumName:c,memberName:a.id.name});return a.members=f.booleanMembers,this.expect(8),this.finishNode(a,"EnumBooleanBody")}}}}flowParseEnumDeclaration(a){let b=this.parseIdentifier();return a.id=b,a.body=this.flowEnumBody(this.startNode(),b),this.finishNode(a,"EnumDeclaration")}jsxParseOpeningElementAfterName(a){return this.shouldParseTypes()&&(this.match(47)||this.match(51))&&(a.typeArguments=this.flowParseTypeParameterInstantiationInExpression()),super.jsxParseOpeningElementAfterName(a)}isLookaheadToken_lt(){let a=this.nextTokenStart();if(60===this.input.charCodeAt(a)){let b=this.input.charCodeAt(a+1);return 60!==b&&61!==b}return!1}reScan_lt_gt(){let{type:a}=this.state;47===a?(this.state.pos-=1,this.readToken_lt()):48===a&&(this.state.pos-=1,this.readToken_gt())}reScan_lt(){let{type:a}=this.state;return 51===a?(this.state.pos-=2,this.finishOp(47,1),47):a}maybeUnwrapTypeCastExpression(a){return"TypeCastExpression"===a.type?a.expression:a}},typescript:a=>class extends a{constructor(...a){super(...a),this.tsParseInOutModifiers=this.tsParseModifiers.bind(this,{allowedModifiers:["in","out"],disallowedModifiers:["const","public","private","protected","readonly","declare","abstract","override"],errorTemplate:a3.InvalidModifierOnTypeParameter}),this.tsParseConstModifier=this.tsParseModifiers.bind(this,{allowedModifiers:["const"],disallowedModifiers:["in","out"],errorTemplate:a3.InvalidModifierOnTypeParameterPositions}),this.tsParseInOutConstModifiers=this.tsParseModifiers.bind(this,{allowedModifiers:["in","out","const"],disallowedModifiers:["public","private","protected","readonly","declare","abstract","override"],errorTemplate:a3.InvalidModifierOnTypeParameter})}getScopeHandler(){return av}tsIsIdentifier(){return I(this.state.type)}tsTokenCanFollowModifier(){return this.match(0)||this.match(5)||this.match(55)||this.match(21)||this.match(139)||this.isLiteralPropertyName()}tsNextTokenOnSameLineAndCanFollowModifier(){return this.next(),!this.hasPrecedingLineBreak()&&this.tsTokenCanFollowModifier()}tsNextTokenCanFollowModifier(){return this.match(106)?(this.next(),this.tsTokenCanFollowModifier()):this.tsNextTokenOnSameLineAndCanFollowModifier()}tsParseModifier(a,b,c){if(!I(this.state.type)&&58!==this.state.type&&75!==this.state.type)return;let d=this.state.value;if(a.includes(d)){if(c&&this.match(106)||b&&this.tsIsStartOfStaticBlocks())return;if(this.tsTryParse(this.tsNextTokenCanFollowModifier.bind(this)))return d}}tsParseModifiers({allowedModifiers:a,disallowedModifiers:b,stopOnStartOfClassStaticBlock:c,errorTemplate:d=a3.InvalidModifierOnTypeMember},e){let f=(a,b,c,d)=>{b===c&&e[d]&&this.raise(a3.InvalidModifiersOrder,a,{orderedModifiers:[c,d]})},g=(a,b,c,d)=>{(e[c]&&b===d||e[d]&&b===c)&&this.raise(a3.IncompatibleModifiers,a,{modifiers:[c,d]})};for(;;){let{startLoc:h}=this.state,i=this.tsParseModifier(a.concat(null!=b?b:[]),c,e.static);if(!i)break;if(a4(i))e.accessibility?this.raise(a3.DuplicateAccessibilityModifier,h,{modifier:i}):(f(h,i,i,"override"),f(h,i,i,"static"),f(h,i,i,"readonly"),e.accessibility=i);else"in"===i||"out"===i?(e[i]&&this.raise(a3.DuplicateModifier,h,{modifier:i}),e[i]=!0,f(h,i,"in","out")):(hasOwnProperty.call(e,i)?this.raise(a3.DuplicateModifier,h,{modifier:i}):(f(h,i,"static","readonly"),f(h,i,"static","override"),f(h,i,"override","readonly"),f(h,i,"abstract","override"),g(h,i,"declare","override"),g(h,i,"static","abstract")),e[i]=!0);null!=b&&b.includes(i)&&this.raise(d,h,{modifier:i})}}tsIsListTerminator(a){switch(a){case"EnumMembers":case"TypeMembers":return this.match(8);case"HeritageClauseElement":return this.match(5);case"TupleElementTypes":return this.match(3);case"TypeParametersOrArguments":return this.match(48)}}tsParseList(a,b){let c=[];for(;!this.tsIsListTerminator(a);)c.push(b());return c}tsParseDelimitedList(a,b,c){var d=this.tsParseDelimitedListWorker(a,b,!0,c);if(null==d)throw Error(`Unexpected ${d} value.`);return d}tsParseDelimitedListWorker(a,b,c,d){let e=[],f=-1;for(;!this.tsIsListTerminator(a);){f=-1;let d=b();if(null==d)return;if(e.push(d),this.eat(12)){f=this.state.lastTokStartLoc.index;continue}if(this.tsIsListTerminator(a))break;c&&this.expect(12);return}return d&&(d.value=f),e}tsParseBracketedList(a,b,c,d,e){d||(c?this.expect(0):this.expect(47));let f=this.tsParseDelimitedList(a,b,e);return c?this.expect(3):this.expect(48),f}tsParseImportType(){let a=this.startNode();return this.expect(83),this.expect(10),this.match(134)?a.argument=this.parseStringLiteral(this.state.value):(this.raise(a3.UnsupportedImportTypeArgument,this.state.startLoc),a.argument=super.parseExprAtom()),this.eat(12)?a.options=this.tsParseImportTypeOptions():a.options=null,this.expect(11),this.eat(16)&&(a.qualifier=this.tsParseEntityName(3)),this.match(47)&&(a.typeParameters=this.tsParseTypeArguments()),this.finishNode(a,"TSImportType")}tsParseImportTypeOptions(){let a=this.startNode();this.expect(5);let b=this.startNode();return this.isContextual(76)?(b.method=!1,b.key=this.parseIdentifier(!0),b.computed=!1,b.shorthand=!1):this.unexpected(null,76),this.expect(14),b.value=this.tsParseImportTypeWithPropertyValue(),a.properties=[this.finishObjectProperty(b)],this.eat(12),this.expect(8),this.finishNode(a,"ObjectExpression")}tsParseImportTypeWithPropertyValue(){let a=this.startNode(),b=[];for(this.expect(5);!this.match(8);){let a=this.state.type;I(a)||134===a?b.push(super.parsePropertyDefinition(null)):this.unexpected(),this.eat(12)}return a.properties=b,this.next(),this.finishNode(a,"ObjectExpression")}tsParseEntityName(a){let b;if(1&a&&this.match(78))if(2&a)b=this.parseIdentifier(!0);else{let a=this.startNode();this.next(),b=this.finishNode(a,"ThisExpression")}else b=this.parseIdentifier(!!(1&a));for(;this.eat(16);){let c=this.startNodeAtNode(b);c.left=b,c.right=this.parseIdentifier(!!(1&a)),b=this.finishNode(c,"TSQualifiedName")}return b}tsParseTypeReference(){let a=this.startNode();return a.typeName=this.tsParseEntityName(1),!this.hasPrecedingLineBreak()&&this.match(47)&&(a.typeParameters=this.tsParseTypeArguments()),this.finishNode(a,"TSTypeReference")}tsParseThisTypePredicate(a){this.next();let b=this.startNodeAtNode(a);return b.parameterName=a,b.typeAnnotation=this.tsParseTypeAnnotation(!1),b.asserts=!1,this.finishNode(b,"TSTypePredicate")}tsParseThisTypeNode(){let a=this.startNode();return this.next(),this.finishNode(a,"TSThisType")}tsParseTypeQuery(){let a=this.startNode();return this.expect(87),this.match(83)?a.exprName=this.tsParseImportType():a.exprName=this.tsParseEntityName(3),!this.hasPrecedingLineBreak()&&this.match(47)&&(a.typeParameters=this.tsParseTypeArguments()),this.finishNode(a,"TSTypeQuery")}tsParseTypeParameter(a){let b=this.startNode();return a(b),b.name=this.tsParseTypeParameterName(),b.constraint=this.tsEatThenParseType(81),b.default=this.tsEatThenParseType(29),this.finishNode(b,"TSTypeParameter")}tsTryParseTypeParameters(a){if(this.match(47))return this.tsParseTypeParameters(a)}tsParseTypeParameters(a){let b=this.startNode();this.match(47)||this.match(143)?this.next():this.unexpected();let c={value:-1};return b.params=this.tsParseBracketedList("TypeParametersOrArguments",this.tsParseTypeParameter.bind(this,a),!1,!0,c),0===b.params.length&&this.raise(a3.EmptyTypeParameters,b),-1!==c.value&&this.addExtra(b,"trailingComma",c.value),this.finishNode(b,"TSTypeParameterDeclaration")}tsFillSignature(a,b){let c=19===a,d="typeAnnotation";b.typeParameters=this.tsTryParseTypeParameters(this.tsParseConstModifier),this.expect(10),b.parameters=this.tsParseBindingListForSignature(),c?b[d]=this.tsParseTypeOrTypePredicateAnnotation(a):this.match(a)&&(b[d]=this.tsParseTypeOrTypePredicateAnnotation(a))}tsParseBindingListForSignature(){let a=super.parseBindingList(11,41,2);for(let b of a){let{type:a}=b;("AssignmentPattern"===a||"TSParameterProperty"===a)&&this.raise(a3.UnsupportedSignatureParameterKind,b,{type:a})}return a}tsParseTypeMemberSemicolon(){this.eat(12)||this.isLineTerminator()||this.expect(13)}tsParseSignatureMember(a,b){return this.tsFillSignature(14,b),this.tsParseTypeMemberSemicolon(),this.finishNode(b,a)}tsIsUnambiguouslyIndexSignature(){return this.next(),!!I(this.state.type)&&(this.next(),this.match(14))}tsTryParseIndexSignature(a){if(!(this.match(0)&&this.tsLookAhead(this.tsIsUnambiguouslyIndexSignature.bind(this))))return;this.expect(0);let b=this.parseIdentifier();b.typeAnnotation=this.tsParseTypeAnnotation(),this.resetEndLocation(b),this.expect(3),a.parameters=[b];let c=this.tsTryParseTypeAnnotation();return c&&(a.typeAnnotation=c),this.tsParseTypeMemberSemicolon(),this.finishNode(a,"TSIndexSignature")}tsParsePropertyOrMethodSignature(a,b){if(this.eat(17)&&(a.optional=!0),this.match(10)||this.match(47)){b&&this.raise(a3.ReadonlyForMethodSignature,a),a.kind&&this.match(47)&&this.raise(a3.AccessorCannotHaveTypeParameters,this.state.curPosition()),this.tsFillSignature(14,a),this.tsParseTypeMemberSemicolon();let c="parameters",d="typeAnnotation";if("get"===a.kind)a[c].length>0&&(this.raise(o.BadGetterArity,this.state.curPosition()),this.isThisParam(a[c][0])&&this.raise(a3.AccessorCannotDeclareThisParameter,this.state.curPosition()));else if("set"===a.kind){if(1!==a[c].length)this.raise(o.BadSetterArity,this.state.curPosition());else{let b=a[c][0];this.isThisParam(b)&&this.raise(a3.AccessorCannotDeclareThisParameter,this.state.curPosition()),"Identifier"===b.type&&b.optional&&this.raise(a3.SetAccessorCannotHaveOptionalParameter,this.state.curPosition()),"RestElement"===b.type&&this.raise(a3.SetAccessorCannotHaveRestParameter,this.state.curPosition())}a[d]&&this.raise(a3.SetAccessorCannotHaveReturnType,a[d])}else a.kind="method";return this.finishNode(a,"TSMethodSignature")}{b&&(a.readonly=!0);let c=this.tsTryParseTypeAnnotation();return c&&(a.typeAnnotation=c),this.tsParseTypeMemberSemicolon(),this.finishNode(a,"TSPropertySignature")}}tsParseTypeMember(){let a=this.startNode();if(this.match(10)||this.match(47))return this.tsParseSignatureMember("TSCallSignatureDeclaration",a);if(this.match(77)){let b=this.startNode();return(this.next(),this.match(10)||this.match(47))?this.tsParseSignatureMember("TSConstructSignatureDeclaration",a):(a.key=this.createIdentifier(b,"new"),this.tsParsePropertyOrMethodSignature(a,!1))}this.tsParseModifiers({allowedModifiers:["readonly"],disallowedModifiers:["declare","abstract","private","protected","public","static","override"]},a);let b=this.tsTryParseIndexSignature(a);return b||(super.parsePropertyName(a),!a.computed&&"Identifier"===a.key.type&&("get"===a.key.name||"set"===a.key.name)&&this.tsTokenCanFollowModifier()&&(a.kind=a.key.name,super.parsePropertyName(a),this.match(10)||this.match(47)||this.unexpected(null,10)),this.tsParsePropertyOrMethodSignature(a,!!a.readonly))}tsParseTypeLiteral(){let a=this.startNode();return a.members=this.tsParseObjectTypeMembers(),this.finishNode(a,"TSTypeLiteral")}tsParseObjectTypeMembers(){this.expect(5);let a=this.tsParseList("TypeMembers",this.tsParseTypeMember.bind(this));return this.expect(8),a}tsIsStartOfMappedType(){return(this.next(),this.eat(53))?this.isContextual(122):(this.isContextual(122)&&this.next(),!!this.match(0)&&(this.next(),!!this.tsIsIdentifier()&&(this.next(),this.match(58))))}tsParseMappedType(){let a=this.startNode();this.expect(5),this.match(53)?(a.readonly=this.state.value,this.next(),this.expectContextual(122)):this.eatContextual(122)&&(a.readonly=!0),this.expect(0);let b=this.startNode();return b.name=this.tsParseTypeParameterName(),b.constraint=this.tsExpectThenParseType(58),a.typeParameter=this.finishNode(b,"TSTypeParameter"),a.nameType=this.eatContextual(93)?this.tsParseType():null,this.expect(3),this.match(53)?(a.optional=this.state.value,this.next(),this.expect(17)):this.eat(17)&&(a.optional=!0),a.typeAnnotation=this.tsTryParseType(),this.semicolon(),this.expect(8),this.finishNode(a,"TSMappedType")}tsParseTupleType(){let a=this.startNode();a.elementTypes=this.tsParseBracketedList("TupleElementTypes",this.tsParseTupleElementType.bind(this),!0,!1);let b=!1;return a.elementTypes.forEach(a=>{let{type:c}=a;b&&"TSRestType"!==c&&"TSOptionalType"!==c&&!("TSNamedTupleMember"===c&&a.optional)&&this.raise(a3.OptionalTypeBeforeRequired,a),b||(b="TSNamedTupleMember"===c&&a.optional||"TSOptionalType"===c)}),this.finishNode(a,"TSTupleType")}tsParseTupleElementType(){let a,b,c,d,e=this.state.startLoc,f=this.eat(21),{startLoc:g}=this.state,h=J(this.state.type)?this.lookaheadCharCode():null;if(58===h)a=!0,c=!1,b=this.parseIdentifier(!0),this.expect(14),d=this.tsParseType();else if(63===h){c=!0;let e=this.state.value,f=this.tsParseNonArrayType();58===this.lookaheadCharCode()?(a=!0,b=this.createIdentifier(this.startNodeAt(g),e),this.expect(17),this.expect(14),d=this.tsParseType()):(a=!1,d=f,this.expect(17))}else d=this.tsParseType(),c=this.eat(17),a=this.eat(14);if(a){let a;b?((a=this.startNodeAt(g)).optional=c,a.label=b,a.elementType=d,this.eat(17)&&(a.optional=!0,this.raise(a3.TupleOptionalAfterType,this.state.lastTokStartLoc))):((a=this.startNodeAt(g)).optional=c,this.raise(a3.InvalidTupleMemberLabel,d),a.label=d,a.elementType=this.tsParseType()),d=this.finishNode(a,"TSNamedTupleMember")}else if(c){let a=this.startNodeAt(g);a.typeAnnotation=d,d=this.finishNode(a,"TSOptionalType")}if(f){let a=this.startNodeAt(e);a.typeAnnotation=d,d=this.finishNode(a,"TSRestType")}return d}tsParseParenthesizedType(){let a=this.startNode();return this.expect(10),a.typeAnnotation=this.tsParseType(),this.expect(11),this.finishNode(a,"TSParenthesizedType")}tsParseFunctionOrConstructorType(a,b){let c=this.startNode();return"TSConstructorType"===a&&(c.abstract=!!b,b&&this.next(),this.next()),this.tsInAllowConditionalTypesContext(()=>this.tsFillSignature(19,c)),this.finishNode(c,a)}tsParseLiteralTypeNode(){let a=this.startNode();switch(this.state.type){case 135:case 136:case 134:case 85:case 86:a.literal=super.parseExprAtom();break;default:this.unexpected()}return this.finishNode(a,"TSLiteralType")}tsParseTemplateLiteralType(){let a=this.startNode();return a.literal=super.parseTemplate(!1),this.finishNode(a,"TSLiteralType")}parseTemplateSubstitution(){return this.state.inType?this.tsParseType():super.parseTemplateSubstitution()}tsParseThisTypeOrThisTypePredicate(){let a=this.tsParseThisTypeNode();return this.isContextual(116)&&!this.hasPrecedingLineBreak()?this.tsParseThisTypePredicate(a):a}tsParseNonArrayType(){switch(this.state.type){case 134:case 135:case 136:case 85:case 86:return this.tsParseLiteralTypeNode();case 53:if("-"===this.state.value){let a=this.startNode(),b=this.lookahead();return 135!==b.type&&136!==b.type&&this.unexpected(),a.literal=this.parseMaybeUnary(),this.finishNode(a,"TSLiteralType")}break;case 78:return this.tsParseThisTypeOrThisTypePredicate();case 87:return this.tsParseTypeQuery();case 83:return this.tsParseImportType();case 5:return this.tsLookAhead(this.tsIsStartOfMappedType.bind(this))?this.tsParseMappedType():this.tsParseTypeLiteral();case 0:return this.tsParseTupleType();case 10:return this.tsParseParenthesizedType();case 25:case 24:return this.tsParseTemplateLiteralType();default:{let{type:a}=this.state;if(I(a)||88===a||84===a){let b=88===a?"TSVoidKeyword":84===a?"TSNullKeyword":function(a){switch(a){case"any":return"TSAnyKeyword";case"boolean":return"TSBooleanKeyword";case"bigint":return"TSBigIntKeyword";case"never":return"TSNeverKeyword";case"number":return"TSNumberKeyword";case"object":return"TSObjectKeyword";case"string":return"TSStringKeyword";case"symbol":return"TSSymbolKeyword";case"undefined":return"TSUndefinedKeyword";case"unknown":return"TSUnknownKeyword";default:return}}(this.state.value);if(void 0!==b&&46!==this.lookaheadCharCode()){let a=this.startNode();return this.next(),this.finishNode(a,b)}return this.tsParseTypeReference()}}}throw this.unexpected()}tsParseArrayTypeOrHigher(){let{startLoc:a}=this.state,b=this.tsParseNonArrayType();for(;!this.hasPrecedingLineBreak()&&this.eat(0);)if(this.match(3)){let c=this.startNodeAt(a);c.elementType=b,this.expect(3),b=this.finishNode(c,"TSArrayType")}else{let c=this.startNodeAt(a);c.objectType=b,c.indexType=this.tsParseType(),this.expect(3),b=this.finishNode(c,"TSIndexedAccessType")}return b}tsParseTypeOperator(){let a=this.startNode(),b=this.state.value;return this.next(),a.operator=b,a.typeAnnotation=this.tsParseTypeOperatorOrHigher(),"readonly"===b&&this.tsCheckTypeAnnotationForReadOnly(a),this.finishNode(a,"TSTypeOperator")}tsCheckTypeAnnotationForReadOnly(a){switch(a.typeAnnotation.type){case"TSTupleType":case"TSArrayType":return;default:this.raise(a3.UnexpectedReadonly,a)}}tsParseInferType(){let a=this.startNode();this.expectContextual(115);let b=this.startNode();return b.name=this.tsParseTypeParameterName(),b.constraint=this.tsTryParse(()=>this.tsParseConstraintForInferType()),a.typeParameter=this.finishNode(b,"TSTypeParameter"),this.finishNode(a,"TSInferType")}tsParseConstraintForInferType(){if(this.eat(81)){let a=this.tsInDisallowConditionalTypesContext(()=>this.tsParseType());if(this.state.inDisallowConditionalTypesContext||!this.match(17))return a}}tsParseTypeOperatorOrHigher(){var a;return(a=this.state.type)>=121&&a<=123&&!this.state.containsEsc?this.tsParseTypeOperator():this.isContextual(115)?this.tsParseInferType():this.tsInAllowConditionalTypesContext(()=>this.tsParseArrayTypeOrHigher())}tsParseUnionOrIntersectionType(a,b,c){let d=this.startNode(),e=this.eat(c),f=[];do f.push(b());while(this.eat(c))return 1!==f.length||e?(d.types=f,this.finishNode(d,a)):f[0]}tsParseIntersectionTypeOrHigher(){return this.tsParseUnionOrIntersectionType("TSIntersectionType",this.tsParseTypeOperatorOrHigher.bind(this),45)}tsParseUnionTypeOrHigher(){return this.tsParseUnionOrIntersectionType("TSUnionType",this.tsParseIntersectionTypeOrHigher.bind(this),43)}tsIsStartOfFunctionType(){return!!this.match(47)||this.match(10)&&this.tsLookAhead(this.tsIsUnambiguouslyStartOfFunctionType.bind(this))}tsSkipParameterStart(){if(I(this.state.type)||this.match(78))return this.next(),!0;if(this.match(5)){let{errors:a}=this.state,b=a.length;try{return this.parseObjectLike(8,!0),a.length===b}catch(a){return!1}}if(this.match(0)){this.next();let{errors:a}=this.state,b=a.length;try{return super.parseBindingList(3,93,1),a.length===b}catch(a){}}return!1}tsIsUnambiguouslyStartOfFunctionType(){if(this.next(),this.match(11)||this.match(21))return!0;if(this.tsSkipParameterStart()&&(this.match(14)||this.match(12)||this.match(17)||this.match(29)||this.match(11)&&(this.next(),this.match(19))))return!0;return!1}tsParseTypeOrTypePredicateAnnotation(a){return this.tsInType(()=>{let b=this.startNode();this.expect(a);let c=this.startNode(),d=!!this.tsTryParse(this.tsParseTypePredicateAsserts.bind(this));if(d&&this.match(78)){let a=this.tsParseThisTypeOrThisTypePredicate();return"TSThisType"===a.type?(c.parameterName=a,c.asserts=!0,c.typeAnnotation=null,a=this.finishNode(c,"TSTypePredicate")):(this.resetStartLocationFromNode(a,c),a.asserts=!0),b.typeAnnotation=a,this.finishNode(b,"TSTypeAnnotation")}let e=this.tsIsIdentifier()&&this.tsTryParse(this.tsParseTypePredicatePrefix.bind(this));if(!e)return d?(c.parameterName=this.parseIdentifier(),c.asserts=d,c.typeAnnotation=null,b.typeAnnotation=this.finishNode(c,"TSTypePredicate"),this.finishNode(b,"TSTypeAnnotation")):this.tsParseTypeAnnotation(!1,b);let f=this.tsParseTypeAnnotation(!1);return c.parameterName=e,c.typeAnnotation=f,c.asserts=d,b.typeAnnotation=this.finishNode(c,"TSTypePredicate"),this.finishNode(b,"TSTypeAnnotation")})}tsTryParseTypeOrTypePredicateAnnotation(){if(this.match(14))return this.tsParseTypeOrTypePredicateAnnotation(14)}tsTryParseTypeAnnotation(){if(this.match(14))return this.tsParseTypeAnnotation()}tsTryParseType(){return this.tsEatThenParseType(14)}tsParseTypePredicatePrefix(){let a=this.parseIdentifier();if(this.isContextual(116)&&!this.hasPrecedingLineBreak())return this.next(),a}tsParseTypePredicateAsserts(){if(109!==this.state.type)return!1;let a=this.state.containsEsc;return this.next(),(!!I(this.state.type)||!!this.match(78))&&(a&&this.raise(o.InvalidEscapedReservedWord,this.state.lastTokStartLoc,{reservedWord:"asserts"}),!0)}tsParseTypeAnnotation(a=!0,b=this.startNode()){return this.tsInType(()=>{a&&this.expect(14),b.typeAnnotation=this.tsParseType()}),this.finishNode(b,"TSTypeAnnotation")}tsParseType(){a2(this.state.inType);let a=this.tsParseNonConditionalType();if(this.state.inDisallowConditionalTypesContext||this.hasPrecedingLineBreak()||!this.eat(81))return a;let b=this.startNodeAtNode(a);return b.checkType=a,b.extendsType=this.tsInDisallowConditionalTypesContext(()=>this.tsParseNonConditionalType()),this.expect(17),b.trueType=this.tsInAllowConditionalTypesContext(()=>this.tsParseType()),this.expect(14),b.falseType=this.tsInAllowConditionalTypesContext(()=>this.tsParseType()),this.finishNode(b,"TSConditionalType")}isAbstractConstructorSignature(){return this.isContextual(124)&&this.isLookaheadContextual("new")}tsParseNonConditionalType(){return this.tsIsStartOfFunctionType()?this.tsParseFunctionOrConstructorType("TSFunctionType"):this.match(77)?this.tsParseFunctionOrConstructorType("TSConstructorType"):this.isAbstractConstructorSignature()?this.tsParseFunctionOrConstructorType("TSConstructorType",!0):this.tsParseUnionTypeOrHigher()}tsParseTypeAssertion(){this.getPluginOption("typescript","disallowAmbiguousJSXLike")&&this.raise(a3.ReservedTypeAssertion,this.state.startLoc);let a=this.startNode();return a.typeAnnotation=this.tsInType(()=>(this.next(),this.match(75)?this.tsParseTypeReference():this.tsParseType())),this.expect(48),a.expression=this.parseMaybeUnary(),this.finishNode(a,"TSTypeAssertion")}tsParseHeritageClause(a){let b=this.state.startLoc,c=this.tsParseDelimitedList("HeritageClauseElement",()=>{let a=this.startNode();return a.expression=this.tsParseEntityName(3),this.match(47)&&(a.typeParameters=this.tsParseTypeArguments()),this.finishNode(a,"TSExpressionWithTypeArguments")});return c.length||this.raise(a3.EmptyHeritageClauseType,b,{token:a}),c}tsParseInterfaceDeclaration(a,b={}){if(this.hasFollowingLineBreak())return null;this.expectContextual(129),b.declare&&(a.declare=!0),I(this.state.type)?(a.id=this.parseIdentifier(),this.checkIdentifier(a.id,130)):(a.id=null,this.raise(a3.MissingInterfaceName,this.state.startLoc)),a.typeParameters=this.tsTryParseTypeParameters(this.tsParseInOutConstModifiers),this.eat(81)&&(a.extends=this.tsParseHeritageClause("extends"));let c=this.startNode();return c.body=this.tsInType(this.tsParseObjectTypeMembers.bind(this)),a.body=this.finishNode(c,"TSInterfaceBody"),this.finishNode(a,"TSInterfaceDeclaration")}tsParseTypeAliasDeclaration(a){return a.id=this.parseIdentifier(),this.checkIdentifier(a.id,2),a.typeAnnotation=this.tsInType(()=>{if(a.typeParameters=this.tsTryParseTypeParameters(this.tsParseInOutModifiers),this.expect(29),this.isContextual(114)&&46!==this.lookaheadCharCode()){let a=this.startNode();return this.next(),this.finishNode(a,"TSIntrinsicKeyword")}return this.tsParseType()}),this.semicolon(),this.finishNode(a,"TSTypeAliasDeclaration")}tsInTopLevelContext(a){if(this.curContext()===t.brace)return a();{let b=this.state.context;this.state.context=[b[0]];try{return a()}finally{this.state.context=b}}}tsInType(a){let b=this.state.inType;this.state.inType=!0;try{return a()}finally{this.state.inType=b}}tsInDisallowConditionalTypesContext(a){let b=this.state.inDisallowConditionalTypesContext;this.state.inDisallowConditionalTypesContext=!0;try{return a()}finally{this.state.inDisallowConditionalTypesContext=b}}tsInAllowConditionalTypesContext(a){let b=this.state.inDisallowConditionalTypesContext;this.state.inDisallowConditionalTypesContext=!1;try{return a()}finally{this.state.inDisallowConditionalTypesContext=b}}tsEatThenParseType(a){if(this.match(a))return this.tsNextThenParseType()}tsExpectThenParseType(a){return this.tsInType(()=>(this.expect(a),this.tsParseType()))}tsNextThenParseType(){return this.tsInType(()=>(this.next(),this.tsParseType()))}tsParseEnumMember(){let a=this.startNode();return a.id=this.match(134)?super.parseStringLiteral(this.state.value):this.parseIdentifier(!0),this.eat(29)&&(a.initializer=super.parseMaybeAssignAllowIn()),this.finishNode(a,"TSEnumMember")}tsParseEnumDeclaration(a,b={}){return b.const&&(a.const=!0),b.declare&&(a.declare=!0),this.expectContextual(126),a.id=this.parseIdentifier(),this.checkIdentifier(a.id,a.const?8971:8459),this.expect(5),a.members=this.tsParseDelimitedList("EnumMembers",this.tsParseEnumMember.bind(this)),this.expect(8),this.finishNode(a,"TSEnumDeclaration")}tsParseEnumBody(){let a=this.startNode();return this.expect(5),a.members=this.tsParseDelimitedList("EnumMembers",this.tsParseEnumMember.bind(this)),this.expect(8),this.finishNode(a,"TSEnumBody")}tsParseModuleBlock(){let a=this.startNode();return this.scope.enter(0),this.expect(5),super.parseBlockOrModuleBlockBody(a.body=[],void 0,!0,8),this.scope.exit(),this.finishNode(a,"TSModuleBlock")}tsParseModuleOrNamespaceDeclaration(a,b=!1){if(a.id=this.parseIdentifier(),b||this.checkIdentifier(a.id,1024),this.eat(16)){let b=this.startNode();this.tsParseModuleOrNamespaceDeclaration(b,!0),a.body=b}else this.scope.enter(1024),this.prodParam.enter(0),a.body=this.tsParseModuleBlock(),this.prodParam.exit(),this.scope.exit();return this.finishNode(a,"TSModuleDeclaration")}tsParseAmbientExternalModuleDeclaration(a){return this.isContextual(112)?(a.kind="global",a.global=!0,a.id=this.parseIdentifier()):this.match(134)?(a.kind="module",a.id=super.parseStringLiteral(this.state.value)):this.unexpected(),this.match(5)?(this.scope.enter(1024),this.prodParam.enter(0),a.body=this.tsParseModuleBlock(),this.prodParam.exit(),this.scope.exit()):this.semicolon(),this.finishNode(a,"TSModuleDeclaration")}tsParseImportEqualsDeclaration(a,b,c){a.isExport=c||!1,a.id=b||this.parseIdentifier(),this.checkIdentifier(a.id,4096),this.expect(29);let d=this.tsParseModuleReference();return"type"===a.importKind&&"TSExternalModuleReference"!==d.type&&this.raise(a3.ImportAliasHasImportType,d),a.moduleReference=d,this.semicolon(),this.finishNode(a,"TSImportEqualsDeclaration")}tsIsExternalModuleReference(){return this.isContextual(119)&&40===this.lookaheadCharCode()}tsParseModuleReference(){return this.tsIsExternalModuleReference()?this.tsParseExternalModuleReference():this.tsParseEntityName(0)}tsParseExternalModuleReference(){let a=this.startNode();return this.expectContextual(119),this.expect(10),this.match(134)||this.unexpected(),a.expression=super.parseExprAtom(),this.expect(11),this.sawUnambiguousESM=!0,this.finishNode(a,"TSExternalModuleReference")}tsLookAhead(a){let b=this.state.clone(),c=a();return this.state=b,c}tsTryParseAndCatch(a){let b=this.tryParse(b=>a()||b());if(!b.aborted&&b.node)return b.error&&(this.state=b.failState),b.node}tsTryParse(a){let b=this.state.clone(),c=a();if(void 0!==c&&!1!==c)return c;this.state=b}tsTryParseDeclare(a){if(this.isLineTerminator())return;let b=this.state.type;return this.tsInAmbientContext(()=>{switch(b){case 68:return a.declare=!0,super.parseFunctionStatement(a,!1,!1);case 80:return a.declare=!0,this.parseClass(a,!0,!1);case 126:return this.tsParseEnumDeclaration(a,{declare:!0});case 112:return this.tsParseAmbientExternalModuleDeclaration(a);case 100:if(this.state.containsEsc)return;case 75:case 74:if(!this.match(75)||!this.isLookaheadContextual("enum"))return a.declare=!0,this.parseVarStatement(a,this.state.value,!0);return this.expect(75),this.tsParseEnumDeclaration(a,{const:!0,declare:!0});case 107:if(this.isUsing())return this.raise(a3.InvalidModifierOnUsingDeclaration,this.state.startLoc,"declare"),a.declare=!0,this.parseVarStatement(a,"using",!0);break;case 96:if(this.isAwaitUsing())return this.raise(a3.InvalidModifierOnAwaitUsingDeclaration,this.state.startLoc,"declare"),a.declare=!0,this.next(),this.parseVarStatement(a,"await using",!0);break;case 129:{let b=this.tsParseInterfaceDeclaration(a,{declare:!0});if(b)return b}default:if(I(b))return this.tsParseDeclaration(a,this.state.type,!0,null)}})}tsTryParseExportDeclaration(){return this.tsParseDeclaration(this.startNode(),this.state.type,!0,null)}tsParseDeclaration(a,b,c,d){switch(b){case 124:if(this.tsCheckLineTerminator(c)&&(this.match(80)||I(this.state.type)))return this.tsParseAbstractDeclaration(a,d);break;case 127:if(this.tsCheckLineTerminator(c)){if(this.match(134))return this.tsParseAmbientExternalModuleDeclaration(a);else if(I(this.state.type))return a.kind="module",this.tsParseModuleOrNamespaceDeclaration(a)}break;case 128:if(this.tsCheckLineTerminator(c)&&I(this.state.type))return a.kind="namespace",this.tsParseModuleOrNamespaceDeclaration(a);break;case 130:if(this.tsCheckLineTerminator(c)&&I(this.state.type))return this.tsParseTypeAliasDeclaration(a)}}tsCheckLineTerminator(a){return a?!this.hasFollowingLineBreak()&&(this.next(),!0):!this.isLineTerminator()}tsTryParseGenericAsyncArrowFunction(a){if(!this.match(47))return;let b=this.state.maybeInArrowParameters;this.state.maybeInArrowParameters=!0;let c=this.tsTryParseAndCatch(()=>{let b=this.startNodeAt(a);return b.typeParameters=this.tsParseTypeParameters(this.tsParseConstModifier),super.parseFunctionParams(b),b.returnType=this.tsTryParseTypeOrTypePredicateAnnotation(),this.expect(19),b});if(this.state.maybeInArrowParameters=b,c)return super.parseArrowExpression(c,null,!0)}tsParseTypeArgumentsInExpression(){if(47===this.reScan_lt())return this.tsParseTypeArguments()}tsParseTypeArguments(){let a=this.startNode();return a.params=this.tsInType(()=>this.tsInTopLevelContext(()=>(this.expect(47),this.tsParseDelimitedList("TypeParametersOrArguments",this.tsParseType.bind(this))))),0===a.params.length?this.raise(a3.EmptyTypeArguments,a):this.state.inType||this.curContext()!==t.brace||this.reScan_lt_gt(),this.expect(48),this.finishNode(a,"TSTypeParameterInstantiation")}tsIsDeclarationStart(){var a;return(a=this.state.type)>=124&&a<=130}isExportDefaultSpecifier(){return!this.tsIsDeclarationStart()&&super.isExportDefaultSpecifier()}parseBindingElement(a,b){let c=b.length?b[0].loc.start:this.state.startLoc,d={};this.tsParseModifiers({allowedModifiers:["public","private","protected","override","readonly"]},d);let e=d.accessibility,f=d.override,g=d.readonly;!(4&a)&&(e||g||f)&&this.raise(a3.UnexpectedParameterModifier,c);let h=this.parseMaybeDefault();2&a&&this.parseFunctionParamType(h);let i=this.parseMaybeDefault(h.loc.start,h);if(e||g||f){let a=this.startNodeAt(c);return b.length&&(a.decorators=b),e&&(a.accessibility=e),g&&(a.readonly=g),f&&(a.override=f),"Identifier"!==i.type&&"AssignmentPattern"!==i.type&&this.raise(a3.UnsupportedParameterPropertyKind,a),a.parameter=i,this.finishNode(a,"TSParameterProperty")}return b.length&&(h.decorators=b),i}isSimpleParameter(a){return"TSParameterProperty"===a.type&&super.isSimpleParameter(a.parameter)||super.isSimpleParameter(a)}tsDisallowOptionalPattern(a){for(let b of a.params)"Identifier"!==b.type&&b.optional&&!this.state.isAmbientContext&&this.raise(a3.PatternIsOptional,b)}setArrowFunctionParameters(a,b,c){super.setArrowFunctionParameters(a,b,c),this.tsDisallowOptionalPattern(a)}parseFunctionBodyAndFinish(a,b,c=!1){this.match(14)&&(a.returnType=this.tsParseTypeOrTypePredicateAnnotation(14));let d="FunctionDeclaration"===b?"TSDeclareFunction":"ClassMethod"===b||"ClassPrivateMethod"===b?"TSDeclareMethod":void 0;return d&&!this.match(5)&&this.isLineTerminator()?this.finishNode(a,d):"TSDeclareFunction"===d&&this.state.isAmbientContext&&(this.raise(a3.DeclareFunctionHasImplementation,a),a.declare)?super.parseFunctionBodyAndFinish(a,d,c):(this.tsDisallowOptionalPattern(a),super.parseFunctionBodyAndFinish(a,b,c))}registerFunctionStatementId(a){!a.body&&a.id?this.checkIdentifier(a.id,1024):super.registerFunctionStatementId(a)}tsCheckForInvalidTypeCasts(a){a.forEach(a=>{(null==a?void 0:a.type)==="TSTypeCastExpression"&&this.raise(a3.UnexpectedTypeAnnotation,a.typeAnnotation)})}toReferencedList(a,b){return this.tsCheckForInvalidTypeCasts(a),a}parseArrayLike(a,b,c){let d=super.parseArrayLike(a,b,c);return"ArrayExpression"===d.type&&this.tsCheckForInvalidTypeCasts(d.elements),d}parseSubscript(a,b,c,d){if(!this.hasPrecedingLineBreak()&&this.match(35)){this.state.canStartJSXElement=!1,this.next();let c=this.startNodeAt(b);return c.expression=a,this.finishNode(c,"TSNonNullExpression")}let e=!1;if(this.match(18)&&60===this.lookaheadCharCode()){if(c)return d.stop=!0,a;d.optionalChainMember=e=!0,this.next()}if(this.match(47)||this.match(51)){let f,g=this.tsTryParseAndCatch(()=>{if(!c&&this.atPossibleAsyncArrow(a)){let a=this.tsTryParseGenericAsyncArrowFunction(b);if(a)return d.stop=!0,a}let g=this.tsParseTypeArgumentsInExpression();if(!g)return;if(e&&!this.match(10)){f=this.state.curPosition();return}if(N(this.state.type)){let c=super.parseTaggedTemplateExpression(a,b,d);return c.typeParameters=g,c}if(!c&&this.eat(10)){let c=this.startNodeAt(b);return c.callee=a,c.arguments=this.parseCallExpressionArguments(),this.tsCheckForInvalidTypeCasts(c.arguments),c.typeParameters=g,d.optionalChainMember&&(c.optional=e),this.finishCallExpression(c,d.optionalChainMember)}let h=this.state.type;if(48===h||52===h||10!==h&&93!==h&&120!==h&&D[h]&&!this.hasPrecedingLineBreak())return;let i=this.startNodeAt(b);return i.expression=a,i.typeParameters=g,this.finishNode(i,"TSInstantiationExpression")});if(f&&this.unexpected(f,10),g)return"TSInstantiationExpression"===g.type&&((this.match(16)||this.match(18)&&40!==this.lookaheadCharCode())&&this.raise(a3.InvalidPropertyAccessAfterInstantiationExpression,this.state.startLoc),this.match(16)||this.match(18)||(g.expression=super.stopParseSubscript(a,d))),g}return super.parseSubscript(a,b,c,d)}parseNewCallee(a){var b;super.parseNewCallee(a);let{callee:c}=a;"TSInstantiationExpression"!==c.type||null!=(b=c.extra)&&b.parenthesized||(a.typeParameters=c.typeParameters,a.callee=c.expression)}parseExprOp(a,b,c){let d;if(B[58]>c&&!this.hasPrecedingLineBreak()&&(this.isContextual(93)||(d=this.isContextual(120)))){let e=this.startNodeAt(b);return e.expression=a,e.typeAnnotation=this.tsInType(()=>(this.next(),this.match(75))?(d&&this.raise(o.UnexpectedKeyword,this.state.startLoc,{keyword:"const"}),this.tsParseTypeReference()):this.tsParseType()),this.finishNode(e,d?"TSSatisfiesExpression":"TSAsExpression"),this.reScan_lt_gt(),this.parseExprOp(e,b,c)}return super.parseExprOp(a,b,c)}checkReservedWord(a,b,c,d){this.state.isAmbientContext||super.checkReservedWord(a,b,c,d)}checkImportReflection(a){super.checkImportReflection(a),a.module&&"value"!==a.importKind&&this.raise(a3.ImportReflectionHasImportType,a.specifiers[0].loc.start)}checkDuplicateExports(){}isPotentialImportPhase(a){if(super.isPotentialImportPhase(a))return!0;if(this.isContextual(130)){let b=this.lookaheadCharCode();return a?123===b||42===b:61!==b}return!a&&this.isContextual(87)}applyImportPhase(a,b,c,d){super.applyImportPhase(a,b,c,d),b?a.exportKind="type"===c?"type":"value":a.importKind="type"===c||"typeof"===c?c:"value"}parseImport(a){let b;if(this.match(134))return a.importKind="value",super.parseImport(a);if(I(this.state.type)&&61===this.lookaheadCharCode())return a.importKind="value",this.tsParseImportEqualsDeclaration(a);if(this.isContextual(130)){let c=this.parseMaybeImportPhase(a,!1);if(61===this.lookaheadCharCode())return this.tsParseImportEqualsDeclaration(a,c);b=super.parseImportSpecifiersAndAfter(a,c)}else b=super.parseImport(a);return"type"===b.importKind&&b.specifiers.length>1&&"ImportDefaultSpecifier"===b.specifiers[0].type&&this.raise(a3.TypeImportCannotSpecifyDefaultAndNamed,b),b}parseExport(a,b){if(this.match(83)){this.next();let b=null;return this.isContextual(130)&&this.isPotentialImportPhase(!1)?b=this.parseMaybeImportPhase(a,!1):a.importKind="value",this.tsParseImportEqualsDeclaration(a,b,!0)}return this.eat(29)?(a.expression=super.parseExpression(),this.semicolon(),this.sawUnambiguousESM=!0,this.finishNode(a,"TSExportAssignment")):this.eatContextual(93)?(this.expectContextual(128),a.id=this.parseIdentifier(),this.semicolon(),this.finishNode(a,"TSNamespaceExportDeclaration")):super.parseExport(a,b)}isAbstractClass(){return this.isContextual(124)&&this.isLookaheadContextual("class")}parseExportDefaultExpression(){if(this.isAbstractClass()){let a=this.startNode();return this.next(),a.abstract=!0,this.parseClass(a,!0,!0)}if(this.match(129)){let a=this.tsParseInterfaceDeclaration(this.startNode());if(a)return a}return super.parseExportDefaultExpression()}parseVarStatement(a,b,c=!1){let{isAmbientContext:d}=this.state,e=super.parseVarStatement(a,b,c||d);if(!d)return e;if(!a.declare&&("using"===b||"await using"===b))return this.raiseOverwrite(a3.UsingDeclarationInAmbientContext,a,b),e;for(let{id:a,init:c}of e.declarations)c&&("var"===b||"let"===b||a.typeAnnotation?this.raise(a3.InitializerNotAllowedInAmbientContext,c):!function(a,b){var c;let{type:d}=a;if(null!=(c=a.extra)&&c.parenthesized)return!1;if(b){if("Literal"===d){let{value:b}=a;if("string"==typeof b||"boolean"==typeof b)return!0}}else if("StringLiteral"===d||"BooleanLiteral"===d)return!0;return!!(a5(a,b)||function(a,b){if("UnaryExpression"===a.type){let{operator:c,argument:d}=a;if("-"===c&&a5(d,b))return!0}return!1}(a,b)||"TemplateLiteral"===d&&0===a.expressions.length||function(a){if("MemberExpression"!==a.type)return!1;let{computed:b,property:c}=a;return(!b||"StringLiteral"===c.type||"TemplateLiteral"===c.type&&!(c.expressions.length>0))&&function a(b){return"Identifier"===b.type||"MemberExpression"===b.type&&!b.computed&&a(b.object)}(a.object)}(a))}(c,this.hasPlugin("estree"))&&this.raise(a3.ConstInitializerMustBeStringOrNumericLiteralOrLiteralEnumReference,c));return e}parseStatementContent(a,b){if(!this.state.containsEsc)switch(this.state.type){case 75:if(this.isLookaheadContextual("enum")){let a=this.startNode();return this.expect(75),this.tsParseEnumDeclaration(a,{const:!0})}break;case 124:case 125:if(this.nextTokenIsIdentifierAndNotTSRelationalOperatorOnSameLine()){let a=this.state.type,c=this.startNode();this.next();let d=125===a?this.tsTryParseDeclare(c):this.tsParseAbstractDeclaration(c,b);if(d)return 125===a&&(d.declare=!0),d;return c.expression=this.createIdentifier(this.startNodeAt(c.loc.start),125===a?"declare":"abstract"),this.semicolon(!1),this.finishNode(c,"ExpressionStatement")}break;case 126:return this.tsParseEnumDeclaration(this.startNode());case 112:if(123===this.lookaheadCharCode()){let a=this.startNode();return this.tsParseAmbientExternalModuleDeclaration(a)}break;case 129:{let a=this.tsParseInterfaceDeclaration(this.startNode());if(a)return a;break}case 127:if(this.nextTokenIsIdentifierOrStringLiteralOnSameLine()){let a=this.startNode();return this.next(),this.tsParseDeclaration(a,127,!1,b)}break;case 128:if(this.nextTokenIsIdentifierOnSameLine()){let a=this.startNode();return this.next(),this.tsParseDeclaration(a,128,!1,b)}break;case 130:if(this.nextTokenIsIdentifierOnSameLine()){let a=this.startNode();return this.next(),this.tsParseTypeAliasDeclaration(a)}}return super.parseStatementContent(a,b)}parseAccessModifier(){return this.tsParseModifier(["public","protected","private"])}tsHasSomeModifiers(a,b){return b.some(b=>a4(b)?a.accessibility===b:!!a[b])}tsIsStartOfStaticBlocks(){return this.isContextual(106)&&123===this.lookaheadCharCode()}parseClassMember(a,b,c){let d=["declare","private","public","protected","override","abstract","readonly","static"];this.tsParseModifiers({allowedModifiers:d,disallowedModifiers:["in","out"],stopOnStartOfClassStaticBlock:!0,errorTemplate:a3.InvalidModifierOnTypeParameterPositions},b);let e=()=>{this.tsIsStartOfStaticBlocks()?(this.next(),this.next(),this.tsHasSomeModifiers(b,d)&&this.raise(a3.StaticBlockCannotHaveModifier,this.state.curPosition()),super.parseClassStaticBlock(a,b)):this.parseClassMemberWithIsStatic(a,b,c,!!b.static)};b.declare?this.tsInAmbientContext(e):e()}parseClassMemberWithIsStatic(a,b,c,d){let e=this.tsTryParseIndexSignature(b);if(e){a.body.push(e),b.abstract&&this.raise(a3.IndexSignatureHasAbstract,b),b.accessibility&&this.raise(a3.IndexSignatureHasAccessibility,b,{modifier:b.accessibility}),b.declare&&this.raise(a3.IndexSignatureHasDeclare,b),b.override&&this.raise(a3.IndexSignatureHasOverride,b);return}!this.state.inAbstractClass&&b.abstract&&this.raise(a3.NonAbstractClassHasAbstractMethod,b),b.override&&!c.hadSuperClass&&this.raise(a3.OverrideNotInSubClass,b),super.parseClassMemberWithIsStatic(a,b,c,d)}parsePostMemberNameModifiers(a){this.eat(17)&&(a.optional=!0),a.readonly&&this.match(10)&&this.raise(a3.ClassMethodHasReadonly,a),a.declare&&this.match(10)&&this.raise(a3.ClassMethodHasDeclare,a)}shouldParseExportDeclaration(){return!!this.tsIsDeclarationStart()||super.shouldParseExportDeclaration()}parseConditional(a,b,c){if(!this.match(17))return a;if(this.state.maybeInArrowParameters){let b=this.lookaheadCharCode();if(44===b||61===b||58===b||41===b)return this.setOptionalParametersError(c),a}return super.parseConditional(a,b,c)}parseParenItem(a,b){let c=super.parseParenItem(a,b);if(this.eat(17)&&(c.optional=!0,this.resetEndLocation(a)),this.match(14)){let c=this.startNodeAt(b);return c.expression=a,c.typeAnnotation=this.tsParseTypeAnnotation(),this.finishNode(c,"TSTypeCastExpression")}return a}parseExportDeclaration(a){if(!this.state.isAmbientContext&&this.isContextual(125))return this.tsInAmbientContext(()=>this.parseExportDeclaration(a));let b=this.state.startLoc,c=this.eatContextual(125);if(c&&(this.isContextual(125)||!this.shouldParseExportDeclaration()))throw this.raise(a3.ExpectedAmbientAfterExportDeclare,this.state.startLoc);let d=I(this.state.type)&&this.tsTryParseExportDeclaration()||super.parseExportDeclaration(a);return d?(("TSInterfaceDeclaration"===d.type||"TSTypeAliasDeclaration"===d.type||c)&&(a.exportKind="type"),c&&"TSImportEqualsDeclaration"!==d.type&&(this.resetStartLocation(d,b),d.declare=!0),d):null}parseClassId(a,b,c,d){if((!b||c)&&this.isContextual(113))return;super.parseClassId(a,b,c,a.declare?1024:8331);let e=this.tsTryParseTypeParameters(this.tsParseInOutConstModifiers);e&&(a.typeParameters=e)}parseClassPropertyAnnotation(a){!a.optional&&(this.eat(35)?a.definite=!0:this.eat(17)&&(a.optional=!0));let b=this.tsTryParseTypeAnnotation();b&&(a.typeAnnotation=b)}parseClassProperty(a){if(this.parseClassPropertyAnnotation(a),this.state.isAmbientContext&&!(a.readonly&&!a.typeAnnotation)&&this.match(29)&&this.raise(a3.DeclareClassFieldHasInitializer,this.state.startLoc),a.abstract&&this.match(29)){let{key:b}=a;this.raise(a3.AbstractPropertyHasInitializer,this.state.startLoc,{propertyName:"Identifier"!==b.type||a.computed?`[${this.input.slice(this.offsetToSourcePos(b.start),this.offsetToSourcePos(b.end))}]`:b.name})}return super.parseClassProperty(a)}parseClassPrivateProperty(a){return a.abstract&&this.raise(a3.PrivateElementHasAbstract,a),a.accessibility&&this.raise(a3.PrivateElementHasAccessibility,a,{modifier:a.accessibility}),this.parseClassPropertyAnnotation(a),super.parseClassPrivateProperty(a)}parseClassAccessorProperty(a){return this.parseClassPropertyAnnotation(a),a.optional&&this.raise(a3.AccessorCannotBeOptional,a),super.parseClassAccessorProperty(a)}pushClassMethod(a,b,c,d,e,f){let g=this.tsTryParseTypeParameters(this.tsParseConstModifier);g&&e&&this.raise(a3.ConstructorHasTypeParameters,g);let{declare:h=!1,kind:i}=b;h&&("get"===i||"set"===i)&&this.raise(a3.DeclareAccessor,b,{kind:i}),g&&(b.typeParameters=g),super.pushClassMethod(a,b,c,d,e,f)}pushClassPrivateMethod(a,b,c,d){let e=this.tsTryParseTypeParameters(this.tsParseConstModifier);e&&(b.typeParameters=e),super.pushClassPrivateMethod(a,b,c,d)}declareClassPrivateMethodInScope(a,b){"TSDeclareMethod"===a.type||("MethodDefinition"!==a.type||null!=a.value.body)&&super.declareClassPrivateMethodInScope(a,b)}parseClassSuper(a){if(super.parseClassSuper(a),a.superClass)if("TSInstantiationExpression"===a.superClass.type){let b=a.superClass,c=b.expression;this.takeSurroundingComments(c,c.start,c.end);let d=b.typeParameters;this.takeSurroundingComments(d,d.start,d.end),a.superClass=c,a.superTypeParameters=d}else(this.match(47)||this.match(51))&&(a.superTypeParameters=this.tsParseTypeArgumentsInExpression());this.eatContextual(113)&&(a.implements=this.tsParseHeritageClause("implements"))}parseObjPropValue(a,b,c,d,e,f,g){let h=this.tsTryParseTypeParameters(this.tsParseConstModifier);return h&&(a.typeParameters=h),super.parseObjPropValue(a,b,c,d,e,f,g)}parseFunctionParams(a,b){let c=this.tsTryParseTypeParameters(this.tsParseConstModifier);c&&(a.typeParameters=c),super.parseFunctionParams(a,b)}parseVarId(a,b){super.parseVarId(a,b),"Identifier"===a.id.type&&!this.hasPrecedingLineBreak()&&this.eat(35)&&(a.definite=!0);let c=this.tsTryParseTypeAnnotation();c&&(a.id.typeAnnotation=c,this.resetEndLocation(a.id))}parseAsyncArrowFromCallExpression(a,b){return this.match(14)&&(a.returnType=this.tsParseTypeAnnotation()),super.parseAsyncArrowFromCallExpression(a,b)}parseMaybeAssign(a,b){var c,d,e,f,g;let h,i,j,k;if(this.hasPlugin("jsx")&&(this.match(143)||this.match(47))){if(h=this.state.clone(),!(i=this.tryParse(()=>super.parseMaybeAssign(a,b),h)).error)return i.node;let{context:c}=this.state,d=c[c.length-1];(d===t.j_oTag||d===t.j_expr)&&c.pop()}if(!(null!=(c=i)&&c.error)&&!this.match(47))return super.parseMaybeAssign(a,b);h&&h!==this.state||(h=this.state.clone());let l=this.tryParse(c=>{var d,e;k=this.tsParseTypeParameters(this.tsParseConstModifier);let f=super.parseMaybeAssign(a,b);return("ArrowFunctionExpression"!==f.type||null!=(d=f.extra)&&d.parenthesized)&&c(),(null==(e=k)?void 0:e.params.length)!==0&&this.resetStartLocationFromNode(f,k),f.typeParameters=k,f},h);if(!l.error&&!l.aborted)return k&&this.reportReservedArrowTypeParam(k),l.node;if(!i&&(a2(!this.hasPlugin("jsx")),!(j=this.tryParse(()=>super.parseMaybeAssign(a,b),h)).error))return j.node;if(null!=(d=i)&&d.node)return this.state=i.failState,i.node;if(l.node)return this.state=l.failState,k&&this.reportReservedArrowTypeParam(k),l.node;if(null!=(e=j)&&e.node)return this.state=j.failState,j.node;throw(null==(f=i)?void 0:f.error)||l.error||(null==(g=j)?void 0:g.error)}reportReservedArrowTypeParam(a){var b;1===a.params.length&&!a.params[0].constraint&&!(null!=(b=a.extra)&&b.trailingComma)&&this.getPluginOption("typescript","disallowAmbiguousJSXLike")&&this.raise(a3.ReservedArrowTypeParam,a)}parseMaybeUnary(a,b){return!this.hasPlugin("jsx")&&this.match(47)?this.tsParseTypeAssertion():super.parseMaybeUnary(a,b)}parseArrow(a){if(this.match(14)){let b=this.tryParse(a=>{let b=this.tsParseTypeOrTypePredicateAnnotation(14);return(this.canInsertSemicolon()||!this.match(19))&&a(),b});if(b.aborted)return;b.thrown||(b.error&&(this.state=b.failState),a.returnType=b.node)}return super.parseArrow(a)}parseFunctionParamType(a){this.eat(17)&&(a.optional=!0);let b=this.tsTryParseTypeAnnotation();return b&&(a.typeAnnotation=b),this.resetEndLocation(a),a}isAssignable(a,b){switch(a.type){case"TSTypeCastExpression":return this.isAssignable(a.expression,b);case"TSParameterProperty":return!0;default:return super.isAssignable(a,b)}}toAssignable(a,b=!1){switch(a.type){case"ParenthesizedExpression":this.toAssignableParenthesizedExpression(a,b);break;case"TSAsExpression":case"TSSatisfiesExpression":case"TSNonNullExpression":case"TSTypeAssertion":b?this.expressionScope.recordArrowParameterBindingError(a3.UnexpectedTypeCastInParameter,a):this.raise(a3.UnexpectedTypeCastInParameter,a),this.toAssignable(a.expression,b);break;case"AssignmentExpression":b||"TSTypeCastExpression"!==a.left.type||(a.left=this.typeCastToParameter(a.left));default:super.toAssignable(a,b)}}toAssignableParenthesizedExpression(a,b){switch(a.expression.type){case"TSAsExpression":case"TSSatisfiesExpression":case"TSNonNullExpression":case"TSTypeAssertion":case"ParenthesizedExpression":this.toAssignable(a.expression,b);break;default:super.toAssignable(a,b)}}checkToRestConversion(a,b){switch(a.type){case"TSAsExpression":case"TSSatisfiesExpression":case"TSTypeAssertion":case"TSNonNullExpression":this.checkToRestConversion(a.expression,!1);break;default:super.checkToRestConversion(a,b)}}isValidLVal(a,b,c,d){switch(a){case"TSTypeCastExpression":return!0;case"TSParameterProperty":return"parameter";case"TSNonNullExpression":return"expression";case"TSAsExpression":case"TSSatisfiesExpression":case"TSTypeAssertion":return(64!==d||!c)&&["expression",!0];default:return super.isValidLVal(a,b,c,d)}}parseBindingAtom(){return 78===this.state.type?this.parseIdentifier(!0):super.parseBindingAtom()}parseMaybeDecoratorArguments(a,b){if(this.match(47)||this.match(51)){let c=this.tsParseTypeArgumentsInExpression();if(this.match(10)){let d=super.parseMaybeDecoratorArguments(a,b);return d.typeParameters=c,d}this.unexpected(null,10)}return super.parseMaybeDecoratorArguments(a,b)}checkCommaAfterRest(a){return this.state.isAmbientContext&&this.match(12)&&this.lookaheadCharCode()===a?(this.next(),!1):super.checkCommaAfterRest(a)}isClassMethod(){return this.match(47)||super.isClassMethod()}isClassProperty(){return this.match(35)||this.match(14)||super.isClassProperty()}parseMaybeDefault(a,b){let c=super.parseMaybeDefault(a,b);return"AssignmentPattern"===c.type&&c.typeAnnotation&&c.right.start<c.typeAnnotation.start&&this.raise(a3.TypeAnnotationAfterAssign,c.typeAnnotation),c}getTokenFromCode(a){if(this.state.inType){if(62===a)return void this.finishOp(48,1);if(60===a)return void this.finishOp(47,1)}super.getTokenFromCode(a)}reScan_lt_gt(){let{type:a}=this.state;47===a?(this.state.pos-=1,this.readToken_lt()):48===a&&(this.state.pos-=1,this.readToken_gt())}reScan_lt(){let{type:a}=this.state;return 51===a?(this.state.pos-=2,this.finishOp(47,1),47):a}toAssignableListItem(a,b,c){let d=a[b];"TSTypeCastExpression"===d.type&&(a[b]=this.typeCastToParameter(d)),super.toAssignableListItem(a,b,c)}typeCastToParameter(a){return a.expression.typeAnnotation=a.typeAnnotation,this.resetEndLocation(a.expression,a.typeAnnotation.loc.end),a.expression}shouldParseArrow(a){return this.match(14)?a.every(a=>this.isAssignable(a,!0)):super.shouldParseArrow(a)}shouldParseAsyncArrow(){return this.match(14)||super.shouldParseAsyncArrow()}canHaveLeadingDecorator(){return super.canHaveLeadingDecorator()||this.isAbstractClass()}jsxParseOpeningElementAfterName(a){if(this.match(47)||this.match(51)){let b=this.tsTryParseAndCatch(()=>this.tsParseTypeArgumentsInExpression());b&&(a.typeParameters=b)}return super.jsxParseOpeningElementAfterName(a)}getGetterSetterExpectedParamCount(a){let b=super.getGetterSetterExpectedParamCount(a),c=this.getObjectOrClassMethodParams(a)[0];return c&&this.isThisParam(c)?b+1:b}parseCatchClauseParam(){let a=super.parseCatchClauseParam(),b=this.tsTryParseTypeAnnotation();return b&&(a.typeAnnotation=b,this.resetEndLocation(a)),a}tsInAmbientContext(a){let{isAmbientContext:b,strict:c}=this.state;this.state.isAmbientContext=!0,this.state.strict=!1;try{return a()}finally{this.state.isAmbientContext=b,this.state.strict=c}}parseClass(a,b,c){let d=this.state.inAbstractClass;this.state.inAbstractClass=!!a.abstract;try{return super.parseClass(a,b,c)}finally{this.state.inAbstractClass=d}}tsParseAbstractDeclaration(a,b){if(this.match(80))return a.abstract=!0,this.maybeTakeDecorators(b,this.parseClass(a,!0,!1));if(this.isContextual(129))if(!this.hasFollowingLineBreak())return a.abstract=!0,this.raise(a3.NonClassMethodPropertyHasAbstractModifier,a),this.tsParseInterfaceDeclaration(a);else return null;throw this.unexpected(null,80)}parseMethod(a,b,c,d,e,f,g){let h=super.parseMethod(a,b,c,d,e,f,g);if((h.abstract||"TSAbstractMethodDefinition"===h.type)&&(this.hasPlugin("estree")?h.value:h).body){let{key:a}=h;this.raise(a3.AbstractMethodHasImplementation,h,{methodName:"Identifier"!==a.type||h.computed?`[${this.input.slice(this.offsetToSourcePos(a.start),this.offsetToSourcePos(a.end))}]`:a.name})}return h}tsParseTypeParameterName(){return this.parseIdentifier().name}shouldParseAsAmbientContext(){return!!this.getPluginOption("typescript","dts")}parse(){return this.shouldParseAsAmbientContext()&&(this.state.isAmbientContext=!0),super.parse()}getExpression(){return this.shouldParseAsAmbientContext()&&(this.state.isAmbientContext=!0),super.getExpression()}parseExportSpecifier(a,b,c,d){return!b&&d?(this.parseTypeOnlyImportExportSpecifier(a,!1,c),this.finishNode(a,"ExportSpecifier")):(a.exportKind="value",super.parseExportSpecifier(a,b,c,d))}parseImportSpecifier(a,b,c,d,e){return!b&&d?(this.parseTypeOnlyImportExportSpecifier(a,!0,c),this.finishNode(a,"ImportSpecifier")):(a.importKind="value",super.parseImportSpecifier(a,b,c,d,c?4098:4096))}parseTypeOnlyImportExportSpecifier(a,b,c){let d,e=b?"imported":"local",f=b?"local":"exported",g=a[e],h=!1,i=!0,j=g.loc.start;if(this.isContextual(93)){let a=this.parseIdentifier();if(this.isContextual(93)){let c=this.parseIdentifier();J(this.state.type)?(h=!0,g=a,d=b?this.parseIdentifier():this.parseModuleExportName()):d=c,i=!1}else J(this.state.type)?(i=!1,d=b?this.parseIdentifier():this.parseModuleExportName()):(h=!0,g=a)}else J(this.state.type)&&(h=!0,b?(g=this.parseIdentifier(!0),this.isContextual(93)||this.checkReservedWord(g.name,g.loc.start,!0,!0)):g=this.parseModuleExportName());h&&c&&this.raise(b?a3.TypeModifierIsUsedInTypeImports:a3.TypeModifierIsUsedInTypeExports,j),a[e]=g,a[f]=d,a[b?"importKind":"exportKind"]=h?"type":"value",i&&this.eatContextual(93)&&(a[f]=b?this.parseIdentifier():this.parseModuleExportName()),a[f]||(a[f]=this.cloneIdentifier(a[e])),b&&this.checkIdentifier(a[f],h?4098:4096)}fillOptionalPropertiesForTSESLint(a){switch(a.type){case"ExpressionStatement":null!=a.directive||(a.directive=void 0);return;case"RestElement":a.value=void 0;case"Identifier":case"ArrayPattern":case"AssignmentPattern":case"ObjectPattern":null!=a.decorators||(a.decorators=[]),null!=a.optional||(a.optional=!1),null!=a.typeAnnotation||(a.typeAnnotation=void 0);return;case"TSParameterProperty":null!=a.accessibility||(a.accessibility=void 0),null!=a.decorators||(a.decorators=[]),null!=a.override||(a.override=!1),null!=a.readonly||(a.readonly=!1),null!=a.static||(a.static=!1);return;case"TSEmptyBodyFunctionExpression":a.body=null;case"TSDeclareFunction":case"FunctionDeclaration":case"FunctionExpression":case"ClassMethod":case"ClassPrivateMethod":null!=a.declare||(a.declare=!1),null!=a.returnType||(a.returnType=void 0),null!=a.typeParameters||(a.typeParameters=void 0);return;case"Property":null!=a.optional||(a.optional=!1);return;case"TSMethodSignature":case"TSPropertySignature":null!=a.optional||(a.optional=!1);case"TSIndexSignature":null!=a.accessibility||(a.accessibility=void 0),null!=a.readonly||(a.readonly=!1),null!=a.static||(a.static=!1);return;case"TSAbstractPropertyDefinition":case"PropertyDefinition":case"TSAbstractAccessorProperty":case"AccessorProperty":null!=a.declare||(a.declare=!1),null!=a.definite||(a.definite=!1),null!=a.readonly||(a.readonly=!1),null!=a.typeAnnotation||(a.typeAnnotation=void 0);case"TSAbstractMethodDefinition":case"MethodDefinition":null!=a.accessibility||(a.accessibility=void 0),null!=a.decorators||(a.decorators=[]),null!=a.override||(a.override=!1),null!=a.optional||(a.optional=!1);return;case"ClassExpression":null!=a.id||(a.id=null);case"ClassDeclaration":null!=a.abstract||(a.abstract=!1),null!=a.declare||(a.declare=!1),null!=a.decorators||(a.decorators=[]),null!=a.implements||(a.implements=[]),null!=a.superTypeArguments||(a.superTypeArguments=void 0),null!=a.typeParameters||(a.typeParameters=void 0);return;case"TSTypeAliasDeclaration":case"VariableDeclaration":null!=a.declare||(a.declare=!1);return;case"VariableDeclarator":null!=a.definite||(a.definite=!1);return;case"TSEnumDeclaration":null!=a.const||(a.const=!1),null!=a.declare||(a.declare=!1);return;case"TSEnumMember":null!=a.computed||(a.computed=!1);return;case"TSImportType":null!=a.qualifier||(a.qualifier=null),null!=a.options||(a.options=null);return;case"TSInterfaceDeclaration":null!=a.declare||(a.declare=!1),null!=a.extends||(a.extends=[]);return;case"TSMappedType":null!=a.optional||(a.optional=!1),null!=a.readonly||(a.readonly=void 0);return;case"TSModuleDeclaration":null!=a.declare||(a.declare=!1),null!=a.global||(a.global="global"===a.kind);return;case"TSTypeParameter":null!=a.const||(a.const=!1),null!=a.in||(a.in=!1),null!=a.out||(a.out=!1);return}}chStartsBindingIdentifierAndNotRelationalOperator(a,b){if(V(a)){if(a1.lastIndex=b,a1.test(this.input)){let a=this.codePointAtPos(a1.lastIndex);if(!W(a)&&92!==a)return!1}return!0}return 92===a||!1}nextTokenIsIdentifierAndNotTSRelationalOperatorOnSameLine(){let a=this.nextTokenInLineStart(),b=this.codePointAtPos(a);return this.chStartsBindingIdentifierAndNotRelationalOperator(b,a)}nextTokenIsIdentifierOrStringLiteralOnSameLine(){let a=this.nextTokenInLineStart(),b=this.codePointAtPos(a);return this.chStartsBindingIdentifier(b,a)||34===b||39===b}},v8intrinsic:a=>class extends a{parseV8Intrinsic(){if(this.match(54)){let a=this.state.startLoc,b=this.startNode();if(this.next(),I(this.state.type)){let a=this.parseIdentifierName(),c=this.createIdentifier(b,a);if(this.castNodeTo(c,"V8IntrinsicIdentifier"),this.match(10))return c}this.unexpected(a)}}parseExprAtom(a){return this.parseV8Intrinsic()||super.parseExprAtom(a)}},placeholders:a=>class extends a{parsePlaceholder(a){if(this.match(133)){let b=this.startNode();return this.next(),this.assertNoSpace(),b.name=super.parseIdentifier(!0),this.assertNoSpace(),this.expect(133),this.finishPlaceholder(b,a)}}finishPlaceholder(a,b){let c=a;return c.expectedNode&&c.type||(c=this.finishNode(c,"Placeholder")),c.expectedNode=b,c}getTokenFromCode(a){37===a&&37===this.input.charCodeAt(this.state.pos+1)?this.finishOp(133,2):super.getTokenFromCode(a)}parseExprAtom(a){return this.parsePlaceholder("Expression")||super.parseExprAtom(a)}parseIdentifier(a){return this.parsePlaceholder("Identifier")||super.parseIdentifier(a)}checkReservedWord(a,b,c,d){void 0!==a&&super.checkReservedWord(a,b,c,d)}cloneIdentifier(a){let b=super.cloneIdentifier(a);return"Placeholder"===b.type&&(b.expectedNode=a.expectedNode),b}cloneStringLiteral(a){return"Placeholder"===a.type?this.cloneIdentifier(a):super.cloneStringLiteral(a)}parseBindingAtom(){return this.parsePlaceholder("Pattern")||super.parseBindingAtom()}isValidLVal(a,b,c,d){return"Placeholder"===a||super.isValidLVal(a,b,c,d)}toAssignable(a,b){a&&"Placeholder"===a.type&&"Expression"===a.expectedNode?a.expectedNode="Pattern":super.toAssignable(a,b)}chStartsBindingIdentifier(a,b){if(super.chStartsBindingIdentifier(a,b))return!0;let c=this.nextTokenStart();return 37===this.input.charCodeAt(c)&&37===this.input.charCodeAt(c+1)}verifyBreakContinue(a,b){var c;(null==(c=a.label)?void 0:c.type)!=="Placeholder"&&super.verifyBreakContinue(a,b)}parseExpressionStatement(a,b){var c;return"Placeholder"!==b.type||null!=(c=b.extra)&&c.parenthesized?super.parseExpressionStatement(a,b):this.match(14)?(a.label=this.finishPlaceholder(b,"Identifier"),this.next(),a.body=super.parseStatementOrSloppyAnnexBFunctionDeclaration(),this.finishNode(a,"LabeledStatement")):(this.semicolon(),a.name=b.name,this.finishPlaceholder(a,"Statement"))}parseBlock(a,b,c){return this.parsePlaceholder("BlockStatement")||super.parseBlock(a,b,c)}parseFunctionId(a){return this.parsePlaceholder("Identifier")||super.parseFunctionId(a)}parseClass(a,b,c){let d=b?"ClassDeclaration":"ClassExpression";this.next();let e=this.state.strict,f=this.parsePlaceholder("Identifier");if(f)if(this.match(81)||this.match(133)||this.match(5))a.id=f;else if(c||!b)return a.id=null,a.body=this.finishPlaceholder(f,"ClassBody"),this.finishNode(a,d);else throw this.raise(a6.ClassNameIsRequired,this.state.startLoc);else this.parseClassId(a,b,c);return super.parseClassSuper(a),a.body=this.parsePlaceholder("ClassBody")||super.parseClassBody(!!a.superClass,e),this.finishNode(a,d)}parseExport(a,b){let c=this.parsePlaceholder("Identifier");if(!c)return super.parseExport(a,b);if(!this.isContextual(98)&&!this.match(12))return a.specifiers=[],a.source=null,a.declaration=this.finishPlaceholder(c,"Declaration"),this.finishNode(a,"ExportNamedDeclaration");this.expectPlugin("exportDefaultFrom");let d=this.startNode();return d.exported=c,a.specifiers=[this.finishNode(d,"ExportDefaultSpecifier")],super.parseExport(a,b)}isExportDefaultSpecifier(){if(this.match(65)){let a=this.nextTokenStart();if(this.isUnparsedContextual(a,"from")&&this.input.startsWith(A[133],this.nextTokenStartSince(a+4)))return!0}return super.isExportDefaultSpecifier()}maybeParseExportDefaultSpecifier(a,b){var c;return null!=(c=a.specifiers)&&!!c.length||super.maybeParseExportDefaultSpecifier(a,b)}checkExport(a){let{specifiers:b}=a;null!=b&&b.length&&(a.specifiers=b.filter(a=>"Placeholder"===a.exported.type)),super.checkExport(a),a.specifiers=b}parseImport(a){let b=this.parsePlaceholder("Identifier");if(!b)return super.parseImport(a);if(a.specifiers=[],!this.isContextual(98)&&!this.match(12))return a.source=this.finishPlaceholder(b,"StringLiteral"),this.semicolon(),this.finishNode(a,"ImportDeclaration");let c=this.startNodeAtNode(b);return c.local=b,a.specifiers.push(this.finishNode(c,"ImportDefaultSpecifier")),this.eat(12)&&(this.maybeParseStarImportSpecifier(a)||this.parseNamedImportSpecifiers(a)),this.expectContextual(98),a.source=this.parseImportSource(),this.semicolon(),this.finishNode(a,"ImportDeclaration")}parseImportSource(){return this.parsePlaceholder("StringLiteral")||super.parseImportSource()}assertNoSpace(){this.state.start>this.offsetToSourcePos(this.state.lastTokEndLoc.index)&&this.raise(a6.UnexpectedSpace,this.state.lastTokEndLoc)}}},ba=Object.keys(a9);class bb extends a0{checkProto(a,b,c,d){if("SpreadElement"===a.type||this.isObjectMethod(a)||a.computed||a.shorthand)return c;let e=a.key;return"__proto__"===("Identifier"===e.type?e.name:e.value)?(b?this.raise(o.RecordNoProto,e):c&&(d?null===d.doubleProtoLoc&&(d.doubleProtoLoc=e.loc.start):this.raise(o.DuplicateProto,e)),!0):c}shouldExitDescending(a,b){return"ArrowFunctionExpression"===a.type&&this.offsetToSourcePos(a.start)===b}getExpression(){if(this.enterInitialScopes(),this.nextToken(),this.match(140))throw this.raise(o.ParseExpressionEmptyInput,this.state.startLoc);let a=this.parseExpression();if(!this.match(140))throw this.raise(o.ParseExpressionExpectsEOF,this.state.startLoc,{unexpected:this.input.codePointAt(this.state.start)});return this.finalizeRemainingComments(),a.comments=this.comments,a.errors=this.state.errors,256&this.optionFlags&&(a.tokens=this.tokens),a}parseExpression(a,b){return a?this.disallowInAnd(()=>this.parseExpressionBase(b)):this.allowInAnd(()=>this.parseExpressionBase(b))}parseExpressionBase(a){let b=this.state.startLoc,c=this.parseMaybeAssign(a);if(this.match(12)){let d=this.startNodeAt(b);for(d.expressions=[c];this.eat(12);)d.expressions.push(this.parseMaybeAssign(a));return this.toReferencedList(d.expressions),this.finishNode(d,"SequenceExpression")}return c}parseMaybeAssignDisallowIn(a,b){return this.disallowInAnd(()=>this.parseMaybeAssign(a,b))}parseMaybeAssignAllowIn(a,b){return this.allowInAnd(()=>this.parseMaybeAssign(a,b))}setOptionalParametersError(a){a.optionalParametersLoc=this.state.startLoc}parseMaybeAssign(a,b){var c;let d,e=this.state.startLoc,f=this.isContextual(108);if(f&&this.prodParam.hasYield){this.next();let a=this.parseYield(e);return b&&(a=b.call(this,a,e)),a}a?d=!1:(a=new aX,d=!0);let{type:g}=this.state;(10===g||I(g))&&(this.state.potentialArrowAt=this.state.start);let h=this.parseMaybeConditional(a);if(b&&(h=b.call(this,h,e)),(c=this.state.type)>=29&&c<=33){let b=this.startNodeAt(e),c=this.state.value;if(b.operator=c,this.match(29)){this.toAssignable(h,!0),b.left=h;let c=e.index;null!=a.doubleProtoLoc&&a.doubleProtoLoc.index>=c&&(a.doubleProtoLoc=null),null!=a.shorthandAssignLoc&&a.shorthandAssignLoc.index>=c&&(a.shorthandAssignLoc=null),null!=a.privateKeyLoc&&a.privateKeyLoc.index>=c&&(this.checkDestructuringPrivate(a),a.privateKeyLoc=null),null!=a.voidPatternLoc&&a.voidPatternLoc.index>=c&&(a.voidPatternLoc=null)}else b.left=h;return this.next(),b.right=this.parseMaybeAssign(),this.checkLVal(h,this.finishNode(b,"AssignmentExpression"),void 0,void 0,void 0,void 0,"||="===c||"&&="===c||"??="===c),b}if(d&&this.checkExpressionErrors(a,!0),f){let{type:a}=this.state;if((this.hasPlugin("v8intrinsic")?D[a]:D[a]&&!this.match(54))&&!this.isAmbiguousPrefixOrIdentifier())return this.raiseOverwrite(o.YieldNotInGeneratorFunction,e),this.parseYield(e)}return h}parseMaybeConditional(a){let b=this.state.startLoc,c=this.state.potentialArrowAt,d=this.parseExprOps(a);return this.shouldExitDescending(d,c)?d:this.parseConditional(d,b,a)}parseConditional(a,b,c){if(this.eat(17)){let c=this.startNodeAt(b);return c.test=a,c.consequent=this.parseMaybeAssignAllowIn(),this.expect(14),c.alternate=this.parseMaybeAssign(),this.finishNode(c,"ConditionalExpression")}return a}parseMaybeUnaryOrPrivate(a){return this.match(139)?this.parsePrivateName():this.parseMaybeUnary(a)}parseExprOps(a){let b=this.state.startLoc,c=this.state.potentialArrowAt,d=this.parseMaybeUnaryOrPrivate(a);return this.shouldExitDescending(d,c)?d:this.parseExprOp(d,b,-1)}parseExprOp(a,b,c){if(this.isPrivateName(a)){let b=this.getPrivateNameSV(a);!(c>=B[58])&&this.prodParam.hasIn&&this.match(58)||this.raise(o.PrivateInExpectedIn,a,{identifierName:b}),this.classScope.usePrivateName(b,a.loc.start)}let d=this.state.type;if(d>=39&&d<=59&&(this.prodParam.hasIn||!this.match(58))){let e=B[d];if(e>c){if(39===d){if(this.expectPlugin("pipelineOperator"),this.state.inFSharpPipelineDirectBody)return a;this.checkPipelineAtInfixOperator(a,b)}let f=this.startNodeAt(b);f.left=a,f.operator=this.state.value;let g=41===d||42===d,h=40===d;if(h&&(e=B[42]),this.next(),39===d&&this.hasPlugin(["pipelineOperator",{proposal:"minimal"}])&&96===this.state.type&&this.prodParam.hasAwait)throw this.raise(o.UnexpectedAwaitAfterPipelineBody,this.state.startLoc);f.right=this.parseExprOpRightExpr(d,e);let i=this.finishNode(f,g||h?"LogicalExpression":"BinaryExpression"),j=this.state.type;if(h&&(41===j||42===j)||g&&40===j)throw this.raise(o.MixingCoalesceWithLogical,this.state.startLoc);return this.parseExprOp(i,b,c)}}return a}parseExprOpRightExpr(a,b){let c=this.state.startLoc;if(39===a){switch(this.getPluginOption("pipelineOperator","proposal")){case"hack":return this.withTopicBindingContext(()=>this.parseHackPipeBody());case"fsharp":return this.withSoloAwaitPermittingContext(()=>this.parseFSharpPipelineBody(b))}if("smart"===this.getPluginOption("pipelineOperator","proposal"))return this.withTopicBindingContext(()=>{if(this.prodParam.hasYield&&this.isContextual(108))throw this.raise(o.PipeBodyIsTighter,this.state.startLoc);return this.parseSmartPipelineBodyInStyle(this.parseExprOpBaseRightExpr(a,b),c)})}return this.parseExprOpBaseRightExpr(a,b)}parseExprOpBaseRightExpr(a,b){let c=this.state.startLoc;return this.parseExprOp(this.parseMaybeUnaryOrPrivate(),c,57===a?b-1:b)}parseHackPipeBody(){var a;let{startLoc:b}=this.state,c=this.parseMaybeAssign();return j.has(c.type)&&!(null!=(a=c.extra)&&a.parenthesized)&&this.raise(o.PipeUnparenthesizedBody,b,{type:c.type}),this.topicReferenceWasUsedInCurrentContext()||this.raise(o.PipeTopicUnused,b),c}checkExponentialAfterUnary(a){this.match(57)&&this.raise(o.UnexpectedTokenUnaryExponentiation,a.argument)}parseMaybeUnary(a,b){let c=this.state.startLoc,d=this.isContextual(96);if(d&&this.recordAwaitIfAllowed()){this.next();let a=this.parseAwait(c);return b||this.checkExponentialAfterUnary(a),a}let e=this.match(34),f=this.startNode();if(E[this.state.type]){f.operator=this.state.value,f.prefix=!0,this.match(72)&&this.expectPlugin("throwExpressions");let c=this.match(89);if(this.next(),f.argument=this.parseMaybeUnary(null,!0),this.checkExpressionErrors(a,!0),this.state.strict&&c){let a=f.argument;"Identifier"===a.type?this.raise(o.StrictDelete,f):this.hasPropertyAsPrivateName(a)&&this.raise(o.DeletePrivateField,f)}if(!e)return b||this.checkExponentialAfterUnary(f),this.finishNode(f,"UnaryExpression")}let g=this.parseUpdate(f,e,a);if(d){let{type:a}=this.state;if((this.hasPlugin("v8intrinsic")?D[a]:D[a]&&!this.match(54))&&!this.isAmbiguousPrefixOrIdentifier())return this.raiseOverwrite(o.AwaitNotInAsyncContext,c),this.parseAwait(c)}return g}parseUpdate(a,b,c){if(b)return this.checkLVal(a.argument,this.finishNode(a,"UpdateExpression")),a;let d=this.state.startLoc,e=this.parseExprSubscripts(c);if(this.checkExpressionErrors(c,!1))return e;for(;34===this.state.type&&!this.canInsertSemicolon();){let a=this.startNodeAt(d);a.operator=this.state.value,a.prefix=!1,a.argument=e,this.next(),this.checkLVal(e,e=this.finishNode(a,"UpdateExpression"))}return e}parseExprSubscripts(a){let b=this.state.startLoc,c=this.state.potentialArrowAt,d=this.parseExprAtom(a);return this.shouldExitDescending(d,c)?d:this.parseSubscripts(d,b)}parseSubscripts(a,b,c){let d={optionalChainMember:!1,maybeAsyncArrow:this.atPossibleAsyncArrow(a),stop:!1};do a=this.parseSubscript(a,b,c,d),d.maybeAsyncArrow=!1;while(!d.stop)return a}parseSubscript(a,b,c,d){let{type:e}=this.state;if(!c&&15===e)return this.parseBind(a,b,c,d);if(N(e))return this.parseTaggedTemplateExpression(a,b,d);let f=!1;if(18===e){if(c&&(this.raise(o.OptionalChainingNoNew,this.state.startLoc),40===this.lookaheadCharCode()))return this.stopParseSubscript(a,d);d.optionalChainMember=f=!0,this.next()}if(!c&&this.match(10))return this.parseCoverCallAndAsyncArrowHead(a,b,d,f);{let c=this.eat(0);return c||f||this.eat(16)?this.parseMember(a,b,d,c,f):this.stopParseSubscript(a,d)}}stopParseSubscript(a,b){return b.stop=!0,a}parseMember(a,b,c,d,e){let f=this.startNodeAt(b);return(f.object=a,f.computed=d,d?(f.property=this.parseExpression(),this.expect(3)):this.match(139)?("Super"===a.type&&this.raise(o.SuperPrivateField,b),this.classScope.usePrivateName(this.state.value,this.state.startLoc),f.property=this.parsePrivateName()):f.property=this.parseIdentifier(!0),c.optionalChainMember)?(f.optional=e,this.finishNode(f,"OptionalMemberExpression")):this.finishNode(f,"MemberExpression")}parseBind(a,b,c,d){let e=this.startNodeAt(b);return e.object=a,this.next(),e.callee=this.parseNoCallExpr(),d.stop=!0,this.parseSubscripts(this.finishNode(e,"BindExpression"),b,c)}parseCoverCallAndAsyncArrowHead(a,b,c,d){let e=this.state.maybeInArrowParameters,f=null;this.state.maybeInArrowParameters=!0,this.next();let g=this.startNodeAt(b);g.callee=a;let{maybeAsyncArrow:h,optionalChainMember:i}=c;h&&(this.expressionScope.enter(new aU(2)),f=new aX),i&&(g.optional=d),d?g.arguments=this.parseCallExpressionArguments():g.arguments=this.parseCallExpressionArguments("Super"!==a.type,g,f);let j=this.finishCallExpression(g,i);return h&&this.shouldParseAsyncArrow()&&!d?(c.stop=!0,this.checkDestructuringPrivate(f),this.expressionScope.validateAsPattern(),this.expressionScope.exit(),j=this.parseAsyncArrowFromCallExpression(this.startNodeAt(b),j)):(h&&(this.checkExpressionErrors(f,!0),this.expressionScope.exit()),this.toReferencedArguments(j)),this.state.maybeInArrowParameters=e,j}toReferencedArguments(a,b){this.toReferencedListDeep(a.arguments,b)}parseTaggedTemplateExpression(a,b,c){let d=this.startNodeAt(b);return d.tag=a,d.quasi=this.parseTemplate(!0),c.optionalChainMember&&this.raise(o.OptionalChainingNoTemplate,b),this.finishNode(d,"TaggedTemplateExpression")}atPossibleAsyncArrow(a){return"Identifier"===a.type&&"async"===a.name&&this.state.lastTokEndLoc.index===a.end&&!this.canInsertSemicolon()&&a.end-a.start==5&&this.offsetToSourcePos(a.start)===this.state.potentialArrowAt}finishCallExpression(a,b){if("Import"===a.callee.type)if(0===a.arguments.length||a.arguments.length>2)this.raise(o.ImportCallArity,a);else for(let b of a.arguments)"SpreadElement"===b.type&&this.raise(o.ImportCallSpreadArgument,b);return this.finishNode(a,b?"OptionalCallExpression":"CallExpression")}parseCallExpressionArguments(a,b,c){let d=[],e=!0,f=this.state.inFSharpPipelineDirectBody;for(this.state.inFSharpPipelineDirectBody=!1;!this.eat(11);){if(e)e=!1;else if(this.expect(12),this.match(11)){b&&this.addTrailingCommaExtraToNode(b),this.next();break}d.push(this.parseExprListItem(11,!1,c,a))}return this.state.inFSharpPipelineDirectBody=f,d}shouldParseAsyncArrow(){return this.match(19)&&!this.canInsertSemicolon()}parseAsyncArrowFromCallExpression(a,b){var c;return this.resetPreviousNodeTrailingComments(b),this.expect(19),this.parseArrowExpression(a,b.arguments,!0,null==(c=b.extra)?void 0:c.trailingCommaLoc),b.innerComments&&aA(a,b.innerComments),b.callee.trailingComments&&aA(a,b.callee.trailingComments),a}parseNoCallExpr(){let a=this.state.startLoc;return this.parseSubscripts(this.parseExprAtom(),a,!0)}parseExprAtom(a){let b,c=null,{type:d}=this.state;switch(d){case 79:return this.parseSuper();case 83:if(b=this.startNode(),this.next(),this.match(16))return this.parseImportMetaPropertyOrPhaseCall(b);if(!this.match(10))return this.raise(o.UnsupportedImport,this.state.lastTokStartLoc),this.finishNode(b,"Import");if(512&this.optionFlags)return this.parseImportCall(b);return this.finishNode(b,"Import");case 78:return b=this.startNode(),this.next(),this.finishNode(b,"ThisExpression");case 90:return this.parseDo(this.startNode(),!1);case 56:case 31:return this.readRegexp(),this.parseRegExpLiteral(this.state.value);case 135:return this.parseNumericLiteral(this.state.value);case 136:return this.parseBigIntLiteral(this.state.value);case 134:return this.parseStringLiteral(this.state.value);case 84:return this.parseNullLiteral();case 85:return this.parseBooleanLiteral(!0);case 86:return this.parseBooleanLiteral(!1);case 10:{let a=this.state.potentialArrowAt===this.state.start;return this.parseParenAndDistinguishExpression(a)}case 0:return this.parseArrayLike(3,!1,a);case 5:return this.parseObjectLike(8,!1,!1,a);case 68:return this.parseFunctionOrFunctionSent();case 26:c=this.parseDecorators();case 80:return this.parseClass(this.maybeTakeDecorators(c,this.startNode()),!1);case 77:return this.parseNewOrNewTarget();case 25:case 24:return this.parseTemplate(!1);case 15:{b=this.startNode(),this.next(),b.object=null;let a=b.callee=this.parseNoCallExpr();if("MemberExpression"===a.type)return this.finishNode(b,"BindExpression");throw this.raise(o.UnsupportedBind,a)}case 139:return this.raise(o.PrivateInExpectedIn,this.state.startLoc,{identifierName:this.state.value}),this.parsePrivateName();case 33:return this.parseTopicReferenceThenEqualsSign(54,"%");case 32:return this.parseTopicReferenceThenEqualsSign(44,"^");case 37:case 38:return this.parseTopicReference("hack");case 44:case 54:case 27:{let a=this.getPluginOption("pipelineOperator","proposal");if(a)return this.parseTopicReference(a);throw this.unexpected()}case 47:{let a=this.input.codePointAt(this.nextTokenStart());if(V(a)||62===a)throw this.expectOnePlugin(["jsx","flow","typescript"]);throw this.unexpected()}default:if(137===d)return this.parseDecimalLiteral(this.state.value);if(2===d||1===d)return this.parseArrayLike(2===this.state.type?4:3,!0);if(6===d||7===d)return this.parseObjectLike(6===this.state.type?9:8,!1,!0);if(I(d)){if(this.isContextual(127)&&123===this.lookaheadInLineCharCode())return this.parseModuleExpression();let a=this.state.potentialArrowAt===this.state.start,b=this.state.containsEsc,c=this.parseIdentifier();if(!b&&"async"===c.name&&!this.canInsertSemicolon()){let{type:b}=this.state;if(68===b)return this.resetPreviousNodeTrailingComments(c),this.next(),this.parseAsyncFunctionExpression(this.startNodeAtNode(c));if(I(b))if(a&&61===this.lookaheadCharCode())return this.parseAsyncArrowUnaryFunction(this.startNodeAtNode(c));else return c;if(90===b)return this.resetPreviousNodeTrailingComments(c),this.parseDo(this.startNodeAtNode(c),!0)}if(a&&this.match(19)&&!this.canInsertSemicolon())return this.next(),this.parseArrowExpression(this.startNodeAtNode(c),[c],!1);return c}throw this.unexpected()}}parseTopicReferenceThenEqualsSign(a,b){let c=this.getPluginOption("pipelineOperator","proposal");if(c)return this.state.type=a,this.state.value=b,this.state.pos--,this.state.end--,this.state.endLoc=f(this.state.endLoc,-1),this.parseTopicReference(c);throw this.unexpected()}parseTopicReference(a){let b=this.startNode(),c=this.state.startLoc,d=this.state.type;return this.next(),this.finishTopicReference(b,c,a,d)}finishTopicReference(a,b,c,d){if(this.testTopicReferenceConfiguration(c,b,d))if("hack"===c)return this.topicReferenceIsAllowedInCurrentContext()||this.raise(o.PipeTopicUnbound,b),this.registerTopicReference(),this.finishNode(a,"TopicReference");else return this.topicReferenceIsAllowedInCurrentContext()||this.raise(o.PrimaryTopicNotAllowed,b),this.registerTopicReference(),this.finishNode(a,"PipelinePrimaryTopicReference");throw this.raise(o.PipeTopicUnconfiguredToken,b,{token:A[d]})}testTopicReferenceConfiguration(a,b,c){switch(a){case"hack":return this.hasPlugin(["pipelineOperator",{topicToken:A[c]}]);case"smart":return 27===c;default:throw this.raise(o.PipeTopicRequiresHackPipes,b)}}parseAsyncArrowUnaryFunction(a){this.prodParam.enter(ax(!0,this.prodParam.hasYield));let b=[this.parseIdentifier()];return this.prodParam.exit(),this.hasPrecedingLineBreak()&&this.raise(o.LineTerminatorBeforeArrow,this.state.curPosition()),this.expect(19),this.parseArrowExpression(a,b,!0)}parseDo(a,b){this.expectPlugin("doExpressions"),b&&this.expectPlugin("asyncDoExpressions"),a.async=b,this.next();let c=this.state.labels;return this.state.labels=[],b?(this.prodParam.enter(2),a.body=this.parseBlock(),this.prodParam.exit()):a.body=this.parseBlock(),this.state.labels=c,this.finishNode(a,"DoExpression")}parseSuper(){let a=this.startNode();return this.next(),this.match(10)&&!this.scope.allowDirectSuper?16&this.optionFlags||this.raise(o.SuperNotAllowed,a):this.scope.allowSuper||16&this.optionFlags||this.raise(o.UnexpectedSuper,a),this.match(10)||this.match(0)||this.match(16)||this.raise(o.UnsupportedSuper,a),this.finishNode(a,"Super")}parsePrivateName(){let a=this.startNode(),b=this.startNodeAt(f(this.state.startLoc,1)),c=this.state.value;return this.next(),a.id=this.createIdentifier(b,c),this.finishNode(a,"PrivateName")}parseFunctionOrFunctionSent(){let a=this.startNode();if(this.next(),this.prodParam.hasYield&&this.match(16)){let b=this.createIdentifier(this.startNodeAtNode(a),"function");return this.next(),this.match(103)?this.expectPlugin("functionSent"):this.hasPlugin("functionSent")||this.unexpected(),this.parseMetaProperty(a,b,"sent")}return this.parseFunction(a)}parseMetaProperty(a,b,c){a.meta=b;let d=this.state.containsEsc;return a.property=this.parseIdentifier(!0),(a.property.name!==c||d)&&this.raise(o.UnsupportedMetaProperty,a.property,{target:b.name,onlyValidPropertyName:c}),this.finishNode(a,"MetaProperty")}parseImportMetaPropertyOrPhaseCall(a){if(this.next(),this.isContextual(105)||this.isContextual(97)){let b=this.isContextual(105);return this.expectPlugin(b?"sourcePhaseImports":"deferredImportEvaluation"),this.next(),a.phase=b?"source":"defer",this.parseImportCall(a)}{let b=this.createIdentifierAt(this.startNodeAtNode(a),"import",this.state.lastTokStartLoc);return this.isContextual(101)&&(this.inModule||this.raise(o.ImportMetaOutsideModule,b),this.sawUnambiguousESM=!0),this.parseMetaProperty(a,b,"meta")}}parseLiteralAtNode(a,b,c){return this.addExtra(c,"rawValue",a),this.addExtra(c,"raw",this.input.slice(this.offsetToSourcePos(c.start),this.state.end)),c.value=a,this.next(),this.finishNode(c,b)}parseLiteral(a,b){let c=this.startNode();return this.parseLiteralAtNode(a,b,c)}parseStringLiteral(a){return this.parseLiteral(a,"StringLiteral")}parseNumericLiteral(a){return this.parseLiteral(a,"NumericLiteral")}parseBigIntLiteral(a){return this.parseLiteral(a,"BigIntLiteral")}parseDecimalLiteral(a){return this.parseLiteral(a,"DecimalLiteral")}parseRegExpLiteral(a){let b=this.startNode();return this.addExtra(b,"raw",this.input.slice(this.offsetToSourcePos(b.start),this.state.end)),b.pattern=a.pattern,b.flags=a.flags,this.next(),this.finishNode(b,"RegExpLiteral")}parseBooleanLiteral(a){let b=this.startNode();return b.value=a,this.next(),this.finishNode(b,"BooleanLiteral")}parseNullLiteral(){let a=this.startNode();return this.next(),this.finishNode(a,"NullLiteral")}parseParenAndDistinguishExpression(a){let b,c,d,e=this.state.startLoc;this.next(),this.expressionScope.enter(new aU(1));let f=this.state.maybeInArrowParameters,g=this.state.inFSharpPipelineDirectBody;this.state.maybeInArrowParameters=!0,this.state.inFSharpPipelineDirectBody=!1;let h=this.state.startLoc,i=[],j=new aX,k=!0;for(;!this.match(11);){if(k)k=!1;else if(this.expect(12,null===j.optionalParametersLoc?null:j.optionalParametersLoc),this.match(11)){d=this.state.startLoc;break}if(this.match(21)){let a=this.state.startLoc;if(c=this.state.startLoc,i.push(this.parseParenItem(this.parseRestBinding(),a)),!this.checkCommaAfterRest(41))break}else i.push(this.parseMaybeAssignAllowInOrVoidPattern(11,j,this.parseParenItem))}let l=this.state.lastTokEndLoc;this.expect(11),this.state.maybeInArrowParameters=f,this.state.inFSharpPipelineDirectBody=g;let m=this.startNodeAt(e);return a&&this.shouldParseArrow(i)&&(m=this.parseArrow(m))?(this.checkDestructuringPrivate(j),this.expressionScope.validateAsPattern(),this.expressionScope.exit(),this.parseArrowExpression(m,i,!1),m):(this.expressionScope.exit(),i.length||this.unexpected(this.state.lastTokStartLoc),d&&this.unexpected(d),c&&this.unexpected(c),this.checkExpressionErrors(j,!0),this.toReferencedListDeep(i,!0),i.length>1?((b=this.startNodeAt(h)).expressions=i,this.finishNode(b,"SequenceExpression"),this.resetEndLocation(b,l)):b=i[0],this.wrapParenthesis(e,b))}wrapParenthesis(a,b){if(!(1024&this.optionFlags))return this.addExtra(b,"parenthesized",!0),this.addExtra(b,"parenStart",a.index),this.takeSurroundingComments(b,a.index,this.state.lastTokEndLoc.index),b;let c=this.startNodeAt(a);return c.expression=b,this.finishNode(c,"ParenthesizedExpression")}shouldParseArrow(a){return!this.canInsertSemicolon()}parseArrow(a){if(this.eat(19))return a}parseParenItem(a,b){return a}parseNewOrNewTarget(){let a=this.startNode();if(this.next(),this.match(16)){let b=this.createIdentifier(this.startNodeAtNode(a),"new");this.next();let c=this.parseMetaProperty(a,b,"target");return this.scope.allowNewTarget||this.raise(o.UnexpectedNewTarget,c),c}return this.parseNew(a)}parseNew(a){if(this.parseNewCallee(a),this.eat(10)){let b=this.parseExprList(11);this.toReferencedList(b),a.arguments=b}else a.arguments=[];return this.finishNode(a,"NewExpression")}parseNewCallee(a){let b=this.match(83),c=this.parseNoCallExpr();a.callee=c,b&&("Import"===c.type||"ImportExpression"===c.type)&&this.raise(o.ImportCallNotNewExpression,c)}parseTemplateElement(a){let{start:b,startLoc:c,end:d,value:e}=this.state,g=this.startNodeAt(f(c,1));null!==e||a||this.raise(o.InvalidEscapeSequenceTemplate,f(this.state.firstInvalidTemplateEscapePos,1));let h=this.match(24),i=h?-1:-2,j=d+i;g.value={raw:this.input.slice(b+1,j).replace(/\r\n?/g,"\n"),cooked:null===e?null:e.slice(1,i)},g.tail=h,this.next();let k=this.finishNode(g,"TemplateElement");return this.resetEndLocation(k,f(this.state.lastTokEndLoc,i)),k}parseTemplate(a){let b=this.startNode(),c=this.parseTemplateElement(a),d=[c],e=[];for(;!c.tail;)e.push(this.parseTemplateSubstitution()),this.readTemplateContinuation(),d.push(c=this.parseTemplateElement(a));return b.expressions=e,b.quasis=d,this.finishNode(b,"TemplateLiteral")}parseTemplateSubstitution(){return this.parseExpression()}parseObjectLike(a,b,c,d){c&&this.expectPlugin("recordAndTuple");let e=this.state.inFSharpPipelineDirectBody;this.state.inFSharpPipelineDirectBody=!1;let f=!1,g=!0,h=this.startNode();for(h.properties=[],this.next();!this.match(a);){let e;if(g)g=!1;else if(this.expect(12),this.match(a)){this.addTrailingCommaExtraToNode(h);break}b?e=this.parseBindingProperty():(e=this.parsePropertyDefinition(d),f=this.checkProto(e,c,f,d)),c&&!this.isObjectProperty(e)&&"SpreadElement"!==e.type&&this.raise(o.InvalidRecordProperty,e),e.shorthand&&this.addExtra(e,"shorthand",!0),h.properties.push(e)}this.next(),this.state.inFSharpPipelineDirectBody=e;let i="ObjectExpression";return b?i="ObjectPattern":c&&(i="RecordExpression"),this.finishNode(h,i)}addTrailingCommaExtraToNode(a){this.addExtra(a,"trailingComma",this.state.lastTokStartLoc.index),this.addExtra(a,"trailingCommaLoc",this.state.lastTokStartLoc,!1)}maybeAsyncOrAccessorProp(a){return!a.computed&&"Identifier"===a.key.type&&(this.isLiteralPropertyName()||this.match(0)||this.match(55))}parsePropertyDefinition(a){let b,c=[];if(this.match(26))for(this.hasPlugin("decorators")&&this.raise(o.UnsupportedPropertyDecorator,this.state.startLoc);this.match(26);)c.push(this.parseDecorator());let d=this.startNode(),e=!1,f=!1;if(this.match(21))return c.length&&this.unexpected(),this.parseSpread();c.length&&(d.decorators=c,c=[]),d.method=!1,a&&(b=this.state.startLoc);let g=this.eat(55);this.parsePropertyNamePrefixOperator(d);let h=this.state.containsEsc;if(this.parsePropertyName(d,a),!g&&!h&&this.maybeAsyncOrAccessorProp(d)){let{key:a}=d,b=a.name;"async"!==b||this.hasPrecedingLineBreak()||(e=!0,this.resetPreviousNodeTrailingComments(a),g=this.eat(55),this.parsePropertyName(d)),("get"===b||"set"===b)&&(f=!0,this.resetPreviousNodeTrailingComments(a),d.kind=b,this.match(55)&&(g=!0,this.raise(o.AccessorIsGenerator,this.state.curPosition(),{kind:b}),this.next()),this.parsePropertyName(d))}return this.parseObjPropValue(d,b,g,e,!1,f,a)}getGetterSetterExpectedParamCount(a){return+("get"!==a.kind)}getObjectOrClassMethodParams(a){return a.params}checkGetterSetterParams(a){var b;let c=this.getGetterSetterExpectedParamCount(a),d=this.getObjectOrClassMethodParams(a);d.length!==c&&this.raise("get"===a.kind?o.BadGetterArity:o.BadSetterArity,a),"set"===a.kind&&(null==(b=d[d.length-1])?void 0:b.type)==="RestElement"&&this.raise(o.BadSetterRestParameter,a)}parseObjectMethod(a,b,c,d,e){if(e){let c=this.parseMethod(a,b,!1,!1,!1,"ObjectMethod");return this.checkGetterSetterParams(c),c}if(c||b||this.match(10))return d&&this.unexpected(),a.kind="method",a.method=!0,this.parseMethod(a,b,c,!1,!1,"ObjectMethod")}parseObjectProperty(a,b,c,d){if(a.shorthand=!1,this.eat(14))return a.value=c?this.parseMaybeDefault(this.state.startLoc):this.parseMaybeAssignAllowInOrVoidPattern(8,d),this.finishObjectProperty(a);if(!a.computed&&"Identifier"===a.key.type){if(this.checkReservedWord(a.key.name,a.key.loc.start,!0,!1),c)a.value=this.parseMaybeDefault(b,this.cloneIdentifier(a.key));else if(this.match(29)){let c=this.state.startLoc;null!=d?null===d.shorthandAssignLoc&&(d.shorthandAssignLoc=c):this.raise(o.InvalidCoverInitializedName,c),a.value=this.parseMaybeDefault(b,this.cloneIdentifier(a.key))}else a.value=this.cloneIdentifier(a.key);return a.shorthand=!0,this.finishObjectProperty(a)}}finishObjectProperty(a){return this.finishNode(a,"ObjectProperty")}parseObjPropValue(a,b,c,d,e,f,g){let h=this.parseObjectMethod(a,c,d,e,f)||this.parseObjectProperty(a,b,e,g);return h||this.unexpected(),h}parsePropertyName(a,b){if(this.eat(0))a.computed=!0,a.key=this.parseMaybeAssignAllowIn(),this.expect(3);else{let c,{type:d,value:e}=this.state;if(J(d))c=this.parseIdentifier(!0);else switch(d){case 135:c=this.parseNumericLiteral(e);break;case 134:c=this.parseStringLiteral(e);break;case 136:c=this.parseBigIntLiteral(e);break;case 139:{let a=this.state.startLoc;null!=b?null===b.privateKeyLoc&&(b.privateKeyLoc=a):this.raise(o.UnexpectedPrivateField,a),c=this.parsePrivateName();break}default:if(137===d){c=this.parseDecimalLiteral(e);break}this.unexpected()}a.key=c,139!==d&&(a.computed=!1)}}initFunction(a,b){a.id=null,a.generator=!1,a.async=b}parseMethod(a,b,c,d,e,f,g=!1){this.initFunction(a,c),a.generator=b,this.scope.enter(530|576*!!g|32*!!e),this.prodParam.enter(ax(c,a.generator)),this.parseFunctionParams(a,d);let h=this.parseFunctionBodyAndFinish(a,f,!0);return this.prodParam.exit(),this.scope.exit(),h}parseArrayLike(a,b,c){b&&this.expectPlugin("recordAndTuple");let d=this.state.inFSharpPipelineDirectBody;this.state.inFSharpPipelineDirectBody=!1;let e=this.startNode();return this.next(),e.elements=this.parseExprList(a,!b,c,e),this.state.inFSharpPipelineDirectBody=d,this.finishNode(e,b?"TupleExpression":"ArrayExpression")}parseArrowExpression(a,b,c,d){this.scope.enter(518);let e=ax(c,!1);!this.match(5)&&this.prodParam.hasIn&&(e|=8),this.prodParam.enter(e),this.initFunction(a,c);let f=this.state.maybeInArrowParameters;return b&&(this.state.maybeInArrowParameters=!0,this.setArrowFunctionParameters(a,b,d)),this.state.maybeInArrowParameters=!1,this.parseFunctionBody(a,!0),this.prodParam.exit(),this.scope.exit(),this.state.maybeInArrowParameters=f,this.finishNode(a,"ArrowFunctionExpression")}setArrowFunctionParameters(a,b,c){this.toAssignableList(b,c,!1),a.params=b}parseFunctionBodyAndFinish(a,b,c=!1){return this.parseFunctionBody(a,!1,c),this.finishNode(a,b)}parseFunctionBody(a,b,c=!1){let d=b&&!this.match(5);if(this.expressionScope.enter(new aT),d)a.body=this.parseMaybeAssign(),this.checkParams(a,!1,b,!1);else{let d=this.state.strict,e=this.state.labels;this.state.labels=[],this.prodParam.enter(4|this.prodParam.currentFlags()),a.body=this.parseBlock(!0,!1,e=>{let f=!this.isSimpleParamList(a.params);e&&f&&this.raise(o.IllegalLanguageModeDirective,("method"===a.kind||"constructor"===a.kind)&&a.key?a.key.loc.end:a);let g=!d&&this.state.strict;this.checkParams(a,!this.state.strict&&!b&&!c&&!f,b,g),this.state.strict&&a.id&&this.checkIdentifier(a.id,65,g)}),this.prodParam.exit(),this.state.labels=e}this.expressionScope.exit()}isSimpleParameter(a){return"Identifier"===a.type}isSimpleParamList(a){for(let b=0,c=a.length;b<c;b++)if(!this.isSimpleParameter(a[b]))return!1;return!0}checkParams(a,b,c,d=!0){let e=!b&&new Set,f={type:"FormalParameters"};for(let b of a.params)this.checkLVal(b,f,5,e,d)}parseExprList(a,b,c,d){let e=[],f=!0;for(;!this.eat(a);){if(f)f=!1;else if(this.expect(12),this.match(a)){d&&this.addTrailingCommaExtraToNode(d),this.next();break}e.push(this.parseExprListItem(a,b,c))}return e}parseExprListItem(a,b,c,d){let e;if(this.match(12))b||this.raise(o.UnexpectedToken,this.state.curPosition(),{unexpected:","}),e=null;else if(this.match(21)){let a=this.state.startLoc;e=this.parseParenItem(this.parseSpread(c),a)}else if(this.match(17)){this.expectPlugin("partialApplication"),d||this.raise(o.UnexpectedArgumentPlaceholder,this.state.startLoc);let a=this.startNode();this.next(),e=this.finishNode(a,"ArgumentPlaceholder")}else e=this.parseMaybeAssignAllowInOrVoidPattern(a,c,this.parseParenItem);return e}parseIdentifier(a){let b=this.startNode(),c=this.parseIdentifierName(a);return this.createIdentifier(b,c)}createIdentifier(a,b){return a.name=b,a.loc.identifierName=b,this.finishNode(a,"Identifier")}createIdentifierAt(a,b,c){return a.name=b,a.loc.identifierName=b,this.finishNodeAt(a,"Identifier",c)}parseIdentifierName(a){let b,{startLoc:c,type:d}=this.state;J(d)?b=this.state.value:this.unexpected();let e=d<=92;return a?e&&this.replaceToken(132):this.checkReservedWord(b,c,e,!1),this.next(),b}checkReservedWord(a,b,c,d){if(!(a.length>10)){if(ab.has(a)){if(c&&X.has(a))return void this.raise(o.UnexpectedKeyword,b,{keyword:a});if((this.state.strict?d?aa:_:$)(a,this.inModule))return void this.raise(o.UnexpectedReservedWord,b,{reservedWord:a});if("yield"===a){if(this.prodParam.hasYield)return void this.raise(o.YieldBindingIdentifier,b)}else if("await"===a){if(this.prodParam.hasAwait)return void this.raise(o.AwaitBindingIdentifier,b);if(this.scope.inStaticBlock)return void this.raise(o.AwaitBindingIdentifierInStaticBlock,b);this.expressionScope.recordAsyncArrowParametersError(b)}else if("arguments"===a&&this.scope.inClassAndNotInNonArrowFunction)return void this.raise(o.ArgumentsInClass,b)}}}recordAwaitIfAllowed(){let a=this.prodParam.hasAwait;return a&&!this.scope.inFunction&&(this.state.hasTopLevelAwait=!0),a}parseAwait(a){let b=this.startNodeAt(a);return this.expressionScope.recordParameterInitializerError(o.AwaitExpressionFormalParameter,b),this.eat(55)&&this.raise(o.ObsoleteAwaitStar,b),this.scope.inFunction||1&this.optionFlags||(this.isAmbiguousPrefixOrIdentifier()?this.ambiguousScriptDifferentAst=!0:this.sawUnambiguousESM=!0),this.state.soloAwait||(b.argument=this.parseMaybeUnary(null,!0)),this.finishNode(b,"AwaitExpression")}isAmbiguousPrefixOrIdentifier(){if(this.hasPrecedingLineBreak())return!0;let{type:a}=this.state;return 53===a||10===a||0===a||N(a)||102===a&&!this.state.containsEsc||138===a||56===a||this.hasPlugin("v8intrinsic")&&54===a}parseYield(a){let b=this.startNodeAt(a);this.expressionScope.recordParameterInitializerError(o.YieldInParameter,b);let c=!1,d=null;if(!this.hasPrecedingLineBreak())switch(c=this.eat(55),this.state.type){case 13:case 140:case 8:case 11:case 3:case 9:case 14:case 12:if(!c)break;default:d=this.parseMaybeAssign()}return b.delegate=c,b.argument=d,this.finishNode(b,"YieldExpression")}parseImportCall(a){if(this.next(),a.source=this.parseMaybeAssignAllowIn(),a.options=null,this.eat(12)){if(this.match(11))this.addTrailingCommaExtraToNode(a.source);else if(a.options=this.parseMaybeAssignAllowIn(),this.eat(12)&&(this.addTrailingCommaExtraToNode(a.options),!this.match(11))){do this.parseMaybeAssignAllowIn();while(this.eat(12)&&!this.match(11))this.raise(o.ImportCallArity,a)}}return this.expect(11),this.finishNode(a,"ImportExpression")}checkPipelineAtInfixOperator(a,b){this.hasPlugin(["pipelineOperator",{proposal:"smart"}])&&"SequenceExpression"===a.type&&this.raise(o.PipelineHeadSequenceExpression,b)}parseSmartPipelineBodyInStyle(a,b){if(this.isSimpleReference(a)){let c=this.startNodeAt(b);return c.callee=a,this.finishNode(c,"PipelineBareFunction")}{let c=this.startNodeAt(b);return this.checkSmartPipeTopicBodyEarlyErrors(b),c.expression=a,this.finishNode(c,"PipelineTopicExpression")}}isSimpleReference(a){switch(a.type){case"MemberExpression":return!a.computed&&this.isSimpleReference(a.object);case"Identifier":return!0;default:return!1}}checkSmartPipeTopicBodyEarlyErrors(a){if(this.match(19))throw this.raise(o.PipelineBodyNoArrow,this.state.startLoc);this.topicReferenceWasUsedInCurrentContext()||this.raise(o.PipelineTopicUnused,a)}withTopicBindingContext(a){let b=this.state.topicContext;this.state.topicContext={maxNumOfResolvableTopics:1,maxTopicIndex:null};try{return a()}finally{this.state.topicContext=b}}withSmartMixTopicForbiddingContext(a){if(!this.hasPlugin(["pipelineOperator",{proposal:"smart"}]))return a();{let b=this.state.topicContext;this.state.topicContext={maxNumOfResolvableTopics:0,maxTopicIndex:null};try{return a()}finally{this.state.topicContext=b}}}withSoloAwaitPermittingContext(a){let b=this.state.soloAwait;this.state.soloAwait=!0;try{return a()}finally{this.state.soloAwait=b}}allowInAnd(a){let b=this.prodParam.currentFlags();if(8&~b){this.prodParam.enter(8|b);try{return a()}finally{this.prodParam.exit()}}return a()}disallowInAnd(a){let b=this.prodParam.currentFlags();if(8&b){this.prodParam.enter(-9&b);try{return a()}finally{this.prodParam.exit()}}return a()}registerTopicReference(){this.state.topicContext.maxTopicIndex=0}topicReferenceIsAllowedInCurrentContext(){return this.state.topicContext.maxNumOfResolvableTopics>=1}topicReferenceWasUsedInCurrentContext(){return null!=this.state.topicContext.maxTopicIndex&&this.state.topicContext.maxTopicIndex>=0}parseFSharpPipelineBody(a){let b=this.state.startLoc;this.state.potentialArrowAt=this.state.start;let c=this.state.inFSharpPipelineDirectBody;this.state.inFSharpPipelineDirectBody=!0;let d=this.parseExprOp(this.parseMaybeUnaryOrPrivate(),b,a);return this.state.inFSharpPipelineDirectBody=c,d}parseModuleExpression(){this.expectPlugin("moduleBlocks");let a=this.startNode();this.next(),this.match(5)||this.unexpected(null,5);let b=this.startNodeAt(this.state.endLoc);this.next();let c=this.initializeScopes(!0);this.enterInitialScopes();try{a.body=this.parseProgram(b,8,"module")}finally{c()}return this.finishNode(a,"ModuleExpression")}parseVoidPattern(a){this.expectPlugin("discardBinding");let b=this.startNode();return null!=a&&(a.voidPatternLoc=this.state.startLoc),this.next(),this.finishNode(b,"VoidPattern")}parseMaybeAssignAllowInOrVoidPattern(a,b,c){if(null!=b&&this.match(88)){let c=this.lookaheadCharCode();if(44===c||c===(3===a?93:8===a?125:41)||61===c)return this.parseMaybeDefault(this.state.startLoc,this.parseVoidPattern(b))}return this.parseMaybeAssignAllowIn(b,c)}parsePropertyNamePrefixOperator(a){}}let bc={kind:1},bd={kind:2},be=/[\uD800-\uDFFF]/u,bf=/in(?:stanceof)?/y;class bg extends bb{parseTopLevel(a,b){return a.program=this.parseProgram(b,140,"module"===this.options.sourceType?"module":"script"),a.comments=this.comments,256&this.optionFlags&&(a.tokens=function(a,b,c){for(let d=0;d<a.length;d++){let e=a[d],{type:g}=e;if("number"==typeof g){if(139===g){let{loc:b,start:c,value:g,end:h}=e,i=c+1,j=f(b.start,1);a.splice(d,1,new aP({type:z[27],value:"#",start:c,end:i,startLoc:b.start,endLoc:j}),new aP({type:z[132],value:g,start:i,end:h,startLoc:j,endLoc:b.end})),d++;continue}if(N(g)){let h,i,j,k,l,{loc:m,start:n,value:o,end:p}=e,q=n+1,r=f(m.start,1);h=new aP(96===b.charCodeAt(n-c)?{type:z[22],value:"`",start:n,end:q,startLoc:m.start,endLoc:r}:{type:z[8],value:"}",start:n,end:q,startLoc:m.start,endLoc:r}),24===g?(j=p-1,k=f(m.end,-1),i=null===o?null:o.slice(1,-1),l=new aP({type:z[22],value:"`",start:j,end:p,startLoc:k,endLoc:m.end})):(j=p-2,k=f(m.end,-2),i=null===o?null:o.slice(1,-2),l=new aP({type:z[23],value:"${",start:j,end:p,startLoc:k,endLoc:m.end})),a.splice(d,1,h,new aP({type:z[20],value:i,start:q,end:j,startLoc:r,endLoc:k}),l),d+=2;continue}e.type=z[g]}}return a}(this.tokens,this.input,this.startIndex)),this.finishNode(a,"File")}parseProgram(a,b,c){if(a.sourceType=c,a.interpreter=this.parseInterpreterDirective(),this.parseBlockBody(a,!0,!0,b),this.inModule){if(!(64&this.optionFlags)&&this.scope.undefinedExports.size>0)for(let[a,b]of Array.from(this.scope.undefinedExports))this.raise(o.ModuleExportUndefined,b,{localName:a});this.addExtra(a,"topLevelAwait",this.state.hasTopLevelAwait)}return 140===b?this.finishNode(a,"Program"):this.finishNodeAt(a,"Program",f(this.state.startLoc,-1))}stmtToDirective(a){let b=this.castNodeTo(a,"Directive"),c=this.castNodeTo(a.expression,"DirectiveLiteral"),d=c.value,e=this.input.slice(this.offsetToSourcePos(c.start),this.offsetToSourcePos(c.end)),f=c.value=e.slice(1,-1);return this.addExtra(c,"raw",e),this.addExtra(c,"rawValue",f),this.addExtra(c,"expressionValue",d),b.value=c,delete a.expression,b}parseInterpreterDirective(){if(!this.match(28))return null;let a=this.startNode();return a.value=this.state.value,this.next(),this.finishNode(a,"InterpreterDirective")}isLet(){return!!this.isContextual(100)&&this.hasFollowingBindingAtom()}isUsing(){return!!this.isContextual(107)&&this.nextTokenIsIdentifierOnSameLine()}isForUsing(){if(!this.isContextual(107))return!1;let a=this.nextTokenInLineStart(),b=this.codePointAtPos(a);if(this.isUnparsedContextual(a,"of")){let b=this.lookaheadCharCodeSince(a+2);if(61!==b&&58!==b&&59!==b)return!1}return!!(this.chStartsBindingIdentifier(b,a)||this.isUnparsedContextual(a,"void"))}nextTokenIsIdentifierOnSameLine(){let a=this.nextTokenInLineStart(),b=this.codePointAtPos(a);return this.chStartsBindingIdentifier(b,a)}isAwaitUsing(){if(!this.isContextual(96))return!1;let a=this.nextTokenInLineStart();if(this.isUnparsedContextual(a,"using")){a=this.nextTokenInLineStartSince(a+5);let b=this.codePointAtPos(a);if(this.chStartsBindingIdentifier(b,a))return!0}return!1}chStartsBindingIdentifier(a,b){if(V(a)){if(bf.lastIndex=b,bf.test(this.input)){let a=this.codePointAtPos(bf.lastIndex);if(!W(a)&&92!==a)return!1}return!0}return 92===a||!1}chStartsBindingPattern(a){return 91===a||123===a}hasFollowingBindingAtom(){let a=this.nextTokenStart(),b=this.codePointAtPos(a);return this.chStartsBindingPattern(b)||this.chStartsBindingIdentifier(b,a)}hasInLineFollowingBindingIdentifierOrBrace(){let a=this.nextTokenInLineStart(),b=this.codePointAtPos(a);return 123===b||this.chStartsBindingIdentifier(b,a)}allowsUsing(){return(this.scope.inModule||!this.scope.inTopLevel)&&!this.scope.inBareCaseStatement}parseModuleItem(){return this.parseStatementLike(15)}parseStatementListItem(){return this.parseStatementLike(6|(!this.options.annexB||this.state.strict?0:8))}parseStatementOrSloppyAnnexBFunctionDeclaration(a=!1){let b=0;return this.options.annexB&&!this.state.strict&&(b|=4,a&&(b|=8)),this.parseStatementLike(b)}parseStatement(){return this.parseStatementLike(0)}parseStatementLike(a){let b=null;return this.match(26)&&(b=this.parseDecorators(!0)),this.parseStatementContent(a,b)}parseStatementContent(a,b){let c=this.state.type,d=this.startNode(),e=!!(2&a),f=!!(4&a),g=1&a;switch(c){case 60:return this.parseBreakContinueStatement(d,!0);case 63:return this.parseBreakContinueStatement(d,!1);case 64:return this.parseDebuggerStatement(d);case 90:return this.parseDoWhileStatement(d);case 91:return this.parseForStatement(d);case 68:if(46===this.lookaheadCharCode())break;return f||this.raise(this.state.strict?o.StrictFunction:this.options.annexB?o.SloppyFunctionAnnexB:o.SloppyFunction,this.state.startLoc),this.parseFunctionStatement(d,!1,!e&&f);case 80:return e||this.unexpected(),this.parseClass(this.maybeTakeDecorators(b,d),!0);case 69:return this.parseIfStatement(d);case 70:return this.parseReturnStatement(d);case 71:return this.parseSwitchStatement(d);case 72:return this.parseThrowStatement(d);case 73:return this.parseTryStatement(d);case 96:if(this.isAwaitUsing())return this.allowsUsing()?e?this.recordAwaitIfAllowed()||this.raise(o.AwaitUsingNotInAsyncContext,d):this.raise(o.UnexpectedLexicalDeclaration,d):this.raise(o.UnexpectedUsingDeclaration,d),this.next(),this.parseVarStatement(d,"await using");break;case 107:if(this.state.containsEsc||!this.hasInLineFollowingBindingIdentifierOrBrace())break;return this.allowsUsing()?e||this.raise(o.UnexpectedLexicalDeclaration,this.state.startLoc):this.raise(o.UnexpectedUsingDeclaration,this.state.startLoc),this.parseVarStatement(d,"using");case 100:{if(this.state.containsEsc)break;let a=this.nextTokenStart(),b=this.codePointAtPos(a);if(91!==b&&(!e&&this.hasFollowingLineBreak()||!this.chStartsBindingIdentifier(b,a)&&123!==b))break}case 75:e||this.raise(o.UnexpectedLexicalDeclaration,this.state.startLoc);case 74:{let a=this.state.value;return this.parseVarStatement(d,a)}case 92:return this.parseWhileStatement(d);case 76:return this.parseWithStatement(d);case 5:return this.parseBlock();case 13:return this.parseEmptyStatement(d);case 83:{let a=this.lookaheadCharCode();if(40===a||46===a)break}case 82:{let a;return 8&this.optionFlags||g||this.raise(o.UnexpectedImportExport,this.state.startLoc),this.next(),a=83===c?this.parseImport(d):this.parseExport(d,b),this.assertModuleNodeAllowed(a),a}default:if(this.isAsyncFunction())return e||this.raise(o.AsyncFunctionInSingleStatementContext,this.state.startLoc),this.next(),this.parseFunctionStatement(d,!0,!e&&f)}let h=this.state.value,i=this.parseExpression();return I(c)&&"Identifier"===i.type&&this.eat(14)?this.parseLabeledStatement(d,h,i,a):this.parseExpressionStatement(d,i,b)}assertModuleNodeAllowed(a){8&this.optionFlags||this.inModule||this.raise(o.ImportOutsideModule,a)}decoratorsEnabledBeforeExport(){return!!this.hasPlugin("decorators-legacy")||this.hasPlugin("decorators")&&!1!==this.getPluginOption("decorators","decoratorsBeforeExport")}maybeTakeDecorators(a,b,c){if(a){var d;null!=(d=b.decorators)&&d.length?("boolean"!=typeof this.getPluginOption("decorators","decoratorsBeforeExport")&&this.raise(o.DecoratorsBeforeAfterExport,b.decorators[0]),b.decorators.unshift(...a)):b.decorators=a,this.resetStartLocationFromNode(b,a[0]),c&&this.resetStartLocationFromNode(c,b)}return b}canHaveLeadingDecorator(){return this.match(80)}parseDecorators(a){let b=[];do b.push(this.parseDecorator());while(this.match(26))if(this.match(82))a||this.unexpected(),this.decoratorsEnabledBeforeExport()||this.raise(o.DecoratorExportClass,this.state.startLoc);else if(!this.canHaveLeadingDecorator())throw this.raise(o.UnexpectedLeadingDecorator,this.state.startLoc);return b}parseDecorator(){this.expectOnePlugin(["decorators","decorators-legacy"]);let a=this.startNode();if(this.next(),this.hasPlugin("decorators")){let b,c=this.state.startLoc;if(this.match(10)){let c=this.state.startLoc;this.next(),b=this.parseExpression(),this.expect(11),b=this.wrapParenthesis(c,b);let d=this.state.startLoc;a.expression=this.parseMaybeDecoratorArguments(b,c),!1===this.getPluginOption("decorators","allowCallParenthesized")&&a.expression!==b&&this.raise(o.DecoratorArgumentsOutsideParentheses,d)}else{for(b=this.parseIdentifier(!1);this.eat(16);){let a=this.startNodeAt(c);a.object=b,this.match(139)?(this.classScope.usePrivateName(this.state.value,this.state.startLoc),a.property=this.parsePrivateName()):a.property=this.parseIdentifier(!0),a.computed=!1,b=this.finishNode(a,"MemberExpression")}a.expression=this.parseMaybeDecoratorArguments(b,c)}}else a.expression=this.parseExprSubscripts();return this.finishNode(a,"Decorator")}parseMaybeDecoratorArguments(a,b){if(this.eat(10)){let c=this.startNodeAt(b);return c.callee=a,c.arguments=this.parseCallExpressionArguments(),this.toReferencedList(c.arguments),this.finishNode(c,"CallExpression")}return a}parseBreakContinueStatement(a,b){return this.next(),this.isLineTerminator()?a.label=null:(a.label=this.parseIdentifier(),this.semicolon()),this.verifyBreakContinue(a,b),this.finishNode(a,b?"BreakStatement":"ContinueStatement")}verifyBreakContinue(a,b){let c;for(c=0;c<this.state.labels.length;++c){let d=this.state.labels[c];if((null==a.label||d.name===a.label.name)&&(null!=d.kind&&(b||1===d.kind)||a.label&&b))break}c===this.state.labels.length&&this.raise(o.IllegalBreakContinue,a,{type:b?"BreakStatement":"ContinueStatement"})}parseDebuggerStatement(a){return this.next(),this.semicolon(),this.finishNode(a,"DebuggerStatement")}parseHeaderExpression(){this.expect(10);let a=this.parseExpression();return this.expect(11),a}parseDoWhileStatement(a){return this.next(),this.state.labels.push(bc),a.body=this.withSmartMixTopicForbiddingContext(()=>this.parseStatement()),this.state.labels.pop(),this.expect(92),a.test=this.parseHeaderExpression(),this.eat(13),this.finishNode(a,"DoWhileStatement")}parseForStatement(a){this.next(),this.state.labels.push(bc);let b=null;if(this.isContextual(96)&&this.recordAwaitIfAllowed()&&(b=this.state.startLoc,this.next()),this.scope.enter(0),this.expect(10),this.match(13))return null!==b&&this.unexpected(b),this.parseFor(a,null);let c=this.isContextual(100);{let d=this.isAwaitUsing(),e=d||this.isForUsing(),f=c&&this.hasFollowingBindingAtom()||e;if(this.match(74)||this.match(75)||f){let c,f=this.startNode();d?(c="await using",this.recordAwaitIfAllowed()||this.raise(o.AwaitUsingNotInAsyncContext,this.state.startLoc),this.next()):c=this.state.value,this.next(),this.parseVar(f,!0,c);let g=this.finishNode(f,"VariableDeclaration"),h=this.match(58);return(h&&e&&this.raise(o.ForInUsing,g),(h||this.isContextual(102))&&1===g.declarations.length)?this.parseForIn(a,g,b):(null!==b&&this.unexpected(b),this.parseFor(a,g))}}let d=this.isContextual(95),e=new aX,f=this.parseExpression(!0,e),g=this.isContextual(102);return(g&&(c&&this.raise(o.ForOfLet,f),null===b&&d&&"Identifier"===f.type&&this.raise(o.ForOfAsync,f)),g||this.match(58))?(this.checkDestructuringPrivate(e),this.toAssignable(f,!0),this.checkLVal(f,{type:g?"ForOfStatement":"ForInStatement"}),this.parseForIn(a,f,b)):(this.checkExpressionErrors(e,!0),null!==b&&this.unexpected(b),this.parseFor(a,f))}parseFunctionStatement(a,b,c){return this.next(),this.parseFunction(a,1|2*!!c|8*!!b)}parseIfStatement(a){return this.next(),a.test=this.parseHeaderExpression(),a.consequent=this.parseStatementOrSloppyAnnexBFunctionDeclaration(),a.alternate=this.eat(66)?this.parseStatementOrSloppyAnnexBFunctionDeclaration():null,this.finishNode(a,"IfStatement")}parseReturnStatement(a){return this.prodParam.hasReturn||this.raise(o.IllegalReturn,this.state.startLoc),this.next(),this.isLineTerminator()?a.argument=null:(a.argument=this.parseExpression(),this.semicolon()),this.finishNode(a,"ReturnStatement")}parseSwitchStatement(a){let b,c;this.next(),a.discriminant=this.parseHeaderExpression();let d=a.cases=[];for(this.expect(5),this.state.labels.push(bd),this.scope.enter(256);!this.match(8);)if(this.match(61)||this.match(65)){let a=this.match(61);b&&this.finishNode(b,"SwitchCase"),d.push(b=this.startNode()),b.consequent=[],this.next(),a?b.test=this.parseExpression():(c&&this.raise(o.MultipleDefaultsInSwitch,this.state.lastTokStartLoc),c=!0,b.test=null),this.expect(14)}else b?b.consequent.push(this.parseStatementListItem()):this.unexpected();return this.scope.exit(),b&&this.finishNode(b,"SwitchCase"),this.next(),this.state.labels.pop(),this.finishNode(a,"SwitchStatement")}parseThrowStatement(a){return this.next(),this.hasPrecedingLineBreak()&&this.raise(o.NewlineAfterThrow,this.state.lastTokEndLoc),a.argument=this.parseExpression(),this.semicolon(),this.finishNode(a,"ThrowStatement")}parseCatchClauseParam(){let a=this.parseBindingAtom();return this.scope.enter(this.options.annexB&&"Identifier"===a.type?8:0),this.checkLVal(a,{type:"CatchClause"},9),a}parseTryStatement(a){if(this.next(),a.block=this.parseBlock(),a.handler=null,this.match(62)){let b=this.startNode();this.next(),this.match(10)?(this.expect(10),b.param=this.parseCatchClauseParam(),this.expect(11)):(b.param=null,this.scope.enter(0)),b.body=this.withSmartMixTopicForbiddingContext(()=>this.parseBlock(!1,!1)),this.scope.exit(),a.handler=this.finishNode(b,"CatchClause")}return a.finalizer=this.eat(67)?this.parseBlock():null,a.handler||a.finalizer||this.raise(o.NoCatchOrFinally,a),this.finishNode(a,"TryStatement")}parseVarStatement(a,b,c=!1){return this.next(),this.parseVar(a,!1,b,c),this.semicolon(),this.finishNode(a,"VariableDeclaration")}parseWhileStatement(a){return this.next(),a.test=this.parseHeaderExpression(),this.state.labels.push(bc),a.body=this.withSmartMixTopicForbiddingContext(()=>this.parseStatement()),this.state.labels.pop(),this.finishNode(a,"WhileStatement")}parseWithStatement(a){return this.state.strict&&this.raise(o.StrictWith,this.state.startLoc),this.next(),a.object=this.parseHeaderExpression(),a.body=this.withSmartMixTopicForbiddingContext(()=>this.parseStatement()),this.finishNode(a,"WithStatement")}parseEmptyStatement(a){return this.next(),this.finishNode(a,"EmptyStatement")}parseLabeledStatement(a,b,c,d){var e;for(let a of this.state.labels)a.name===b&&this.raise(o.LabelRedeclaration,c,{labelName:b});let f=(e=this.state.type)>=90&&e<=92?1:this.match(71)?2:null;for(let b=this.state.labels.length-1;b>=0;b--){let c=this.state.labels[b];if(c.statementStart===a.start)c.statementStart=this.sourceToOffsetPos(this.state.start),c.kind=f;else break}return this.state.labels.push({name:b,kind:f,statementStart:this.sourceToOffsetPos(this.state.start)}),a.body=8&d?this.parseStatementOrSloppyAnnexBFunctionDeclaration(!0):this.parseStatement(),this.state.labels.pop(),a.label=c,this.finishNode(a,"LabeledStatement")}parseExpressionStatement(a,b,c){return a.expression=b,this.semicolon(),this.finishNode(a,"ExpressionStatement")}parseBlock(a=!1,b=!0,c){let d=this.startNode();return a&&this.state.strictErrors.clear(),this.expect(5),b&&this.scope.enter(0),this.parseBlockBody(d,a,!1,8,c),b&&this.scope.exit(),this.finishNode(d,"BlockStatement")}isValidDirective(a){return"ExpressionStatement"===a.type&&"StringLiteral"===a.expression.type&&!a.expression.extra.parenthesized}parseBlockBody(a,b,c,d,e){let f=a.body=[],g=a.directives=[];this.parseBlockOrModuleBlockBody(f,b?g:void 0,c,d,e)}parseBlockOrModuleBlockBody(a,b,c,d,e){let f=this.state.strict,g=!1,h=!1;for(;!this.match(d);){let d=c?this.parseModuleItem():this.parseStatementListItem();if(b&&!h){if(this.isValidDirective(d)){let a=this.stmtToDirective(d);b.push(a),g||"use strict"!==a.value.value||(g=!0,this.setStrict(!0));continue}h=!0,this.state.strictErrors.clear()}a.push(d)}null==e||e.call(this,g),f||this.setStrict(!1),this.next()}parseFor(a,b){return a.init=b,this.semicolon(!1),a.test=this.match(13)?null:this.parseExpression(),this.semicolon(!1),a.update=this.match(11)?null:this.parseExpression(),this.expect(11),a.body=this.withSmartMixTopicForbiddingContext(()=>this.parseStatement()),this.scope.exit(),this.state.labels.pop(),this.finishNode(a,"ForStatement")}parseForIn(a,b,c){let d=this.match(58);return this.next(),d?null!==c&&this.unexpected(c):a.await=null!==c,"VariableDeclaration"!==b.type||null==b.declarations[0].init||d&&this.options.annexB&&!this.state.strict&&"var"===b.kind&&"Identifier"===b.declarations[0].id.type||this.raise(o.ForInOfLoopInitializer,b,{type:d?"ForInStatement":"ForOfStatement"}),"AssignmentPattern"===b.type&&this.raise(o.InvalidLhs,b,{ancestor:{type:"ForStatement"}}),a.left=b,a.right=d?this.parseExpression():this.parseMaybeAssignAllowIn(),this.expect(11),a.body=this.withSmartMixTopicForbiddingContext(()=>this.parseStatement()),this.scope.exit(),this.state.labels.pop(),this.finishNode(a,d?"ForInStatement":"ForOfStatement")}parseVar(a,b,c,d=!1){let e=a.declarations=[];for(a.kind=c;;){let a=this.startNode();if(this.parseVarId(a,c),a.init=this.eat(29)?b?this.parseMaybeAssignDisallowIn():this.parseMaybeAssignAllowIn():null,null===a.init&&!d&&("Identifier"===a.id.type||b&&(this.match(58)||this.isContextual(102))?"const"!==c&&"using"!==c&&"await using"!==c||this.match(58)||this.isContextual(102)||this.raise(o.DeclarationMissingInitializer,this.state.lastTokEndLoc,{kind:c}):this.raise(o.DeclarationMissingInitializer,this.state.lastTokEndLoc,{kind:"destructuring"})),e.push(this.finishNode(a,"VariableDeclarator")),!this.eat(12))break}return a}parseVarId(a,b){let c=this.parseBindingAtom();"using"===b||"await using"===b?("ArrayPattern"===c.type||"ObjectPattern"===c.type)&&this.raise(o.UsingDeclarationHasBindingPattern,c.loc.start):"VoidPattern"===c.type&&this.raise(o.UnexpectedVoidPattern,c.loc.start),this.checkLVal(c,{type:"VariableDeclarator"},"var"===b?5:8201),a.id=c}parseAsyncFunctionExpression(a){return this.parseFunction(a,8)}parseFunction(a,b=0){let c=2&b,d=!!(1&b),e=!!(8&b);this.initFunction(a,e),this.match(55)&&(c&&this.raise(o.GeneratorInSingleStatementContext,this.state.startLoc),this.next(),a.generator=!0),d&&(a.id=this.parseFunctionId(d&&!(4&b)));let f=this.state.maybeInArrowParameters;return this.state.maybeInArrowParameters=!1,this.scope.enter(514),this.prodParam.enter(ax(e,a.generator)),d||(a.id=this.parseFunctionId()),this.parseFunctionParams(a,!1),this.withSmartMixTopicForbiddingContext(()=>{this.parseFunctionBodyAndFinish(a,d?"FunctionDeclaration":"FunctionExpression")}),this.prodParam.exit(),this.scope.exit(),d&&!c&&this.registerFunctionStatementId(a),this.state.maybeInArrowParameters=f,a}parseFunctionId(a){return a||I(this.state.type)?this.parseIdentifier():null}parseFunctionParams(a,b){this.expect(10),this.expressionScope.enter(new aT(3)),a.params=this.parseBindingList(11,41,2|4*!!b),this.expressionScope.exit()}registerFunctionStatementId(a){a.id&&this.scope.declareName(a.id.name,!this.options.annexB||this.state.strict||a.generator||a.async?this.scope.treatFunctionsAsVar?5:8201:17,a.id.loc.start)}parseClass(a,b,c){this.next();let d=this.state.strict;return this.state.strict=!0,this.parseClassId(a,b,c),this.parseClassSuper(a),a.body=this.parseClassBody(!!a.superClass,d),this.finishNode(a,b?"ClassDeclaration":"ClassExpression")}isClassProperty(){return this.match(29)||this.match(13)||this.match(8)}isClassMethod(){return this.match(10)}nameIsConstructor(a){return"Identifier"===a.type&&"constructor"===a.name||"StringLiteral"===a.type&&"constructor"===a.value}isNonstaticConstructor(a){return!a.computed&&!a.static&&this.nameIsConstructor(a.key)}parseClassBody(a,b){this.classScope.enter();let c={hadConstructor:!1,hadSuperClass:a},d=[],e=this.startNode();if(e.body=[],this.expect(5),this.withSmartMixTopicForbiddingContext(()=>{for(;!this.match(8);){if(this.eat(13)){if(d.length>0)throw this.raise(o.DecoratorSemicolon,this.state.lastTokEndLoc);continue}if(this.match(26)){d.push(this.parseDecorator());continue}let a=this.startNode();d.length&&(a.decorators=d,this.resetStartLocationFromNode(a,d[0]),d=[]),this.parseClassMember(e,a,c),"constructor"===a.kind&&a.decorators&&a.decorators.length>0&&this.raise(o.DecoratorConstructor,a)}}),this.state.strict=b,this.next(),d.length)throw this.raise(o.TrailingDecorator,this.state.startLoc);return this.classScope.exit(),this.finishNode(e,"ClassBody")}parseClassMemberFromModifier(a,b){let c=this.parseIdentifier(!0);return this.isClassMethod()?(b.kind="method",b.computed=!1,b.key=c,b.static=!1,this.pushClassMethod(a,b,!1,!1,!1,!1),!0):this.isClassProperty()?(b.computed=!1,b.key=c,b.static=!1,a.body.push(this.parseClassProperty(b)),!0):(this.resetPreviousNodeTrailingComments(c),!1)}parseClassMember(a,b,c){let d=this.isContextual(106);if(d){if(this.parseClassMemberFromModifier(a,b))return;if(this.eat(5))return void this.parseClassStaticBlock(a,b)}this.parseClassMemberWithIsStatic(a,b,c,d)}parseClassMemberWithIsStatic(a,b,c,d){if(b.static=d,this.parsePropertyNamePrefixOperator(b),this.eat(55)){b.kind="method";let c=this.match(139);return(this.parseClassElementName(b),this.parsePostMemberNameModifiers(b),c)?void this.pushClassPrivateMethod(a,b,!0,!1):(this.isNonstaticConstructor(b)&&this.raise(o.ConstructorIsGenerator,b.key),void this.pushClassMethod(a,b,!0,!1,!1,!1))}let e=!this.state.containsEsc&&I(this.state.type),f=this.parseClassElementName(b),g=e?f.name:null,h=this.isPrivateName(f),i=this.state.startLoc;if(this.parsePostMemberNameModifiers(b),this.isClassMethod()){if(b.kind="method",h)return void this.pushClassPrivateMethod(a,b,!1,!1);let d=this.isNonstaticConstructor(b),e=!1;d&&(b.kind="constructor",c.hadConstructor&&!this.hasPlugin("typescript")&&this.raise(o.DuplicateConstructor,f),d&&this.hasPlugin("typescript")&&b.override&&this.raise(o.OverrideOnConstructor,f),c.hadConstructor=!0,e=c.hadSuperClass),this.pushClassMethod(a,b,!1,!1,d,e)}else if(this.isClassProperty())h?this.pushClassPrivateProperty(a,b):this.pushClassProperty(a,b);else if("async"!==g||this.isLineTerminator())if("get"!==g&&"set"!==g||this.match(55)&&this.isLineTerminator())if("accessor"!==g||this.isLineTerminator())this.isLineTerminator()?h?this.pushClassPrivateProperty(a,b):this.pushClassProperty(a,b):this.unexpected();else{this.expectPlugin("decoratorAutoAccessors"),this.resetPreviousNodeTrailingComments(f);let c=this.match(139);this.parseClassElementName(b),this.pushClassAccessorProperty(a,b,c)}else{this.resetPreviousNodeTrailingComments(f),b.kind=g;let c=this.match(139);this.parseClassElementName(b),c?this.pushClassPrivateMethod(a,b,!1,!1):(this.isNonstaticConstructor(b)&&this.raise(o.ConstructorIsAccessor,b.key),this.pushClassMethod(a,b,!1,!1,!1,!1)),this.checkGetterSetterParams(b)}else{this.resetPreviousNodeTrailingComments(f);let c=this.eat(55);b.optional&&this.unexpected(i),b.kind="method";let d=this.match(139);this.parseClassElementName(b),this.parsePostMemberNameModifiers(b),d?this.pushClassPrivateMethod(a,b,c,!0):(this.isNonstaticConstructor(b)&&this.raise(o.ConstructorIsAsync,b.key),this.pushClassMethod(a,b,c,!0,!1,!1))}}parseClassElementName(a){let{type:b,value:c}=this.state;if((132===b||134===b)&&a.static&&"prototype"===c&&this.raise(o.StaticPrototype,this.state.startLoc),139===b){"constructor"===c&&this.raise(o.ConstructorClassPrivateField,this.state.startLoc);let b=this.parsePrivateName();return a.key=b,b}return this.parsePropertyName(a),a.key}parseClassStaticBlock(a,b){var c;this.scope.enter(720);let d=this.state.labels;this.state.labels=[],this.prodParam.enter(0);let e=b.body=[];this.parseBlockOrModuleBlockBody(e,void 0,!1,8),this.prodParam.exit(),this.scope.exit(),this.state.labels=d,a.body.push(this.finishNode(b,"StaticBlock")),null!=(c=b.decorators)&&c.length&&this.raise(o.DecoratorStaticBlock,b)}pushClassProperty(a,b){!b.computed&&this.nameIsConstructor(b.key)&&this.raise(o.ConstructorClassField,b.key),a.body.push(this.parseClassProperty(b))}pushClassPrivateProperty(a,b){let c=this.parseClassPrivateProperty(b);a.body.push(c),this.classScope.declarePrivateName(this.getPrivateNameSV(c.key),0,c.key.loc.start)}pushClassAccessorProperty(a,b,c){!c&&!b.computed&&this.nameIsConstructor(b.key)&&this.raise(o.ConstructorClassField,b.key);let d=this.parseClassAccessorProperty(b);a.body.push(d),c&&this.classScope.declarePrivateName(this.getPrivateNameSV(d.key),0,d.key.loc.start)}pushClassMethod(a,b,c,d,e,f){a.body.push(this.parseMethod(b,c,d,e,f,"ClassMethod",!0))}pushClassPrivateMethod(a,b,c,d){let e=this.parseMethod(b,c,d,!1,!1,"ClassPrivateMethod",!0);a.body.push(e);let f="get"===e.kind?e.static?6:2:"set"===e.kind?e.static?5:1:0;this.declareClassPrivateMethodInScope(e,f)}declareClassPrivateMethodInScope(a,b){this.classScope.declarePrivateName(this.getPrivateNameSV(a.key),b,a.key.loc.start)}parsePostMemberNameModifiers(a){}parseClassPrivateProperty(a){return this.parseInitializer(a),this.semicolon(),this.finishNode(a,"ClassPrivateProperty")}parseClassProperty(a){return this.parseInitializer(a),this.semicolon(),this.finishNode(a,"ClassProperty")}parseClassAccessorProperty(a){return this.parseInitializer(a),this.semicolon(),this.finishNode(a,"ClassAccessorProperty")}parseInitializer(a){this.scope.enter(592),this.expressionScope.enter(new aT),this.prodParam.enter(0),a.value=this.eat(29)?this.parseMaybeAssignAllowIn():null,this.expressionScope.exit(),this.prodParam.exit(),this.scope.exit()}parseClassId(a,b,c,d=8331){if(I(this.state.type))a.id=this.parseIdentifier(),b&&this.declareNameFromIdentifier(a.id,d);else if(c||!b)a.id=null;else throw this.raise(o.MissingClassName,this.state.startLoc)}parseClassSuper(a){a.superClass=this.eat(81)?this.parseExprSubscripts():null}parseExport(a,b){let c,d=this.parseMaybeImportPhase(a,!0),e=this.maybeParseExportDefaultSpecifier(a,d),f=!e||this.eat(12),g=f&&this.eatExportStar(a),h=g&&this.maybeParseExportNamespaceSpecifier(a),i=f&&(!h||this.eat(12)),j=e||g;if(g&&!h){if(e&&this.unexpected(),b)throw this.raise(o.UnsupportedDecoratorExport,a);return this.parseExportFrom(a,!0),this.sawUnambiguousESM=!0,this.finishNode(a,"ExportAllDeclaration")}let k=this.maybeParseExportNamedSpecifiers(a);if(e&&f&&!g&&!k&&this.unexpected(null,5),h&&i&&this.unexpected(null,98),j||k){if(c=!1,b)throw this.raise(o.UnsupportedDecoratorExport,a);this.parseExportFrom(a,j)}else c=this.maybeParseExportDeclaration(a);if(j||k||c){var l;if(this.checkExport(a,!0,!1,!!a.source),(null==(l=a.declaration)?void 0:l.type)==="ClassDeclaration")this.maybeTakeDecorators(b,a.declaration,a);else if(b)throw this.raise(o.UnsupportedDecoratorExport,a);return this.sawUnambiguousESM=!0,this.finishNode(a,"ExportNamedDeclaration")}if(this.eat(65)){let c=this.parseExportDefaultExpression();if(a.declaration=c,"ClassDeclaration"===c.type)this.maybeTakeDecorators(b,c,a);else if(b)throw this.raise(o.UnsupportedDecoratorExport,a);return this.checkExport(a,!0,!0),this.sawUnambiguousESM=!0,this.finishNode(a,"ExportDefaultDeclaration")}throw this.unexpected(null,5)}eatExportStar(a){return this.eat(55)}maybeParseExportDefaultSpecifier(a,b){if(b||this.isExportDefaultSpecifier()){this.expectPlugin("exportDefaultFrom",null==b?void 0:b.loc.start);let c=b||this.parseIdentifier(!0),d=this.startNodeAtNode(c);return d.exported=c,a.specifiers=[this.finishNode(d,"ExportDefaultSpecifier")],!0}return!1}maybeParseExportNamespaceSpecifier(a){if(this.isContextual(93)){null!=a.specifiers||(a.specifiers=[]);let b=this.startNodeAt(this.state.lastTokStartLoc);return this.next(),b.exported=this.parseModuleExportName(),a.specifiers.push(this.finishNode(b,"ExportNamespaceSpecifier")),!0}return!1}maybeParseExportNamedSpecifiers(a){if(this.match(5)){a.specifiers||(a.specifiers=[]);let b="type"===a.exportKind;return a.specifiers.push(...this.parseExportSpecifiers(b)),a.source=null,this.hasPlugin("importAssertions")?a.assertions=[]:a.attributes=[],a.declaration=null,!0}return!1}maybeParseExportDeclaration(a){return!!this.shouldParseExportDeclaration()&&(a.specifiers=[],a.source=null,this.hasPlugin("importAssertions")?a.assertions=[]:a.attributes=[],a.declaration=this.parseExportDeclaration(a),!0)}isAsyncFunction(){if(!this.isContextual(95))return!1;let a=this.nextTokenInLineStart();return this.isUnparsedContextual(a,"function")}parseExportDefaultExpression(){let a=this.startNode();if(this.match(68))return this.next(),this.parseFunction(a,5);if(this.isAsyncFunction())return this.next(),this.next(),this.parseFunction(a,13);if(this.match(80))return this.parseClass(a,!0,!0);if(this.match(26))return this.hasPlugin("decorators")&&!0===this.getPluginOption("decorators","decoratorsBeforeExport")&&this.raise(o.DecoratorBeforeExport,this.state.startLoc),this.parseClass(this.maybeTakeDecorators(this.parseDecorators(!1),this.startNode()),!0,!0);if(this.match(75)||this.match(74)||this.isLet()||this.isUsing()||this.isAwaitUsing())throw this.raise(o.UnsupportedDefaultExport,this.state.startLoc);let b=this.parseMaybeAssignAllowIn();return this.semicolon(),b}parseExportDeclaration(a){return this.match(80)?this.parseClass(this.startNode(),!0,!1):this.parseStatementListItem()}isExportDefaultSpecifier(){let{type:a}=this.state;if(I(a)){if(95===a&&!this.state.containsEsc||100===a)return!1;if((130===a||129===a)&&!this.state.containsEsc){let a=this.nextTokenStart(),b=this.input.charCodeAt(a);if(123===b||this.chStartsBindingIdentifier(b,a)&&!this.input.startsWith("from",a))return this.expectOnePlugin(["flow","typescript"]),!1}}else if(!this.match(65))return!1;let b=this.nextTokenStart(),c=this.isUnparsedContextual(b,"from");if(44===this.input.charCodeAt(b)||I(this.state.type)&&c)return!0;if(this.match(65)&&c){let a=this.input.charCodeAt(this.nextTokenStartSince(b+4));return 34===a||39===a}return!1}parseExportFrom(a,b){this.eatContextual(98)?(a.source=this.parseImportSource(),this.checkExport(a),this.maybeParseImportAttributes(a),this.checkJSONModuleImport(a)):b&&this.unexpected(),this.semicolon()}shouldParseExportDeclaration(){let{type:a}=this.state;return 26===a&&(this.expectOnePlugin(["decorators","decorators-legacy"]),this.hasPlugin("decorators"))?(!0===this.getPluginOption("decorators","decoratorsBeforeExport")&&this.raise(o.DecoratorBeforeExport,this.state.startLoc),!0):this.isUsing()||this.isAwaitUsing()?(this.raise(o.UsingDeclarationExport,this.state.startLoc),!0):74===a||75===a||68===a||80===a||this.isLet()||this.isAsyncFunction()}checkExport(a,b,c,d){if(b){var e,f;if(c){if(this.checkDuplicateExports(a,"default"),this.hasPlugin("exportDefaultFrom")){let b=a.declaration;"Identifier"!==b.type||"from"!==b.name||b.end-b.start!=4||null!=(f=b.extra)&&f.parenthesized||this.raise(o.ExportDefaultFromAsIdentifier,b)}}else if(null!=(e=a.specifiers)&&e.length)for(let b of a.specifiers){let{exported:a}=b,c="Identifier"===a.type?a.name:a.value;if(this.checkDuplicateExports(b,c),!d&&b.local){let{local:a}=b;"Identifier"!==a.type?this.raise(o.ExportBindingIsString,b,{localName:a.value,exportName:c}):(this.checkReservedWord(a.name,a.loc.start,!0,!1),this.scope.checkLocalExport(a))}}else if(a.declaration){let b=a.declaration;if("FunctionDeclaration"===b.type||"ClassDeclaration"===b.type){let{id:c}=b;if(!c)throw Error("Assertion failure");this.checkDuplicateExports(a,c.name)}else if("VariableDeclaration"===b.type)for(let a of b.declarations)this.checkDeclaration(a.id)}}}checkDeclaration(a){if("Identifier"===a.type)this.checkDuplicateExports(a,a.name);else if("ObjectPattern"===a.type)for(let b of a.properties)this.checkDeclaration(b);else if("ArrayPattern"===a.type)for(let b of a.elements)b&&this.checkDeclaration(b);else"ObjectProperty"===a.type?this.checkDeclaration(a.value):"RestElement"===a.type?this.checkDeclaration(a.argument):"AssignmentPattern"===a.type&&this.checkDeclaration(a.left)}checkDuplicateExports(a,b){this.exportedIdentifiers.has(b)&&("default"===b?this.raise(o.DuplicateDefaultExport,a):this.raise(o.DuplicateExport,a,{exportName:b})),this.exportedIdentifiers.add(b)}parseExportSpecifiers(a){let b=[],c=!0;for(this.expect(5);!this.eat(8);){if(c)c=!1;else if(this.expect(12),this.eat(8))break;let d=this.isContextual(130),e=this.match(134),f=this.startNode();f.local=this.parseModuleExportName(),b.push(this.parseExportSpecifier(f,e,a,d))}return b}parseExportSpecifier(a,b,c,d){return this.eatContextual(93)?a.exported=this.parseModuleExportName():b?a.exported=this.cloneStringLiteral(a.local):a.exported||(a.exported=this.cloneIdentifier(a.local)),this.finishNode(a,"ExportSpecifier")}parseModuleExportName(){if(this.match(134)){let a=this.parseStringLiteral(this.state.value),b=be.exec(a.value);return b&&this.raise(o.ModuleExportNameHasLoneSurrogate,a,{surrogateCharCode:b[0].charCodeAt(0)}),a}return this.parseIdentifier(!0)}isJSONModuleImport(a){return null!=a.assertions&&a.assertions.some(({key:a,value:b})=>"json"===b.value&&("Identifier"===a.type?"type"===a.name:"type"===a.value))}checkImportReflection(a){let{specifiers:b}=a,c=1===b.length?b[0].type:null;if("source"===a.phase)"ImportDefaultSpecifier"!==c&&this.raise(o.SourcePhaseImportRequiresDefault,b[0].loc.start);else if("defer"===a.phase)"ImportNamespaceSpecifier"!==c&&this.raise(o.DeferImportRequiresNamespace,b[0].loc.start);else if(a.module){var d;"ImportDefaultSpecifier"!==c&&this.raise(o.ImportReflectionNotBinding,b[0].loc.start),(null==(d=a.assertions)?void 0:d.length)>0&&this.raise(o.ImportReflectionHasAssertion,b[0].loc.start)}}checkJSONModuleImport(a){if(this.isJSONModuleImport(a)&&"ExportAllDeclaration"!==a.type){let{specifiers:b}=a;if(null!=b){let a=b.find(a=>{let b;if("ExportSpecifier"===a.type?b=a.local:"ImportSpecifier"===a.type&&(b=a.imported),void 0!==b)return"Identifier"===b.type?"default"!==b.name:"default"!==b.value});void 0!==a&&this.raise(o.ImportJSONBindingNotDefault,a.loc.start)}}}isPotentialImportPhase(a){return!a&&(this.isContextual(105)||this.isContextual(97)||this.isContextual(127))}applyImportPhase(a,b,c,d){!b&&("module"===c?(this.expectPlugin("importReflection",d),a.module=!0):this.hasPlugin("importReflection")&&(a.module=!1),"source"===c?(this.expectPlugin("sourcePhaseImports",d),a.phase="source"):"defer"===c?(this.expectPlugin("deferredImportEvaluation",d),a.phase="defer"):this.hasPlugin("sourcePhaseImports")&&(a.phase=null))}parseMaybeImportPhase(a,b){if(!this.isPotentialImportPhase(b))return this.applyImportPhase(a,b,null),null;let c=this.startNode(),d=this.parseIdentifierName(!0),{type:e}=this.state;return(J(e)?98!==e||102===this.lookaheadCharCode():12!==e)?(this.applyImportPhase(a,b,d,c.loc.start),null):(this.applyImportPhase(a,b,null),this.createIdentifier(c,d))}isPrecedingIdImportPhase(a){let{type:b}=this.state;return I(b)?98!==b||102===this.lookaheadCharCode():12!==b}parseImport(a){return this.match(134)?this.parseImportSourceAndAttributes(a):this.parseImportSpecifiersAndAfter(a,this.parseMaybeImportPhase(a,!1))}parseImportSpecifiersAndAfter(a,b){a.specifiers=[];let c=!this.maybeParseDefaultImportSpecifier(a,b)||this.eat(12),d=c&&this.maybeParseStarImportSpecifier(a);return c&&!d&&this.parseNamedImportSpecifiers(a),this.expectContextual(98),this.parseImportSourceAndAttributes(a)}parseImportSourceAndAttributes(a){return null!=a.specifiers||(a.specifiers=[]),a.source=this.parseImportSource(),this.maybeParseImportAttributes(a),this.checkImportReflection(a),this.checkJSONModuleImport(a),this.semicolon(),this.sawUnambiguousESM=!0,this.finishNode(a,"ImportDeclaration")}parseImportSource(){return this.match(134)||this.unexpected(),this.parseExprAtom()}parseImportSpecifierLocal(a,b,c){b.local=this.parseIdentifier(),a.specifiers.push(this.finishImportSpecifier(b,c))}finishImportSpecifier(a,b,c=8201){return this.checkLVal(a.local,{type:b},c),this.finishNode(a,b)}parseImportAttributes(){this.expect(5);let a=[],b=new Set;do{if(this.match(8))break;let c=this.startNode(),d=this.state.value;if(b.has(d)&&this.raise(o.ModuleAttributesWithDuplicateKeys,this.state.startLoc,{key:d}),b.add(d),this.match(134)?c.key=this.parseStringLiteral(d):c.key=this.parseIdentifier(!0),this.expect(14),!this.match(134))throw this.raise(o.ModuleAttributeInvalidValue,this.state.startLoc);c.value=this.parseStringLiteral(this.state.value),a.push(this.finishNode(c,"ImportAttribute"))}while(this.eat(12))return this.expect(8),a}parseModuleAttributes(){let a=[],b=new Set;do{let c=this.startNode();if(c.key=this.parseIdentifier(!0),"type"!==c.key.name&&this.raise(o.ModuleAttributeDifferentFromType,c.key),b.has(c.key.name)&&this.raise(o.ModuleAttributesWithDuplicateKeys,c.key,{key:c.key.name}),b.add(c.key.name),this.expect(14),!this.match(134))throw this.raise(o.ModuleAttributeInvalidValue,this.state.startLoc);c.value=this.parseStringLiteral(this.state.value),a.push(this.finishNode(c,"ImportAttribute"))}while(this.eat(12))return a}maybeParseImportAttributes(a){let b;var c=!1;if(this.match(76)){if(this.hasPrecedingLineBreak()&&40===this.lookaheadCharCode())return;this.next(),this.hasPlugin("moduleAttributes")?(b=this.parseModuleAttributes(),this.addExtra(a,"deprecatedWithLegacySyntax",!0)):b=this.parseImportAttributes(),c=!0}else this.isContextual(94)&&!this.hasPrecedingLineBreak()?(this.hasPlugin("deprecatedImportAssert")||this.hasPlugin("importAssertions")||this.raise(o.ImportAttributesUseAssert,this.state.startLoc),this.hasPlugin("importAssertions")||this.addExtra(a,"deprecatedAssertSyntax",!0),this.next(),b=this.parseImportAttributes()):b=[];!c&&this.hasPlugin("importAssertions")?a.assertions=b:a.attributes=b}maybeParseDefaultImportSpecifier(a,b){if(b){let c=this.startNodeAtNode(b);return c.local=b,a.specifiers.push(this.finishImportSpecifier(c,"ImportDefaultSpecifier")),!0}return!!J(this.state.type)&&(this.parseImportSpecifierLocal(a,this.startNode(),"ImportDefaultSpecifier"),!0)}maybeParseStarImportSpecifier(a){if(this.match(55)){let b=this.startNode();return this.next(),this.expectContextual(93),this.parseImportSpecifierLocal(a,b,"ImportNamespaceSpecifier"),!0}return!1}parseNamedImportSpecifiers(a){let b=!0;for(this.expect(5);!this.eat(8);){if(b)b=!1;else{if(this.eat(14))throw this.raise(o.DestructureNamedImport,this.state.startLoc);if(this.expect(12),this.eat(8))break}let c=this.startNode(),d=this.match(134),e=this.isContextual(130);c.imported=this.parseModuleExportName();let f=this.parseImportSpecifier(c,d,"type"===a.importKind||"typeof"===a.importKind,e,void 0);a.specifiers.push(f)}}parseImportSpecifier(a,b,c,d,e){if(this.eatContextual(93))a.local=this.parseIdentifier();else{let{imported:c}=a;if(b)throw this.raise(o.ImportBindingIsString,a,{importName:c.value});this.checkReservedWord(c.name,a.loc.start,!0,!0),a.local||(a.local=this.cloneIdentifier(c))}return this.finishImportSpecifier(a,"ImportSpecifier",e)}isThisParam(a){return"Identifier"===a.type&&"this"===a.name}}class bh extends bg{constructor(a,b,c){const d=function(a){let b={sourceType:"script",sourceFilename:void 0,startIndex:0,startColumn:0,startLine:1,allowAwaitOutsideFunction:!1,allowReturnOutsideFunction:!1,allowNewTargetOutsideFunction:!1,allowImportExportEverywhere:!1,allowSuperOutsideMethod:!1,allowUndeclaredExports:!1,allowYieldOutsideFunction:!1,plugins:[],strictMode:void 0,ranges:!1,tokens:!1,createImportExpressions:!1,createParenthesizedExpressions:!1,errorRecovery:!1,attachComment:!0,annexB:!0};if(null==a)return b;if(null!=a.annexB&&!1!==a.annexB)throw Error("The `annexB` option can only be set to `false`.");for(let c of Object.keys(b))null!=a[c]&&(b[c]=a[c]);if(1===b.startLine)null==a.startIndex&&b.startColumn>0?b.startIndex=b.startColumn:null==a.startColumn&&b.startIndex>0&&(b.startColumn=b.startIndex);else if((null==a.startColumn||null==a.startIndex)&&null!=a.startIndex)throw Error("With a `startLine > 1` you must also specify `startIndex` and `startColumn`.");if("commonjs"===b.sourceType){if(null!=a.allowAwaitOutsideFunction)throw Error("The `allowAwaitOutsideFunction` option cannot be used with `sourceType: 'commonjs'`.");if(null!=a.allowReturnOutsideFunction)throw Error("`sourceType: 'commonjs'` implies `allowReturnOutsideFunction: true`, please remove the `allowReturnOutsideFunction` option or use `sourceType: 'script'`.");if(null!=a.allowNewTargetOutsideFunction)throw Error("`sourceType: 'commonjs'` implies `allowNewTargetOutsideFunction: true`, please remove the `allowNewTargetOutsideFunction` option or use `sourceType: 'script'`.")}return b}(a);super(d,b),this.options=d,this.initializeScopes(),this.plugins=c,this.filename=d.sourceFilename,this.startIndex=d.startIndex;let e=0;d.allowAwaitOutsideFunction&&(e|=1),d.allowReturnOutsideFunction&&(e|=2),d.allowImportExportEverywhere&&(e|=8),d.allowSuperOutsideMethod&&(e|=16),d.allowUndeclaredExports&&(e|=64),d.allowNewTargetOutsideFunction&&(e|=4),d.allowYieldOutsideFunction&&(e|=32),d.ranges&&(e|=128),d.tokens&&(e|=256),d.createImportExpressions&&(e|=512),d.createParenthesizedExpressions&&(e|=1024),d.errorRecovery&&(e|=2048),d.attachComment&&(e|=4096),d.annexB&&(e|=8192),this.optionFlags=e}getScopeHandler(){return ad}parse(){this.enterInitialScopes();let a=this.startNode(),b=this.startNode();this.nextToken(),a.errors=null;let c=this.parseTopLevel(a,b);return c.errors=this.state.errors,c.comments.length=this.state.commentsLen,c}}let bi=function(a){let b={};for(let c of Object.keys(a))b[c]=z[a[c]];return b}(H);function bj(a,b){let c=bh,d=new Map;if(null!=a&&a.plugins){for(let b of a.plugins){let a,c;"string"==typeof b?a=b:[a,c]=b,d.has(a)||d.set(a,c||{})}!function(a){if(a.has("decorators")){if(a.has("decorators-legacy"))throw Error("Cannot use the decorators and decorators-legacy plugin together");let b=a.get("decorators").decoratorsBeforeExport;if(null!=b&&"boolean"!=typeof b)throw Error("'decoratorsBeforeExport' must be a boolean, if specified.");let c=a.get("decorators").allowCallParenthesized;if(null!=c&&"boolean"!=typeof c)throw Error("'allowCallParenthesized' must be a boolean.")}if(a.has("flow")&&a.has("typescript"))throw Error("Cannot combine flow and typescript plugins.");if(a.has("placeholders")&&a.has("v8intrinsic"))throw Error("Cannot combine placeholders and v8intrinsic plugins.");if(a.has("pipelineOperator")){var b,c;let d=a.get("pipelineOperator").proposal;if(!a7.includes(d)){let a=a7.map(a=>`"${a}"`).join(", ");throw Error(`"pipelineOperator" requires "proposal" option whose value must be one of: ${a}.`)}if("hack"===d){if(a.has("placeholders"))throw Error("Cannot combine placeholders plugin and Hack-style pipes.");if(a.has("v8intrinsic"))throw Error("Cannot combine v8intrinsic plugin and Hack-style pipes.");let b=a.get("pipelineOperator").topicToken;if(!a8.includes(b)){let a=a8.map(a=>`"${a}"`).join(", ");throw Error(`"pipelineOperator" in "proposal": "hack" mode also requires a "topicToken" option whose value must be one of: ${a}.`)}if("#"===b&&(null==(c=a.get("recordAndTuple"))?void 0:c.syntaxType)==="hash")throw Error(`Plugin conflict between \`["pipelineOperator", { proposal: "hack", topicToken: "#" }]\` and \`${JSON.stringify(["recordAndTuple",a.get("recordAndTuple")])}\`.`)}else if("smart"===d&&(null==(b=a.get("recordAndTuple"))?void 0:b.syntaxType)==="hash")throw Error(`Plugin conflict between \`["pipelineOperator", { proposal: "smart" }]\` and \`${JSON.stringify(["recordAndTuple",a.get("recordAndTuple")])}\`.`)}if(a.has("moduleAttributes")){if(a.has("deprecatedImportAssert")||a.has("importAssertions"))throw Error("Cannot combine importAssertions, deprecatedImportAssert and moduleAttributes plugins.");if("may-2020"!==a.get("moduleAttributes").version)throw Error("The 'moduleAttributes' plugin requires a 'version' option, representing the last proposal update. Currently, the only supported value is 'may-2020'.")}if(a.has("importAssertions")&&a.has("deprecatedImportAssert"))throw Error("Cannot combine importAssertions and deprecatedImportAssert plugins.");if(a.has("deprecatedImportAssert")||a.has("importAttributes")&&a.get("importAttributes").deprecatedAssertSyntax&&a.set("deprecatedImportAssert",{}),a.has("recordAndTuple")){let b=a.get("recordAndTuple").syntaxType;if(null!=b){let a=["hash","bar"];if(!a.includes(b))throw Error("The 'syntaxType' option of the 'recordAndTuple' plugin must be one of: "+a.map(a=>`'${a}'`).join(", "))}}if(a.has("asyncDoExpressions")&&!a.has("doExpressions")){let a=Error("'asyncDoExpressions' requires 'doExpressions', please add 'doExpressions' to parser plugins.");throw a.missingPlugins="doExpressions",a}if(a.has("optionalChainingAssign")&&"2023-07"!==a.get("optionalChainingAssign").version)throw Error("The 'optionalChainingAssign' plugin requires a 'version' option, representing the last proposal update. Currently, the only supported value is '2023-07'.");if(a.has("discardBinding")&&"void"!==a.get("discardBinding").syntaxType)throw Error("The 'discardBinding' plugin requires a 'syntaxType' option. Currently the only supported value is 'void'.")}(d),c=function(a){let b=[];for(let c of ba)a.has(c)&&b.push(c);let c=b.join("|"),d=bk.get(c);if(!d){for(let a of(d=bh,b))d=a9[a](d);bk.set(c,d)}return d}(d)}return new c(a,b,d)}let bk=new Map;c.parse=function(a,b){var c;if((null==(c=b)?void 0:c.sourceType)!=="unambiguous")return bj(b,a).parse();b=Object.assign({},b);try{b.sourceType="module";let c=bj(b,a),d=c.parse();if(c.sawUnambiguousESM)return d;if(c.ambiguousScriptDifferentAst)try{return b.sourceType="script",bj(b,a).parse()}catch(a){}else d.program.sourceType="script";return d}catch(c){try{return b.sourceType="script",bj(b,a).parse()}catch(a){}throw c}},c.parseExpression=function(a,b){let c=bj(b,a);return c.options.strictMode&&(c.state.strict=!0),c.getExpression()},c.tokTypes=bi},385298,854340,218048,a=>{"use strict";var b=a.i(497895),c=a.i(644799);let d={"lucide-react":{version:"0.563.0",capabilities:["ui"]},recharts:{version:"2.9.0",capabilities:["visualization"]},"react-router-dom":{version:"6.30.4"},"@radix-ui/react-accordion":{version:"^1.2.0",capabilities:["ui"]},"@radix-ui/react-alert-dialog":{version:"^1.1.1",capabilities:["ui"]},"@radix-ui/react-aspect-ratio":{version:"^1.1.0"},"@radix-ui/react-avatar":{version:"^1.1.0"},"@radix-ui/react-checkbox":{version:"^1.1.1"},"@radix-ui/react-collapsible":{version:"^1.1.0"},"@radix-ui/react-dialog":{version:"^1.1.1",capabilities:["ui"]},"@radix-ui/react-dropdown-menu":{version:"^2.1.1"},"@radix-ui/react-hover-card":{version:"^1.1.1"},"@radix-ui/react-label":{version:"^2.1.0"},"@radix-ui/react-menubar":{version:"^1.1.1"},"@radix-ui/react-navigation-menu":{version:"^1.2.0"},"@radix-ui/react-popover":{version:"^1.1.1"},"@radix-ui/react-progress":{version:"^1.1.0"},"@radix-ui/react-radio-group":{version:"^1.2.0"},"@radix-ui/react-scroll-area":{version:"^1.2.10"},"@radix-ui/react-select":{version:"^2.1.1"},"@radix-ui/react-separator":{version:"^1.1.0"},"@radix-ui/react-slider":{version:"^1.2.0"},"@radix-ui/react-slot":{version:"^1.1.0"},"@radix-ui/react-switch":{version:"^1.1.0"},"@radix-ui/react-tabs":{version:"^1.1.0"},"@radix-ui/react-toast":{version:"^1.2.1"},"@radix-ui/react-toggle":{version:"^1.1.0"},"@radix-ui/react-toggle-group":{version:"^1.1.0"},"@radix-ui/react-tooltip":{version:"^1.1.2"},"@hookform/resolvers":{version:"5.4.0",capabilities:["forms"]},"@tanstack/react-query":{version:"5.101.2",capabilities:["data"]},"@tanstack/react-table":{version:"8.21.3",capabilities:["data","ui"]},"@xyflow/react":{version:"12.11.2",capabilities:["ui","visualization"]},"class-variance-authority":{version:"^0.7.0"},clsx:{version:"^2.1.1"},"date-fns":{version:"^3.6.0"},"embla-carousel-react":{version:"^8.1.8"},"framer-motion":{version:"^11.15.0",capabilities:["animation"]},motion:{version:"12.43.0",capabilities:["animation"]},gsap:{version:"3.14.2",capabilities:["animation"]},"@types/gsap":{version:"3.0.0"},"fuse.js":{version:"7.5.0",capabilities:["data"]},"qrcode.react":{version:"4.2.0",capabilities:["visualization"]},"react-colorful":{version:"5.8.0",capabilities:["ui"]},"react-day-picker":{version:"^8.10.1"},"react-dnd":{version:"16.0.1",capabilities:["ui"]},"react-dnd-html5-backend":{version:"16.0.1"},"react-dnd-touch-backend":{version:"16.0.1"},"@supabase/supabase-js":{version:"2.110.8",capabilities:["data"]},"@supabase/ssr":{version:"0.12.3",capabilities:["data"]},"react-dropzone":{version:"17.0.0",capabilities:["ui"]},"react-hook-form":{version:"7.81.0",capabilities:["forms"]},"react-markdown":{version:"10.1.0",capabilities:["ui"]},"react-resizable-panels":{version:"4.12.2",capabilities:["ui"]},"remark-gfm":{version:"4.0.1"},"tailwind-merge":{version:"^2.4.0"},"tailwindcss-animate":{version:"^1.0.7",capabilities:["animation"]},vaul:{version:"^0.9.1",capabilities:["ui"]},three:{version:"0.177.0",capabilities:["three-dimensional"]},"@types/three":{version:"0.177.0"},"@react-three/fiber":{version:"9.6.1",capabilities:["three-dimensional"]},"@react-three/drei":{version:"10.7.7",capabilities:["three-dimensional"]},"@react-three/postprocessing":{version:"3.0.4",capabilities:["three-dimensional"]},"@react-three/rapier":{version:"2.2.0",capabilities:["three-dimensional"]},"@react-three/cannon":{version:"6.6.0",capabilities:["three-dimensional"]},"@splinetool/react-spline":{version:"4.1.0",companions:["@splinetool/runtime"],capabilities:["three-dimensional"]},"@splinetool/runtime":{version:"1.12.98",capabilities:["three-dimensional"]},"three-stdlib":{version:"2.36.1",capabilities:["three-dimensional"]},maath:{version:"0.10.8",capabilities:["three-dimensional"]},postprocessing:{version:"6.39.3",capabilities:["three-dimensional"]},leva:{version:"0.10.1",capabilities:["three-dimensional","ui"]},"@paper-design/shaders-react":{version:"0.0.77",capabilities:["three-dimensional","visualization"]},sonner:{version:"2.0.7",capabilities:["ui"]},"react-leaflet":{version:"5.0.0",capabilities:["mapping"]},leaflet:{version:"1.9.4",capabilities:["mapping"]},"@types/leaflet":{version:"1.9.21"},"react-syntax-highlighter":{version:"15.8.0",capabilities:["ui"]},"react-intersection-observer":{version:"9.16.0"},cmdk:{version:"1.1.1",capabilities:["ui"]},"hls.js":{version:"1.6.16",capabilities:["media"]},"@uiw/react-md-editor":{version:"4.0.6",capabilities:["ui"]},"@use-gesture/react":{version:"10.3.1",capabilities:["ui"]},"react-countup":{version:"6.5.3",capabilities:["animation"]},"react-resizable":{version:"3.0.4",capabilities:["ui"]},"@types/react-resizable":{version:"3.0.8"},"@tanstack/react-virtual":{version:"3.14.7",capabilities:["ui"]},jspdf:{version:"4.2.1",capabilities:["media"]},"@react-pdf/renderer":{version:"4.5.1",capabilities:["media"]},howler:{version:"2.2.4",capabilities:["media"]},"react-arborist":{version:"3.15.0",capabilities:["ui"]},"react-masonry-css":{version:"1.0.16",capabilities:["ui"]},"yet-another-react-lightbox":{version:"3.32.1",capabilities:["media"]},"@tsparticles/react":{version:"4.3.2",capabilities:["animation","visualization"]},"@tsparticles/engine":{version:"4.3.2",capabilities:["animation","visualization"]},"@tsparticles/slim":{version:"4.3.2",capabilities:["animation","visualization"]},"react-parallax":{version:"3.5.2",capabilities:["animation"]},zod:{version:"4.4.3",capabilities:["data","forms"]},zustand:{version:"5.0.14",capabilities:["state"]}},e=Object.freeze(Object.fromEntries(Object.entries(d).map(([a,b])=>[a,b.version]))),f=new Set(["react","react-dom"]),g=new Set(["assert","buffer","child_process","cluster","crypto","dgram","dns","events","fs","http","https","module","net","os","path","perf_hooks","process","querystring","readline","stream","string_decoder","timers","tls","tty","url","util","v8","vm","worker_threads","zlib"]);function h(a){let b=new Set,e=new Set,h=[],m=new Set;for(let l of a){let a="string"==typeof l?void 0:l.path,o=function(a){try{let b=(0,c.parse)(a,{sourceType:"module",plugins:["jsx","typescript","importAttributes"],createImportExpressions:!0}),d=new Set,e=!1;return function a(b,c){if(Array.isArray(b)){for(let d of b)a(d,c);return}if(i(b))for(let[d,e]of(c(b),Object.entries(b)))"loc"!==d&&"extra"!==d&&"leadingComments"!==d&&"innerComments"!==d&&"trailingComments"!==d&&"object"==typeof e&&null!==e&&a(e,c)}(b,a=>{if("ImportDeclaration"===a.type||"ExportNamedDeclaration"===a.type||"ExportAllDeclaration"===a.type){let b=j(a.source);b&&d.add(b);return}if("ImportExpression"===a.type){let b=j(a.source);b?d.add(b):e=!0;return}if("CallExpression"===a.type&&i(a.callee)&&"Import"===a.callee.type){let b=Array.isArray(a.arguments)?j(a.arguments[0]):null;b?d.add(b):e=!0}}),{sources:Array.from(d),hasNonLiteralDynamicImport:e}}catch{return{sources:[],hasNonLiteralDynamicImport:!1}}}("string"==typeof l?l:l.code);for(let c of(o.hasNonLiteralDynamicImport&&k(h,m,{path:a,code:"NON_LITERAL_DYNAMIC_IMPORT",message:"Dynamic imports must use a string literal so Squid can select dependencies deterministically before the preview starts."}),o.sources)){var n;if(e.add(c),(n=c).startsWith(".")||n.startsWith("/")||n.startsWith("@/"))continue;let i=c.startsWith("@")?c.split("/").slice(0,2).join("/"):c.split("/")[0];if(!f.has(i)){if(c.startsWith("node:")||g.has(i)){k(h,m,{path:a,source:c,packageName:i,code:"UNSUPPORTED_NODE_BUILTIN",message:`Node.js built-in module "${c}" is unavailable in Squid's browser preview. Remove it or use a browser-safe API.`});continue}if(function(a){try{return!!new URL(a).protocol}catch{return!1}}(c)){k(h,m,{path:a,source:c,packageName:i,code:"UNSUPPORTED_URL_IMPORT",message:`URL import "${c}" is unsupported. Import an allowlisted package by name or include the source in the generated app.`});continue}if(!(i in d)){k(h,m,{path:a,source:c,packageName:i,code:"UNSUPPORTED_EXTERNAL_IMPORT",message:`Unsupported external package "${i}" imported from "${c}". Use a package supported by Squid or remove the import.`});continue}!function a(b,c){if(!c.has(b))for(let e of(c.add(b),d[b].companions??[]))a(e,c)}(i,b)}}}return{dependencies:Object.fromEntries(Array.from(b).sort().map(a=>[a,d[a].version])),diagnostics:h.sort(l),importSources:Array.from(e).sort()}}function i(a){return"object"==typeof a&&null!==a&&"type"in a&&"string"==typeof a.type}function j(a){return i(a)&&"StringLiteral"===a.type&&"string"==typeof a.value?a.value:null}function k(a,b,c){let d=[c.path,c.code,c.source].join(":");b.has(d)||(b.add(d),a.push(c))}function l(a,b){return`${a.path??""}:${a.code}:${a.source??""}`.localeCompare(`${b.path??""}:${b.code}:${b.source??""}`)}a.s(["generatedAppDependencies",0,e,"getRequiredGeneratedAppDependencies",0,function(a){return h(a).dependencies},"preflightGeneratedAppImports",0,h],854340);var m=a.i(665713);let n=/\bfetch\s*\(/g,o=/https?:\/\/[^\s"'`)<>{]+/g,p=/\bimport\.meta\.env\.([A-Z][A-Z0-9_]*)\b/g,q=/(?:SECRET|PRIVATE|SERVER|ADMIN|SERVICE_ROLE|PASSWORD)/i,r=/\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|secret|password|private[_-]?key)\b\s*[:=]\s*["'`]([A-Za-z0-9_\-./+=]{12,})["'`]/gi,s=/\b(?:authorization|x-api-key|api-key)\b\s*[:=]\s*["'`](?:Bearer\s+)?([A-Za-z0-9_\-./+=]{12,})["'`]/gi,t=/["'`](?:User-Agent|Origin|Host|Referer|Cookie|Content-Length)["'`]\s*:/gi;function u(a){return Array.from(new Set(a)).sort()}function v(a,b){return b.lastIndex=0,b.test(a)}function w(a,b,c=0){let d,e=[];for(b.lastIndex=0;null!==(d=b.exec(a));)e.push(d[c]);return e}function x(a){let b=a.map(a=>a.code).join("\n"),c=w(b,n).length,d=u(w(b,o)),e=u(w(b,p,1)),f=[],g=[],h=new Map;for(let a of d){let b=(0,m.findIntegrationProviderByUrl)(a);if(!b)continue;let c=h.get(b.id);if(c){c.matchedEndpoints=u([...c.matchedEndpoints,a]);continue}h.set(b.id,{id:b.id,name:b.name,policyStatus:b.policyStatus,runtime:b.runtime,commercialUse:b.commercialUse,docsUrl:b.docsUrl,matchedEndpoints:[a]})}for(let a of h.values()){if("blocked"===a.policyStatus){f.push({message:`${a.name} is blocked by Squid's integration policy. Choose a compliant provider or a user-controlled deployment instead.`});continue}"conditional"===a.policyStatus&&g.push(`${a.name} requires setup or policy review before production use.`),"server"===a.runtime&&g.push(`${a.name} requires a server-side integration for reliable or authenticated use.`),"allowed"!==a.commercialUse&&g.push(`${a.name} commercial-use terms must be reviewed before deployment.`)}let i=Array.from(h.values()).sort((a,b)=>a.name.localeCompare(b.name));for(let b of a)v(b.code,n)&&(/\bresponse\.ok\b|\b[a-zA-Z_$][\w$]*\.ok\b/.test(b.code)||f.push({path:b.path,message:"Live API requests must reject non-success HTTP responses before reading data."}),/\bAbortController\b/.test(b.code)||f.push({path:b.path,message:"Live API requests must use AbortController to enforce a timeout."}),/\b(?:retry|retries|attempt|attempts|maxAttempts|MAX_ATTEMPTS|MAX_RETRIES|RETRY_COUNT|backoff|tries)\b/i.test(b.code)||f.push({path:b.path,message:"Live API requests must include a bounded retry path."}),/\b(?:is[A-Z][A-Za-z0-9]*|validate[A-Z][A-Za-z0-9]*|safeParse|Array\.isArray)\b/.test(b.code)||f.push({path:b.path,message:"Live API responses must be validated at runtime before rendering."}),v(b.code,t)&&f.push({path:b.path,message:"Browser fetch must not set forbidden request headers such as User-Agent, Origin, Host, Referer, Cookie, or Content-Length."}));for(let b of a){for(let a of w(b.code,r,1))f.push({path:b.path,message:"Hard-coded API credentials are forbidden in generated browser code."});for(let a of w(b.code,s,1))f.push({path:b.path,message:"Secret-bearing authorization headers are forbidden in generated browser code."})}for(let a of e)a.startsWith("VITE_")||f.push({message:`Browser environment variable ${a} must use the VITE_ prefix.`}),q.test(a)&&f.push({message:`Environment variable ${a} appears secret-bearing and cannot be exposed to the browser.`});return 0===c?{status:f.length>0?"blocked":e.length>0||g.length>0?"setup_required":"not_detected",requestsDetected:c,endpoints:d,environmentVariables:e,providers:i,policyWarnings:u(g),issues:f}:{status:f.length>0?"blocked":e.length>0||g.length>0?"setup_required":"verified",requestsDetected:c,endpoints:d,environmentVariables:e,providers:i,policyWarnings:u(g),issues:f}}function y(a){return a.replace(/\/+$/,"")||"/"}function z(a,b){let c=Array.from(new Set(b));if(0===c.length)return[];let d=x(a),e=a.find(a=>/(^|\/)integrations\.(?:ts|tsx|js|jsx)$/i.test(a.path)),f=[];for(let b of c){let c=(0,m.getIntegrationProvider)(b);if(!c){f.push({message:`Selected API ${b} is not present in Squid's reviewed integration registry.`});continue}if("blocked"===c.policyStatus){f.push({message:`${c.name} is selected but blocked by Squid's integration policy.`});continue}let g=RegExp(`["']${c.id.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}["']`);if(e&&g.test(e.code)||f.push({path:e?.path,message:`Selected API ${c.name} [${c.id}] must be declared in integrations.ts with its exact providerId.`}),"supabase"===c.id){a.some(a=>/\bimport\s*{[^}]*\bsupabase\b[^}]*}\s*from\s*["']@\/lib\/supabase["']/.test(a.code))||f.push({message:'Selected API Supabase [supabase] must import its protected browser client from "@/lib/supabase".'});continue}if("browser"!==c.runtime||"none"!==c.auth)continue;let h=d.providers.find(a=>a.id===c.id);if(!h||0===h.matchedEndpoints.length){f.push({message:`Selected API ${c.name} [${c.id}] must be called at runtime from its reviewed endpoint contract; mock or static data is not allowed.`});continue}let i=new URL(c.baseUrl);for(let a of h.matchedEndpoints){let b;try{b=new URL(a)}catch{continue}let d=b.origin===i.origin,e="/"===i.pathname||b.pathname===i.pathname||b.pathname.startsWith(`${i.pathname.replace(/\/$/,"")}/`);d&&!e&&f.push({message:`${c.name} endpoint ${a} is outside the reviewed base URL ${c.baseUrl}. Do not invent or use legacy API versions.`});let g=c.endpointContracts,h=y(b.pathname)===y(i.pathname)&&0===b.search.length;if(!d||h||!g?.length)continue;let j=g.find(a=>(function(a,b){let c=y(a).split("/"),d=y(b).split("/");return c.length===d.length&&d.every((a,b)=>/^\{[^{}]+\}$/.test(a)?c[b].length>0:c[b]===a)})(b.pathname,a.path));if(!j){f.push({message:`${c.name} endpoint ${a} is not in the reviewed endpoint contract. Use only ${g.map(a=>`${a.method} ${a.path}`).join(", ")}.`});continue}let k=new Set(j.parameters.filter(a=>"query"===a.in).map(a=>a.name)),l=Array.from(b.searchParams.keys()).filter(a=>!k.has(a));l.length>0&&f.push({message:`${c.name} endpoint ${a} uses undocumented query parameter${1===l.length?"":"s"}: ${l.join(", ")}.`});let m=j.parameters.filter(a=>"query"===a.in&&a.required&&!b.searchParams.has(a.name)).map(a=>a.name);m.length>0&&f.push({message:`${c.name} endpoint ${a} is missing required query parameter${1===m.length?"":"s"}: ${m.join(", ")}.`})}}return f}a.s(["analyzeGeneratedApiIntegration",0,x,"validateSelectedApiUsage",0,z],218048);let A=new Set(["components/ui/accordion","components/ui/alert","components/ui/alert-dialog","components/ui/avatar","components/ui/badge","components/ui/breadcrumb","components/ui/button","components/ui/calendar","components/ui/card","components/ui/carousel","components/ui/checkbox","components/ui/collapsible","components/ui/dialog","components/ui/drawer","components/ui/dropdown-menu","components/ui/form","components/ui/hover-card","components/ui/input","components/ui/label","components/ui/menubar","components/ui/navigation-menu","components/ui/pagination","components/ui/popover","components/ui/progress","components/ui/radio-group","components/ui/resizable","components/ui/scroll-area","components/ui/select","components/ui/separator","components/ui/skeleton","components/ui/slider","components/ui/switch","components/ui/table","components/ui/tabs","components/ui/textarea","components/ui/toast","components/ui/toaster","components/ui/toggle","components/ui/toggle-group","components/ui/tooltip","components/ui/use-toast","components/ui/index","lib/supabase","lib/utils","squid-runtime/supabase"]),B=new Set([...A].filter(a=>"components/ui/button"!==a&&"components/ui/badge"!==a&&"components/ui/navigation-menu"!==a&&"components/ui/toggle"!==a));function C(a){return A.has(a)}let D=/\b(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g,E=/\bimport\s+(type\s+)?([\s\S]*?)\s+from\s+["']([^"']+)["'];?/g;function F(a){return a.replace(/\.(tsx|ts|jsx|js|json|css)$/i,"")}function G(a){var b=a.replace(/^@\//,"").replace(/^\//,"").replace(/^\.\//,"").replace(/\\/g,"/").replace(/\/+/g,"/").replace(/^src\//,"").replace(/^app\//,"");let c=[];for(let a of b.split("/"))if(a&&"."!==a){if(".."===a){c.pop();continue}c.push(a)}return c.join("/")}function H(a,b){return Object.defineProperty(a,"protectedPathsBlocked",{value:b.protectedPathsBlocked,enumerable:!1,configurable:!0}),a}function I(a){return{protectedPathsBlocked:"number"==typeof a.protectedPathsBlocked?a.protectedPathsBlocked:0}}function J(a,b=[]){let c=[];for(let b of(a.find(a=>"App.tsx"===a.path)||c.push({message:"Missing App.tsx entry file."}),c.push(...h(a).diagnostics.map(({path:a,message:b})=>({path:a,message:b}))),a)){for(let e of L(b.code))if(O(e)){var d;C(F(G(e)))||(d=b.path,P(d,e,a)||c.push({path:b.path,message:`Unresolved internal import "${e}". Generate the imported file or remove the import.`}))}for(let d of M(b.code)){let{source:e}=d;if(!O(e)||C(F(G(e)))&&!P(b.path,e,a))continue;let f=P(b.path,e,a);f&&c.push(...function(a,b,c){if(!/\.(tsx|ts|jsx|js)$/i.test(c.path))return[];let d=[],e=function(a){let b,c=N(a),d=new Set,e=/\bexport\s+default\b/.test(c),f=c.match(/\bexport\s+default\s+(?:async\s+)?(?:function|class)?\s*([A-Za-z_$][\w$]*)?/)?.[1];for(let a of[/\bexport\s+(?:declare\s+)?(?:async\s+)?(?:function|class|interface|type|enum)\s+([A-Za-z_$][\w$]*)/g,/\bexport\s+(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)/g]){let b;for(a.lastIndex=0;null!==(b=a.exec(c));)d.add(b[1])}let g=/\bexport\s*{([\s\S]*?)}(?:\s*from\s*["'][^"']+["'])?\s*;?/g;for(;null!==(b=g.exec(c));)for(let a of b[1].split(",")){let b=a.trim().replace(/^type\s+/,"");if(!b)continue;let[c,g=c]=b.split(/\s+as\s+/).map(a=>a.trim());c&&g&&("default"===g?(e=!0,f="default"===c?f:c):/^[A-Za-z_$][\w$]*$/.test(g)&&d.add(g))}return{hasDefault:e,defaultName:f,namedExports:d}}(c.code);if(b.defaultImport&&!e.hasDefault){let f=e.namedExports.has(b.defaultImport);d.push({path:a,message:f?`Default import "${b.defaultImport}" from "${b.source}" is invalid because ${c.path} exports "${b.defaultImport}" only as a named export. Use import { ${b.defaultImport} } from "${b.source}" or add a default export.`:`Default import "${b.defaultImport}" from "${b.source}" is invalid because ${c.path} has no default export. Add a default export or change the import to match its named exports.`})}for(let f of b.namedImports){if("default"===f.imported){e.hasDefault||d.push({path:a,message:`Named default import "${f.local}" from "${b.source}" is invalid because ${c.path} has no default export.`});continue}if(e.namedExports.has(f.imported))continue;let g=e.hasDefault&&(!e.defaultName||e.defaultName===f.imported)?` It has a default export; use import ${f.local} from "${b.source}" or export "${f.imported}" by name.`:"";d.push({path:a,message:`Named import "${f.imported}" from "${b.source}" is invalid because ${c.path} does not export "${f.imported}".${g}`})}return d}(b.path,d,f))}}return c.push(...function(a){let b=[];for(let c of a){if(!/\.(tsx|jsx)$/i.test(c.path))continue;let a=N(c.code);/\bon(?:Click|Submit|Change|CheckedChange|ValueChange)\s*=\s*\{\s*\([^)]*\)\s*=>\s*(?:\{\s*\}|undefined|null)\s*\}/.test(a)&&b.push({path:c.path,message:"Empty event handler. Implement a real visible outcome or remove the inert control."})}return b}(a)),c.push(...function(a){let b=a.filter(a=>/\.(tsx|ts|jsx|js)$/i.test(a.path)),c=b.map(a=>a.code).join("\n"),d=/document\.documentElement\.classList\.add\(\s*["'`]dark["'`]/.test(c),e=/document\.documentElement\.classList\.remove\(\s*["'`]dark["'`]/.test(c),f=/document\.documentElement\.classList\.toggle\(\s*["'`]dark["'`]/.test(c),g=/\bdark:[\w\-\[\]/.:%]+/.test(c),h=/\b(?:setIsDark|setDarkMode|setTheme|toggleTheme)\b/.test(c);if(!(f||d&&e||g&&h))return[];let i=/localStorage\.getItem\(/.test(c)&&/localStorage\.setItem\(/.test(c),j=/matchMedia\(\s*["'`]\(prefers-color-scheme:\s*dark\)["'`]\s*\)/.test(c),k=/document\.documentElement\.style\.colorScheme\s*=/.test(c)||/document\.documentElement\.style\.setProperty\(\s*["'`]color-scheme["'`]/.test(c);if((f||d&&e)&&i&&j&&k)return[];let l=b.find(a=>{let b=a.code;return/document\.documentElement\.classList\.toggle\(\s*["'`]dark["'`]/.test(b)||/document\.documentElement\.classList\.add\(\s*["'`]dark["'`]/.test(b)&&/document\.documentElement\.classList\.remove\(\s*["'`]dark["'`]/.test(b)||/\b(?:setIsDark|setDarkMode|setTheme|toggleTheme)\b/.test(b)});return[{path:l?.path,message:"Theme control is incomplete. Initialize from a persisted localStorage preference with a prefers-color-scheme fallback, persist changes, and update document.documentElement.style.colorScheme together with the root dark class."}]}(a)),c.push(...x(a).issues),c.push(...z(a,b)),c}function K(a){let c=a.split(".").pop()?.toLowerCase();return"tsx"===c||"jsx"===c?c:"ts"===c?"ts":"css"===c?"css":"json"===c?"json":(0,b.getExtensionForLanguage)((0,b.getLanguageOfFile)(a))}function L(a){let b,c=new Set;for(D.lastIndex=0;null!==(b=D.exec(a));)c.add(b[1]);return Array.from(c)}function M(a){let b,c=[];for(E.lastIndex=0;null!==(b=E.exec(a));){let a=b[2].trim(),d=b[3],e=function(a){let b=a.match(/{([\s\S]*?)}/)?.[1];return b?b.split(",").map(a=>a.trim().replace(/^type\s+/,"")).filter(Boolean).map(a=>{let[b,c]=a.split(/\s+as\s+/).map(a=>a.trim());return{imported:b,local:c||b}}).filter(({imported:a,local:b})=>[a,b].every(a=>/^[A-Za-z_$][\w$]*$/.test(a))):[]}(a),f=function(a){if(a.startsWith("{")||a.startsWith("*"))return;let b=a.replace(/{[\s\S]*}/g,"").replace(/\*\s+as\s+\w+/g,""),c=b.split(",")[0]?.trim();return c&&/^[A-Za-z_$][\w$]*$/.test(c)?c:void 0}(a);(f||0!==e.length)&&c.push({source:d,defaultImport:f,namedImports:e})}return c}function N(a){return a.replace(/\/\*[\s\S]*?\*\//g,"").replace(/(^|[^:])\/\/.*$/gm,"$1")}function O(a){return a.startsWith("@/")||a.startsWith("/")||a.startsWith("./")||a.startsWith("../")}function P(a,b,c){let d=Q(a,b);for(let a of c)if(d.includes(F(a.path)))return a;return null}function Q(a,b){let c=a.includes("/")?a.slice(0,a.lastIndexOf("/")):"",d=F(b.startsWith("./")||b.startsWith("../")?G(`${c}/${b}`):G(b));return[d,`${d}/index`]}a.s(["attachGeneratedFilesStats",0,H,"buildGeneratedFilesQualityReport",0,function(a){let b=J(a),c=b.filter(a=>a.message.startsWith("Unresolved internal import")),d=function(a){let b=[];for(let c of a)if(/\.(tsx|jsx)$/i.test(c.path)){for(let a of c.code.matchAll(/<button\b(?![^>]*aria-label=)[^>]*>\s*(?:<[^>]+>\s*)*<\/button>/g))b.push({path:c.path,message:"Button appears to have no visible text or aria-label."});for(let a of c.code.matchAll(/<input\b([^>]*)>/g)){let d=a[1]||"";/\b(?:aria-label|aria-labelledby|id|placeholder)=/.test(d)||function(a,b){let c=a.slice(0,b);return c.lastIndexOf("<label")>c.lastIndexOf("</label>")&&-1!==a.indexOf("</label>",b)}(c.code,a.index)||b.push({path:c.path,message:"Input appears to be missing an accessible name, id, or placeholder."})}for(let a of c.code.matchAll(/<img\b([^>]*)>/g)){let d=a[1]||"";/\balt=/.test(d)||b.push({path:c.path,message:"Image appears to be missing alt text."})}}return b}(a),e=function(a){let b=0;for(let d of a)for(let e of L(d.code))if(O(e)){var c;if(C(F(G(e)))){b+=1;continue}c=d.path,P(c,e,a)&&(b+=1)}return b}(a),{protectedPathsBlocked:f}=I(a),g=a.filter(a=>/\.(tsx|ts|jsx|js)$/i.test(a.path)).length,h=b.length+d.length,i=x(a);return{generatedAt:new Date().toISOString(),filesGenerated:a.length,sourceFiles:g,importsResolved:e,unresolvedImports:c,protectedPathsBlocked:f,accessibilityWarnings:d,diagnostics:b,apiIntegration:i,status:0===h?"passed":"warning"}},"formatGeneratedFileDiagnostics",0,function(a){return["Generated app validation failed. Repair every issue before returning the changed files:",...a.map(a=>`- ${a.path?`${a.path}: `:""}${a.message}`)].join("\n")},"formatGeneratedFilesMarkdown",0,function(a){return a.map(a=>`\`\`\`${a.language||K(a.path)}{path=${a.path}}
+${a.code}
+\`\`\``).join("\n\n")},"normalizeGeneratedFiles",0,function(a){let b=new Map,c=0;for(let d of a){let a=function(a){let b=a.trim().replace(/^["'`]+|["'`]+$/g,"").replace(/\\/g,"/").replace(/\/+/g,"/").replace(/^@\//,"").replace(/^\//,"").replace(/^\.\//,"").replace(/^src\//,"");if(!b||b.includes(".."))return null;if(/^app\.tsx$/i.test(b))return"App.tsx";let c=F(b);return B.has(c)?null:b}(d.path);if(!a){c+=1;continue}let e=d.code??d.content??"";e.trim()&&b.set(a,{path:a,code:function(a){return function(a){var b;if(!/\bcn\s*\(/.test(a)||M(b=a).some(a=>"cn"===a.defaultImport||a.namedImports.some(a=>"cn"===a.local))||/\b(?:const|let|var|function|class)\s+cn\b/.test(N(b)))return a;let c=/import\s*{([\s\S]*?)}\s*from\s*["']@\/lib\/utils["'];?/;return c.test(a)?a.replace(c,(a,b)=>{let c=b.split(",").map(a=>a.trim()).filter(Boolean);return c.some(a=>/^cn(?:\s+as\s+cn)?$/.test(a))||c.push("cn"),`import { ${c.join(", ")} } from "@/lib/utils";`}):function(a,b){let c=a.split("\n"),d=0;for(;d<c.length&&(/^\s*$/.test(c[d])||/^\s*["']use\s+\w+["'];?\s*$/.test(c[d]));)d+=1;return c.splice(d,0,b),c.join("\n")}(a,'import { cn } from "@/lib/utils";')}(a.replace(/import\s*{\s*Motion\s*}\s*from\s*["']framer-motion["'];?/g,'import { motion } from "framer-motion";').replace(/<Motion(\s|>)/g,"<motion.div$1").replace(/<\/Motion>/g,"</motion.div>").replace(/await\s+(?:window\.)?navigator\.clipboard\.writeText\(([^;\n]+)\);/g,"await (navigator?.clipboard?.writeText?.($1) ?? Promise.resolve()).catch(() => {});").replace(/(^|[^a-zA-Z0-9_$])(?:window\.)?navigator\.clipboard\.writeText\(([^;\n]+)\);/g,"$1(navigator?.clipboard?.writeText?.($2) ?? Promise.resolve()).catch(() => {});").replace(/from\s*["']@\/components\/ui\/sonner["']/g,'from "sonner"').replace(/import\s*{([\s\S]*?)}\s*from\s*["']@\/components\/ui\/select["'];?/g,(a,b)=>{if(!/SelectItemText/.test(b))return a;let c=b.split(",").map(a=>a.trim()).filter(Boolean).filter(a=>!/^SelectItemText(?:\s+as\s+.*)?$/.test(a));return c.includes("SelectItem")||c.push("SelectItem"),`import { ${c.join(", ")} } from "@/components/ui/select";`}).replace(/<\s*SelectItemText\b([^>]*)>/g,"<SelectItem$1>").replace(/<\/\s*SelectItemText\s*>/g,"</SelectItem>").replace(/<\s*Select\.ItemText\b([^>]*)>/g,"<Select.Item$1>").replace(/<\/\s*Select\.ItemText\s*>/g,"</Select.Item>"))}(e),language:function(a,b){let c=b.split(".").pop()?.toLowerCase();return"tsx"===c||"ts"===c||"jsx"===c||"js"===c||"css"===c||"json"===c?c:a&&"text"!==a?"typescript"===a?"ts":"javascript"===a?"js":a:K(b)}(d.language,a),fullMatch:d.fullMatch})}let d=Array.from(b.values()).map(a=>{var c,d;return{...a,code:(c=a,d=b,c.code.replace(/(["'])(@\/(?:components|lib|utils|types)\/[^"']+)\1/g,(a,b,e)=>{if(C(F(G(e))))return a;let f=function(a,b,c){let d=Q(a,b);for(let[a]of c)if(d.includes(F(a)))return a;return null}(c.path,e,d);return f?`${b}${function(a,b){let c=a.split("/").slice(0,-1),d=F(b).split("/");for(;c.length&&d.length&&c[0]===d[0];)c.shift(),d.shift();let e=[...c.map(()=>".."),...d].join("/")||".";return e.startsWith(".")?e:`./${e}`}(c.path,f)}${b}`:a}))}});return H(d,{protectedPathsBlocked:c}),d},"parseStoredGeneratedFiles",0,function(a){return Array.isArray(a)?a.filter(a=>!!a&&"object"==typeof a&&"string"==typeof a.path&&("string"==typeof a.code||"string"==typeof a.content)):[]},"readGeneratedFilesStats",0,I,"validateGeneratedFiles",0,J],385298)},565832,a=>{"use strict";var b=a.i(157544);let c=b.z.string().trim().url().superRefine((a,c)=>{let d=new URL(a);(!("https:"===d.protocol&&/^[a-z0-9-]+\.supabase\.co$/i.test(d.hostname))||d.username||d.password||d.port||"/"!==d.pathname&&""!==d.pathname||d.search||d.hash)&&c.addIssue({code:b.z.ZodIssueCode.custom,message:"Expected an HTTPS Supabase project URL."})}).transform(a=>a.replace(/\/$/,"")),d=b.z.object({url:c,publishableKey:b.z.string().trim().min(1)}).strict().superRefine((a,c)=>{let d;(d=a.publishableKey.trim()).startsWith("sb_publishable_")||"anon"===function(a){let b=a.split(".");if(3!==b.length)return null;try{let a=b[1].replace(/-/g,"+").replace(/_/g,"/").padEnd(4*Math.ceil(b[1].length/4),"="),c=JSON.parse(globalThis.atob(a));if(!c||"object"!=typeof c||!("role"in c))return null;return"string"==typeof c.role?c.role:null}catch{return null}}(d.trim())||c.addIssue({code:b.z.ZodIssueCode.custom,path:["publishableKey"],message:"Expected a browser-safe Supabase publishable or legacy anon key."})}),e=b.z.discriminatedUnion("status",[b.z.object({status:b.z.literal("not_connected")}).strict(),b.z.object({status:b.z.literal("provisioning")}).strict(),b.z.object({status:b.z.literal("missing_browser_key")}).strict(),b.z.object({status:b.z.literal("invalid_browser_key")}).strict(),b.z.object({status:b.z.literal("invalid_project_url")}).strict(),b.z.object({status:b.z.literal("ready"),config:d}).strict()]);a.s(["SUPABASE_CLIENT_ADAPTER_IMPORT",0,"@/lib/supabase","SUPABASE_CLIENT_ADAPTER_PATH",0,"/lib/supabase.ts","SUPABASE_EXPORT_ENVIRONMENT_VARIABLES",0,["VITE_SUPABASE_URL","VITE_SUPABASE_PUBLISHABLE_KEY"],"SUPABASE_PREVIEW_RUNTIME_PATH",0,"/squid-runtime/supabase.ts","buildSupabaseClientAdapterModule",0,function(){return`import { createClient } from "@supabase/supabase-js";
+import { publishableKey, url } from "@/squid-runtime/supabase";
+
+export const supabase = createClient(url, publishableKey);
+`},"buildSupabaseExportRuntimeModule",0,function(){return`const url = import.meta.env.VITE_SUPABASE_URL;
+const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+function isLegacyAnonKey(value: string) {
+  const parts = value.split(".");
+  if (parts.length !== 3) return false;
+
+  try {
+    const payload = parts[1]
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
+    return JSON.parse(globalThis.atob(payload)).role === "anon";
+  } catch {
+    return false;
+  }
+}
+
+function isValidProjectUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    return (
+      parsed.protocol === "https:" &&
+      /^[a-z0-9-]+\\.supabase\\.co$/i.test(parsed.hostname) &&
+      !parsed.username &&
+      !parsed.password &&
+      !parsed.port &&
+      (parsed.pathname === "/" || parsed.pathname === "") &&
+      !parsed.search &&
+      !parsed.hash
+    );
+  } catch {
+    return false;
+  }
+}
+
+if (!url || !isValidProjectUrl(url)) {
+  throw new Error("Supabase setup required: set a valid VITE_SUPABASE_URL.");
+}
+
+if (
+  !publishableKey ||
+  (!publishableKey.startsWith("sb_publishable_") &&
+    !isLegacyAnonKey(publishableKey))
+) {
+  throw new Error(
+    "Supabase setup required: set a browser-safe VITE_SUPABASE_PUBLISHABLE_KEY.",
+  );
+}
+
+export { publishableKey, url };
+`},"getSupabaseRuntimeSetupMessage",0,function(a){switch(a.status){case"not_connected":return"Supabase setup required: no Supabase project is connected.";case"provisioning":return"Supabase setup required: the connected project is still provisioning.";case"missing_browser_key":return"Supabase setup required: no browser-safe publishable key was found.";case"invalid_browser_key":return"Supabase setup required: an invalid or privileged API key was rejected.";case"invalid_project_url":return"Supabase setup required: the connected project URL is invalid."}},"resolveSupabaseBrowserRuntimeForPreview",0,function({runtime:a,generatedAppUsesSupabase:b,workspaceResolved:c}){return a||(b&&c?{status:"not_connected"}:void 0)},"supabaseBrowserRuntimeStateSchema",0,e])},370848,812389,a=>{"use strict";let b=`
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+`,c=`import * as React from "react"
+import * as AccordionPrimitive from "@radix-ui/react-accordion"
+import { ChevronDown } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const Accordion = AccordionPrimitive.Root
+
+const AccordionItem = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
+>(({ className, ...props }, ref) => (
+  <AccordionPrimitive.Item
+    ref={ref}
+    className={cn("border-b", className)}
+    {...props}
+  />
+))
+AccordionItem.displayName = "AccordionItem"
+
+const AccordionTrigger = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <AccordionPrimitive.Header className="flex">
+    <AccordionPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+    </AccordionPrimitive.Trigger>
+  </AccordionPrimitive.Header>
+))
+AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName
+
+const AccordionContent = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <AccordionPrimitive.Content
+    ref={ref}
+    className="overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    {...props}
+  >
+    <div className={cn("pb-4 pt-0", className)}>{children}</div>
+  </AccordionPrimitive.Content>
+))
+
+AccordionContent.displayName = AccordionPrimitive.Content.displayName
+
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+`,d=`import * as React from "react"
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
+
+import { cn } from "../../lib/utils"
+import { buttonVariants } from "./button"
+
+const AlertDialog = AlertDialogPrimitive.Root
+
+const AlertDialogTrigger = AlertDialogPrimitive.Trigger
+
+const AlertDialogPortal = AlertDialogPrimitive.Portal
+
+const AlertDialogOverlay = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Overlay
+    className={cn(
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+    ref={ref}
+  />
+))
+AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
+
+const AlertDialogContent = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPortal>
+    <AlertDialogOverlay />
+    <AlertDialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      )}
+      {...props}
+    />
+  </AlertDialogPortal>
+))
+AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName
+
+const AlertDialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col space-y-2 text-center sm:text-left",
+      className
+    )}
+    {...props}
+  />
+)
+AlertDialogHeader.displayName = "AlertDialogHeader"
+
+const AlertDialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className
+    )}
+    {...props}
+  />
+)
+AlertDialogFooter.displayName = "AlertDialogFooter"
+
+const AlertDialogTitle = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Title
+    ref={ref}
+    className={cn("text-lg font-semibold", className)}
+    {...props}
+  />
+))
+AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName
+
+const AlertDialogDescription = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+AlertDialogDescription.displayName =
+  AlertDialogPrimitive.Description.displayName
+
+const AlertDialogAction = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Action>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Action
+    ref={ref}
+    className={cn(buttonVariants(), className)}
+    {...props}
+  />
+))
+AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName
+
+const AlertDialogCancel = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Cancel
+    ref={ref}
+    className={cn(
+      buttonVariants({ variant: "outline" }),
+      "mt-2 sm:mt-0",
+      className
+    )}
+    {...props}
+  />
+))
+AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName
+
+export {
+  AlertDialog,
+  AlertDialogPortal,
+  AlertDialogOverlay,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+}
+`,e=`import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "../../lib/utils"
+
+const alertVariants = cva(
+  "relative w-full rounded-lg border border-gray-200 p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-gray-950 dark:border-gray-800 dark:[&>svg]:text-gray-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-white text-gray-950 dark:bg-gray-950 dark:text-gray-50",
+        destructive:
+          "border-red-500/50 text-red-500 dark:border-red-500 [&>svg]:text-red-500 dark:border-red-900/50 dark:text-red-900 dark:dark:border-red-900 dark:[&>svg]:text-red-900",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+const Alert = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+>(({ className, variant, ...props }, ref) => (
+  <div
+    ref={ref}
+    role="alert"
+    className={cn(alertVariants({ variant }), className)}
+    {...props}
+  />
+))
+Alert.displayName = "Alert"
+
+const AlertTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h5
+    ref={ref}
+    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+    {...props}
+  />
+))
+AlertTitle.displayName = "AlertTitle"
+
+const AlertDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    {...props}
+  />
+))
+AlertDescription.displayName = "AlertDescription"
+
+export { Alert, AlertTitle, AlertDescription }
+
+`,f=`import * as React from "react"
+import * as AvatarPrimitive from "@radix-ui/react-avatar"
+
+import { cn } from "../../lib/utils"
+
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      className
+    )}
+    {...props}
+  />
+))
+Avatar.displayName = AvatarPrimitive.Root.displayName
+
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Image
+    ref={ref}
+    className={cn("aspect-square h-full w-full", className)}
+    {...props}
+  />
+))
+AvatarImage.displayName = AvatarPrimitive.Image.displayName
+
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Fallback
+    ref={ref}
+    className={cn(
+      "flex h-full w-full items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800",
+      className
+    )}
+    {...props}
+  />
+))
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+
+export { Avatar, AvatarImage, AvatarFallback }
+
+`,g=`import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "../../lib/utils"
+
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        secondary:
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive:
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+        outline: "text-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  )
+}
+
+export { Badge, badgeVariants }
+
+`,h=`import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { ChevronRight, MoreHorizontal } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const Breadcrumb = React.forwardRef<
+  HTMLElement,
+  React.ComponentPropsWithoutRef<"nav"> & {
+    separator?: React.ReactNode
+  }
+>(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />)
+Breadcrumb.displayName = "Breadcrumb"
+
+const BreadcrumbList = React.forwardRef<
+  HTMLOListElement,
+  React.ComponentPropsWithoutRef<"ol">
+>(({ className, ...props }, ref) => (
+  <ol
+    ref={ref}
+    className={cn(
+      "flex flex-wrap items-center gap-1.5 break-words text-sm text-gray-500 sm:gap-2.5 dark:text-gray-400",
+      className
+    )}
+    {...props}
+  />
+))
+BreadcrumbList.displayName = "BreadcrumbList"
+
+const BreadcrumbItem = React.forwardRef<
+  HTMLLIElement,
+  React.ComponentPropsWithoutRef<"li">
+>(({ className, ...props }, ref) => (
+  <li
+    ref={ref}
+    className={cn("inline-flex items-center gap-1.5", className)}
+    {...props}
+  />
+))
+BreadcrumbItem.displayName = "BreadcrumbItem"
+
+const BreadcrumbLink = React.forwardRef<
+  HTMLAnchorElement,
+  React.ComponentPropsWithoutRef<"a"> & {
+    asChild?: boolean
+  }
+>(({ asChild, className, ...props }, ref) => {
+  const Comp = asChild ? Slot : "a"
+
+  return (
+    <Comp
+      ref={ref}
+      className={cn("transition-colors hover:text-gray-950 dark:hover:text-gray-50", className)}
+      {...props}
+    />
+  )
+})
+BreadcrumbLink.displayName = "BreadcrumbLink"
+
+const BreadcrumbPage = React.forwardRef<
+  HTMLSpanElement,
+  React.ComponentPropsWithoutRef<"span">
+>(({ className, ...props }, ref) => (
+  <span
+    ref={ref}
+    role="link"
+    aria-disabled="true"
+    aria-current="page"
+    className={cn("font-normal text-gray-950 dark:text-gray-50", className)}
+    {...props}
+  />
+))
+BreadcrumbPage.displayName = "BreadcrumbPage"
+
+const BreadcrumbSeparator = ({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"li">) => (
+  <li
+    role="presentation"
+    aria-hidden="true"
+    className={cn("[&>svg]:size-3.5", className)}
+    {...props}
+  >
+    {children ?? <ChevronRight />}
+  </li>
+)
+BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
+
+const BreadcrumbEllipsis = ({
+  className,
+  ...props
+}: React.ComponentProps<"span">) => (
+  <span
+    role="presentation"
+    aria-hidden="true"
+    className={cn("flex h-9 w-9 items-center justify-center", className)}
+    {...props}
+  >
+    <MoreHorizontal className="h-4 w-4" />
+    <span className="sr-only">More</span>
+  </span>
+)
+BreadcrumbEllipsis.displayName = "BreadcrumbElipssis"
+
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+}
+
+`,i=`import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from '../../lib/utils';
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        // Semantic tokens only. Outline/ghost keep resting text-foreground so a
+        // secondary CTA with bg-background stays readable when nested in a dark
+        // hero that inherits light text. They intentionally omit hover:text-* so
+        // custom className text colors (nav Login, branded secondary CTAs) are
+        // not forced to gray-900/white on hover via twMerge leaving hover:text.
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background text-foreground hover:bg-accent",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "text-foreground hover:bg-accent",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size }), className)}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+`,j=`import * as React from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { DayPicker } from "react-day-picker"
+
+import { cn } from "../../lib/utils"
+import { buttonVariants } from "./button"
+
+export type CalendarProps = React.ComponentProps<typeof DayPicker>
+
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  ...props
+}: CalendarProps) {
+  return (
+    <DayPicker
+      showOutsideDays={showOutsideDays}
+      className={cn("p-3", className)}
+      classNames={{
+        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        month: "space-y-4",
+        caption: "flex justify-center pt-1 relative items-center",
+        caption_label: "text-sm font-medium",
+        nav: "space-x-1 flex items-center",
+        nav_button: cn(
+          buttonVariants({ variant: "outline" }),
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+        ),
+        nav_button_previous: "absolute left-1",
+        nav_button_next: "absolute right-1",
+        table: "w-full border-collapse space-y-1",
+        head_row: "flex",
+        head_cell:
+          "text-gray-500 rounded-md w-9 font-normal text-[0.8rem] dark:text-gray-400",
+        row: "flex w-full mt-2",
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-gray-100/50 [&:has([aria-selected])]:bg-gray-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 dark:[&:has([aria-selected].day-outside)]:bg-gray-800/50 dark:[&:has([aria-selected])]:bg-gray-800",
+        day: cn(
+          buttonVariants({ variant: "ghost" }),
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+        ),
+        day_range_end: "day-range-end",
+        day_selected:
+          "bg-gray-900 text-gray-50 hover:bg-gray-900 hover:text-gray-50 focus:bg-gray-900 focus:text-gray-50 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-50 dark:hover:text-gray-900 dark:focus:bg-gray-50 dark:focus:text-gray-900",
+        day_today: "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50",
+        day_outside:
+          "day-outside text-gray-500 opacity-50 aria-selected:bg-gray-100/50 aria-selected:text-gray-500 aria-selected:opacity-30 dark:text-gray-400 dark:aria-selected:bg-gray-800/50 dark:aria-selected:text-gray-400",
+        day_disabled: "text-gray-500 opacity-50 dark:text-gray-400",
+        day_range_middle:
+          "aria-selected:bg-gray-100 aria-selected:text-gray-900 dark:aria-selected:bg-gray-800 dark:aria-selected:text-gray-50",
+        day_hidden: "invisible",
+        ...classNames,
+      }}
+      components={{
+        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+      }}
+      {...props}
+    />
+  )
+}
+Calendar.displayName = "Calendar"
+
+export { Calendar }
+
+`,k=`import * as React from 'react';
+
+import { cn } from '../../lib/utils';
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border border-gray-200 bg-white text-gray-950 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-gray-500 dark:text-gray-400", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+`,l=`import * as React from "react"
+import useEmblaCarousel, {
+  type UseEmblaCarouselType,
+} from "embla-carousel-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+import { Button } from "./button"
+
+type CarouselApi = UseEmblaCarouselType[1]
+type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
+type CarouselOptions = UseCarouselParameters[0]
+type CarouselPlugin = UseCarouselParameters[1]
+
+type CarouselProps = {
+  opts?: CarouselOptions
+  plugins?: CarouselPlugin
+  orientation?: "horizontal" | "vertical"
+  setApi?: (api: CarouselApi) => void
+}
+
+type CarouselContextProps = {
+  carouselRef: ReturnType<typeof useEmblaCarousel>[0]
+  api: ReturnType<typeof useEmblaCarousel>[1]
+  scrollPrev: () => void
+  scrollNext: () => void
+  canScrollPrev: boolean
+  canScrollNext: boolean
+} & CarouselProps
+
+const CarouselContext = React.createContext<CarouselContextProps | null>(null)
+
+function useCarousel() {
+  const context = React.useContext(CarouselContext)
+
+  if (!context) {
+    throw new Error("useCarousel must be used within a <Carousel />")
+  }
+
+  return context
+}
+
+const Carousel = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & CarouselProps
+>(
+  (
+    {
+      orientation = "horizontal",
+      opts,
+      setApi,
+      plugins,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const [carouselRef, api] = useEmblaCarousel(
+      {
+        ...opts,
+        axis: orientation === "horizontal" ? "x" : "y",
+      },
+      plugins
+    )
+    const [canScrollPrev, setCanScrollPrev] = React.useState(false)
+    const [canScrollNext, setCanScrollNext] = React.useState(false)
+
+    const onSelect = React.useCallback((api: CarouselApi) => {
+      if (!api) {
+        return
+      }
+
+      setCanScrollPrev(api.canScrollPrev())
+      setCanScrollNext(api.canScrollNext())
+    }, [])
+
+    const scrollPrev = React.useCallback(() => {
+      api?.scrollPrev()
+    }, [api])
+
+    const scrollNext = React.useCallback(() => {
+      api?.scrollNext()
+    }, [api])
+
+    const handleKeyDown = React.useCallback(
+      (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault()
+          scrollPrev()
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault()
+          scrollNext()
+        }
+      },
+      [scrollPrev, scrollNext]
+    )
+
+    React.useEffect(() => {
+      if (!api || !setApi) {
+        return
+      }
+
+      setApi(api)
+    }, [api, setApi])
+
+    React.useEffect(() => {
+      if (!api) {
+        return
+      }
+
+      onSelect(api)
+      api.on("reInit", onSelect)
+      api.on("select", onSelect)
+
+      return () => {
+        api?.off("select", onSelect)
+      }
+    }, [api, onSelect])
+
+    return (
+      <CarouselContext.Provider
+        value={{
+          carouselRef,
+          api: api,
+          opts,
+          orientation:
+            orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
+          scrollPrev,
+          scrollNext,
+          canScrollPrev,
+          canScrollNext,
+        }}
+      >
+        <div
+          ref={ref}
+          onKeyDownCapture={handleKeyDown}
+          className={cn("relative", className)}
+          role="region"
+          aria-roledescription="carousel"
+          {...props}
+        >
+          {children}
+        </div>
+      </CarouselContext.Provider>
+    )
+  }
+)
+Carousel.displayName = "Carousel"
+
+const CarouselContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { carouselRef, orientation } = useCarousel()
+
+  return (
+    <div ref={carouselRef} className="overflow-hidden">
+      <div
+        ref={ref}
+        className={cn(
+          "flex",
+          orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
+          className
+        )}
+        {...props}
+      />
+    </div>
+  )
+})
+CarouselContent.displayName = "CarouselContent"
+
+const CarouselItem = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { orientation } = useCarousel()
+
+  return (
+    <div
+      ref={ref}
+      role="group"
+      aria-roledescription="slide"
+      className={cn(
+        "min-w-0 shrink-0 grow-0 basis-full",
+        orientation === "horizontal" ? "pl-4" : "pt-4",
+        className
+      )}
+      {...props}
+    />
+  )
+})
+CarouselItem.displayName = "CarouselItem"
+
+const CarouselPrevious = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<typeof Button>
+>(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  const { orientation, scrollPrev, canScrollPrev } = useCarousel()
+
+  return (
+    <Button
+      ref={ref}
+      variant={variant}
+      size={size}
+      className={cn(
+        "absolute  h-8 w-8 rounded-full",
+        orientation === "horizontal"
+          ? "-left-12 top-1/2 -translate-y-1/2"
+          : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
+        className
+      )}
+      disabled={!canScrollPrev}
+      onClick={scrollPrev}
+      {...props}
+    >
+      <ArrowLeft className="h-4 w-4" />
+      <span className="sr-only">Previous slide</span>
+    </Button>
+  )
+})
+CarouselPrevious.displayName = "CarouselPrevious"
+
+const CarouselNext = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<typeof Button>
+>(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  const { orientation, scrollNext, canScrollNext } = useCarousel()
+
+  return (
+    <Button
+      ref={ref}
+      variant={variant}
+      size={size}
+      className={cn(
+        "absolute h-8 w-8 rounded-full",
+        orientation === "horizontal"
+          ? "-right-12 top-1/2 -translate-y-1/2"
+          : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
+        className
+      )}
+      disabled={!canScrollNext}
+      onClick={scrollNext}
+      {...props}
+    >
+      <ArrowRight className="h-4 w-4" />
+      <span className="sr-only">Next slide</span>
+    </Button>
+  )
+})
+CarouselNext.displayName = "CarouselNext"
+
+export {
+  type CarouselApi,
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+}
+
+`,m=`import * as React from "react"
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
+import { Check } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const Checkbox = React.forwardRef<
+  React.ElementRef<typeof CheckboxPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <CheckboxPrimitive.Root
+    ref={ref}
+    className={cn(
+      "peer h-4 w-4 shrink-0 rounded-sm border border-gray-200 dark:border-gray-900 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-gray-900 data-[state=checked]:text-gray-50  dark:ring-offset-gray-950 dark:focus-visible:ring-gray-300 dark:data-[state=checked]:bg-gray-50 dark:data-[state=checked]:text-gray-900",
+      className
+    )}
+    {...props}
+  >
+    <CheckboxPrimitive.Indicator
+      className={cn("flex items-center justify-center text-current")}
+    >
+      <Check className="h-4 w-4" />
+    </CheckboxPrimitive.Indicator>
+  </CheckboxPrimitive.Root>
+))
+Checkbox.displayName = CheckboxPrimitive.Root.displayName
+
+export { Checkbox }
+
+`,n=`import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
+
+const Collapsible = CollapsiblePrimitive.Root
+
+const CollapsibleTrigger = CollapsiblePrimitive.CollapsibleTrigger
+
+const CollapsibleContent = CollapsiblePrimitive.CollapsibleContent
+
+export { Collapsible, CollapsibleTrigger, CollapsibleContent }
+
+`,o=`import * as React from "react"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { X } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const Dialog = DialogPrimitive.Root
+
+const DialogTrigger = DialogPrimitive.Trigger
+
+const DialogPortal = DialogPrimitive.Portal
+
+const DialogClose = DialogPrimitive.Close
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+  />
+))
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 text-foreground shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+))
+DialogContent.displayName = DialogPrimitive.Content.displayName
+
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col space-y-1.5 text-center sm:text-left",
+      className
+    )}
+    {...props}
+  />
+)
+DialogHeader.displayName = "DialogHeader"
+
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className
+    )}
+    {...props}
+  />
+)
+DialogFooter.displayName = "DialogFooter"
+
+const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      "text-lg font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+DialogTitle.displayName = DialogPrimitive.Title.displayName
+
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+DialogDescription.displayName = DialogPrimitive.Description.displayName
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+}
+
+`,p=`import * as React from "react"
+import { Drawer as DrawerPrimitive } from "vaul"
+
+import { cn } from "../../lib/utils"
+
+const Drawer = ({
+  shouldScaleBackground = true,
+  ...props
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
+  <DrawerPrimitive.Root
+    shouldScaleBackground={shouldScaleBackground}
+    {...props}
+  />
+)
+Drawer.displayName = "Drawer"
+
+const DrawerTrigger = DrawerPrimitive.Trigger
+
+const DrawerPortal = DrawerPrimitive.Portal
+
+const DrawerClose = DrawerPrimitive.Close
+
+const DrawerOverlay = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.Overlay
+    ref={ref}
+    className={cn("fixed inset-0 z-50 bg-black/80", className)}
+    {...props}
+  />
+))
+DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
+
+const DrawerContent = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DrawerPortal>
+    <DrawerOverlay />
+    <DrawerPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950",
+        className
+      )}
+      {...props}
+    >
+      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-gray-100 dark:bg-gray-800" />
+      {children}
+    </DrawerPrimitive.Content>
+  </DrawerPortal>
+))
+DrawerContent.displayName = "DrawerContent"
+
+const DrawerHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn("grid gap-1.5 p-4 text-center sm:text-left", className)}
+    {...props}
+  />
+)
+DrawerHeader.displayName = "DrawerHeader"
+
+const DrawerFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+    {...props}
+  />
+)
+DrawerFooter.displayName = "DrawerFooter"
+
+const DrawerTitle = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.Title
+    ref={ref}
+    className={cn(
+      "text-lg font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+DrawerTitle.displayName = DrawerPrimitive.Title.displayName
+
+const DrawerDescription = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-gray-500 dark:text-gray-400", className)}
+    {...props}
+  />
+))
+DrawerDescription.displayName = DrawerPrimitive.Description.displayName
+
+export {
+  Drawer,
+  DrawerPortal,
+  DrawerOverlay,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerDescription,
+}
+
+`,q=`import * as React from "react"
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { Check, ChevronRight, Circle } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const DropdownMenu = DropdownMenuPrimitive.Root
+
+const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
+
+const DropdownMenuGroup = DropdownMenuPrimitive.Group
+
+const DropdownMenuPortal = DropdownMenuPrimitive.Portal
+
+const DropdownMenuSub = DropdownMenuPrimitive.Sub
+
+const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
+
+const DropdownMenuSubTrigger = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
+    inset?: boolean
+  }
+>(({ className, inset, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubTrigger
+    ref={ref}
+    className={cn(
+      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-gray-100 data-[state=open]:bg-gray-100 dark:focus:bg-gray-800 dark:data-[state=open]:bg-gray-800",
+      inset && "pl-8",
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <ChevronRight className="ml-auto h-4 w-4" />
+  </DropdownMenuPrimitive.SubTrigger>
+))
+DropdownMenuSubTrigger.displayName =
+  DropdownMenuPrimitive.SubTrigger.displayName
+
+const DropdownMenuSubContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubContent
+    ref={ref}
+    className={cn(
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+      className
+    )}
+    {...props}
+  />
+))
+DropdownMenuSubContent.displayName =
+  DropdownMenuPrimitive.SubContent.displayName
+
+const DropdownMenuContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+        className
+      )}
+      {...props}
+    />
+  </DropdownMenuPrimitive.Portal>
+))
+DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
+
+const DropdownMenuItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
+    inset?: boolean
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-gray-800 dark:focus:text-gray-50",
+      inset && "pl-8",
+      className
+    )}
+    {...props}
+  />
+))
+DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
+
+const DropdownMenuCheckboxItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
+>(({ className, children, checked, ...props }, ref) => (
+  <DropdownMenuPrimitive.CheckboxItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-gray-800 dark:focus:text-gray-50",
+      className
+    )}
+    checked={checked}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.CheckboxItem>
+))
+DropdownMenuCheckboxItem.displayName =
+  DropdownMenuPrimitive.CheckboxItem.displayName
+
+const DropdownMenuRadioItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
+>(({ className, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.RadioItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-gray-800 dark:focus:text-gray-50",
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Circle className="h-2 w-2 fill-current" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.RadioItem>
+))
+DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
+
+const DropdownMenuLabel = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
+    inset?: boolean
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Label
+    ref={ref}
+    className={cn(
+      "px-2 py-1.5 text-sm font-semibold",
+      inset && "pl-8",
+      className
+    )}
+    {...props}
+  />
+))
+DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName
+
+const DropdownMenuSeparator = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-gray-100 dark:bg-gray-800", className)}
+    {...props}
+  />
+))
+DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
+
+const DropdownMenuShortcut = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) => {
+  return (
+    <span
+      className={cn("ml-auto text-xs tracking-widest opacity-60", className)}
+      {...props}
+    />
+  )
+}
+DropdownMenuShortcut.displayName = "DropdownMenuShortcut"
+
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+}
+
+`,r=`import * as React from "react"
+import * as HoverCardPrimitive from "@radix-ui/react-hover-card"
+
+import { cn } from "../../lib/utils"
+
+const HoverCard = HoverCardPrimitive.Root
+
+const HoverCardTrigger = HoverCardPrimitive.Trigger
+
+const HoverCardContent = React.forwardRef<
+  React.ElementRef<typeof HoverCardPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <HoverCardPrimitive.Content
+    ref={ref}
+    align={align}
+    sideOffset={sideOffset}
+    className={cn(
+      "z-50 w-64 rounded-md border border-gray-200 bg-white p-4 text-gray-950 shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+      className
+    )}
+    {...props}
+  />
+))
+HoverCardContent.displayName = HoverCardPrimitive.Content.displayName
+
+export { HoverCard, HoverCardTrigger, HoverCardContent }
+
+`,s=`import * as React from "react"
+import { cn } from "../../lib/utils"
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = "Input"
+
+export { Input }
+`,t=`import * as React from 'react';
+import * as LabelPrimitive from '@radix-ui/react-label';
+import { cva, type VariantProps } from 'class-variance-authority';
+
+import { cn } from '../../lib/utils';
+
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+)
+
+const Label = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants>
+>(({ className, ...props }, ref) => (
+  <LabelPrimitive.Root
+    ref={ref}
+    className={cn(labelVariants(), className)}
+    {...props}
+  />
+))
+Label.displayName = LabelPrimitive.Root.displayName
+
+export { Label }
+`,u=`
+import * as React from "react"
+import * as MenubarPrimitive from "@radix-ui/react-menubar"
+import { Check, ChevronRight, Circle } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const MenubarMenu = MenubarPrimitive.Menu
+
+const MenubarGroup = MenubarPrimitive.Group
+
+const MenubarPortal = MenubarPrimitive.Portal
+
+const MenubarSub = MenubarPrimitive.Sub
+
+const MenubarRadioGroup = MenubarPrimitive.RadioGroup
+
+const Menubar = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <MenubarPrimitive.Root
+    ref={ref}
+    className={cn(
+      "flex h-10 items-center space-x-1 rounded-md border border-gray-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-950",
+      className
+    )}
+    {...props}
+  />
+))
+Menubar.displayName = MenubarPrimitive.Root.displayName
+
+const MenubarTrigger = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <MenubarPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none focus:bg-gray-100 focus:text-gray-900 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[state=open]:bg-gray-800 dark:data-[state=open]:text-gray-50",
+      className
+    )}
+    {...props}
+  />
+))
+MenubarTrigger.displayName = MenubarPrimitive.Trigger.displayName
+
+const MenubarSubTrigger = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.SubTrigger>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubTrigger> & {
+    inset?: boolean
+  }
+>(({ className, inset, children, ...props }, ref) => (
+  <MenubarPrimitive.SubTrigger
+    ref={ref}
+    className={cn(
+      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-gray-100 focus:text-gray-900 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-50 dark:data-[state=open]:bg-gray-800 dark:data-[state=open]:text-gray-50",
+      inset && "pl-8",
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <ChevronRight className="ml-auto h-4 w-4" />
+  </MenubarPrimitive.SubTrigger>
+))
+MenubarSubTrigger.displayName = MenubarPrimitive.SubTrigger.displayName
+
+const MenubarSubContent = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.SubContent>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubContent>
+>(({ className, ...props }, ref) => (
+  <MenubarPrimitive.SubContent
+    ref={ref}
+    className={cn(
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+      className
+    )}
+    {...props}
+  />
+))
+MenubarSubContent.displayName = MenubarPrimitive.SubContent.displayName
+
+const MenubarContent = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Content>
+>(
+  (
+    { className, align = "start", alignOffset = -4, sideOffset = 8, ...props },
+    ref
+  ) => (
+    <MenubarPrimitive.Portal>
+      <MenubarPrimitive.Content
+        ref={ref}
+        align={align}
+        alignOffset={alignOffset}
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 min-w-[12rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 shadow-md data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+          className
+        )}
+        {...props}
+      />
+    </MenubarPrimitive.Portal>
+  )
+)
+MenubarContent.displayName = MenubarPrimitive.Content.displayName
+
+const MenubarItem = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Item> & {
+    inset?: boolean
+  }
+>(({ className, inset, ...props }, ref) => (
+  <MenubarPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-gray-800 dark:focus:text-gray-50",
+      inset && "pl-8",
+      className
+    )}
+    {...props}
+  />
+))
+MenubarItem.displayName = MenubarPrimitive.Item.displayName
+
+const MenubarCheckboxItem = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.CheckboxItem>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.CheckboxItem>
+>(({ className, children, checked, ...props }, ref) => (
+  <MenubarPrimitive.CheckboxItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-gray-800 dark:focus:text-gray-50",
+      className
+    )}
+    checked={checked}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <MenubarPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </MenubarPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </MenubarPrimitive.CheckboxItem>
+))
+MenubarCheckboxItem.displayName = MenubarPrimitive.CheckboxItem.displayName
+
+const MenubarRadioItem = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.RadioItem>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.RadioItem>
+>(({ className, children, ...props }, ref) => (
+  <MenubarPrimitive.RadioItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-gray-800 dark:focus:text-gray-50",
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <MenubarPrimitive.ItemIndicator>
+        <Circle className="h-2 w-2 fill-current" />
+      </MenubarPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </MenubarPrimitive.RadioItem>
+))
+MenubarRadioItem.displayName = MenubarPrimitive.RadioItem.displayName
+
+const MenubarLabel = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Label> & {
+    inset?: boolean
+  }
+>(({ className, inset, ...props }, ref) => (
+  <MenubarPrimitive.Label
+    ref={ref}
+    className={cn(
+      "px-2 py-1.5 text-sm font-semibold",
+      inset && "pl-8",
+      className
+    )}
+    {...props}
+  />
+))
+MenubarLabel.displayName = MenubarPrimitive.Label.displayName
+
+const MenubarSeparator = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <MenubarPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-gray-100 dark:bg-gray-800", className)}
+    {...props}
+  />
+))
+MenubarSeparator.displayName = MenubarPrimitive.Separator.displayName
+
+const MenubarShortcut = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) => {
+  return (
+    <span
+      className={cn(
+        "ml-auto text-xs tracking-widest text-gray-500 dark:text-gray-400",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+MenubarShortcut.displayname = "MenubarShortcut"
+
+export {
+  Menubar,
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarContent,
+  MenubarItem,
+  MenubarSeparator,
+  MenubarLabel,
+  MenubarCheckboxItem,
+  MenubarRadioGroup,
+  MenubarRadioItem,
+  MenubarPortal,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarGroup,
+  MenubarSub,
+  MenubarShortcut,
+}
+
+`,v=`import * as React from "react"
+import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
+import { cva } from "class-variance-authority"
+import { ChevronDown } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const NavigationMenu = React.forwardRef<
+  React.ElementRef<typeof NavigationMenuPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>
+>(({ className, children, ...props }, ref) => (
+  <NavigationMenuPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative z-10 flex max-w-max flex-1 items-center justify-center",
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <NavigationMenuViewport />
+  </NavigationMenuPrimitive.Root>
+))
+NavigationMenu.displayName = NavigationMenuPrimitive.Root.displayName
+
+const NavigationMenuList = React.forwardRef<
+  React.ElementRef<typeof NavigationMenuPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <NavigationMenuPrimitive.List
+    ref={ref}
+    className={cn(
+      "group flex flex-1 list-none items-center justify-center space-x-1",
+      className
+    )}
+    {...props}
+  />
+))
+NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName
+
+const NavigationMenuItem = NavigationMenuPrimitive.Item
+
+const navigationMenuTriggerStyle = cva(
+  "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent focus:bg-accent focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+)
+
+const NavigationMenuTrigger = React.forwardRef<
+  React.ElementRef<typeof NavigationMenuPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <NavigationMenuPrimitive.Trigger
+    ref={ref}
+    className={cn(navigationMenuTriggerStyle(), "group", className)}
+    {...props}
+  >
+    {children}{""}
+    <ChevronDown
+      className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
+      aria-hidden="true"
+    />
+  </NavigationMenuPrimitive.Trigger>
+))
+NavigationMenuTrigger.displayName = NavigationMenuPrimitive.Trigger.displayName
+
+const NavigationMenuContent = React.forwardRef<
+  React.ElementRef<typeof NavigationMenuPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <NavigationMenuPrimitive.Content
+    ref={ref}
+    className={cn(
+      "left-0 top-0 w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 md:absolute md:w-auto",
+      className
+    )}
+    {...props}
+  />
+))
+NavigationMenuContent.displayName = NavigationMenuPrimitive.Content.displayName
+
+const NavigationMenuLink = NavigationMenuPrimitive.Link
+
+const NavigationMenuViewport = React.forwardRef<
+  React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
+>(({ className, ...props }, ref) => (
+  <div className={cn("absolute left-0 top-full flex justify-center")}>
+    <NavigationMenuPrimitive.Viewport
+      className={cn(
+        "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border border-gray-200 bg-white text-gray-950 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)] dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+        className
+      )}
+      ref={ref}
+      {...props}
+    />
+  </div>
+))
+NavigationMenuViewport.displayName =
+  NavigationMenuPrimitive.Viewport.displayName
+
+const NavigationMenuIndicator = React.forwardRef<
+  React.ElementRef<typeof NavigationMenuPrimitive.Indicator>,
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Indicator>
+>(({ className, ...props }, ref) => (
+  <NavigationMenuPrimitive.Indicator
+    ref={ref}
+    className={cn(
+      "top-full z-[1] flex h-1.5 items-end justify-center overflow-hidden data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out data-[state=visible]:fade-in",
+      className
+    )}
+    {...props}
+  >
+    <div className="relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-gray-200 shadow-md dark:bg-gray-800" />
+  </NavigationMenuPrimitive.Indicator>
+))
+NavigationMenuIndicator.displayName =
+  NavigationMenuPrimitive.Indicator.displayName
+
+export {
+  navigationMenuTriggerStyle,
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuContent,
+  NavigationMenuTrigger,
+  NavigationMenuLink,
+  NavigationMenuIndicator,
+  NavigationMenuViewport,
+}
+
+`,w=`import * as React from "react"
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+import { ButtonProps, buttonVariants } from "./button"
+
+const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
+  <nav
+    role="navigation"
+    aria-label="pagination"
+    className={cn("mx-auto flex w-full justify-center", className)}
+    {...props}
+  />
+)
+Pagination.displayName = "Pagination"
+
+const PaginationContent = React.forwardRef<
+  HTMLUListElement,
+  React.ComponentProps<"ul">
+>(({ className, ...props }, ref) => (
+  <ul
+    ref={ref}
+    className={cn("flex flex-row items-center gap-1", className)}
+    {...props}
+  />
+))
+PaginationContent.displayName = "PaginationContent"
+
+const PaginationItem = React.forwardRef<
+  HTMLLIElement,
+  React.ComponentProps<"li">
+>(({ className, ...props }, ref) => (
+  <li ref={ref} className={cn("", className)} {...props} />
+))
+PaginationItem.displayName = "PaginationItem"
+
+type PaginationLinkProps = {
+  isActive?: boolean
+} & Pick<ButtonProps, "size"> &
+  React.ComponentProps<"a">
+
+const PaginationLink = ({
+  className,
+  isActive,
+  size = "icon",
+  ...props
+}: PaginationLinkProps) => (
+  <a
+    aria-current={isActive ? "page" : undefined}
+    className={cn(
+      buttonVariants({
+        variant: isActive ? "outline" : "ghost",
+        size,
+      }),
+      className
+    )}
+    {...props}
+  />
+)
+PaginationLink.displayName = "PaginationLink"
+
+const PaginationPrevious = ({
+  className,
+  ...props
+}: React.ComponentProps<typeof PaginationLink>) => (
+  <PaginationLink
+    aria-label="Go to previous page"
+    size="default"
+    className={cn("gap-1 pl-2.5", className)}
+    {...props}
+  >
+    <ChevronLeft className="h-4 w-4" />
+    <span>Previous</span>
+  </PaginationLink>
+)
+PaginationPrevious.displayName = "PaginationPrevious"
+
+const PaginationNext = ({
+  className,
+  ...props
+}: React.ComponentProps<typeof PaginationLink>) => (
+  <PaginationLink
+    aria-label="Go to next page"
+    size="default"
+    className={cn("gap-1 pr-2.5", className)}
+    {...props}
+  >
+    <span>Next</span>
+    <ChevronRight className="h-4 w-4" />
+  </PaginationLink>
+)
+PaginationNext.displayName = "PaginationNext"
+
+const PaginationEllipsis = ({
+  className,
+  ...props
+}: React.ComponentProps<"span">) => (
+  <span
+    aria-hidden
+    className={cn("flex h-9 w-9 items-center justify-center", className)}
+    {...props}
+  >
+    <MoreHorizontal className="h-4 w-4" />
+    <span className="sr-only">More pages</span>
+  </span>
+)
+PaginationEllipsis.displayName = "PaginationEllipsis"
+
+export {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+}
+
+`,x=`import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
+import { cn } from "../../lib/utils"
+
+const Popover = PopoverPrimitive.Root
+
+const PopoverTrigger = PopoverPrimitive.Trigger
+
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 rounded-md border border-gray-200 bg-white p-4 text-gray-950 shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+        className
+      )}
+      {...props}
+    />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName
+
+export { Popover, PopoverTrigger, PopoverContent }
+
+`,y=`import * as React from "react"
+import * as ProgressPrimitive from "@radix-ui/react-progress"
+
+import { cn } from "../../lib/utils"
+
+const Progress = React.forwardRef<
+  React.ElementRef<typeof ProgressPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
+>(({ className, value, ...props }, ref) => (
+  <ProgressPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative h-4 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800",
+      className
+    )}
+    {...props}
+  >
+    <ProgressPrimitive.Indicator
+      className="h-full w-full flex-1 bg-gray-900 transition-all dark:bg-gray-50"
+      style={{ transform: \`translateX(-\${100 - (value || 0)}%)\` }}
+    />
+  </ProgressPrimitive.Root>
+))
+Progress.displayName = ProgressPrimitive.Root.displayName
+
+export { Progress }
+`,z=`import * as React from "react"
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
+import { Circle } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const RadioGroup = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
+>(({ className, ...props }, ref) => {
+  return (
+    <RadioGroupPrimitive.Root
+      className={cn("grid gap-2", className)}
+      {...props}
+      ref={ref}
+    />
+  )
+})
+RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
+
+const RadioGroupItem = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
+>(({ className, ...props }, ref) => {
+  return (
+    <RadioGroupPrimitive.Item
+      ref={ref}
+      className={cn(
+        "aspect-square h-4 w-4 rounded-full border border-gray-200 dark:border-gray-900 text-gray-900 ring-offset-white focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50  dark:text-gray-50 dark:ring-offset-gray-950 dark:focus-visible:ring-gray-300",
+        className
+      )}
+      {...props}
+    >
+      <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+        <Circle className="h-2.5 w-2.5 fill-current text-current" />
+      </RadioGroupPrimitive.Indicator>
+    </RadioGroupPrimitive.Item>
+  )
+})
+RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
+
+export { RadioGroup, RadioGroupItem }
+
+`,A=`import * as React from "react"
+import * as SelectPrimitive from "@radix-ui/react-select"
+import { Check, ChevronDown, ChevronUp } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const Select = SelectPrimitive.Root
+
+const SelectGroup = SelectPrimitive.Group
+
+const SelectValue = SelectPrimitive.Value
+
+const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <SelectPrimitive.Icon asChild>
+      <ChevronDown className="h-4 w-4 opacity-50" />
+    </SelectPrimitive.Icon>
+  </SelectPrimitive.Trigger>
+))
+SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
+
+const SelectScrollUpButton = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.ScrollUpButton
+    ref={ref}
+    className={cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    )}
+    {...props}
+  >
+    <ChevronUp className="h-4 w-4" />
+  </SelectPrimitive.ScrollUpButton>
+))
+SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
+
+const SelectScrollDownButton = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.ScrollDownButton
+    ref={ref}
+    className={cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    )}
+    {...props}
+  >
+    <ChevronDown className="h-4 w-4" />
+  </SelectPrimitive.ScrollDownButton>
+))
+SelectScrollDownButton.displayName =
+  SelectPrimitive.ScrollDownButton.displayName
+
+const SelectContent = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
+>(({ className, children, position = "popper", ...props }, ref) => (
+  <SelectPrimitive.Portal>
+    <SelectPrimitive.Content
+      ref={ref}
+      className={cn(
+        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        position === "popper" &&
+          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        className
+      )}
+      position={position}
+      {...props}
+    >
+      <SelectScrollUpButton />
+      <SelectPrimitive.Viewport
+        className={cn(
+          "p-1",
+          position === "popper" &&
+            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+        )}
+      >
+        {children}
+      </SelectPrimitive.Viewport>
+      <SelectScrollDownButton />
+    </SelectPrimitive.Content>
+  </SelectPrimitive.Portal>
+))
+SelectContent.displayName = SelectPrimitive.Content.displayName
+
+const SelectLabel = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Label
+    ref={ref}
+    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
+    {...props}
+  />
+))
+SelectLabel.displayName = SelectPrimitive.Label.displayName
+
+const SelectItem = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <SelectPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </SelectPrimitive.ItemIndicator>
+    </span>
+
+    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+  </SelectPrimitive.Item>
+))
+SelectItem.displayName = SelectPrimitive.Item.displayName
+
+const SelectSeparator = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    {...props}
+  />
+))
+SelectSeparator.displayName = SelectPrimitive.Separator.displayName
+
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+}
+
+`,B=`import * as React from "react"
+import * as SeparatorPrimitive from "@radix-ui/react-separator"
+
+import { cn } from "../../lib/utils"
+
+const Separator = React.forwardRef<
+  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
+>(
+  (
+    { className, orientation = "horizontal", decorative = true, ...props },
+    ref
+  ) => (
+    <SeparatorPrimitive.Root
+      ref={ref}
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "shrink-0 bg-gray-200 dark:bg-gray-800",
+        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+        className
+      )}
+      {...props}
+    />
+  )
+)
+Separator.displayName = SeparatorPrimitive.Root.displayName
+
+export { Separator }
+
+`,C=`import { cn } from "../../lib/utils"
+
+function Skeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("animate-pulse rounded-md bg-gray-100 dark:bg-gray-800", className)}
+      {...props}
+    />
+  )
+}
+
+export { Skeleton }
+`,D=`import * as React from "react"
+import * as SliderPrimitive from "@radix-ui/react-slider"
+
+import { cn } from "../../lib/utils"
+
+const Slider = React.forwardRef<
+  React.ElementRef<typeof SliderPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <SliderPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative flex w-full touch-none select-none items-center",
+      className
+    )}
+    {...props}
+  >
+    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+      <SliderPrimitive.Range className="absolute h-full bg-gray-900 dark:bg-gray-50" />
+    </SliderPrimitive.Track>
+    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-gray-900 bg-white ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:border-gray-50 dark:bg-gray-950 dark:ring-offset-gray-950 dark:focus-visible:ring-gray-300" />
+  </SliderPrimitive.Root>
+))
+Slider.displayName = SliderPrimitive.Root.displayName
+
+export { Slider }
+
+`,E=`import * as React from "react"
+import * as SwitchPrimitives from "@radix-ui/react-switch"
+
+import { cn } from "../../lib/utils"
+
+const Switch = React.forwardRef<
+  React.ElementRef<typeof SwitchPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
+>(({ className, ...props }, ref) => (
+  <SwitchPrimitives.Root
+    className={cn(
+      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-gray-900 data-[state=unchecked]:bg-gray-200 dark:focus-visible:ring-gray-300 dark:focus-visible:ring-offset-gray-950 dark:data-[state=checked]:bg-gray-50 dark:data-[state=unchecked]:bg-gray-800",
+      className
+    )}
+    {...props}
+    ref={ref}
+  >
+    <SwitchPrimitives.Thumb
+      className={cn(
+        "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0 dark:bg-gray-950"
+      )}
+    />
+  </SwitchPrimitives.Root>
+))
+Switch.displayName = SwitchPrimitives.Root.displayName
+
+export { Switch }
+
+`,F=`import * as React from "react"
+
+import { cn } from "../../lib/utils"
+
+const Table = React.forwardRef<
+  HTMLTableElement,
+  React.HTMLAttributes<HTMLTableElement>
+>(({ className, ...props }, ref) => (
+  <div className="relative w-full overflow-auto">
+    <table
+      ref={ref}
+      className={cn("w-full caption-bottom text-sm", className)}
+      {...props}
+    />
+  </div>
+))
+Table.displayName = "Table"
+
+const TableHeader = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref) => (
+  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
+))
+TableHeader.displayName = "TableHeader"
+
+const TableBody = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref) => (
+  <tbody
+    ref={ref}
+    className={cn("[&_tr:last-child]:border-0", className)}
+    {...props}
+  />
+))
+TableBody.displayName = "TableBody"
+
+const TableFooter = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref) => (
+  <tfoot
+    ref={ref}
+    className={cn(
+      "border-t bg-gray-100/50 font-medium [&>tr]:last:border-b-0 dark:bg-gray-800/50",
+      className
+    )}
+    {...props}
+  />
+))
+TableFooter.displayName = "TableFooter"
+
+const TableRow = React.forwardRef<
+  HTMLTableRowElement,
+  React.HTMLAttributes<HTMLTableRowElement>
+>(({ className, ...props }, ref) => (
+  <tr
+    ref={ref}
+    className={cn(
+      "border-b transition-colors hover:bg-gray-100/50 data-[state=selected]:bg-gray-100 dark:hover:bg-gray-800/50 dark:data-[state=selected]:bg-gray-800",
+      className
+    )}
+    {...props}
+  />
+))
+TableRow.displayName = "TableRow"
+
+const TableHead = React.forwardRef<
+  HTMLTableCellElement,
+  React.ThHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref) => (
+  <th
+    ref={ref}
+    className={cn(
+      "h-12 px-4 text-left align-middle font-medium text-gray-500 [&:has([role=checkbox])]:pr-0 dark:text-gray-400",
+      className
+    )}
+    {...props}
+  />
+))
+TableHead.displayName = "TableHead"
+
+const TableCell = React.forwardRef<
+  HTMLTableCellElement,
+  React.TdHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref) => (
+  <td
+    ref={ref}
+    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    {...props}
+  />
+))
+TableCell.displayName = "TableCell"
+
+const TableCaption = React.forwardRef<
+  HTMLTableCaptionElement,
+  React.HTMLAttributes<HTMLTableCaptionElement>
+>(({ className, ...props }, ref) => (
+  <caption
+    ref={ref}
+    className={cn("mt-4 text-sm text-gray-500 dark:text-gray-400", className)}
+    {...props}
+  />
+))
+TableCaption.displayName = "TableCaption"
+
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+}
+
+`,G=`import * as React from "react"
+import * as TabsPrimitive from "@radix-ui/react-tabs"
+
+import { cn } from "../../lib/utils"
+
+const Tabs = TabsPrimitive.Root
+
+const TabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      "inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+      className
+    )}
+    {...props}
+  />
+))
+TabsList.displayName = TabsPrimitive.List.displayName
+
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-gray-950 data-[state=active]:shadow-sm dark:ring-offset-gray-950 dark:focus-visible:ring-gray-300 dark:data-[state=active]:bg-gray-950 dark:data-[state=active]:text-gray-50",
+      className
+    )}
+    {...props}
+  />
+))
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
+
+const TabsContent = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      "mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 dark:ring-offset-gray-950 dark:focus-visible:ring-gray-300",
+      className
+    )}
+    {...props}
+  />
+))
+TabsContent.displayName = TabsPrimitive.Content.displayName
+
+export { Tabs, TabsList, TabsTrigger, TabsContent }
+
+`,H=`import * as React from "react"
+
+import { cn } from "../../lib/utils"
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Textarea.displayName = "Textarea"
+
+export { Textarea }
+
+`,I=`import * as React from "react"
+import * as ToastPrimitives from "@radix-ui/react-toast"
+import { cva, type VariantProps } from "class-variance-authority"
+import { X } from "lucide-react"
+
+import { cn } from "../../lib/utils"
+
+const ToastProvider = ToastPrimitives.Provider
+
+const ToastViewport = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Viewport>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Viewport
+    ref={ref}
+    className={cn(
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
+      className
+    )}
+    {...props}
+  />
+))
+ToastViewport.displayName = ToastPrimitives.Viewport.displayName
+
+const toastVariants = cva(
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-gray-200 p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full dark:border-gray-800",
+  {
+    variants: {
+      variant: {
+        default: "border bg-white text-gray-950 dark:bg-gray-950 dark:text-gray-50",
+        destructive:
+          "destructive group border-red-500 bg-red-500 text-gray-50 dark:border-red-900 dark:bg-red-900 dark:text-gray-50",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+const Toast = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
+    VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => {
+  return (
+    <ToastPrimitives.Root
+      ref={ref}
+      className={cn(toastVariants({ variant }), className)}
+      {...props}
+    />
+  )
+})
+Toast.displayName = ToastPrimitives.Root.displayName
+
+const ToastAction = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Action>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Action
+    ref={ref}
+    className={cn(
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-transparent px-3 text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-gray-100/40 group-[.destructive]:hover:border-red-500/30 group-[.destructive]:hover:bg-red-500 group-[.destructive]:hover:text-gray-50 group-[.destructive]:focus:ring-red-500 dark:border-gray-800 dark:ring-offset-gray-950 dark:hover:bg-gray-800 dark:focus:ring-gray-300 dark:group-[.destructive]:border-gray-800/40 dark:group-[.destructive]:hover:border-red-900/30 dark:group-[.destructive]:hover:bg-red-900 dark:group-[.destructive]:hover:text-gray-50 dark:group-[.destructive]:focus:ring-red-900",
+      className
+    )}
+    {...props}
+  />
+))
+ToastAction.displayName = ToastPrimitives.Action.displayName
+
+const ToastClose = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Close>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Close
+    ref={ref}
+    className={cn(
+      "absolute right-2 top-2 rounded-md p-1 text-gray-950/50 opacity-0 transition-opacity hover:text-gray-950 focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600 dark:text-gray-50/50 dark:hover:text-gray-50",
+      className
+    )}
+    toast-close=""
+    {...props}
+  >
+    <X className="h-4 w-4" />
+  </ToastPrimitives.Close>
+))
+ToastClose.displayName = ToastPrimitives.Close.displayName
+
+const ToastTitle = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Title>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Title
+    ref={ref}
+    className={cn("text-sm font-semibold", className)}
+    {...props}
+  />
+))
+ToastTitle.displayName = ToastPrimitives.Title.displayName
+
+const ToastDescription = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Description>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Description
+    ref={ref}
+    className={cn("text-sm opacity-90", className)}
+    {...props}
+  />
+))
+ToastDescription.displayName = ToastPrimitives.Description.displayName
+
+type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
+
+type ToastActionElement = React.ReactElement<typeof ToastAction>
+
+export {
+  type ToastProps,
+  type ToastActionElement,
+  ToastProvider,
+  ToastViewport,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
+}
+
+`,J=`import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "./toast"
+import { useToast } from "./use-toast"
+
+export function Toaster() {
+  const { toasts } = useToast()
+
+  return (
+    <ToastProvider>
+      {toasts.map(function ({ id, title, description, action, ...props }) {
+        return (
+          <Toast key={id} {...props}>
+            <div className="grid gap-1">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
+            </div>
+            {action}
+            <ToastClose />
+          </Toast>
+        )
+      })}
+      <ToastViewport />
+    </ToastProvider>
+  )
+}
+
+`,K=`import * as React from "react"
+import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group"
+import { type VariantProps } from "class-variance-authority"
+
+import { cn } from "../../lib/utils"
+import { toggleVariants } from "./toggle"
+
+const ToggleGroupContext = React.createContext<
+  VariantProps<typeof toggleVariants>
+>({
+  size: "default",
+  variant: "default",
+})
+
+const ToggleGroup = React.forwardRef<
+  React.ElementRef<typeof ToggleGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> &
+    VariantProps<typeof toggleVariants>
+>(({ className, variant, size, children, ...props }, ref) => (
+  <ToggleGroupPrimitive.Root
+    ref={ref}
+    className={cn("flex items-center justify-center gap-1", className)}
+    {...props}
+  >
+    <ToggleGroupContext.Provider value={{ variant, size }}>
+      {children}
+    </ToggleGroupContext.Provider>
+  </ToggleGroupPrimitive.Root>
+))
+
+ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName
+
+const ToggleGroupItem = React.forwardRef<
+  React.ElementRef<typeof ToggleGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> &
+    VariantProps<typeof toggleVariants>
+>(({ className, children, variant, size, ...props }, ref) => {
+  const context = React.useContext(ToggleGroupContext)
+
+  return (
+    <ToggleGroupPrimitive.Item
+      ref={ref}
+      className={cn(
+        toggleVariants({
+          variant: context.variant || variant,
+          size: context.size || size,
+        }),
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </ToggleGroupPrimitive.Item>
+  )
+})
+
+ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName
+
+export { ToggleGroup, ToggleGroupItem }
+
+`,L=`import * as React from "react"
+import * as TogglePrimitive from "@radix-ui/react-toggle"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "../../lib/utils"
+
+const toggleVariants = cva(
+  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground",
+  {
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        outline:
+          "border border-input bg-transparent hover:bg-accent",
+      },
+      size: {
+        default: "h-10 px-3",
+        sm: "h-9 px-2.5",
+        lg: "h-11 px-5",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+const Toggle = React.forwardRef<
+  React.ElementRef<typeof TogglePrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> &
+    VariantProps<typeof toggleVariants>
+>(({ className, variant, size, ...props }, ref) => (
+  <TogglePrimitive.Root
+    ref={ref}
+    className={cn(toggleVariants({ variant, size, className }))}
+    {...props}
+  />
+))
+
+Toggle.displayName = TogglePrimitive.Root.displayName
+
+export { Toggle, toggleVariants }
+
+`,M=`import * as React from "react"
+import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+
+import { cn } from "../../lib/utils"
+
+const TooltipProvider = TooltipPrimitive.Provider
+
+const Tooltip = TooltipPrimitive.Root
+
+const TooltipTrigger = TooltipPrimitive.Trigger
+
+const TooltipContent = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <TooltipPrimitive.Content
+    ref={ref}
+    sideOffset={sideOffset}
+    className={cn(
+      "z-50 overflow-hidden rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-950 shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
+      className
+    )}
+    {...props}
+  />
+))
+TooltipContent.displayName = TooltipPrimitive.Content.displayName
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+
+`,N=`import * as React from "react"
+
+import type {
+  ToastActionElement,
+  ToastProps,
+} from "./toast"
+
+const TOAST_LIMIT = 1
+const TOAST_REMOVE_DELAY = 1000000
+
+type ToasterToast = ToastProps & {
+  id: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: ToastActionElement
+}
+
+const actionTypes = {
+  ADD_TOAST: "ADD_TOAST",
+  UPDATE_TOAST: "UPDATE_TOAST",
+  DISMISS_TOAST: "DISMISS_TOAST",
+  REMOVE_TOAST: "REMOVE_TOAST",
+} as const
+
+let count = 0
+
+function genId() {
+  count = (count + 1) % Number.MAX_SAFE_INTEGER
+  return count.toString()
+}
+
+type ActionType = typeof actionTypes
+
+type Action =
+  | {
+      type: ActionType["ADD_TOAST"]
+      toast: ToasterToast
+    }
+  | {
+      type: ActionType["UPDATE_TOAST"]
+      toast: Partial<ToasterToast>
+    }
+  | {
+      type: ActionType["DISMISS_TOAST"]
+      toastId?: ToasterToast["id"]
+    }
+  | {
+      type: ActionType["REMOVE_TOAST"]
+      toastId?: ToasterToast["id"]
+    }
+
+interface State {
+  toasts: ToasterToast[]
+}
+
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+const addToRemoveQueue = (toastId: string) => {
+  if (toastTimeouts.has(toastId)) {
+    return
+  }
+
+  const timeout = setTimeout(() => {
+    toastTimeouts.delete(toastId)
+    dispatch({
+      type: "REMOVE_TOAST",
+      toastId: toastId,
+    })
+  }, TOAST_REMOVE_DELAY)
+
+  toastTimeouts.set(toastId, timeout)
+}
+
+export const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case "ADD_TOAST":
+      return {
+        ...state,
+        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+      }
+
+    case "UPDATE_TOAST":
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
+        ),
+      }
+
+    case "DISMISS_TOAST": {
+      const { toastId } = action
+
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
+      if (toastId) {
+        addToRemoveQueue(toastId)
+      } else {
+        state.toasts.forEach((toast) => {
+          addToRemoveQueue(toast.id)
+        })
+      }
+
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t
+        ),
+      }
+    }
+    case "REMOVE_TOAST":
+      if (action.toastId === undefined) {
+        return {
+          ...state,
+          toasts: [],
+        }
+      }
+      return {
+        ...state,
+        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+      }
+  }
+}
+
+const listeners: Array<(state: State) => void> = []
+
+let memoryState: State = { toasts: [] }
+
+function dispatch(action: Action) {
+  memoryState = reducer(memoryState, action)
+  listeners.forEach((listener) => {
+    listener(memoryState)
+  })
+}
+
+type Toast = Omit<ToasterToast, "id">
+
+function toast({ ...props }: Toast) {
+  const id = genId()
+
+  const update = (props: ToasterToast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    })
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss()
+      },
+    },
+  })
+
+  return {
+    id: id,
+    dismiss,
+    update,
+  }
+}
+
+function useToast() {
+  const [state, setState] = React.useState<State>(memoryState)
+
+  React.useEffect(() => {
+    listeners.push(setState)
+    return () => {
+      const index = listeners.indexOf(setState)
+      if (index > -1) {
+        listeners.splice(index, 1)
+      }
+    }
+  }, [state])
+
+  return {
+    ...state,
+    toast,
+    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+  }
+}
+
+export { useToast, toast }
+`,O=`"use client"
+
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+import { Slot } from "@radix-ui/react-slot"
+import {
+  Controller,
+  FormProvider,
+  useFormContext,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form"
+
+import { cn } from "@/lib/utils"
+import { Label } from "@/components/ui/label"
+
+const Form = FormProvider
+
+type FormFieldContextValue<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+> = {
+  name: TName
+}
+
+const FormFieldContext = React.createContext<FormFieldContextValue | null>(null)
+
+const FormField = <
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>(props: ControllerProps<TFieldValues, TName>) => (
+  <FormFieldContext.Provider value={{ name: props.name }}>
+    <Controller {...props} />
+  </FormFieldContext.Provider>
+)
+
+type FormItemContextValue = {
+  id: string
+}
+
+const FormItemContext = React.createContext<FormItemContextValue | null>(null)
+
+const useFormField = () => {
+  const fieldContext = React.useContext(FormFieldContext)
+  const itemContext = React.useContext(FormItemContext)
+  const { getFieldState, formState } = useFormContext()
+
+  if (!fieldContext) {
+    throw new Error("useFormField should be used within <FormField>")
+  }
+  if (!itemContext) {
+    throw new Error("useFormField should be used within <FormItem>")
+  }
+
+  const fieldState = getFieldState(fieldContext.name, formState)
+  const { id } = itemContext
+
+  return {
+    id,
+    name: fieldContext.name,
+    formItemId: \`\${id}-form-item\`,
+    formDescriptionId: \`\${id}-form-item-description\`,
+    formMessageId: \`\${id}-form-item-message\`,
+    ...fieldState,
+  }
+}
+
+const FormItem = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const id = React.useId()
+
+  return (
+    <FormItemContext.Provider value={{ id }}>
+      <div ref={ref} className={cn("space-y-2", className)} {...props} />
+    </FormItemContext.Provider>
+  )
+})
+FormItem.displayName = "FormItem"
+
+const FormLabel = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
+>(({ className, ...props }, ref) => {
+  const { error, formItemId } = useFormField()
+
+  return (
+    <Label
+      ref={ref}
+      className={cn(error && "text-destructive", className)}
+      htmlFor={formItemId}
+      {...props}
+    />
+  )
+})
+FormLabel.displayName = "FormLabel"
+
+const FormControl = React.forwardRef<
+  React.ElementRef<typeof Slot>,
+  React.ComponentPropsWithoutRef<typeof Slot>
+>(({ ...props }, ref) => {
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
+
+  return (
+    <Slot
+      ref={ref}
+      id={formItemId}
+      aria-describedby={
+        error
+          ? \`\${formDescriptionId} \${formMessageId}\`
+          : formDescriptionId
+      }
+      aria-invalid={Boolean(error)}
+      {...props}
+    />
+  )
+})
+FormControl.displayName = "FormControl"
+
+const FormDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => {
+  const { formDescriptionId } = useFormField()
+
+  return (
+    <p
+      ref={ref}
+      id={formDescriptionId}
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+})
+FormDescription.displayName = "FormDescription"
+
+const FormMessage = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, children, ...props }, ref) => {
+  const { error, formMessageId } = useFormField()
+  const body = error ? String(error.message ?? "") : children
+
+  if (!body) return null
+
+  return (
+    <p
+      ref={ref}
+      id={formMessageId}
+      className={cn("text-sm font-medium text-destructive", className)}
+      {...props}
+    >
+      {body}
+    </p>
+  )
+})
+FormMessage.displayName = "FormMessage"
+
+export {
+  useFormField,
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+  FormField,
+}
+`,P=`"use client"
+
+import { GripVertical } from "lucide-react"
+import * as ResizablePrimitive from "react-resizable-panels"
+
+import { cn } from "@/lib/utils"
+
+function ResizablePanelGroup({
+  className,
+  ...props
+}: ResizablePrimitive.GroupProps) {
+  return (
+    <ResizablePrimitive.Group
+      className={cn(
+        "flex h-full w-full aria-[orientation=vertical]:flex-col",
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+function ResizablePanel(props: ResizablePrimitive.PanelProps) {
+  return <ResizablePrimitive.Panel {...props} />
+}
+
+function ResizableHandle({
+  withHandle,
+  className,
+  ...props
+}: ResizablePrimitive.SeparatorProps & { withHandle?: boolean }) {
+  return (
+    <ResizablePrimitive.Separator
+      className={cn(
+        "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 aria-[orientation=horizontal]:h-px aria-[orientation=horizontal]:w-full aria-[orientation=horizontal]:after:left-0 aria-[orientation=horizontal]:after:h-1 aria-[orientation=horizontal]:after:w-full aria-[orientation=horizontal]:after:translate-x-0 aria-[orientation=horizontal]:after:-translate-y-1/2 [&[aria-orientation=horizontal]>div]:rotate-90",
+        className,
+      )}
+      {...props}
+    >
+      {withHandle ? (
+        <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
+          <GripVertical className="h-2.5 w-2.5" />
+        </div>
+      ) : null}
+    </ResizablePrimitive.Separator>
+  )
+}
+
+export { ResizableHandle, ResizablePanel, ResizablePanelGroup }
+`,Q=`"use client"
+
+import * as React from "react"
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+
+import { cn } from "@/lib/utils"
+
+const ScrollArea = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
+>(({ className, children, ...props }, ref) => (
+  <ScrollAreaPrimitive.Root
+    ref={ref}
+    className={cn("relative overflow-hidden", className)}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Viewport className="h-full w-full">
+      {children}
+    </ScrollAreaPrimitive.Viewport>
+    <ScrollBar />
+    <ScrollAreaPrimitive.Corner />
+  </ScrollAreaPrimitive.Root>
+))
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
+
+const ScrollBar = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
+>(({ className, orientation = "vertical", ...props }, ref) => (
+  <ScrollAreaPrimitive.ScrollAreaScrollbar
+    ref={ref}
+    orientation={orientation}
+    className={cn(
+      "flex touch-none select-none transition-colors",
+      orientation === "vertical" &&
+        "h-full w-2.5 border-l border-l-transparent p-px",
+      orientation === "horizontal" &&
+        "h-2.5 flex-col border-t border-t-transparent p-px",
+      className,
+    )}
+    {...props}
+  >
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+  </ScrollAreaPrimitive.ScrollAreaScrollbar>
+))
+ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
+
+export { ScrollArea, ScrollBar }
+`;var R=a.i(385298),S=a.i(854340);let T={background:"0 0% 100%",foreground:"0 0% 3.9%",card:"0 0% 100%","card-foreground":"0 0% 3.9%",popover:"0 0% 100%","popover-foreground":"0 0% 3.9%",primary:"0 0% 9%","primary-foreground":"0 0% 98%",secondary:"0 0% 96.1%","secondary-foreground":"0 0% 9%",muted:"0 0% 96.1%","muted-foreground":"0 0% 45.1%",accent:"0 0% 96.1%","accent-foreground":"0 0% 9%",destructive:"0 84.2% 60.2%","destructive-foreground":"0 0% 98%",border:"0 0% 89.8%",input:"0 0% 89.8%",ring:"0 0% 3.9%",radius:"0.5rem"},U={background:"0 0% 3.9%",foreground:"0 0% 98%",card:"0 0% 3.9%","card-foreground":"0 0% 98%",popover:"0 0% 3.9%","popover-foreground":"0 0% 98%",primary:"0 0% 98%","primary-foreground":"0 0% 9%",secondary:"0 0% 14.9%","secondary-foreground":"0 0% 98%",muted:"0 0% 14.9%","muted-foreground":"0 0% 63.9%",accent:"0 0% 14.9%","accent-foreground":"0 0% 98%",destructive:"0 62.8% 30.6%","destructive-foreground":"0 0% 98%",border:"0 0% 14.9%",input:"0 0% 14.9%",ring:"0 0% 83.1%",radius:"0.5rem"},V={colors:{border:"hsl(var(--border))",input:"hsl(var(--input))",ring:"hsl(var(--ring))",background:"hsl(var(--background))",foreground:"hsl(var(--foreground))",primary:{DEFAULT:"hsl(var(--primary))",foreground:"hsl(var(--primary-foreground))"},secondary:{DEFAULT:"hsl(var(--secondary))",foreground:"hsl(var(--secondary-foreground))"},destructive:{DEFAULT:"hsl(var(--destructive))",foreground:"hsl(var(--destructive-foreground))"},muted:{DEFAULT:"hsl(var(--muted))",foreground:"hsl(var(--muted-foreground))"},accent:{DEFAULT:"hsl(var(--accent))",foreground:"hsl(var(--accent-foreground))"},popover:{DEFAULT:"hsl(var(--popover))",foreground:"hsl(var(--popover-foreground))"},card:{DEFAULT:"hsl(var(--card))",foreground:"hsl(var(--card-foreground))"}},borderRadius:{lg:"var(--radius)",md:"calc(var(--radius) - 2px)",sm:"calc(var(--radius) - 4px)"}};function W(a,b){return[`${a} {`,...Object.entries(b).map(([a,b])=>`  --${a}: ${b};`),"}"]}function X({includeTailwindDirectives:a=!1}={}){return[...a?["@tailwind base;","@tailwind components;","@tailwind utilities;",""]:[],...W(":root",T),"",...W(".dark",U),"",":root { color-scheme: light; }",".dark { color-scheme: dark; }","","* {","  border-color: hsl(var(--border));","}","","html {","  background-color: hsl(var(--background));","  color: hsl(var(--foreground));","}","","body {","  margin: 0;","  min-width: 320px;","  min-height: 100vh;","  background-color: hsl(var(--background));","  color: hsl(var(--foreground));","}"].join("\n")}function Y(){return JSON.stringify(V,null,2)}a.s(["buildGeneratedThemeCss",0,X,"serializeGeneratedTailwindThemeExtension",0,Y],812389);var Z=a.i(565832);S.generatedAppDependencies;let $={"/lib/utils.ts":b,"/components/ui/accordion.tsx":c,"/components/ui/alert-dialog.tsx":d,"/components/ui/alert.tsx":e,"/components/ui/avatar.tsx":f,"/components/ui/badge.tsx":g,"/components/ui/breadcrumb.tsx":h,"/components/ui/button.tsx":i,"/components/ui/calendar.tsx":j,"/components/ui/card.tsx":k,"/components/ui/carousel.tsx":l,"/components/ui/checkbox.tsx":m,"/components/ui/collapsible.tsx":n,"/components/ui/dialog.tsx":o,"/components/ui/drawer.tsx":p,"/components/ui/dropdown-menu.tsx":q,"/components/ui/form.tsx":O,"/components/ui/hover-card.tsx":r,"/components/ui/input.tsx":s,"/components/ui/label.tsx":t,"/components/ui/menubar.tsx":u,"/components/ui/navigation-menu.tsx":v,"/components/ui/pagination.tsx":w,"/components/ui/popover.tsx":x,"/components/ui/progress.tsx":y,"/components/ui/radio-group.tsx":z,"/components/ui/resizable.tsx":P,"/components/ui/scroll-area.tsx":Q,"/components/ui/select.tsx":A,"/components/ui/separator.tsx":B,"/components/ui/skeleton.tsx":C,"/components/ui/slider.tsx":D,"/components/ui/switch.tsx":E,"/components/ui/table.tsx":F,"/components/ui/tabs.tsx":G,"/components/ui/textarea.tsx":H,"/components/ui/toast.tsx":I,"/components/ui/toaster.tsx":J,"/components/ui/toggle-group.tsx":K,"/components/ui/toggle.tsx":L,"/components/ui/tooltip.tsx":M,"/components/ui/use-toast.tsx":N,"/components/ui/index.tsx":`
+  export * from "./button"
+  export * from "./card"
+  export * from "./input"
+  export * from "./label"
+  export * from "./select"
+  export * from "./textarea"
+  export * from "./avatar"
+  export * from "./radio-group"
+  `,"/public/index.html":`<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Document</title>
+    </head>
+    <body>
+      <div id="root"></div>
+    </body>
+  </html>
+  `},_=`type TailwindRuntime = {
+  config: unknown;
+};
+
+const configureTailwind = () => {
+  const runtime = (window as Window & { tailwind?: TailwindRuntime }).tailwind;
+  if (!runtime) return false;
+
+  runtime.config = {
+    darkMode: "class",
+    theme: {
+      extend: ${Y()},
+    },
+  };
+  return true;
+};
+
+const styleId = "squid-generated-theme";
+if (!document.getElementById(styleId)) {
+  const style = document.createElement("style");
+  style.id = styleId;
+  style.textContent = ${JSON.stringify(X())};
+  document.head.appendChild(style);
+}
+
+if (!configureTailwind()) {
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+    if (configureTailwind() || attempts >= 40) {
+      window.clearInterval(timer);
+    }
+  }, 25);
+}
+
+export {};
+`,aa=/\b(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;function ab(a){let b={"/public/index.html":$["/public/index.html"]},c=[],d=(a,d)=>{let e;for(aa.lastIndex=0;null!==(e=aa.exec(d));){let d=function(a,b){let c;if(b.startsWith("@/"))c=`/${b.slice(2)}`;else if(b.startsWith("/"))c=b;else{if(!(b.startsWith("./")||b.startsWith("../")))return null;let d=a.slice(0,a.lastIndexOf("/"));c=function(a){let b=[];for(let c of a.split("/"))c&&"."!==c&&(".."===c?b.pop():b.push(c));return`/${b.join("/")}`}(`${d}/${b}`)}return(/\.[a-z]+$/i.test(c)?[c]:[c,`${c}.tsx`,`${c}.ts`,`${c}/index.tsx`]).find(a=>a in $)??null}(a,e[1]);!d||d in b||(b[d]=$[d],c.push(d))}};for(let b of a)d(`/${b.path}`,b.code);for(;c.length>0;){let a=c.shift();a&&d(a,b[a])}return b}let ac=`"use client";
+
+import { useEffect } from "react";
+
+const PREVIEW_SOURCE = "squid-preview-inspector";
+const PARENT_SOURCE = "squid-preview-parent";
+const READY_ANNOUNCEMENT_TIMEOUT_MS = 60_000;
+
+export function SquidPreviewInspector() {
+  useEffect(() => {
+    let selectionMode = false;
+    let readyAnnouncementTimer: number | undefined;
+
+    function ensureSelectionStyles() {
+      if (document.getElementById("squid-preview-selection-style")) return;
+
+      const style = document.createElement("style");
+      style.id = "squid-preview-selection-style";
+      style.textContent = [
+        "body.squid-preview-selecting,",
+        "body.squid-preview-selecting * {",
+        "  cursor: crosshair !important;",
+        "}",
+        "body.squid-preview-selecting *:hover {",
+        "  outline: 2px solid #2563eb !important;",
+        "  outline-offset: 2px !important;",
+        "}",
+      ].join("\\n");
+      document.head.appendChild(style);
+    }
+
+    function setSelectionMode(enabled: boolean) {
+      selectionMode = enabled;
+      ensureSelectionStyles();
+      document.body?.classList.toggle("squid-preview-selecting", enabled);
+    }
+
+    function getDomPath(element: Element) {
+      const segments: string[] = [];
+      let current: Element | null = element;
+
+      while (current && current !== document.body) {
+        const parent: Element | null = current.parentElement;
+        const tag = current.tagName.toLowerCase();
+        const id = current.id ? "#" + current.id : "";
+        const className =
+          typeof current.className === "string" && current.className.trim()
+            ? "." + current.className.trim().split(/\\s+/).slice(0, 3).join(".")
+            : "";
+        const index = parent
+          ? Array.from(parent.children)
+              .filter((child) => child.tagName === current?.tagName)
+              .indexOf(current) + 1
+          : 1;
+
+        segments.unshift(tag + id + className + ":nth-of-type(" + index + ")");
+        current = parent;
+      }
+
+      return segments.join(" > ");
+    }
+
+    function getSelectionAttributes(element: Element) {
+      const attributeNames = [
+        "type",
+        "name",
+        "placeholder",
+        "title",
+        "data-testid",
+        "aria-current",
+        "aria-expanded",
+        "aria-pressed",
+      ];
+      const attributes: Record<string, string> = {};
+
+      for (const name of attributeNames) {
+        const value = element.getAttribute(name);
+        if (value) attributes[name] = value.slice(0, 160);
+      }
+
+      return Object.keys(attributes).length > 0 ? attributes : undefined;
+    }
+
+    function getElementRect(element: Element) {
+      const rect = element.getBoundingClientRect();
+      return {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+
+    function serializeSelection(target: Element) {
+      return {
+        tagName: target.tagName.toLowerCase(),
+        domPath: getDomPath(target),
+        text:
+          target.textContent?.replace(/\\s+/g, " ").trim().slice(0, 240) ||
+          "",
+        id: target.id || undefined,
+        className:
+          typeof target.className === "string"
+            ? target.className.slice(0, 240)
+            : undefined,
+        role: target.getAttribute("role") || undefined,
+        ariaLabel: target.getAttribute("aria-label") || undefined,
+        href: target instanceof HTMLAnchorElement ? target.href : undefined,
+        imageAlt:
+          target instanceof HTMLImageElement ? target.alt || undefined : undefined,
+        attributes: getSelectionAttributes(target),
+        rect: getElementRect(target),
+        html: target.outerHTML.replace(/\\s+/g, " ").trim().slice(0, 600),
+      };
+    }
+
+    function postReady() {
+      window.parent?.postMessage({ source: PREVIEW_SOURCE, type: "ready" }, "*");
+    }
+
+    async function captureWithSafeCanvasPatterns<T>(
+      capture: () => Promise<T>,
+    ) {
+      const prototype = CanvasRenderingContext2D.prototype;
+      const originalCreatePattern = prototype.createPattern;
+
+      prototype.createPattern = function (
+        image: CanvasImageSource,
+        repetition: string | null,
+      ) {
+        const source = image as CanvasImageSource & {
+          width?: number;
+          height?: number;
+          getContext?: unknown;
+        };
+        const isZeroSizedCanvas =
+          typeof source.getContext === "function" &&
+          (source.width === 0 || source.height === 0);
+
+        if (isZeroSizedCanvas) {
+          // html2canvas 1.4.1 can round a subpixel gradient surface down to
+          // zero before creating its pattern. A transparent pixel preserves
+          // the screenshot while omitting only that unrenderable surface.
+          const fallback = this.canvas.ownerDocument.createElement("canvas");
+          fallback.width = 1;
+          fallback.height = 1;
+          return originalCreatePattern.call(this, fallback, repetition);
+        }
+
+        return originalCreatePattern.call(this, image, repetition);
+      };
+
+      try {
+        return await capture();
+      } finally {
+        prototype.createPattern = originalCreatePattern;
+      }
+    }
+
+    async function captureScreenshot(message: {
+      requestId?: string;
+      width?: number;
+      height?: number;
+      quality?: number;
+    }) {
+      const requestId = String(message.requestId ?? "");
+      const width = Number(message.width) || 1280;
+      const height = Number(message.height) || 720;
+      const quality = Number(message.quality) || 78;
+
+      try {
+        const html2canvas = (await import("html2canvas")).default;
+        const canvas = await captureWithSafeCanvasPatterns(() =>
+          html2canvas(document.documentElement, {
+            width,
+            height,
+            windowWidth: width,
+            windowHeight: height,
+            scale: 1,
+            logging: false,
+            useCORS: true,
+            backgroundColor:
+              getComputedStyle(document.body).backgroundColor || "#ffffff",
+            onclone: (doc) => {
+              doc.querySelector("[data-squid-preview-inspector]")?.remove();
+            },
+          }),
+        );
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(
+            (result) =>
+              result
+                ? resolve(result)
+                : reject(new Error("Screenshot encoding failed")),
+            "image/jpeg",
+            quality / 100,
+          );
+        });
+        const buffer = await blob.arrayBuffer();
+        window.parent?.postMessage(
+          {
+            source: PREVIEW_SOURCE,
+            type: "screenshot",
+            requestId,
+            buffer,
+            mimeType: "image/jpeg",
+          },
+          "*",
+          [buffer],
+        );
+      } catch (error) {
+        window.parent?.postMessage(
+          {
+            source: PREVIEW_SOURCE,
+            type: "screenshot",
+            requestId,
+            error:
+              error instanceof Error ? error.message : "Screenshot capture failed",
+          },
+          "*",
+        );
+      }
+    }
+
+    function runRuntimeTest(requestId: number) {
+      const clickableElements = Array.from(
+        document.querySelectorAll(
+          "button, a, input, select, textarea, [role='button']",
+        ),
+      );
+      const unnamedClickableElements = clickableElements.filter((element) => {
+        const labelledBy = element.getAttribute("aria-labelledby");
+        const labelledByText = labelledBy
+          ? labelledBy
+              .split(/\\s+/)
+              .map((id) => document.getElementById(id)?.textContent || "")
+              .join(" ")
+          : "";
+        const label =
+          element.getAttribute("aria-label") ||
+          labelledByText ||
+          element.getAttribute("title") ||
+          element.getAttribute("placeholder") ||
+          element.textContent;
+
+        return !label?.replace(/\\s+/g, " ").trim();
+      }).length;
+      const horizontalOverflow =
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth + 8;
+
+      window.parent?.postMessage(
+        {
+          source: PREVIEW_SOURCE,
+          type: "runtime-test-report",
+          requestId,
+          report: {
+            status:
+              unnamedClickableElements > 0 || horizontalOverflow
+                ? "review"
+                : "passed",
+            viewport: {
+              width: Math.max(1, document.documentElement.clientWidth),
+              height: Math.max(1, document.documentElement.clientHeight),
+            },
+            clickableElements: clickableElements.length,
+            unnamedClickableElements,
+            horizontalOverflow,
+            runtimeError: null,
+            checkedAt: new Date().toISOString(),
+          },
+        },
+        "*",
+      );
+    }
+
+    function onMessage(event: MessageEvent) {
+      const message = event.data;
+      if (!message || message.source !== PARENT_SOURCE) return;
+
+      if (message.type === "set-selection-mode") {
+        setSelectionMode(Boolean(message.enabled));
+      }
+
+      if (message.type === "ping") {
+        postReady();
+      }
+
+      if (message.type === "ready-ack" && readyAnnouncementTimer !== undefined) {
+        window.clearInterval(readyAnnouncementTimer);
+      }
+
+      if (message.type === "run-runtime-test") {
+        runRuntimeTest(Number(message.requestId) || 0);
+      }
+
+      if (message.type === "capture-screenshot") {
+        void captureScreenshot(message);
+      }
+    }
+
+    function onClick(event: MouseEvent) {
+      if (!selectionMode) return;
+      if (!(event.target instanceof Element)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectionMode(false);
+      window.parent?.postMessage(
+        {
+          source: PREVIEW_SOURCE,
+          type: "selected",
+          selection: serializeSelection(event.target),
+        },
+        "*",
+      );
+    }
+
+    window.addEventListener("message", onMessage);
+    window.addEventListener("click", onClick, true);
+    ensureSelectionStyles();
+    postReady();
+    readyAnnouncementTimer = window.setInterval(postReady, 500);
+    const stopReadyAnnouncementTimer = window.setTimeout(
+      () => window.clearInterval(readyAnnouncementTimer),
+      READY_ANNOUNCEMENT_TIMEOUT_MS,
+    );
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("click", onClick, true);
+      window.clearInterval(readyAnnouncementTimer);
+      window.clearTimeout(stopReadyAnnouncementTimer);
+      document.body?.classList.remove("squid-preview-selecting");
+    };
+  }, []);
+
+  return <div data-squid-preview-inspector hidden aria-hidden="true" />;
+}
+`;a.s(["getRequiredShadcnFiles",0,ab,"getSandpackConfig",0,function(a,b){var c,d;let e=(0,R.normalizeGeneratedFiles)(a),f={...ab(e)};for(let a of(f["/tsconfig.json"]=`{
+    "include": [
+      "./**/*"
+    ],
+    "compilerOptions": {
+      "strict": true,
+      "esModuleInterop": true,
+      "lib": [ "dom", "es2015" ],
+      "jsx": "react-jsx",
+      "baseUrl": "./",
+      "paths": {
+        "@/components/*": ["components/*"],
+        "@/lib/*": ["lib/*"],
+        "@/squid-runtime/*": ["squid-runtime/*"],
+        "@/utils/*": ["utils/*"],
+        "@/types/*": ["types/*"]
+      }
+    }
+  }`,e))"App.tsx"===a.path?f["/App.generated.tsx"]=a.code:f[`/${a.path}`]=a.code;if(f["/squid-preview-inspector.tsx"]=ac,f["/squid-preview-theme.ts"]=_,b&&(f[Z.SUPABASE_PREVIEW_RUNTIME_PATH]={code:"ready"!==(c=b).status?`throw new Error(${JSON.stringify((0,Z.getSupabaseRuntimeSetupMessage)(c))});
+
+export const url = "";
+export const publishableKey = "";
+`:`export const url = ${JSON.stringify(c.config.url)};
+export const publishableKey = ${JSON.stringify(c.config.publishableKey)};
+`,hidden:!0,readOnly:!0},f[Z.SUPABASE_CLIENT_ADAPTER_PATH]={code:(0,Z.buildSupabaseClientAdapterModule)(),hidden:!0,readOnly:!0}),f["/App.generated.tsx"])f["/App.tsx"]=`import "./squid-preview-theme";
+import GeneratedApp from "./App.generated";
+import { SquidPreviewInspector } from "./squid-preview-inspector";
+
+export default function App() {
+  return (
+    <>
+      <SquidPreviewInspector />
+      <GeneratedApp />
+    </>
+  );
+}`;else if(e.length>0){let a=(e.find(a=>a.path.endsWith(".tsx")||a.path.endsWith(".jsx"))||e[0]).path.replace(/\.(tsx?|jsx?)$/,"");f["/App.tsx"]=`import "./squid-preview-theme";
+import React from 'react';
+import MainComponent from './${a}';
+import { SquidPreviewInspector } from "./squid-preview-inspector";
+
+export default function App() {
+  return (
+    <>
+      <SquidPreviewInspector />
+      <MainComponent />
+    </>
+  );
+}`}return{template:"react-ts",files:f,options:{externalResources:["https://cdn.tailwindcss.com"]},customSetup:{dependencies:{...(d=f,(0,S.getRequiredGeneratedAppDependencies)(Object.values(d).map(a=>"string"==typeof a?a:a.code))),html2canvas:"1.4.1"}}}}],370848)}];
+
+//# sourceMappingURL=_03dw5i1._.js.map

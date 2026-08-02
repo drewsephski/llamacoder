@@ -4,9 +4,10 @@ vi.mock("server-only", () => ({}));
 
 const generateTextMock = vi.hoisted(() => vi.fn());
 
-vi.mock("ai", () => ({
-  generateText: generateTextMock,
-}));
+vi.mock("ai", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("ai")>();
+  return { ...actual, generateText: generateTextMock };
+});
 
 vi.mock("@/lib/openrouter", () => ({
   createAppOpenRouter: vi.fn(),
@@ -19,6 +20,13 @@ vi.mock("@/lib/openrouter", () => ({
     visible: false,
     mandatory: false,
     effort: "none",
+  })),
+}));
+
+vi.mock("@/features/generation/server/request-telemetry", () => ({
+  createRequestTelemetry: vi.fn(() => ({
+    markFirstByte: vi.fn(),
+    record: vi.fn().mockResolvedValue(undefined),
   })),
 }));
 
@@ -49,6 +57,9 @@ describe("follow-up prompt normalization", () => {
   it("uses the dedicated system channel for generation instructions", async () => {
     generateTextMock.mockResolvedValueOnce({
       text: '{"prompts":["Add filters","Polish mobile","Improve loading"]}',
+      output: {
+        prompts: ["Add filters", "Polish mobile", "Improve loading"],
+      },
     });
 
     await generateFollowUpPrompts({
@@ -58,6 +69,10 @@ describe("follow-up prompt normalization", () => {
 
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        maxOutputTokens: 400,
+        maxRetries: 1,
+        timeout: { totalMs: 8_000 },
+        output: expect.anything(),
         system: expect.stringContaining("Generate concise follow-up prompts"),
         prompt: expect.stringContaining("Project title: Dashboard"),
       }),

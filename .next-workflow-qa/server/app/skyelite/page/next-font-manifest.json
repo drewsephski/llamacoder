@@ -1,0 +1,13 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/app/skyelite/page": [
+      "static/media/5c285b27cdda1fe8-s.p.2_mbdogr7ni8i.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/7ebf22b5a21034f8-s.p.3j3877k49yy0l.woff2",
+      "static/media/e41d5df559864f9e-s.p.1g73gv09-xcb6.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

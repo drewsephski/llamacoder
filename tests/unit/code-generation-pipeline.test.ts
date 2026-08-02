@@ -156,4 +156,17 @@ describe("code generation pipeline", () => {
       partialText: expect.stringContaining("```tsx{path=App.tsx}"),
     });
   });
+
+  it("refuses to finalize syntactically valid output truncated by token limits", () => {
+    expect(
+      getCodeGenerationRunFinalizeState(completeGeneratedApp, "length"),
+    ).toEqual({
+      status: "recoverable",
+      phase: "continuation_required",
+      label: "Generation reached the model limit",
+      partialText: completeGeneratedApp,
+      errorMessage:
+        "The model reached its output limit before the app was complete. Continue or retry before saving this version.",
+    });
+  });
 });

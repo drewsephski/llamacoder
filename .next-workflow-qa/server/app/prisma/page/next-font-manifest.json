@@ -1,0 +1,15 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/app/prisma/page": [
+      "static/media/5c285b27cdda1fe8-s.p.2_mbdogr7ni8i.woff2",
+      "static/media/2cc64289d47b4837-s.p.3gyhordp6ke8y.woff2",
+      "static/media/22fa55bc1dba6839-s.p.0d9vtzwl8fd0i.woff2",
+      "static/media/92965d68c2e7dc96-s.p.1tn4ua9rqzvtc.woff2",
+      "static/media/434f71d810631da4-s.p.3ea9128zkldg5.woff2",
+      "static/media/7ebf22b5a21034f8-s.p.3j3877k49yy0l.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

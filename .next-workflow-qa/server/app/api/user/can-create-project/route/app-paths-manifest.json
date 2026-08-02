@@ -1,0 +1,3 @@
+{
+  "/api/user/can-create-project/route": "app/api/user/can-create-project/route.js"
+}

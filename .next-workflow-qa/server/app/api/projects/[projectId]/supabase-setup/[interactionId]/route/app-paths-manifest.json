@@ -1,0 +1,3 @@
+{
+  "/api/projects/[projectId]/supabase-setup/[interactionId]/route": "app/api/projects/[projectId]/supabase-setup/[interactionId]/route.js"
+}

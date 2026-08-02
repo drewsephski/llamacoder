@@ -105,17 +105,14 @@ describe("AI persistence classifier", () => {
         detected: true,
         recommendation: "require_database",
         explicitlyRequested: false,
-        proposedSchema: [
-          { entity: "habits" },
-          { entity: "habit_entries" },
-        ],
+        proposedSchema: [{ entity: "habits" }, { entity: "habit_entries" }],
       },
     });
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: "USER REQUEST 1:\nBuild me a habit tracker app",
         system: expect.stringContaining(
-          "even when the user never says \"database\", \"save\", or \"persist\"",
+          'even when the user never says "database", "save", or "persist"',
         ),
       }),
     );
@@ -172,7 +169,8 @@ describe("AI persistence classifier", () => {
         isAppRequest: true,
         requiresPersistence: true,
         confidence: 100,
-        rationale: "The user explicitly requested Supabase for the existing app.",
+        rationale:
+          "The user explicitly requested Supabase for the existing app.",
         useCase: "Habit tracker backend",
         explicitlyRequested: true,
         requirements: {
@@ -204,7 +202,9 @@ describe("AI persistence classifier", () => {
         detected: true,
         explicitlyRequested: true,
         requirements: { authentication: true, realtime: true },
-        proposedSchema: [{ entity: "habits", fields: ["name: text", "user_id: uuid"] }],
+        proposedSchema: [
+          { entity: "habits", fields: ["name: text", "user_id: uuid"] },
+        ],
       },
     });
     expect(generateTextMock).toHaveBeenCalledWith(

@@ -1,0 +1,3 @@
+module.exports=[261315,a=>{"use strict";var b=a.i(428838),c=function(){function a(a,b,c){void 0===c&&(c={}),this.status="idle",this.options=c,this.sandboxSetup=b,this.iframeSelector=a}return a.prototype.updateOptions=function(a){(0,b.dequal)(this.options,a)||(this.options=a,this.updateSandbox())},a.prototype.updateSandbox=function(a,b){throw void 0===a&&(a=this.sandboxSetup),Error("Method not implemented")},a.prototype.destroy=function(){throw Error("Method not implemented")},a.prototype.dispatch=function(a){throw Error("Method not implemented")},a.prototype.listen=function(a){throw Error("Method not implemented")},a}();a.s(["S",0,c])}];
+
+//# sourceMappingURL=0w3f_%40codesandbox_sandpack-client_dist_base-80a1f760_mjs_132d0ew._.js.map

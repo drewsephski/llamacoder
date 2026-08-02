@@ -533,7 +533,7 @@ describe("/api/get-next-completion-stream-promise", () => {
         chat: {
           id: "chat_1",
           userId: "user_1",
-          model: "model_1",
+          model: "deepseek/deepseek-v4-flash",
           quality: "low",
         },
       }),
@@ -548,7 +548,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     const response = await POST(
       request({
         messageId: "msg_1",
-        model: "model_1",
+        model: "deepseek/deepseek-v4-flash",
         screenshotData,
       }),
     );
@@ -567,6 +567,12 @@ describe("/api/get-next-completion-stream-promise", () => {
       ]),
     );
     expect(generateTextMock).not.toHaveBeenCalled();
+    expect(createRequestTelemetryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: "google/gemini-3.1-flash-lite",
+        requestKind: "generation",
+      }),
+    );
     const lastMessage = streamTextMock.mock.calls[0][0].messages.at(-1);
     expect(lastMessage.content).toEqual(
       expect.arrayContaining([
@@ -2928,8 +2934,10 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(createOpenRouterModelMock).toHaveBeenCalledWith(
       expect.anything(),
       "google/gemini-3.1-flash-lite",
-      expect.objectContaining({ maxTokens: 16_000 }),
+      expect.objectContaining({ usage: { include: true } }),
+      { sort: "throughput" },
     );
+    expect(streamTextMock.mock.calls[0][0].maxOutputTokens).toBe(16_000);
     const prompt = streamTextMock.mock.calls[0][0].messages[0].content;
     expect(prompt).toContain("Render a reachable edit-title action");
     expect(prompt).toContain("export default function App");

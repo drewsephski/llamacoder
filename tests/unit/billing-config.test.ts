@@ -7,6 +7,7 @@ import {
   getModelCreditHoldCost,
   getModelCreditCost,
   getModelTokenPricing,
+  getOpenRouterMaxPrice,
   isSubscriptionEntitled,
   normalizeTier,
 } from "@/lib/billing/config";
@@ -71,6 +72,25 @@ describe("billing config", () => {
     expect(getModelTokenPricing(LEGACY_DEFAULT_MODEL)).toEqual(
       getModelTokenPricing(DEFAULT_MODEL),
     );
+    expect(getModelTokenPricing(FREE_MODEL)).toEqual({
+      inputPricePerMillion: 0.14,
+      outputPricePerMillion: 0.28,
+    });
+    expect(getModelTokenPricing("z-ai/glm-5.2")).toEqual({
+      inputPricePerMillion: 0.2842,
+      outputPricePerMillion: 0.8932,
+    });
+  });
+
+  it("adds a bounded safety margin to OpenRouter provider ceilings", () => {
+    expect(getOpenRouterMaxPrice(FREE_MODEL)).toEqual({
+      inputPricePerMillion: 0.161,
+      outputPricePerMillion: 0.322,
+    });
+    expect(getOpenRouterMaxPrice("z-ai/glm-5.2")).toEqual({
+      inputPricePerMillion: 0.32683,
+      outputPricePerMillion: 1.02718,
+    });
   });
 
   it("rounds actual provider cost up to preserve the configured margin", () => {

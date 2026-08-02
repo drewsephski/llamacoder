@@ -1,0 +1,12 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/app/mentality/page": [
+      "static/media/5c285b27cdda1fe8-s.p.2_mbdogr7ni8i.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.1gsd1jahc5dg_.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

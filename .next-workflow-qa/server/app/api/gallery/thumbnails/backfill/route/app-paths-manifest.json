@@ -1,0 +1,3 @@
+{
+  "/api/gallery/thumbnails/backfill/route": "app/api/gallery/thumbnails/backfill/route.js"
+}

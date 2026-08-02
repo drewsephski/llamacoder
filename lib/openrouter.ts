@@ -11,6 +11,8 @@ import { getErrorMessage } from "@/features/shared/errors";
 import type { SystemModelMessage } from "ai";
 
 const MAX_OPENROUTER_FALLBACK_MODELS = 3;
+export const HELICONE_OPENROUTER_BASE_URL =
+  "https://openrouter.helicone.ai/api/v1";
 export const GENERATED_CODE_MAX_TOKENS = 16000;
 export const VISION_ANALYSIS_MODEL =
   process.env.OPENROUTER_VISION_MODEL || DEFAULT_MODEL;
@@ -58,7 +60,7 @@ export function createAppOpenRouter({
   }
 
   if (process.env.HELICONE_API_KEY) {
-    options.baseURL = "https://openrouter.helicone.ai/api/v1";
+    options.baseURL = HELICONE_OPENROUTER_BASE_URL;
     options.headers = {
       "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
       "Helicone-Property-appname": "SquidAgent",
@@ -190,9 +192,9 @@ export function aggregateOpenRouterUsageMetadata(
   if (summaries.length === 0) return null;
 
   const sum = (
-    select: (summary: NonNullable<OpenRouterUsageSummary>) =>
-      | number
-      | undefined,
+    select: (
+      summary: NonNullable<OpenRouterUsageSummary>,
+    ) => number | undefined,
   ) => {
     const values = summaries
       .map(select)

@@ -1,0 +1,3 @@
+{
+  "/api/page-purchases/[sessionId]/download/route": "app/api/page-purchases/[sessionId]/download/route.js"
+}

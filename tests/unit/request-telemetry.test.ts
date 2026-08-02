@@ -179,4 +179,74 @@ describe("AI request telemetry", () => {
       }),
     });
   });
+
+  it("charges aggregate usage and provider cost for a multi-step request", async () => {
+    const telemetry = createRequestTelemetry({
+      userId: "user_1",
+      chatId: "chat_1",
+      messageId: "message_1",
+      modelId: "openai/gpt-4.1",
+      creditHoldId: "hold_1",
+      quality: "low",
+      reasoning: {
+        enabled: false,
+        visible: false,
+        mandatory: false,
+        effort: "none",
+      },
+    });
+
+    await telemetry.record({
+      status: "completed",
+      usage: {
+        inputTokens: 300,
+        inputTokenDetails: {
+          noCacheTokens: 300,
+          cacheReadTokens: 0,
+          cacheWriteTokens: 0,
+        },
+        outputTokens: 100,
+        outputTokenDetails: {
+          textTokens: 100,
+          reasoningTokens: 0,
+        },
+        totalTokens: 400,
+      },
+      providerMetadataByStep: [
+        {
+          openrouter: {
+            provider: "Provider A",
+            usage: {
+              cost: 0.01,
+              promptTokens: 100,
+              completionTokens: 20,
+              totalTokens: 120,
+            },
+          },
+        },
+        {
+          openrouter: {
+            provider: "Provider B",
+            usage: {
+              cost: 0.03,
+              promptTokens: 200,
+              completionTokens: 80,
+              totalTokens: 280,
+            },
+          },
+        },
+      ],
+    });
+
+    expect(creditHoldUpdateManyMock).toHaveBeenCalledWith({
+      where: { id: "hold_1", status: "active" },
+      data: expect.objectContaining({
+        providerCostUsd: { increment: 0.04 },
+        inputTokens: { increment: 300 },
+        outputTokens: { increment: 100 },
+        totalTokens: { increment: 400 },
+        provider: "Provider B",
+      }),
+    });
+  });
 });

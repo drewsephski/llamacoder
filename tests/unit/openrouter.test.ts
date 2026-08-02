@@ -7,12 +7,15 @@ vi.mock("@/lib/model-fallbacks", () => ({
 }));
 
 import {
+  aggregateOpenRouterUsageMetadata,
   createOpenRouterModel,
+  getCacheableSystemPrompt,
   getAIErrorMessage,
   getAIErrorStatus,
   getOpenRouterModelRoute,
   getOpenRouterProviderOptions,
   getOpenRouterReasoningSelection,
+  HELICONE_OPENROUTER_BASE_URL,
   requiresOpenRouterReasoning,
 } from "@/lib/openrouter";
 import {
@@ -57,8 +60,66 @@ describe("OpenRouter helpers", () => {
       models: undefined,
       provider: {
         sort: "price",
-        max_price: { prompt: 2, completion: 8 },
+        max_price: { prompt: 2.3, completion: 9.2 },
       },
+    });
+  });
+
+  it("uses the OpenRouter-specific Helicone gateway", () => {
+    expect(HELICONE_OPENROUTER_BASE_URL).toBe(
+      "https://openrouter.helicone.ai/api/v1",
+    );
+  });
+
+  it("opts Anthropic system prompts into ephemeral provider caching", () => {
+    getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
+
+    expect(
+      getCacheableSystemPrompt("anthropic/claude-sonnet-5", "stable prompt"),
+    ).toEqual({
+      role: "system",
+      content: "stable prompt",
+      providerOptions: {
+        openrouter: { cacheControl: { type: "ephemeral" } },
+      },
+    });
+    expect(getCacheableSystemPrompt(SAFE_GPT_MODEL, "stable prompt")).toBe(
+      "stable prompt",
+    );
+  });
+
+  it("aggregates token and cost metadata across tool-loop steps", () => {
+    expect(
+      aggregateOpenRouterUsageMetadata([
+        {
+          openrouter: {
+            provider: "Provider A",
+            usage: {
+              cost: 0.01,
+              promptTokens: 100,
+              completionTokens: 20,
+              totalTokens: 120,
+            },
+          },
+        },
+        {
+          openrouter: {
+            provider: "Provider B",
+            usage: {
+              cost: 0.03,
+              promptTokens: 200,
+              completionTokens: 80,
+              totalTokens: 280,
+            },
+          },
+        },
+      ]),
+    ).toMatchObject({
+      provider: "Provider B",
+      providerCostUsd: 0.04,
+      inputTokens: 300,
+      outputTokens: 100,
+      totalTokens: 400,
     });
   });
 

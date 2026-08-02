@@ -81,6 +81,13 @@ vi.mock("@/features/security/server/rate-limit", () => ({
   consumeRateLimit: consumeRateLimitMock,
 }));
 
+vi.mock("@/features/generation/server/request-telemetry", () => ({
+  createRequestTelemetry: vi.fn(() => ({
+    markFirstByte: vi.fn(),
+    record: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 import { POST } from "@/app/api/create-chat/route";
 
 function request(body: unknown) {

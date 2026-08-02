@@ -127,7 +127,11 @@ describe("design partner homepage surface", () => {
     expect(screen.getByText("Enter a valid email address.")).toBeVisible();
     await waitFor(() => expect(screen.getByLabelText(/^name/i)).toHaveFocus());
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(screen.getByText(/step 01 of 05/i)).toBeVisible();
+    expect(screen.getByText("Contact details")).toBeVisible();
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "1",
+    );
   });
 
   it("keeps answers when moving backward through the guided form", async () => {

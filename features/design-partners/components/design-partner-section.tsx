@@ -8,8 +8,8 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  Check,
   CircleCheck,
+  LockKeyhole,
 } from "lucide-react";
 import { usePlausible } from "next-plausible";
 
@@ -78,28 +78,28 @@ const initialValues: FormValues = {
 
 const formSteps = [
   {
-    eyebrow: "Start with the basics",
+    label: "Contact details",
     title: "Who should we follow up with?",
     description: "Use the details you check most often for project work.",
   },
   {
-    eyebrow: "A little context",
+    label: "Your work",
     title: "Tell us how you work.",
     description: "This helps us understand the perspective you bring.",
   },
   {
-    eyebrow: "The useful part",
+    label: "Project brief",
     title: "What should we prototype?",
     description:
       "A rough brief is enough. Focus on the decision it should unlock.",
   },
   {
-    eyebrow: "Plan the follow-up",
+    label: "Timing and reply",
     title: "When and where should we reply?",
     description: "Choose the timing and channel that work best for you.",
   },
   {
-    eyebrow: "Ready to send",
+    label: "Review",
     title: "One last confirmation.",
     description:
       "Review the essentials, then send your brief to the Squid team.",
@@ -128,7 +128,7 @@ const fieldStep: Partial<Record<FormValueName, number>> = {
 
 const lastStep = formSteps.length - 1;
 const fieldControlClass =
-  "h-12 rounded-xl bg-muted/25 px-4 shadow-none transition-colors hover:bg-muted/40 focus-visible:bg-background";
+  "h-12 rounded-lg border-border/80 bg-background/60 px-4 shadow-none transition-[background-color,border-color,box-shadow] duration-200 hover:border-foreground/20 hover:bg-background focus-visible:border-primary/70 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-primary/15 focus-visible:ring-offset-0";
 
 const stepMotionVariants = {
   enter: (direction: number) => ({
@@ -279,53 +279,72 @@ export function DesignPartnerSection() {
     <section
       id="design-partner-program"
       aria-labelledby="design-partner-heading"
-      className="relative z-10 scroll-mt-28 overflow-x-clip border-y border-border/70 bg-muted/25 px-3 py-14 sm:px-6 sm:py-24"
+      className="relative isolate z-10 scroll-mt-28 overflow-x-clip border-y border-border/70 bg-background px-3 py-14 sm:px-6 sm:py-24 lg:py-28"
     >
-      <div className="mx-auto grid w-full min-w-0 max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:gap-16">
-        <div className="min-w-0 px-1 lg:sticky lg:top-24 lg:self-start lg:px-0">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_72%_24%,hsl(var(--primary)/0.08),transparent_28%),linear-gradient(to_bottom,hsl(var(--muted)/0.28),transparent_42%)] dark:bg-[radial-gradient(circle_at_72%_24%,hsl(var(--primary)/0.12),transparent_30%),linear-gradient(to_bottom,hsl(var(--muted)/0.22),transparent_44%)]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent"
+      />
+
+      <div className="mx-auto grid w-full min-w-0 max-w-[1180px] gap-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:items-start lg:gap-16 xl:gap-20">
+        <div className="min-w-0 px-1 lg:sticky lg:top-28 lg:self-start lg:px-0">
           <p className="font-mono-jb text-xs font-semibold uppercase tracking-[0.16em] text-[#0062FF] dark:text-[#0CA8FF]">
             Design partner program
           </p>
           <h2
             id="design-partner-heading"
-            className="mt-4 max-w-xl font-display text-4xl leading-[1.02] tracking-tight text-foreground sm:text-5xl"
+            className="mt-4 max-w-xl text-balance font-display text-4xl leading-[1.02] tracking-[-0.035em] text-foreground sm:text-5xl"
           >
             Turn a real brief into something your client can click.
           </h2>
-          <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground">
+          <p className="mt-6 max-w-lg text-pretty text-base leading-7 text-muted-foreground">
             We are inviting a small group of designers, agency owners, product
             leads, and founders to build one real prototype directly with the
             Squid team.
           </p>
 
-          <ul className="mt-8 space-y-4">
+          <ol className="mt-9 max-w-lg border-y border-border/80">
             {[
               "One focused working session with the Squid team",
               "A shareable React prototype and portable source code",
               "No charge for the first prototype",
               "Candid feedback is required; positive feedback is not",
-            ].map((item) => (
-              <li key={item} className="flex gap-3 text-sm leading-6">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#0062FF]/10 text-[#0062FF] dark:text-[#0CA8FF]">
-                  <Check className="size-3.5" aria-hidden="true" />
+            ].map((item, index) => (
+              <li
+                key={item}
+                className="flex items-start gap-4 border-b border-border/65 py-3.5 text-sm leading-6 last:border-b-0"
+              >
+                <span
+                  aria-hidden="true"
+                  className="font-mono-jb w-6 shrink-0 pt-px text-[11px] font-semibold tabular-nums text-primary"
+                >
+                  {String(index + 1).padStart(2, "0")}
                 </span>
-                {item}
+                <span className="text-foreground/90">{item}</span>
               </li>
             ))}
-          </ul>
+          </ol>
 
-          <p className="mt-8 max-w-lg border-l-2 border-border pl-4 text-sm leading-6 text-muted-foreground">
+          <p className="mt-7 max-w-lg border-l-2 border-primary/30 pl-4 text-sm leading-6 text-muted-foreground">
             This is a research partnership, not a promise of ongoing agency
             services. We select briefs where a prototype can create a useful
             decision quickly.
           </p>
         </div>
 
-        <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-background p-4 shadow-sm sm:rounded-2xl sm:p-8">
+        <div className="relative min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/80 bg-background/90 p-4 shadow-[0_28px_90px_-48px_hsl(var(--primary)/0.55)] backdrop-blur-sm sm:p-7">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
+          />
           {status === "success" ? (
             <article
               aria-live="polite"
-              className="relative isolate flex min-h-[520px] flex-col overflow-hidden rounded-lg bg-muted/35 p-5 sm:rounded-xl sm:p-8"
+              className="relative isolate flex min-h-[500px] flex-col overflow-hidden rounded-xl bg-muted/30 p-5 sm:p-8"
             >
               <div
                 aria-hidden="true"
@@ -397,35 +416,52 @@ export function DesignPartnerSection() {
             <form
               onSubmit={handleSubmit}
               noValidate
-              className="flex min-h-[620px] min-w-0 flex-col"
+              className="flex min-h-[540px] min-w-0 flex-col"
             >
-              <div className="border-b border-border/70 pb-6">
+              <div className="border-b border-border/70 pb-5">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="font-mono-jb text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-                    Step {String(currentStep + 1).padStart(2, "0")} of{" "}
+                  <p className="text-xs font-medium text-foreground">
+                    Application progress
+                  </p>
+                  <p className="font-mono-jb text-[11px] tabular-nums text-muted-foreground">
+                    {String(currentStep + 1).padStart(2, "0")} /{" "}
                     {String(formSteps.length).padStart(2, "0")}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    About 3 minutes
-                  </p>
                 </div>
-                <div
+
+                <ol
                   role="progressbar"
                   aria-label="Application progress"
                   aria-valuemin={1}
                   aria-valuemax={formSteps.length}
                   aria-valuenow={currentStep + 1}
-                  className="mt-4 h-1 overflow-hidden rounded-full bg-muted"
+                  className="mt-4 grid grid-cols-5 gap-1.5"
                 >
-                  <motion.div
-                    className="h-full origin-left rounded-full bg-primary"
-                    initial={false}
-                    animate={{ scaleX: (currentStep + 1) / formSteps.length }}
-                    transition={{
-                      duration: reduceMotion ? 0 : 0.35,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                  />
+                  {formSteps.map((step, index) => (
+                    <li key={step.label}>
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "block h-1 rounded-full bg-muted transition-[background-color,opacity] duration-300",
+                          index <= currentStep && "bg-primary",
+                          index < currentStep && "opacity-45",
+                        )}
+                      />
+                      <span className="sr-only">
+                        {step.label}
+                        {index === currentStep ? ", current" : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+
+                <div className="mt-3 flex items-center justify-between gap-4">
+                  <p className="text-xs font-medium text-primary">
+                    {formSteps[currentStep].label}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    About 3 minutes
+                  </p>
                 </div>
               </div>
 
@@ -443,7 +479,7 @@ export function DesignPartnerSection() {
                 </div>
               ) : null}
 
-              <div className="relative min-h-[430px] flex-1 overflow-hidden py-8">
+              <div className="relative min-h-[340px] flex-1 overflow-hidden py-7 sm:min-h-[350px]">
                 <AnimatePresence mode="wait" initial={false} custom={direction}>
                   <motion.div
                     key={currentStep}
@@ -458,17 +494,14 @@ export function DesignPartnerSection() {
                     }}
                     className="min-w-0"
                   >
-                    <header className="mb-8">
-                      <p className="text-sm font-medium text-primary">
-                        {formSteps[currentStep].eyebrow}
-                      </p>
+                    <header className="mb-7">
                       <h3
                         id={`design-partner-step-${currentStep}`}
-                        className="mt-2 max-w-lg font-display text-3xl leading-[1.08] tracking-tight text-foreground"
+                        className="max-w-lg text-balance font-display text-3xl leading-[1.08] tracking-[-0.025em] text-foreground"
                       >
                         {formSteps[currentStep].title}
                       </h3>
-                      <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+                      <p className="mt-3 max-w-lg text-pretty text-sm leading-6 text-muted-foreground">
                         {formSteps[currentStep].description}
                       </p>
                     </header>
@@ -488,25 +521,37 @@ export function DesignPartnerSection() {
                 <input id="website" name="website" tabIndex={-1} />
               </div>
 
-              <footer className="flex items-center justify-between gap-3 border-t border-border/70 pt-6">
+              <footer className="mt-auto flex items-center justify-between gap-3 border-t border-border/70 pt-5">
                 {currentStep > 0 ? (
                   <Button
                     type="button"
                     variant="ghost"
                     onClick={goToPreviousStep}
                     disabled={status === "submitting"}
+                    className="active:translate-y-px"
                   >
                     <ArrowLeft data-icon="inline-start" aria-hidden="true" />
                     Back
                   </Button>
                 ) : (
-                  <p className="hidden text-xs text-muted-foreground sm:block">
-                    Your answers stay private.
+                  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <LockKeyhole className="size-3.5" aria-hidden="true" />
+                    <span className="hidden sm:inline">
+                      Your answers stay private.
+                    </span>
+                    <span className="sr-only sm:hidden">
+                      Your answers stay private.
+                    </span>
                   </p>
                 )}
 
                 {currentStep < lastStep ? (
-                  <Button type="button" size="lg" onClick={goToNextStep}>
+                  <Button
+                    type="button"
+                    size="lg"
+                    onClick={goToNextStep}
+                    className="active:translate-y-px"
+                  >
                     Continue
                     <ArrowRight data-icon="inline-end" aria-hidden="true" />
                   </Button>
@@ -515,7 +560,7 @@ export function DesignPartnerSection() {
                     type="submit"
                     size="lg"
                     disabled={status === "submitting"}
-                    className="min-w-40"
+                    className="min-w-40 active:translate-y-px"
                   >
                     {status === "submitting" ? (
                       <CometSpinner
@@ -676,7 +721,7 @@ function WizardStep({
             aria-describedby={
               issues.projectSummary ? "projectSummary-error" : undefined
             }
-            className="resize-none rounded-xl bg-muted/25 p-4 text-base leading-7 shadow-none transition-colors hover:bg-muted/40 focus-visible:bg-background"
+            className="resize-none rounded-lg border-border/80 bg-background/60 p-4 text-base leading-7 shadow-none transition-[background-color,border-color,box-shadow] duration-200 hover:border-foreground/20 hover:bg-background focus-visible:border-primary/70 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-primary/15 focus-visible:ring-offset-0"
             required
           />
         </Field>
@@ -796,13 +841,13 @@ function EnhancedSelectField({
         id={id}
         aria-invalid={invalid}
         aria-describedby={invalid ? `${id}-error` : undefined}
-        className="h-12 rounded-xl bg-muted/25 px-4 text-base shadow-none transition-colors hover:bg-muted/40 data-[state=open]:border-primary/50 data-[state=open]:bg-background"
+        className="h-12 rounded-lg border-border/80 bg-background/60 px-4 text-base shadow-none transition-[background-color,border-color,box-shadow] duration-200 hover:border-foreground/20 hover:bg-background focus:ring-4 focus:ring-primary/15 focus:ring-offset-0 data-[state=open]:border-primary/70 data-[state=open]:bg-background"
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent
         position="popper"
-        className="rounded-xl border-border/80 bg-popover/95 p-1 shadow-xl backdrop-blur-md"
+        className="rounded-xl border-border/80 bg-popover/95 p-1 shadow-[0_20px_60px_-28px_hsl(var(--primary)/0.4)] backdrop-blur-md"
       >
         <SelectGroup>
           {options.map(([optionValue, label]) => (

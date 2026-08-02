@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "functions": {
+    "/_middleware": {
+      "runtime": "nodejs",
+      "matchers": [
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!api|_next\\/static|_next\\/image|favicon.ico).*))(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$",
+          "originalSource": "/((?!api|_next/static|_next/image|favicon.ico).*)"
+        }
+      ]
+    },
+    "/api/gallery": {
+      "maxDuration": 120
+    },
+    "/api/gallery/[publicationId]/thumbnail": {
+      "maxDuration": 120
+    },
+    "/api/gallery/thumbnails/backfill": {
+      "maxDuration": 60
+    },
+    "/api/get-next-completion-stream-promise": {
+      "maxDuration": 300
+    },
+    "/api/maintenance/gallery-thumbnails": {
+      "maxDuration": 60
+    },
+    "/api/page-purchases/[sessionId]/download": {},
+    "/api/scrape-screenshot": {
+      "maxDuration": 120
+    },
+    "/api/synthetic/launch": {
+      "maxDuration": 60
+    },
+    "/chats/[id]": {
+      "maxDuration": 45
+    }
+  }
+}

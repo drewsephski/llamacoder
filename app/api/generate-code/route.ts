@@ -260,11 +260,16 @@ export async function POST(request: NextRequest) {
 
     const generateCode = (userContent: string) =>
       generateText({
-        model: createOpenRouterModel(openrouter, chat.model, {
-          usage: { include: true },
-        }, {
-          sort: "throughput",
-        }),
+        model: createOpenRouterModel(
+          openrouter,
+          chat.model,
+          {
+            usage: { include: true },
+          },
+          {
+            sort: "throughput",
+          },
+        ),
         maxOutputTokens: GENERATED_CODE_MAX_TOKENS,
         providerOptions: getOpenRouterProviderOptions(
           chat.model,

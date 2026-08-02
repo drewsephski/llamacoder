@@ -1,0 +1,3 @@
+module.exports=[856057,a=>{"use strict";var b=a.i(748790);let c=(0,a.i(794474).createNoIndexMetadata)({title:"Shared React App Preview",description:"Preview a React app shared from Squid Agent.",path:"/share",includeCanonical:!1});a.s(["default",0,function({children:a}){return(0,b.jsx)("div",{className:"flex min-h-dvh flex-col items-center justify-center",children:a})},"metadata",0,c])},764743,a=>{a.n(a.i(856057))}];
+
+//# sourceMappingURL=app_share_layout_tsx_1pdky3h._.js.map
