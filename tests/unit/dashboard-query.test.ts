@@ -94,4 +94,45 @@ describe("dashboard verification evidence", () => {
     expect(result.userCredits).toBe(5);
     expect(mocks.getUserCreditInfo).toHaveBeenCalledWith("user_1");
   });
+
+  it("searches owned project titles and prompts with matching pagination counts", async () => {
+    const count = vi.fn().mockResolvedValueOnce(12).mockResolvedValueOnce(2);
+    const findMany = vi.fn().mockResolvedValue([]);
+    mocks.getPrisma.mockReturnValue({
+      chat: { count, findMany },
+      runtimeVerification: { findMany: vi.fn() },
+      exportArtifact: { findMany: vi.fn() },
+    });
+
+    const result = await getDashboardData({
+      page: "2",
+      query: "  portfolio  ",
+    });
+
+    const projectWhere = {
+      userId: "user_1",
+      OR: [
+        { title: { contains: "portfolio", mode: "insensitive" } },
+        { prompt: { contains: "portfolio", mode: "insensitive" } },
+      ],
+    };
+    expect(count).toHaveBeenNthCalledWith(1, {
+      where: { userId: "user_1" },
+    });
+    expect(count).toHaveBeenNthCalledWith(2, { where: projectWhere });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: projectWhere,
+        skip: 0,
+        take: 9,
+      }),
+    );
+    expect(result).toMatchObject({
+      currentPage: 1,
+      filteredProjects: 2,
+      query: "portfolio",
+      totalPages: 1,
+      totalProjects: 12,
+    });
+  });
 });

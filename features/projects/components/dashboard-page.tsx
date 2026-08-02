@@ -27,15 +27,12 @@ import {
   TriangleAlert,
   Info,
   MessageSquareText,
+  Search,
+  X,
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 import {
   Empty,
   EmptyContent,
@@ -92,17 +89,27 @@ function getPaginationItems(currentPage: number, totalPages: number) {
   return items;
 }
 
+function getDashboardHref(page: number, query: string) {
+  const params = new URLSearchParams();
+  if (page > 1) params.set("page", String(page));
+  if (query) params.set("q", query);
+  const search = params.toString();
+  return search ? `/dashboard?${search}` : "/dashboard";
+}
+
 export async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; session_id?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; session_id?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const {
     currentPage,
+    filteredProjects,
     hasActiveSubscription,
     monthlyAllowance,
     projects,
+    query,
     session,
     subscriptionCredits,
     tier: currentTier,
@@ -112,6 +119,7 @@ export async function DashboardPage({
   } = await getDashboardData({
     checkoutSessionId: resolvedSearchParams.session_id,
     page: resolvedSearchParams.page,
+    query: resolvedSearchParams.q,
   });
   const paginationItems = getPaginationItems(currentPage, totalPages);
   const creditPackEntries = Object.entries(CREDIT_PACKS) as [
@@ -141,7 +149,8 @@ export async function DashboardPage({
   const creditBarValue = hasActiveSubscription
     ? subscriptionCredits
     : userCredits;
-  const hasProjects = projects.length > 0;
+  const hasProjects = totalProjects > 0;
+  const hasMatchingProjects = filteredProjects > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -233,34 +242,25 @@ export async function DashboardPage({
                     <span className="text-sm text-muted-foreground">
                       Available Credits
                     </span>
-                    <TooltipProvider delayDuration={150}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            className="-my-2 hidden sm:inline-flex"
-                            aria-label="How available credits work"
-                          >
-                            <Info aria-hidden="true" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="top"
-                          align="start"
-                          sideOffset={8}
-                          className="max-w-64"
-                        >
-                          <p className="text-pretty leading-relaxed">
-                            Free accounts receive {TIERS.free.monthlyCredits}{" "}
-                            starter credits after email verification.
-                            Generations charge only after a version saves
-                            successfully. See Usage for the full ledger.
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <details className="group/credits relative">
+                      <summary
+                        className="-my-2 flex size-8 cursor-pointer list-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden"
+                        aria-label="How available credits work"
+                      >
+                        <Info className="size-4" aria-hidden="true" />
+                      </summary>
+                      <div
+                        role="note"
+                        className="absolute left-0 top-full z-20 mt-2 w-64 rounded-md border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md"
+                      >
+                        <p className="text-pretty leading-relaxed">
+                          Free accounts receive {TIERS.free.monthlyCredits}{" "}
+                          starter credits after email verification. Generations
+                          charge only after a version saves successfully. See
+                          Usage for the full ledger.
+                        </p>
+                      </div>
+                    </details>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Coins className="h-4 w-4 text-amber-500" />
@@ -314,20 +314,66 @@ export async function DashboardPage({
 
         {/* Projects Section */}
         <div className="mb-8">
-          <div className="mb-4 flex items-center gap-3">
-            <h2 className="text-lg font-medium">Your Projects</h2>
-            <Badge
-              radius="full"
-              variant={
-                !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
-                  ? "destructive-light"
-                  : "secondary"
-              }
-            >
-              {hasActiveSubscription
-                ? totalProjects
-                : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
-            </Badge>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-medium">Your Projects</h2>
+              <Badge
+                radius="full"
+                variant={
+                  !hasActiveSubscription && totalProjects >= FREE_PROJECT_LIMIT
+                    ? "destructive-light"
+                    : "secondary"
+                }
+              >
+                {query
+                  ? `${filteredProjects} found`
+                  : hasActiveSubscription
+                    ? totalProjects
+                    : `${totalProjects}/${FREE_PROJECT_LIMIT}`}
+              </Badge>
+            </div>
+            {hasProjects ? (
+              <form
+                action="/dashboard"
+                method="get"
+                role="search"
+                className="flex w-full items-center gap-2 sm:max-w-md"
+              >
+                <label htmlFor="project-search" className="sr-only">
+                  Search projects
+                </label>
+                <div className="relative min-w-0 flex-1">
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    id="project-search"
+                    name="q"
+                    type="search"
+                    defaultValue={query}
+                    maxLength={100}
+                    placeholder="Search title or prompt"
+                    className="h-10 pl-9"
+                  />
+                </div>
+                <Button type="submit" variant="outline" size="sm">
+                  Search
+                </Button>
+                {query ? (
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Clear project search"
+                  >
+                    <Link href="/dashboard">
+                      <X aria-hidden="true" />
+                    </Link>
+                  </Button>
+                ) : null}
+              </form>
+            ) : null}
           </div>
           {!hasProjects ? (
             /* Empty State */
@@ -403,6 +449,28 @@ export async function DashboardPage({
                   >
                     Compare plans and pricing
                   </Link>
+                </Empty>
+              </FramePanel>
+            </Frame>
+          ) : !hasMatchingProjects ? (
+            <Frame spacing="sm" className="bg-muted/30">
+              <FramePanel className="p-0 shadow-none">
+                <Empty className="border-0 px-6 py-12">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Search aria-hidden="true" />
+                    </EmptyMedia>
+                    <EmptyTitle>No projects match “{query}”</EmptyTitle>
+                    <EmptyDescription>
+                      Try a project title, a word from the original prompt, or
+                      clear the search to see every project.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <Button asChild variant="outline">
+                      <Link href="/dashboard">Clear search</Link>
+                    </Button>
+                  </EmptyContent>
                 </Empty>
               </FramePanel>
             </Frame>
@@ -559,7 +627,7 @@ export async function DashboardPage({
                     </Button>
                   ) : (
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/dashboard?page=${currentPage - 1}`}>
+                      <Link href={getDashboardHref(currentPage - 1, query)}>
                         Previous
                       </Link>
                     </Button>
@@ -583,7 +651,9 @@ export async function DashboardPage({
                         </Button>
                       ) : (
                         <Button key={item} variant="outline" size="sm" asChild>
-                          <Link href={`/dashboard?page=${item}`}>{item}</Link>
+                          <Link href={getDashboardHref(item, query)}>
+                            {item}
+                          </Link>
                         </Button>
                       ),
                     )}
@@ -594,7 +664,7 @@ export async function DashboardPage({
                     </Button>
                   ) : (
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/dashboard?page=${currentPage + 1}`}>
+                      <Link href={getDashboardHref(currentPage + 1, query)}>
                         Next
                       </Link>
                     </Button>

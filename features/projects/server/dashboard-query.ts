@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Chat } from "@prisma/client";
+import type { Chat, Prisma } from "@prisma/client";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { getPrisma } from "@/lib/prisma";
@@ -25,9 +25,11 @@ export type DashboardProject = Chat & {
 
 export type DashboardData = {
   currentPage: number;
+  filteredProjects: number;
   hasActiveSubscription: boolean;
   monthlyAllowance: number;
   projects: DashboardProject[];
+  query: string;
   session: Awaited<ReturnType<typeof getCurrentSession>>;
   subscriptionCredits: number;
   tier: TierKey;
@@ -39,21 +41,26 @@ export type DashboardData = {
 export async function getDashboardData({
   checkoutSessionId,
   page,
+  query,
 }: {
   checkoutSessionId?: string;
   page?: string;
+  query?: string;
 }): Promise<DashboardData> {
   const session = await getCurrentSession();
+  const normalizedQuery = query?.trim().slice(0, 100) ?? "";
   const parsedPage = Number.parseInt(page || "1", 10);
-  const currentPage =
+  const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
   if (!session) {
     return {
-      currentPage,
+      currentPage: requestedPage,
+      filteredProjects: 0,
       hasActiveSubscription: false,
       monthlyAllowance: 0,
       projects: [],
+      query: normalizedQuery,
       session: null,
       subscriptionCredits: 0,
       tier: "free",
@@ -75,24 +82,56 @@ export async function getDashboardData({
     }
   }
 
-  const [totalProjects, projectRows, creditInfo] = await Promise.all([
-    prisma.chat.count({ where: { userId: session.user.id } }),
-    prisma.chat.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      skip: (currentPage - 1) * PROJECTS_PER_PAGE,
-      take: PROJECTS_PER_PAGE,
-      include: {
-        messages: {
-          where: { role: "assistant" },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { id: true, content: true, files: true, createdAt: true },
-        },
-      },
-    }),
+  const ownerWhere = {
+    userId: session.user.id,
+  } satisfies Prisma.ChatWhereInput;
+  const projectWhere = {
+    ...ownerWhere,
+    ...(normalizedQuery
+      ? {
+          OR: [
+            {
+              title: {
+                contains: normalizedQuery,
+                mode: "insensitive" as const,
+              },
+            },
+            {
+              prompt: {
+                contains: normalizedQuery,
+                mode: "insensitive" as const,
+              },
+            },
+          ],
+        }
+      : {}),
+  } satisfies Prisma.ChatWhereInput;
+  const totalProjectsPromise = prisma.chat.count({ where: ownerWhere });
+  const filteredProjectsPromise = normalizedQuery
+    ? prisma.chat.count({ where: projectWhere })
+    : totalProjectsPromise;
+  const [totalProjects, filteredProjects, creditInfo] = await Promise.all([
+    totalProjectsPromise,
+    filteredProjectsPromise,
     getUserCreditInfo(session.user.id),
   ]);
+  const totalPages = Math.ceil(filteredProjects / PROJECTS_PER_PAGE);
+  const currentPage =
+    totalPages === 0 ? 1 : Math.min(requestedPage, totalPages);
+  const projectRows = await prisma.chat.findMany({
+    where: projectWhere,
+    orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * PROJECTS_PER_PAGE,
+    take: PROJECTS_PER_PAGE,
+    include: {
+      messages: {
+        where: { role: "assistant" },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { id: true, content: true, files: true, createdAt: true },
+      },
+    },
+  });
 
   const latestMessageIds = projectRows.flatMap((project) =>
     project.messages[0] ? [project.messages[0].id] : [],
@@ -170,13 +209,15 @@ export async function getDashboardData({
 
   return {
     currentPage,
+    filteredProjects,
     hasActiveSubscription: creditInfo?.hasActiveSubscription ?? false,
     monthlyAllowance: creditInfo?.monthlyAllowance ?? 0,
     projects,
+    query: normalizedQuery,
     session,
     subscriptionCredits: creditInfo?.creditBreakdown?.subscriptionCredits ?? 0,
     tier: creditInfo?.tier ?? "free",
-    totalPages: Math.ceil(totalProjects / PROJECTS_PER_PAGE),
+    totalPages,
     totalProjects,
     userCredits: creditInfo?.credits ?? 0,
   };
