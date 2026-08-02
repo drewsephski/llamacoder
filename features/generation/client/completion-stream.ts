@@ -7,6 +7,7 @@ import {
   type UIMessageChunk,
 } from "ai";
 import type { GenerationRecoveryMode } from "@/features/generation/recovery";
+import { z } from "zod";
 
 export type CompletionStream = {
   events: ReadableStream<UIMessageChunk>;
@@ -17,6 +18,32 @@ export type CompletionStream = {
 
 export const COMPLETION_START_TIMEOUT_MS = 30_000;
 export const COMPLETION_IDLE_TIMEOUT_MS = 75_000;
+
+const finalizedProjectMessageSchema = z
+  .object({
+    id: z.string().min(1),
+    role: z.string().min(1),
+    content: z.string(),
+    files: z.unknown().nullable(),
+    followUpPrompts: z.unknown().nullable(),
+    chatId: z.string().min(1),
+    position: z.number().int(),
+    changeSummary: z.string().nullable(),
+    versionKind: z.string().nullable(),
+    versionLabel: z.string().nullable(),
+    designScores: z.unknown().nullable(),
+    isBookmarked: z.boolean(),
+    createdAt: z.string().datetime(),
+  })
+  .passthrough()
+  .transform((message) => ({
+    ...message,
+    createdAt: new Date(message.createdAt),
+  }));
+
+const finalizedGenerationPayloadSchema = z.object({
+  message: finalizedProjectMessageSchema,
+});
 
 export class CompletionStreamError extends Error {
   constructor(
@@ -286,14 +313,20 @@ export async function finalizeGenerationRun(
     method: "POST",
   });
   const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.message?.id) {
+  if (!response.ok) {
     throw new Error(
       payload?.message ||
         payload?.error ||
         "Unable to finalize the generated app",
     );
   }
-  return payload.message as ProjectMessage;
+
+  const parsed = finalizedGenerationPayloadSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error("The finalized app response was invalid. Please retry.");
+  }
+
+  return parsed.data.message as ProjectMessage;
 }
 
 export async function updateGenerationRun(

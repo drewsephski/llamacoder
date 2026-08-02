@@ -239,6 +239,73 @@ describe("CodeRunnerReact", () => {
     );
   });
 
+  it("waits for preview readiness before running runtime verification", () => {
+    vi.useFakeTimers();
+    const onPreviewTestReport = vi.fn();
+    const files = [
+      {
+        path: "App.tsx",
+        content: "export default function App() { return <button>Save</button>; }",
+      },
+    ];
+    const { rerender } = render(
+      <CodeRunnerReact
+        files={files}
+        previewTestNonce={1}
+        onPreviewTestReport={onPreviewTestReport}
+      />,
+    );
+
+    act(() => vi.advanceTimersByTime(3_000));
+    expect(onPreviewTestReport).not.toHaveBeenCalled();
+
+    sandpackState.status = "running";
+    rerender(
+      <CodeRunnerReact
+        files={files}
+        previewTestNonce={1}
+        onPreviewTestReport={onPreviewTestReport}
+      />,
+    );
+    const iframe = screen
+      .getByTitle("Generated preview")
+      .closest("iframe") as HTMLIFrameElement;
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          source: iframe.contentWindow,
+          data: { source: "squid-preview-inspector", type: "ready" },
+        }),
+      );
+    });
+    act(() => vi.advanceTimersByTime(1_500));
+
+    const report = {
+      status: "passed" as const,
+      viewport: { width: 1280, height: 720 },
+      clickableElements: 1,
+      unnamedClickableElements: 0,
+      horizontalOverflow: false,
+      runtimeError: null,
+      checkedAt: "2026-08-02T00:39:30.000Z",
+    };
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          source: iframe.contentWindow,
+          data: {
+            source: "squid-preview-inspector",
+            type: "runtime-test-report",
+            requestId: 1,
+            report,
+          },
+        }),
+      );
+    });
+
+    expect(onPreviewTestReport).toHaveBeenCalledWith(report);
+  });
+
   it("ignores a ready message from a different runner iframe", () => {
     vi.useFakeTimers();
     sandpackState.status = "done";

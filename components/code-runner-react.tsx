@@ -228,6 +228,7 @@ function PreviewAttempt({
         {(onPreviewSelection || onPreviewTestReport) && (
           <PreviewInspector
             rootRef={rootRef}
+            ready={lifecycle.status === "ready"}
             selectionMode={previewSelectionMode}
             testNonce={previewTestNonce}
             onPreviewSelection={onPreviewSelection}
@@ -352,12 +353,14 @@ function PreviewLifecycleReporter({
 
 function PreviewInspector({
   rootRef,
+  ready,
   selectionMode,
   testNonce,
   onPreviewSelection,
   onPreviewTestReport,
 }: {
   rootRef: RefObject<HTMLDivElement | null>;
+  ready: boolean;
   selectionMode: boolean;
   testNonce: number;
   onPreviewSelection?: (selection: PreviewElementSelection) => void;
@@ -428,7 +431,7 @@ function PreviewInspector({
   }, [rootRef, selectionMode]);
 
   useEffect(() => {
-    if (!testNonce || !onPreviewTestReport) return;
+    if (!ready || !testNonce || !onPreviewTestReport) return;
 
     const iframe = getPreviewIframe(rootRef.current);
     const runtimeError = sandpack.error?.message;
@@ -494,7 +497,7 @@ function PreviewInspector({
       window.removeEventListener("message", onMessage);
       window.clearTimeout(unavailableTimer);
     };
-  }, [testNonce, onPreviewTestReport, rootRef, sandpack.error]);
+  }, [ready, testNonce, onPreviewTestReport, rootRef, sandpack.error]);
 
   if (!selectionMode) return null;
 

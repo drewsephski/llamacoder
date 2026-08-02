@@ -283,6 +283,14 @@ describe("fetchCompletionStream", () => {
           role: "assistant",
           content: "Generated app",
           files: [],
+          followUpPrompts: null,
+          position: 2,
+          changeSummary: null,
+          versionKind: null,
+          versionLabel: null,
+          designScores: null,
+          isBookmarked: false,
+          createdAt: "2026-08-02T00:39:00.000Z",
         },
       }),
     );
@@ -291,8 +299,38 @@ describe("fetchCompletionStream", () => {
     const message = await finalizeGenerationRun("run_1");
 
     expect(message.id).toBe("assistant_1");
+    expect(message.createdAt).toEqual(new Date("2026-08-02T00:39:00.000Z"));
     expect(fetchMock).toHaveBeenCalledWith("/api/generation-runs/run_1", {
       method: "POST",
     });
+  });
+
+  it("rejects a finalized message that cannot be hydrated safely", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({
+          message: {
+            id: "assistant_1",
+            chatId: "chat_1",
+            role: "assistant",
+            content: "Generated app",
+            files: [],
+            followUpPrompts: null,
+            position: 2,
+            changeSummary: null,
+            versionKind: null,
+            versionLabel: null,
+            designScores: null,
+            isBookmarked: false,
+            createdAt: "not-a-date",
+          },
+        }),
+      ),
+    );
+
+    await expect(finalizeGenerationRun("run_1")).rejects.toThrow(
+      "The finalized app response was invalid. Please retry.",
+    );
   });
 });
