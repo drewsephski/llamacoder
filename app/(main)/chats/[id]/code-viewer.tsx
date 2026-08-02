@@ -3,13 +3,17 @@
 import CloseIcon from "@/components/icons/close-icon";
 import RefreshIcon from "@/components/icons/refresh";
 import {
+  Check,
+  ChevronDown,
   DownloadIcon,
   ExternalLink,
   FlaskConical,
   LayoutDashboard,
   MousePointer2,
+  Settings2,
   ShieldCheck,
 } from "lucide-react";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import Link from "next/link";
 import { SiNetlify } from "react-icons/si";
 import { toast } from "sonner";
@@ -514,6 +518,7 @@ export default function CodeViewer({
     !!chat.userId &&
     parsedAppSpec?.dataPersistence.detected === true &&
     parsedAppSpec?.dataPersistence.status !== "connect_declined";
+  const showProjectTools = !disabledControls || !!chat.userId;
   const generatedAppUsesSupabase = useMemo(
     () => generatedFilesUseSupabaseRuntime(files),
     [files],
@@ -800,6 +805,30 @@ export default function CodeViewer({
           container-type: inline-size;
         }
 
+        .code-toolbar-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        }
+
+        .code-toolbar-tools-panel [data-slot="button"] {
+          min-height: 2.5rem;
+          height: auto;
+          width: 100%;
+          justify-content: flex-start;
+          gap: 0.625rem;
+          border-color: transparent;
+          background: transparent;
+          padding: 0.625rem;
+          white-space: normal;
+          text-align: left;
+          box-shadow: none;
+        }
+
+        .code-toolbar-tools-panel [data-slot="button"]:hover {
+          background: hsl(var(--muted) / 0.7);
+          box-shadow: none;
+        }
+
         @container code-toolbar (max-width: 82rem) {
           .code-toolbar-project-title {
             display: none;
@@ -807,39 +836,61 @@ export default function CodeViewer({
         }
 
         @container code-toolbar (max-width: 64rem) {
-          .code-toolbar-adaptive-label {
+          .code-toolbar-primary .code-toolbar-adaptive-label {
             display: none;
           }
 
-          .code-toolbar-adaptive-button {
+          .code-toolbar-primary .code-toolbar-adaptive-button {
             width: 2rem;
             padding-inline: 0;
             gap: 0;
           }
         }
 
-        @container code-toolbar (max-width: 48rem) {
-          .code-toolbar-dashboard-label {
+        @container code-toolbar (max-width: 46rem) {
+          .code-toolbar-layout {
+            grid-template-columns: minmax(0, 1fr) auto;
+          }
+
+          .code-toolbar-view-switch {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            width: 100%;
+          }
+
+          .code-toolbar-view-switch button {
+            width: auto;
+          }
+
+          .code-toolbar-save-full,
+          .code-toolbar-saved-label,
+          .code-toolbar-tools-label {
             display: none;
           }
 
-          .code-toolbar-dashboard-icon {
-            display: block;
+          .code-toolbar-save-short {
+            display: inline;
+          }
+        }
+
+        @container code-toolbar (max-width: 28rem) {
+          .code-toolbar-primary .code-toolbar-review,
+          .code-toolbar-dashboard-button {
+            display: none;
           }
 
-          .code-toolbar-dashboard-button {
-            width: 2rem;
-            padding-inline: 0;
+          .code-toolbar-layout {
+            column-gap: 0.375rem;
           }
         }
       `}</style>
-      <div className="code-viewer-toolbar min-h-16 shrink-0 overflow-x-hidden border-b border-border px-3 py-2 md:px-4">
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 sm:min-w-max sm:flex-nowrap sm:gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0 sm:flex-nowrap md:gap-3">
+      <header className="code-viewer-toolbar relative z-20 shrink-0 border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-sm md:px-4">
+        <div className="code-toolbar-layout min-w-0 items-center gap-2">
+          <div className="code-toolbar-primary flex min-w-0 items-center gap-2">
             <Button
               variant="ghost"
-              size="icon"
-              className="hidden md:flex"
+              size="icon-sm"
+              className="hidden shrink-0 md:inline-flex"
               onClick={onClose}
               aria-label="Close code viewer"
               title="Close code viewer"
@@ -857,7 +908,11 @@ export default function CodeViewer({
                 }
                 disabled={disabledControls}
               >
-                <SelectTrigger className="h-[38px] w-16 text-sm font-semibold !outline-none !ring-0 !ring-transparent">
+                <SelectTrigger
+                  className="h-[38px] w-16 text-sm font-semibold !outline-none !ring-0 !ring-transparent"
+                  aria-label="Choose project version"
+                  title="Project version"
+                >
                   <SelectValue>{`v${currentVersion + 1}`}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -902,189 +957,281 @@ export default function CodeViewer({
                 </Button>
               )}
             {!disabledControls && message && (
-              <VersionDiffDialog
-                projectId={chat.id}
-                messageId={message.id}
-                before={
-                  diffBaseMessage
-                    ? getMessageGeneratedFiles(diffBaseMessage)
-                    : []
-                }
-                after={getMessageGeneratedFiles(message)}
-                initialLabel={message.versionLabel}
-                initialBookmarked={message.isBookmarked}
-                canRestore={
-                  currentVersionIndex < allAssistantMessages.length - 1
-                }
-                onRestoreFiles={(paths) => onRestoreFiles(message.id, paths)}
-              />
-            )}
-            {!disabledControls && (
-              <QualityReportPanel
-                report={qualityReport}
-                exportStatus={verifiedExportStatus}
-                runtimeVerification={previewTestReport}
-              />
-            )}
-            {!disabledControls && buildPassport && (
-              <BuildPassportDialog passport={buildPassport} />
-            )}
-            {chat.userId && (
-              <ProjectIntegrationsPanel
-                projectId={chat.id}
-                messageId={message?.id}
-              />
+              <div className="code-toolbar-review shrink-0">
+                <VersionDiffDialog
+                  projectId={chat.id}
+                  messageId={message.id}
+                  before={
+                    diffBaseMessage
+                      ? getMessageGeneratedFiles(diffBaseMessage)
+                      : []
+                  }
+                  after={getMessageGeneratedFiles(message)}
+                  initialLabel={message.versionLabel}
+                  initialBookmarked={message.isBookmarked}
+                  canRestore={
+                    currentVersionIndex < allAssistantMessages.length - 1
+                  }
+                  onRestoreFiles={(paths) => onRestoreFiles(message.id, paths)}
+                />
+              </div>
             )}
           </div>
-          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:shrink-0 sm:flex-nowrap">
-            {showSupabaseConnectCta &&
-              integrationWorkspaceQuery.isLoading &&
-              !integrationWorkspaceQuery.isError && (
-                <Button size="sm" variant="secondary" disabled>
-                  <CometSpinner className="size-3.5" aria-hidden="true" />{" "}
-                  Checking Supabase setup
-                </Button>
-              )}
-            {showSupabaseConnectCta && integrationWorkspaceQuery.isError && (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => integrationWorkspaceQuery.refetch()}
-              >
-                Retry Supabase check
-              </Button>
+
+          <div
+            className="code-toolbar-view-switch inline-flex min-w-0 items-center rounded-lg border border-border/60 bg-muted/30 p-1"
+            role="tablist"
+            aria-label="Workspace view"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "code"}
+              onClick={() => onTabChange("code")}
+              disabled={disabledControls}
+              className={`h-8 min-w-0 flex-1 rounded-md px-3 text-xs font-semibold transition-[background-color,color,box-shadow] duration-150 sm:w-[4.5rem] ${
+                activeTab === "code"
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-foreground"
+              } disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              Code
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "preview"}
+              onClick={() => onTabChange("preview")}
+              disabled={disabledControls}
+              className={`h-8 min-w-0 flex-1 rounded-md px-3 text-xs font-semibold transition-[background-color,color,box-shadow] duration-150 sm:w-[4.5rem] ${
+                activeTab === "preview"
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-foreground"
+              } disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              Preview
+            </button>
+          </div>
+
+          <div className="code-toolbar-actions flex min-w-0 items-center justify-end gap-1.5">
+            {showProjectTools && (
+              <Popover className="relative order-last">
+                <PopoverButton
+                  as={Button}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="group gap-1.5 px-2.5"
+                  aria-label="Open project tools"
+                  title="Project tools"
+                >
+                  <Settings2 className="size-3.5" />
+                  <span className="code-toolbar-tools-label">Tools</span>
+                  <ChevronDown className="size-3 text-muted-foreground transition-transform group-data-[open]:rotate-180" />
+                </PopoverButton>
+                <PopoverPanel
+                  anchor="bottom end"
+                  transition
+                  className="code-toolbar-tools-panel z-50 mt-2 w-[min(20rem,calc(100vw-1rem))] origin-top-right rounded-xl border border-border/80 bg-background/95 p-2 text-foreground shadow-2xl shadow-foreground/15 outline-none backdrop-blur-xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0"
+                >
+                  <div className="px-2 pb-1.5 pt-1">
+                    <p className="text-xs font-semibold text-foreground">
+                      Project tools
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
+                      Review build details or connect services when you need
+                      them.
+                    </p>
+                  </div>
+                  <div className="grid gap-0.5">
+                    {!disabledControls && (
+                      <QualityReportPanel
+                        report={qualityReport}
+                        exportStatus={verifiedExportStatus}
+                        runtimeVerification={previewTestReport}
+                      />
+                    )}
+                    {!disabledControls && buildPassport && (
+                      <BuildPassportDialog passport={buildPassport} />
+                    )}
+                    {chat.userId && (
+                      <ProjectIntegrationsPanel
+                        projectId={chat.id}
+                        messageId={message?.id}
+                      />
+                    )}
+                  </div>
+                  {showSupabaseConnectCta && (
+                    <div className="mt-2 grid gap-1 border-t border-border/70 pt-2">
+                      <p className="px-2 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        Supabase
+                      </p>
+                      {showSupabaseConnectCta &&
+                        integrationWorkspaceQuery.isLoading &&
+                        !integrationWorkspaceQuery.isError && (
+                          <Button size="sm" variant="secondary" disabled>
+                            <CometSpinner
+                              className="size-3.5"
+                              aria-hidden="true"
+                            />{" "}
+                            Checking Supabase setup
+                          </Button>
+                        )}
+                      {showSupabaseConnectCta &&
+                        integrationWorkspaceQuery.isError && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => integrationWorkspaceQuery.refetch()}
+                          >
+                            Retry Supabase check
+                          </Button>
+                        )}
+                      {showSupabaseConnectCta &&
+                        !integrationWorkspaceQuery.isLoading &&
+                        !integrationWorkspaceQuery.isError &&
+                        !integrationWorkspaceQuery.isFetching &&
+                        (!supabaseIntegration || !isSupabaseReady) && (
+                          <Button asChild size="sm" variant="secondary">
+                            <Link
+                              href={`/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(chat.id)}&environment=development`}
+                            >
+                              {supabaseIntegration
+                                ? "Reconnect Supabase"
+                                : "Connect Supabase"}
+                            </Link>
+                          </Button>
+                        )}
+                      {showSupabaseConnectCta &&
+                        !integrationWorkspaceQuery.isLoading &&
+                        !integrationWorkspaceQuery.isError &&
+                        !integrationWorkspaceQuery.isFetching &&
+                        isSupabaseReady &&
+                        !isSupabaseProvisioned &&
+                        !isSupabaseProvisioning &&
+                        !isSupabaseProvisioningTerminal && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={supabaseProvisionMutation.isPending}
+                            onClick={() => supabaseProvisionMutation.mutate()}
+                          >
+                            {supabaseProvisionMutation.isPending ? (
+                              <CometSpinner
+                                className="size-3.5"
+                                aria-hidden="true"
+                              />
+                            ) : null}
+                            {supabaseProvisionMutation.isPending
+                              ? "Creating project"
+                              : "Create with verified email"}
+                          </Button>
+                        )}
+                      {showSupabaseConnectCta &&
+                        !integrationWorkspaceQuery.isLoading &&
+                        !integrationWorkspaceQuery.isError &&
+                        !integrationWorkspaceQuery.isFetching &&
+                        isSupabaseReady &&
+                        isSupabaseProvisioning && (
+                          <Button size="sm" variant="secondary" disabled>
+                            <CometSpinner
+                              className="size-3.5"
+                              aria-hidden="true"
+                            />
+                            {supabaseProvisioningLabel(
+                              supabaseProvisioningOperation?.phase,
+                            )}
+                          </Button>
+                        )}
+                      {showSupabaseConnectCta &&
+                        !integrationWorkspaceQuery.isLoading &&
+                        !integrationWorkspaceQuery.isError &&
+                        !integrationWorkspaceQuery.isFetching &&
+                        isSupabaseReady &&
+                        isSupabaseProvisioningTerminal && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={supabaseProvisionMutation.isPending}
+                            onClick={() => supabaseProvisionMutation.mutate()}
+                            title={
+                              supabaseProvisioningOperation?.errorMessage ??
+                              undefined
+                            }
+                          >
+                            Retry Supabase setup
+                          </Button>
+                        )}
+                      {showSupabaseConnectCta &&
+                        !integrationWorkspaceQuery.isLoading &&
+                        !integrationWorkspaceQuery.isError &&
+                        !integrationWorkspaceQuery.isFetching &&
+                        needsSupabaseProvisioningResume && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={supabaseProvisionMutation.isPending}
+                            onClick={() => supabaseProvisionMutation.mutate()}
+                          >
+                            Resume Supabase setup
+                          </Button>
+                        )}
+                      {showSupabaseConnectCta &&
+                        !integrationWorkspaceQuery.isLoading &&
+                        !integrationWorkspaceQuery.isError &&
+                        !integrationWorkspaceQuery.isFetching &&
+                        isSupabaseReady &&
+                        isSupabaseProvisioned &&
+                        !isSupabaseProvisioning &&
+                        !isSupabaseProvisioningTerminal &&
+                        !needsSupabaseProvisioningResume && (
+                          <>
+                            {supabaseProjectUrl && (
+                              <Button asChild size="sm" variant="secondary">
+                                <Link
+                                  href={supabaseProjectUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Open Supabase{" "}
+                                  <ExternalLink className="size-3.5" />
+                                </Link>
+                              </Button>
+                            )}
+                            {supabaseRuntime?.status === "ready" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={openSupabaseEnvDialog}
+                              >
+                                Supabase Environment Variables
+                              </Button>
+                            ) : supabaseRuntime ? (
+                              <span className="max-w-72 text-xs text-amber-700 dark:text-amber-300">
+                                {getSupabaseRuntimeSetupMessage(
+                                  supabaseRuntime,
+                                )}
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                    </div>
+                  )}
+                </PopoverPanel>
+              </Popover>
             )}
-            {showSupabaseConnectCta &&
-              !integrationWorkspaceQuery.isLoading &&
-              !integrationWorkspaceQuery.isError &&
-              !integrationWorkspaceQuery.isFetching &&
-              (!supabaseIntegration || !isSupabaseReady) && (
-                <Button asChild size="sm" variant="secondary">
-                  <Link
-                    href={`/api/integrations/oauth/supabase/start?projectId=${encodeURIComponent(chat.id)}&environment=development`}
-                  >
-                    {supabaseIntegration
-                      ? "Reconnect Supabase"
-                      : "Connect Supabase"}
-                  </Link>
-                </Button>
-              )}
-            {showSupabaseConnectCta &&
-              !integrationWorkspaceQuery.isLoading &&
-              !integrationWorkspaceQuery.isError &&
-              !integrationWorkspaceQuery.isFetching &&
-              isSupabaseReady &&
-              !isSupabaseProvisioned &&
-              !isSupabaseProvisioning &&
-              !isSupabaseProvisioningTerminal && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={supabaseProvisionMutation.isPending}
-                  onClick={() => supabaseProvisionMutation.mutate()}
-                >
-                  {supabaseProvisionMutation.isPending ? (
-                    <CometSpinner className="size-3.5" aria-hidden="true" />
-                  ) : null}
-                  {supabaseProvisionMutation.isPending
-                    ? "Creating project"
-                    : "Create with verified email"}
-                </Button>
-              )}
-            {showSupabaseConnectCta &&
-              !integrationWorkspaceQuery.isLoading &&
-              !integrationWorkspaceQuery.isError &&
-              !integrationWorkspaceQuery.isFetching &&
-              isSupabaseReady &&
-              isSupabaseProvisioning && (
-                <Button size="sm" variant="secondary" disabled>
-                  <CometSpinner className="size-3.5" aria-hidden="true" />
-                  {supabaseProvisioningLabel(
-                    supabaseProvisioningOperation?.phase,
-                  )}
-                </Button>
-              )}
-            {showSupabaseConnectCta &&
-              !integrationWorkspaceQuery.isLoading &&
-              !integrationWorkspaceQuery.isError &&
-              !integrationWorkspaceQuery.isFetching &&
-              isSupabaseReady &&
-              isSupabaseProvisioningTerminal && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={supabaseProvisionMutation.isPending}
-                  onClick={() => supabaseProvisionMutation.mutate()}
-                  title={
-                    supabaseProvisioningOperation?.errorMessage ?? undefined
-                  }
-                >
-                  Retry Supabase setup
-                </Button>
-              )}
-            {showSupabaseConnectCta &&
-              !integrationWorkspaceQuery.isLoading &&
-              !integrationWorkspaceQuery.isError &&
-              !integrationWorkspaceQuery.isFetching &&
-              needsSupabaseProvisioningResume && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={supabaseProvisionMutation.isPending}
-                  onClick={() => supabaseProvisionMutation.mutate()}
-                >
-                  Resume Supabase setup
-                </Button>
-              )}
-            {showSupabaseConnectCta &&
-              !integrationWorkspaceQuery.isLoading &&
-              !integrationWorkspaceQuery.isError &&
-              !integrationWorkspaceQuery.isFetching &&
-              isSupabaseReady &&
-              isSupabaseProvisioned &&
-              !isSupabaseProvisioning &&
-              !isSupabaseProvisioningTerminal &&
-              !needsSupabaseProvisioningResume && (
-                <>
-                  {supabaseProjectUrl && (
-                    <Button asChild size="sm" variant="secondary">
-                      <Link
-                        href={supabaseProjectUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open Supabase <ExternalLink className="size-3.5" />
-                      </Link>
-                    </Button>
-                  )}
-                  {supabaseRuntime?.status === "ready" ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={openSupabaseEnvDialog}
-                    >
-                      Supabase Environment Variables
-                    </Button>
-                  ) : supabaseRuntime ? (
-                    <span className="max-w-72 text-xs text-amber-700 dark:text-amber-300">
-                      {getSupabaseRuntimeSetupMessage(supabaseRuntime)}
-                    </span>
-                  ) : null}
-                </>
-              )}
             <Button
               asChild
-              variant="outline"
-              size="sm"
-              className="code-toolbar-dashboard-button px-2 sm:px-4"
+              variant="ghost"
+              size="icon-sm"
+              className="code-toolbar-dashboard-button shrink-0"
             >
               <Link
                 href="/dashboard"
                 aria-label="Open dashboard"
                 title="Dashboard"
               >
-                <LayoutDashboard className="code-toolbar-dashboard-icon hidden size-3.5" />
-                <span className="code-toolbar-dashboard-label">Dashboard</span>
+                <LayoutDashboard className="size-4" />
               </Link>
             </Button>
             {!isSaved && (
@@ -1102,54 +1249,30 @@ export default function CodeViewer({
                     {isSaving ? "Saving..." : "Loading..."}
                   </>
                 ) : !chat.userId ? (
-                  "Sign Up to Save"
+                  <>
+                    <span className="code-toolbar-save-full">
+                      Sign up to save
+                    </span>
+                    <span className="code-toolbar-save-short hidden">Save</span>
+                  </>
                 ) : (
                   "Save"
                 )}
               </Button>
             )}
             {isSaved && (
-              <span className="rounded-md bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-400">
-                Saved
+              <span
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 px-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+                role="status"
+                title="Project saved"
+              >
+                <Check className="size-3.5" />
+                <span className="code-toolbar-saved-label">Saved</span>
               </span>
             )}
-            <div
-              className="inline-flex min-w-[10.5rem] flex-1 items-center rounded-xl border border-border/60 bg-muted/30 p-1 sm:flex-none"
-              role="tablist"
-              aria-label="Workspace view"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "code"}
-                onClick={() => onTabChange("code")}
-                disabled={disabledControls}
-                className={`h-8 min-w-0 flex-1 rounded-lg px-3 text-xs font-semibold transition-all duration-200 sm:w-20 ${
-                  activeTab === "code"
-                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
-                    : "text-muted-foreground hover:text-foreground"
-                } disabled:cursor-not-allowed disabled:opacity-50`}
-              >
-                Code
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "preview"}
-                onClick={() => onTabChange("preview")}
-                disabled={disabledControls}
-                className={`h-8 min-w-0 flex-1 rounded-lg px-3 text-xs font-semibold transition-all duration-200 sm:w-20 ${
-                  activeTab === "preview"
-                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
-                    : "text-muted-foreground hover:text-foreground"
-                } disabled:cursor-not-allowed disabled:opacity-50`}
-              >
-                Preview
-              </button>
-            </div>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
         {activeTab === "code" ? (

@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatedThemeToggleButton } from "@/components/ui/animated-theme-toggle-button";
 import {
-  BarChart3,
   CreditCard,
   GalleryHorizontalEnd,
   HelpCircle,
@@ -227,14 +226,6 @@ function Header({ onHelpClick }: HeaderProps) {
                   <Link href="/dashboard">Dashboard</Link>
                 </Button>
                 <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className="text-foreground hover:bg-accent hover:text-accent-foreground"
-                >
-                  <Link href="/dashboard/usage">Usage</Link>
-                </Button>
-                <Button
                   onClick={handleSignOut}
                   variant="ghost"
                   size="sm"
@@ -406,17 +397,6 @@ function Header({ onHelpClick }: HeaderProps) {
                         aria-hidden="true"
                       />
                       Gallery
-                    </Link>
-                    <Link
-                      href="/dashboard/usage"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={mobileMenuItemClassName}
-                    >
-                      <BarChart3
-                        className="size-4 text-primary"
-                        aria-hidden="true"
-                      />
-                      Usage
                     </Link>
                     <button
                       type="button"

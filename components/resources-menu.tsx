@@ -13,6 +13,7 @@ import {
   FileText,
   Info,
   LifeBuoy,
+  ReceiptText,
   ScanSearch,
   Search,
   Scale,
@@ -93,6 +94,13 @@ export const resourceLinks: ResourceLink[] = [
     shortLabel: "Help",
     description: "Get help or send feedback",
     icon: LifeBuoy,
+  },
+  {
+    href: "/dashboard/usage",
+    label: "Usage ledger",
+    shortLabel: "Usage",
+    description: "Review credit charges, grants, and refunds",
+    icon: ReceiptText,
   },
 ];
 
@@ -197,7 +205,7 @@ export function ResourcesMenu({
         className={cn(
           "absolute top-full z-50 mt-3 w-[min(40rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-2 text-popover-foreground shadow-2xl shadow-foreground/10 backdrop-blur-xl transition-[opacity,transform] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] motion-reduce:translate-y-0 motion-reduce:transition-opacity",
           compact
-            ? "fixed inset-x-4 top-16 mt-2 w-auto"
+            ? "fixed inset-x-4 top-16 mt-2 max-h-[calc(100dvh-5rem)] w-auto overflow-y-auto overscroll-contain"
             : align === "end"
               ? "right-0"
               : "left-1/2 -translate-x-1/2",

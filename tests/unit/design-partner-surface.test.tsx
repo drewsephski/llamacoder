@@ -153,6 +153,38 @@ describe("design partner homepage surface", () => {
     );
   });
 
+  it("keeps focus treatments inside the step viewport and describes helper text", async () => {
+    const { container } = render(<DesignPartnerSection />);
+
+    expect(
+      container.querySelector('[data-slot="design-partner-step-viewport"]'),
+    ).toHaveClass("-mx-2", "px-2", "overflow-hidden");
+
+    fireEvent.change(screen.getByLabelText(/^name/i), {
+      target: { value: "Avery Morgan" },
+    });
+    fireEvent.change(screen.getByLabelText(/work email/i), {
+      target: { value: "avery@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    await chooseOption(/your role/i, /freelance designer/i);
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    const projectSummary = await screen.findByLabelText(
+      /what would you like to prototype/i,
+    );
+    expect(projectSummary).toHaveAttribute(
+      "aria-describedby",
+      "projectSummary-hint",
+    );
+    expect(projectSummary).toHaveAttribute(
+      "placeholder",
+      expect.stringMatching(/reviewable onboarding prototype/i),
+    );
+    expect(screen.getByText("0 / 1,500")).toBeVisible();
+  });
+
   it("uses the enhanced loader while submitting", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(
       () => new Promise<Response>(() => undefined),

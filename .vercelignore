@@ -2,13 +2,16 @@
 .next
 .next-e2e
 .next-gallery-qa
+.next-workflow-qa
 node_modules
 coverage
 test-results
 playwright-report
 tmp
 output
-launch
+# Keep the repository-root launch production package out of deployments while
+# still shipping app/launch and public/launch.
+/launch
 .eve
 .agents
 .claude

@@ -479,7 +479,10 @@ export function DesignPartnerSection() {
                 </div>
               ) : null}
 
-              <div className="relative min-h-[340px] flex-1 overflow-hidden py-7 sm:min-h-[350px]">
+              <div
+                data-slot="design-partner-step-viewport"
+                className="relative -mx-2 min-h-[340px] flex-1 overflow-hidden px-2 py-7 sm:min-h-[350px]"
+              >
                 <AnimatePresence mode="wait" initial={false} custom={direction}>
                   <motion.div
                     key={currentStep}
@@ -666,7 +669,7 @@ function WizardStep({
             maxLength={160}
             aria-invalid={Boolean(issues.companyName)}
             aria-describedby={
-              issues.companyName ? "companyName-error" : undefined
+              issues.companyName ? "companyName-error" : "companyName-hint"
             }
             className={fieldControlClass}
           />
@@ -696,7 +699,7 @@ function WizardStep({
             maxLength={2048}
             aria-invalid={Boolean(issues.portfolioUrl)}
             aria-describedby={
-              issues.portfolioUrl ? "portfolioUrl-error" : undefined
+              issues.portfolioUrl ? "portfolioUrl-error" : "portfolioUrl-hint"
             }
             className={fieldControlClass}
           />
@@ -705,7 +708,16 @@ function WizardStep({
           label="What would you like to prototype?"
           name="projectSummary"
           issues={issues}
-          hint={`${values.projectSummary.length.toLocaleString()}/1,500 · Include the audience, the decision to unlock, and any deadline.`}
+          hint={
+            <>
+              <span>
+                Include the audience, the decision to unlock, and any deadline.
+              </span>
+              <span className="font-mono-jb shrink-0 tabular-nums text-foreground/70">
+                {values.projectSummary.length.toLocaleString()} / 1,500
+              </span>
+            </>
+          }
           required
         >
           <Textarea
@@ -717,11 +729,14 @@ function WizardStep({
             rows={7}
             minLength={40}
             maxLength={1500}
+            placeholder="For example: a reviewable onboarding prototype that helps our client choose a direction before the next stakeholder session."
             aria-invalid={Boolean(issues.projectSummary)}
             aria-describedby={
-              issues.projectSummary ? "projectSummary-error" : undefined
+              issues.projectSummary
+                ? "projectSummary-error"
+                : "projectSummary-hint"
             }
-            className="resize-none rounded-lg border-border/80 bg-background/60 p-4 text-base leading-7 shadow-none transition-[background-color,border-color,box-shadow] duration-200 hover:border-foreground/20 hover:bg-background focus-visible:border-primary/70 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-primary/15 focus-visible:ring-offset-0"
+            className="resize-none rounded-lg border-border/80 bg-background/60 p-4 text-base leading-7 shadow-none transition-[background-color,border-color,box-shadow] duration-200 placeholder:text-muted-foreground/55 hover:border-foreground/20 hover:bg-background focus-visible:border-primary/70 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-primary/15 focus-visible:ring-offset-0"
             required
           />
         </Field>
@@ -949,7 +964,7 @@ function Field({
   label: string;
   name: string;
   issues: FieldIssues;
-  hint?: string;
+  hint?: React.ReactNode;
   required?: boolean;
   children: React.ReactNode;
 }) {
@@ -969,7 +984,12 @@ function Field({
       </label>
       <div className="mt-2 min-w-0">{children}</div>
       {hint && !issue ? (
-        <p className="mt-2 text-xs leading-5 text-muted-foreground">{hint}</p>
+        <div
+          id={`${name}-hint`}
+          className="mt-2 flex flex-col gap-1 text-xs leading-5 text-muted-foreground sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+        >
+          {hint}
+        </div>
       ) : null}
       {issue ? (
         <p

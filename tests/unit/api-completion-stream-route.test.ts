@@ -28,6 +28,7 @@ const {
   prismaMock,
   releaseCreditHoldMock,
   reserveCreditHoldMock,
+  smoothStreamMock,
   streamTextMock,
   telemetryMock,
   exaSearchMock,
@@ -46,6 +47,7 @@ const {
   getSessionMock: vi.fn(),
   releaseCreditHoldMock: vi.fn(),
   reserveCreditHoldMock: vi.fn(),
+  smoothStreamMock: vi.fn(() => "smooth-stream-transform"),
   streamTextMock: vi.fn(),
   exaSearchMock: vi.fn(() => ({ type: "provider-tool" })),
   loadChatUrlContentMock: vi.fn(),
@@ -101,6 +103,7 @@ vi.mock("ai", async (importOriginal) => {
       tools: { exaSearch: exaSearchMock },
     }),
     generateText: generateTextMock,
+    smoothStream: smoothStreamMock,
     streamText: streamTextMock,
   };
 });
@@ -522,6 +525,8 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(call.messages.at(-1).content).toContain("final user");
     expect(call.onChunk).toEqual(expect.any(Function));
     expect(call.onFinish).toEqual(expect.any(Function));
+    expect(smoothStreamMock).toHaveBeenCalledWith({ delayInMs: 5 });
+    expect(call.experimental_transform).toBe("smooth-stream-transform");
     expect(telemetryMock.markFirstByte).toHaveBeenCalled();
   });
 

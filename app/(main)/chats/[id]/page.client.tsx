@@ -473,6 +473,7 @@ export default function PageClient({ chat }: { chat: Chat }) {
           ) {
             didPushToCode = true;
             setIsShowingCodeViewer(true);
+            setActiveTab("code");
           }
 
           if (
@@ -483,7 +484,6 @@ export default function PageClient({ chat }: { chat: Chat }) {
           ) {
             didPushToPreview = true;
             setIsShowingCodeViewer(true);
-            setActiveTab("preview");
           }
         }
 

@@ -5,6 +5,7 @@ import {
   createUIMessageStreamResponse,
   generateText,
   Output,
+  smoothStream,
   stepCountIs,
   streamText,
 } from "ai";
@@ -1887,6 +1888,7 @@ export async function POST(req: Request) {
             providerOptions: reasoning.providerOptions,
             abortSignal: req.signal,
             timeout: { totalMs: 270_000, chunkMs: 60_000 },
+            experimental_transform: smoothStream({ delayInMs: 5 }),
             system: getCacheableSystemPrompt(codegenModel, systemInstruction),
             messages: toModelMessages(
               clampMessagesToBillingBudget(guardedMessages),
