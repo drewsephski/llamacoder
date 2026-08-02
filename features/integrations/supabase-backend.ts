@@ -12,59 +12,78 @@ export const authenticatedTasksBackendPlanSchema = z
   })
   .strict();
 
+const RESERVED_BACKEND_IDENTIFIERS = new Set([
+  "id",
+  "user_id",
+  "created_at",
+  "updated_at",
+  "tableoid",
+  "xmin",
+  "cmin",
+  "xmax",
+  "cmax",
+  "ctid",
+  "all",
+  "alter",
+  "and",
+  "auth",
+  "check",
+  "constraint",
+  "create",
+  "default",
+  "delete",
+  "drop",
+  "false",
+  "foreign",
+  "from",
+  "grant",
+  "group",
+  "insert",
+  "into",
+  "not",
+  "null",
+  "order",
+  "policy",
+  "primary",
+  "public",
+  "references",
+  "revoke",
+  "select",
+  "table",
+  "true",
+  "unique",
+  "update",
+  "user",
+  "using",
+  "where",
+  "with",
+]);
+
+export function normalizeSupabaseBackendIdentifier(
+  value: string,
+  fallback: string,
+) {
+  const normalize = (candidate: string) =>
+    candidate
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .replace(/^[^a-z]+/, "")
+      .slice(0, 48);
+  const identifier = normalize(value) || normalize(fallback) || "record";
+  return RESERVED_BACKEND_IDENTIFIERS.has(identifier)
+    ? `${identifier.slice(0, 42)}_value`
+    : identifier;
+}
+
 const postgresIdentifierSchema = z
   .string()
   .min(1)
   .max(48)
   .regex(/^[a-z][a-z0-9_]*$/)
   .refine(
-    (identifier) =>
-      ![
-        "id",
-        "user_id",
-        "created_at",
-        "updated_at",
-        "tableoid",
-        "xmin",
-        "cmin",
-        "xmax",
-        "cmax",
-        "ctid",
-        "all",
-        "alter",
-        "and",
-        "auth",
-        "check",
-        "constraint",
-        "create",
-        "default",
-        "delete",
-        "drop",
-        "false",
-        "foreign",
-        "from",
-        "grant",
-        "group",
-        "insert",
-        "into",
-        "not",
-        "null",
-        "order",
-        "policy",
-        "primary",
-        "public",
-        "references",
-        "revoke",
-        "select",
-        "table",
-        "true",
-        "unique",
-        "update",
-        "user",
-        "using",
-        "where",
-        "with",
-      ].includes(identifier),
+    (identifier) => !RESERVED_BACKEND_IDENTIFIERS.has(identifier),
     "Identifier is reserved by the backend plan compiler.",
   );
 

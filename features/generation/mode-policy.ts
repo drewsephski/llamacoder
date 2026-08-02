@@ -10,8 +10,11 @@ import { describePersistenceIntent } from "@/features/generation/persistence-int
 import { buildSelectedApiPurposeStep } from "@/features/integrations/generation-contract";
 import type { IntegrationProvider } from "@/features/integrations/registry";
 import { createSupabaseBackendPlan } from "@/features/integrations/server/supabase-backend-plan";
-import { getAuthenticatedTasksBackendPlan } from "@/features/integrations/supabase-backend";
-import type { SupabaseBackendColumn } from "@/features/integrations/supabase-backend";
+import {
+  getAuthenticatedTasksBackendPlan,
+  normalizeSupabaseBackendIdentifier,
+  type SupabaseBackendColumn,
+} from "@/features/integrations/supabase-backend";
 
 function summarizePrompt(prompt: string) {
   const normalized = prompt.replace(/\s+/g, " ").trim();
@@ -242,39 +245,15 @@ export function classifySupabaseSetupRequirements({
   };
 }
 
-const RESERVED_BACKEND_IDENTIFIERS = new Set([
-  "id",
-  "user_id",
-  "created_at",
-  "updated_at",
-  "tableoid",
-  "xmin",
-  "cmin",
-  "xmax",
-  "cmax",
-  "ctid",
-]);
-
-function backendIdentifier(value: string, fallback: string) {
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .replace(/^[^a-z]+/, "")
-    .slice(0, 48);
-  const identifier = normalized || fallback;
-  return RESERVED_BACKEND_IDENTIFIERS.has(identifier)
-    ? `${identifier}_value`.slice(0, 48)
-    : identifier;
-}
-
 function inferBackendColumn(
   field: string,
   index: number,
 ): SupabaseBackendColumn {
   const [rawName = "", rawDescription = ""] = field.split(/[:—-]/, 2);
-  const name = backendIdentifier(rawName, `field_${index + 1}`);
+  const name = normalizeSupabaseBackendIdentifier(
+    rawName,
+    `field_${index + 1}`,
+  );
   const description = `${field} ${rawDescription}`.toLowerCase();
   const type = /\b(?:boolean|bool|completed|enabled|active|published)\b/.test(
     description,
@@ -307,7 +286,7 @@ function buildBackendPlanFromAppSpec(
   const sourceEntities = spec.dataPersistence.proposedSchema.slice(0, 4);
   if (!sourceEntities.length) return null;
   const names = sourceEntities.map((entity, index) =>
-    backendIdentifier(entity.entity, `entity_${index + 1}`),
+    normalizeSupabaseBackendIdentifier(entity.entity, `entity_${index + 1}`),
   );
   if (new Set(names).size !== names.length) return null;
   const entities = sourceEntities.map((entity, entityIndex) => {
@@ -327,17 +306,27 @@ function buildBackendPlanFromAppSpec(
               .includes(target.entity.trim().toLowerCase()),
         );
         if (targetIndex < 0) return [];
-        const column = backendIdentifier(
+        const column = normalizeSupabaseBackendIdentifier(
           `${names[targetIndex]}_id`,
           "parent_id",
         );
-        if (!uniqueColumns.some((candidate) => candidate.name === column)) {
+        const existingColumnIndex = uniqueColumns.findIndex(
+          (candidate) => candidate.name === column,
+        );
+        if (existingColumnIndex < 0) {
           uniqueColumns.push({
             name: column,
             type: "uuid",
             nullable: false,
             unique: false,
           });
+        } else if (uniqueColumns[existingColumnIndex].type !== "uuid") {
+          uniqueColumns[existingColumnIndex] = {
+            name: column,
+            type: "uuid",
+            nullable: false,
+            unique: false,
+          };
         }
         return [
           {

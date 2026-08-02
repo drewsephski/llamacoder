@@ -420,6 +420,75 @@ describe("typed Supabase backend plans", () => {
     ).toMatchObject({ table: true, rowLevelSecurity: true });
   });
 
+  it("normalizes reserved entity names and coerces relationship columns to uuid", () => {
+    const spec = appSpecSchema.parse({
+      architecture: { authentication: "Email/password accounts" },
+      overview: { purpose: "A project tracker with comments and users" },
+      dataPersistence: {
+        detected: true,
+        confidence: 99,
+        recommendation: "require_database",
+        explicitlyRequested: true,
+        status: "connect_confirmed",
+        requirements: {
+          authentication: true,
+          storage: false,
+          realtime: false,
+          privilegedServerLogic: false,
+        },
+        useCase: "Track projects, comments, and their owners",
+        proposedSchema: [
+          {
+            entity: "projects",
+            purpose: "Projects",
+            fields: ["name: text"],
+            relationships: ["projects belong to user"],
+          },
+          {
+            entity: "comments",
+            purpose: "Project comments",
+            fields: ["projects_id: text", "body: text"],
+            relationships: ["comments belong to projects"],
+          },
+          {
+            entity: "user",
+            purpose: "User profiles",
+            fields: ["name: text"],
+            relationships: [],
+          },
+        ],
+      },
+    });
+
+    const requirements = classifySupabaseSetupRequirements({
+      prompt: "Build a project tracker with comments and user accounts",
+      spec,
+    });
+    expect(requirements.backendTemplate).toBe("related_owner_scoped");
+    expect(requirements.backendPlan).toMatchObject({
+      entities: [
+        {
+          relationships: [
+            { targetEntity: "user_value", column: "user_value_id" },
+          ],
+        },
+        {
+          columns: expect.arrayContaining([
+            expect.objectContaining({ name: "projects_id", type: "uuid" }),
+          ]),
+          relationships: [
+            { targetEntity: "projects", column: "projects_id" },
+          ],
+        },
+        { name: "user_value" },
+      ],
+    });
+    expect(isSupportedSupabaseBackendPlan(requirements.backendPlan)).toBe(true);
+    expect(() =>
+      compileSupabaseBackendPlan(requirements.backendPlan),
+    ).not.toThrow();
+  });
+
   it("fails verification closed on RLS, policy, grant, or table drift", () => {
     const compiled = compileSupabaseBackendPlan(ownerPlan());
     const result = verificationResult(compiled);
