@@ -16,7 +16,7 @@ describe("resources navigation", () => {
 
     expect(screen.getByRole("link", { name: /^Usage ledger/ })).toHaveAttribute(
       "href",
-      "/dashboard/usage",
+      "/sign-in?callbackUrl=/dashboard/usage",
     );
   });
 });

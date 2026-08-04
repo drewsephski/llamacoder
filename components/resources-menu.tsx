@@ -96,7 +96,7 @@ export const resourceLinks: ResourceLink[] = [
     icon: LifeBuoy,
   },
   {
-    href: "/dashboard/usage",
+    href: "/sign-in?callbackUrl=/dashboard/usage",
     label: "Usage ledger",
     shortLabel: "Usage",
     description: "Review credit charges, grants, and refunds",

@@ -1,25 +1,16 @@
-import type { Metadata } from "next";
-
 import {
   MarketingFooter,
   MarketingHeader,
 } from "@/components/marketing-chrome";
 import { SourceAuditClient } from "@/features/source-audit/components/source-audit-client";
-import { SITE_URL } from "@/lib/seo";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Free AI App Source Audit",
   description:
     "Audit a public GitHub repository or exported AI app ZIP for portability, project structure, environment setup, and obvious client-secret exposure.",
-  alternates: { canonical: "/audit" },
-  openGraph: {
-    type: "website",
-    url: `${SITE_URL}/audit`,
-    title: "Free AI App Source Audit | Squid Agent",
-    description:
-      "Find out what an AI-built app is actually ready for before you migrate or hand it off.",
-  },
-};
+  path: "/audit",
+});
 
 export default function SourceAuditPage() {
   return (

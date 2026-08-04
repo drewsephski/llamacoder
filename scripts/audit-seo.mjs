@@ -100,6 +100,12 @@ async function fetchPage(pathname) {
       ogImage: document
         .querySelector('meta[property="og:image"]')
         ?.getAttribute("content"),
+      ogUrl: document
+        .querySelector('meta[property="og:url"]')
+        ?.getAttribute("content"),
+      ogType: document
+        .querySelector('meta[property="og:type"]')
+        ?.getAttribute("content"),
       twitterCard: document
         .querySelector('meta[name="twitter:card"]')
         ?.getAttribute("content"),
