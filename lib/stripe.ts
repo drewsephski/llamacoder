@@ -56,16 +56,33 @@ export function getStripePriceIds() {
   return stripePriceIds;
 }
 
-export const STRIPE_PRICE_IDS = new Proxy(
-  {} as { pro: string; pro_plus: string },
-  {
+function lazyConfigProxy<T extends object>(load: () => T): T {
+  return new Proxy({} as T, {
     get(_target, prop) {
-      return getStripePriceIds()[
-        prop as keyof ReturnType<typeof getStripePriceIds>
-      ];
+      if (typeof prop !== "string") return undefined;
+      return (load() as Record<string, unknown>)[prop];
     },
-  },
-);
+    has(_target, prop) {
+      return typeof prop === "string" && Object.hasOwn(load(), prop);
+    },
+    ownKeys() {
+      return Reflect.ownKeys(load());
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+      if (typeof prop !== "string" || !Object.hasOwn(load(), prop)) {
+        return undefined;
+      }
+
+      return {
+        configurable: true,
+        enumerable: true,
+        value: (load() as Record<string, unknown>)[prop],
+      };
+    },
+  });
+}
+
+export const STRIPE_PRICE_IDS = lazyConfigProxy(getStripePriceIds);
 
 let creditPackConfigs: typeof import("./billing/config").CREDIT_PACKS extends infer _T
   ? Record<
@@ -98,16 +115,7 @@ export function getCreditPackConfigs() {
   return creditPackConfigs;
 }
 
-export const CREDIT_PACK_CONFIGS = new Proxy(
-  {} as ReturnType<typeof getCreditPackConfigs>,
-  {
-    get(_target, prop) {
-      return getCreditPackConfigs()[
-        prop as keyof ReturnType<typeof getCreditPackConfigs>
-      ];
-    },
-  },
-);
+export const CREDIT_PACK_CONFIGS = lazyConfigProxy(getCreditPackConfigs);
 
 function addCheckoutSessionId(url: string) {
   const separator = url.includes("?") ? "&" : "?";
