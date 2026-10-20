@@ -50,6 +50,11 @@ export type ModelReasoningCapability =
        * Plan-mode toggle is not a meaningful user-facing choice.
        */
       planModeAvailable?: boolean;
+      /**
+       * OpenRouter rejects `reasoning: { enabled: false }` for this model.
+       * Use minimum effort with `exclude: true` outside Plan mode instead.
+       */
+      openRouterRequiresReasoning?: boolean;
       supportedEfforts?: readonly ReasoningEffort[];
       defaultEffort?: ReasoningEffort;
     };
@@ -80,6 +85,7 @@ export const MODELS: ModelOption[] = [
     reasoning: {
       supported: true,
       mandatory: false,
+      openRouterRequiresReasoning: true,
       supportedEfforts: ["xhigh", "high"],
       defaultEffort: "high",
     },
@@ -119,6 +125,7 @@ export const MODELS: ModelOption[] = [
     reasoning: {
       supported: true,
       mandatory: false,
+      openRouterRequiresReasoning: true,
       supportedEfforts: ["high", "medium", "low", "minimal"],
       defaultEffort: "medium",
     },
@@ -145,6 +152,7 @@ export const MODELS: ModelOption[] = [
     reasoning: {
       supported: true,
       mandatory: false,
+      openRouterRequiresReasoning: true,
       supportedEfforts: ["high", "medium", "low"],
       defaultEffort: "medium",
     },
