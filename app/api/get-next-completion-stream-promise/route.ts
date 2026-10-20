@@ -2103,7 +2103,7 @@ export async function POST(req: Request) {
 
           const observedStream = result
             .toUIMessageStream({
-              sendReasoning: true,
+              sendReasoning: reasoning.visible,
               sendSources: true,
               onError: getAIErrorMessage,
             })

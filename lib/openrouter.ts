@@ -218,9 +218,30 @@ export function aggregateOpenRouterUsageMetadata(
   };
 }
 
+function openRouterReasoningCannotBeDisabled(
+  capability: ReturnType<typeof getModelReasoningCapability>,
+) {
+  return (
+    capability.supported &&
+    (capability.mandatory || capability.openRouterRequiresReasoning === true)
+  );
+}
+
+function selectMinimumReasoningEffort(
+  capability: Extract<
+    ReturnType<typeof getModelReasoningCapability>,
+    { supported: true }
+  >,
+): ReasoningEffort {
+  if (capability.supportedEfforts?.includes("minimal")) return "minimal";
+  if (capability.supportedEfforts?.includes("low")) return "low";
+  return capability.defaultEffort || capability.supportedEfforts?.[0] || "low";
+}
+
 export function requiresOpenRouterReasoning(model: string) {
   const { primary } = getOpenRouterModelRoute(model);
-  return getModelReasoningCapability(primary).mandatory;
+  const capability = getModelReasoningCapability(primary);
+  return openRouterReasoningCannotBeDisabled(capability);
 }
 
 export function getOpenRouterReasoningSelection(
@@ -239,7 +260,9 @@ export function getOpenRouterReasoningSelection(
     };
   }
 
-  if (!capability.mandatory && quality === "low") {
+  const reasoningRequired = openRouterReasoningCannotBeDisabled(capability);
+
+  if (!reasoningRequired && quality === "low") {
     return {
       enabled: false,
       visible: false,
@@ -251,21 +274,38 @@ export function getOpenRouterReasoningSelection(
     };
   }
 
+  if (reasoningRequired && !capability.mandatory && quality === "low") {
+    const effort = selectMinimumReasoningEffort(capability);
+    return {
+      enabled: true,
+      visible: false,
+      mandatory: false,
+      effort,
+      providerOptions: {
+        openrouter: {
+          reasoning: { effort, exclude: true },
+        },
+      },
+    };
+  }
+
   const selectedEffort =
     capability.mandatory && capability.supportedEfforts?.includes("low")
       ? "low"
       : capability.defaultEffort || capability.supportedEfforts?.[0];
 
+  const planMode = quality === "high";
+
   return {
     enabled: true,
-    visible: true,
+    visible: planMode,
     mandatory: capability.mandatory,
     effort: selectedEffort || "default",
     providerOptions: {
       openrouter: {
         reasoning: selectedEffort
-          ? { effort: selectedEffort, exclude: false }
-          : { enabled: true, exclude: false },
+          ? { effort: selectedEffort, exclude: !planMode }
+          : { enabled: true, exclude: !planMode },
       },
     },
   };

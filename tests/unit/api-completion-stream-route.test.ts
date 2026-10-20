@@ -167,12 +167,12 @@ vi.mock("@/lib/openrouter", () => ({
     openrouter: { reasoning: { enabled: false } },
   })),
   getOpenRouterReasoningSelection: vi.fn(() => ({
-    enabled: false,
-    visible: false,
+    enabled: true,
+    visible: true,
     mandatory: false,
-    effort: "none",
+    effort: "medium",
     providerOptions: {
-      openrouter: { reasoning: { enabled: false } },
+      openrouter: { reasoning: { effort: "medium", exclude: false } },
     },
   })),
 }));

@@ -20,8 +20,10 @@ import {
 } from "@/lib/openrouter";
 import {
   DEFAULT_MODEL,
+  FREE_MODEL,
   GEMINI_3_5_FLASH_LITE_MODEL,
   GEMINI_3_8_FLASH_MODEL,
+  GPT_6_LUNA_MODEL,
   SAFE_GPT_MODEL,
 } from "@/lib/constants";
 
@@ -162,7 +164,7 @@ describe("OpenRouter helpers", () => {
     });
 
     expect(requiresOpenRouterReasoning("x-ai/grok-4.3")).toBe(false);
-    expect(requiresOpenRouterReasoning("openai/gpt-5.5")).toBe(false);
+    expect(requiresOpenRouterReasoning("openai/gpt-5.5")).toBe(true);
     expect(getOpenRouterProviderOptions("x-ai/grok-4.3", "low")).toEqual({
       openrouter: {
         reasoning: { enabled: false },
@@ -173,14 +175,42 @@ describe("OpenRouter helpers", () => {
   it("keeps reasoning disabled for ordinary models", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
-    expect(requiresOpenRouterReasoning(GEMINI_3_8_FLASH_MODEL)).toBe(false);
-    expect(getOpenRouterProviderOptions(GEMINI_3_8_FLASH_MODEL, "low")).toEqual(
-      {
+    expect(requiresOpenRouterReasoning(FREE_MODEL)).toBe(false);
+    expect(getOpenRouterProviderOptions(FREE_MODEL, "low")).toEqual({
+      openrouter: {
+        reasoning: { enabled: false },
+      },
+    });
+  });
+
+  it("never disables reasoning for OpenRouter-mandatory models outside Plan mode", () => {
+    getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
+
+    expect(requiresOpenRouterReasoning(DEFAULT_MODEL)).toBe(true);
+    expect(getOpenRouterReasoningSelection(DEFAULT_MODEL, "low")).toEqual({
+      enabled: true,
+      visible: false,
+      mandatory: false,
+      effort: "high",
+      providerOptions: {
         openrouter: {
-          reasoning: { enabled: false },
+          reasoning: { effort: "high", exclude: true },
         },
       },
-    );
+    });
+    expect(
+      getOpenRouterReasoningSelection(GEMINI_3_8_FLASH_MODEL, "low"),
+    ).toEqual({
+      enabled: true,
+      visible: false,
+      mandatory: false,
+      effort: "minimal",
+      providerOptions: {
+        openrouter: {
+          reasoning: { effort: "minimal", exclude: true },
+        },
+      },
+    });
   });
 
   it("always enables mandatory models without sending a disable value", () => {
@@ -191,9 +221,14 @@ describe("OpenRouter helpers", () => {
       getOpenRouterReasoningSelection(GEMINI_3_5_FLASH_LITE_MODEL, "low"),
     ).toMatchObject({
       enabled: true,
-      visible: true,
+      visible: false,
       mandatory: true,
       effort: "low",
+      providerOptions: {
+        openrouter: {
+          reasoning: { effort: "low", exclude: true },
+        },
+      },
     });
   });
 
@@ -215,17 +250,17 @@ describe("OpenRouter helpers", () => {
     });
   });
 
-  it("explicitly disables Gemini reasoning outside Plan mode", () => {
+  it("excludes hidden reasoning from code output for GPT-6 Luna outside Plan mode", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
-    expect(getOpenRouterReasoningSelection(DEFAULT_MODEL, "low")).toEqual({
-      enabled: false,
+    expect(getOpenRouterReasoningSelection(GPT_6_LUNA_MODEL, "low")).toEqual({
+      enabled: true,
       visible: false,
       mandatory: false,
-      effort: "none",
+      effort: "low",
       providerOptions: {
         openrouter: {
-          reasoning: { enabled: false },
+          reasoning: { effort: "low", exclude: true },
         },
       },
     });
