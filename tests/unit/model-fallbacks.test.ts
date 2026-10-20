@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   CLAUDE_HAIKU_5_5_MODEL,
+  CLAUDE_OPUS_5_5_MODEL,
   DEFAULT_MODEL,
   FREE_MODEL,
   GEMINI_3_5_FLASH_LITE_MODEL,
   GEMINI_3_8_FLASH_MODEL,
   GPT_6_LUNA_MODEL,
+  LEGACY_CLAUDE_OPUS_4_8_MODEL,
+  LEGACY_CLAUDE_OPUS_MODEL,
+  LEGACY_CLAUDE_SONNET_5_MODEL,
   LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_GLM_5_2_MODEL,
@@ -82,6 +86,18 @@ describe("model fallbacks", () => {
     ]);
     expect(getModelWithFallbacks(SECONDARY_STARTER_MODEL)).toEqual([
       GEMINI_3_8_FLASH_MODEL,
+    ]);
+  });
+
+  it("routes legacy Claude Sonnet and Opus chats to Claude Opus 5.5", () => {
+    expect(getModelWithFallbacks(LEGACY_CLAUDE_SONNET_5_MODEL)).toEqual([
+      CLAUDE_OPUS_5_5_MODEL,
+    ]);
+    expect(getModelWithFallbacks(LEGACY_CLAUDE_OPUS_4_8_MODEL)).toEqual([
+      CLAUDE_OPUS_5_5_MODEL,
+    ]);
+    expect(getModelWithFallbacks(LEGACY_CLAUDE_OPUS_MODEL)).toEqual([
+      CLAUDE_OPUS_5_5_MODEL,
     ]);
   });
 

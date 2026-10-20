@@ -1,12 +1,15 @@
 import {
   CLAUDE_HAIKU_5_5_MODEL,
+  CLAUDE_OPUS_5_5_MODEL,
   DEFAULT_MODEL,
   FREE_MODEL,
   GEMINI_3_5_FLASH_LITE_MODEL,
   GEMINI_3_8_FLASH_MODEL,
   GEMINI_MULTIMODAL_MODEL,
   GPT_6_LUNA_MODEL,
+  LEGACY_CLAUDE_OPUS_4_8_MODEL,
   LEGACY_CLAUDE_OPUS_MODEL,
+  LEGACY_CLAUDE_SONNET_5_MODEL,
   LEGACY_DEFAULT_MODEL,
   LEGACY_DEEPSEEK_V4_PRO_MODEL,
   LEGACY_GEMINI_3_5_FLASH_MODEL,
@@ -33,7 +36,7 @@ export const FALLBACK_MODELS = {
   gpt: GPT_6_LUNA_MODEL,
   gemini: GEMINI_3_8_FLASH_MODEL,
   advancedCode: CLAUDE_HAIKU_5_5_MODEL,
-  premium: "anthropic/claude-opus-4.8",
+  premium: CLAUDE_OPUS_5_5_MODEL,
 };
 
 const LEGACY_GEMINI_FLASH_MODELS = new Set<string>([
@@ -83,7 +86,11 @@ export function getModelWithFallbacks(model: string): string[] {
     return [FALLBACK_MODELS.gpt];
   }
 
-  if (model === LEGACY_CLAUDE_OPUS_MODEL) {
+  if (
+    model === LEGACY_CLAUDE_OPUS_MODEL ||
+    model === LEGACY_CLAUDE_OPUS_4_8_MODEL ||
+    model === LEGACY_CLAUDE_SONNET_5_MODEL
+  ) {
     return [FALLBACK_MODELS.premium];
   }
 

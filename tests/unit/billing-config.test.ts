@@ -44,15 +44,16 @@ describe("billing config", () => {
     expect(getModelCreditCost(LEGACY_MINIMAX_M3_MODEL)).toBe(2);
     expect(getModelCreditCost(LEGACY_KIMI_CODE_MODEL)).toBe(2);
     expect(getModelCreditCost(LEGACY_QWEN_MAX_MODEL)).toBe(2);
-    expect(getModelCreditCost("anthropic/claude-sonnet-5")).toBe(8);
+    expect(getModelCreditCost("anthropic/claude-sonnet-5")).toBe(16);
     expect(getModelCreditCost("x-ai/grok-4.5")).toBe(2);
     expect(getModelCreditCost(LEGACY_GEMINI_PRO_MODEL)).toBe(3);
     expect(getModelCreditCost(SAFE_GPT_MODEL)).toBe(3);
-    expect(getModelCreditCost("anthropic/claude-opus-4.8")).toBe(19);
+    expect(getModelCreditCost("anthropic/claude-opus-5.5")).toBe(16);
+    expect(getModelCreditCost("anthropic/claude-opus-4.8")).toBe(16);
     expect(
       getModelCreditCost("anthropic/claude-opus-4.8", { outputTokens: 15_000 }),
-    ).toBe(44);
-    expect(getModelCreditHoldCost("anthropic/claude-opus-4.8")).toBe(44);
+    ).toBe(40);
+    expect(getModelCreditHoldCost("anthropic/claude-opus-4.8")).toBe(40);
     expect(getModelCreditCost("openai/gpt-5.5")).toBe(3);
     expect(() => getModelCreditCost("unknown/model")).toThrow(
       "UNPRICED_MODEL:unknown/model",
@@ -138,8 +139,8 @@ describe("billing config", () => {
       }),
     ).toBe(true);
     expect(canTierUseModel("pro", "openai/gpt-6-luna")).toBe(true);
-    expect(canTierUseModel("pro", "anthropic/claude-opus-4.8")).toBe(false);
-    expect(canTierUseModel("pro_plus", "anthropic/claude-opus-4.8")).toBe(true);
+    expect(canTierUseModel("pro", "anthropic/claude-opus-5.5")).toBe(false);
+    expect(canTierUseModel("pro_plus", "anthropic/claude-opus-5.5")).toBe(true);
     expect(TIERS.pro.monthlyCredits).toBe(100);
     expect(TIERS.pro.rolloverCap).toBe(200);
   });

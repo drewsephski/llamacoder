@@ -1,5 +1,6 @@
 import {
   CLAUDE_HAIKU_5_5_MODEL,
+  CLAUDE_OPUS_5_5_MODEL,
   DEFAULT_MODEL,
   FREE_MODEL,
   GEMINI_3_5_FLASH_LITE_MODEL,
@@ -11,6 +12,8 @@ import {
   LEGACY_GROK_4_5_MODEL,
   GEMINI_MULTIMODAL_MODEL,
   GPT_6_LUNA_MODEL,
+  LEGACY_CLAUDE_OPUS_4_8_MODEL,
+  LEGACY_CLAUDE_SONNET_5_MODEL,
   LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_GLM_5_2_MODEL,
@@ -131,7 +134,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     tier: "advanced",
     bands: { small: 7, standard: 10, large: 13, xl: 15 },
   },
-  "anthropic/claude-sonnet-5": {
+  [LEGACY_CLAUDE_SONNET_5_MODEL]: {
     tier: "premium",
     bands: { small: 8, standard: 11, large: 15, xl: 18 },
   },
@@ -139,9 +142,13 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     tier: "premium",
     bands: { small: 4, standard: 9, large: 14, xl: 20 },
   },
-  "anthropic/claude-opus-4.8": {
+  [LEGACY_CLAUDE_OPUS_4_8_MODEL]: {
     tier: "premium",
     bands: { small: 19, standard: 28, large: 36, xl: 44 },
+  },
+  [CLAUDE_OPUS_5_5_MODEL]: {
+    tier: "premium",
+    bands: { small: 16, standard: 24, large: 32, xl: 40 },
   },
 };
 
@@ -261,7 +268,7 @@ export const MODEL_TOKEN_PRICING: Record<string, ModelTokenPricing> = {
   },
   [SAFE_GPT_MODEL]: { inputPricePerMillion: 2, outputPricePerMillion: 8 },
   "openai/gpt-5.5": { inputPricePerMillion: 2, outputPricePerMillion: 8 },
-  "anthropic/claude-sonnet-5": {
+  [LEGACY_CLAUDE_SONNET_5_MODEL]: {
     inputPricePerMillion: 2,
     outputPricePerMillion: 10,
   },
@@ -269,9 +276,13 @@ export const MODEL_TOKEN_PRICING: Record<string, ModelTokenPricing> = {
     inputPricePerMillion: 2,
     outputPricePerMillion: 12,
   },
-  "anthropic/claude-opus-4.8": {
+  [LEGACY_CLAUDE_OPUS_4_8_MODEL]: {
     inputPricePerMillion: 5,
     outputPricePerMillion: 25,
+  },
+  [CLAUDE_OPUS_5_5_MODEL]: {
+    inputPricePerMillion: 4,
+    outputPricePerMillion: 20,
   },
 };
 

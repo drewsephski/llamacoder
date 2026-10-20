@@ -11,6 +11,9 @@ export const LEGACY_GROK_4_5_MODEL = "x-ai/grok-4.5";
 export const LEGACY_DEEPSEEK_V4_PRO_MODEL = "deepseek/deepseek-v4-pro";
 export const GPT_6_LUNA_MODEL = "openai/gpt-6-luna";
 export const CLAUDE_HAIKU_5_5_MODEL = "anthropic/claude-haiku-5.5";
+export const CLAUDE_OPUS_5_5_MODEL = "anthropic/claude-opus-5.5";
+export const LEGACY_CLAUDE_SONNET_5_MODEL = "anthropic/claude-sonnet-5";
+export const LEGACY_CLAUDE_OPUS_4_8_MODEL = "anthropic/claude-opus-4.8";
 export const LEGACY_DEFAULT_MODEL = "google/gemini-3-flash-preview";
 export const LEGACY_GEMINI_DEFAULT_MODEL = GEMINI_MULTIMODAL_MODEL;
 export const LEGACY_FREE_MODEL = "tencent/hy3-preview:free";
@@ -147,21 +150,8 @@ export const MODELS: ModelOption[] = [
     },
   },
   {
-    label: "Claude Sonnet 5",
-    value: "anthropic/claude-sonnet-5",
-    paid: true,
-    group: "premium",
-    summary: "Efficient Claude coding model with strong agentic performance.",
-    reasoning: {
-      supported: true,
-      mandatory: false,
-      supportedEfforts: ["xhigh", "high", "medium", "low"],
-      defaultEffort: "medium",
-    },
-  },
-  {
-    label: "Claude Opus 4.8",
-    value: "anthropic/claude-opus-4.8",
+    label: "Claude Opus 5.5",
+    value: CLAUDE_OPUS_5_5_MODEL,
     paid: true,
     group: "premium",
     summary:
