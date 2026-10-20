@@ -15,13 +15,13 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/billing", () => ({
   FREE_PROJECT_LIMIT: 3,
-  hasModelPricing: (modelId: string) =>
-    modelId === "google/gemini-3.1-flash-lite",
+  hasModelPricing: (modelId: string) => modelId === DEFAULT_MODEL,
   getModelCreditHoldCost: () => 1,
   checkProjectCreationEligibility: vi.fn(),
 }));
 
 import { GET } from "@/app/api/user/can-create-project/route";
+import { DEFAULT_MODEL } from "@/lib/constants";
 
 describe("can-create-project route", () => {
   beforeEach(() => {

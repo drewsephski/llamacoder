@@ -94,7 +94,7 @@ describe("billing credit engine", () => {
       }),
     ).resolves.toMatchObject({
       success: true,
-      creditsUsed: 3,
+      creditsUsed: 5,
       remainingCredits: 8,
     });
   });

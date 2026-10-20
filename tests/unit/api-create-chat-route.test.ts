@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_MODEL, FREE_MODEL } from "@/lib/constants";
+import {
+  DEFAULT_MODEL,
+  FREE_MODEL,
+  GEMINI_3_5_FLASH_LITE_MODEL,
+} from "@/lib/constants";
 import { readJson } from "../fixtures/builders";
 
 const {
@@ -58,7 +62,7 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 });
 
 vi.mock("@/lib/openrouter", () => ({
-  VISION_ANALYSIS_MODEL: "google/gemini-3.1-flash-lite",
+  VISION_ANALYSIS_MODEL: DEFAULT_MODEL,
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: createOpenRouterModelMock,
   getAIErrorMessage: (error: unknown) =>
@@ -329,7 +333,7 @@ describe("/api/create-chat", () => {
     const response = await POST(
       request({
         prompt: "Build a timer",
-        model: "openai/gpt-4.1",
+        model: GEMINI_3_5_FLASH_LITE_MODEL,
         quality: "high",
       }),
     );

@@ -16,6 +16,7 @@ import {
   type PromptTemplateValues,
 } from "@/lib/prompt-templates";
 import { createEmptyAppSpec } from "@/features/generation/app-spec";
+import { DEFAULT_MODEL, GEMINI_MULTIMODAL_MODEL } from "@/lib/constants";
 
 const {
   createOpenRouterModelMock,
@@ -42,7 +43,7 @@ const {
   gatewayModelMock: vi.fn(() => "gateway-model"),
   generateTextMock: vi.fn(),
   getModelCreditHoldCostMock: vi.fn((model: string) =>
-    model === "google/gemini-3.1-flash-lite" ? 5 : 10,
+    model === GEMINI_MULTIMODAL_MODEL ? 5 : 10,
   ),
   getSessionMock: vi.fn(),
   releaseCreditHoldMock: vi.fn(),
@@ -155,7 +156,7 @@ vi.mock("@/lib/billing", async (importOriginal) => {
 
 vi.mock("@/lib/openrouter", () => ({
   GENERATED_CODE_MAX_TOKENS: 16000,
-  VISION_ANALYSIS_MODEL: "google/gemini-3.1-flash-lite",
+  VISION_ANALYSIS_MODEL: DEFAULT_MODEL,
   getCacheableSystemPrompt: vi.fn((_model: string, content: string) => content),
   createAppOpenRouter: vi.fn(() => vi.fn()),
   createOpenRouterModel: createOpenRouterModelMock,
@@ -574,7 +575,7 @@ describe("/api/get-next-completion-stream-promise", () => {
     expect(generateTextMock).not.toHaveBeenCalled();
     expect(createRequestTelemetryMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        modelId: "google/gemini-3.1-flash-lite",
+        modelId: DEFAULT_MODEL,
         requestKind: "generation",
       }),
     );
@@ -2932,13 +2933,13 @@ GET https://api.example.com/v2/airports/{code} — returns the airport name, cit
     expect(reserveCreditHoldMock).not.toHaveBeenCalled();
     expect(createRequestTelemetryMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        modelId: "google/gemini-3.1-flash-lite",
+        modelId: DEFAULT_MODEL,
         requestKind: "free_repair",
       }),
     );
     expect(createOpenRouterModelMock).toHaveBeenCalledWith(
       expect.anything(),
-      "google/gemini-3.1-flash-lite",
+      DEFAULT_MODEL,
       expect.objectContaining({ usage: { include: true } }),
       { sort: "throughput" },
     );

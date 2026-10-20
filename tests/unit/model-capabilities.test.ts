@@ -9,15 +9,14 @@ import {
 describe("model capabilities", () => {
   it.each([
     ["deepseek/deepseek-v4-flash", true],
-    ["google/gemini-2.5-flash-lite", true],
     [DEFAULT_MODEL, true],
     [GEMINI_3_5_FLASH_LITE_MODEL, false],
-    ["openai/gpt-4.1", false],
+    ["google/gemini-3.8-flash", true],
     ["anthropic/claude-opus-4.8", true],
     ["anthropic/claude-sonnet-5", true],
-    ["x-ai/grok-4.5", false],
-    ["deepseek/deepseek-v4-pro", true],
-    ["z-ai/glm-5.2", true],
+    ["openai/gpt-6-luna", true],
+    ["anthropic/claude-haiku-5.5", true],
+    ["z-ai/glm-5.3-flash", true],
     ["unknown/model", false],
   ])("returns Plan-mode availability for %s", (model, expected) => {
     expect(isPlanModeAvailable(model)).toBe(expected);
