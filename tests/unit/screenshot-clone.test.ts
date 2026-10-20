@@ -99,8 +99,8 @@ Compact utility bar with copyright only.
 
   it("routes text-only models to a multimodal default for screenshots", () => {
     expect(resolveVisionCapableCodingModel(FREE_MODEL)).toBe(DEFAULT_MODEL);
-    expect(resolveVisionCapableCodingModel("anthropic/claude-sonnet-5")).toBe(
-      "anthropic/claude-sonnet-5",
+    expect(resolveVisionCapableCodingModel("anthropic/claude-opus-5.5")).toBe(
+      "anthropic/claude-opus-5.5",
     );
   });
 

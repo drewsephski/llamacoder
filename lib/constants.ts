@@ -1,17 +1,32 @@
 export const FREE_MODEL = "deepseek/deepseek-v4-flash";
-export const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
+export const DEFAULT_MODEL = "z-ai/glm-5.3-flash";
+export const GEMINI_MULTIMODAL_MODEL = "google/gemini-3.1-flash-lite";
 export const GEMINI_3_5_FLASH_LITE_MODEL = "google/gemini-3.5-flash-lite";
+export const GEMINI_3_8_FLASH_MODEL = "google/gemini-3.8-flash";
+/** Removed from the picker; kept for legacy chat routing. */
+export const LEGACY_GEMINI_3_5_FLASH_MODEL = "google/gemini-3.5-flash";
+export const LEGACY_GEMINI_3_6_FLASH_MODEL = "google/gemini-3.6-flash";
+export const LEGACY_GEMINI_3_7_FLASH_MODEL = "google/gemini-3.7-flash";
+export const LEGACY_GROK_4_5_MODEL = "x-ai/grok-4.5";
+export const LEGACY_DEEPSEEK_V4_PRO_MODEL = "deepseek/deepseek-v4-pro";
+export const GPT_6_LUNA_MODEL = "openai/gpt-6-luna";
+export const CLAUDE_HAIKU_5_5_MODEL = "anthropic/claude-haiku-5.5";
+export const CLAUDE_OPUS_5_5_MODEL = "anthropic/claude-opus-5.5";
+export const LEGACY_CLAUDE_SONNET_5_MODEL = "anthropic/claude-sonnet-5";
+export const LEGACY_CLAUDE_OPUS_4_8_MODEL = "anthropic/claude-opus-4.8";
 export const LEGACY_DEFAULT_MODEL = "google/gemini-3-flash-preview";
+export const LEGACY_GEMINI_DEFAULT_MODEL = GEMINI_MULTIMODAL_MODEL;
 export const LEGACY_FREE_MODEL = "tencent/hy3-preview:free";
 export const LEGACY_SECONDARY_STARTER_MODEL = "minimax/minimax-m2.5";
 export const LEGACY_MIMO_STARTER_MODEL = "xiaomi/mimo-v2.5";
 export const LEGACY_KIMI_CODE_MODEL = "moonshotai/kimi-k2.7-code";
 export const LEGACY_MINIMAX_M3_MODEL = "minimax/minimax-m3";
-export const LEGACY_GEMINI_PRO_MODEL = "google/gemini-3.1-pro-preview";
 export const LEGACY_QWEN_MAX_MODEL = "qwen/qwen3.7-max";
+export const LEGACY_GEMINI_PRO_MODEL = "google/gemini-3.1-pro-preview";
 export const LEGACY_GPT_5_4_MODEL = "openai/gpt-5.4";
 export const LEGACY_CLAUDE_OPUS_MODEL = "anthropic/claude-opus-4.6";
 export const LEGACY_LAGUNA_MODEL = "poolside/laguna-xs-2.1";
+export const LEGACY_GLM_5_2_MODEL = "z-ai/glm-5.2";
 export const SECONDARY_STARTER_MODEL = "google/gemini-2.5-flash-lite";
 export const SAFE_GPT_MODEL = "openai/gpt-4.1";
 
@@ -55,29 +70,18 @@ export type ModelOption = {
 
 export const MODELS: ModelOption[] = [
   {
-    label: "Gemini 3.1 Flash Lite",
+    label: "GLM 5.3 Flash",
     value: DEFAULT_MODEL,
     free: true,
+    featured: true,
     group: "free",
-    summary: "Low-latency multimodal default for fast app generation.",
+    summary:
+      "Fast multimodal default for low-latency app generation and screenshots.",
     reasoning: {
       supported: true,
       mandatory: false,
-      supportedEfforts: ["high", "medium", "low", "minimal"],
-      defaultEffort: "medium",
-    },
-  },
-  {
-    label: "Gemini 3.5 Flash Lite",
-    value: GEMINI_3_5_FLASH_LITE_MODEL,
-    free: true,
-    group: "free",
-    summary: "Upgraded agentic Gemini model for focused app generation.",
-    reasoning: {
-      supported: true,
-      mandatory: true,
-      supportedEfforts: ["high", "medium", "low", "minimal"],
-      defaultEffort: "minimal",
+      supportedEfforts: ["xhigh", "high"],
+      defaultEffort: "high",
     },
   },
   {
@@ -94,23 +98,60 @@ export const MODELS: ModelOption[] = [
     },
   },
   {
-    label: "Gemini 2.5 Flash Lite",
-    value: SECONDARY_STARTER_MODEL,
+    label: "Gemini 3.5 Flash Lite",
+    value: GEMINI_3_5_FLASH_LITE_MODEL,
+    free: true,
     group: "free",
-    summary: "Fast low-cost Gemini starter model for app generation.",
-    reasoning: { supported: true, mandatory: false },
+    summary: "Agentic Gemini Flash Lite for focused app generation.",
+    reasoning: {
+      supported: true,
+      mandatory: true,
+      supportedEfforts: ["high", "medium", "low", "minimal"],
+      defaultEffort: "minimal",
+    },
   },
   {
-    label: "GPT-4.1",
-    value: SAFE_GPT_MODEL,
+    label: "Gemini 3.8 Flash",
+    value: GEMINI_3_8_FLASH_MODEL,
     paid: true,
     group: "paid",
-    summary: "Strong non-thinking GPT coding model with a 1M-token context.",
-    reasoning: { supported: false, mandatory: false },
+    summary: "Newest Google Gemini Flash release on OpenRouter.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["high", "medium", "low", "minimal"],
+      defaultEffort: "medium",
+    },
   },
   {
-    label: "Claude Opus 4.8",
-    value: "anthropic/claude-opus-4.8",
+    label: "Claude Haiku 5.5",
+    value: CLAUDE_HAIKU_5_5_MODEL,
+    paid: true,
+    group: "paid",
+    summary: "Fast Claude model for responsive edits and lighter builds.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["high", "medium", "low"],
+      defaultEffort: "medium",
+    },
+  },
+  {
+    label: "GPT-6 Luna",
+    value: GPT_6_LUNA_MODEL,
+    paid: true,
+    group: "paid",
+    summary: "OpenAI Luna coding model for fast iterative app generation.",
+    reasoning: {
+      supported: true,
+      mandatory: false,
+      supportedEfforts: ["high", "medium", "low"],
+      defaultEffort: "medium",
+    },
+  },
+  {
+    label: "Claude Opus 5.5",
+    value: CLAUDE_OPUS_5_5_MODEL,
     paid: true,
     group: "premium",
     summary:
@@ -120,62 +161,6 @@ export const MODELS: ModelOption[] = [
       mandatory: false,
       supportedEfforts: ["xhigh", "high", "medium", "low"],
       defaultEffort: "medium",
-    },
-  },
-  {
-    label: "Claude Sonnet 5",
-    value: "anthropic/claude-sonnet-5",
-    paid: true,
-    featured: false,
-    group: "premium",
-    summary: "Efficient Claude coding model with strong agentic performance.",
-    reasoning: {
-      supported: true,
-      mandatory: false,
-      supportedEfforts: ["xhigh", "high", "medium", "low"],
-      defaultEffort: "medium",
-    },
-  },
-  {
-    label: "Grok 4.5",
-    value: "x-ai/grok-4.5",
-    paid: true,
-    featured: false,
-    group: "paid",
-    summary: "xAI frontier model for complex coding and app generation.",
-    reasoning: {
-      supported: true,
-      mandatory: true,
-      supportedEfforts: ["high", "medium", "low"],
-      defaultEffort: "high",
-    },
-  },
-  {
-    label: "DeepSeek V4 Pro",
-    value: "deepseek/deepseek-v4-pro",
-    paid: true,
-    featured: false,
-    group: "paid",
-    summary: "Low-cost long-context reasoning and software engineering model.",
-    reasoning: {
-      supported: true,
-      mandatory: false,
-      supportedEfforts: ["xhigh", "high"],
-      defaultEffort: "high",
-    },
-  },
-  {
-    label: "GLM 5.2",
-    value: "z-ai/glm-5.2",
-    paid: true,
-    featured: false,
-    group: "paid",
-    summary: "Open-weight long-horizon coding and automation model.",
-    reasoning: {
-      supported: true,
-      mandatory: false,
-      supportedEfforts: ["xhigh", "high"],
-      defaultEffort: "high",
     },
   },
 ];

@@ -11,9 +11,9 @@ describe("getModelBadgeClass", () => {
     },
   );
 
-  it("assigns distinct colors to Grok and GLM", () => {
-    expect(getModelBadgeClass("x-ai/grok-4.5")).toBe("model-grok");
-    expect(getModelBadgeClass("z-ai/glm-5.2")).toBe("model-glm");
+  it("assigns distinct colors to GPT Luna and GLM", () => {
+    expect(getModelBadgeClass("openai/gpt-6-luna")).toBe("model-gpt");
+    expect(getModelBadgeClass("z-ai/glm-5.3-flash")).toBe("model-glm");
   });
 
   it("uses the neutral badge for an unknown provider", () => {

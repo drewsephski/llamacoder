@@ -21,8 +21,8 @@ import {
 import {
   DEFAULT_MODEL,
   GEMINI_3_5_FLASH_LITE_MODEL,
+  GEMINI_3_8_FLASH_MODEL,
   SAFE_GPT_MODEL,
-  SECONDARY_STARTER_MODEL,
 } from "@/lib/constants";
 
 describe("OpenRouter helpers", () => {
@@ -156,8 +156,8 @@ describe("OpenRouter helpers", () => {
 
   it("uses normalized routes for removed mandatory-reasoning models", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => {
-      if (model === "x-ai/grok-4.3") return ["deepseek/deepseek-v4-pro"];
-      if (model === "openai/gpt-5.5") return ["openai/gpt-4.1"];
+      if (model === "x-ai/grok-4.3") return ["anthropic/claude-haiku-5.5"];
+      if (model === "openai/gpt-5.5") return ["openai/gpt-6-luna"];
       return [model];
     });
 
@@ -173,32 +173,20 @@ describe("OpenRouter helpers", () => {
   it("keeps reasoning disabled for ordinary models", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
-    expect(requiresOpenRouterReasoning(SECONDARY_STARTER_MODEL)).toBe(false);
-    expect(
-      getOpenRouterProviderOptions(SECONDARY_STARTER_MODEL, "low"),
-    ).toEqual({
-      openrouter: {
-        reasoning: { enabled: false },
+    expect(requiresOpenRouterReasoning(GEMINI_3_8_FLASH_MODEL)).toBe(false);
+    expect(getOpenRouterProviderOptions(GEMINI_3_8_FLASH_MODEL, "low")).toEqual(
+      {
+        openrouter: {
+          reasoning: { enabled: false },
+        },
       },
-    });
+    );
   });
 
   it("always enables mandatory models without sending a disable value", () => {
     getModelWithFallbacksMock.mockImplementation((model: string) => [model]);
 
-    expect(requiresOpenRouterReasoning("x-ai/grok-4.5")).toBe(true);
     expect(requiresOpenRouterReasoning(GEMINI_3_5_FLASH_LITE_MODEL)).toBe(true);
-    expect(getOpenRouterReasoningSelection("x-ai/grok-4.5", "low")).toEqual({
-      enabled: true,
-      visible: true,
-      mandatory: true,
-      effort: "low",
-      providerOptions: {
-        openrouter: {
-          reasoning: { effort: "low", exclude: false },
-        },
-      },
-    });
     expect(
       getOpenRouterReasoningSelection(GEMINI_3_5_FLASH_LITE_MODEL, "low"),
     ).toMatchObject({
@@ -218,10 +206,10 @@ describe("OpenRouter helpers", () => {
       enabled: true,
       visible: true,
       mandatory: false,
-      effort: "medium",
+      effort: "high",
       providerOptions: {
         openrouter: {
-          reasoning: { effort: "medium", exclude: false },
+          reasoning: { effort: "high", exclude: false },
         },
       },
     });

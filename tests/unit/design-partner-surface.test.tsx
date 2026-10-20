@@ -182,7 +182,9 @@ describe("design partner homepage surface", () => {
       "placeholder",
       expect.stringMatching(/reviewable onboarding prototype/i),
     );
-    expect(screen.getByText("0 / 1,500")).toBeVisible();
+    expect(document.getElementById("projectSummary-hint")).toHaveTextContent(
+      "0 / 1,500",
+    );
   });
 
   it("uses the enhanced loader while submitting", async () => {
