@@ -1,10 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 
 import { getCurrentSession } from "@/features/auth/server/session";
 import { consumeRateLimit } from "@/features/security/server/rate-limit";
+import {
+  createObjectStorageClient,
+  getObjectStorageConfig,
+  getObjectStorageUrl,
+} from "@/lib/object-storage";
 
 const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -50,27 +55,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const bucket = process.env.S3_UPLOAD_BUCKET?.trim();
-  const region = process.env.S3_UPLOAD_REGION?.trim();
-  const accessKeyId = process.env.S3_UPLOAD_KEY?.trim();
-  const secretAccessKey = process.env.S3_UPLOAD_SECRET?.trim();
-  if (!bucket || !region || !accessKeyId || !secretAccessKey) {
+  let config;
+  try {
+    config = getObjectStorageConfig("NEON_UPLOAD_BUCKET");
+  } catch {
     return Response.json(
       { error: "Upload storage is not configured." },
       { status: 503 },
     );
   }
 
-  const extension = parsed.data.filename.split(".").at(-1)?.toLowerCase();
-  const key = `squid-uploads/${session.user.id}/${randomUUID()}.${extension || "image"}`;
-  const client = new S3Client({
-    region,
-    credentials: { accessKeyId, secretAccessKey },
-  });
+  const extension = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  }[parsed.data.filetype];
+  const key = `squid-uploads/${session.user.id}/${randomUUID()}.${extension}`;
+  const client = createObjectStorageClient(config);
   const url = await getSignedUrl(
     client,
     new PutObjectCommand({
-      Bucket: bucket,
+      Bucket: config.bucket,
       Key: key,
       ContentType: parsed.data.filetype,
       ContentLength: parsed.data.filesize,
@@ -79,5 +84,11 @@ export async function POST(request: Request) {
     { expiresIn: 300 },
   );
 
-  return Response.json({ key, bucket, region, url });
+  return Response.json({
+    key,
+    bucket: config.bucket,
+    region: config.region,
+    url,
+    objectUrl: getObjectStorageUrl(config, key),
+  });
 }

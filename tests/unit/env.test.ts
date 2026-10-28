@@ -48,7 +48,7 @@ describe("production environment validation", () => {
     const result = validateProductionEnvironment({
       ...validEnvironment(),
       OPENROUTER_API_KEY: "",
-      S3_UPLOAD_BUCKET: "bucket",
+      NEON_GALLERY_BUCKET: "bucket",
     });
     expect(result.valid).toBe(false);
     if (result.valid) return;

@@ -3,16 +3,8 @@ type PresignedUploadResponse = {
   key: string;
   region: string;
   url: string;
+  objectUrl: string;
 };
-
-function getPublicObjectUrl({ bucket, key, region }: PresignedUploadResponse) {
-  const encodedKey = key
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-
-  return `https://${bucket}.s3.${region}.amazonaws.com/${encodedKey}`;
-}
 
 export async function uploadScreenshot(file: File) {
   const presignResponse = await fetch("/api/s3-upload", {
@@ -46,5 +38,5 @@ export async function uploadScreenshot(file: File) {
     throw new Error("Unable to upload the screenshot.");
   }
 
-  return { url: getPublicObjectUrl(presigned) };
+  return { url: presigned.objectUrl };
 }

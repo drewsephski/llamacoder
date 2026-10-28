@@ -1,0 +1,7 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - status [ref=e5]:
+      - generic [ref=e8]: Loading
+      - paragraph [ref=e10]: Loading gallery...
+    - region "Notifications alt+T"
+  - alert [ref=e11]

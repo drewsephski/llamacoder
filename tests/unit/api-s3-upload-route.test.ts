@@ -38,14 +38,16 @@ function request(body: Record<string, unknown>) {
 describe("S3 upload signer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.AWS_ENDPOINT_URL_S3 =
+      "https://branch.storage.us-east-1.aws.neon.tech";
     mocks.getCurrentSession.mockResolvedValue({ user: { id: "user_1" } });
     mocks.consumeRateLimit.mockResolvedValue({ allowed: true, remaining: 11 });
     mocks.getSignedUrl.mockResolvedValue("https://uploads.example.com/signed");
     mocks.lastPutObjectInput = null;
-    process.env.S3_UPLOAD_BUCKET = "bucket";
-    process.env.S3_UPLOAD_REGION = "us-east-1";
-    process.env.S3_UPLOAD_KEY = "access-key";
-    process.env.S3_UPLOAD_SECRET = "secret-key";
+    process.env.NEON_UPLOAD_BUCKET = "bucket";
+    process.env.AWS_REGION = "us-east-1";
+    process.env.AWS_ACCESS_KEY_ID = "access-key";
+    process.env.AWS_SECRET_ACCESS_KEY = "secret-key";
   });
 
   it("authenticates before signing", async () => {

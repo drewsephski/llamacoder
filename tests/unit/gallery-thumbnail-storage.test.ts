@@ -25,17 +25,19 @@ import { getGalleryThumbnailObject } from "@/features/gallery/server/thumbnail-s
 describe("gallery thumbnail storage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.S3_UPLOAD_BUCKET = "squid-assets";
-    process.env.S3_UPLOAD_REGION = "us-east-1";
-    process.env.S3_UPLOAD_KEY = "s3-key";
-    process.env.S3_UPLOAD_SECRET = "s3-secret";
+    process.env.AWS_ENDPOINT_URL_S3 =
+      "https://branch.storage.us-east-1.aws.neon.tech";
+    process.env.NEON_GALLERY_BUCKET = "squid-assets";
+    process.env.AWS_REGION = "us-east-1";
+    process.env.AWS_ACCESS_KEY_ID = "s3-key";
+    process.env.AWS_SECRET_ACCESS_KEY = "s3-secret";
   });
 
   it("reads only gallery objects from the configured private bucket", async () => {
     s3SendMock.mockResolvedValue({ ContentType: "image/jpeg" });
 
     await getGalleryThumbnailObject(
-      "https://squid-assets.s3.us-east-1.amazonaws.com/squid-gallery/publication%201/message.jpg",
+      "https://branch.storage.us-east-1.aws.neon.tech/squid-assets/squid-gallery/publication%201/message.jpg",
     );
 
     expect(s3SendMock).toHaveBeenCalledWith(

@@ -17,6 +17,8 @@ describe("uploadScreenshot", () => {
             key: "users/a screenshot.png",
             region: "us-east-1",
             url: "https://signed-upload.example",
+            objectUrl:
+              "https://branch.storage.aws.neon.tech/squid-uploads/users/a%20screenshot.png",
           }),
           { status: 200 },
         ),
@@ -28,7 +30,7 @@ describe("uploadScreenshot", () => {
     });
 
     await expect(uploadScreenshot(file)).resolves.toEqual({
-      url: "https://squid-uploads.s3.us-east-1.amazonaws.com/users/a%20screenshot.png",
+      url: "https://branch.storage.aws.neon.tech/squid-uploads/users/a%20screenshot.png",
     });
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
