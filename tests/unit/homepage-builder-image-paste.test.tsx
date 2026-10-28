@@ -90,6 +90,9 @@ vi.mock("@/features/generation/client/generation-handoff-context", () => ({
 vi.mock("@/lib/auth-client", () => ({
   authClient: { getSession: getSessionMock },
 }));
+vi.mock("@/features/gallery/client/hero-image-rotation", () => ({
+  buildGalleryHeroImageDeck: () => [],
+}));
 
 import { HomepageBuilderIsland } from "@/features/marketing/components/homepage-builder-island";
 

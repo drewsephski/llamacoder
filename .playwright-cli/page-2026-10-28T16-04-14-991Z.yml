@@ -1,0 +1,252 @@
+- generic [active] [ref=f6e1]:
+  - generic [ref=f6e3]:
+    - generic [ref=f6e4]:
+      - banner [ref=f6e5]:
+        - generic [ref=f6e6]:
+          - link "Squid Agent Squid" [ref=f6e7] [cursor=pointer]:
+            - /url: /
+            - img "Squid Agent" [ref=f6e8]
+            - generic [ref=f6e9]: Squid
+          - navigation [ref=f6e10]:
+            - link "Gallery" [ref=f6e11] [cursor=pointer]:
+              - /url: /gallery
+          - generic [ref=f6e12]:
+            - link "Build an app" [ref=f6e13] [cursor=pointer]:
+              - /url: /
+            - button "Toggle theme" [ref=f6e15] [cursor=pointer]
+      - main [ref=f6e19]:
+        - generic [ref=f6e20]:
+          - generic [ref=f6e21]:
+            - heading "Made with Squid" [level=1] [ref=f6e22]
+            - paragraph [ref=f6e23]: Explore real apps published by the community. Open any project to try it, then remix the ones their creators have opened up.
+          - link "Build an app" [ref=f6e24] [cursor=pointer]:
+            - /url: /
+        - generic [ref=f6e26]:
+          - generic [ref=f6e27]:
+            - generic [ref=f6e28]: Search projects
+            - textbox "Search projects" [ref=f6e29]
+            - button "Search gallery" [ref=f6e30] [cursor=pointer]
+          - combobox "Sort projects" [ref=f6e33] [cursor=pointer]:
+            - generic: Newest
+          - combobox [aria-hidden] [ref=f6e38]
+          - generic [ref=f6e39]:
+            - generic [ref=f6e40]: Remixable
+            - switch "Show only remixable projects" [ref=f6e41] [cursor=pointer]
+            - checkbox [aria-hidden]
+        - region [ref=f6e42]:
+          - heading "Community projects" [level=2] [ref=f6e44]
+          - generic [ref=f6e45]:
+            - article [ref=f6e46]:
+              - link "Preview of Think clearly Think clearly Drew Sepeczi's profile by Drew Sepeczi View only" [ref=f6e47] [cursor=pointer]:
+                - /url: /gallery/think-clearly-uf7q6zqgrm
+                - img "Preview of Think clearly" [ref=f6e49]
+                - generic [ref=f6e51]:
+                  - generic [ref=f6e52]:
+                    - heading "Think clearly" [level=2] [ref=f6e53]
+                    - generic [ref=f6e54]:
+                      - img "Drew Sepeczi's profile" [ref=f6e55]
+                      - generic [ref=f6e56]: by Drew Sepeczi
+                  - generic [ref=f6e57]: View only
+            - article [ref=f6e62]:
+              - link "Preview of AI Launchpad Landing Page AI Launchpad Landing Page Drew Sepeczi's profile by Drew Sepeczi View only" [ref=f6e63] [cursor=pointer]:
+                - /url: /gallery/ai-launchpad-landing-page-9ej8dxfe7g
+                - img "Preview of AI Launchpad Landing Page" [ref=f6e65]
+                - generic [ref=f6e67]:
+                  - generic [ref=f6e68]:
+                    - heading "AI Launchpad Landing Page" [level=2] [ref=f6e69]
+                    - generic [ref=f6e70]:
+                      - img "Drew Sepeczi's profile" [ref=f6e71]
+                      - generic [ref=f6e72]: by Drew Sepeczi
+                  - generic [ref=f6e73]: View only
+            - article [ref=f6e78]:
+              - link "Preview of Kanban Project Board App Kanban Project Board App Drew Sepeczi's profile by Drew Sepeczi Remix allowed" [ref=f6e79] [cursor=pointer]:
+                - /url: /gallery/kanban-project-board-app-c9hn1v8ftr
+                - img "Preview of Kanban Project Board App" [ref=f6e81]
+                - generic [ref=f6e83]:
+                  - generic [ref=f6e84]:
+                    - heading "Kanban Project Board App" [level=2] [ref=f6e85]
+                    - generic [ref=f6e86]:
+                      - img "Drew Sepeczi's profile" [ref=f6e87]
+                      - generic [ref=f6e88]: by Drew Sepeczi
+                  - generic [ref=f6e89]: Remix allowed
+            - article [ref=f6e94]:
+              - link "Preview of Squid Agent Clone Builder Squid Agent Clone Builder Drew Sepeczi's profile by Drew Sepeczi View only" [ref=f6e95] [cursor=pointer]:
+                - /url: /gallery/squid-agent-clone-builder-4uyldx6dbn
+                - img "Preview of Squid Agent Clone Builder" [ref=f6e97]
+                - generic [ref=f6e99]:
+                  - generic [ref=f6e100]:
+                    - heading "Squid Agent Clone Builder" [level=2] [ref=f6e101]
+                    - generic [ref=f6e102]:
+                      - img "Drew Sepeczi's profile" [ref=f6e103]
+                      - generic [ref=f6e104]: by Drew Sepeczi
+                  - generic [ref=f6e105]: View only
+            - article [ref=f6e110]:
+              - link "Preview of MagicRings Component Integration MagicRings Component Integration Drew Sepeczi's profile by Drew Sepeczi Remix allowed" [ref=f6e111] [cursor=pointer]:
+                - /url: /gallery/magicrings-component-integration-gojk0tbusj
+                - img "Preview of MagicRings Component Integration" [ref=f6e113]
+                - generic [ref=f6e115]:
+                  - generic [ref=f6e116]:
+                    - heading "MagicRings Component Integration" [level=2] [ref=f6e117]
+                    - generic [ref=f6e118]:
+                      - img "Drew Sepeczi's profile" [ref=f6e119]
+                      - generic [ref=f6e120]: by Drew Sepeczi
+                  - generic [ref=f6e121]: Remix allowed
+            - article [ref=f6e126]:
+              - link "Preview of Building an App Guide Building an App Guide Drew Sepeczi's profile by Drew Sepeczi View only" [ref=f6e127] [cursor=pointer]:
+                - /url: /gallery/building-an-app-guide-nbyfkqec8z
+                - img "Preview of Building an App Guide" [ref=f6e129]
+                - generic [ref=f6e131]:
+                  - generic [ref=f6e132]:
+                    - heading "Building an App Guide" [level=2] [ref=f6e133]
+                    - generic [ref=f6e134]:
+                      - img "Drew Sepeczi's profile" [ref=f6e135]
+                      - generic [ref=f6e136]: by Drew Sepeczi
+                  - generic [ref=f6e137]: View only
+            - article [ref=f6e142]:
+              - link "Preview of Aethera Hero Fade Looper Aethera Hero Fade Looper Drew Sepeczi's profile by Drew Sepeczi View only" [ref=f6e143] [cursor=pointer]:
+                - /url: /gallery/aethera-hero-fade-looper-5xqexepvuw
+                - img "Preview of Aethera Hero Fade Looper" [ref=f6e145]
+                - generic [ref=f6e147]:
+                  - generic [ref=f6e148]:
+                    - heading "Aethera Hero Fade Looper" [level=2] [ref=f6e149]
+                    - generic [ref=f6e150]:
+                      - img "Drew Sepeczi's profile" [ref=f6e151]
+                      - generic [ref=f6e152]: by Drew Sepeczi
+                  - generic [ref=f6e153]: View only
+            - article [ref=f6e158]:
+              - link "Preview of AI Startup Landing Page AI Startup Landing Page Drew Sepeczi's profile by Drew Sepeczi View only" [ref=f6e159] [cursor=pointer]:
+                - /url: /gallery/ai-startup-landing-page-beamhribcv
+                - img "Preview of AI Startup Landing Page" [ref=f6e161]
+                - generic [ref=f6e163]:
+                  - generic [ref=f6e164]:
+                    - heading "AI Startup Landing Page" [level=2] [ref=f6e165]
+                    - generic [ref=f6e166]:
+                      - img "Drew Sepeczi's profile" [ref=f6e167]
+                      - generic [ref=f6e168]: by Drew Sepeczi
+                  - generic [ref=f6e169]: View only
+            - article [ref=f6e174]:
+              - link "Preview of React Landing Page Blueprint React Landing Page Blueprint Drew Sepeczi's profile by Drew Sepeczi View only" [ref=f6e175] [cursor=pointer]:
+                - /url: /gallery/react-landing-page-blueprint-mk6cnmgsko
+                - img "Preview of React Landing Page Blueprint" [ref=f6e177]
+                - generic [ref=f6e179]:
+                  - generic [ref=f6e180]:
+                    - heading "React Landing Page Blueprint" [level=2] [ref=f6e181]
+                    - generic [ref=f6e182]:
+                      - img "Drew Sepeczi's profile" [ref=f6e183]
+                      - generic [ref=f6e184]: by Drew Sepeczi
+                  - generic [ref=f6e185]: View only
+            - article [ref=f6e190]:
+              - link "Preview of Liquid Glass Hero Section Liquid Glass Hero Section Drew Sepeczi's profile by Drew Sepeczi Remix allowed" [ref=f6e191] [cursor=pointer]:
+                - /url: /gallery/liquid-glass-hero-section-1wkcbazjal
+                - img "Preview of Liquid Glass Hero Section" [ref=f6e193]
+                - generic [ref=f6e195]:
+                  - generic [ref=f6e196]:
+                    - heading "Liquid Glass Hero Section" [level=2] [ref=f6e197]
+                    - generic [ref=f6e198]:
+                      - img "Drew Sepeczi's profile" [ref=f6e199]
+                      - generic [ref=f6e200]: by Drew Sepeczi
+                  - generic [ref=f6e201]: Remix allowed
+            - article [ref=f6e206]:
+              - link "Preview of Dental Clinic Landing Page Dental Clinic Landing Page Drew Sepeczi's profile by Drew Sepeczi Remix allowed" [ref=f6e207] [cursor=pointer]:
+                - /url: /gallery/dental-clinic-landing-page-6agvy6ofsm
+                - img "Preview of Dental Clinic Landing Page" [ref=f6e209]
+                - generic [ref=f6e211]:
+                  - generic [ref=f6e212]:
+                    - heading "Dental Clinic Landing Page" [level=2] [ref=f6e213]
+                    - generic [ref=f6e214]:
+                      - img "Drew Sepeczi's profile" [ref=f6e215]
+                      - generic [ref=f6e216]: by Drew Sepeczi
+                  - generic [ref=f6e217]: Remix allowed
+            - article [ref=f6e222]:
+              - link "Preview of Cinematic Hero Section Cinematic Hero Section Drew Sepeczi's profile by Drew Sepeczi Remix allowed" [ref=f6e223] [cursor=pointer]:
+                - /url: /gallery/cinematic-hero-section-okayc6kyyj
+                - img "Preview of Cinematic Hero Section" [ref=f6e225]
+                - generic [ref=f6e227]:
+                  - generic [ref=f6e228]:
+                    - heading "Cinematic Hero Section" [level=2] [ref=f6e229]
+                    - generic [ref=f6e230]:
+                      - img "Drew Sepeczi's profile" [ref=f6e231]
+                      - generic [ref=f6e232]: by Drew Sepeczi
+                  - generic [ref=f6e233]: Remix allowed
+          - navigation "Community project pages" [ref=f6e238]:
+            - link "Next" [ref=f6e240] [cursor=pointer]:
+              - /url: /gallery?cursor=eyJ2IjoxLCJzbmFwc2hvdEF0IjoiMjAyNi0xMC0yOFQxNjowNDoxMy41OThaIiwicHVibGlzaGVkQXQiOiIyMDI2LTA3LTI0VDE0OjA1OjU3LjgxOVoiLCJpZCI6IlB5T2hhejUxU0phcTE0MEQiLCJkaXJlY3Rpb24iOiJhZnRlciIsInF1ZXJ5IjoiIiwicmVtaXhhYmxlIjpmYWxzZSwic29ydCI6Im5ld2VzdCJ9
+        - region [ref=f6e241]:
+          - generic [ref=f6e242]:
+            - generic [ref=f6e243]:
+              - paragraph [ref=f6e244]: Playable showcases
+              - heading "Squid Arcade" [level=2] [ref=f6e245]
+            - paragraph [ref=f6e246]: Three complex React games built without image assets or a game engine. Open one to play and copy its full build prompt.
+          - generic [ref=f6e247]:
+            - article [ref=f6e248]:
+              - link [ref=f6e249] [cursor=pointer]:
+                - /url: /gallery/orbital-salvage
+                - generic [ref=f6e250]:
+                  - img "Preview of Orbital Salvage" [ref=f6e251]
+                  - generic: Playable
+                - generic [ref=f6e254]:
+                  - paragraph [ref=f6e255]: Canvas arcade
+                  - heading "Orbital Salvage" [level=2] [ref=f6e258]
+                  - paragraph [ref=f6e259]: A momentum-driven recovery run with procedural hazards, particles, combo scoring, touch controls, and a persistent high score.
+            - article [ref=f6e263]:
+              - link [ref=f6e264] [cursor=pointer]:
+                - /url: /gallery/rune-circuit
+                - generic [ref=f6e265]:
+                  - img "Preview of Rune Circuit" [ref=f6e266]
+                  - generic: Playable
+                - generic [ref=f6e269]:
+                  - paragraph [ref=f6e270]: Logic puzzle
+                  - heading "Rune Circuit" [level=2] [ref=f6e273]
+                  - paragraph [ref=f6e274]: A ceramic circuit-routing puzzle with real connectivity logic, undo history, hints, level progression, timers, and saved best scores.
+            - article [ref=f6e278]:
+              - link [ref=f6e279] [cursor=pointer]:
+                - /url: /gallery/echo-chamber
+                - generic [ref=f6e280]:
+                  - img "Preview of Echo Chamber" [ref=f6e281]
+                  - generic: Playable
+                - generic [ref=f6e284]:
+                  - paragraph [ref=f6e285]: Audio memory
+                  - heading "Echo Chamber" [level=2] [ref=f6e288]
+                  - paragraph [ref=f6e289]: A procedural spatial-memory instrument with synthesized stereo tones, three speeds, keyboard play, animated sequences, and persistent scores.
+        - region [ref=f6e293]:
+          - generic [ref=f6e294]:
+            - generic [ref=f6e295]:
+              - paragraph [ref=f6e296]: Premium page showcases
+              - heading "Landing pages" [level=2] [ref=f6e297]
+            - paragraph [ref=f6e298]: Three complete React landing pages built with distinct structures, premium interaction systems, and reusable build prompts for your next generation.
+          - generic [ref=f6e299]:
+            - article [ref=f6e300]:
+              - link "Open Cinder Studio — Atelier Edition landing page" [ref=f6e301] [cursor=pointer]:
+                - /url: /gallery/cinder-studio
+                - generic [ref=f6e302]:
+                  - img "Preview of Cinder Studio — Atelier Edition" [ref=f6e303]
+                  - generic: Atmospheric luxury studio
+                  - generic: Live page
+                - generic [ref=f6e306]:
+                  - paragraph [ref=f6e307]: Theme
+                  - heading "Cinder Studio — Atelier Edition" [level=2] [ref=f6e310]
+                  - paragraph [ref=f6e311]: "A premium atmospheric concept for an architectural lighting atelier: dark luxury, cinematic interaction rhythms, and a calm, instrument-driven showcase of fixture craftsmanship."
+            - article [ref=f6e316]:
+              - link "Open Relay — Release Workbench landing page" [ref=f6e317] [cursor=pointer]:
+                - /url: /gallery/relay-release-evidence
+                - generic [ref=f6e318]:
+                  - img "Preview of Relay — Release Workbench" [ref=f6e319]
+                  - generic: Developer tooling
+                  - generic: Live page
+                - generic [ref=f6e322]:
+                  - paragraph [ref=f6e323]: Theme
+                  - heading "Relay — Release Workbench" [level=2] [ref=f6e326]
+                  - paragraph [ref=f6e327]: A premium engineering landing for a release workbench that places verification, policy, and decision context into one trustworthy review surface.
+            - article [ref=f6e332]:
+              - link "Open Small Hours — Community Table landing page" [ref=f6e333] [cursor=pointer]:
+                - /url: /gallery/small-hours-table
+                - generic [ref=f6e334]:
+                  - img "Preview of Small Hours — Community Table" [ref=f6e335]
+                  - generic: Hospitality
+                  - generic: Live page
+                - generic [ref=f6e338]:
+                  - paragraph [ref=f6e339]: Theme
+                  - heading "Small Hours — Community Table" [level=2] [ref=f6e342]
+                  - paragraph [ref=f6e343]: A premium hospitality concept with a letter-shaped story, tactile community notices, and a lightweight invitation flow designed for recurring dinner events.
+    - region "Notifications alt+T"
+  - alert [ref=f6e348]

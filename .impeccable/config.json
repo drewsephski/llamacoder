@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "app/globals.css"
+        ],
+        "createdAt": "2026-10-28T16:00:15.758Z",
+        "reason": "Agent review: existing Jack 3D creator portfolio demo intentionally uses a metallic heading; preserve its shipped design during the storage migration."
+      }
+    ]
+  }
+}

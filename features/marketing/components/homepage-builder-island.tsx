@@ -23,6 +23,7 @@ import {
   Sparkles,
   WandSparkles,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -90,6 +91,10 @@ import {
   type PromptTemplateValues,
 } from "@/lib/prompt-templates";
 import { uploadScreenshot } from "@/lib/s3-upload-client";
+import {
+  buildGalleryHeroImageDeck,
+  type GalleryHeroImage,
+} from "@/features/gallery/client/hero-image-rotation";
 import { WorkflowMediaCard } from "@/components/homepage/workflow-media-card";
 
 const ApiSelectionDialog = dynamic(() =>
@@ -328,6 +333,595 @@ function getHomepageFlowPartialPath(progress: number) {
   }
 
   return pathParts.join(" ");
+}
+
+type HeroPopoutSlot = {
+  top: number;
+  left: number;
+  rotate: number;
+  scale: number;
+  entryX: number;
+  entryY: number;
+  driftX: number;
+  driftY: number;
+  duration: number;
+  zIndex: number;
+};
+
+type HeroPopout = {
+  id: string;
+  src: string;
+  alt: string;
+  title: string;
+  prompt: string;
+  top: number;
+  left: number;
+  rotate: number;
+  scale: number;
+  entryX: number;
+  entryY: number;
+  driftX: number;
+  driftY: number;
+  duration: number;
+  zIndex: number;
+  slotIndex: number;
+};
+
+type HeroPopoutExclusionZone = {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
+};
+
+const HERO_POPOUT_MAX_ACTIVE = 6;
+const HERO_POPOUT_EXCLUSION_PADDING_PX = 28;
+const HERO_POPOUT_ROW_TOLERANCE_PERCENT = 6;
+const HERO_POPOUT_MIN_VERTICAL_GAP_PERCENT = 11;
+
+const HERO_POPOUT_SLOTS: readonly HeroPopoutSlot[] = [
+  {
+    top: 14,
+    left: 12,
+    rotate: -7,
+    scale: 0.96,
+    entryX: -28,
+    entryY: 20,
+    driftX: -6,
+    driftY: -10,
+    duration: 3.4,
+    zIndex: 2,
+  },
+  {
+    top: 28,
+    left: 88,
+    rotate: 6,
+    scale: 1.03,
+    entryX: 26,
+    entryY: 16,
+    driftX: 8,
+    driftY: -8,
+    duration: 3.7,
+    zIndex: 3,
+  },
+  {
+    top: 42,
+    left: 14,
+    rotate: -4,
+    scale: 0.98,
+    entryX: -22,
+    entryY: 14,
+    driftX: -4,
+    driftY: -12,
+    duration: 3.2,
+    zIndex: 2,
+  },
+  {
+    top: 56,
+    left: 86,
+    rotate: 5,
+    scale: 1.01,
+    entryX: 24,
+    entryY: 12,
+    driftX: 6,
+    driftY: -9,
+    duration: 3.6,
+    zIndex: 4,
+  },
+  {
+    top: 70,
+    left: 12,
+    rotate: -5,
+    scale: 0.95,
+    entryX: -26,
+    entryY: 18,
+    driftX: -8,
+    driftY: -11,
+    duration: 3.5,
+    zIndex: 2,
+  },
+  {
+    top: 84,
+    left: 88,
+    rotate: 7,
+    scale: 1.04,
+    entryX: 28,
+    entryY: 16,
+    driftX: 10,
+    driftY: -13,
+    duration: 3.8,
+    zIndex: 3,
+  },
+];
+
+function randomInRange(min: number, max: number) {
+  return min + Math.random() * (max - min);
+}
+
+function clampPercent(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
+function getHeroPopoutCardSize(layerWidth: number) {
+  const width = Math.min(196, Math.max(120, layerWidth * 0.16));
+  const height = width * (9 / 16);
+  return { width, height };
+}
+
+function measureHeroPopoutExclusionZones(
+  layer: HTMLElement,
+  shell: HTMLElement,
+): HeroPopoutExclusionZone[] {
+  const layerRect = layer.getBoundingClientRect();
+  if (layerRect.width <= 0 || layerRect.height <= 0) return [];
+
+  const zoneNames = ["copy", "compose", "clone"] as const;
+
+  return zoneNames.flatMap((name) => {
+    const element = shell.querySelector<HTMLElement>(
+      `[data-hero-popout-exclude="${name}"]`,
+    );
+    if (!element) return [];
+
+    const rect = element.getBoundingClientRect();
+
+    return [
+      {
+        top: clampPercent(
+          ((rect.top - layerRect.top - HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.height) *
+            100,
+        ),
+        bottom: clampPercent(
+          ((rect.bottom - layerRect.top + HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.height) *
+            100,
+        ),
+        left: clampPercent(
+          ((rect.left - layerRect.left - HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.width) *
+            100,
+        ),
+        right: clampPercent(
+          ((rect.right - layerRect.left + HERO_POPOUT_EXCLUSION_PADDING_PX) /
+            layerRect.width) *
+            100,
+        ),
+      },
+    ];
+  });
+}
+
+function isInHeroEdgeClipZone(top: number, left: number) {
+  return top < 12 || top > 88 || left < 12 || left > 88;
+}
+
+function heroPopoutOverlapsExclusionZone(
+  top: number,
+  left: number,
+  cardWidth: number,
+  cardHeight: number,
+  layerWidth: number,
+  layerHeight: number,
+  zone: HeroPopoutExclusionZone,
+) {
+  const halfWidthPercent = (cardWidth / layerWidth) * 50;
+  const halfHeightPercent = (cardHeight / layerHeight) * 50;
+
+  const popoutTop = top - halfHeightPercent;
+  const popoutBottom = top + halfHeightPercent;
+  const popoutLeft = left - halfWidthPercent;
+  const popoutRight = left + halfWidthPercent;
+
+  return !(
+    popoutRight < zone.left ||
+    popoutLeft > zone.right ||
+    popoutBottom < zone.top ||
+    popoutTop > zone.bottom
+  );
+}
+
+function heroPopoutOverlapsAnyExclusionZone(
+  top: number,
+  left: number,
+  cardWidth: number,
+  cardHeight: number,
+  layerWidth: number,
+  layerHeight: number,
+  zones: HeroPopoutExclusionZone[],
+) {
+  return zones.some((zone) =>
+    heroPopoutOverlapsExclusionZone(
+      top,
+      left,
+      cardWidth,
+      cardHeight,
+      layerWidth,
+      layerHeight,
+      zone,
+    ),
+  );
+}
+
+function getFallbackHeroPopoutExclusionZones(): HeroPopoutExclusionZone[] {
+  return [
+    { top: 6, bottom: 36, left: 12, right: 88 },
+    { top: 28, bottom: 76, left: 8, right: 92 },
+    { top: 68, bottom: 96, left: 14, right: 86 },
+  ];
+}
+
+function heroPopoutWouldFormRow(
+  top: number,
+  activePopouts: readonly Pick<HeroPopout, "top">[],
+) {
+  return activePopouts.some(
+    (popout) => Math.abs(popout.top - top) <= HERO_POPOUT_ROW_TOLERANCE_PERCENT,
+  );
+}
+
+function heroPopoutIsTooCloseVertically(
+  top: number,
+  activePopouts: readonly Pick<HeroPopout, "top">[],
+) {
+  return activePopouts.some(
+    (popout) =>
+      Math.abs(popout.top - top) < HERO_POPOUT_MIN_VERTICAL_GAP_PERCENT,
+  );
+}
+
+function isHeroPopoutSlotValid(
+  slot: HeroPopoutSlot,
+  cardWidth: number,
+  cardHeight: number,
+  layerWidth: number,
+  layerHeight: number,
+  exclusionZones: HeroPopoutExclusionZone[],
+  activePopouts: readonly HeroPopout[],
+) {
+  if (
+    isInHeroEdgeClipZone(slot.top, slot.left) ||
+    heroPopoutOverlapsAnyExclusionZone(
+      slot.top,
+      slot.left,
+      cardWidth,
+      cardHeight,
+      layerWidth,
+      layerHeight,
+      exclusionZones,
+    ) ||
+    heroPopoutWouldFormRow(slot.top, activePopouts) ||
+    heroPopoutIsTooCloseVertically(slot.top, activePopouts)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function pickHeroPopoutSlot(
+  layerWidth: number,
+  layerHeight: number,
+  exclusionZones: HeroPopoutExclusionZone[],
+  activePopouts: readonly HeroPopout[],
+  startSlotIndex: number,
+): { slot: HeroPopoutSlot; slotIndex: number } | null {
+  const { width: cardWidth, height: cardHeight } =
+    getHeroPopoutCardSize(layerWidth);
+  const zones =
+    exclusionZones.length > 0
+      ? exclusionZones
+      : getFallbackHeroPopoutExclusionZones();
+
+  for (let offset = 0; offset < HERO_POPOUT_SLOTS.length; offset += 1) {
+    const slotIndex = (startSlotIndex + offset) % HERO_POPOUT_SLOTS.length;
+    const slot = HERO_POPOUT_SLOTS[slotIndex];
+    if (!slot) continue;
+
+    if (
+      isHeroPopoutSlotValid(
+        slot,
+        cardWidth,
+        cardHeight,
+        layerWidth,
+        layerHeight,
+        zones,
+        activePopouts,
+      )
+    ) {
+      return { slot, slotIndex };
+    }
+  }
+
+  return null;
+}
+
+function buildHeroPopoutFromSlot(
+  slot: HeroPopoutSlot,
+  slotIndex: number,
+  showcase: GalleryHeroImage,
+): HeroPopout {
+  const horizontalJitter = randomInRange(-1.8, 1.8);
+
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    src: showcase.src,
+    alt: showcase.alt,
+    title: showcase.title,
+    prompt: showcase.prompt,
+    top: slot.top,
+    left: clampPercent(slot.left + horizontalJitter),
+    rotate: slot.rotate + randomInRange(-1.5, 1.5),
+    scale: slot.scale + randomInRange(-0.02, 0.02),
+    entryX: slot.entryX,
+    entryY: slot.entryY + randomInRange(-3, 3),
+    driftX: slot.driftX + randomInRange(-2, 2),
+    driftY: slot.driftY + randomInRange(-2, 2),
+    duration: slot.duration + randomInRange(-0.15, 0.2),
+    zIndex: slot.zIndex,
+    slotIndex,
+  };
+}
+
+function getHeroPopoutSpawnDelayMs(slotIndex: number) {
+  const rhythm = 760 + (slotIndex % HERO_POPOUT_SLOTS.length) * 140;
+  return rhythm + randomInRange(120, 420);
+}
+
+function HeroPopoutCard({
+  popout,
+  onRemove,
+  onSelectPrompt,
+}: {
+  popout: HeroPopout;
+  onRemove: (id: string) => void;
+  onSelectPrompt: (prompt: string, title: string) => void;
+}) {
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    if (popout.prompt.trim().length === 0) return;
+    onSelectPrompt(popout.prompt, popout.title);
+  }
+
+  return (
+    <button
+      type="button"
+      className="hero-popout"
+      style={
+        {
+          top: `${popout.top}%`,
+          left: `${popout.left}%`,
+          zIndex: popout.zIndex,
+          animationDuration: `${popout.duration}s`,
+          "--popout-rotate": `${popout.rotate}deg`,
+          "--popout-scale": popout.scale,
+          "--popout-entry-x": `${popout.entryX}px`,
+          "--popout-entry-y": `${popout.entryY}px`,
+          "--popout-drift-x": `${popout.driftX}px`,
+          "--popout-drift-y": `${popout.driftY}px`,
+        } as React.CSSProperties
+      }
+      aria-label={`Use the prompt from ${popout.title}`}
+      onClick={handleClick}
+      onAnimationEnd={(event) => {
+        if (event.animationName !== "heroPopoutLife") return;
+        onRemove(popout.id);
+      }}
+    >
+      <div className="hero-popout-image-wrap">
+        <Image
+          src={popout.src}
+          alt={`${popout.title} app preview`}
+          fill
+          unoptimized
+          sizes="196px"
+          draggable={false}
+          className="hero-popout-image"
+        />
+      </div>
+    </button>
+  );
+}
+
+function HeroPopoutShowcases({
+  onSelectPrompt,
+}: {
+  onSelectPrompt: (prompt: string, title: string) => void;
+}) {
+  const reduceMotion = useReducedMotion();
+  const layerRef = useRef<HTMLDivElement>(null);
+  const exclusionZonesRef = useRef<HeroPopoutExclusionZone[]>([]);
+  const showcaseImagesRef = useRef<GalleryHeroImage[]>([]);
+  const imageDeckRef = useRef<GalleryHeroImage[]>([]);
+  const lastImageSrcRef = useRef<string | null>(null);
+  const slotIndexRef = useRef(0);
+  const [popouts, setPopouts] = useState<HeroPopout[]>([]);
+  const [showcaseImagesReady, setShowcaseImagesReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/gallery?withThumbnails=all")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Unable to load gallery previews.");
+        }
+        return response.json() as Promise<{ images?: GalleryHeroImage[] }>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+
+        showcaseImagesRef.current = (data.images ?? []).filter(
+          (image): image is GalleryHeroImage =>
+            typeof image.src === "string" &&
+            image.src.length > 0 &&
+            typeof image.alt === "string" &&
+            typeof image.title === "string" &&
+            typeof image.prompt === "string" &&
+            image.prompt.trim().length > 0,
+        );
+        imageDeckRef.current = [];
+        lastImageSrcRef.current = null;
+        setShowcaseImagesReady(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        showcaseImagesRef.current = [];
+        setShowcaseImagesReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const layer = layerRef.current;
+    const shell = layer?.closest<HTMLElement>('[data-testid="hero-shell"]');
+    if (!layer || !shell) return;
+
+    const syncExclusionZones = () => {
+      exclusionZonesRef.current = measureHeroPopoutExclusionZones(layer, shell);
+    };
+
+    syncExclusionZones();
+
+    const resizeObserver = new ResizeObserver(syncExclusionZones);
+    resizeObserver.observe(shell);
+    resizeObserver.observe(layer);
+    window.addEventListener("resize", syncExclusionZones);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", syncExclusionZones);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || !showcaseImagesReady) return;
+    if (showcaseImagesRef.current.length === 0) return;
+
+    let cancelled = false;
+    let spawnTimeoutId: number | undefined;
+
+    const queuePopout = () => {
+      if (cancelled) return;
+
+      const layer = layerRef.current;
+      if (!layer) {
+        spawnTimeoutId = window.setTimeout(queuePopout, 400);
+        return;
+      }
+
+      const layerRect = layer.getBoundingClientRect();
+      if (layerRect.width <= 0 || layerRect.height <= 0) {
+        spawnTimeoutId = window.setTimeout(queuePopout, 400);
+        return;
+      }
+
+      if (showcaseImagesRef.current.length === 0) {
+        spawnTimeoutId = window.setTimeout(queuePopout, 400);
+        return;
+      }
+
+      let delayForNextSpawn = getHeroPopoutSpawnDelayMs(slotIndexRef.current);
+
+      setPopouts((current) => {
+        if (current.length >= HERO_POPOUT_MAX_ACTIVE) {
+          delayForNextSpawn = randomInRange(680, 980);
+          return current;
+        }
+
+        const slotSelection = pickHeroPopoutSlot(
+          layerRect.width,
+          layerRect.height,
+          exclusionZonesRef.current,
+          current,
+          slotIndexRef.current,
+        );
+        if (!slotSelection) {
+          delayForNextSpawn = randomInRange(520, 860);
+          return current;
+        }
+
+        if (imageDeckRef.current.length === 0) {
+          imageDeckRef.current = buildGalleryHeroImageDeck(
+            showcaseImagesRef.current,
+            lastImageSrcRef.current,
+          );
+        }
+
+        const showcase = imageDeckRef.current.shift();
+        if (!showcase) {
+          delayForNextSpawn = randomInRange(680, 980);
+          return current;
+        }
+
+        slotIndexRef.current =
+          (slotSelection.slotIndex + 1) % HERO_POPOUT_SLOTS.length;
+        lastImageSrcRef.current = showcase.src;
+        delayForNextSpawn = getHeroPopoutSpawnDelayMs(slotSelection.slotIndex);
+
+        const popout = buildHeroPopoutFromSlot(
+          slotSelection.slot,
+          slotSelection.slotIndex,
+          showcase,
+        );
+
+        return [...current, popout];
+      });
+
+      spawnTimeoutId = window.setTimeout(queuePopout, delayForNextSpawn);
+    };
+
+    queuePopout();
+
+    return () => {
+      cancelled = true;
+      if (spawnTimeoutId !== undefined) {
+        window.clearTimeout(spawnTimeoutId);
+      }
+    };
+  }, [reduceMotion, showcaseImagesReady]);
+
+  const handleRemovePopout = useCallback((id: string) => {
+    setPopouts((current) => current.filter((item) => item.id !== id));
+  }, []);
+
+  if (reduceMotion) return null;
+
+  return (
+    <div ref={layerRef} className="hero-popout-layer">
+      {popouts.map((popout) => (
+        <HeroPopoutCard
+          key={popout.id}
+          popout={popout}
+          onRemove={handleRemovePopout}
+          onSelectPrompt={onSelectPrompt}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function HomepageBuilderIsland({
@@ -664,6 +1258,25 @@ export function HomepageBuilderIsland({
     [plausible],
   );
 
+  const handleGalleryPromptSelect = useCallback(
+    (value: string, title: string) => {
+      setActiveTemplate(null);
+      setPrompt(value);
+      promptStartedAtRef.current ??= Date.now();
+      plausible("Gallery Prompt Selected", {
+        props: { source: "homepage_hero_popout", title },
+      });
+      window.requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+        if (textareaRef.current) {
+          const end = textareaRef.current.value.length;
+          textareaRef.current.setSelectionRange(end, end);
+        }
+      });
+    },
+    [plausible],
+  );
+
   const handleTemplateCompiledPrompt = useCallback((compiled: string) => {
     setPrompt(compiled);
   }, []);
@@ -885,8 +1498,9 @@ export function HomepageBuilderIsland({
         <main>
           <div className="hero-shell" data-testid="hero-shell">
             <div className="hero-stage" data-testid="hero-stage">
+              <HeroPopoutShowcases onSelectPrompt={handleGalleryPromptSelect} />
               {/* Hero copy */}
-              <div className="hero-copy">
+              <div className="hero-copy" data-hero-popout-exclude="copy">
                 <h1 className="animate-fade-up">
                   <KineticText
                     as="span"
@@ -908,6 +1522,7 @@ export function HomepageBuilderIsland({
               {/* Main form */}
               <form
                 id="builder"
+                data-hero-popout-exclude="compose"
                 className="animate-fade-up-2 relative z-[3] w-full max-w-2xl pt-8 sm:pt-10 lg:pt-12"
                 action={async (formData) => {
                   const shouldSubmit = await playBuildLaunchAnimation();
@@ -1455,7 +2070,10 @@ export function HomepageBuilderIsland({
                     </div>
                   </div>
                   {/* URL section */}
-                  <div className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10">
+                  <div
+                    className="relative z-[3] mb-4 mt-8 sm:mb-10 sm:mt-10"
+                    data-hero-popout-exclude="clone"
+                  >
                     <div className="or-divider mb-4">or start from a site</div>
 
                     <div className="flex justify-center">
