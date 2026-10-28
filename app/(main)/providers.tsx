@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NoiseTexture } from "@/components/ui/noise-texture";
 import { GenerationHandoffProvider } from "@/features/generation/client/generation-handoff-context";
+import { CreditGiftPopup } from "@/features/billing/components/credit-gift-popup";
 
 // Create QueryClient outside component to avoid recreating on render
 const queryClient = new QueryClient({
@@ -27,6 +28,7 @@ export default function Providers({ children }: { children: ReactNode }) {
           <div className="relative min-h-full">
             <NoiseTexture />
             {children}
+            <CreditGiftPopup />
           </div>
         </GenerationHandoffProvider>
       </ThemeProvider>

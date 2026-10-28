@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import PlausibleProvider from "next-plausible";
-import { DM_Sans } from "next/font/google";
+import localFont from "next/font/local";
 
 import { ForSaleBanner } from "@/features/for-sale/components/for-sale-banner";
 import {
@@ -13,11 +13,11 @@ import { sitewideStructuredData } from "@/lib/site-structured-data";
 
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
+const dmSans = localFont({
+  src: "./fonts/dm-sans-latin.woff2",
   variable: "--font-dm-sans",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: "100 1000",
 });
 
 const title = "Squid Agent: Fast AI React Prototype Builder";
