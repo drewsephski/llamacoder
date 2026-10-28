@@ -1,1 +1,2 @@
 [    3181ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://2-19-8-sandpack.codesandbox.io/static/js/vendors~sandbox-startup.ca8a95b40.chunk.js:0
+[   78357ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://col.csbops.io/data/sandpack:0

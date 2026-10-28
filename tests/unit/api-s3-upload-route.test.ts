@@ -81,6 +81,9 @@ describe("S3 upload signer", () => {
       bucket: "bucket",
       region: "us-east-1",
       url: "https://uploads.example.com/signed",
+      objectUrl: expect.stringMatching(
+        /^https:\/\/branch\.storage\.us-east-1\.aws\.neon\.tech\/bucket\/squid-uploads\/user_1\//,
+      ),
     });
     expect(body.key).toMatch(/^squid-uploads\/user_1\/[0-9a-f-]+\.png$/);
     expect(mocks.consumeRateLimit).toHaveBeenCalledWith({
@@ -101,5 +104,23 @@ describe("S3 upload signer", () => {
       expect.anything(),
       { expiresIn: 300 },
     );
+  });
+
+  it("returns 503 when Neon storage is incompletely configured", async () => {
+    const endpoint = process.env.AWS_ENDPOINT_URL_S3;
+    delete process.env.AWS_ENDPOINT_URL_S3;
+    try {
+      const response = await POST(
+        request({
+          filename: "screen.png",
+          filetype: "image/png",
+          filesize: 500,
+        }),
+      );
+      expect(response.status).toBe(503);
+      expect(mocks.getSignedUrl).not.toHaveBeenCalled();
+    } finally {
+      process.env.AWS_ENDPOINT_URL_S3 = endpoint;
+    }
   });
 });
