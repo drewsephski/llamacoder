@@ -17,6 +17,7 @@ import {
   LEGACY_GEMINI_3_7_FLASH_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_GLM_5_2_MODEL,
+  LEGACY_GLM_5_3_FLASH_MODEL,
   LEGACY_GROK_4_5_MODEL,
   LEGACY_GPT_5_4_MODEL,
   LEGACY_KIMI_CODE_MODEL,
@@ -115,7 +116,7 @@ export function getModelWithFallbacks(model: string): string[] {
     return [FALLBACK_MODELS.advancedCode];
   }
 
-  if (model === LEGACY_GLM_5_2_MODEL) {
+  if (model === LEGACY_GLM_5_2_MODEL || model === LEGACY_GLM_5_3_FLASH_MODEL) {
     return [DEFAULT_MODEL];
   }
 

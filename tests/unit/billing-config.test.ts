@@ -39,7 +39,7 @@ describe("billing config", () => {
     expect(getModelCreditCost(LEGACY_MIMO_STARTER_MODEL)).toBe(3);
     expect(getModelCreditCost("deepseek/deepseek-v4-pro")).toBe(2);
     expect(getModelCreditCost("x-ai/grok-4.3")).toBe(2);
-    expect(getModelCreditCost("openai/gpt-6-luna")).toBe(3);
+    expect(getModelCreditCost("openai/gpt-6-luna")).toBe(1);
     expect(getModelCreditCost(LEGACY_GLM_5_2_MODEL)).toBe(1);
     expect(getModelCreditCost(LEGACY_MINIMAX_M3_MODEL)).toBe(2);
     expect(getModelCreditCost(LEGACY_KIMI_CODE_MODEL)).toBe(2);
@@ -47,14 +47,14 @@ describe("billing config", () => {
     expect(getModelCreditCost("anthropic/claude-sonnet-5")).toBe(16);
     expect(getModelCreditCost("x-ai/grok-4.5")).toBe(2);
     expect(getModelCreditCost(LEGACY_GEMINI_PRO_MODEL)).toBe(3);
-    expect(getModelCreditCost(SAFE_GPT_MODEL)).toBe(3);
+    expect(getModelCreditCost(SAFE_GPT_MODEL)).toBe(1);
     expect(getModelCreditCost("anthropic/claude-opus-5.5")).toBe(16);
     expect(getModelCreditCost("anthropic/claude-opus-4.8")).toBe(16);
     expect(
       getModelCreditCost("anthropic/claude-opus-4.8", { outputTokens: 15_000 }),
     ).toBe(40);
     expect(getModelCreditHoldCost("anthropic/claude-opus-4.8")).toBe(40);
-    expect(getModelCreditCost("openai/gpt-5.5")).toBe(3);
+    expect(getModelCreditCost("openai/gpt-5.5")).toBe(1);
     expect(() => getModelCreditCost("unknown/model")).toThrow(
       "UNPRICED_MODEL:unknown/model",
     );
@@ -66,8 +66,8 @@ describe("billing config", () => {
 
   it("uses the current OpenRouter token prices for the default model", () => {
     expect(getModelTokenPricing(DEFAULT_MODEL)).toEqual({
-      inputPricePerMillion: 0.048,
-      outputPricePerMillion: 0.16,
+      inputPricePerMillion: 0.1,
+      outputPricePerMillion: 0.5,
     });
     expect(getModelTokenPricing(GEMINI_MULTIMODAL_MODEL)).toEqual({
       inputPricePerMillion: 0.825,
@@ -95,8 +95,8 @@ describe("billing config", () => {
       outputPricePerMillion: 0.2093,
     });
     expect(getOpenRouterMaxPrice(LEGACY_GLM_5_2_MODEL)).toEqual({
-      inputPricePerMillion: 0.0552,
-      outputPricePerMillion: 0.184,
+      inputPricePerMillion: 0.115,
+      outputPricePerMillion: 0.575,
     });
   });
 
@@ -132,6 +132,7 @@ describe("billing config", () => {
     expect(canTierUseModel("free", LEGACY_DEFAULT_MODEL)).toBe(true);
     expect(canTierUseModel("free", LEGACY_SECONDARY_STARTER_MODEL)).toBe(true);
     expect(canTierUseModel("free", LEGACY_MIMO_STARTER_MODEL)).toBe(true);
+    expect(canTierUseModel("free", "z-ai/glm-5.3-flash")).toBe(true);
     expect(canTierUseModel("free", "deepseek/deepseek-v4-pro")).toBe(false);
     expect(
       canTierUseModel("free", "deepseek/deepseek-v4-pro", {

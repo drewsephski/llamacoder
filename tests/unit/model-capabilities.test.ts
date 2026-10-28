@@ -15,7 +15,7 @@ describe("model capabilities", () => {
     ["anthropic/claude-opus-5.5", true],
     ["openai/gpt-6-luna", true],
     ["anthropic/claude-haiku-5.5", true],
-    ["z-ai/glm-5.3-flash", true],
+    ["z-ai/glm-5.3-flash", false],
     ["unknown/model", false],
   ])("returns Plan-mode availability for %s", (model, expected) => {
     expect(isPlanModeAvailable(model)).toBe(expected);

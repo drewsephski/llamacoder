@@ -13,6 +13,7 @@ import {
   LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_GLM_5_2_MODEL,
+  LEGACY_GLM_5_3_FLASH_MODEL,
   LEGACY_GROK_4_5_MODEL,
   LEGACY_KIMI_CODE_MODEL,
   LEGACY_MINIMAX_M3_MODEL,
@@ -101,8 +102,11 @@ describe("model fallbacks", () => {
     ]);
   });
 
-  it("routes legacy GLM 5.2 chats to GLM 5.3 Flash", () => {
+  it("routes legacy GLM chats to the GPT-6 Luna default", () => {
     expect(getModelWithFallbacks(LEGACY_GLM_5_2_MODEL)).toEqual([
+      DEFAULT_MODEL,
+    ]);
+    expect(getModelWithFallbacks(LEGACY_GLM_5_3_FLASH_MODEL)).toEqual([
       DEFAULT_MODEL,
     ]);
   });

@@ -37,7 +37,7 @@ When a user attaches a screenshot (especially via **clone a site**):
 1. **Direct multimodal codegen** — the screenshot is attached as an `image` part on the last user message; the coding model sees the pixels directly (no text-only intermediary).
 2. **Clone intent** — default fidelity lock; inspiration-only when user says "inspired by" / "don't copy".
 3. **Codegen** uses `screenshotCloneMode` — suspends Style Pack rotation; fidelity contract tells the model to read layout/colors/copy from the attached image.
-4. **Model routing** — text-only models (e.g. DeepSeek V4 Flash) auto-route to the current multimodal default (`z-ai/glm-5.3-flash`) for screenshot builds.
+4. **Model routing** — text-only models (e.g. DeepSeek V4 Flash) auto-route to the current multimodal default (`openai/gpt-6-luna`) for screenshot builds.
 
 Optional: `screenshotCloneVisionPrompt` remains available for a separate DNA extraction pass if re-enabled later.
 

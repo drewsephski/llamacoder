@@ -17,6 +17,7 @@ import {
   LEGACY_DEFAULT_MODEL,
   LEGACY_GEMINI_PRO_MODEL,
   LEGACY_GLM_5_2_MODEL,
+  LEGACY_GLM_5_3_FLASH_MODEL,
   LEGACY_KIMI_CODE_MODEL,
   LEGACY_MINIMAX_M3_MODEL,
   LEGACY_MIMO_STARTER_MODEL,
@@ -74,10 +75,6 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     tier: "efficient",
     bands: { small: 3, standard: 4, large: 5, xl: 6 },
   },
-  [DEFAULT_MODEL]: {
-    tier: "starter",
-    bands: { small: 1, standard: 1, large: 2, xl: 2 },
-  },
   [GEMINI_MULTIMODAL_MODEL]: {
     tier: "efficient",
     bands: { small: 2, standard: 3, large: 4, xl: 5 },
@@ -107,8 +104,8 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     bands: { small: 2, standard: 3, large: 4, xl: 5 },
   },
   [GPT_6_LUNA_MODEL]: {
-    tier: "advanced",
-    bands: { small: 3, standard: 4, large: 5, xl: 6 },
+    tier: "starter",
+    bands: { small: 1, standard: 1, large: 2, xl: 2 },
   },
   [LEGACY_KIMI_CODE_MODEL]: {
     tier: "efficient",
@@ -216,10 +213,6 @@ export const MODEL_TOKEN_PRICING: Record<string, ModelTokenPricing> = {
   [LEGACY_GLM_5_2_MODEL]: {
     inputPricePerMillion: 0.62,
     outputPricePerMillion: 2.42,
-  },
-  [DEFAULT_MODEL]: {
-    inputPricePerMillion: 0.048,
-    outputPricePerMillion: 0.16,
   },
   [GEMINI_MULTIMODAL_MODEL]: {
     inputPricePerMillion: 0.25,
@@ -432,6 +425,7 @@ export const TIERS = {
       SECONDARY_STARTER_MODEL,
       LEGACY_SECONDARY_STARTER_MODEL,
       LEGACY_MIMO_STARTER_MODEL,
+      LEGACY_GLM_5_3_FLASH_MODEL,
     ] as string[] | "all",
     price: 0,
     name: "Free",

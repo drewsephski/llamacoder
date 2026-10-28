@@ -1,5 +1,6 @@
 export const FREE_MODEL = "deepseek/deepseek-v4-flash";
-export const DEFAULT_MODEL = "z-ai/glm-5.3-flash";
+export const GPT_6_LUNA_MODEL = "openai/gpt-6-luna";
+export const DEFAULT_MODEL = GPT_6_LUNA_MODEL;
 export const GEMINI_MULTIMODAL_MODEL = "google/gemini-3.1-flash-lite";
 export const GEMINI_3_5_FLASH_LITE_MODEL = "google/gemini-3.5-flash-lite";
 export const GEMINI_3_8_FLASH_MODEL = "google/gemini-3.8-flash";
@@ -9,7 +10,6 @@ export const LEGACY_GEMINI_3_6_FLASH_MODEL = "google/gemini-3.6-flash";
 export const LEGACY_GEMINI_3_7_FLASH_MODEL = "google/gemini-3.7-flash";
 export const LEGACY_GROK_4_5_MODEL = "x-ai/grok-4.5";
 export const LEGACY_DEEPSEEK_V4_PRO_MODEL = "deepseek/deepseek-v4-pro";
-export const GPT_6_LUNA_MODEL = "openai/gpt-6-luna";
 export const CLAUDE_HAIKU_5_5_MODEL = "anthropic/claude-haiku-5.5";
 export const CLAUDE_OPUS_5_5_MODEL = "anthropic/claude-opus-5.5";
 export const LEGACY_CLAUDE_SONNET_5_MODEL = "anthropic/claude-sonnet-5";
@@ -27,6 +27,7 @@ export const LEGACY_GPT_5_4_MODEL = "openai/gpt-5.4";
 export const LEGACY_CLAUDE_OPUS_MODEL = "anthropic/claude-opus-4.6";
 export const LEGACY_LAGUNA_MODEL = "poolside/laguna-xs-2.1";
 export const LEGACY_GLM_5_2_MODEL = "z-ai/glm-5.2";
+export const LEGACY_GLM_5_3_FLASH_MODEL = "z-ai/glm-5.3-flash";
 export const SECONDARY_STARTER_MODEL = "google/gemini-2.5-flash-lite";
 export const SAFE_GPT_MODEL = "openai/gpt-4.1";
 
@@ -75,19 +76,18 @@ export type ModelOption = {
 
 export const MODELS: ModelOption[] = [
   {
-    label: "GLM 5.3 Flash",
+    label: "GPT-6 Luna",
     value: DEFAULT_MODEL,
     free: true,
     featured: true,
     group: "free",
-    summary:
-      "Fast multimodal default for low-latency app generation and screenshots.",
+    summary: "OpenAI Luna coding model for fast iterative app generation.",
     reasoning: {
       supported: true,
       mandatory: false,
       openRouterRequiresReasoning: true,
-      supportedEfforts: ["xhigh", "high"],
-      defaultEffort: "high",
+      supportedEfforts: ["high", "medium", "low"],
+      defaultEffort: "medium",
     },
   },
   {
@@ -139,20 +139,6 @@ export const MODELS: ModelOption[] = [
     reasoning: {
       supported: true,
       mandatory: false,
-      supportedEfforts: ["high", "medium", "low"],
-      defaultEffort: "medium",
-    },
-  },
-  {
-    label: "GPT-6 Luna",
-    value: GPT_6_LUNA_MODEL,
-    paid: true,
-    group: "paid",
-    summary: "OpenAI Luna coding model for fast iterative app generation.",
-    reasoning: {
-      supported: true,
-      mandatory: false,
-      openRouterRequiresReasoning: true,
       supportedEfforts: ["high", "medium", "low"],
       defaultEffort: "medium",
     },

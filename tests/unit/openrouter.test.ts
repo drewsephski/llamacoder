@@ -191,10 +191,10 @@ describe("OpenRouter helpers", () => {
       enabled: true,
       visible: false,
       mandatory: false,
-      effort: "high",
+      effort: "low",
       providerOptions: {
         openrouter: {
-          reasoning: { effort: "high", exclude: true },
+          reasoning: { effort: "low", exclude: true },
         },
       },
     });
@@ -241,10 +241,10 @@ describe("OpenRouter helpers", () => {
       enabled: true,
       visible: true,
       mandatory: false,
-      effort: "high",
+      effort: "medium",
       providerOptions: {
         openrouter: {
-          reasoning: { effort: "high", exclude: false },
+          reasoning: { effort: "medium", exclude: false },
         },
       },
     });
